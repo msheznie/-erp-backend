@@ -1,5 +1,18 @@
 <?php
-
+/**
+=============================================
+-- File Name : UnitAPIController.php
+-- Project Name : ERP
+-- Module Name :  Unit Master
+-- Author : Pasan Madhuranga
+-- Create date :  22 - March 2018
+-- Description : This file contains the all CRUD for Unit Master
+-- REVISION HISTORY
+-- Date: 22 - March 2018 By: Pasan Description: Added a new function named as getAllUnitMaster()
+-- Date: 22 - March 2018 By: Pasan Description: Added a new function named as updateUnitMaster()
+-- Date: 22 - March 2018 By: Pasan Description: Added a new function named as getUnitMasterFormData()
+-- Date: 22 - March 2018 By: Pasan Description: Added a new function named as getUnitConversionsByUnitId()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUnitAPIRequest;

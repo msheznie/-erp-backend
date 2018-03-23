@@ -210,5 +210,6 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getUnitMasterFormData', 'UnitAPIController@getUnitMasterFormData');
     Route::resource('unit/conversion', 'UnitConversionAPIController');
     Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData');
+    Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion');
 
 });

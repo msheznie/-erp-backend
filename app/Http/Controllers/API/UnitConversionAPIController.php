@@ -1,5 +1,16 @@
 <?php
-
+/**
+=============================================
+-- File Name : UnitConversionAPIController.php
+-- Project Name : ERP
+-- Module Name :  Unit Conversion
+-- Author : Pasan Madhuranga
+-- Create date :  22 - March 2018
+-- Description : This file contains the all CRUD for Unit Conversion
+-- REVISION HISTORY
+-- Date: 22 - March 2018 By: Pasan Description: Added a new function named as getUnitConversionFormData()
+-- Date: 22 - March 2018 By: Pasan Description: Added a new function named as updateUnitConversion()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUnitConversionAPIRequest;
@@ -153,6 +164,36 @@ class UnitConversionAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+
+    }
+
+    /**
+     * update unit conversions by id
+     * @param Request $request
+     * @return mixed
+     */
+    public function updateUnitConversion(Request $request)
+    {
+        $input = $request->all();
+
+        $data = [
+            'masterUnitID'  => $input['masterUnitID'],
+            'subUnitID'     => is_array($input['subUnitID']) ? $input['subUnitID'][0] : $input['subUnitID'],
+            'conversion'    => $input['updateConversion'],
+        ];
+
+        $validator = \Validator::make($data, [
+            'conversion' => 'numeric'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422 );
+        }
+
+        $unitConversion = $this->unitConversionRepository->update($data, $input['unitsConversionAutoID']);
+
+        return $this->sendResponse($unitConversion->toArray(), 'Unit Conversion updated successfully');
+        dd($data);
 
     }
 }
