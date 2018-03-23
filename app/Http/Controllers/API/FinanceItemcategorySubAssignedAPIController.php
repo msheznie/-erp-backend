@@ -1,0 +1,238 @@
+<?php
+/**
+=============================================
+-- File Name : FinanceItemcategorySubAssignedAPIController.php
+-- Project Name : ERP
+-- Module Name :  Finance Item Category Sub Assigned
+-- Author : Mohamed Fayas
+-- Create date : 14 - March 2018
+-- Description : This file contains the all CRUD for Finance Item Category Sub Assigned
+-- REVISION HISTORY
+-- Date: 14-March 2018 By: Fayas Description: Added new functions named as assignedCompaniesBySubCategory(),getNotAssignedCompanies(),
+ */
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateFinanceItemcategorySubAssignedAPIRequest;
+use App\Http\Requests\API\UpdateFinanceItemcategorySubAssignedAPIRequest;
+use App\Models\FinanceItemCategorySub;
+use App\Models\Company;
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Repositories\FinanceItemcategorySubAssignedRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Class FinanceItemcategorySubAssignedController
+ * @package App\Http\Controllers\API
+ */
+class FinanceItemcategorySubAssignedAPIController extends AppBaseController
+{
+    /** @var  FinanceItemcategorySubAssignedRepository */
+    private $financeItemcategorySubAssignedRepository;
+
+    public function __construct(FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo)
+    {
+        $this->financeItemcategorySubAssignedRepository = $financeItemcategorySubAssignedRepo;
+    }
+
+    /**
+     * Display a listing of the FinanceItemcategorySubAssigned.
+     * GET|HEAD /financeItemcategorySubAssigneds
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function index(Request $request)
+    {
+        $this->financeItemcategorySubAssignedRepository->pushCriteria(new RequestCriteria($request));
+        $this->financeItemcategorySubAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $financeItemcategorySubAssigneds = $this->financeItemcategorySubAssignedRepository->all();
+
+        return $this->sendResponse($financeItemcategorySubAssigneds->toArray(), 'Finance Itemcategory Sub Assigneds retrieved successfully');
+    }
+
+    /**
+     *  Display a listing of the Finance Item category Sub Assigned.
+     * Get /assignedCompaniesBySubCategory
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function assignedCompaniesBySubCategory(Request $request)
+    {
+
+        $financeItemcategorySubAssigneds = FinanceItemcategorySubAssigned::where('itemCategorySubID', $request->get('itemCategorySubID'))
+            ->with(['company'])
+            ->paginate(10);
+        //->get();
+
+        return $this->sendResponse($financeItemcategorySubAssigneds->toArray(), 'Finance Itemcategory Sub Assigneds retrieved successfully');
+    }
+
+
+    /**
+     * Store a newly created FinanceItemcategorySubAssigned in storage.
+     * POST /financeItemcategorySubAssigneds
+     *
+     * @param CreateFinanceItemcategorySubAssignedAPIRequest $request
+     *
+     * @return Response
+     */
+    public function store(CreateFinanceItemcategorySubAssignedAPIRequest $request)
+    {
+
+        $input = $request->all();
+
+        if (array_key_exists('Actions', $input)) {
+            unset($input['Actions']);
+        }
+
+        if (array_key_exists('Index', $input)) {
+            unset($input['Index']);
+        }
+
+        if (array_key_exists('company', $input)) {
+            unset($input['company']);
+        }
+        if (array_key_exists('finance_gl_code_pl', $input)) {
+            unset($input['finance_gl_code_pl']);
+        }
+
+        if (array_key_exists('finance_gl_code_bs', $input)) {
+            unset($input['finance_gl_code_bs']);
+        }
+
+        foreach ($input as $key => $value) {
+            if (is_array($input[$key])) {
+                if (count($input[$key]) > 0) {
+                    $input[$key] = $input[$key][0];
+                } else {
+                    $input[$key] = 0;
+                }
+            }
+        }
+
+        if (array_key_exists('itemCategoryAssignedID', $input)) {
+
+            $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('itemCategoryAssignedID', $input['itemCategoryAssignedID'])->first();
+
+            if (empty($financeItemCategorySubAssigned)) {
+                return $this->sendError('company Assigned not found');
+            }
+            foreach ($input as $key => $value) {
+                $financeItemCategorySubAssigned->$key = $value;
+            }
+            $financeItemCategorySubAssigned->save();
+        } else {
+            $company = Company::where('companySystemID', $input['companySystemID'])->first();
+            $input['companyID'] = $company->CompanyID;
+            $input['mainItemCategoryID'] = $input['itemCategoryID'];
+            $financeItemCategorySubAssigned = $this->financeItemcategorySubAssignedRepository->create($input);
+        }
+
+        return $this->sendResponse($financeItemCategorySubAssigned->toArray(), 'Finance Item Category Sub Assigned saved successfully');
+    }
+
+
+    /**
+     *  Display a listing of the companies not assigned for Finance Item category Sub.
+     * Get /getNotAssignedCompanies
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function getNotAssignedCompanies(Request $request)
+    {
+
+        $itemCategorySubID = $request->get('itemCategorySubID');
+        $companies = DB::table('companymaster AS c')
+            ->where('isGroup', 0)
+           ->whereNotExists( function ($query) use ($itemCategorySubID) {
+                $query
+                    ->select(DB::raw(1))
+                    ->from('financeitemcategorysubassigned AS fc')
+                    ->whereRaw('c.companySystemID = fc.companySystemID')
+                    ->where('fc.itemCategorySubID', '=', $itemCategorySubID);
+            })
+            ->select('c.companySystemID',
+                'c.CompanyID',
+                'c.CompanyName'
+                )
+            ->get();
+
+        return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
+    }
+
+    /**
+     * Display the specified FinanceItemcategorySubAssigned.
+     * GET|HEAD /financeItemcategorySubAssigneds/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function show($id)
+    {
+        /** @var FinanceItemcategorySubAssigned $financeItemcategorySubAssigned */
+        $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->findWithoutFail($id);
+
+        if (empty($financeItemcategorySubAssigned)) {
+            return $this->sendError('Finance Itemcategory Sub Assigned not found');
+        }
+
+        return $this->sendResponse($financeItemcategorySubAssigned->toArray(), 'Finance Itemcategory Sub Assigned retrieved successfully');
+    }
+
+    /**
+     * Update the specified FinanceItemcategorySubAssigned in storage.
+     * PUT/PATCH /financeItemcategorySubAssigneds/{id}
+     *
+     * @param  int $id
+     * @param UpdateFinanceItemcategorySubAssignedAPIRequest $request
+     *
+     * @return Response
+     */
+    public function update($id, UpdateFinanceItemcategorySubAssignedAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var FinanceItemcategorySubAssigned $financeItemcategorySubAssigned */
+        $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->findWithoutFail($id);
+
+        if (empty($financeItemcategorySubAssigned)) {
+            return $this->sendError('Finance Itemcategory Sub Assigned not found');
+        }
+
+        $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->update($input, $id);
+
+        return $this->sendResponse($financeItemcategorySubAssigned->toArray(), 'FinanceItemcategorySubAssigned updated successfully');
+    }
+
+    /**
+     * Remove the specified FinanceItemcategorySubAssigned from storage.
+     * DELETE /financeItemcategorySubAssigneds/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function destroy($id)
+    {
+        /** @var FinanceItemcategorySubAssigned $financeItemcategorySubAssigned */
+        $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->findWithoutFail($id);
+
+        if (empty($financeItemcategorySubAssigned)) {
+            return $this->sendError('Finance Itemcategory Sub Assigned not found');
+        }
+
+        $financeItemcategorySubAssigned->delete();
+
+        return $this->sendResponse($id, 'Finance Itemcategory Sub Assigned deleted successfully');
+    }
+}

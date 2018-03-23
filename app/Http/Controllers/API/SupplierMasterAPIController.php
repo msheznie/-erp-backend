@@ -1,0 +1,327 @@
+<?php
+/**
+=============================================
+-- File Name : SupplierMasterAPIController.php
+-- Project Name : ERP
+-- Module Name :  Supplier Master
+-- Author : Mohamed Fayas
+-- Create date : 14 - March 2018
+-- Description : This file contains the all CRUD for Purchase Order Details(item )
+-- REVISION HISTORY
+-- Date: 14-March 2018 By: Fayas Description: Added new functions named as getSupplierMasterByCompany(),getAssignedCompaniesBySupplier(),
+
+ */
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
+use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
+use App\Models\Company;
+use App\Models\CountryMaster;
+use App\Models\SupplierMaster;
+use App\Models\DocumentMaster;
+use App\Models\ChartOfAccount;
+use App\Repositories\SupplierMasterRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Input;
+use Illuminate\Validation\Rules\In;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+use App\Criteria\FilterSupplierMasterByCompanyCriteria;
+use Illuminate\Support\Facades\DB;
+use App\Repositories\UserRepository;
+use Illuminate\Support\Facades\Auth;
+
+/**
+ * Class SupplierMasterController
+ * @package App\Http\Controllers\API
+ */
+class SupplierMasterAPIController extends AppBaseController
+{
+    /** @var  SupplierMasterRepository */
+    private $supplierMasterRepository;
+    private $userRepository;
+
+    public function __construct(SupplierMasterRepository $supplierMasterRepo, UserRepository $userRepo)
+    {
+        $this->supplierMasterRepository = $supplierMasterRepo;
+        $this->userRepository = $userRepo;
+    }
+
+    /**
+     * Display a listing of the SupplierMaster.
+     * GET|HEAD /supplierMasters
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function index(Request $request)
+    {
+        //$this->supplierMasterRepository->pushCriteria(new FilterSupplierMasterByCompanyCriteria($request));
+
+        //return $this->supplierMasterRepository->getFieldsSearchable();
+
+        $this->supplierMasterRepository->pushCriteria(new RequestCriteria($request));
+
+        $this->supplierMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+
+        $supplierMasters = $this->supplierMasterRepository
+            //->with(['categoryMaster','employee'])
+            ->paginate($request->get('limit'));
+        //->all();
+
+
+        return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');
+    }
+
+    /**
+     * get supplier master by company.
+     * POST /getSupplierMasterByCompany
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function getSupplierMasterByCompany(Request $request)
+    {
+
+        $companyId = $request['companyId'];
+        $supplierMasters = SupplierMaster::
+             //where('primaryCompanySystemID', $companyId)
+             with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
+                $query->where('isDefault', -1)
+                    ->with(['currencyMaster']);
+            }]);
+            //->select();
+
+        /**
+         ['suppliermaster.primarySupplierCode',
+        'suppliermaster.supplierName',
+        'suppliermaster.creditPeriod',
+        //'suppliermaster.categoryDescription',
+        'suppliermaster.primaryCompanyID',
+        'suppliermaster.isActive'
+        ]*/
+
+        return \DataTables::eloquent($supplierMasters)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Index', 'Index', "Index")
+            ->make(true);
+        ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
+    }
+
+    /**
+     * get sub categories by supplier.
+     * POST /getSubcategoriesBySupplier
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function getSubcategoriesBySupplier(Request $request)
+    {
+
+        $supplierId = $request['supplierId'];
+        $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)
+            ->first();
+        if ($supplier) {
+            $suppliersubcategory = DB::table('suppliersubcategoryassign')
+                ->leftJoin('suppliercategorysub', 'suppliersubcategoryassign.supSubCategoryID', '=', 'suppliercategorysub.supCategorySubID')
+                ->where('supplierID', $supplierId)->get();
+        } else {
+            $suppliersubcategory = [];
+        }
+
+        return $this->sendResponse($suppliersubcategory, 'Supplier Category Subs retrieved successfully');
+    }
+
+
+    /**
+     * Store a newly created SupplierMaster in storage.
+     * POST /supplierMasters
+     *
+     * @param CreateSupplierMasterAPIRequest $request
+     *
+     * @return Response
+     */
+    public function store(CreateSupplierMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $empId = $user->employee['empID'];
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = $empId;
+
+        $input['uniqueTextcode'] = 'S';
+
+         if(array_key_exists ('supplierCountryID' , $input )){
+             $input['countryID'] = $input['supplierCountryID'];
+         }
+
+        $company = Company::where('companySystemID',$input['primaryCompanySystemID'])->first();
+
+        $input['primaryCompanyID'] = $company->CompanyID;
+
+
+        $document = DocumentMaster::where('documentID','SUPM')->first();
+
+        $input['documentSystemID'] = $document->documentSystemID;
+        $input['documentID'] = $document->documentID;
+
+        $input['isActive'] = 1;
+        //$input['isCriticalYN'] = 1;
+
+        $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID',$input['liabilityAccountSysemID'])->first();
+        $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID',$input['UnbilledGRVAccountSystemID'])->first();
+
+        $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
+        $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
+
+        $supplierMasters = $this->supplierMasterRepository->create($input);
+
+        $updateSupplierMasters = SupplierMaster::where('supplierCodeSystem',$supplierMasters['supplierCodeSystem'])->first();
+        $updateSupplierMasters->primarySupplierCode = 's0'.strval($supplierMasters->supplierCodeSystem);
+        $updateSupplierMasters->save();
+
+        return $this->sendResponse($supplierMasters->toArray(), 'Supplier Master saved successfully');
+    }
+
+
+    public function updateSupplierMaster(Request $request)
+    {
+
+        $input = $this->convertArrayToValue($request->all());
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $empId;
+        $empName = $user->employee['empName'];
+
+        unset($input['companySystemID']);
+
+        $id = $input['supplierCodeSystem'];
+
+        if(array_key_exists ('supplierCountryID' , $input )){
+            $input['countryID'] = $input['supplierCountryID'];
+        }
+
+        $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID',$input['liabilityAccountSysemID'])->first();
+        $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID',$input['UnbilledGRVAccountSystemID'])->first();
+
+        $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
+        $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
+
+        $supplierMaster = SupplierMaster::where('supplierCodeSystem', $id)->first();
+
+        if (empty($supplierMaster)) {
+            return $this->sendError('Supplier Master not found');
+        }
+
+        if($input['supplierConfirmedYN'] == 1){
+            $input['supplierConfirmedEmpID'] = $empId;
+            $input['supplierConfirmedEmpName'] = $empName;
+            $input['supplierConfirmedDate'] = now();
+        }
+
+         $supplierMaster = $this->supplierMasterRepository->update($input, $id);
+
+        return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
+    }
+
+
+    public function getAssignedCompaniesBySupplier(Request $request)
+    {
+        $supplierId = $request['supplierId'];
+        $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)
+            ->first();
+        if ($supplier) {
+            $supplierCompanies = DB::table('supplierassigned')
+                ->leftJoin('supplierimportance','supplierassigned.supplierImportanceID','=','supplierimportance.supplierImportanceID')
+                ->leftJoin('suppliernature','supplierassigned.supplierNatureID','=','suppliernature.supplierNatureID')
+                ->leftJoin('suppliertype','supplierassigned.supplierTypeID','=','suppliertype.supplierTypeID')
+                ->leftJoin('suppliercritical','supplierassigned.isCriticalYN','=','suppliercritical.suppliercriticalID')
+                ->leftJoin('yesnoselection','supplierassigned.isActive','=','yesnoselection.idyesNoselection')
+                ->where('supplierCodeSytem', $supplierId)
+                ->get();
+        } else {
+            $supplierCompanies = [];
+        }
+
+        return $this->sendResponse($supplierCompanies, 'Supplier Category Subs retrieved successfully');
+    }
+
+    /**
+     * Display the specified SupplierMaster.
+     * GET|HEAD /supplierMasters/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function show($id)
+    {
+        /** @var SupplierMaster $supplierMaster */
+         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
+        //$supplierMaster = SupplierMaster::where("supplierCodeSystem", $id)->first();
+
+        if (empty($supplierMaster)) {
+            return $this->sendError('Supplier Master not found');
+        }
+
+        return $this->sendResponse($supplierMaster->toArray(), 'Supplier Master retrieved successfully');
+    }
+
+    /**
+     * Update the specified SupplierMaster in storage.
+     * PUT/PATCH /supplierMasters/{id}
+     *
+     * @param  int $id
+     * @param UpdateSupplierMasterAPIRequest $request
+     *
+     * @return Response
+     */
+    public function update($id, UpdateSupplierMasterAPIRequest $request)
+    {
+         $input = $request->all();
+
+        /** @var SupplierMaster $supplierMaster */
+        $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
+
+        if (empty($supplierMaster)) {
+            return $this->sendError('Supplier Master not found');
+        }
+
+        $supplierMaster = $this->supplierMasterRepository->update($input, $id);
+
+        return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
+    }
+
+    /**
+     * Remove the specified SupplierMaster from storage.
+     * DELETE /supplierMasters/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function destroy($id)
+    {
+        /** @var SupplierMaster $supplierMaster */
+        $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
+
+        if (empty($supplierMaster)) {
+            return $this->sendError('Supplier Master not found');
+        }
+
+        $supplierMaster->delete();
+
+        return $this->sendResponse($id, 'Supplier Master deleted successfully');
+    }
+
+
+}

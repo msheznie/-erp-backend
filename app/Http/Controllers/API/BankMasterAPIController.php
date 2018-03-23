@@ -1,0 +1,269 @@
+<?php
+/**
+=============================================
+-- File Name : BankMasterController.php
+-- Project Name : ERP
+-- Module Name :  Bank Master
+-- Author : Pasan Madhuranga
+-- Create date : 21 - March 2018
+-- Description : This file contains the all CRUD for Bank Master
+-- REVISION HISTORY
+-- Date: 21 - March 2018 By: Pasan Description: Added a new function named as updateBankMaster()
+-- Date: 21 - March 2018 By: Pasan Description: Added a new function named as assignedCompaniesByBank()
+-- Date: 21 - March 2018 By: Pasan Description: Added a new function named as getBankMasterFormData()
+ */
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateBankMasterAPIRequest;
+use App\Http\Requests\API\UpdateBankMasterAPIRequest;
+use App\Models\BankMaster;
+use App\Models\BankAssign;
+use App\Models\Company;
+use App\Repositories\BankMasterRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+use App\Repositories\UserRepository;
+use Illuminate\Validation\Rule;
+
+/**
+ * Class BankMasterController
+ * @package App\Http\Controllers\API
+ */
+
+class BankMasterAPIController extends AppBaseController
+{
+    /** @var  BankMasterRepository */
+    private $bankMasterRepository;
+    private $userRepository;
+
+    public function __construct(BankMasterRepository $bankMasterRepo, UserRepository $userRepo)
+    {
+        $this->bankMasterRepository = $bankMasterRepo;
+        $this->userRepository = $userRepo;
+    }
+
+    /**
+     * Display a listing of the BankMaster.
+     * GET|HEAD /bankMasters
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function index(Request $request)
+    {
+        $this->bankMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->bankMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $bankMasters = $this->bankMasterRepository->all();
+
+        return $this->sendResponse($bankMasters->toArray(), 'Bank Masters retrieved successfully');
+    }
+
+    /**
+     * Store a newly created BankMaster in storage.
+     * POST /bankMasters
+     *
+     * @param CreateBankMasterAPIRequest $request
+     *
+     * @return Response
+     */
+    public function store(CreateBankMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $messages = array(
+            'bankShortCode.unique'   => 'The Bank Short Code has already been taken'
+        );
+
+        $validator = \Validator::make($input, [
+            'bankShortCode' => 'unique:erp_bankmaster'
+        ],$messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422 );
+        }
+
+        $id = \Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $empId = $user->employee['empID'];
+        $input['createdByEmpID'] = $empId;
+
+        $bankMasters = $this->bankMasterRepository->create($input);
+
+        return $this->sendResponse($bankMasters->toArray(), 'Bank Master saved successfully');
+    }
+
+    /**
+     * Display the specified BankMaster.
+     * GET|HEAD /bankMasters/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function show($id)
+    {
+        /** @var BankMaster $bankMaster */
+        $bankMaster = $this->bankMasterRepository->findWithoutFail($id);
+
+        if (empty($bankMaster)) {
+            return $this->sendError('Bank Master not found');
+        }
+
+        return $this->sendResponse($bankMaster->toArray(), 'Bank Master retrieved successfully');
+    }
+
+    /**
+     * Update the specified BankMaster in storage.
+     * PUT/PATCH /bankMasters/{id}
+     *
+     * @param  int $id
+     * @param UpdateBankMasterAPIRequest $request
+     *
+     * @return Response
+     */
+    public function update($id, UpdateBankMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var BankMaster $bankMaster */
+        $bankMaster = $this->bankMasterRepository->findWithoutFail($id);
+
+        if (empty($bankMaster)) {
+            return $this->sendError('Bank Master not found');
+        }
+
+        $bankMaster = $this->bankMasterRepository->update($input, $id);
+
+        return $this->sendResponse($bankMaster->toArray(), 'BankMaster updated successfully');
+    }
+
+    /**
+     * Remove the specified BankMaster from storage.
+     * DELETE /bankMasters/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function destroy($id)
+    {
+        /** @var BankMaster $bankMaster */
+        $bankMaster = $this->bankMasterRepository->findWithoutFail($id);
+
+        if (empty($bankMaster)) {
+            return $this->sendError('Bank Master not found');
+        }
+
+        $bankMaster->delete();
+
+        return $this->sendResponse($id, 'Bank Master deleted successfully');
+    }
+
+    /**
+     * Get bank master data for list
+     * @param Request $request
+     * @return mixed
+     */
+    public function getAllBankMaster(Request $request)
+    {
+        $input = $request->all();
+
+        $bankMasters = BankMaster::select('*');
+        return \DataTables::eloquent($bankMasters)
+            //->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    /**
+     * Update bank master details by bank id
+     * @param Request $request
+     * @return mixed
+     */
+    public function updateBankMaster(Request $request)
+    {
+        $input = $request->all();
+
+        $messages = array(
+            'bankShortCode.unique'   => 'The Bank Short Code has already been taken'
+        );
+
+        $validator = \Validator::make($input, [
+            'bankShortCode' => Rule::unique('erp_bankmaster')->ignore($input['bankmasterAutoID'], 'bankmasterAutoID')
+        ],$messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422 );
+        }
+
+        $data =array_except($input, ['bankmasterAutoID', 'TimeStamp', 'createdByEmpID', 'createdDateTime']);
+
+        $bankMaster = $this->bankMasterRepository->update($data, $input['bankmasterAutoID']);
+
+        return $this->sendResponse($bankMaster->toArray(), 'Bank master updated successfully');
+    }
+
+    /**
+     * Display all assigned bankAssigned for specific Bank Master.
+     * GET|HEAD /assignedCompaniesByBank
+     *
+     * @param  int itemCodeSystem
+     *
+     * @return Response
+     */
+    public function assignedCompaniesByBank(Request $request)
+    {
+        $bankId = $request['bankmasterAutoID'];
+
+        $itemCompanies = BankAssign::with(['company'])->where('bankmasterAutoID',$bankId)
+            ->select(
+                'erp_bankassigned.bankAssignedAutoID',
+                'erp_bankassigned.bankmasterAutoID',
+                'erp_bankassigned.isDefault',
+                'erp_bankassigned.isAssigned',
+                'erp_bankassigned.isActive',
+                'companymaster.CompanyName',
+                'companymaster.companyID'
+            );
+
+        return \DataTables::eloquent($itemCompanies)
+            //->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+
+        return $this->sendResponse($itemCompanies, 'Companies retrieved successfully');
+
+    }
+
+    /**
+     * Get bank master related dropdown data
+     * @param Request $request
+     * @return mixed
+     */
+    public function getBankMasterFormData(Request $request)
+    {
+        $bankId = $request['bankmasterAutoID'];
+
+        /** Get not assign company list */
+
+        $assignCompanyId = BankAssign::select('companyID')->where('bankmasterAutoID', $bankId)->get();
+        $comanyIdArray = [];
+        foreach($assignCompanyId as $key=>$val)
+        {
+            $comanyIdArray[] = $val->companyID;
+        }
+        $allCompanies = Company::where("isGroup", 0)->whereNotIn('CompanyID', $comanyIdArray)->get();
+
+        $output = array(
+            'allCompanies' => $allCompanies,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
+    }
+}

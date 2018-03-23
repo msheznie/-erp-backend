@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Class ChartOfAccount
+ * @package App\Models
+ * @version February 27, 2018, 9:57 am UTC
+ *
+ * @property integer documentSystemID
+ * @property string documentID
+ * @property string AccountCode
+ * @property string AccountDescription
+ * @property string masterAccount
+ * @property string catogaryBLorPL
+ * @property integer controllAccountYN
+ * @property string controlAccounts
+ * @property integer isApproved
+ * @property string approvedBy
+ * @property string|\Carbon\Carbon approvedDate
+ * @property string approvedComment
+ * @property integer isActive
+ * @property integer isBank
+ * @property integer AllocationID
+ * @property integer relatedPartyYN
+ * @property string interCompanyID
+ * @property string createdPcID
+ * @property string createdUserGroup
+ * @property string createdUserID
+ * @property string|\Carbon\Carbon createdDateTime
+ * @property string modifiedPc
+ * @property string modifiedUser
+ * @property string|\Carbon\Carbon timestamp
+ */
+class ChartOfAccount extends Model
+{
+    //use SoftDeletes;
+
+    public $table = 'chartofaccounts';
+    
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
+    protected $primaryKey  = 'chartOfAccountSystemID';
+
+    protected $dates = ['deleted_at'];
+
+
+    public $fillable = [
+        'documentSystemID',
+        'documentID',
+        'AccountCode',
+        'AccountDescription',
+        'masterAccount',
+        'catogaryBLorPLID',
+        'catogaryBLorPL',
+        'controllAccountYN',
+        'controlAccountsSystemID',
+        'controlAccounts',
+        'isApproved',
+        'approvedBy',
+        'approvedDate',
+        'approvedComment',
+        'isActive',
+        'isBank',
+        'AllocationID',
+        'relatedPartyYN',
+        'interCompanyID',
+        'createdPcID',
+        'createdUserGroup',
+        'createdUserID',
+        'createdDateTime',
+        'modifiedPc',
+        'modifiedUser',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'chartOfAccountSystemID' => 'integer',
+        'documentSystemID' => 'integer',
+        'documentID' => 'string',
+        'AccountCode' => 'string',
+        'AccountDescription' => 'string',
+        'masterAccount' => 'string',
+        'catogaryBLorPLID'=> 'integer',
+        'catogaryBLorPL' => 'string',
+        'controllAccountYN' => 'integer',
+        'controlAccountsSystemID' => 'integer',
+        'controlAccounts' => 'string',
+        'isApproved' => 'integer',
+        'approvedBy' => 'string',
+        'approvedComment' => 'string',
+        'isActive' => 'integer',
+        'isBank' => 'integer',
+        'AllocationID' => 'integer',
+        'relatedPartyYN' => 'integer',
+        'interCompanyID' => 'string',
+        'createdPcID' => 'string',
+        'createdUserGroup' => 'string',
+        'createdUserID' => 'string',
+        'modifiedPc' => 'string',
+        'modifiedUser' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    public function controlAccount(){
+        /** one control account  can have many chart of accounts */
+        return $this->belongsTo('App\Models\ControlAccount', 'controlAccountsSystemID','controlAccountsSystemID');
+    }
+
+    public function accountType(){
+        /** one Account Type can related to many chart of accounts */
+        return $this->belongsTo('App\Models\AccountsType', 'catogaryBLorPLID','accountsType');
+    }
+
+
+    
+}

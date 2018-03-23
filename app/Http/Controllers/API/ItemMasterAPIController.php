@@ -1,0 +1,364 @@
+<?php
+/**
+=============================================
+-- File Name : ItemMasterAPIController.php
+-- Project Name : ERP
+-- Module Name :  Item Master
+-- Author : Mohamed Fayas
+-- Create date : 14 - March 2018
+-- Description : This file contains the all CRUD for Item Master
+-- REVISION HISTORY
+-- Date: 14-March 2018 By: Fayas Description: Added new functions named as getAllItemsMaster(),getItemMasterFormData(),
+updateItemMaster(),getAssignedCompaniesByItem()
+ */
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateItemMasterAPIRequest;
+use App\Http\Requests\API\UpdateItemMasterAPIRequest;
+use App\Models\ItemMaster;
+use App\Models\Company;
+use App\Models\FinanceItemCategoryMaster;
+use App\Models\FinanceItemCategorySub;
+use App\Models\DocumentMaster;
+use App\Models\ItemAssigned;
+use App\Models\Unit;
+use App\Models\YesNoSelection;
+use App\Repositories\ItemMasterRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+use Illuminate\Support\Facades\DB;
+use App\Repositories\UserRepository;
+use Illuminate\Support\Facades\Auth;
+
+/**
+ * Class ItemMasterController
+ * @package App\Http\Controllers\API
+ */
+
+class ItemMasterAPIController extends AppBaseController
+{
+    /** @var  ItemMasterRepository */
+    private $itemMasterRepository;
+    private $userRepository;
+    public function __construct(ItemMasterRepository $itemMasterRepo,UserRepository $userRepo)
+    {
+        $this->itemMasterRepository = $itemMasterRepo;
+        $this->userRepository = $userRepo;
+    }
+
+    /**
+     * Display a listing of the ItemMaster.
+     * GET|HEAD /itemMasters
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function index(Request $request)
+    {
+        $this->itemMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->itemMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $itemMasters = $this->itemMasterRepository->all();
+
+        return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');
+    }
+
+    /**
+     * Display a listing of the ItemMaster.
+     * POST /getAllItemsMaster
+     *
+     * @param Request $request
+     * @return Response
+     */
+
+    public function getAllItemsMaster(Request $request)
+    {
+
+        $input = $request->all();
+         $itemMasters = ItemMaster::with(['unit','financeMainCategory','financeSubCategory']);
+        if(array_key_exists ('financeCategoryMaster' , $input)){
+            if($request['financeCategoryMaster'] > 0){
+                $itemMasters->where('financeCategoryMaster',$input['financeCategoryMaster']);
+            }
+        }
+
+        if(array_key_exists ('financeCategorySub' , $input )){
+
+            if($request['financeCategorySub'] > 0){
+                $itemMasters->where('financeCategorySub',$input['financeCategorySub']);
+            }
+        }
+
+        if(array_key_exists ('isActive' , $input )){
+            if($input['isActive'] == 0 || $input['isActive'] == 1){
+                $itemMasters->where('isActive',$input['isActive']);
+            }
+        }
+        if(array_key_exists ('itemApprovedYN' , $input )){
+            if($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1){
+                $itemMasters->where('itemApprovedYN',$input['itemApprovedYN']);
+            }
+        }
+        if(array_key_exists ('itemConfirmedYN' , $input )){
+            if($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1){
+                $itemMasters->where('itemConfirmedYN',$input['itemConfirmedYN']);
+            }
+        }
+
+
+        return \DataTables::eloquent($itemMasters)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Index', 'Index', "Index")
+            ->make(true);
+        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+    }
+
+    /**
+     * get form data for Item Master.
+     * GET /getItemMasterFormData
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getItemMasterFormData(Request $request)
+    {
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+
+        $masterCompany = Company::where("companySystemID",$selectedCompanyId)->first();
+
+        /** all Companies by Group company  Drop Down */
+        $companiesByGroup = Company::where("masterComapanyID",$masterCompany->CompanyID)
+            ->where("isGroup",0)->get();
+
+
+        /** all Company  Drop Down */
+        $allCompanies = Company::where("isGroup",0)->get();
+
+        /** all FinanceItemCategoryMaster Drop Down */
+        $itemCategory = FinanceItemCategoryMaster::all();
+
+        /** all FinanceItemCategorySub Drop Down */
+        $itemCategorySub = FinanceItemCategorySub::all();
+
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $units = Unit::all();
+
+        $output = array('companiesByGroup' => $companiesByGroup,
+                         'allCompanies' => $allCompanies,
+                         'financeItemCategoryMaster' => $itemCategory,
+                         'financeItemCategorySub' => $itemCategorySub,
+                          'yesNoSelection' => $yesNoSelection,
+                          'units' => $units
+                        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
+    }
+
+    /**
+     * Store a newly created ItemMaster in storage.
+     * POST /itemMasters
+     *
+     * @param CreateItemMasterAPIRequest $request
+     *
+     * @return Response
+     */
+    public function store(CreateItemMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $empId = $user->employee['empID'];
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = $empId;
+
+        $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID',$input['financeCategoryMaster'])->first();
+        $input['createdUserID'] = $financeCategoryMaster->itemCodeDef;
+        $runningSerialOrder = $financeCategoryMaster->lastSerialOrder + 1;
+        $code = $financeCategoryMaster->itemCodeDef;
+        $count = $financeCategoryMaster->numberOfDigits;
+        $primaryCode = $code . str_pad($runningSerialOrder, $count, '0', STR_PAD_LEFT);
+        $input['runningSerialOrder'] =  $runningSerialOrder;
+        $input['primaryCode'] =  $primaryCode;
+        $input['primaryItemCode'] =  $code;
+        $financeCategorySub = FinanceItemCategorySub::where('itemCategorySubID',$input['financeCategorySub'])->first();
+        $company = Company::where('companySystemID',$input['primaryCompanySystemID'])->first();
+        $input['primaryCompanyID'] = $company->CompanyID;
+        $document = DocumentMaster::where('documentID','ITMM')->first();
+        $input['documentSystemID'] = $document->documentSystemID;
+        $input['documentID'] = $document->documentID;
+
+        $itemMasters = $this->itemMasterRepository->create($input);
+
+        $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
+        $financeCategoryMaster->modifiedPc = gethostname();
+        $financeCategoryMaster->modifiedUser = $empId;
+        $financeCategoryMaster->save();
+
+        return $this->sendResponse($itemMasters->toArray(), 'Item Master saved successfully');
+    }
+
+    /**
+     * Update the specified ItemMaster in storage.
+     * PUT/PATCH /updateItemMaster
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function updateItemMaster(Request $request)
+    {
+
+        $input = $request->all();
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $empId;
+        $empName = $user->employee['empName'];
+
+        $id = $input['itemCodeSystem'];
+
+        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
+
+        if (empty($itemMaster)) {
+            return $this->sendError('Item Master not found');
+        }
+        foreach ($input as $key => $value) {
+            if (is_array($input[$key])){
+                if(count($input[$key]) > 0){
+                    $input[$key] = $input[$key][0];
+                }else{
+                    $input[$key] = 0;
+                }
+            }
+        }
+        if($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1){
+
+            //if approved no
+               //is approved  =1
+
+            // else approved yes
+                // call ur function
+
+            $input['itemConfirmedByEMPID'] = $empId;
+            $input['itemConfirmedByEMPName'] = $empName;
+            $input['itemConfirmedDate'] = now();
+        }
+        foreach ($input as $key => $value) {
+            $itemMaster->$key = $value;
+        }
+
+
+        $itemMaster->save();
+
+        // $supplierMaster = $this->supplierMasterRepository->update($input, $id);
+
+        return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully');
+    }
+
+    /**
+     * Display all assigned itemAssigned for specific Item Master.
+     * GET|HEAD /getAssignedCompaniesByItem}
+     *
+     * @param  int itemCodeSystem
+     *
+     * @return Response
+     */
+    public function getAssignedCompaniesByItem(Request $request)
+    {
+
+        $itemId = $request['itemCodeSystem'];
+        $item = ItemMaster::where('itemCodeSystem', '=', $itemId)->first();
+
+        if ($item) {
+            $itemCompanies = ItemAssigned::where('itemCodeSystem',$itemId)->with(['company'])->get();
+        } else {
+            $itemCompanies = [];
+        }
+
+        return $this->sendResponse($itemCompanies, 'Companies retrieved successfully');
+
+    }
+    
+
+
+
+    /**
+     * Display the specified ItemMaster.
+     * GET|HEAD /itemMasters/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function show($id)
+    {
+        /** @var ItemMaster $itemMaster */
+        //$itemMaster = $this->itemMasterRepository->findWithoutFail($id);
+        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
+
+
+        if (empty($itemMaster)) {
+            return $this->sendError('Item Master not found');
+        }
+
+        return $this->sendResponse($itemMaster->toArray(), 'Item Master retrieved successfully');
+    }
+
+    /**
+     * Update the specified ItemMaster in storage.
+     * PUT/PATCH /itemMasters/{id}
+     *
+     * @param  int $id
+     * @param UpdateItemMasterAPIRequest $request
+     *
+     * @return Response
+     */
+    public function update($id, UpdateItemMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var ItemMaster $itemMaster */
+        $itemMaster = $this->itemMasterRepository->findWithoutFail($id);
+
+        if (empty($itemMaster)) {
+            return $this->sendError('Item Master not found');
+        }
+
+        $itemMaster = $this->itemMasterRepository->update($input, $id);
+
+        return $this->sendResponse($itemMaster->toArray(), 'ItemMaster updated successfully');
+    }
+
+    /**
+     * Remove the specified ItemMaster from storage.
+     * DELETE /itemMasters/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function destroy($id)
+    {
+        /** @var ItemMaster $itemMaster */
+        $itemMaster = $this->itemMasterRepository->findWithoutFail($id);
+
+        if (empty($itemMaster)) {
+            return $this->sendError('Item Master not found');
+        }
+
+        $itemMaster->delete();
+
+        return $this->sendResponse($id, 'Item Master deleted successfully');
+    }
+}

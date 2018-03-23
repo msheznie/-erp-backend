@@ -1,0 +1,281 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Class Company
+ * @package App\Models
+ * @version February 16, 2018, 6:23 am UTC
+ *
+ * @property string CompanyID
+ * @property string CompanyName
+ * @property string CompanyNameLocalized
+ * @property string LocalName
+ * @property integer MasterLevel
+ * @property integer CompanyLevel
+ * @property string masterComapanyID
+ * @property string masterComapanyIDReporting
+ * @property string companyShortCode
+ * @property integer orgListOrder
+ * @property integer orgListSordOrder
+ * @property integer sortOrder
+ * @property integer listOrder
+ * @property string CompanyAddress
+ * @property string companyCountry
+ * @property integer CompanyTelephone
+ * @property integer CompanyFax
+ * @property string CompanyEmail
+ * @property string CompanyURL
+ * @property string|\Carbon\Carbon SubscriptionStarted
+ * @property string|\Carbon\Carbon SubscriptionUpTo
+ * @property string ContactPerson
+ * @property integer ContactPersonTelephone
+ * @property integer ContactPersonFax
+ * @property string ContactPersonEmail
+ * @property string registrationNumber
+ * @property string companyLogo
+ * @property integer reportingCurrency
+ * @property integer localCurrencyID
+ * @property string mainFormName
+ * @property string menuInitialImage
+ * @property string menuInitialSelectedImage
+ * @property float policyItemIssueTollerence
+ * @property float policyAddonPercentage
+ * @property integer policyPOAppDayDiff
+ * @property integer policyStockAdjWacCurrentYN
+ * @property integer policyDepreciationRunDate
+ * @property integer isGroup
+ * @property integer isAttachementYN
+ * @property string reportingCriteria
+ * @property string reportingCriteriaFormQuery
+ * @property string supplierReportingCriteria
+ * @property string supplierReportingCriteriaFormQuery
+ * @property string supplierPOSavReportingCriteria
+ * @property string supplierPOSavReportingCriteriaFormQuery
+ * @property string supplierPOSpentReportingCriteriaFormQuery
+ * @property string exchangeGainLossGLCode
+ * @property string exchangeLossGLCode
+ * @property string exchangeGainGLCode
+ * @property string exchangeProvisionGLCode
+ * @property string exchangeProvisionGLCodeAR
+ * @property integer isApprovalByServiceLine
+ * @property integer isApprovalByServiceLineFinance
+ * @property integer isTaxYN
+ * @property integer isActive
+ * @property integer isActiveGroup
+ * @property integer showInCombo
+ * @property integer allowBackDatedGRV
+ * @property integer allowCustomerInvWithoutContractID
+ * @property integer checkMaxQty
+ * @property integer itemCodeMustInPR
+ * @property integer op_OnOpenPopUpYN
+ * @property integer showInNewRILRQHSE
+ * @property string createdUserGroup
+ * @property string createdPcID
+ * @property string createdUserID
+ * @property string modifiedPc
+ * @property string modifiedUser
+ * @property string|\Carbon\Carbon createdDateTime
+ * @property string|\Carbon\Carbon timeStamp
+ */
+class Company extends Model
+{
+    //use SoftDeletes;
+
+    public $table = 'companymaster';
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
+
+    protected $dates = ['deleted_at'];
+
+
+    public $fillable = [
+        'CompanyID',
+        'CompanyName',
+        'CompanyNameLocalized',
+        'LocalName',
+        'MasterLevel',
+        'CompanyLevel',
+        'masterComapanyID',
+        'masterComapanyIDReporting',
+        'companyShortCode',
+        'orgListOrder',
+        'orgListSordOrder',
+        'sortOrder',
+        'listOrder',
+        'CompanyAddress',
+        'companyCountry',
+        'CompanyTelephone',
+        'CompanyFax',
+        'CompanyEmail',
+        'CompanyURL',
+        'SubscriptionStarted',
+        'SubscriptionUpTo',
+        'ContactPerson',
+        'ContactPersonTelephone',
+        'ContactPersonFax',
+        'ContactPersonEmail',
+        'registrationNumber',
+        'companyLogo',
+        'reportingCurrency',
+        'localCurrencyID',
+        'mainFormName',
+        'menuInitialImage',
+        'menuInitialSelectedImage',
+        'policyItemIssueTollerence',
+        'policyAddonPercentage',
+        'policyPOAppDayDiff',
+        'policyStockAdjWacCurrentYN',
+        'policyDepreciationRunDate',
+        'isGroup',
+        'isAttachementYN',
+        'reportingCriteria',
+        'reportingCriteriaFormQuery',
+        'supplierReportingCriteria',
+        'supplierReportingCriteriaFormQuery',
+        'supplierPOSavReportingCriteria',
+        'supplierPOSavReportingCriteriaFormQuery',
+        'supplierPOSpentReportingCriteriaFormQuery',
+        'exchangeGainLossGLCode',
+        'exchangeLossGLCode',
+        'exchangeGainGLCode',
+        'exchangeProvisionGLCode',
+        'exchangeProvisionGLCodeAR',
+        'isApprovalByServiceLine',
+        'isApprovalByServiceLineFinance',
+        'isTaxYN',
+        'isActive',
+        'isActiveGroup',
+        'showInCombo',
+        'allowBackDatedGRV',
+        'allowCustomerInvWithoutContractID',
+        'checkMaxQty',
+        'itemCodeMustInPR',
+        'op_OnOpenPopUpYN',
+        'showInNewRILRQHSE',
+        'createdUserGroup',
+        'createdPcID',
+        'createdUserID',
+        'modifiedPc',
+        'modifiedUser',
+        'createdDateTime',
+        'timeStamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'companySystemID' => 'integer',
+        'CompanyID' => 'string',
+        'CompanyName' => 'string',
+        'CompanyNameLocalized' => 'string',
+        'LocalName' => 'string',
+        'MasterLevel' => 'integer',
+        'CompanyLevel' => 'integer',
+        'masterComapanyID' => 'string',
+        'masterComapanyIDReporting' => 'string',
+        'companyShortCode' => 'string',
+        'orgListOrder' => 'integer',
+        'orgListSordOrder' => 'integer',
+        'sortOrder' => 'integer',
+        'listOrder' => 'integer',
+        'CompanyAddress' => 'string',
+        'companyCountry' => 'string',
+        'CompanyTelephone' => 'integer',
+        'CompanyFax' => 'integer',
+        'CompanyEmail' => 'string',
+        'CompanyURL' => 'string',
+        'ContactPerson' => 'string',
+        'ContactPersonTelephone' => 'integer',
+        'ContactPersonFax' => 'integer',
+        'ContactPersonEmail' => 'string',
+        'registrationNumber' => 'string',
+        'companyLogo' => 'string',
+        'reportingCurrency' => 'integer',
+        'localCurrencyID' => 'integer',
+        'mainFormName' => 'string',
+        'menuInitialImage' => 'string',
+        'menuInitialSelectedImage' => 'string',
+        'policyItemIssueTollerence' => 'float',
+        'policyAddonPercentage' => 'float',
+        'policyPOAppDayDiff' => 'integer',
+        'policyStockAdjWacCurrentYN' => 'integer',
+        'policyDepreciationRunDate' => 'integer',
+        'isGroup' => 'integer',
+        'isAttachementYN' => 'integer',
+        'reportingCriteria' => 'string',
+        'reportingCriteriaFormQuery' => 'string',
+        'supplierReportingCriteria' => 'string',
+        'supplierReportingCriteriaFormQuery' => 'string',
+        'supplierPOSavReportingCriteria' => 'string',
+        'supplierPOSavReportingCriteriaFormQuery' => 'string',
+        'supplierPOSpentReportingCriteriaFormQuery' => 'string',
+        'exchangeGainLossGLCode' => 'string',
+        'exchangeLossGLCode' => 'string',
+        'exchangeGainGLCode' => 'string',
+        'exchangeProvisionGLCode' => 'string',
+        'exchangeProvisionGLCodeAR' => 'string',
+        'isApprovalByServiceLine' => 'integer',
+        'isApprovalByServiceLineFinance' => 'integer',
+        'isTaxYN' => 'integer',
+        'isActive' => 'integer',
+        'isActiveGroup' => 'integer',
+        'showInCombo' => 'integer',
+        'allowBackDatedGRV' => 'integer',
+        'allowCustomerInvWithoutContractID' => 'integer',
+        'checkMaxQty' => 'integer',
+        'itemCodeMustInPR' => 'integer',
+        'op_OnOpenPopUpYN' => 'integer',
+        'showInNewRILRQHSE' => 'integer',
+        'createdUserGroup' => 'string',
+        'createdPcID' => 'string',
+        'createdUserID' => 'string',
+        'modifiedPc' => 'string',
+        'modifiedUser' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    public function employees(){
+        return $this->belongsToMany('App\Models\Employee', 'employeesdepartments','CompanyID','companyId');
+    }
+    public function subCategory(){
+        return $this->hasMany('App\Models\FinanceItemCategorySub', 'financeitemcategorysubassigned', 'companySystemID','companySystemID');
+    }
+
+    public function scopeOfSubCategory($query, $type)
+    {
+        return $query->where('type', $type);
+    }
+
+    public function customerAssigned()
+    {
+        return $this->hasMany('App\Models\CustomerAssigned', 'companySystemID','companySystemID');
+    }
+
+    public function child()
+    {
+        return $this->hasMany(Company::class,'masterCompanySystemIDReorting','companySystemID');
+    }
+
+
+
+    public function bank(){
+        return $this->belongsToMany('App\Models\BankMaster', 'erp_bankassigned','CompanyID','companyID');
+    }
+}

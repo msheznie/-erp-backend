@@ -1,0 +1,98 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Class NavigationUserGroupSetup
+ * @package App\Models
+ * @version February 13, 2018, 9:01 am UTC
+ *
+ * @property integer userGroupID
+ * @property string companyID
+ * @property integer navigationMenuID
+ * @property string description
+ * @property integer masterID
+ * @property string url
+ * @property string pageID
+ * @property string pageTitle
+ * @property string pageIcon
+ * @property integer levelNo
+ * @property integer sortOrder
+ * @property integer isSubExist
+ * @property string|\Carbon\Carbon timestamp
+ */
+class NavigationUserGroupSetup extends Model
+{
+    //use SoftDeletes;
+
+    public $table = 'srp_erp_navigationusergroupsetup';
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
+
+    protected $dates = ['deleted_at'];
+
+
+    public $fillable = [
+        'userGroupID',
+        'companyID',
+        'navigationMenuID',
+        'description',
+        'masterID',
+        'url',
+        'pageID',
+        'pageTitle',
+        'pageIcon',
+        'levelNo',
+        'sortOrder',
+        'isSubExist',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'UserGroupSetupID' => 'integer',
+        'userGroupID' => 'integer',
+        'companyID' => 'string',
+        'navigationMenuID' => 'integer',
+        'description' => 'string',
+        'masterID' => 'integer',
+        'url' => 'string',
+        'pageID' => 'string',
+        'pageTitle' => 'string',
+        'pageIcon' => 'string',
+        'levelNo' => 'integer',
+        'sortOrder' => 'integer',
+        'isSubExist' => 'integer'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    public function parent()
+    {
+        return $this->belongsTo('App\NavigationUserGroupSetup','UserGroupSetupID');
+    }
+
+    public function child()
+    {
+        return $this->hasMany(NavigationUserGroupSetup::class,'masterID','navigationMenuID');
+    }
+
+
+
+}

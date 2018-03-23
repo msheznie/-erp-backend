@@ -1,0 +1,238 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Class Employee
+ * @package App\Models
+ * @version February 13, 2018, 8:41 am UTC
+ *
+ * @property string empID
+ * @property integer serial
+ * @property string empLeadingText
+ * @property string empPassword
+ * @property string empUserName
+ * @property string empTitle
+ * @property string empInitial
+ * @property string empName
+ * @property string empName_O
+ * @property string empFullName
+ * @property string empSurname
+ * @property string empSurname_O
+ * @property string empFirstName
+ * @property string empFirstName_O
+ * @property string empFamilyName
+ * @property string empFamilyName_O
+ * @property string empFatherName
+ * @property string empFatherName_O
+ * @property string empManagerAttached
+ * @property date empDateRegistered
+ * @property string empTelOffice
+ * @property string empTelMobile
+ * @property string empLandLineNo
+ * @property integer extNo
+ * @property string empFax
+ * @property string empEmail
+ * @property integer empLocation
+ * @property string|\Carbon\Carbon empDateTerminated
+ * @property integer empLoginActive
+ * @property integer empActive
+ * @property integer userGroupID
+ * @property string empCompanyID
+ * @property integer religion
+ * @property integer isLoggedIn
+ * @property integer isLoggedOutFailYN
+ * @property integer logingFlag
+ * @property integer isSuperAdmin
+ * @property integer discharegedYN
+ * @property string hrusergroupID
+ * @property integer isConsultant
+ * @property integer isTrainee
+ * @property integer is3rdParty
+ * @property string 3rdPartyCompanyName
+ * @property integer gender
+ * @property integer designation
+ * @property string nationality
+ * @property integer isManager
+ * @property integer isApproval
+ * @property integer isDashBoard
+ * @property integer isAdmin
+ * @property integer isBasicUser
+ * @property string ActivationCode
+ * @property integer ActivationFlag
+ * @property integer isHR_admin
+ * @property integer isLock
+ * @property integer opRptManagerAccess
+ * @property integer isSupportAdmin
+ * @property integer isHSEadmin
+ * @property integer excludeObjectivesYN
+ * @property integer machineID
+ * @property string|\Carbon\Carbon timestamp
+ */
+class Employee extends Model
+{
+    //use SoftDeletes;
+
+    public $table = 'employees';
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
+
+    protected $dates = ['deleted_at'];
+
+
+    public $fillable = [
+        'empID',
+        'serial',
+        'empLeadingText',
+        'empPassword',
+        'empUserName',
+        'empTitle',
+        'empInitial',
+        'empName',
+        'empName_O',
+        'empFullName',
+        'empSurname',
+        'empSurname_O',
+        'empFirstName',
+        'empFirstName_O',
+        'empFamilyName',
+        'empFamilyName_O',
+        'empFatherName',
+        'empFatherName_O',
+        'empManagerAttached',
+        'empDateRegistered',
+        'empTelOffice',
+        'empTelMobile',
+        'empLandLineNo',
+        'extNo',
+        'empFax',
+        'empEmail',
+        'empLocation',
+        'empDateTerminated',
+        'empLoginActive',
+        'empActive',
+        'userGroupID',
+        'empCompanyID',
+        'religion',
+        'isLoggedIn',
+        'isLoggedOutFailYN',
+        'logingFlag',
+        'isSuperAdmin',
+        'discharegedYN',
+        'hrusergroupID',
+        'isConsultant',
+        'isTrainee',
+        'is3rdParty',
+        '3rdPartyCompanyName',
+        'gender',
+        'designation',
+        'nationality',
+        'isManager',
+        'isApproval',
+        'isDashBoard',
+        'isAdmin',
+        'isBasicUser',
+        'ActivationCode',
+        'ActivationFlag',
+        'isHR_admin',
+        'isLock',
+        'opRptManagerAccess',
+        'isSupportAdmin',
+        'isHSEadmin',
+        'excludeObjectivesYN',
+        'machineID',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'employeeSystemID' => 'integer',
+        'empID' => 'string',
+        'serial' => 'integer',
+        'empLeadingText' => 'string',
+        'empPassword' => 'string',
+        'empUserName' => 'string',
+        'empTitle' => 'string',
+        'empInitial' => 'string',
+        'empName' => 'string',
+        'empName_O' => 'string',
+        'empFullName' => 'string',
+        'empSurname' => 'string',
+        'empSurname_O' => 'string',
+        'empFirstName' => 'string',
+        'empFirstName_O' => 'string',
+        'empFamilyName' => 'string',
+        'empFamilyName_O' => 'string',
+        'empFatherName' => 'string',
+        'empFatherName_O' => 'string',
+        'empManagerAttached' => 'string',
+        'empDateRegistered' => 'date',
+        'empTelOffice' => 'string',
+        'empTelMobile' => 'string',
+        'empLandLineNo' => 'string',
+        'extNo' => 'integer',
+        'empFax' => 'string',
+        'empEmail' => 'string',
+        'empLocation' => 'integer',
+        'empLoginActive' => 'integer',
+        'empActive' => 'integer',
+        'userGroupID' => 'integer',
+        'empCompanyID' => 'string',
+        'religion' => 'integer',
+        'isLoggedIn' => 'integer',
+        'isLoggedOutFailYN' => 'integer',
+        'logingFlag' => 'integer',
+        'isSuperAdmin' => 'integer',
+        'discharegedYN' => 'integer',
+        'hrusergroupID' => 'string',
+        'isConsultant' => 'integer',
+        'isTrainee' => 'integer',
+        'is3rdParty' => 'integer',
+        '3rdPartyCompanyName' => 'string',
+        'gender' => 'integer',
+        'designation' => 'integer',
+        'nationality' => 'string',
+        'isManager' => 'integer',
+        'isApproval' => 'integer',
+        'isDashBoard' => 'integer',
+        'isAdmin' => 'integer',
+        'isBasicUser' => 'integer',
+        'ActivationCode' => 'string',
+        'ActivationFlag' => 'integer',
+        'isHR_admin' => 'integer',
+        'isLock' => 'integer',
+        'opRptManagerAccess' => 'integer',
+        'isSupportAdmin' => 'integer',
+        'isHSEadmin' => 'integer',
+        'excludeObjectivesYN' => 'integer',
+        'machineID' => 'integer'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo('App\Models\User');
+    }
+
+    public function companies(){
+        return $this->belongsToMany('App\Models\Company', 'employeesdepartments','CompanyID','employeeID');
+    }
+    
+}

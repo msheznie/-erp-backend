@@ -1,0 +1,154 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Class SupplierAssigned
+ * @package App\Models
+ * @version March 2, 2018, 12:33 pm UTC
+ *
+ * @property integer supplierCodeSytem
+ * @property integer companySystemID
+ * @property string companyID
+ * @property string uniqueTextcode
+ * @property string primarySupplierCode
+ * @property string secondarySupplierCode
+ * @property string supplierName
+ * @property integer liabilityAccountSysemID
+ * @property string liabilityAccount
+ * @property integer UnbilledGRVAccountSystemID
+ * @property string UnbilledGRVAccount
+ * @property string address
+ * @property integer countryID
+ * @property string supplierCountryID
+ * @property string telephone
+ * @property string fax
+ * @property string supEmail
+ * @property string webAddress
+ * @property integer currency
+ * @property string nameOnPaymentCheque
+ * @property float creditLimit
+ * @property float creditPeriod
+ * @property integer supCategoryMasterID
+ * @property integer supCategorySubID
+ * @property string registrationNumber
+ * @property string registrationExprity
+ * @property integer supplierImportanceID
+ * @property integer supplierNatureID
+ * @property integer supplierTypeID
+ * @property integer WHTApplicable
+ * @property integer isRelatedPartyYN
+ * @property integer isCriticalYN
+ * @property integer isActive
+ * @property integer isAssigned
+ * @property string|\Carbon\Carbon timestamp
+ */
+class SupplierAssigned extends Model
+{
+    //use SoftDeletes;
+
+    public $table = 'supplierassigned';
+    
+    const CREATED_AT = 'timestamp';
+    const UPDATED_AT = 'timestamp';
+    protected $primaryKey  = 'supplierAssignedID';
+
+
+    protected $dates = ['deleted_at'];
+
+
+    public $fillable = [
+        'supplierCodeSytem',
+        'companySystemID',
+        'companyID',
+        'uniqueTextcode',
+        'primarySupplierCode',
+        'secondarySupplierCode',
+        'supplierName',
+        'liabilityAccountSysemID',
+        'liabilityAccount',
+        'UnbilledGRVAccountSystemID',
+        'UnbilledGRVAccount',
+        'address',
+        'countryID',
+        'supplierCountryID',
+        'telephone',
+        'fax',
+        'supEmail',
+        'webAddress',
+        'currency',
+        'nameOnPaymentCheque',
+        'creditLimit',
+        'creditPeriod',
+        'supCategoryMasterID',
+        'supCategorySubID',
+        'registrationNumber',
+        'registrationExprity',
+        'supplierImportanceID',
+        'supplierNatureID',
+        'supplierTypeID',
+        'WHTApplicable',
+        'isRelatedPartyYN',
+        'isCriticalYN',
+        'isActive',
+        'isAssigned',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'supplierAssignedID' => 'integer',
+        'supplierCodeSytem' => 'integer',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
+        'uniqueTextcode' => 'string',
+        'primarySupplierCode' => 'string',
+        'secondarySupplierCode' => 'string',
+        'supplierName' => 'string',
+        'liabilityAccountSysemID' => 'integer',
+        'liabilityAccount' => 'string',
+        'UnbilledGRVAccountSystemID' => 'integer',
+        'UnbilledGRVAccount' => 'string',
+        'address' => 'string',
+        'countryID' => 'integer',
+        'supplierCountryID' => 'string',
+        'telephone' => 'string',
+        'fax' => 'string',
+        'supEmail' => 'string',
+        'webAddress' => 'string',
+        'currency' => 'integer',
+        'nameOnPaymentCheque' => 'string',
+        'creditLimit' => 'float',
+        'creditPeriod' => 'float',
+        'supCategoryMasterID' => 'integer',
+        'supCategorySubID' => 'integer',
+        'registrationNumber' => 'string',
+        'registrationExprity' => 'string',
+        'supplierImportanceID' => 'integer',
+        'supplierNatureID' => 'integer',
+        'supplierTypeID' => 'integer',
+        'WHTApplicable' => 'integer',
+        'isRelatedPartyYN' => 'integer',
+        'isCriticalYN' => 'integer',
+        'isActive' => 'integer',
+        'isAssigned' => 'integer'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}

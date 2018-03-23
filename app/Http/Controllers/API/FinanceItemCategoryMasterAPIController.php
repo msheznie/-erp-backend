@@ -1,0 +1,206 @@
+<?php
+/**
+=============================================
+-- File Name : FinanceItemCategoryMasterAPIController.php
+-- Project Name : ERP
+-- Module Name :  Finance Item Category Master
+-- Author : Mohamed Fayas
+-- Create date : 14 - March 2018
+-- Description : This file contains the all CRUD for Finance Item Category Master
+-- REVISION HISTORY
+-- Date: 14-March 2018 By: Fayas Description: Added new functions named as allItemFinanceCategories(),allItemFinanceSubCategoriesByMainCategory(),
+getSubCategoryFormData(),
+ */
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateFinanceItemCategoryMasterAPIRequest;
+use App\Http\Requests\API\UpdateFinanceItemCategoryMasterAPIRequest;
+use App\Models\ChartOfAccount;
+use App\Models\YesNoSelection;
+use App\Models\FinanceItemCategoryMaster;
+use App\Models\FinanceItemCategorySub;
+use App\Repositories\FinanceItemCategoryMasterRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class FinanceItemCategoryMasterController
+ * @package App\Http\Controllers\API
+ */
+
+class FinanceItemCategoryMasterAPIController extends AppBaseController
+{
+    /** @var  FinanceItemCategoryMasterRepository */
+    private $financeItemCategoryMasterRepository;
+
+    public function __construct(FinanceItemCategoryMasterRepository $financeItemCategoryMasterRepo)
+    {
+        $this->financeItemCategoryMasterRepository = $financeItemCategoryMasterRepo;
+    }
+
+    /**
+     * Display a listing of the FinanceItemCategoryMaster.
+     * GET|HEAD /financeItemCategoryMasters
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function index(Request $request)
+    {
+        $this->financeItemCategoryMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->financeItemCategoryMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $financeItemCategoryMasters = $this->financeItemCategoryMasterRepository->all();
+
+        return $this->sendResponse($financeItemCategoryMasters->toArray(), 'Finance Item Category Masters retrieved successfully');
+    }
+
+    /**
+     * Display a listing of the FinanceItemCategoryMaster.
+     * POST /allItemFinanceCategories
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function allItemFinanceCategories(Request $request){
+
+        $financeItemCategoryMasters = FinanceItemCategoryMaster::select('financeitemcategorymaster.*');
+
+        return \DataTables::eloquent($financeItemCategoryMasters)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    /**
+     * Display a listing of the Finance Item Category Sub by Category Master .
+     * GET /allItemFinanceSubCategoriesByMainCategory
+     *
+     * @param Request $request
+     * @return Response
+     */
+
+    public function allItemFinanceSubCategoriesByMainCategory(Request $request){
+
+        $financeItemCategorySub = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
+                                                         ->with(['finance_gl_code_bs','finance_gl_code_pl'])
+                                                         ->select('financeitemcategorysub.*');
+
+        return \DataTables::eloquent($financeItemCategorySub)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    /**
+     * get form data for sub  category .
+     * GET /getSubCategoryFormData
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getSubCategoryFormData(Request $request){
+
+        /** all main categories*/
+        $mainCategories = FinanceItemCategoryMaster::all();
+
+        /** all chart of Account */
+        $chartOfAccount = ChartOfAccount::all();
+
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        $output = array('mainCategories' => $mainCategories,
+            'chartOfAccount' => $chartOfAccount,
+            'yesNoSelection' => $yesNoSelection,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    /**
+     * Store a newly created FinanceItemCategoryMaster in storage.
+     * POST /financeItemCategoryMasters
+     *
+     * @param CreateFinanceItemCategoryMasterAPIRequest $request
+     *
+     * @return Response
+     */
+    public function store(CreateFinanceItemCategoryMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $financeItemCategoryMasters = $this->financeItemCategoryMasterRepository->create($input);
+
+        return $this->sendResponse($financeItemCategoryMasters->toArray(), 'Finance Item Category Master saved successfully');
+    }
+
+    /**
+     * Display the specified FinanceItemCategoryMaster.
+     * GET|HEAD /financeItemCategoryMasters/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function show($id)
+    {
+        /** @var FinanceItemCategoryMaster $financeItemCategoryMaster */
+        $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->findWithoutFail($id);
+
+        if (empty($financeItemCategoryMaster)) {
+            return $this->sendError('Finance Item Category Master not found');
+        }
+
+        return $this->sendResponse($financeItemCategoryMaster->toArray(), 'Finance Item Category Master retrieved successfully');
+    }
+
+    /**
+     * Update the specified FinanceItemCategoryMaster in storage.
+     * PUT/PATCH /financeItemCategoryMasters/{id}
+     *
+     * @param  int $id
+     * @param UpdateFinanceItemCategoryMasterAPIRequest $request
+     *
+     * @return Response
+     */
+    public function update($id, UpdateFinanceItemCategoryMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var FinanceItemCategoryMaster $financeItemCategoryMaster */
+        $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->findWithoutFail($id);
+
+        if (empty($financeItemCategoryMaster)) {
+            return $this->sendError('Finance Item Category Master not found');
+        }
+
+        $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->update($input, $id);
+
+        return $this->sendResponse($financeItemCategoryMaster->toArray(), 'FinanceItemCategoryMaster updated successfully');
+    }
+
+    /**
+     * Remove the specified FinanceItemCategoryMaster from storage.
+     * DELETE /financeItemCategoryMasters/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function destroy($id)
+    {
+        /** @var FinanceItemCategoryMaster $financeItemCategoryMaster */
+        $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->findWithoutFail($id);
+
+        if (empty($financeItemCategoryMaster)) {
+            return $this->sendError('Finance Item Category Master not found');
+        }
+
+        $financeItemCategoryMaster->delete();
+
+        return $this->sendResponse($id, 'Finance Item Category Master deleted successfully');
+    }
+}

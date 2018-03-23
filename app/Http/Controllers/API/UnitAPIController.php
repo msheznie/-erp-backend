@@ -1,0 +1,256 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateUnitAPIRequest;
+use App\Http\Requests\API\UpdateUnitAPIRequest;
+use App\Models\Unit;
+use App\Models\UnitConversion;
+use App\Repositories\UnitRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+use App\Repositories\UserRepository;
+use Illuminate\Validation\Rule;
+
+/**
+ * Class UnitController
+ * @package App\Http\Controllers\API
+ */
+
+class UnitAPIController extends AppBaseController
+{
+    /** @var  UnitRepository */
+    private $unitRepository;
+
+    public function __construct(UnitRepository $unitRepo, UserRepository $userRepo)
+    {
+        $this->unitRepository = $unitRepo;
+        $this->userRepository = $userRepo;
+    }
+
+    /**
+     * Display a listing of the Unit.
+     * GET|HEAD /units
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function index(Request $request)
+    {
+        $this->unitRepository->pushCriteria(new RequestCriteria($request));
+        $this->unitRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $units = $this->unitRepository->all();
+
+        return $this->sendResponse($units->toArray(), 'Units retrieved successfully');
+    }
+
+    /**
+     * Store a newly created Unit in storage.
+     * POST /units
+     *
+     * @param CreateUnitAPIRequest $request
+     *
+     * @return Response
+     */
+    public function store(CreateUnitAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $messages = array(
+            'UnitShortCode.unique'   => 'The Unit Short Code has already been taken'
+        );
+
+        $validator = \Validator::make($input, [
+            'UnitShortCode' => 'unique:units'
+        ],$messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422 );
+        }
+
+        $id = \Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $empId = $user->employee['empID'];
+        $input['createdUserID'] = $empId;
+
+        $units = $this->unitRepository->create($input);
+
+        return $this->sendResponse($units->toArray(), 'Unit saved successfully');
+    }
+
+    /**
+     * Display the specified Unit.
+     * GET|HEAD /units/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function show($id)
+    {
+        /** @var Unit $unit */
+        $unit = $this->unitRepository->findWithoutFail($id);
+
+        if (empty($unit)) {
+            return $this->sendError('Unit not found');
+        }
+
+        return $this->sendResponse($unit->toArray(), 'Unit retrieved successfully');
+    }
+
+    /**
+     * Update the specified Unit in storage.
+     * PUT/PATCH /units/{id}
+     *
+     * @param  int $id
+     * @param UpdateUnitAPIRequest $request
+     *
+     * @return Response
+     */
+    public function update($id, UpdateUnitAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var Unit $unit */
+        $unit = $this->unitRepository->findWithoutFail($id);
+
+        if (empty($unit)) {
+            return $this->sendError('Unit not found');
+        }
+
+        $unit = $this->unitRepository->update($input, $id);
+
+        return $this->sendResponse($unit->toArray(), 'Unit updated successfully');
+    }
+
+    /**
+     * Remove the specified Unit from storage.
+     * DELETE /units/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function destroy($id)
+    {
+        /** @var Unit $unit */
+        $unit = $this->unitRepository->findWithoutFail($id);
+
+        if (empty($unit)) {
+            return $this->sendError('Unit not found');
+        }
+
+        $unit->delete();
+
+        return $this->sendResponse($id, 'Unit deleted successfully');
+    }
+
+    /**
+     * Get unit master data for list
+     * @param Request $request
+     * @return mixed
+     */
+    public function getAllUnitMaster(Request $request)
+    {
+        $input = $request->all();
+
+        $unitMasters = Unit::select('UnitID', 'UnitShortCode', 'UnitDes');
+        return \DataTables::eloquent($unitMasters)
+            //->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    /**
+     * Update unit master details by unit id
+     * @param Request $request
+     * @return mixed
+     */
+    public function updateUnitMaster(Request $request)
+    {
+        $input = $request->all();
+
+        $messages = array(
+            'UnitShortCode.unique'   => 'The Unit Short Code has already been taken'
+        );
+
+        $validator = \Validator::make($input, [
+            'UnitShortCode' => Rule::unique('units')->ignore($input['UnitID'], 'UnitID')
+        ],$messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422 );
+        }
+
+        $id = \Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+        $input['modifiedUser'] = $empId;
+        $data =array_except($input, ['UnitID', 'timeStamp', 'createdDateTime']);
+
+        $unitMaster = $this->unitRepository->update($data, $input['UnitID']);
+
+        return $this->sendResponse($unitMaster->toArray(), 'Unit master updated successfully');
+    }
+
+    /**
+     * Get unit master related dropdown data
+     * @param Request $request
+     * @return mixed
+     */
+    public function getUnitMasterFormData(Request $request)
+    {
+        $unitId = $request['UnitID'];
+
+        $unitData = $this->getUnitConversionsByUnitId($unitId);
+
+        $unitMaster = Unit::select('UnitID', 'UnitShortCode', 'UnitDes')
+            ->whereNotIn('UnitID', $unitData['unitIdArray'])
+            ->get();
+
+        $output = array(
+            'allUnits' => $unitMaster,
+            'unitConversion' => $unitData['dataArray'],
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
+    }
+
+    /**
+     * Get all conversions for a given master unit
+     * @param $unitId
+     * @return array
+     */
+    private function getUnitConversionsByUnitId($unitId)
+    {
+        $subUnitConversion = UnitConversion::select('unitsConversionAutoID', 'subUnitID','conversion')
+                                ->where('masterUnitID',$unitId )
+                                ->get();
+        $unitIdArray = [];
+        $dataArray = [];
+        foreach($subUnitConversion as $key=>$val)
+        {
+            $unitData = Unit::select('UnitID', 'UnitShortCode', 'UnitDes')
+                            ->where('UnitID', $val->subUnitID)
+                            ->first();
+
+            $val->UnitID        = $unitData->UnitID;
+            $val->UnitShortCode = $unitData->UnitShortCode;
+            $val->UnitDes       = $unitData->UnitDes;
+            $dataArray[]        = $val;
+            $unitIdArray[]      = $unitData->UnitID;
+        }
+
+        $returnData = [
+            'dataArray'     => $dataArray,
+            'unitIdArray'   => $unitIdArray
+        ];
+
+        return $returnData;
+    }
+}

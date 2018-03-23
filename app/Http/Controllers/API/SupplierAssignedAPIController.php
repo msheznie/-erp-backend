@@ -1,0 +1,210 @@
+<?php
+/**
+=============================================
+-- File Name : SupplierAssignedAPIController.php
+-- Project Name : ERP
+-- Module Name :  Supplier Assigned
+-- Author : Mohamed Fayas
+-- Create date : 14 - March 2018
+-- Description : This file contains the all CRUD for Supplier Assigned
+-- REVISION HISTORY
+ */
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateSupplierAssignedAPIRequest;
+use App\Http\Requests\API\UpdateSupplierAssignedAPIRequest;
+use App\Models\SupplierAssigned;
+use App\Models\SupplierMaster;
+use App\Models\Company;
+use App\Models\ChartOfAccount;
+use App\Repositories\SupplierAssignedRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class SupplierAssignedController
+ * @package App\Http\Controllers\API
+ */
+
+class SupplierAssignedAPIController extends AppBaseController
+{
+    /** @var  SupplierAssignedRepository */
+    private $supplierAssignedRepository;
+
+    public function __construct(SupplierAssignedRepository $supplierAssignedRepo)
+    {
+        $this->supplierAssignedRepository = $supplierAssignedRepo;
+    }
+
+    /**
+     * Display a listing of the SupplierAssigned.
+     * GET|HEAD /supplierAssigneds
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function index(Request $request)
+    {
+        $this->supplierAssignedRepository->pushCriteria(new RequestCriteria($request));
+        $this->supplierAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $supplierAssigneds = $this->supplierAssignedRepository->all();
+
+        return $this->sendResponse($supplierAssigneds->toArray(), 'Supplier Assigneds retrieved successfully');
+    }
+
+    /**
+     * Store a newly created SupplierAssigned in storage.
+     * POST /supplierAssigneds
+     *
+     * @param CreateSupplierAssignedAPIRequest $request
+     *
+     * @return Response
+     */
+    public function store(CreateSupplierAssignedAPIRequest $request)
+    {
+        $input = $request->all();
+
+        unset( $input['primaryCompanySystemID']);
+        unset( $input['importanceDescription']);
+        unset( $input['natureDescription']);
+        unset( $input['typeDescription']);
+
+        unset( $input['suppliercriticalID']);
+        unset( $input['description']);
+        unset( $input['idyesNoselection']);
+        unset( $input['YesNo']);
+
+        if (is_array($input['supplierCountryID']))
+            $input['supplierCountryID'] = $input['supplierCountryID'][0];
+
+        if (is_array($input['currency']))
+            $input['currency'] = $input['currency'][0];
+
+        if (is_array($input['supCategoryMasterID']))
+            $input['supCategoryMasterID'] = $input['supCategoryMasterID'][0];
+
+        if (is_array($input['supCategoryMasterID']))
+            $input['supCategoryMasterID'] = $input['supCategoryMasterID'][0];
+
+        if (is_array($input['companySystemID']))
+            $input['companySystemID'] = $input['companySystemID'][0];
+        if (is_array($input['liabilityAccountSysemID']))
+            $input['liabilityAccountSysemID'] = $input['liabilityAccountSysemID'][0];
+        if (is_array($input['UnbilledGRVAccountSystemID']))
+            $input['UnbilledGRVAccountSystemID'] = $input['UnbilledGRVAccountSystemID'][0];
+        if (is_array($input['isCriticalYN']))
+            $input['isCriticalYN'] = $input['isCriticalYN'][0];
+        if (is_array($input['isActive']))
+            $input['isActive'] = $input['isActive'][0];
+        if (is_array($input['supplierImportanceID']))
+            $input['supplierImportanceID'] = $input['supplierImportanceID'][0];
+        if (is_array($input['supplierNatureID']))
+            $input['supplierNatureID'] = $input['supplierNatureID'][0];
+        if (is_array($input['supplierTypeID']))
+            $input['supplierTypeID'] = $input['supplierTypeID'][0];
+        if (is_array($input['WHTApplicable']))
+            $input['WHTApplicable'] = $input['WHTApplicable'][0];
+
+
+        $company = Company::where('companySystemID',$input['companySystemID'])->first();
+
+        $supplier = SupplierMaster::where('supplierCodeSystem',$input['supplierCodeSytem'])->first();
+
+        $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID',$input['liabilityAccountSysemID'])->first();
+        $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID',$input['UnbilledGRVAccountSystemID'])->first();
+
+        $input['companyID'] = $company['CompanyID'];
+        $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
+        $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
+
+
+
+        if( array_key_exists ('supplierAssignedID' , $input )){
+
+            $supplierAssigneds = SupplierAssigned::where('supplierAssignedID', $input['supplierAssignedID'])->first();
+
+
+            if (empty($supplierAssigneds)) {
+                return $this->sendError('supplier Assigned not found');
+            }
+            foreach ($input as $key => $value) {
+                $supplierAssigneds->$key = $value;
+            }
+            $supplierAssigneds->save();
+        }else{
+            $supplierAssigneds = $this->supplierAssignedRepository->create($input);
+        }
+
+        return $this->sendResponse($supplierAssigneds->toArray(), 'Supplier Assigned saved successfully');
+    }
+
+    /**
+     * Display the specified SupplierAssigned.
+     * GET|HEAD /supplierAssigneds/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function show($id)
+    {
+        /** @var SupplierAssigned $supplierAssigned */
+        $supplierAssigned = $this->supplierAssignedRepository->findWithoutFail($id);
+
+        if (empty($supplierAssigned)) {
+            return $this->sendError('Supplier Assigned not found');
+        }
+
+        return $this->sendResponse($supplierAssigned->toArray(), 'Supplier Assigned retrieved successfully');
+    }
+
+    /**
+     * Update the specified SupplierAssigned in storage.
+     * PUT/PATCH /supplierAssigneds/{id}
+     *
+     * @param  int $id
+     * @param UpdateSupplierAssignedAPIRequest $request
+     *
+     * @return Response
+     */
+    public function update($id, UpdateSupplierAssignedAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var SupplierAssigned $supplierAssigned */
+        $supplierAssigned = $this->supplierAssignedRepository->findWithoutFail($id);
+
+        if (empty($supplierAssigned)) {
+            return $this->sendError('Supplier Assigned not found');
+        }
+
+        $supplierAssigned = $this->supplierAssignedRepository->update($input, $id);
+
+        return $this->sendResponse($supplierAssigned->toArray(), 'SupplierAssigned updated successfully');
+    }
+
+    /**
+     * Remove the specified SupplierAssigned from storage.
+     * DELETE /supplierAssigneds/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function destroy($id)
+    {
+        /** @var SupplierAssigned $supplierAssigned */
+        $supplierAssigned = $this->supplierAssignedRepository->findWithoutFail($id);
+
+        if (empty($supplierAssigned)) {
+            return $this->sendError('Supplier Assigned not found');
+        }
+
+        $supplierAssigned->delete();
+
+        return $this->sendResponse($id, 'Supplier Assigned deleted successfully');
+    }
+}

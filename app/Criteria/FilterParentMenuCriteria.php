@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Criteria;
+
+use Prettus\Repository\Contracts\CriteriaInterface;
+use Prettus\Repository\Contracts\RepositoryInterface;
+use Illuminate\Http\Request;
+
+/**
+ * Class FilterParentMenuCriteria.
+ *
+ * @package namespace App\Criteria;
+ */
+class FilterParentMenuCriteria implements CriteriaInterface
+{
+
+    protected $request;
+
+    public function __construct(Request $request)
+    {
+        $this->request = $request;
+    }
+
+    /**
+     * Apply criteria in query repository
+     *
+     * @param string              $model
+     * @param RepositoryInterface $repository
+     *
+     * @return mixed
+     */
+    public function apply($model, RepositoryInterface $repository)
+    {
+
+        $companyId = $this->request['companyId'];
+        $userGroupId = $this->request['userGroupId'];
+        return $model->where('masterID',NULL)
+                     ->where('userGroupID',$userGroupId)
+                     ->where('companyID',$companyId)
+                     ->with(['child' => function ($query) use($companyId,$userGroupId) {
+                        $query->where('userGroupID',$userGroupId)
+                              ->where('companyID',$companyId)
+                              ->with(['child' => function ($query) use($companyId,$userGroupId) {
+                                    $query->where('userGroupID',$userGroupId)
+                                          ->where('companyID',$companyId)
+                                          ->orderBy("sortOrder","asc");
+                                }])
+                            ->orderBy("sortOrder","asc");
+                       }])
+                      ->orderBy("sortOrder","asc");
+                   /*  ->whereHas('child',function ($q){
+                                                     $q->where('companyID',13)
+                                                         ->where('userGroupID',4);
+                                                 });*/
+                  // return $model->where('UserGroupSetupID',13699);
+    }
+}
