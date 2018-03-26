@@ -25,6 +25,8 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\Auth;
+use App\Repositories\UserRepository;
 
 /**
  * Class ChartOfAccountController
@@ -34,10 +36,12 @@ class ChartOfAccountAPIController extends AppBaseController
 {
     /** @var  ChartOfAccountRepository */
     private $chartOfAccountRepository;
+    private $userRepository;
 
-    public function __construct(ChartOfAccountRepository $chartOfAccountRepo)
+    public function __construct(ChartOfAccountRepository $chartOfAccountRepo, UserRepository $userRepo)
     {
         $this->chartOfAccountRepository = $chartOfAccountRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -69,20 +73,54 @@ class ChartOfAccountAPIController extends AppBaseController
     {
         $input = $request->all();
 
-
-
         if(array_key_exists ('catogaryBLorPLID' , $input )){
             $categoryBLorPL = AccountsType::where('accountsType',$input['catogaryBLorPLID'])->first();
             if($categoryBLorPL){
                 $input['catogaryBLorPL'] = $categoryBLorPL->code ;
             }
-
         }
+
+        if(array_key_exists ('controlAccountsSystemID' , $input )){
+            $controlAccount = ControlAccount::where('controlAccountsSystemID',$input['controlAccountsSystemID'])->first();
+            if($controlAccount){
+                $input['controlAccounts'] = $controlAccount->controlAccountsID ;
+            }
+        }
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
 
         $input['documentSystemID'] = 59 ;
         $input['documentID'] = 'CAM';
 
-        $chartOfAccounts = $this->chartOfAccountRepository->create($input);
+        if( array_key_exists ('chartOfAccountSystemID' , $input )){
+
+            /*$financeItemCategorySubs = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
+
+            if (empty($financeItemCategorySubs)) {
+                return $this->sendError('Sub category not found');
+            }
+
+            foreach ($input as $key => $value) {
+                $financeItemCategorySubs->$key = $value;
+            }
+
+            if($input['includePLForGRVYN'] == 1 || $input['includePLForGRVYN']){
+                $input['includePLForGRVYN'] = -1;
+            }
+
+            $financeItemCategorySubs->modifiedPc = gethostname();
+            $financeItemCategorySubs->modifiedUser = $empId;
+
+            $financeItemCategorySubs->save();*/
+        }else{
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = $empId;
+            $chartOfAccounts = $this->chartOfAccountRepository->create($input);
+        }
+
+
 
         return $this->sendResponse($chartOfAccounts->toArray(), 'Chart Of Account saved successfully');
     }
