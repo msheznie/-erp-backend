@@ -6,7 +6,7 @@
 -- Module Name :  Supplier Master
 -- Author : Mohamed Fayas
 -- Create date : 14 - March 2018
--- Description : This file contains the all CRUD for Purchase Order Details(item )
+-- Description : This file contains the all CRUD for Supplier Master
 -- REVISION HISTORY
 -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getSupplierMasterByCompany(),getAssignedCompaniesBySupplier(),
 

@@ -212,4 +212,16 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData');
     Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion');
 
+    Route::resource('purchase_requests', 'PurchaseRequestAPIController');
+    Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
+
+
 });
+
+
+
+
+
+Route::resource('priorities', 'PriorityAPIController');
+
+Route::resource('locations', 'LocationAPIController');

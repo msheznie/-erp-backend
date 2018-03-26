@@ -108,3 +108,11 @@ Route::resource('bankAssigns', 'BankAssignController');
 Route::resource('units', 'UnitController');
 
 Route::resource('unitConversions', 'UnitConversionController');
+
+
+
+Route::resource('purchaseRequests', 'PurchaseRequestController');
+
+Route::resource('priorities', 'PriorityController');
+
+Route::resource('locations', 'LocationController');
