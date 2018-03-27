@@ -116,3 +116,7 @@ Route::resource('purchaseRequests', 'PurchaseRequestController');
 Route::resource('priorities', 'PriorityController');
 
 Route::resource('locations', 'LocationController');
+
+Route::resource('yesNoSelectionForMinuses', 'YesNoSelectionForMinusController');
+
+Route::resource('months', 'MonthsController');

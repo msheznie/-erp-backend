@@ -280,6 +280,10 @@ class PurchaseRequest extends Model
         return $this->belongsTo('App\Models\Location','location','locationID');
     }
 
+    public function segment(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
+
 
     
 }

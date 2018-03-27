@@ -214,7 +214,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::resource('purchase_requests', 'PurchaseRequestAPIController');
     Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
-
+    Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
 
 });
 
@@ -225,3 +225,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 Route::resource('priorities', 'PriorityAPIController');
 
 Route::resource('locations', 'LocationAPIController');
+
+Route::resource('yes_no_selection_for_minuses', 'YesNoSelectionForMinusAPIController');
+
+Route::resource('months', 'MonthsAPIController');
