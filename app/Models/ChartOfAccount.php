@@ -40,10 +40,10 @@ class ChartOfAccount extends Model
     //use SoftDeletes;
 
     public $table = 'chartofaccounts';
-    
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey  = 'chartOfAccountSystemID';
+    protected $primaryKey = 'chartOfAccountSystemID';
 
     protected $dates = ['deleted_at'];
 
@@ -68,6 +68,11 @@ class ChartOfAccount extends Model
         'AllocationID',
         'relatedPartyYN',
         'interCompanyID',
+        'confirmedYN',
+        'confirmedEmpSystemID',
+        'confirmedEmpID',
+        'confirmedEmpName',
+        'confirmedEmpDate',
         'createdPcID',
         'createdUserGroup',
         'createdUserID',
@@ -89,7 +94,7 @@ class ChartOfAccount extends Model
         'AccountCode' => 'string',
         'AccountDescription' => 'string',
         'masterAccount' => 'string',
-        'catogaryBLorPLID'=> 'integer',
+        'catogaryBLorPLID' => 'integer',
         'catogaryBLorPL' => 'string',
         'controllAccountYN' => 'integer',
         'controlAccountsSystemID' => 'integer',
@@ -102,6 +107,10 @@ class ChartOfAccount extends Model
         'AllocationID' => 'integer',
         'relatedPartyYN' => 'integer',
         'interCompanyID' => 'string',
+        'confirmedYN' => 'integer',
+        'confirmedEmpSystemID' => 'integer',
+        'confirmedEmpID' => 'string',
+        'confirmedEmpName' => 'string',
         'createdPcID' => 'string',
         'createdUserGroup' => 'string',
         'createdUserID' => 'string',
@@ -115,19 +124,20 @@ class ChartOfAccount extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    public function controlAccount(){
+    public function controlAccount()
+    {
         /** one control account  can have many chart of accounts */
-        return $this->belongsTo('App\Models\ControlAccount', 'controlAccountsSystemID','controlAccountsSystemID');
+        return $this->belongsTo('App\Models\ControlAccount', 'controlAccountsSystemID', 'controlAccountsSystemID');
     }
 
-    public function accountType(){
+    public function accountType()
+    {
         /** one Account Type can related to many chart of accounts */
-        return $this->belongsTo('App\Models\AccountsType', 'catogaryBLorPLID','accountsType');
+        return $this->belongsTo('App\Models\AccountsType', 'catogaryBLorPLID', 'accountsType');
     }
 
 
-    
 }
