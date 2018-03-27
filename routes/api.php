@@ -132,7 +132,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getCompanyNavigation','CompanyNavigationMenusAPIController@getCompanyNavigation');
     Route::resource('company_navigation_menuses', 'CompanyNavigationMenusAPIController');
     Route::resource('assignCompanyNavigation','CompanyNavigationMenusAPIController');
-    /** Company user group*/
+    /** Company user group by mubashir*/
     Route::post('getUserGroupByCompanyDatatable', 'UserGroupAPIController@getUserGroupByCompanyDatatable');
     Route::resource('userGroups', 'UserGroupAPIController');
     Route::get('getUserGroup', 'UserGroupAPIController@getUserGroup');
@@ -143,7 +143,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('user_group_assigns', 'UserGroupAssignAPIController');
     Route::get('checkUserGroupAccessRights','UserGroupAssignAPIController@checkUserGroupAccessRights');
     Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
-    /** Approval Level*/
+    /** Approval Level by mubashir*/
     Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
     Route::get('getGroupFilterData', 'ApprovalLevelAPIController@getGroupFilterData');
     Route::get('getAllDocument', 'DocumentMasterAPIController@getAllDocument');
@@ -151,6 +151,11 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('approval_roles', 'ApprovalRoleAPIController');
     Route::resource('department_masters', 'DepartmentMasterAPIController');
     Route::resource('approval_groups', 'ApprovalGroupsAPIController');
+    Route::get('getCompanyServiceLine', 'ApprovalLevelAPIController@getCompanyServiceLine');
+    Route::post('activateApprovalLevel', 'ApprovalLevelAPIController@activateApprovalLevel');
+    Route::get('getAllApprovalGroup', 'ApprovalGroupsAPIController@getAllApprovalGroup');
+    Route::post('assignApprovalGroup', 'ApprovalRoleAPIController@assignApprovalGroup');
+    Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel');
 
     /** Chart of Account Created by Shafri */
     Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount');
@@ -212,3 +217,4 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData');
 
 });
+

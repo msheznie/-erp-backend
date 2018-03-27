@@ -9,4 +9,10 @@ class Helper{
         $document = Models\DocumentMaster::all();
         return $document;
     }
+
+    public static function getCompanyServiceline($company)
+    {
+        $serviceline = Models\SegmentMaster::where('companySystemID','=',$company)->get();
+        return $serviceline;
+    }
 }

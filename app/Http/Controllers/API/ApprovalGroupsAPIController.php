@@ -126,4 +126,9 @@ class ApprovalGroupsAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Approval Groups deleted successfully');
     }
+
+    public function getAllApprovalGroup(){
+        $approvalGroups = ApprovalGroups::all();
+        return $this->sendResponse($approvalGroups->toArray(), 'Approval Groups retrieved successfully');
+    }
 }

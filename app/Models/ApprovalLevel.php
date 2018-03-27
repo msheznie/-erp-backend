@@ -37,6 +37,7 @@ class ApprovalLevel extends Model
     
     const CREATED_AT = 'timeStamp';
     const UPDATED_AT = 'timeStamp';
+    protected $primaryKey = 'approvalLevelID';
 
 
     protected $dates = ['deleted_at'];
@@ -113,5 +114,13 @@ class ApprovalLevel extends Model
     public function serviceline(){
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
-    
+
+    public function approvalRole(){
+        return $this->hasMany('App\Models\ApprovalRole','approvalLevelID','approvalLevelID');
+    }
+
+    public function category(){
+        return $this->belongsTo('App\Models\FinanceItemCategoryMaster','categoryID','itemCategoryID');
+    }
+
 }
