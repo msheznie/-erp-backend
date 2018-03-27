@@ -215,6 +215,29 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getUnitMasterFormData', 'UnitAPIController@getUnitMasterFormData');
     Route::resource('unit/conversion', 'UnitConversionAPIController');
     Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData');
+    Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion');
+
+
+
+
+
+    Route::resource('purchase_requests', 'PurchaseRequestAPIController');
+    Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
+    Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
+
+    Route::resource('priorities', 'PriorityAPIController');
+
+    Route::resource('locations', 'LocationAPIController');
+
+    Route::resource('yes_no_selection_for_minuses', 'YesNoSelectionForMinusAPIController');
+
+    Route::resource('months', 'MonthsAPIController');
 
 });
+
+
+
+
+
+
 

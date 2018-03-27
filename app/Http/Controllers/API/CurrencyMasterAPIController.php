@@ -96,6 +96,7 @@ class CurrencyMasterAPIController extends AppBaseController
             $supplierCurrencies = DB::table('suppliercurrency')
                 ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
                 ->where('supplierCodeSystem','=',$supplierId)
+                ->orderBy('supplierCurrencyID', 'DESC')
                 ->get();
         }else{
             $supplierCurrencies = [];

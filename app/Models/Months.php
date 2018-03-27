@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Class Months
+ * @package App\Models
+ * @version March 27, 2018, 7:40 am UTC
+ *
+ * @property string monthDes
+ */
+class Months extends Model
+{
+    //use SoftDeletes;
+
+    public $table = 'months';
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
+
+    protected $dates = ['deleted_at'];
+
+
+    public $fillable = [
+        'monthDes'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'monthID' => 'integer',
+        'monthDes' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}
