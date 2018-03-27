@@ -77,6 +77,13 @@ class ItemMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
          $itemMasters = ItemMaster::with(['unit','financeMainCategory','financeSubCategory']);
         if(array_key_exists ('financeCategoryMaster' , $input)){
             if($request['financeCategoryMaster'] > 0){
@@ -109,8 +116,17 @@ class ItemMasterAPIController extends AppBaseController
 
 
         return \DataTables::eloquent($itemMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->addColumn('Index', 'Index', "Index")
             ->make(true);
         ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
     }
@@ -281,7 +297,9 @@ class ItemMasterAPIController extends AppBaseController
         $item = ItemMaster::where('itemCodeSystem', '=', $itemId)->first();
 
         if ($item) {
-            $itemCompanies = ItemAssigned::where('itemCodeSystem',$itemId)->with(['company'])->get();
+            $itemCompanies = ItemAssigned::where('itemCodeSystem',$itemId)->with(['company'])
+                ->orderBy('idItemAssigned', 'DESC')
+                ->get();
         } else {
             $itemCompanies = [];
         }

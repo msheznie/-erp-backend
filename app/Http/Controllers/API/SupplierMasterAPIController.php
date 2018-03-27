@@ -85,6 +85,13 @@ class SupplierMasterAPIController extends AppBaseController
      */
     public function getSupplierMasterByCompany(Request $request)
     {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
 
         $companyId = $request['companyId'];
         $supplierMasters = SupplierMaster::
@@ -105,8 +112,18 @@ class SupplierMasterAPIController extends AppBaseController
         ]*/
 
         return \DataTables::eloquent($supplierMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('supplierCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->addColumn('Index', 'Index', "Index")
+            //->addColumn('Index', 'Index', "Index")
             ->make(true);
         ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
     }
@@ -128,7 +145,8 @@ class SupplierMasterAPIController extends AppBaseController
         if ($supplier) {
             $suppliersubcategory = DB::table('suppliersubcategoryassign')
                 ->leftJoin('suppliercategorysub', 'suppliersubcategoryassign.supSubCategoryID', '=', 'suppliercategorysub.supCategorySubID')
-                ->where('supplierID', $supplierId)->get();
+                ->where('supplierID', $supplierId)
+                ->orderBy('supplierSubCategoryAssignID', 'DESC')->get();
         } else {
             $suppliersubcategory = [];
         }
@@ -247,6 +265,7 @@ class SupplierMasterAPIController extends AppBaseController
                 ->leftJoin('suppliercritical','supplierassigned.isCriticalYN','=','suppliercritical.suppliercriticalID')
                 ->leftJoin('yesnoselection','supplierassigned.isActive','=','yesnoselection.idyesNoselection')
                 ->where('supplierCodeSytem', $supplierId)
+                ->orderBy('supplierAssignedID', 'DESC')
                 ->get();
         } else {
             $supplierCompanies = [];
