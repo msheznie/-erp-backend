@@ -156,7 +156,7 @@ class UnitAPIController extends AppBaseController
         if (empty($unit)) {
             return $this->sendError('Unit not found');
         }
-
+        $unit->unitConversion()->delete();
         $unit->delete();
 
         return $this->sendResponse($id, 'Unit deleted successfully');
@@ -170,11 +170,33 @@ class UnitAPIController extends AppBaseController
     public function getAllUnitMaster(Request $request)
     {
         $input = $request->all();
+        $start = $input['start'];
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
 
         $unitMasters = Unit::select('UnitID', 'UnitShortCode', 'UnitDes');
+
         return \DataTables::eloquent($unitMasters)
-            //->addColumn('Actions', 'Actions', "Actions")
-            //->addColumn('Index', 'Index', "Index")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('UnitID', $input['order'][0]['dir']);
+                    } else if($input['order'][0]['column'] == 1)
+                    {
+                        $query->orderBy('UnitShortCode', $input['order'][0]['dir']);
+                    } else
+                    {
+                        $query->orderBy('UnitDes', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->make(true);
     }
 
