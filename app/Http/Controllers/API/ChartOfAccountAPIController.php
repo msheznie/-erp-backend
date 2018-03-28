@@ -16,6 +16,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateChartOfAccountAPIRequest;
 use App\Http\Requests\API\UpdateChartOfAccountAPIRequest;
 use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\Company;
 use App\Models\ControlAccount;
 use App\Models\AccountsType;
 use App\Models\YesNoSelection;
@@ -126,7 +128,6 @@ class ChartOfAccountAPIController extends AppBaseController
             /** End of Validation */
 
 
-
             $chartOfAccount->modifiedPc = gethostname();
             $chartOfAccount->modifiedUser = $empId;
 
@@ -171,6 +172,43 @@ class ChartOfAccountAPIController extends AppBaseController
 
 
         return $this->sendResponse($chartOfAccount->toArray(), 'Chart Of Account saved successfully');
+    }
+
+
+    /**
+     * Display all assigned itemAssigned for specific Item Master.
+     * GET|HEAD / assignedCompaniesByChartOfAccount }
+     *
+     * @param  $request
+     *
+     * @return Response
+     */
+    public function assignedCompaniesByChartOfAccount(Request $request)
+    {
+        $chartOfAccountSystemID = $request['chartOfAccountSystemID'];
+        $data = ChartOfAccountsAssigned::where('chartOfAccountSystemID', '=', $chartOfAccountSystemID)->first();
+
+
+        if ($data) {
+            $itemCompanies = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$chartOfAccountSystemID)->with(['company'])->get();
+        } else {
+            $itemCompanies = [];
+        }
+
+        return $this->sendResponse($itemCompanies, 'Companies retrieved successfully');
+    }
+
+    public function getNotAssignedCompaniesByChartOfAccount(Request $request){
+        $chartOfAccountSystemID = $request->get('chartOfAccountSystemID');
+        $companies = Company::where('isGroup', 0)
+            ->whereDoesntHave('chartOfAccountAssigned',function ($query) use ($chartOfAccountSystemID) {
+                $query->where('chartOfAccountSystemID', '=', $chartOfAccountSystemID);
+            })
+            ->get(['companySystemID',
+                'CompanyID',
+                'CompanyName']);
+
+        return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
     }
 
 

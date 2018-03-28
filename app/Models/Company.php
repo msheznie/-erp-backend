@@ -89,6 +89,7 @@ class Company extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
+    protected $primaryKey = 'companySystemID';
 
 
     protected $dates = ['deleted_at'];
@@ -278,4 +279,10 @@ class Company extends Model
     public function bank(){
         return $this->belongsToMany('App\Models\BankMaster', 'erp_bankassigned','CompanyID','companyID');
     }
+
+    public function chartOfAccountAssigned()
+    {
+        return $this->hasMany('App\Models\ChartOfAccountsAssigned', 'companySystemID','companySystemID');
+    }
+
 }

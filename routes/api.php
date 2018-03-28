@@ -152,12 +152,15 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('department_masters', 'DepartmentMasterAPIController');
     Route::resource('approval_groups', 'ApprovalGroupsAPIController');
 
+
     /** Chart of Account Created by Shafri */
     Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount');
     Route::resource('control_accounts', 'ControlAccountAPIController');
     Route::get('getChartOfAccountFormData', 'ChartOfAccountAPIController@getChartOfAccountFormData');
     Route::resource('chart_of_account', 'ChartOfAccountAPIController');
-
+    Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
+    Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
+    Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
 
 
 
@@ -213,3 +216,4 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion');
 
 });
+
