@@ -152,15 +152,12 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('department_masters', 'DepartmentMasterAPIController');
     Route::resource('approval_groups', 'ApprovalGroupsAPIController');
 
-
     /** Chart of Account Created by Shafri */
     Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount');
     Route::resource('control_accounts', 'ControlAccountAPIController');
     Route::get('getChartOfAccountFormData', 'ChartOfAccountAPIController@getChartOfAccountFormData');
     Route::resource('chart_of_account', 'ChartOfAccountAPIController');
-    Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
-    Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
-    Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
+
 
 
 
@@ -215,5 +212,20 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData');
     Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion');
 
-});
 
+
+
+
+    Route::resource('purchase_requests', 'PurchaseRequestAPIController');
+    Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
+    Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
+
+    Route::resource('priorities', 'PriorityAPIController');
+
+    Route::resource('locations', 'LocationAPIController');
+
+    Route::resource('yes_no_selection_for_minuses', 'YesNoSelectionForMinusAPIController');
+
+    Route::resource('months', 'MonthsAPIController');
+
+});

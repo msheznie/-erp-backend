@@ -68,6 +68,7 @@ class SupplierContactDetailsAPIController extends AppBaseController
         $supplierContactDetails =  DB::table('suppliercontactdetails')
             ->leftJoin('suppliercontacttype','suppliercontactdetails.contactTypeID','=','suppliercontacttype.supplierContactTypeID')
             ->where('supplierID',$supplierId)
+            ->orderBy('supplierContactID', 'DESC')
             ->get();
 
         return $this->sendResponse($supplierContactDetails->toArray(), 'Supplier Contact Details retrieved successfully');

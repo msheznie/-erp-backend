@@ -53,14 +53,16 @@ class ApprovalLevelRepository extends BaseRepository
     {
          $approvalLevel = $this->model
             ->with(['company' => function($query) {
-                $query->select('CompanyName');
+                $query->select('companySystemID','CompanyName','CompanyID');
             },'department' => function($query) {
-                $query->select('DepartmentDescription');
+                $query->select('departmentSystemID','DepartmentDescription');
             },'document' => function($query) {
-                $query->select('documentDescription');
+                $query->select('documentSystemID','documentDescription');
             },'serviceline' => function($query) {
-                $query->select('ServiceLineDes');
-            }])->orderBy('approvalLevelID', 'desc');
+                $query->select('serviceLineSystemID','ServiceLineDes');
+            },'category' => function($query) {
+                $query->select('itemCategoryID','categoryDescription');
+            }])->select('erp_approvallevel.*')->orderBy('approvalLevelID', 'desc');
 
         if(array_key_exists ('selectedCompanyID' , $input)){
             if($input['selectedCompanyID'] > 0){

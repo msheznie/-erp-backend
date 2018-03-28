@@ -173,10 +173,24 @@ class BankMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         $bankMasters = BankMaster::select('*');
         return \DataTables::eloquent($bankMasters)
-            //->addColumn('Actions', 'Actions', "Actions")
-            //->addColumn('Index', 'Index', "Index")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('bankmasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->make(true);
     }
 
@@ -219,21 +233,36 @@ class BankMasterAPIController extends AppBaseController
     public function assignedCompaniesByBank(Request $request)
     {
         $bankId = $request['bankmasterAutoID'];
+        $input = $request->all();
 
-        $itemCompanies = BankAssign::with(['company'])->where('bankmasterAutoID',$bankId)
-            ->select(
-                'erp_bankassigned.bankAssignedAutoID',
-                'erp_bankassigned.bankmasterAutoID',
-                'erp_bankassigned.isDefault',
-                'erp_bankassigned.isAssigned',
-                'erp_bankassigned.isActive',
-                'companymaster.CompanyName',
-                'companymaster.companyID'
-            );
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $itemCompanies = BankAssign::with(['company'])->where('bankmasterAutoID',$bankId);
+//            ->select(
+//                'erp_bankassigned.bankAssignedAutoID',
+//                'erp_bankassigned.bankmasterAutoID',
+//                'erp_bankassigned.isDefault',
+//                'erp_bankassigned.isAssigned',
+//                'erp_bankassigned.isActive',
+//                //'companymaster.CompanyName',
+//                //'company.companyID'
+//            );
 
         return \DataTables::eloquent($itemCompanies)
-            //->addColumn('Actions', 'Actions', "Actions")
-            //->addColumn('Index', 'Index', "Index")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('erp_bankassigned.bankAssignedAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->make(true);
 
         return $this->sendResponse($itemCompanies, 'Companies retrieved successfully');
