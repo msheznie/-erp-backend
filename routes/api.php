@@ -151,13 +151,21 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('approval_roles', 'ApprovalRoleAPIController');
     Route::resource('department_masters', 'DepartmentMasterAPIController');
     Route::resource('approval_groups', 'ApprovalGroupsAPIController');
+    Route::get('getCompanyServiceLine', 'ApprovalLevelAPIController@getCompanyServiceLine');
+    Route::post('activateApprovalLevel', 'ApprovalLevelAPIController@activateApprovalLevel');
+    Route::get('getAllApprovalGroup', 'ApprovalGroupsAPIController@getAllApprovalGroup');
+    Route::post('assignApprovalGroup', 'ApprovalRoleAPIController@assignApprovalGroup');
+    Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel');
+
 
     /** Chart of Account Created by Shafri */
     Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount');
     Route::resource('control_accounts', 'ControlAccountAPIController');
     Route::get('getChartOfAccountFormData', 'ChartOfAccountAPIController@getChartOfAccountFormData');
     Route::resource('chart_of_account', 'ChartOfAccountAPIController');
-
+    Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
+    Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
+    Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
 
 
 
