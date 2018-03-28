@@ -170,7 +170,7 @@ class UnitAPIController extends AppBaseController
     public function getAllUnitMaster(Request $request)
     {
         $input = $request->all();
-        $start = $input['start'];
+        $keyword = $input['search']['value'];
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -178,7 +178,11 @@ class UnitAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $unitMasters = Unit::select('UnitID', 'UnitShortCode', 'UnitDes');
+        $unitMasters = Unit::select('UnitID', 'UnitShortCode', 'UnitDes')->select('units.*');
+//            ->when($keyword, function($query) use ($keyword){
+//                 return $query->where('UnitShortCode', 'LIKE', '%'.$keyword.'%')
+//                     ->orWhere('UnitDes', 'LIKE', '%'.$keyword.'%');
+//            });
 
         return \DataTables::eloquent($unitMasters)
             ->order(function ($query) use ($input) {
