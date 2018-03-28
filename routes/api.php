@@ -237,3 +237,6 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('months', 'MonthsAPIController');
 
 });
+
+
+Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');

@@ -15,19 +15,27 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseRequestAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseRequestAPIRequest;
+use App\Models\Company;
+use App\Models\CompanyPolicyMaster;
+use App\Models\CurrencyMaster;
+use App\Models\DocumentMaster;
+use App\Models\FinanceItemCategoryMaster;
+use App\Models\Location;
 use App\Models\Months;
+use App\Models\Priority;
 use App\Models\PurchaseRequest;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PurchaseRequestRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Auth;
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -36,10 +44,12 @@ class PurchaseRequestAPIController extends AppBaseController
 {
     /** @var  PurchaseRequestRepository */
     private $purchaseRequestRepository;
+    private $userRepository;
 
-    public function __construct(PurchaseRequestRepository $purchaseRequestRepo)
+    public function __construct(PurchaseRequestRepository $purchaseRequestRepo, UserRepository $userRepo)
     {
         $this->purchaseRequestRepository = $purchaseRequestRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -88,11 +98,48 @@ class PurchaseRequestAPIController extends AppBaseController
             ->orderby('year','desc')
             ->get();
 
+        $currencies = CurrencyMaster::all();
+
+        $financeCategories = FinanceItemCategoryMaster::all();
+
+        $locations = Location::all();
+
+        $priorities = Priority::all();
+
+        $financialYears = array(array('value' => intval(date("Y")),'label' => date("Y")),
+                                array('value' => intval(date("Y",strtotime("-1 year"))),'label' => date("Y",strtotime("-1 year"))));
+
+
+        $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID',17)
+                                          ->where('companySystemID',$companyId)
+                                          ->first();
+
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID',20)
+                                            ->where('companySystemID',$companyId)
+                                            ->first();
+
+        $conditions = array('checkBudget' => 0,'allowFinanceCategory' => 0);
+
+        if($checkBudget){
+            $conditions['checkBudget'] = $checkBudget->isYesNO;
+        }
+
+        if($allowFinanceCategory){
+            $conditions['allowFinanceCategory'] = $allowFinanceCategory->isYesNO;
+        }
+
+
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
-            'years' => $years
+            'years' => $years,
+            'currencies' => $currencies,
+            'financeCategories' => $financeCategories,
+            'locations' => $locations,
+            'priorities' => $priorities,
+            'financialYears' => $financialYears,
+            'conditions' => $conditions
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -202,7 +249,49 @@ class PurchaseRequestAPIController extends AppBaseController
      */
     public function store(CreatePurchaseRequestAPIRequest $request)
     {
-        $input = $request->all();
+
+        $input = $this->convertArrayToValue($request->all());
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] =  $user->employee['empID'];
+        $input['createdUserSystemID'] =   $user->employee['empCompanySystemID'];
+        $input['departmentID'] = 'PROC';
+
+        $lastSerial = PurchaseRequest::where('companySystemID', $input['companySystemID'])
+                                       ->orderBy('purchaseRequestID','desc')
+                                       ->first();
+
+        $lastSerialNumber = 0;
+        if($lastSerial){
+            $lastSerialNumber =  intval($lastSerial->serialNumber) + 1;
+        }
+
+        $input['serialNumber'] = $lastSerialNumber;
+        $input['purchaseRequestCode'] = $lastSerialNumber;
+
+        $segment = SegmentMaster::where('serviceLineSystemID',$input['serviceLineSystemID'])->first();
+        if($segment){
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $document = DocumentMaster::where('documentSystemID',$input['documentSystemID'])->first();
+        if($document){
+            $input['documentID'] = $document->documentID;
+        }
+
+         $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if($company){
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if($company){
+            $input['companyID'] = $company->CompanyID;
+        }
+        //$input['serialNumber'] = serialNumber;
 
         $purchaseRequests = $this->purchaseRequestRepository->create($input);
 
