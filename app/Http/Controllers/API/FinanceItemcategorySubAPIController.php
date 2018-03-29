@@ -80,6 +80,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if(array_key_exists ('DT_Row_Index' , $input )){
+            unset($input['DT_Row_Index']);
+        }
+
         if(array_key_exists ('finance_gl_code_bs' , $input )){
             unset($input['finance_gl_code_bs']);
         }

@@ -283,6 +283,12 @@ class ChartOfAccountAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         //$companyId = $request['companyId'];
 
         $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType']);
@@ -304,10 +310,20 @@ class ChartOfAccountAPIController extends AppBaseController
                 $chartOfAccount->where('catogaryBLorPLID', $input['catogaryBLorPLID']);
             }
         }
+        $chartOfAccount->select('chartofaccounts.*');
 
         return \DataTables::eloquent($chartOfAccount)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('chartOfAccountSystemID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
 

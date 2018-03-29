@@ -1,3 +1,0 @@
-
-
-Route::resource('procumentOrders', 'ProcumentOrderController');

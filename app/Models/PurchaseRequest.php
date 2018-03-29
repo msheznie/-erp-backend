@@ -173,6 +173,7 @@ class PurchaseRequest extends Model
         'checkBudgetYN',
         'createdUserGroup',
         'createdPcID',
+        'createdUserSystemID',
         'createdUserID',
         'modifiedPc',
         'modifiedUser',
