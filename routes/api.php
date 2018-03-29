@@ -221,12 +221,13 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion');
 
 
-
-
-
     Route::resource('purchase_requests', 'PurchaseRequestAPIController');
     Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
     Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
+
+    Route::resource('procurement-order', 'ProcumentOrderAPIController');
+    Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
+    Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getPurchaseRequestFormData');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -237,3 +238,6 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('months', 'MonthsAPIController');
 
 });
+
+
+Route::resource('procument_orders', 'ProcumentOrderAPIController');
