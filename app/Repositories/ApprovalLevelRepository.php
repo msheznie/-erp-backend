@@ -51,6 +51,12 @@ class ApprovalLevelRepository extends BaseRepository
 
     public function getGroupApprovalLevelDatatable($input)
     {
+        $sort = "";
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
          $approvalLevel = $this->model
             ->with(['company' => function($query) {
                 $query->select('companySystemID','CompanyName','CompanyID');
@@ -83,6 +89,16 @@ class ApprovalLevelRepository extends BaseRepository
 
         //return datatables($approvalLevel)->toJson();
         return \DataTables::eloquent($approvalLevel)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('approvalLevelID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
     }
