@@ -68,6 +68,7 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 
         $financeItemcategorySubAssigneds = FinanceItemcategorySubAssigned::where('itemCategorySubID', $request->get('itemCategorySubID'))
             ->with(['company'])
+            ->orderBy('itemCategoryAssignedID', 'DESC')
             ->paginate(10);
         //->get();
 
