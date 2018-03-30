@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Class PurchaseRequestDetails
+ * @package App\Models
+ * @version March 29, 2018, 11:41 am UTC
+ *
+ * @property integer purchaseRequestID
+ * @property integer companySystemID
+ * @property string companyID
+ * @property integer itemCategoryID
+ * @property integer itemCode
+ * @property string itemPrimaryCode
+ * @property string itemDescription
+ * @property integer itemFinanceCategoryID
+ * @property integer itemFinanceCategorySubID
+ * @property integer financeGLcodebBSSystemID
+ * @property string financeGLcodebBS
+ * @property integer financeGLcodePLSystemID
+ * @property string financeGLcodePL
+ * @property integer includePLForGRVYN
+ * @property string partNumber
+ * @property float quantityRequested
+ * @property float estimatedCost
+ * @property float totalCost
+ * @property integer budgetYear
+ * @property float budjetAmtLocal
+ * @property float budjetAmtRpt
+ * @property float quantityOnOrder
+ * @property string comments
+ * @property integer unitOfMeasure
+ * @property integer itemClientReferenceNumberMasterID
+ * @property string clientReferenceNumber
+ * @property float quantityInHand
+ * @property float maxQty
+ * @property float minQty
+ * @property float poQuantity
+ * @property string specificationGrade
+ * @property string jobNo
+ * @property string technicalDataSheetAttachment
+ * @property integer selectedForPO
+ * @property integer prClosedYN
+ * @property integer fullyOrdered
+ * @property integer poTrackingID
+ * @property string|\Carbon\Carbon timeStamp
+ */
+class PurchaseRequestDetails extends Model
+{
+    //use SoftDeletes;
+
+    public $table = 'erp_purchaserequestdetails';
+    
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
+    protected $primaryKey  = 'purchaseRequestDetailsID';
+
+
+    protected $dates = ['deleted_at'];
+
+
+    public $fillable = [
+        'purchaseRequestID',
+        'companySystemID',
+        'companyID',
+        'itemCategoryID',
+        'itemCode',
+        'itemPrimaryCode',
+        'itemDescription',
+        'itemFinanceCategoryID',
+        'itemFinanceCategorySubID',
+        'financeGLcodebBSSystemID',
+        'financeGLcodebBS',
+        'financeGLcodePLSystemID',
+        'financeGLcodePL',
+        'includePLForGRVYN',
+        'partNumber',
+        'quantityRequested',
+        'estimatedCost',
+        'totalCost',
+        'budgetYear',
+        'budjetAmtLocal',
+        'budjetAmtRpt',
+        'quantityOnOrder',
+        'comments',
+        'unitOfMeasure',
+        'itemClientReferenceNumberMasterID',
+        'clientReferenceNumber',
+        'quantityInHand',
+        'maxQty',
+        'minQty',
+        'poQuantity',
+        'specificationGrade',
+        'jobNo',
+        'technicalDataSheetAttachment',
+        'selectedForPO',
+        'prClosedYN',
+        'fullyOrdered',
+        'poTrackingID',
+        'timeStamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'purchaseRequestDetailsID' => 'integer',
+        'purchaseRequestID' => 'integer',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
+        'itemCategoryID' => 'integer',
+        'itemCode' => 'integer',
+        'itemPrimaryCode' => 'string',
+        'itemDescription' => 'string',
+        'itemFinanceCategoryID' => 'integer',
+        'itemFinanceCategorySubID' => 'integer',
+        'financeGLcodebBSSystemID' => 'integer',
+        'financeGLcodebBS' => 'string',
+        'financeGLcodePLSystemID' => 'integer',
+        'financeGLcodePL' => 'string',
+        'includePLForGRVYN' => 'integer',
+        'partNumber' => 'string',
+        'quantityRequested' => 'float',
+        'estimatedCost' => 'float',
+        'totalCost' => 'float',
+        'budgetYear' => 'integer',
+        'budjetAmtLocal' => 'float',
+        'budjetAmtRpt' => 'float',
+        'quantityOnOrder' => 'float',
+        'comments' => 'string',
+        'unitOfMeasure' => 'integer',
+        'itemClientReferenceNumberMasterID' => 'integer',
+        'clientReferenceNumber' => 'string',
+        'quantityInHand' => 'float',
+        'maxQty' => 'float',
+        'minQty' => 'float',
+        'poQuantity' => 'float',
+        'specificationGrade' => 'string',
+        'jobNo' => 'string',
+        'technicalDataSheetAttachment' => 'string',
+        'selectedForPO' => 'integer',
+        'prClosedYN' => 'integer',
+        'fullyOrdered' => 'integer',
+        'poTrackingID' => 'integer'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    public function uom(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+}
