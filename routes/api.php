@@ -227,7 +227,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::resource('procurement-order', 'ProcumentOrderAPIController');
     Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
-    Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getPurchaseRequestFormData');
+    Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData');
 
     Route::resource('priorities', 'PriorityAPIController');
 

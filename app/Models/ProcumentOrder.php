@@ -141,19 +141,19 @@ class ProcumentOrder extends Model
 
     public $table = 'erp_purchaseordermaster';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timeStamp';
 
     protected $primaryKey  = 'purchaseOrderID';
 
-
     protected $dates = ['deleted_at'];
-
 
     public $fillable = [
         'poProcessId',
+        'companySystemID',
         'companyID',
         'departmentID',
+        'serviceLineSystemID',
         'serviceLine',
         'companyAddress',
         'documentID',
@@ -269,6 +269,7 @@ class ProcumentOrder extends Model
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
+        'createdUserSystemID',
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
@@ -284,8 +285,10 @@ class ProcumentOrder extends Model
     protected $casts = [
         'purchaseOrderID' => 'integer',
         'poProcessId' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'departmentID' => 'string',
+        'serviceLineSystemID' => 'integer',
         'serviceLine' => 'string',
         'companyAddress' => 'string',
         'documentID' => 'string',
@@ -389,6 +392,7 @@ class ProcumentOrder extends Model
         'vatRegisteredYN' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
@@ -423,6 +427,11 @@ class ProcumentOrder extends Model
     public function currency(){
         return $this->belongsTo('App\Models\CurrencyMaster','supplierTransactionCurrencyID','currencyID');
     }
+
+    public function fcategory(){
+        return $this->belongsTo('App\Models\FinanceItemCategoryMaster','financeCategory','itemCategoryID');
+    }
+
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
