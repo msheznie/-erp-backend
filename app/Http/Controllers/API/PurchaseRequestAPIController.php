@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePurchaseRequestAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseRequestAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
@@ -170,7 +171,10 @@ class PurchaseRequestAPIController extends AppBaseController
             },'priority' => function($query){
                 //$query->select(['priorityDescription']);
             },'location' => function($query){
+
             },'segment' => function($query){
+
+            },'financeCategory' => function($query){
 
             }]);
 
@@ -221,6 +225,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     'erp_purchaserequest.approved',
                     'erp_purchaserequest.timesReferred',
                     'erp_purchaserequest.serviceLineSystemID',
+                    'erp_purchaserequest.financeCategory',
                 ]);
 
         return \DataTables::eloquent($purchaseRequests)
@@ -257,7 +262,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] =  $user->employee['empID'];
-        $input['createdUserSystemID'] =   $user->employee['empCompanySystemID'];
+        $input['createdUserSystemID'] =   $user->employee['employeeSystemID'];
+
         $input['departmentID'] = 'PROC';
 
         $lastSerial = PurchaseRequest::where('companySystemID', $input['companySystemID'])
@@ -282,6 +288,15 @@ class PurchaseRequestAPIController extends AppBaseController
             $input['documentID'] = $document->documentID;
         }
 
+        $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID',$input['companySystemID'])
+                                                                ->where('documentSystemID',$input['documentSystemID'])
+                                                                ->first();
+
+        if($companyDocumentAttachment){
+            $input['docRefNo'] = $companyDocumentAttachment->docRefNumber;
+        }
+
+
          $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if($company){
             $input['companyID'] = $company->CompanyID;
@@ -291,7 +306,6 @@ class PurchaseRequestAPIController extends AppBaseController
         if($company){
             $input['companyID'] = $company->CompanyID;
         }
-        //$input['serialNumber'] = serialNumber;
 
         $purchaseRequests = $this->purchaseRequestRepository->create($input);
 
@@ -309,7 +323,7 @@ class PurchaseRequestAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PurchaseRequest $purchaseRequest */
-        $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($id);
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by','confirmed_by'])->findWithoutFail($id);
 
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');
@@ -329,7 +343,13 @@ class PurchaseRequestAPIController extends AppBaseController
      */
     public function update($id, UpdatePurchaseRequestAPIRequest $request)
     {
+
+        $userId = Auth::id();
+        $user =  $this->userRepository->with(['employee'])->findWithoutFail($userId);
+
         $input = $request->all();
+        $input = array_except($input,['created_by','confirmed_by']);
+        $input = $this->convertArrayToValue($input);
 
         /** @var PurchaseRequest $purchaseRequest */
         $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($id);
@@ -337,6 +357,24 @@ class PurchaseRequestAPIController extends AppBaseController
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');
         }
+
+        $segment = SegmentMaster::where('serviceLineSystemID',$input['serviceLineSystemID'])->first();
+        if($segment){
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] =  $user->employee['empID'];
+
+         $input['modifiedUserSystemID'] =   $user->employee['employeeSystemID'];
+
+        if($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1)
+        {
+            $input['PRConfirmedBy'] = $user->employee['empID'];;
+            $input['PRConfirmedBySystemID'] = $user->employee['employeeSystemID'];
+            $input['PRConfirmedDate'] = now();
+        }
+
 
         $purchaseRequest = $this->purchaseRequestRepository->update($input, $id);
 

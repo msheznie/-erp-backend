@@ -136,8 +136,8 @@ class DocumentMasterAPIController extends AppBaseController
         return $this->sendResponse($id, 'Document Master deleted successfully');
     }
 
-    public function getAllDocument(){
-        $document = \Helper::getAllDocument();
-        return $document;
+    public function getAllDocuments(){
+        $document = \Helper::getAllDocuments();
+        return $this->sendResponse($document, 'record retrieved successfully');
     }
 }

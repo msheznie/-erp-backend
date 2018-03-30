@@ -178,7 +178,8 @@ class PurchaseRequest extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'modifiedUserSystemID'
     ];
 
     /**
@@ -272,6 +273,10 @@ class PurchaseRequest extends Model
         return $this->belongsTo('App\Models\Employee','createdUserSystemID','employeeSystemID');
     }
 
+    public function confirmed_by(){
+        return $this->belongsTo('App\Models\Employee','PRConfirmedBySystemID','employeeSystemID');
+    }
+
     public function priority(){
         return $this->belongsTo('App\Models\Priority','priority','priorityID');
     }
@@ -285,6 +290,8 @@ class PurchaseRequest extends Model
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 
-
+   public function financeCategory(){
+       return $this->belongsTo('App\Models\FinanceItemCategoryMaster','financeCategory','itemCategoryID');
+   }
     
 }

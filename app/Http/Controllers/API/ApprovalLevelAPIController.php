@@ -204,7 +204,7 @@ class ApprovalLevelAPIController extends AppBaseController
         }
 
         /** all document Drop Down */
-        $document = \Helper::getAllDocument();
+        $document = \Helper::getAllDocuments();
 
         /** all finance category Drop Down */
         $financeCategory = FinanceItemCategoryMaster::all();
@@ -264,5 +264,10 @@ class ApprovalLevelAPIController extends AppBaseController
 
         return $this->sendResponse($approvalRole->toArray(), 'Record updated successfully');
 
+    }
+
+    public function confirmDocTest(){
+        $param = array('autoID' => 1008,'company' => 31,'document' => 2,'segment' => 6,'category' => null,'amount' => 997.99992);
+        return $test = \Helper::confirmDocument($param);
     }
 }
