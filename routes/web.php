@@ -1,3 +1,0 @@
-
-
-Route::resource('documentApproveds', 'DocumentApprovedController');
