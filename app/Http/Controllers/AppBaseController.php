@@ -15,7 +15,7 @@ use Response;
 class AppBaseController extends BaseController
 {
 
-    public function sendResponse($result, $message)
+    public function  sendResponse($result, $message)
     {
         return Response::json(ResponseUtil::makeResponse($message, $result));
     }

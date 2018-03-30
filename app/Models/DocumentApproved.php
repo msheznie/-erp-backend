@@ -1,0 +1,136 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Class DocumentApproved
+ * @package App\Models
+ * @version March 29, 2018, 6:31 am UTC
+ *
+ * @property integer companySystemID
+ * @property string companyID
+ * @property integer departmentSystemID
+ * @property string departmentID
+ * @property integer serviceLineSystemID
+ * @property string serviceLineCode
+ * @property integer documentSystemID
+ * @property string documentID
+ * @property integer documentSystemCode
+ * @property string documentCode
+ * @property string|\Carbon\Carbon documentDate
+ * @property integer approvalLevelID
+ * @property integer rollID
+ * @property integer approvalGroupID
+ * @property integer rollLevelOrder
+ * @property string employeeID
+ * @property string|\Carbon\Carbon docConfirmedDate
+ * @property string docConfirmedByEmpID
+ * @property string|\Carbon\Carbon preRollApprovedDate
+ * @property integer approvedYN
+ * @property string|\Carbon\Carbon approvedDate
+ * @property string approvedComments
+ * @property integer rejectedYN
+ * @property string|\Carbon\Carbon rejectedDate
+ * @property string rejectedComments
+ * @property integer myApproveFlag
+ * @property integer isDeligationApproval
+ * @property string approvedForEmpID
+ * @property integer isApprovedFromPC
+ * @property string approvedPCID
+ * @property string|\Carbon\Carbon timeStamp
+ */
+class DocumentApproved extends Model
+{
+    use SoftDeletes;
+
+    public $table = 'erp_documentapproved';
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
+
+    protected $dates = ['deleted_at'];
+
+
+    public $fillable = [
+        'companySystemID',
+        'companyID',
+        'departmentSystemID',
+        'departmentID',
+        'serviceLineSystemID',
+        'serviceLineCode',
+        'documentSystemID',
+        'documentID',
+        'documentSystemCode',
+        'documentCode',
+        'documentDate',
+        'approvalLevelID',
+        'rollID',
+        'approvalGroupID',
+        'rollLevelOrder',
+        'employeeID',
+        'docConfirmedDate',
+        'docConfirmedByEmpID',
+        'preRollApprovedDate',
+        'approvedYN',
+        'approvedDate',
+        'approvedComments',
+        'rejectedYN',
+        'rejectedDate',
+        'rejectedComments',
+        'myApproveFlag',
+        'isDeligationApproval',
+        'approvedForEmpID',
+        'isApprovedFromPC',
+        'approvedPCID',
+        'timeStamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'documentApprovedID' => 'integer',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
+        'departmentSystemID' => 'integer',
+        'departmentID' => 'string',
+        'serviceLineSystemID' => 'integer',
+        'serviceLineCode' => 'string',
+        'documentSystemID' => 'integer',
+        'documentID' => 'string',
+        'documentSystemCode' => 'integer',
+        'documentCode' => 'string',
+        'approvalLevelID' => 'integer',
+        'rollID' => 'integer',
+        'approvalGroupID' => 'integer',
+        'rollLevelOrder' => 'integer',
+        'employeeID' => 'string',
+        'docConfirmedByEmpID' => 'string',
+        'approvedYN' => 'integer',
+        'approvedComments' => 'string',
+        'rejectedYN' => 'integer',
+        'rejectedComments' => 'string',
+        'myApproveFlag' => 'integer',
+        'isDeligationApproval' => 'integer',
+        'approvedForEmpID' => 'string',
+        'isApprovedFromPC' => 'integer',
+        'approvedPCID' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}

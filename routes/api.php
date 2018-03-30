@@ -146,17 +146,17 @@ Route::group(['middleware' => 'auth:api'], function(){
     /** Approval Level*/
     Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
     Route::get('getGroupFilterData', 'ApprovalLevelAPIController@getGroupFilterData');
-    Route::get('getAllDocument', 'DocumentMasterAPIController@getAllDocument');
+    Route::get('getAllDocuments', 'DocumentMasterAPIController@getAllDocuments');
     Route::resource('approval_levels', 'ApprovalLevelAPIController');
     Route::resource('approval_roles', 'ApprovalRoleAPIController');
     Route::resource('department_masters', 'DepartmentMasterAPIController');
     Route::resource('approval_groups', 'ApprovalGroupsAPIController');
+
     Route::get('getCompanyServiceLine', 'ApprovalLevelAPIController@getCompanyServiceLine');
     Route::post('activateApprovalLevel', 'ApprovalLevelAPIController@activateApprovalLevel');
     Route::get('getAllApprovalGroup', 'ApprovalGroupsAPIController@getAllApprovalGroup');
     Route::post('assignApprovalGroup', 'ApprovalRoleAPIController@assignApprovalGroup');
     Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel');
-
 
     /** Chart of Account Created by Shafri */
     Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount');
@@ -220,13 +220,17 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData');
     Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion');
 
-
-
-
+    /** Approval Group Created by Mubashir  */
+    Route::post('getApprovalGroupByCompanyDatatable', 'ApprovalGroupsAPIController@getApprovalGroupByCompanyDatatable');
+    Route::resource('approval_groups', 'ApprovalGroupsAPIController');
 
     Route::resource('purchase_requests', 'PurchaseRequestAPIController');
     Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
     Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
+
+    Route::resource('procurement-order', 'ProcumentOrderAPIController');
+    Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
+    Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getPurchaseRequestFormData');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -241,5 +245,10 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
     Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
 
-
+    Route::resource('document_approveds', 'DocumentApprovedAPIController');
+    Route::get('confirmDocTest', 'ApprovalLevelAPIController@confirmDocTest');
+    Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
 });
+
+
+

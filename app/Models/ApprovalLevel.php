@@ -115,7 +115,7 @@ class ApprovalLevel extends Model
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 
-    public function approvalRole(){
+    public function approvalrole(){
         return $this->hasMany('App\Models\ApprovalRole','approvalLevelID','approvalLevelID');
     }
 
