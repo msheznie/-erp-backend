@@ -246,9 +246,11 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
 
     Route::resource('document_approveds', 'DocumentApprovedAPIController');
-    Route::get('confirmDocTest', 'ApprovalLevelAPIController@confirmDocTest');
     Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
+
+    Route::resource('currency_conversions', 'CurrencyConversionAPIController');
+
+    Route::resource('bank_accounts', 'BankAccountAPIController');
+    //Route::get('confirmDocTest', 'ApprovalLevelAPIController@confirmDocTest');
+
 });
-
-
-
