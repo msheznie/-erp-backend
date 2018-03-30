@@ -14,6 +14,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseRequestDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseRequestDetailsAPIRequest;
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\ItemAssigned;
+use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
 use App\Repositories\PurchaseRequestDetailsRepository;
 use Illuminate\Http\Request;
@@ -26,7 +29,6 @@ use Response;
  * Class PurchaseRequestDetailsController
  * @package App\Http\Controllers\API
  */
-
 class PurchaseRequestDetailsAPIController extends AppBaseController
 {
     /** @var  PurchaseRequestDetailsRepository */
@@ -61,12 +63,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
      * @param Request $request
      * @return Response
      */
-    public function getItemsByPurchaseRequest(Request $request){
+    public function getItemsByPurchaseRequest(Request $request)
+    {
         $input = $request->all();
         $prId = $input['purchaseRequestId'];
 
-        $items = PurchaseRequestDetails::where('purchaseRequestID',$prId)
-                                        ->get();
+        $items = PurchaseRequestDetails::where('purchaseRequestID', $prId)
+            ->with(['uom'])
+            ->get();
 
         return $this->sendResponse($items->toArray(), 'Purchase Request Details retrieved successfully');
     }
@@ -81,7 +85,84 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
      */
     public function store(CreatePurchaseRequestDetailsAPIRequest $request)
     {
-        $input = $request->all();
+        $input = array_except($request->all(), 'uom');
+        $input = $this->convertArrayToValue($input);
+
+
+        $item = ItemAssigned::where('idItemAssigned', $input['itemCode'])->first();
+
+        if (empty($item)) {
+            return $this->sendError('Item not found');
+        }
+
+        $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])->first();
+
+        $input['budgetYear'] = $purchaseRequest->budgetYear;
+
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request Details not found');
+        }
+
+        $input['itemPrimaryCode'] = $item->itemPrimaryCode;
+        $input['itemDescription'] = $item->itemDescription;
+        $input['partNumber'] = $item->secondaryItemCode;
+        $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
+        $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+        $input['estimatedCost'] = $item->wacValueLocal;
+
+        $input['companySystemID'] = $item->companySystemID;
+        $input['companyID'] = $item->companyID;
+        $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
+        $input['maxQty'] = $item->maxQty;
+        $input['minQty'] = $item->minQty;
+
+        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
+            ->where('mainItemCategoryID', $item->financeCategoryMaster)
+            ->where('itemCategorySubID', $item->financeCategorySub)
+            ->first();
+
+        if (empty($financeItemCategorySubAssigned)) {
+            return $this->sendError('Item not found');
+        }
+
+        $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+        $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+        $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+        $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+        $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+
+
+        /*
+     SELECT erp_purchaseorderdetails.companyID,
+            erp_purchaseorderdetails.itemCode,
+            erp_purchaseorderdetails.itemPrimaryCode,
+            Sum(erp_purchaseorderdetails.noQty) AS SumOfnoQty,
+            erp_purchaseordermaster.poCancelledYN,
+            erp_purchaseordermaster.approved
+
+           FROM erp_purchaseorderdetails
+           INNER JOIN erp_purchaseordermaster ON erp_purchaseorderdetails.purchaseOrderMasterID = erp_purchaseordermaster.purchaseOrderID
+           GROUP BY erp_purchaseorderdetails.companyID,
+                    erp_purchaseorderdetails.itemCode,
+                    erp_purchaseorderdetails.itemPrimaryCode,
+                    erp_purchaseordermaster.poCancelledYN,
+                    erp_purchaseordermaster.approved;
+
+         */
+
+        $poQty = 0;
+
+
+
+        $grvQty = 0;
+
+        $quantityOnOrder = $poQty - $grvQty;
+        $quantityInHand = $poQty;
+
+        $input['poQuantity'] = $poQty;
+        $input['quantityOnOrder'] = $quantityOnOrder;
+        $input['quantityInHand'] = $quantityInHand;
 
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($input);
 
