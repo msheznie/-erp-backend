@@ -1,0 +1,163 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateChartOfAccountsAssignedAPIRequest;
+use App\Http\Requests\API\UpdateChartOfAccountsAssignedAPIRequest;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\Company;
+use App\Repositories\ChartOfAccountsAssignedRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+use App\Repositories\UserRepository;
+
+/**
+ * Class ChartOfAccountsAssignedController
+ * @package App\Http\Controllers\API
+ */
+class ChartOfAccountsAssignedAPIController extends AppBaseController
+{
+    /** @var  ChartOfAccountsAssignedRepository */
+    private $chartOfAccountsAssignedRepository;
+    private $userRepository;
+
+    public function __construct(ChartOfAccountsAssignedRepository $chartOfAccountsAssignedRepo, UserRepository $userRepo)
+    {
+        $this->chartOfAccountsAssignedRepository = $chartOfAccountsAssignedRepo;
+        $this->userRepository = $userRepo;
+    }
+
+    /**
+     * Display a listing of the ChartOfAccountsAssigned.
+     * GET|HEAD /chartOfAccountsAssigneds
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function index(Request $request)
+    {
+        $this->chartOfAccountsAssignedRepository->pushCriteria(new RequestCriteria($request));
+        $this->chartOfAccountsAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $chartOfAccountsAssigneds = $this->chartOfAccountsAssignedRepository->all();
+
+        return $this->sendResponse($chartOfAccountsAssigneds->toArray(), 'Chart Of Accounts Assigneds retrieved successfully');
+    }
+
+    /**
+     * Store a newly created ChartOfAccountsAssigned in storage.
+     * POST /chartOfAccountsAssigneds
+     *
+     * @param CreateChartOfAccountsAssignedAPIRequest $request
+     *
+     * @return Response
+     */
+    public function store(CreateChartOfAccountsAssignedAPIRequest $request)
+    {
+        $input = $request->all();
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+        $empName = $user->employee['empName'];
+
+
+        unset($input['company']);
+
+
+        if (array_key_exists('chartOfAccountsAssignedID', $input)) {
+            $chartOfAccountsAssigned = ChartOfAccountsAssigned::find($input['chartOfAccountsAssignedID']);
+
+            if (empty($chartOfAccountsAssigned)) {
+                return $this->sendError('Chart of Account company assigned not found!', 404);
+            }
+
+            $input = $this->convertArrayToValue($input);
+
+            foreach ($input as $key => $value) {
+                $chartOfAccountsAssigned->$key = $value;
+            }
+
+            $chartOfAccountsAssigned->save();
+        } else {
+            $input = $this->convertArrayToValue($input);
+            $company = Company::find($input['companySystemID']);
+            $input['companyID'] = $company->CompanyID;
+            $input['isAssigned'] = -1;
+            $input['isActive'] = 1;
+            $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->create($input);
+        }
+
+
+        return $this->sendResponse($chartOfAccountsAssigned->toArray(), 'Chart Of Accounts Assigned saved successfully');
+    }
+
+    /**
+     * Display the specified ChartOfAccountsAssigned.
+     * GET|HEAD /chartOfAccountsAssigneds/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function show($id)
+    {
+        /** @var ChartOfAccountsAssigned $chartOfAccountsAssigned */
+        $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->findWithoutFail($id);
+
+        if (empty($chartOfAccountsAssigned)) {
+            return $this->sendError('Chart Of Accounts Assigned not found');
+        }
+
+        return $this->sendResponse($chartOfAccountsAssigned->toArray(), 'Chart Of Accounts Assigned retrieved successfully');
+    }
+
+    /**
+     * Update the specified ChartOfAccountsAssigned in storage.
+     * PUT/PATCH /chartOfAccountsAssigneds/{id}
+     *
+     * @param  int $id
+     * @param UpdateChartOfAccountsAssignedAPIRequest $request
+     *
+     * @return Response
+     */
+    public function update($id, UpdateChartOfAccountsAssignedAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var ChartOfAccountsAssigned $chartOfAccountsAssigned */
+        $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->findWithoutFail($id);
+
+        if (empty($chartOfAccountsAssigned)) {
+            return $this->sendError('Chart Of Accounts Assigned not found');
+        }
+
+        $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->update($input, $id);
+
+        return $this->sendResponse($chartOfAccountsAssigned->toArray(), 'ChartOfAccountsAssigned updated successfully');
+    }
+
+    /**
+     * Remove the specified ChartOfAccountsAssigned from storage.
+     * DELETE /chartOfAccountsAssigneds/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function destroy($id)
+    {
+        /** @var ChartOfAccountsAssigned $chartOfAccountsAssigned */
+        $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->findWithoutFail($id);
+
+        if (empty($chartOfAccountsAssigned)) {
+            return $this->sendError('Chart Of Accounts Assigned not found');
+        }
+
+        $chartOfAccountsAssigned->delete();
+
+        return $this->sendResponse($id, 'Chart Of Accounts Assigned deleted successfully');
+    }
+}

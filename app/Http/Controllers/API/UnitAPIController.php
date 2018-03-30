@@ -1,5 +1,18 @@
 <?php
-
+/**
+=============================================
+-- File Name : UnitAPIController.php
+-- Project Name : ERP
+-- Module Name :  Unit Master
+-- Author : Pasan Madhuranga
+-- Create date :  22 - March 2018
+-- Description : This file contains the all CRUD for Unit Master
+-- REVISION HISTORY
+-- Date: 22 - March 2018 By: Pasan Description: Added a new function named as getAllUnitMaster()
+-- Date: 22 - March 2018 By: Pasan Description: Added a new function named as updateUnitMaster()
+-- Date: 22 - March 2018 By: Pasan Description: Added a new function named as getUnitMasterFormData()
+-- Date: 22 - March 2018 By: Pasan Description: Added a new function named as getUnitConversionsByUnitId()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUnitAPIRequest;
@@ -143,7 +156,7 @@ class UnitAPIController extends AppBaseController
         if (empty($unit)) {
             return $this->sendError('Unit not found');
         }
-
+        $unit->unitConversion()->delete();
         $unit->delete();
 
         return $this->sendResponse($id, 'Unit deleted successfully');
@@ -157,11 +170,37 @@ class UnitAPIController extends AppBaseController
     public function getAllUnitMaster(Request $request)
     {
         $input = $request->all();
+        $keyword = $input['search']['value'];
 
-        $unitMasters = Unit::select('UnitID', 'UnitShortCode', 'UnitDes');
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $unitMasters = Unit::select('UnitID', 'UnitShortCode', 'UnitDes')->select('units.*');
+//            ->when($keyword, function($query) use ($keyword){
+//                 return $query->where('UnitShortCode', 'LIKE', '%'.$keyword.'%')
+//                     ->orWhere('UnitDes', 'LIKE', '%'.$keyword.'%');
+//            });
+
         return \DataTables::eloquent($unitMasters)
-            //->addColumn('Actions', 'Actions', "Actions")
-            //->addColumn('Index', 'Index', "Index")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('UnitID', $input['order'][0]['dir']);
+                    } else if($input['order'][0]['column'] == 1)
+                    {
+                        $query->orderBy('UnitShortCode', $input['order'][0]['dir']);
+                    } else
+                    {
+                        $query->orderBy('UnitDes', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->make(true);
     }
 

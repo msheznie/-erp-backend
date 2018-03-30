@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateApprovalGroupsAPIRequest;
 use App\Http\Requests\API\UpdateApprovalGroupsAPIRequest;
 use App\Models\ApprovalGroups;
+use App\Models\DepartmentMaster;
+use App\Models\DocumentMaster;
 use App\Repositories\ApprovalGroupsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -54,9 +56,30 @@ class ApprovalGroupsAPIController extends AppBaseController
     public function store(CreateApprovalGroupsAPIRequest $request)
     {
         $input = $request->all();
-
-        $approvalGroups = $this->approvalGroupsRepository->create($input);
-
+        $input = array_except($input,'document');
+        $input = $this->convertArrayToValue($input);
+        $document = DocumentMaster::find($input["documentSystemID"]);
+        $approvalGroups = "";
+        if (isset($request->rightsGroupId))
+        {
+            $id = $request->rightsGroupId;
+            $approvalGroups = $this->approvalGroupsRepository->findWithoutFail($id);
+            if (empty($approvalGroups)) {
+                return $this->sendError('Approval Group not found');
+            }
+            $approvalGroups->documentSystemID = $input["documentSystemID"];
+            $approvalGroups->rightsGroupDes = $input["rightsGroupDes"];
+            $approvalGroups->departmentSystemID = $document->departmentSystemID;
+            $approvalGroups->departmentID = $document->departmentID;
+            $approvalGroups->documentID = $document->documentID;
+            $approvalGroups->sortOrder =  $input["sortOrder"];
+            $approvalGroups->save();
+        }else{
+            $input["departmentSystemID"] = $document->departmentSystemID;
+            $input["departmentID"] = $document->departmentID;
+            $input["documentID"] = $document->documentID;
+            $approvalGroups = $this->approvalGroupsRepository->create($input);
+        }
         return $this->sendResponse($approvalGroups->toArray(), 'Approval Groups saved successfully');
     }
 
@@ -125,5 +148,35 @@ class ApprovalGroupsAPIController extends AppBaseController
         $approvalGroups->delete();
 
         return $this->sendResponse($id, 'Approval Groups deleted successfully');
+    }
+
+    public function getAllApprovalGroup(){
+        $approvalGroups = ApprovalGroups::all();
+        return $this->sendResponse($approvalGroups->toArray(), 'Approval Groups retrieved successfully');
+    }
+
+    public function getApprovalGroupByCompanyDatatable(Request $request){
+        $approvalGroup = ApprovalGroups::with('document')->orderBy('rightsGroupId','desc');
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        return \DataTables::eloquent($approvalGroup)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('rightsGroupId', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
     }
 }

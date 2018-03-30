@@ -12,7 +12,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property string rightsGroupDes
  * @property integer isFormsAssigned
+ * @property integer documentSystemID
  * @property string documentID
+ * @property integer departmentSystemID
  * @property string departmentID
  * @property string condition
  * @property integer sortOrder
@@ -20,21 +22,25 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class ApprovalGroups extends Model
 {
-    use SoftDeletes;
+    //use SoftDeletes;
 
     public $table = 'approvalgroups';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timestamp';
+    const UPDATED_AT = 'timestamp';
 
 
     protected $dates = ['deleted_at'];
+
+    protected $primaryKey = 'rightsGroupId';
 
 
     public $fillable = [
         'rightsGroupDes',
         'isFormsAssigned',
+        'documentSystemID',
         'documentID',
+        'departmentSystemID',
         'departmentID',
         'condition',
         'sortOrder',
@@ -50,7 +56,9 @@ class ApprovalGroups extends Model
         'rightsGroupId' => 'integer',
         'rightsGroupDes' => 'string',
         'isFormsAssigned' => 'integer',
+        'documentSystemID' => 'integer',
         'documentID' => 'string',
+        'departmentSystemID' => 'integer',
         'departmentID' => 'string',
         'condition' => 'string',
         'sortOrder' => 'integer'
@@ -64,6 +72,14 @@ class ApprovalGroups extends Model
     public static $rules = [
         
     ];
+
+    public function department(){
+        return $this->belongsTo('App\Models\DepartmentMaster','departmentSystemID','departmentSystemID');
+    }
+
+    public function document(){
+        return $this->belongsTo('App\Models\DocumentMaster','documentSystemID','documentSystemID');
+    }
 
     
 }

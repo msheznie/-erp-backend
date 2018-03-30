@@ -126,4 +126,29 @@ class ApprovalRoleAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Approval Role deleted successfully');
     }
+
+    public function getApprovalRollByLevel(Request $request){
+        $approvalRole = ApprovalRole::with(['company' => function($query) {
+            // $query->select('CompanyName');
+        },'department' => function($query) {
+            //$query->select('DepartmentDescription');
+        },'document' => function($query) {
+            //$query->select('documentDescription');
+        },'serviceline' => function($query) {
+            //$query->select('ServiceLineDes');
+        }])->where('approvalLevelID', $request->approvalLevelID)->orderBy('rollLevel', 'asc')->get();
+        return $this->sendResponse($approvalRole->toArray(), 'Record retrieved successfully');
+    }
+
+    public function assignApprovalGroup(Request $request){
+        $input = $request->all();
+        $approvalRole = $this->approvalRoleRepository->findWithoutFail($request->rollMasterID);
+        if (empty($approvalRole)) {
+            return $this->sendError('Approval Groups not found');
+        }
+        $approvalRole->approvalGroupID = $request->approvalGroupID;
+        $approvalRole->save();
+
+        return $this->sendResponse($approvalRole->toArray(), 'ApprovalRole updated successfully');
+    }
 }

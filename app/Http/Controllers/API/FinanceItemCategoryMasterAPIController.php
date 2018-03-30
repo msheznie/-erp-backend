@@ -66,11 +66,29 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
      */
     public function allItemFinanceCategories(Request $request){
 
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         $financeItemCategoryMasters = FinanceItemCategoryMaster::select('financeitemcategorymaster.*');
 
         return \DataTables::eloquent($financeItemCategoryMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('itemCategoryID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->addColumn('Index', 'Index', "Index")
+            //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
 
@@ -84,13 +102,31 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
     public function allItemFinanceSubCategoriesByMainCategory(Request $request){
 
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         $financeItemCategorySub = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
                                                          ->with(['finance_gl_code_bs','finance_gl_code_pl'])
                                                          ->select('financeitemcategorysub.*');
 
         return \DataTables::eloquent($financeItemCategorySub)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('itemCategorySubID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->addColumn('Index', 'Index', "Index")
+            //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
 

@@ -26,12 +26,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class ApprovalRole extends Model
 {
-    use SoftDeletes;
+    //use SoftDeletes;
 
     public $table = 'erp_approvalrollmaster';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
+    protected $primaryKey = 'rollMasterID';
 
 
     protected $dates = ['deleted_at'];
@@ -83,5 +84,19 @@ class ApprovalRole extends Model
         
     ];
 
-    
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
+    public function department(){
+        return $this->belongsTo('App\Models\DepartmentMaster','departmentSystemID','departmentSystemID');
+    }
+
+    public function document(){
+        return $this->belongsTo('App\Models\DocumentMaster','documentSystemID','documentSystemID');
+    }
+
+    public function serviceline(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
 }

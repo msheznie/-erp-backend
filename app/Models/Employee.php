@@ -83,6 +83,7 @@ class Employee extends Model
 
 
     protected $dates = ['deleted_at'];
+    protected $primaryKey = 'employeeSystemID';
 
 
     public $fillable = [

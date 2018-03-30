@@ -5,10 +5,15 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateApprovalLevelAPIRequest;
 use App\Http\Requests\API\UpdateApprovalLevelAPIRequest;
 use App\Models\ApprovalLevel;
+use App\Models\ApprovalRole;
 use App\Models\Company;
+use App\Models\DocumentMaster;
+use App\Models\FinanceItemCategoryMaster;
+use App\Models\SegmentMaster;
 use App\Repositories\ApprovalLevelRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -55,10 +60,37 @@ class ApprovalLevelAPIController extends AppBaseController
     public function store(CreateApprovalLevelAPIRequest $request)
     {
         $input = $request->all();
+        $approvalLevel = "";
+        $input = $this->convertArrayToValue($input);
+        $companyID = Company::where('companySystemID',$input["companySystemID"])->first();
+        $input["companyID"] = $companyID->CompanyID;
 
-        $approvalLevels = $this->approvalLevelRepository->create($input);
+        $documentID = DocumentMaster::where('documentSystemID',$input["documentSystemID"])->first();
+        $input["documentID"] = $documentID->documentID;
+        $input["departmentID"] = $documentID->departmentID;
+        $input["departmentSystemID"] = $documentID->departmentSystemID;
 
-        return $this->sendResponse($approvalLevels->toArray(), 'Approval Level saved successfully');
+        if (isset($request->serviceLineSystemID))
+        {
+            $ServiceLineCode = SegmentMaster::where('serviceLineSystemID',$input["serviceLineSystemID"])->first();
+            $input["serviceLineCode"] = $ServiceLineCode->ServiceLineCode;
+        }
+
+        if (isset($request->approvalLevelID))
+        {
+            $id = $request->approvalLevelID;
+            $approvalLevel = $this->approvalLevelRepository->findWithoutFail($id);
+
+            if (empty($approvalLevel)) {
+                return $this->sendError('Approval Level not found');
+            }
+            $approvalLevel = $this->approvalLevelRepository->update($input, $id);
+
+        }else{
+            $approvalLevel = $this->approvalLevelRepository->create($input);
+        }
+
+        return $this->sendResponse($approvalLevel->toArray(), 'Approval Level saved successfully');
     }
 
     /**
@@ -93,6 +125,22 @@ class ApprovalLevelAPIController extends AppBaseController
     public function update($id, UpdateApprovalLevelAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $approvalLevel = "";
+        $input = $this->convertArrayToValue($input);
+        $companyID = Company::where('companySystemID',$input["companySystemID"])->first();
+        $input["companyID"] = $companyID->CompanyID;
+
+        $documentID = DocumentMaster::where('documentSystemID',$input["documentSystemID"])->first();
+        $input["documentID"] = $documentID->documentID;
+        $input["departmentID"] = $documentID->departmentID;
+        $input["departmentSystemID"] = $documentID->departmentSystemID;
+
+        if (isset($request->serviceLineSystemID))
+        {
+            $ServiceLineCode = SegmentMaster::where('serviceLineSystemID',$input["serviceLineSystemID"])->first();
+            $input["serviceLineCode"] = $ServiceLineCode->ServiceLineCode;
+        }
 
         /** @var ApprovalLevel $approvalLevel */
         $approvalLevel = $this->approvalLevelRepository->findWithoutFail($id);
@@ -122,6 +170,8 @@ class ApprovalLevelAPIController extends AppBaseController
         if (empty($approvalLevel)) {
             return $this->sendError('Approval Level not found');
         }
+
+        $approvalLevel->approvalRole()->delete();
 
         $approvalLevel->delete();
 
@@ -154,12 +204,71 @@ class ApprovalLevelAPIController extends AppBaseController
         }
 
         /** all document Drop Down */
-        $document = \Helper::getAllDocument();
+        $document = \Helper::getAllDocuments();
+
+        /** all finance category Drop Down */
+        $financeCategory = FinanceItemCategoryMaster::all();
 
         $output = array('company' => $groupCompany,
             'document' => $document,
+            'financeCategory' => $financeCategory,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getCompanyServiceLine(Request $request){
+        /** all Service line  Drop Down */
+        $selectedCompanyId = $request['companySystemID'];
+        $serviceline = \Helper::getCompanyServiceline($selectedCompanyId);
+        $output = array('serviceline' => $serviceline
+        );
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function activateApprovalLevel(Request $request){
+        $approvalLevel = $this->approvalLevelRepository->findWithoutFail($request->approvalLevelID);
+
+        if (empty($approvalLevel)) {
+            return $this->sendError('Approval Level not found');
+        }
+        if($request->isActive){
+            $approvalLevel->isActive = -1;
+        }else{
+            $approvalLevel->isActive = 0;
+        }
+        $approvalLevel->save();
+
+        $approvalRole = "";
+        if($approvalLevel->isActive) {
+            $isExist = ApprovalRole::where('approvalLevelID', $request->approvalLevelID)->exists();
+            if (!$isExist) {
+                $approvalRollMaster = [];
+                if ($approvalLevel) {
+                    for ($i = 1; $i <= $approvalLevel->noOfLevels; $i++) {
+                        $approvalRollMaster[] = array('rollDescription' => $approvalLevel->levelDescription . ' ' . $i, 'documentSystemID' => $approvalLevel->documentSystemID, 'documentID' => $approvalLevel->documentID, 'companySystemID' => $approvalLevel->companySystemID, 'companyID' => $approvalLevel->companyID, 'departmentSystemID' => $approvalLevel->departmentSystemID, 'departmentID' => $approvalLevel->departmentID, 'serviceLineSystemID' => $approvalLevel->serviceLineSystemID, 'serviceLineID' => $approvalLevel->serviceLineCode, 'rollLevel' => $i, 'approvalLevelID' => $approvalLevel->approvalLevelID);
+                    }
+                    ApprovalRole::insert($approvalRollMaster);
+                }
+            }
+        }
+        $approvalRole = ApprovalRole::with(['company' => function($query) {
+           // $query->select('CompanyName');
+        },'department' => function($query) {
+            //$query->select('DepartmentDescription');
+        },'document' => function($query) {
+            //$query->select('documentDescription');
+        },'serviceline' => function($query) {
+            //$query->select('ServiceLineDes');
+        }])->where('approvalLevelID', $request->approvalLevelID)->orderBy('rollLevel', 'asc')->get();
+
+        return $this->sendResponse($approvalRole->toArray(), 'Record updated successfully');
+
+    }
+
+    public function confirmDocTest(){
+        //$param = array('autoID' => 81,'company' => 7,'document' => 2,'segment' => 11,'category' => null,'amount' => 1000);
+        //return $test = \Helper::confirmDocument($param);
+        return \Helper::currencyConversion(7,2);
     }
 }

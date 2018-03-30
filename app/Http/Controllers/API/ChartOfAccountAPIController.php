@@ -16,6 +16,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateChartOfAccountAPIRequest;
 use App\Http\Requests\API\UpdateChartOfAccountAPIRequest;
 use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\Company;
 use App\Models\ControlAccount;
 use App\Models\AccountsType;
 use App\Models\YesNoSelection;
@@ -25,6 +27,9 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\Auth;
+use App\Repositories\UserRepository;
+use Illuminate\Validation\Rule;
 
 /**
  * Class ChartOfAccountController
@@ -34,10 +39,12 @@ class ChartOfAccountAPIController extends AppBaseController
 {
     /** @var  ChartOfAccountRepository */
     private $chartOfAccountRepository;
+    private $userRepository;
 
-    public function __construct(ChartOfAccountRepository $chartOfAccountRepo)
+    public function __construct(ChartOfAccountRepository $chartOfAccountRepo, UserRepository $userRepo)
     {
         $this->chartOfAccountRepository = $chartOfAccountRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -67,24 +74,141 @@ class ChartOfAccountAPIController extends AppBaseController
      */
     public function store(CreateChartOfAccountAPIRequest $request)
     {
+
         $input = $request->all();
 
+        /** Validation massage : Common for Add & Update */
+        $accountCode = isset($input['AccountCode']) ? $input['AccountCode'] : '';
+
+        $messages = array(
+            'AccountCode.unique' => 'The Account ' . $accountCode . ' code has already been taken'
+        );
 
 
-        if(array_key_exists ('catogaryBLorPLID' , $input )){
-            $categoryBLorPL = AccountsType::where('accountsType',$input['catogaryBLorPLID'])->first();
-            if($categoryBLorPL){
-                $input['catogaryBLorPL'] = $categoryBLorPL->code ;
+        if (array_key_exists('catogaryBLorPLID', $input)) {
+            $categoryBLorPL = AccountsType::where('accountsType', $input['catogaryBLorPLID'])->first();
+            if ($categoryBLorPL) {
+                $input['catogaryBLorPL'] = $categoryBLorPL->code;
             }
-
         }
 
-        $input['documentSystemID'] = 59 ;
+
+        if (array_key_exists('controlAccountsSystemID', $input)) {
+            $controlAccount = ControlAccount::where('controlAccountsSystemID', $input['controlAccountsSystemID'])->first();
+            if ($controlAccount) {
+                $input['controlAccounts'] = $controlAccount->controlAccountsID;
+            }
+        }
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+
+        $input['documentSystemID'] = 59;
         $input['documentID'] = 'CAM';
 
-        $chartOfAccounts = $this->chartOfAccountRepository->create($input);
+        if (array_key_exists('chartOfAccountSystemID', $input)) {
 
-        return $this->sendResponse($chartOfAccounts->toArray(), 'Chart Of Account saved successfully');
+            $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
+
+            if (empty($chartOfAccount)) {
+                return $this->sendError('Chart of Account not found!', 404);
+            }
+            // $input = array_except($input,['currency_master']); // uses only in sub sub tables
+            $input = $this->convertArrayToValue($input);
+
+            /** Validation : Edit Unique */
+            $validator = \Validator::make($input, [
+                'AccountCode' => Rule::unique('chartofaccounts')->ignore($input['chartOfAccountSystemID'], 'chartOfAccountSystemID')
+            ], $messages);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+            /** End of Validation */
+
+
+            $chartOfAccount->modifiedPc = gethostname();
+            $chartOfAccount->modifiedUser = $empId;
+
+
+            $empName = $user->employee['empName'];
+            $employeeSystemID = $user->employee['employeeSystemID'];
+
+            if ($input['confirmedYN'] == 1) {
+                $input['confirmedEmpSystemID'] = $employeeSystemID;
+                $input['confirmedEmpID'] = $empId;
+                $input['confirmedEmpName'] = $empName;
+                $input['confirmedEmpDate'] = date('Y-m-d H:i:s');
+            }
+
+
+            foreach ($input as $key => $value) {
+                $chartOfAccount->$key = $value;
+            }
+
+            $chartOfAccount->save();
+
+            //return $chartOfAccount;
+
+        } else {
+
+            /** Validation : Add Unique */
+            $validator = \Validator::make($input, [
+                'AccountCode' => 'unique:chartofaccounts'
+            ], $messages);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            /** End of Validation */
+
+
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = $empId;
+            $chartOfAccount = $this->chartOfAccountRepository->create($input);
+        }
+
+
+        return $this->sendResponse($chartOfAccount->toArray(), 'Chart Of Account saved successfully');
+    }
+
+
+    /**
+     * Display all assigned itemAssigned for specific Item Master.
+     * GET|HEAD / assignedCompaniesByChartOfAccount }
+     *
+     * @param  $request
+     *
+     * @return Response
+     */
+    public function assignedCompaniesByChartOfAccount(Request $request)
+    {
+        $chartOfAccountSystemID = $request['chartOfAccountSystemID'];
+        $data = ChartOfAccountsAssigned::where('chartOfAccountSystemID', '=', $chartOfAccountSystemID)->first();
+
+
+        if ($data) {
+            $itemCompanies = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$chartOfAccountSystemID)->with(['company'])->get();
+        } else {
+            $itemCompanies = [];
+        }
+
+        return $this->sendResponse($itemCompanies, 'Companies retrieved successfully');
+    }
+
+    public function getNotAssignedCompaniesByChartOfAccount(Request $request){
+        $chartOfAccountSystemID = $request->get('chartOfAccountSystemID');
+        $companies = Company::where('isGroup', 0)
+            ->whereDoesntHave('chartOfAccountAssigned',function ($query) use ($chartOfAccountSystemID) {
+                $query->where('chartOfAccountSystemID', '=', $chartOfAccountSystemID);
+            })
+            ->get(['companySystemID',
+                'CompanyID',
+                'CompanyName']);
+
+        return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
     }
 
 
@@ -159,6 +283,12 @@ class ChartOfAccountAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         //$companyId = $request['companyId'];
 
         $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType']);
@@ -180,10 +310,20 @@ class ChartOfAccountAPIController extends AppBaseController
                 $chartOfAccount->where('catogaryBLorPLID', $input['catogaryBLorPLID']);
             }
         }
+        $chartOfAccount->select('chartofaccounts.*');
 
         return \DataTables::eloquent($chartOfAccount)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('chartOfAccountSystemID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
 
@@ -204,7 +344,8 @@ class ChartOfAccountAPIController extends AppBaseController
         $accountsType = AccountsType::all();
 
         /** all Account Types */
-        $chartOfAccount = ChartOfAccount::all('AccountCode','AccountDescription');
+        $chartOfAccount = ChartOfAccount::where('isMasterAccount', 1)->get(['AccountCode', 'AccountDescription']);
+        //$chartOfAccount = ChartOfAccount::all('AccountCode', 'AccountDescription');
 
 
         $output = array('controlAccounts' => $controlAccounts,

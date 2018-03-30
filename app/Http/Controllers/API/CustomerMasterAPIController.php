@@ -75,14 +75,32 @@ class CustomerMasterAPIController extends AppBaseController
      */
     public function getAllCustomers(Request $request){
 
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         $companyId = $request['companyId'];
         $customerMasters = CustomerMaster::with(['country'])
              //with(['categoryMaster', 'employee', 'supplierCurrency'])
              ->select('customermaster.*');
 
         return \DataTables::eloquent($customerMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('customerCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->addColumn('Index', 'Index', "Index")
+            //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
 

@@ -74,23 +74,35 @@ class CustomerAssignedAPIController extends AppBaseController
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
 
-        $input = $this->convertArrayToValue($input);
-
         if( array_key_exists ('customerAssignedID' , $input )){
 
-            $customerAssigneds = CustomerAssigned::where('customerAssignedID', $input['customerAssignedID'])->first();
+            $inputData = $request->all();
+            $data = [
+                'isAssigned'    => $inputData['isAssigned'],
+                'isActive'      => $inputData['isActive'],
+                'vatEligible'   => $inputData['vatEligible'],
+                'vatNumber'     => $inputData['vatNumber'],
+                'vatPercentage' => $inputData['vatPercentage']
+            ];
 
-            if (empty($customerAssigneds)) {
-                return $this->sendError('customer assign not found');
-            }
-            $customerAssigneds->isAssigned = $input['isAssigned'];
-            $customerAssigneds->isActive = $input['isActive'];
-            $customerAssigneds->vatEligible = $input['vatEligible'];
-            $customerAssigneds->vatNumber = $input['vatNumber'];
-            $customerAssigneds->vatPercentage = $input['vatPercentage'];
+            $customerAssigneds = $this->customerAssignedRepository->update($data, $inputData['customerAssignedID']);
 
-            $customerAssigneds->save();
+//            $customerAssigneds = CustomerAssigned::where('customerAssignedID', $input['customerAssignedID'])->first();
+//
+//            if (empty($customerAssigneds)) {
+//                return $this->sendError('customer assign not found');
+//            }
+//            $customerAssigneds->isAssigned = $input['isAssigned'];
+//            $customerAssigneds->isActive = $input['isActive'];
+//            $customerAssigneds->vatEligible = $input['vatEligible'];
+//            $customerAssigneds->vatNumber = $input['vatNumber'];
+//            $customerAssigneds->vatPercentage = $input['vatPercentage'];
+//
+//            $customerAssigneds->save();
         }else{
+
+            $input = $this->convertArrayToValue($input);
+
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
             if($company){
                 $input['companyID'] = $company->CompanyID;
