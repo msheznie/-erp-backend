@@ -169,7 +169,6 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 
 
-
     Route::resource('erp_locations', 'ErpLocationAPIController');
     Route::resource('accounts_types', 'AccountsTypeAPIController');
 
@@ -252,3 +251,6 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 
 
+
+
+Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
