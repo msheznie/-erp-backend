@@ -1,21 +1,41 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PurchaseRequestAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Purchase Order
+ * -- Author : Mohamed Nazir
+ * -- Create date : 28 - March 2018
+ * -- Description : This file contains the all CRUD for Purchase Order
+ * -- REVISION HISTORY
+ * -- Date: 28-March 2018 By: Nazir Description: Added new functions named as getProcumentOrderByDocumentType() For load Master View
+ * -- Date: 29-March 2018 By: Nazir Description: Added new functions named as getProcumentOrderFormData() for Master View Filter
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
 use App\Models\Months;
+use App\Models\Company;
+use App\Models\SupplierMaster;
+use App\Models\CompanyPolicyMaster;
+use App\Models\CurrencyMaster;
+use App\Models\DocumentMaster;
+use App\Models\FinanceItemCategoryMaster;
+use App\Models\Location;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
+use App\Repositories\UserRepository;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 
 /**
@@ -26,10 +46,12 @@ class ProcumentOrderAPIController extends AppBaseController
 {
     /** @var  ProcumentOrderRepository */
     private $procumentOrderRepository;
+    private $userRepository;
 
-    public function __construct(ProcumentOrderRepository $procumentOrderRepo)
+    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo)
     {
         $this->procumentOrderRepository = $procumentOrderRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -59,6 +81,52 @@ class ProcumentOrderAPIController extends AppBaseController
     public function store(CreateProcumentOrderAPIRequest $request)
     {
         $input = $request->all();
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] =  $user->employee['empID'];
+        $input['createdUserSystemID'] =   $user->employee['empCompanySystemID'];
+        $input['departmentID'] = 'PROC';
+
+        $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
+            ->orderBy('purchaseOrderID','desc')
+            ->first();
+
+        $lastSerialNumber = 0;
+        if($lastSerial){
+            $lastSerialNumber =  intval($lastSerial->serialNumber) + 1;
+        }
+
+        $input['serialNumber'] = $lastSerialNumber;
+        $input['purchaseOrderCode'] = $lastSerialNumber;
+
+        $segment = SegmentMaster::where('serviceLineSystemID',$input['serviceLineSystemID'])->first();
+        if($segment){
+            $input['serviceLine'] = $segment->ServiceLineCode;
+        }
+
+        $document = DocumentMaster::where('documentSystemID',$input['documentSystemID'])->first();
+        if($document){
+            $input['documentID'] = $document->documentID;
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if($company){
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
+        if($supplier){
+            $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
+            $input['supplierName'] = $supplier->supplierName;
+            $input['supplierAddress'] = $supplier->address;
+            $input['supplierTelephone'] = $supplier->telephone;
+            $input['supplierFax'] = $supplier->fax;
+            $input['supplierEmail'] = $supplier->supEmail;
+            $input['creditPeriod'] = $supplier->creditPeriod;
+        }
 
         $procumentOrders = $this->procumentOrderRepository->create($input);
 
@@ -148,23 +216,23 @@ class ProcumentOrderAPIController extends AppBaseController
             }, 'location' => function ($query) {
             }, 'supplier' => function ($query) {
             }, 'currency' => function ($query) {
+            }, 'fcategory' => function ($query) {
             }, 'segment' => function ($query) {
-
             }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
         }
 
-        if (array_key_exists('cancelledYN', $input)) {
-            if ($input['cancelledYN'] == 0 || $input['cancelledYN'] == -1) {
-                $procumentOrders->where('cancelledYN', $input['cancelledYN']);
+        if (array_key_exists('poCancelledYN', $input)) {
+            if ($input['poCancelledYN'] == 0 || $input['poCancelledYN'] == -1) {
+                $procumentOrders->where('poCancelledYN', $input['poCancelledYN']);
             }
         }
 
-        if (array_key_exists('PRConfirmedYN', $input)) {
-            if ($input['PRConfirmedYN'] == 0 || $input['PRConfirmedYN'] == 1) {
-                $procumentOrders->where('PRConfirmedYN', $input['PRConfirmedYN']);
+        if (array_key_exists('poConfirmedYN', $input)) {
+            if ($input['poConfirmedYN'] == 0 || $input['poConfirmedYN'] == 1) {
+                $procumentOrders->where('poConfirmedYN', $input['poConfirmedYN']);
             }
         }
 
@@ -203,6 +271,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.referenceNumber',
                 'erp_purchaseordermaster.supplierTransactionCurrencyID',
                 'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
+                'erp_purchaseordermaster.financeCategory',
             ]);
 
         return \DataTables::eloquent($procumentOrders)
@@ -219,4 +288,76 @@ class ProcumentOrderAPIController extends AppBaseController
             ->make(true);
         ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
     }
+
+
+    public function getProcumentOrderFormData(Request $request){
+
+        $companyId = $request['companyId'];
+
+        $segments = SegmentMaster::where("companySystemID",$companyId)->get();
+
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $month = Months::all();
+
+        $years = ProcumentOrder::select(DB::raw("YEAR(createdDateTime) as year"))
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year','desc')
+            ->get();
+
+        $supplier = SupplierMaster::select(DB::raw("supplierCodeSystem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
+            ->get();
+
+        $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
+            ->get();
+
+        $financeCategories = FinanceItemCategoryMaster::all();
+
+        $locations = Location::all();
+
+        $financialYears = array(array('value' => intval(date("Y")),'label' => date("Y")),
+            array('value' => intval(date("Y",strtotime("-1 year"))),'label' => date("Y",strtotime("-1 year"))));
+
+
+        $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID',17)
+            ->where('companySystemID',$companyId)
+            ->first();
+
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID',20)
+            ->where('companySystemID',$companyId)
+            ->first();
+
+        $conditions = array('checkBudget' => 0,'allowFinanceCategory' => 0);
+
+        if($checkBudget){
+            $conditions['checkBudget'] = $checkBudget->isYesNO;
+        }
+
+        if($allowFinanceCategory){
+            $conditions['allowFinanceCategory'] = $allowFinanceCategory->isYesNO;
+        }
+
+
+        $output = array('segments' => $segments,
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'month' => $month,
+            'years' => $years,
+            'currencies' => $currencies,
+            'financeCategories' => $financeCategories,
+            'locations' => $locations,
+            'financialYears' => $financialYears,
+            'conditions' => $conditions,
+            'suppliers' => $supplier
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+
 }

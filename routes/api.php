@@ -169,7 +169,6 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 
 
-
     Route::resource('erp_locations', 'ErpLocationAPIController');
     Route::resource('accounts_types', 'AccountsTypeAPIController');
 
@@ -230,7 +229,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::resource('procurement-order', 'ProcumentOrderAPIController');
     Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
-    Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getPurchaseRequestFormData');
+    Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -253,3 +252,6 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 
 
+
+
+Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');

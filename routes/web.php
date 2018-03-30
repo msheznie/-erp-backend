@@ -1,0 +1,3 @@
+
+
+Route::resource('procumentOrderDetails', 'ProcumentOrderDetailController');
