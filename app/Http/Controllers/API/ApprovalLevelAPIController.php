@@ -267,7 +267,7 @@ class ApprovalLevelAPIController extends AppBaseController
     }
 
     public function confirmDocTest(){
-        $param = array('autoID' => 1008,'company' => 31,'document' => 2,'segment' => 6,'category' => null,'amount' => 997.99992);
+        $param = array('autoID' => 1008,'company' => 31,'document' => 2,'segment' => 1,'category' => null,'amount' => 997.99992);
         return $test = \Helper::confirmDocument($param);
     }
 }

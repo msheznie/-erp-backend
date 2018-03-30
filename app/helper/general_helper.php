@@ -4,6 +4,7 @@ namespace App\helper;
 
 use App\Models;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Response;
 use InfyOm\Generator\Utils\ResponseUtil;
 
@@ -27,8 +28,9 @@ class Helper
      * $param 2-company : company
      * $param 3-document : document
      * $param 4-segment : segment
-     * $param 5-category : category
-     * $param 6-amount : amount
+     * $param 5-segment : department
+     * $param 6-category : category
+     * $param 7-amount : amount
      */
     public static function confirmDocument($params)
     {
@@ -52,31 +54,36 @@ class Helper
                 $docInforArr["confirmedBySystemID"] = 'poConfirmedByEmpSystemID';
                 $docInforArr["confirmedDate"] = 'poConfirmedDate';
                 $docInforArr["tableName"] = 'erp_purchaseordermaster';
-                $docInforArr["modelName"] = '';
+                $docInforArr["modelName"] = 'ProcumentOrder';
                 $docInforArr["primarykey"] = 'purchaseOrderID';
+                break;
+            case 3:
+                $docInforArr["documentCodeColumnName"] = 'purchaseOrderCode';
+                $docInforArr["confirmColumnName"] = 'poConfirmedYN';
+                $docInforArr["confirmedBy"] = 'poConfirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'poConfirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'poConfirmedDate';
+                $docInforArr["tableName"] = 'erp_grvmaster';
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'grvAutoID';
                 break;
             default:
         }
 
-        return $docInforArr;
-        $namespacedModel = '\\Model\\'.$params["model"]; // Model name
-        $isConfirm = $namespacedModel::find($params["autoID"])->where($docInforArr["confirmColumnName"], -1)->exists();
-         if (!$isConfirm) {
+        $namespacedModel = 'App\Models\\'.$docInforArr["modelName"]; // Model name
+        $isConfirm = $namespacedModel::where($docInforArr["primarykey"],$params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
+        if (!$isConfirm) {
              $empInfo = self::getEmployeeInfo(); // get current employee detail
-             $confirmDoc = $namespacedModel::find($params["autoID"]);
-             $confirmDoc->$docInforArr["confirmColumnName"] = -1;
-             $confirmDoc->$docInforArr["confirmedBy"] = $empInfo->empID;
-             $confirmDoc->$docInforArr["confirmedBySystemID"] = $empInfo->employeeSystemID;
-             $confirmDoc->$docInforArr["confirmedDate"] = now();
-             $confirmDoc->save();
-
+             //$updateConfirm = $namespacedModel::find($params["autoID"])->update([$docInforArr["confirmColumnName"] => 1,$docInforArr["confirmedBy"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now()]);
              $approvalLevel = Models\ApprovalLevel::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('isActive', -1)->first();
              if ($approvalLevel) {
-                 $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"]);
+
                  $isSegmentWise = $approvalLevel->serviceLineWise;
                  $isCategoryWise = $approvalLevel->isCategoryWiseApproval;
                  $isValueWise = $approvalLevel->valueWise;
 
+                 DB::enableQueryLog();
+                 $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"]);
                  if ($isSegmentWise) {
                      if ($params["segment"]) {
                          $approvalLevel->where('serviceLineSystemID', $params["segment"]);
@@ -106,7 +113,9 @@ class Helper
                  }
 
                  $output = $approvalLevel->get();
-                 $sorceDocument = $namespacedModel.$params["model"]::find($params["autoID"]);   /** get sorce document master record*/
+                 //dd(DB::getQueryLog());
+                 return $output;
+                 $sorceDocument = $namespacedModel::find($params["autoID"]);   /** get sorce document master record*/
                  $documentApproved = [];
                     if ($output) {
                         if ($output->approvalRole) {
@@ -130,7 +139,9 @@ class Helper
 
     public static function getEmployeeInfo()
     {
-        $employee = Models\Employee::find(Auth::id());
+        //$user = Models\User::find(Auth::id());
+        $user = Models\User::find(11);
+        $employee = Models\Employee::find($user->employee_id);
         return $employee;
     }
 
