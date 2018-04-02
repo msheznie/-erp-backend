@@ -92,8 +92,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $financeCategoryId = 0;
 
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-            ->where('companySystemID', $companyId)
-            ->first();
+        ->where('companySystemID', $companyId)
+        ->first();
 
         if ($allowFinanceCategory) {
             $policy = $allowFinanceCategory->isYesNO;
@@ -104,7 +104,6 @@ class PurchaseRequestAPIController extends AppBaseController
                 if ($purchaseRequest) {
                     $financeCategoryId = $purchaseRequest->financeCategory;
                 }
-
             }
         }
 
@@ -114,9 +113,19 @@ class PurchaseRequestAPIController extends AppBaseController
             $items = $items->where('financeCategoryMaster',$financeCategoryId);
         }
 
+         if(array_key_exists ('search' , $input )){
+
+             $search = $input['search'];
+
+             $items = $items->where('itemPrimaryCode','LIKE',"%{$search}%")
+                            ->orWhere('itemDescription','LIKE',"%{$search}%");
+        }
+
+
+
         $items = $items
-            ->take(20)
-            ->get();
+                 ->take(20)
+                 ->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
