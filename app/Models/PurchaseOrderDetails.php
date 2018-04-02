@@ -268,4 +268,8 @@ class PurchaseOrderDetails extends Model
     {
         return $this->belongsTo(\App\Models\ErpPurchaseordermaster::class);
     }
+
+    public function unit(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
 }

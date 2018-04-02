@@ -173,6 +173,18 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         return $this->sendResponse($csv, 'successfully export');
     }
 
+    public function getItemsByProcumentOrder(Request $request){
+        $input = $request->all();
+        $prId = $input['purchaseOrderID'];
+
+        $items = PurchaseOrderDetails::where('purchaseOrderMasterID', $prId)
+            ->with(['unit' => function ($query) {
+            }])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Purchase Order Details retrieved successfully');
+    }
+
     /**
      * Store a newly created PurchaseOrderDetails in storage.
      * POST /purchaseOrderDetails

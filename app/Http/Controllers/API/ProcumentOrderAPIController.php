@@ -164,18 +164,33 @@ class ProcumentOrderAPIController extends AppBaseController
      */
     public function update($id, UpdateProcumentOrderAPIRequest $request)
     {
+        $userId = Auth::id();
+        $user =  $this->userRepository->with(['employee'])->findWithoutFail($userId);
+
         $input = $request->all();
+        $input = array_except($input,['created_by','confirmed_by']);
+        $input = $this->convertArrayToValue($input);
 
         /** @var ProcumentOrder $procumentOrder */
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procument Order not found');
+            return $this->sendError('Procurement Order not found');
         }
+
+        $segment = SegmentMaster::where('serviceLineSystemID',$input['serviceLineSystemID'])->first();
+        if($segment){
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] =  $user->employee['empID'];
+
+        $input['modifiedUserSystemID'] =   $user->employee['employeeSystemID'];
 
         $procumentOrder = $this->procumentOrderRepository->update($input, $id);
 
-        return $this->sendResponse($procumentOrder->toArray(), 'ProcumentOrder updated successfully');
+        return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order updated successfully');
     }
 
     /**
