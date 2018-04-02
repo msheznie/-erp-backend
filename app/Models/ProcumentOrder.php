@@ -140,7 +140,7 @@ class ProcumentOrder extends Model
     //use SoftDeletes;
 
     public $table = 'erp_purchaseordermaster';
-    
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
 

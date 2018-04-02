@@ -6,18 +6,15 @@ use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Class PurchaseOrderDetails
+ * Class GRVDetails
  * @package App\Models
- * @version March 12, 2018, 5:27 am UTC
+ * @version April 2, 2018, 3:53 am UTC
  *
- * @property \App\Models\ErpPurchaseordermaster erpPurchaseordermaster
+ * @property integer grvAutoID
  * @property string companyID
- * @property string departmentID
  * @property string serviceLineCode
- * @property integer purchaseOrderMasterID
- * @property integer POProcessMasterID
- * @property integer WO_purchaseOrderMasterID
- * @property integer WP_purchaseOrderDetailsID
+ * @property integer purchaseOrderMastertID
+ * @property integer purchaseOrderDetailsID
  * @property integer itemCode
  * @property string itemPrimaryCode
  * @property string itemDescription
@@ -30,19 +27,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property integer includePLForGRVYN
  * @property string supplierPartNumber
  * @property integer unitOfMeasure
- * @property integer itemClientReferenceNumberMasterID
- * @property string clientReferenceNumber
  * @property float noQty
- * @property integer noOfDays
+ * @property float prvRecievedQty
+ * @property float poQty
  * @property float unitCost
  * @property float discountPercentage
  * @property float discountAmount
  * @property float netAmount
- * @property integer budgetYear
- * @property integer prBelongsYear
- * @property integer isAccrued
- * @property float budjetAmtLocal
- * @property float budjetAmtRpt
  * @property string comment
  * @property integer supplierDefaultCurrencyID
  * @property float supplierDefaultER
@@ -57,21 +48,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float GRVcostPerUnitSupDefaultCur
  * @property float GRVcostPerUnitSupTransCur
  * @property float GRVcostPerUnitComRptCur
- * @property float addonPurchaseReturnCost
- * @property float purchaseRetcostPerUnitLocalCur
- * @property float purchaseRetcostPerUniSupDefaultCur
- * @property float purchaseRetcostPerUnitTranCur
- * @property float purchaseRetcostPerUnitRptCur
- * @property integer GRVSelectedYN
- * @property integer goodsRecievedYN
- * @property integer logisticSelectedYN
- * @property integer logisticRecievedYN
- * @property integer isAccruedYN
- * @property integer accrualJVID
+ * @property float landingCost_TransCur
+ * @property float landingCost_LocalCur
+ * @property float landingCost_RptCur
+ * @property float logisticsCharges_TransCur
+ * @property float logisticsCharges_LocalCur
+ * @property float logisticsChargest_RptCur
+ * @property integer assetAllocationDoneYN
+ * @property integer isContract
  * @property integer timesReferred
  * @property float totalWHTAmount
  * @property float WHTBearedBySupplier
  * @property float WHTBearedByCompany
+ * @property string extraComment
+ * @property integer vatRegisteredYN
+ * @property integer supplierVATEligible
  * @property float VATPercentage
  * @property float VATAmount
  * @property float VATAmountLocal
@@ -84,28 +75,25 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|\Carbon\Carbon createdDateTime
  * @property string|\Carbon\Carbon timeStamp
  */
-class PurchaseOrderDetails extends Model
+class GRVDetails extends Model
 {
     //use SoftDeletes;
 
-    public $table = 'erp_purchaseorderdetails';
+    public $table = 'erp_grvdetails';
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'purchaseOrderDetailsID';
-
+    protected $primaryKey  = 'grvDetailsID';
 
     protected $dates = ['deleted_at'];
 
 
     public $fillable = [
+        'grvAutoID',
         'companyID',
-        'departmentID',
         'serviceLineCode',
-        'purchaseOrderMasterID',
-        'POProcessMasterID',
-        'WO_purchaseOrderMasterID',
-        'WP_purchaseOrderDetailsID',
+        'purchaseOrderMastertID',
+        'purchaseOrderDetailsID',
         'itemCode',
         'itemPrimaryCode',
         'itemDescription',
@@ -118,19 +106,13 @@ class PurchaseOrderDetails extends Model
         'includePLForGRVYN',
         'supplierPartNumber',
         'unitOfMeasure',
-        'itemClientReferenceNumberMasterID',
-        'clientReferenceNumber',
         'noQty',
-        'noOfDays',
+        'prvRecievedQty',
+        'poQty',
         'unitCost',
         'discountPercentage',
         'discountAmount',
         'netAmount',
-        'budgetYear',
-        'prBelongsYear',
-        'isAccrued',
-        'budjetAmtLocal',
-        'budjetAmtRpt',
         'comment',
         'supplierDefaultCurrencyID',
         'supplierDefaultER',
@@ -145,21 +127,21 @@ class PurchaseOrderDetails extends Model
         'GRVcostPerUnitSupDefaultCur',
         'GRVcostPerUnitSupTransCur',
         'GRVcostPerUnitComRptCur',
-        'addonPurchaseReturnCost',
-        'purchaseRetcostPerUnitLocalCur',
-        'purchaseRetcostPerUniSupDefaultCur',
-        'purchaseRetcostPerUnitTranCur',
-        'purchaseRetcostPerUnitRptCur',
-        'GRVSelectedYN',
-        'goodsRecievedYN',
-        'logisticSelectedYN',
-        'logisticRecievedYN',
-        'isAccruedYN',
-        'accrualJVID',
+        'landingCost_TransCur',
+        'landingCost_LocalCur',
+        'landingCost_RptCur',
+        'logisticsCharges_TransCur',
+        'logisticsCharges_LocalCur',
+        'logisticsChargest_RptCur',
+        'assetAllocationDoneYN',
+        'isContract',
         'timesReferred',
         'totalWHTAmount',
         'WHTBearedBySupplier',
         'WHTBearedByCompany',
+        'extraComment',
+        'vatRegisteredYN',
+        'supplierVATEligible',
         'VATPercentage',
         'VATAmount',
         'VATAmountLocal',
@@ -179,14 +161,12 @@ class PurchaseOrderDetails extends Model
      * @var array
      */
     protected $casts = [
-        'purchaseOrderDetailsID' => 'integer',
+        'grvDetailsID' => 'integer',
+        'grvAutoID' => 'integer',
         'companyID' => 'string',
-        'departmentID' => 'string',
         'serviceLineCode' => 'string',
-        'purchaseOrderMasterID' => 'integer',
-        'POProcessMasterID' => 'integer',
-        'WO_purchaseOrderMasterID' => 'integer',
-        'WP_purchaseOrderDetailsID' => 'integer',
+        'purchaseOrderMastertID' => 'integer',
+        'purchaseOrderDetailsID' => 'integer',
         'itemCode' => 'integer',
         'itemPrimaryCode' => 'string',
         'itemDescription' => 'string',
@@ -199,19 +179,13 @@ class PurchaseOrderDetails extends Model
         'includePLForGRVYN' => 'integer',
         'supplierPartNumber' => 'string',
         'unitOfMeasure' => 'integer',
-        'itemClientReferenceNumberMasterID' => 'integer',
-        'clientReferenceNumber' => 'string',
         'noQty' => 'float',
-        'noOfDays' => 'integer',
+        'prvRecievedQty' => 'float',
+        'poQty' => 'float',
         'unitCost' => 'float',
         'discountPercentage' => 'float',
         'discountAmount' => 'float',
         'netAmount' => 'float',
-        'budgetYear' => 'integer',
-        'prBelongsYear' => 'integer',
-        'isAccrued' => 'integer',
-        'budjetAmtLocal' => 'float',
-        'budjetAmtRpt' => 'float',
         'comment' => 'string',
         'supplierDefaultCurrencyID' => 'integer',
         'supplierDefaultER' => 'float',
@@ -226,21 +200,21 @@ class PurchaseOrderDetails extends Model
         'GRVcostPerUnitSupDefaultCur' => 'float',
         'GRVcostPerUnitSupTransCur' => 'float',
         'GRVcostPerUnitComRptCur' => 'float',
-        'addonPurchaseReturnCost' => 'float',
-        'purchaseRetcostPerUnitLocalCur' => 'float',
-        'purchaseRetcostPerUniSupDefaultCur' => 'float',
-        'purchaseRetcostPerUnitTranCur' => 'float',
-        'purchaseRetcostPerUnitRptCur' => 'float',
-        'GRVSelectedYN' => 'integer',
-        'goodsRecievedYN' => 'integer',
-        'logisticSelectedYN' => 'integer',
-        'logisticRecievedYN' => 'integer',
-        'isAccruedYN' => 'integer',
-        'accrualJVID' => 'integer',
+        'landingCost_TransCur' => 'float',
+        'landingCost_LocalCur' => 'float',
+        'landingCost_RptCur' => 'float',
+        'logisticsCharges_TransCur' => 'float',
+        'logisticsCharges_LocalCur' => 'float',
+        'logisticsChargest_RptCur' => 'float',
+        'assetAllocationDoneYN' => 'integer',
+        'isContract' => 'integer',
         'timesReferred' => 'integer',
         'totalWHTAmount' => 'float',
         'WHTBearedBySupplier' => 'float',
         'WHTBearedByCompany' => 'float',
+        'extraComment' => 'string',
+        'vatRegisteredYN' => 'integer',
+        'supplierVATEligible' => 'integer',
         'VATPercentage' => 'float',
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
@@ -261,16 +235,8 @@ class PurchaseOrderDetails extends Model
         
     ];
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     **/
-    public function order()
-    {
-        return $this->belongsTo(\App\Models\ProcumentOrder::class,'purchaseOrderMasterID','purchaseOrderID');
+    public function master(){
+        return $this->belongsTo('App\Models\GRVMaster','grvAutoID','grvAutoID');
     }
-
-    public function unit(){
-        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
-    }
-
+    
 }

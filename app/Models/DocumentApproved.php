@@ -44,12 +44,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class DocumentApproved extends Model
 {
-    use SoftDeletes;
+    //use SoftDeletes;
 
     public $table = 'erp_documentapproved';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
+    protected $primaryKey = 'documentApprovedID';
 
 
     protected $dates = ['deleted_at'];

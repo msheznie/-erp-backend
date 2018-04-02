@@ -243,15 +243,23 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
     Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
     Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
+    Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
     Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
 
     Route::resource('document_approveds', 'DocumentApprovedAPIController');
-    Route::get('confirmDocTest', 'ApprovalLevelAPIController@confirmDocTest');
     Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
+
+    Route::resource('currency_conversions', 'CurrencyConversionAPIController');
+
+    Route::resource('bank_accounts', 'BankAccountAPIController');
+    Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
+
+    Route::resource('g_r_v_masters', 'GRVMasterAPIController');
+
+    Route::resource('g_r_v_details', 'GRVDetailsAPIController');
+
 });
 
-
-
-
-
 Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
+
+

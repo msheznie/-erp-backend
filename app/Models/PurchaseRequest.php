@@ -293,5 +293,9 @@ class PurchaseRequest extends Model
    public function financeCategory(){
        return $this->belongsTo('App\Models\FinanceItemCategoryMaster','financeCategory','itemCategoryID');
    }
+
+    public function details(){
+        return $this->hasMany('App\Models\PurchaseRequestDetails','purchaseRequestID','purchaseRequestID');
+    }
     
 }
