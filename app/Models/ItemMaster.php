@@ -80,6 +80,7 @@ class ItemMaster extends Model
         'itemPicture',
         'selectedForAssign',
         'isActive',
+        'RollLevForApp_curr',
         'sentConfirmationEmail',
         'confirmationEmailSentByEmpID',
         'confirmationEmailSentByEmpName',
@@ -125,6 +126,7 @@ class ItemMaster extends Model
         'itemPicture' => 'string',
         'selectedForAssign' => 'integer',
         'isActive' => 'integer',
+        'RollLevForApp_curr' => 'integer',
         'sentConfirmationEmail' => 'integer',
         'confirmationEmailSentByEmpID' => 'string',
         'confirmationEmailSentByEmpName' => 'string',
@@ -160,5 +162,9 @@ class ItemMaster extends Model
 
     public function financeSubCategory(){
         return $this->hasOne('App\Models\FinanceItemCategorySub','itemCategorySubID','financeCategorySub');
+    }
+
+    public function documentapproved(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemCodeSystem');
     }
 }

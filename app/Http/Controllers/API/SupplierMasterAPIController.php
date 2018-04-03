@@ -241,9 +241,14 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if($input['supplierConfirmedYN'] == 1){
-            $input['supplierConfirmedEmpID'] = $empId;
+            /*$input['supplierConfirmedEmpID'] = $empId;
             $input['supplierConfirmedEmpName'] = $empName;
-            $input['supplierConfirmedDate'] = now();
+            $input['supplierConfirmedDate'] = now();*/
+            $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
+            $confirm = \Helper::confirmDocument($params);
+            if(!$confirm["success"]){
+                return $this->sendError($confirm["message"]);
+            }
         }
 
          $supplierMaster = $this->supplierMasterRepository->update($input, $id);

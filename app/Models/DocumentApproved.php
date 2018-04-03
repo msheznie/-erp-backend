@@ -133,5 +133,9 @@ class DocumentApproved extends Model
         
     ];
 
-    
+    public function employeesdepartment(){
+        return $this->belongsTo('App\Models\EmployeesDepartment','approvalGroupID','employeeGroupID');
+    }
+
+
 }

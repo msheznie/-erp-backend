@@ -1,16 +1,17 @@
 <?php
 /**
-=============================================
--- File Name : ItemMasterAPIController.php
--- Project Name : ERP
--- Module Name :  Item Master
--- Author : Mohamed Fayas
--- Create date : 14 - March 2018
--- Description : This file contains the all CRUD for Item Master
--- REVISION HISTORY
--- Date: 14-March 2018 By: Fayas Description: Added new functions named as getAllItemsMaster(),getItemMasterFormData(),
-updateItemMaster(),getAssignedCompaniesByItem()
+ * =============================================
+ * -- File Name : ItemMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Item Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Item Master
+ * -- REVISION HISTORY
+ * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getAllItemsMaster(),getItemMasterFormData(),
+ * updateItemMaster(),getAssignedCompaniesByItem()
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateItemMasterAPIRequest;
@@ -37,13 +38,13 @@ use Illuminate\Support\Facades\Auth;
  * Class ItemMasterController
  * @package App\Http\Controllers\API
  */
-
 class ItemMasterAPIController extends AppBaseController
 {
     /** @var  ItemMasterRepository */
     private $itemMasterRepository;
     private $userRepository;
-    public function __construct(ItemMasterRepository $itemMasterRepo,UserRepository $userRepo)
+
+    public function __construct(ItemMasterRepository $itemMasterRepo, UserRepository $userRepo)
     {
         $this->itemMasterRepository = $itemMasterRepo;
         $this->userRepository = $userRepo;
@@ -84,42 +85,99 @@ class ItemMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-         $itemMasters = ItemMaster::with(['unit','financeMainCategory','financeSubCategory']);
-        if(array_key_exists ('financeCategoryMaster' , $input)){
-            if($request['financeCategoryMaster'] > 0){
-                $itemMasters->where('financeCategoryMaster',$input['financeCategoryMaster']);
+        $itemMasters = ItemMaster::with(['unit', 'financeMainCategory', 'financeSubCategory']);
+        if (array_key_exists('financeCategoryMaster', $input)) {
+            if ($request['financeCategoryMaster'] > 0) {
+                $itemMasters->where('financeCategoryMaster', $input['financeCategoryMaster']);
             }
         }
 
-        if(array_key_exists ('financeCategorySub' , $input )){
+        if (array_key_exists('financeCategorySub', $input)) {
 
-            if($request['financeCategorySub'] > 0){
-                $itemMasters->where('financeCategorySub',$input['financeCategorySub']);
+            if ($request['financeCategorySub'] > 0) {
+                $itemMasters->where('financeCategorySub', $input['financeCategorySub']);
             }
         }
 
-        if(array_key_exists ('isActive' , $input )){
-            if($input['isActive'] == 0 || $input['isActive'] == 1){
-                $itemMasters->where('isActive',$input['isActive']);
+        if (array_key_exists('isActive', $input)) {
+            if ($input['isActive'] == 0 || $input['isActive'] == 1) {
+                $itemMasters->where('isActive', $input['isActive']);
             }
         }
-        if(array_key_exists ('itemApprovedYN' , $input )){
-            if($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1){
-                $itemMasters->where('itemApprovedYN',$input['itemApprovedYN']);
+        if (array_key_exists('itemApprovedYN', $input)) {
+            if ($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1) {
+                $itemMasters->where('itemApprovedYN', $input['itemApprovedYN']);
             }
         }
-        if(array_key_exists ('itemConfirmedYN' , $input )){
-            if($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1){
-                $itemMasters->where('itemConfirmedYN',$input['itemConfirmedYN']);
+        if (array_key_exists('itemConfirmedYN', $input)) {
+            if ($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1) {
+                $itemMasters->where('itemConfirmedYN', $input['itemConfirmedYN']);
             }
         }
 
 
         return \DataTables::eloquent($itemMasters)
             ->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+    }
+
+    /**
+     * Display items from ItemMaster for approval.
+     * POST /getAllItemsMasterApproval
+     *
+     * @param Request $request
+     * @return Response
+     */
+
+    public function getAllItemsMasterApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $companyID = $request->selectedCompanyID;
+        $empID = Auth::id();
+        /*$itemMasters =  ItemMaster::whereHas('documentapproved', function($query) use ($companyID,$empID){
+            $query->where('documentSystemID', 57)
+                  ->where('approvedYN', 0)
+                   ->where('primaryCompanySystemID', $companyID)
+                   ->where('RollLevForApp_curr','rollLevelOrder')
+                   ->whereHas('employeesdepartment',function($query) use ($companyID,$empID){
+                       $query->where('companySystemID',$companyID)
+                             ->where('documentSystemID', 57)->where('employeeSystemID', $empID);
+                   });
+        })->where('primaryCompanySystemID',$companyID)->where('itemApprovedYN', 0)->get();
+        return $itemMasters;*/
+
+
+        $itemMasters = ItemMaster::with(['unit','financeMainCategory','financeSubCategory'])->join('erp_documentapproved', function($join) use ($companyID,$empID){
+                $join->on('documentSystemCode', 'itemCodeSystem');
+                $join->on('RollLevForApp_curr', 'rollLevelOrder');
+                $join->where('erp_documentapproved.approvedYN', 0);
+                $join->where('erp_documentapproved.companySystemID', $companyID);
+                $join->where('erp_documentapproved.documentSystemID', 57);
+        })->join('employeesdepartments',function ($join) use ($companyID,$empID){
+            $join->on('approvalGroupID', 'employeeGroupID');
+            $join->where('employeesdepartments.companySystemID',$companyID)->where('employeesdepartments.documentSystemID', 57)->where('employeesdepartments.employeeSystemID', $empID);
+        })->where('itemApprovedYN', 0)->where('primaryCompanySystemID',$companyID);
+
+        return \DataTables::eloquent($itemMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
                     }
                 }
@@ -143,15 +201,15 @@ class ItemMasterAPIController extends AppBaseController
 
         $selectedCompanyId = $request['selectedCompanyId'];
 
-        $masterCompany = Company::where("companySystemID",$selectedCompanyId)->first();
+        $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
         /** all Companies by Group company  Drop Down */
-        $companiesByGroup = Company::where("masterComapanyID",$masterCompany->CompanyID)
-            ->where("isGroup",0)->get();
+        $companiesByGroup = Company::where("masterComapanyID", $masterCompany->CompanyID)
+            ->where("isGroup", 0)->get();
 
 
         /** all Company  Drop Down */
-        $allCompanies = Company::where("isGroup",0)->get();
+        $allCompanies = Company::where("isGroup", 0)->get();
 
         /** all FinanceItemCategoryMaster Drop Down */
         $itemCategory = FinanceItemCategoryMaster::all();
@@ -166,12 +224,12 @@ class ItemMasterAPIController extends AppBaseController
         $units = Unit::all();
 
         $output = array('companiesByGroup' => $companiesByGroup,
-                         'allCompanies' => $allCompanies,
-                         'financeItemCategoryMaster' => $itemCategory,
-                         'financeItemCategorySub' => $itemCategorySub,
-                          'yesNoSelection' => $yesNoSelection,
-                          'units' => $units
-                        );
+            'allCompanies' => $allCompanies,
+            'financeItemCategoryMaster' => $itemCategory,
+            'financeItemCategorySub' => $itemCategorySub,
+            'yesNoSelection' => $yesNoSelection,
+            'units' => $units
+        );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
 
@@ -196,19 +254,19 @@ class ItemMasterAPIController extends AppBaseController
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $empId;
 
-        $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID',$input['financeCategoryMaster'])->first();
+        $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID', $input['financeCategoryMaster'])->first();
         $input['createdUserID'] = $financeCategoryMaster->itemCodeDef;
         $runningSerialOrder = $financeCategoryMaster->lastSerialOrder + 1;
         $code = $financeCategoryMaster->itemCodeDef;
         $count = $financeCategoryMaster->numberOfDigits;
         $primaryCode = $code . str_pad($runningSerialOrder, $count, '0', STR_PAD_LEFT);
-        $input['runningSerialOrder'] =  $runningSerialOrder;
-        $input['primaryCode'] =  $primaryCode;
-        $input['primaryItemCode'] =  $code;
-        $financeCategorySub = FinanceItemCategorySub::where('itemCategorySubID',$input['financeCategorySub'])->first();
-        $company = Company::where('companySystemID',$input['primaryCompanySystemID'])->first();
+        $input['runningSerialOrder'] = $runningSerialOrder;
+        $input['primaryCode'] = $primaryCode;
+        $input['primaryItemCode'] = $code;
+        $financeCategorySub = FinanceItemCategorySub::where('itemCategorySubID', $input['financeCategorySub'])->first();
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
         $input['primaryCompanyID'] = $company->CompanyID;
-        $document = DocumentMaster::where('documentID','ITMM')->first();
+        $document = DocumentMaster::where('documentID', 'ITMM')->first();
         $input['documentSystemID'] = $document->documentSystemID;
         $input['documentID'] = $document->documentID;
 
@@ -232,54 +290,55 @@ class ItemMasterAPIController extends AppBaseController
      */
     public function updateItemMaster(Request $request)
     {
+            $input = $request->all();
 
-        $input = $request->all();
+            $id = Auth::id();
+            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+            $empId = $user->employee['empID'];
+            $input['modifiedPc'] = gethostname();
+            $input['modifiedUser'] = $empId;
+            $empName = $user->employee['empName'];
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-        $empId = $user->employee['empID'];
-        $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = $empId;
-        $empName = $user->employee['empName'];
+            $id = $input['itemCodeSystem'];
 
-        $id = $input['itemCodeSystem'];
+            $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
 
-        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
-
-        if (empty($itemMaster)) {
-            return $this->sendError('Item Master not found');
-        }
-        foreach ($input as $key => $value) {
-            if (is_array($input[$key])){
-                if(count($input[$key]) > 0){
-                    $input[$key] = $input[$key][0];
-                }else{
-                    $input[$key] = 0;
+            if (empty($itemMaster)) {
+                return $this->sendError('Item Master not found');
+            }
+            foreach ($input as $key => $value) {
+                if (is_array($input[$key])) {
+                    if (count($input[$key]) > 0) {
+                        $input[$key] = $input[$key][0];
+                    } else {
+                        $input[$key] = 0;
+                    }
                 }
             }
-        }
-        if($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1){
+            if ($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1) {
 
-            //if approved no
-               //is approved  =1
+                //if approved no
+                //is approved  =1
 
-            // else approved yes
+                // else approved yes
                 // call ur function
 
-            $input['itemConfirmedByEMPID'] = $empId;
-            $input['itemConfirmedByEMPName'] = $empName;
-            $input['itemConfirmedDate'] = now();
-        }
-        foreach ($input as $key => $value) {
-            $itemMaster->$key = $value;
-        }
+                /*$input['itemConfirmedByEMPID'] = $empId;
+                $input['itemConfirmedByEMPName'] = $empName;
+                $input['itemConfirmedDate'] = now();*/
+                $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
+                $confirm = \Helper::confirmDocument($params);
+                if(!$confirm["success"]){
+                    return $this->sendError($confirm["message"]);
+                }
+            }
+            foreach ($input as $key => $value) {
+                $itemMaster->$key = $value;
+            }
 
+            $itemMaster->save();
+            return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully');
 
-        $itemMaster->save();
-
-        // $supplierMaster = $this->supplierMasterRepository->update($input, $id);
-
-        return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully');
     }
 
     /**
@@ -297,7 +356,7 @@ class ItemMasterAPIController extends AppBaseController
         $item = ItemMaster::where('itemCodeSystem', '=', $itemId)->first();
 
         if ($item) {
-            $itemCompanies = ItemAssigned::where('itemCodeSystem',$itemId)->with(['company'])
+            $itemCompanies = ItemAssigned::where('itemCodeSystem', $itemId)->with(['company'])
                 ->orderBy('idItemAssigned', 'DESC')
                 ->get();
         } else {
@@ -307,8 +366,6 @@ class ItemMasterAPIController extends AppBaseController
         return $this->sendResponse($itemCompanies, 'Companies retrieved successfully');
 
     }
-    
-
 
 
     /**

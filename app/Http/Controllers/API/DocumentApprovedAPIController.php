@@ -126,4 +126,5 @@ class DocumentApprovedAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Document Approved deleted successfully');
     }
+
 }

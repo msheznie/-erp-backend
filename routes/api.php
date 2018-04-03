@@ -252,7 +252,12 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('bank_accounts', 'BankAccountAPIController');
     //Route::get('confirmDocTest', 'ApprovalLevelAPIController@confirmDocTest');
 
+    Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval');
+
 });
 
 Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
+
+
+Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
