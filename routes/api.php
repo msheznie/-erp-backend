@@ -230,6 +230,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('procurement-order', 'ProcumentOrderAPIController');
     Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
     Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData');
+    Route::get('getItemsByProcumentOrder', 'PurchaseOrderDetailsAPIController@getItemsByProcumentOrder');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -242,6 +243,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
     Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
     Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
+    Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
     Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
 
     Route::resource('document_approveds', 'DocumentApprovedAPIController');
@@ -250,14 +252,17 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('currency_conversions', 'CurrencyConversionAPIController');
 
     Route::resource('bank_accounts', 'BankAccountAPIController');
-    //Route::get('confirmDocTest', 'ApprovalLevelAPIController@confirmDocTest');
+    Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
+
+    Route::resource('g_r_v_masters', 'GRVMasterAPIController');
+
+    Route::resource('g_r_v_details', 'GRVDetailsAPIController');
 
     Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval');
 
+    Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
+    Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
+
 });
 
-Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
-
-
-Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
