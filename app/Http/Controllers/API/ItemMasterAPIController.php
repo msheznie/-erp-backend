@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getAllItemsMaster(),getItemMasterFormData(),
  * updateItemMaster(),getAssignedCompaniesByItem()
+ * * -- Date: 03-April 2018 By: Mubashir Description: Added a new function getAllItemsMasterApproval() to display items to be approved
  */
 
 namespace App\Http\Controllers\API;
@@ -149,7 +150,8 @@ class ItemMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
         $companyID = $request->selectedCompanyID;
-        $empID = Auth::id();
+        $companyID = \Helper::getGroupCompany($companyID);
+        $empID = \Helper::getEmployeeSystemID();
         /*$itemMasters =  ItemMaster::whereHas('documentapproved', function($query) use ($companyID,$empID){
             $query->where('documentSystemID', 57)
                   ->where('approvedYN', 0)
@@ -162,18 +164,22 @@ class ItemMasterAPIController extends AppBaseController
         })->where('primaryCompanySystemID',$companyID)->where('itemApprovedYN', 0)->get();
         return $itemMasters;*/
 
-
+        //DB::enableQueryLog();
         $itemMasters = ItemMaster::with(['unit','financeMainCategory','financeSubCategory'])->join('erp_documentapproved', function($join) use ($companyID,$empID){
                 $join->on('documentSystemCode', 'itemCodeSystem');
                 $join->on('RollLevForApp_curr', 'rollLevelOrder');
                 $join->where('erp_documentapproved.approvedYN', 0);
-                $join->where('erp_documentapproved.companySystemID', $companyID);
+                $join->where('erp_documentapproved.rejectedYN', 0);
+                $join->whereIn('erp_documentapproved.companySystemID', $companyID);
                 $join->where('erp_documentapproved.documentSystemID', 57);
         })->join('employeesdepartments',function ($join) use ($companyID,$empID){
             $join->on('approvalGroupID', 'employeeGroupID');
-            $join->where('employeesdepartments.companySystemID',$companyID)->where('employeesdepartments.documentSystemID', 57)->where('employeesdepartments.employeeSystemID', $empID);
-        })->where('itemApprovedYN', 0)->where('primaryCompanySystemID',$companyID);
-
+            $join->whereIn('employeesdepartments.companySystemID',$companyID);
+            $join->where('employeesdepartments.documentSystemID', 57);
+            $join->where('employeesdepartments.employeeSystemID', $empID);
+        })->where('itemApprovedYN', 0)->
+        whereIn('primaryCompanySystemID',$companyID);
+        //dd(DB::getQueryLog());
         return \DataTables::eloquent($itemMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -435,5 +441,26 @@ class ItemMasterAPIController extends AppBaseController
         $itemMaster->delete();
 
         return $this->sendResponse($id, 'Item Master deleted successfully');
+    }
+
+
+    public function approveItem(Request $request){
+        $approve = \Helper::approveDocument($request);
+        if(!$approve["success"]){
+            return $this->sendError($approve["message"]);
+        }else{
+            return $this->sendResponse(array(),$approve["message"]);
+        }
+
+    }
+
+    public function rejectItem(Request $request){
+        $reject = \Helper::rejectDocument($request);
+        if(!$reject["success"]){
+            return $this->sendError($reject["message"]);
+        }else{
+            return $this->sendResponse(array(),$reject["message"]);
+        }
+
     }
 }

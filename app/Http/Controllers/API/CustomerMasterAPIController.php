@@ -105,6 +105,58 @@ class CustomerMasterAPIController extends AppBaseController
     }
 
     /**
+     * get supplier master approval by company.
+     * GET|HEAD /getAllCustomerMasterApproval
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getAllCustomerMasterApproval(Request $request){
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->selectedCompanyID;
+        $companyID = \Helper::getGroupCompany($companyID);
+        $empID = \Helper::getEmployeeSystemID();
+
+        $customerMasters = CustomerMaster::with('country')->join('erp_documentapproved', function($join) use ($companyID,$empID){
+            $join->on('documentSystemCode', 'customerCodeSystem');
+            $join->on('RollLevForApp_curr', 'rollLevelOrder');
+            $join->where('erp_documentapproved.approvedYN', 0);
+            $join->where('erp_documentapproved.rejectedYN', 0);
+            $join->whereIn('erp_documentapproved.companySystemID', $companyID);
+            $join->where('erp_documentapproved.documentSystemID', 58);
+        })->join('employeesdepartments',function ($join) use ($companyID,$empID){
+            $join->on('approvalGroupID', 'employeeGroupID');
+            $join->whereIn('employeesdepartments.companySystemID',$companyID);
+            $join->where('employeesdepartments.documentSystemID', 58);
+            $join->where('employeesdepartments.employeeSystemID', $empID);
+        })->where('customermaster.approvedYN', 0)->
+        whereIn('primaryCompanySystemID',$companyID);
+
+        return \DataTables::eloquent($customerMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('customerCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    /**
      * get form data for Customer Master.
      * GET /getCustomerFormData
      *
@@ -217,12 +269,11 @@ class CustomerMasterAPIController extends AppBaseController
                 $input['confirmedEmpID'] = $empId;
                 $input['confirmedEmpName'] = $empName;
                 $input['confirmedDate'] = now();*/
-                $params = array('autoID' => $input['custGLAccountSystemID'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
+                $params = array('autoID' => $input['customerCodeSystem'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
                 $confirm = \Helper::confirmDocument($params);
                 if(!$confirm["success"]){
                     return $this->sendError($confirm["message"]);
                 }
-                return;
             }
 
             foreach ($input as $key => $value) {
@@ -320,5 +371,25 @@ class CustomerMasterAPIController extends AppBaseController
         $customerMaster->delete();
 
         return $this->sendResponse($id, 'Customer Master deleted successfully');
+    }
+
+    public function approveCustomer(Request $request){
+        $approve = \Helper::approveDocument($request);
+        if(!$approve["success"]){
+            return $this->sendError($approve["message"]);
+        }else{
+            return $this->sendResponse(array(),$approve["message"]);
+        }
+
+    }
+
+    public function rejectCustomer(Request $request){
+        $reject = \Helper::rejectDocument($request);
+        if(!$reject["success"]){
+            return $this->sendError($reject["message"]);
+        }else{
+            return $this->sendResponse(array(),$reject["message"]);
+        }
+
     }
 }

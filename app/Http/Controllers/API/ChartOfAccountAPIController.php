@@ -327,6 +327,48 @@ class ChartOfAccountAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function getAllChartOfAccountApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $companyID = $request->selectedCompanyID;
+        $companyID = \Helper::getGroupCompany($companyID);
+        $empID = \Helper::getEmployeeSystemID();
+
+        $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType'])->join('erp_documentapproved', function($join) use ($companyID,$empID){
+            $join->on('documentSystemCode', 'chartOfAccountSystemID');
+            $join->on('RollLevForApp_curr', 'rollLevelOrder');
+            $join->where('erp_documentapproved.approvedYN', 0);
+            $join->where('erp_documentapproved.rejectedYN', 0);
+            $join->whereIn('erp_documentapproved.companySystemID', $companyID);
+            $join->where('erp_documentapproved.documentSystemID', 59);
+        })->join('employeesdepartments',function ($join) use ($companyID,$empID){
+            $join->on('approvalGroupID', 'employeeGroupID');
+            $join->whereIn('employeesdepartments.companySystemID',$companyID);
+            $join->where('employeesdepartments.documentSystemID', 59);
+            $join->where('employeesdepartments.employeeSystemID', $empID);
+        })->where('isApproved', 0)->
+        whereIn('primaryCompanySystemID',$companyID);
+        //dd(DB::getQueryLog());
+        return \DataTables::eloquent($chartOfAccount)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('chartOfAccountSystemID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
     /**
      * get form data for Chart of Account.
      * POST /getChartOfAccountFormData
@@ -355,6 +397,27 @@ class ChartOfAccountAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+
+    public function approveChartOfAccount(Request $request){
+        $approve = \Helper::approveDocument($request);
+        if(!$approve["success"]){
+            return $this->sendError($approve["message"]);
+        }else{
+            return $this->sendResponse(array(),$approve["message"]);
+        }
+
+    }
+
+    public function rejectChartOfAccount(Request $request){
+        $reject = \Helper::rejectDocument($request);
+        if(!$reject["success"]){
+            return $this->sendError($reject["message"]);
+        }else{
+            return $this->sendResponse(array(),$reject["message"]);
+        }
+
     }
 
 

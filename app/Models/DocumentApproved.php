@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property integer approvalGroupID
  * @property integer rollLevelOrder
  * @property string employeeID
+ * @property integer employeeSystemID
  * @property string|\Carbon\Carbon docConfirmedDate
  * @property string docConfirmedByEmpID
  * @property string|\Carbon\Carbon preRollApprovedDate
@@ -73,6 +74,7 @@ class DocumentApproved extends Model
         'approvalGroupID',
         'rollLevelOrder',
         'employeeID',
+        'employeeSystemID',
         'docConfirmedDate',
         'docConfirmedByEmpID',
         'preRollApprovedDate',
@@ -112,6 +114,7 @@ class DocumentApproved extends Model
         'approvalGroupID' => 'integer',
         'rollLevelOrder' => 'integer',
         'employeeID' => 'string',
+        'employeeSystemID' => 'integer',
         'docConfirmedByEmpID' => 'string',
         'approvedYN' => 'integer',
         'approvedComments' => 'string',

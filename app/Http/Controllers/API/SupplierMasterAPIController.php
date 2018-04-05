@@ -128,6 +128,63 @@ class SupplierMasterAPIController extends AppBaseController
         ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
     }
 
+
+    /**
+     * get supplier master approval by company.
+     * POST /getAllSupplierMasterApproval
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function getAllSupplierMasterApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->selectedCompanyID;
+        $companyID = \Helper::getGroupCompany($companyID);
+        $empID = \Helper::getEmployeeSystemID();
+
+        //DB::enableQueryLog();
+        $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
+            $query->where('isDefault', -1)
+                ->with(['currencyMaster']);
+        }])->join('erp_documentapproved', function($join) use ($companyID,$empID){
+            $join->on('documentSystemCode', 'supplierCodeSystem');
+            $join->on('RollLevForApp_curr', 'rollLevelOrder');
+            $join->where('erp_documentapproved.approvedYN', 0);
+            $join->where('erp_documentapproved.rejectedYN', 0);
+            $join->whereIn('erp_documentapproved.companySystemID', $companyID);
+            $join->where('erp_documentapproved.documentSystemID', 56);
+        })->join('employeesdepartments',function ($join) use ($companyID,$empID){
+            $join->on('approvalGroupID', 'employeeGroupID');
+            $join->whereIn('employeesdepartments.companySystemID',$companyID);
+            $join->where('employeesdepartments.documentSystemID', 56);
+            $join->where('employeesdepartments.employeeSystemID', $empID);
+        })->where('suppliermaster.approvedYN', 0)->
+        whereIn('primaryCompanySystemID',$companyID);
+        //dd(DB::getQueryLog());
+        return \DataTables::eloquent($supplierMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('supplierCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+
+    }
+
     /**
      * get sub categories by supplier.
      * POST /getSubcategoriesBySupplier
@@ -211,7 +268,6 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function updateSupplierMaster(Request $request)
     {
-
         $input = $this->convertArrayToValue($request->all());
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
@@ -220,7 +276,13 @@ class SupplierMasterAPIController extends AppBaseController
         $input['modifiedUser'] = $empId;
         $empName = $user->employee['empName'];
 
+        $isConfirm = $input['supplierConfirmedYN'];
         unset($input['companySystemID']);
+        unset($input['supplierConfirmedYN']);
+        unset($input['supplierConfirmedEmpID']);
+        unset($input['supplierConfirmedEmpSystemID']);
+        unset($input['supplierConfirmedEmpName']);
+        unset($input['supplierConfirmedDate']);
 
         $id = $input['supplierCodeSystem'];
 
@@ -240,7 +302,7 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Master not found');
         }
 
-        if($input['supplierConfirmedYN'] == 1){
+        if($isConfirm){
             /*$input['supplierConfirmedEmpID'] = $empId;
             $input['supplierConfirmedEmpName'] = $empName;
             $input['supplierConfirmedDate'] = now();*/
@@ -348,4 +410,23 @@ class SupplierMasterAPIController extends AppBaseController
     }
 
 
+    public function approveSupplier(Request $request){
+        $approve = \Helper::approveDocument($request);
+        if(!$approve["success"]){
+            return $this->sendError($approve["message"]);
+        }else{
+            return $this->sendResponse(array(),$approve["message"]);
+        }
+
+    }
+
+    public function rejectSupplier(Request $request){
+        $reject = \Helper::rejectDocument($request);
+        if(!$reject["success"]){
+            return $this->sendError($reject["message"]);
+        }else{
+            return $this->sendResponse(array(),$reject["message"]);
+        }
+
+    }
 }
