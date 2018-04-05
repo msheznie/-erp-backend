@@ -136,10 +136,11 @@ class ChartOfAccountAPIController extends AppBaseController
             $employeeSystemID = $user->employee['employeeSystemID'];
 
             if ($input['confirmedYN'] == 1) {
-                $input['confirmedEmpSystemID'] = $employeeSystemID;
-                $input['confirmedEmpID'] = $empId;
-                $input['confirmedEmpName'] = $empName;
-                $input['confirmedEmpDate'] = date('Y-m-d H:i:s');
+                $params = array('autoID' => $input['chartOfAccountSystemID'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
+                $confirm = \Helper::confirmDocument($params);
+                if(!$confirm["success"]){
+                    return $this->sendError($confirm["message"]);
+                }
             }
 
 
@@ -374,7 +375,7 @@ class ChartOfAccountAPIController extends AppBaseController
      * POST /getChartOfAccountFormData
      *
      */
-    public function getChartOfAccountFormData()
+    public function getChartOfAccountFormData(Request $request)
     {
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -389,11 +390,22 @@ class ChartOfAccountAPIController extends AppBaseController
         $chartOfAccount = ChartOfAccount::where('isMasterAccount', 1)->get(['AccountCode', 'AccountDescription']);
         //$chartOfAccount = ChartOfAccount::all('AccountCode', 'AccountDescription');
 
+        $selectedCompanyId = $request['selectedCompanyId'];
+
+        $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
+
+        /** all Companies by Group company  Drop Down */
+        $companiesByGroup = Company::where("masterComapanyID", $masterCompany->CompanyID)
+            ->where("isGroup", 0)->get();
+
+        /** all Company  Drop Down */
+        $allCompanies = Company::where("isGroup", 0)->get();
 
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,
             'yesNoSelection' => $yesNoSelection,
-            'chartOfAccount' => $chartOfAccount
+            'chartOfAccount' => $chartOfAccount,
+            'allCompanies' => $allCompanies,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

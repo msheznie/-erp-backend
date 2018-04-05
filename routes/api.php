@@ -279,4 +279,5 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 });
 
+Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
 

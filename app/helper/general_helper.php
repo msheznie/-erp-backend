@@ -20,18 +20,34 @@ use InfyOm\Generator\Utils\ResponseUtil;
 
 class Helper
 {
+
+    /**
+     * Get all the documents
+     * @return mixed
+     */
     public static function getAllDocuments()
     {
         $document = Models\DocumentMaster::all();
         return $document;
     }
 
+    /**
+     * Get all company service line
+     * @param $company - current company id
+     * @return $serviceline all service lines
+     */
     public static function getCompanyServiceline($company)
     {
         $serviceline = Models\SegmentMaster::where('companySystemID', '=', $company)->get();
         return $serviceline;
     }
 
+
+    /**
+     * Get all companies related to a group
+     * @param $selectedCompanyId - current company id
+     * @return array
+     */
     public static function getGroupCompany($selectedCompanyId)
     {
         $companiesByGroup = Models\Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
@@ -53,7 +69,7 @@ class Helper
     }
 
     /**
-     * a common function to confirm document with approval creation
+     * A common function to confirm document with approval creation
      * @param $params : accept parameters as an array
      * $param 1-documentSystemID : autoID
      * $param 2-company : company
@@ -142,7 +158,8 @@ class Helper
                 case 59:
                     $docInforArr["documentCodeColumnName"] = 'AccountCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
-                    $docInforArr["confirmedBy"] = 'confirmedEmpID';
+                    $docInforArr["confirmedBy"] = 'confirmedEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confirmedEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedEmpDate';
                     $docInforArr["tableName"] = 'chartofaccounts';
@@ -162,7 +179,7 @@ class Helper
                     // get current employee detail
                     $empInfo = self::getEmployeeInfo();
                     //confirm the document
-                    $updateConfirm = $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now()]);
+                    $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now()]);
                     //get the policy
                     $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
                     if ($policy) {
@@ -234,7 +251,7 @@ class Helper
                             }
                         }
                         // insert rolls to document approved table
-                        $insertDocumentApproved = Models\DocumentApproved::insert($documentApproved);
+                        Models\DocumentApproved::insert($documentApproved);
                         DB::commit();
                         return ['success' => true, 'message' => 'Successfully document confirmed'];
                     } else {
@@ -244,7 +261,7 @@ class Helper
                     return ['success' => false, 'message' => 'Document is already confirmed'];
                 }
             } else {
-                return ['success' => false, 'message' => 'No record found'];
+                return ['success' => false, 'message' => 'No records found'];
             }
             // all good
         } catch (\Exception $e) {
@@ -255,25 +272,31 @@ class Helper
     }
 
     /**
-     * function to get conversion rate by company,supplier and bankaccount
-     * @param $companySystemID - company
-     * @param $transactionCurrencyID - transaction currency
-     * @param $documentCurrency - document currency
-     * @param null $supplierSystemID - supplier
-     * @param null $bankAccountAutoID - bank
-     * @return trasToLocER,trasToRptER,trasToSuppER,transToBankER
+     * Function to get currency conversion rate by company,supplier and bankaccount
+     * @param $companySystemID - company auto id
+     * @param $transactionCurrencyID - document/supplier/customer transaction currency
+     * @param $documentCurrencyID - this is an optional currency from each line item EX: PR it takes the local currency
+     * @param $transactionAmount - document/supplier/customer transaction amount
+     * @param null $bankAccountAutoID - bank account ID
+     * @return trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount
      */
-    public static function currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrency, $supplierSystemID = null, $bankAccountAutoID = null)
+    public static function currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $transactionAmount, $bankAccountAutoID = null)
     {
         $locaCurrencyID = null;
         $reportingCurrencyID = null;
-        $supplierCurrencyID = null;
         $bankAccountCurrencyID = null;
 
-        $trasToSuppER = null;
-        $trasToLocER = null;
-        $trasToRptER = null;
-        $transToBankER = null;
+        $reportingAmount = 0;
+        $localAmount = 0;
+        $documentAmount = 0;
+        $bankAmount = 0;
+
+        $trasToSuppER = 1;
+        $trasToLocER = 0;
+        $trasToRptER = 0;
+        $transToBankER = 0;
+        $transToDocER = 0;
+
         // get company local and reporting currency conversion
         if ($companySystemID) {
             $companyCurrency = Models\Company::find($companySystemID);
@@ -285,15 +308,42 @@ class Helper
 
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $reportingCurrencyID)->first();
                 $trasToRptER = $conversion->conversion;
-            }
-        }
-        // get supplier currency conversion
-        if ($supplierSystemID) {
-            $supplierCurrency = Models\SupplierMaster::find($supplierSystemID);
-            if ($supplierCurrency) {
-                $supplierCurrencyID = $supplierCurrency->currencyID;
-                $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $supplierCurrencyID)->first();
-                $trasToSuppER = $conversion->conversion;
+
+                if ($transactionCurrencyID == $reportingCurrencyID) {
+                    $reportingAmount = $transactionAmount;
+                } else {
+                    if ($trasToRptER > $trasToSuppER) {
+                        if ($trasToRptER > 1) {
+                            $reportingAmount = $transactionAmount / $trasToRptER;
+                        } else {
+                            $reportingAmount = $transactionAmount * $trasToRptER;
+                        }
+                    } else {
+                        If ($trasToRptER > 1) {
+                            $reportingAmount = $transactionAmount * $trasToRptER;
+                        } else {
+                            $reportingAmount = $transactionAmount / $trasToRptER;
+                        }
+                    }
+                }
+
+                if ($transactionCurrencyID == $locaCurrencyID) {
+                    $localAmount = $transactionAmount;
+                } else {
+                    if ($trasToLocER > $trasToSuppER) {
+                        if ($trasToLocER > 1) {
+                            $localAmount = $transactionAmount / $trasToLocER;
+                        } else {
+                            $localAmount = $transactionAmount * $trasToLocER;
+                        }
+                    } else {
+                        If ($trasToLocER > 1) {
+                            $localAmount = $transactionAmount * $trasToLocER;
+                        } else {
+                            $localAmount = $transactionAmount / $trasToLocER;
+                        }
+                    }
+                }
             }
         }
 
@@ -304,16 +354,58 @@ class Helper
                 $bankAccountCurrencyID = $bankCurrency->accountCurrencyID;
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $bankAccountCurrencyID)->first();
                 $transToBankER = $conversion->conversion;
+
+                if ($transactionCurrencyID == $bankAccountCurrencyID) {
+                    $bankAmount = $transactionAmount;
+                } else {
+                    if ($transToBankER > $trasToSuppER) {
+                        if ($transToBankER > 1) {
+                            $bankAmount = $transactionAmount / $transToBankER;
+                        } else {
+                            $bankAmount = $transactionAmount * $transToBankER;
+                        }
+                    } else {
+                        If ($transToBankER > 1) {
+                            $bankAmount = $transactionAmount * $transToBankER;
+                        } else {
+                            $bankAmount = $transactionAmount / $transToBankER;
+                        }
+                    }
+                }
             }
         }
 
-        return self::sendResponse(array('trasToLocER' => $trasToLocER, 'trasToRptER' => $trasToRptER, 'trasToSuppER' => $trasToSuppER, 'transToBankER' => $transToBankER), "Record retrieved");
+        // get document currency. Ex : in purchase request the currency which is selected in the header is the document currency
+        if ($documentCurrencyID) {
+            $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $documentCurrencyID)->first();
+            $transToDocER = $conversion->conversion;
+
+            if ($transactionCurrencyID == $documentCurrencyID) {
+                $documentAmount = $transactionAmount;
+            } else {
+                if ($transToDocER > $trasToSuppER) {
+                    if ($transToDocER > 1) {
+                        $documentAmount = $transactionAmount / $transToDocER;
+                    } else {
+                        $documentAmount = $transactionAmount * $transToDocER;
+                    }
+                } else {
+                    If ($transToDocER > 1) {
+                        $documentAmount = $transactionAmount * $transToDocER;
+                    } else {
+                        $documentAmount = $transactionAmount / $transToDocER;
+                    }
+                }
+            }
+        }
+
+        return self::sendResponse(array('trasToLocER' => $trasToLocER, 'trasToRptER' => $trasToRptER, 'transToBankER' => $transToBankER, 'reportingAmount' => $reportingAmount, 'localAmount' => $localAmount, 'documentAmount' => $documentAmount, 'bankAmount' => $bankAmount), "Record retrieved");
     }
 
 
     /**
      * function to approve documents
-     * @param $input - get line record
+     * @param $input - get line records
      * @return mixed
      */
     public static function approveDocument($input)
@@ -345,6 +437,15 @@ class Helper
                 $docInforArr["approvedColumnName"] = 'approvedYN';
                 $docInforArr["approvedBy"] = 'approvedEmpID';
                 $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                break;
+            case 59:
+                $docInforArr["tableName"] = 'chartofaccounts';
+                $docInforArr["modelName"] = 'ChartOfAccount';
+                $docInforArr["primarykey"] = 'chartOfAccountSystemID';
+                $docInforArr["approvedColumnName"] = 'isApproved';
+                $docInforArr["approvedBy"] = 'approvedBy';
+                $docInforArr["approvedBySystemID"] = 'approvedBySystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 break;
             default:
@@ -397,22 +498,28 @@ class Helper
     {
         DB::beginTransaction();
         try {
-            //check document is already rejected
-            $isRejected = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('rejectedYN', -1)->first();
-            if (!$isRejected) {
-                $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
-                if ($approvalLevel) {
-                    // get current employee detail
-                    $empInfo = self::getEmployeeInfo();
-                    // update record in document approved table
-                    $approvedeDoc = Models\DocumentApproved::find($input["documentApprovedID"])->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
+            //check document exist
+            $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
+            if ($docApprove) {
+                //check document is already rejected
+                $isRejected = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('rejectedYN', -1)->first();
+                if (!$isRejected) {
+                    $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
+                    if ($approvalLevel) {
+                        // get current employee detail
+                        $empInfo = self::getEmployeeInfo();
+                        // update record in document approved table
+                        $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
+                    } else {
+                        return ['success' => false, 'message' => 'Approval level not found'];
+                    }
+                    DB::commit();
+                    return ['success' => true, 'message' => 'Document is successfully rejected'];
                 } else {
-                    return ['success' => false, 'message' => 'Approval level not found'];
+                    return ['success' => false, 'message' => 'Document is already rejected'];
                 }
-                DB::commit();
-                return ['success' => true, 'message' => 'Document is successfully rejected'];
             } else {
-                return ['success' => false, 'message' => 'Document is already rejected'];
+                return ['success' => false, 'message' => 'No record found'];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -420,6 +527,10 @@ class Helper
         }
     }
 
+    /**
+     * get current employee information
+     * @return mixed
+     */
     public static function getEmployeeInfo()
     {
         $user = Models\User::find(Auth::id());
@@ -427,6 +538,10 @@ class Helper
         return $employee;
     }
 
+    /**
+     * get employee system id
+     * @return mixed
+     */
     public static function getEmployeeSystemID()
     {
         $user = Models\User::find(Auth::id());

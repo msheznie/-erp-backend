@@ -50,6 +50,8 @@ class ChartOfAccount extends Model
 
     public $fillable = [
         'documentSystemID',
+        'primaryCompanySystemID',
+        'primaryCompanyID',
         'documentID',
         'AccountCode',
         'AccountDescription',
@@ -91,6 +93,8 @@ class ChartOfAccount extends Model
      */
     protected $casts = [
         'chartOfAccountSystemID' => 'integer',
+        'primaryCompanySystemID' => 'integer',
+        'primaryCompanyID' => 'string',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'AccountCode' => 'string',
