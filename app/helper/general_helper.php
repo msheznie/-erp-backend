@@ -464,11 +464,12 @@ class Helper
                     if ($approvalLevel) {
                         // get current employee detail
                         $empInfo = self::getEmployeeInfo();
-                        if ($approvalLevel->rollLevelOrder == $input["rollLevelOrder"]) { // update the document after the final approval
+                        if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => 1, $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
+                        }else{
+                            // update roll level in master table
+                            $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
                         }
-                        // update roll level in master table
-                        $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
                     } else {
