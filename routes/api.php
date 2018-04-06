@@ -256,6 +256,9 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::resource('g_r_v_masters', 'GRVMasterAPIController');
     Route::resource('g_r_v_details', 'GRVDetailsAPIController');
+    Route::resource('document_attachments', 'DocumentAttachmentsAPIController');
+    Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
+    Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
 
     Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval');
     Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
@@ -279,5 +282,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 });
 
+
 Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
+
 

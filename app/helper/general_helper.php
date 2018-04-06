@@ -402,8 +402,16 @@ class Helper
                 }
             }
         }
+        $array = array('trasToLocER' => $trasToLocER,
+            'trasToRptER' => $trasToRptER,
+            'transToBankER' => $transToBankER,
+            'reportingAmount' => $reportingAmount,
+            'localAmount' => $localAmount,
+            'documentAmount' => $documentAmount,
+            'bankAmount' => $bankAmount);
 
-        return self::sendResponse(array('trasToLocER' => $trasToLocER, 'trasToRptER' => $trasToRptER, 'transToBankER' => $transToBankER, 'reportingAmount' => $reportingAmount, 'localAmount' => $localAmount, 'documentAmount' => $documentAmount, 'bankAmount' => $bankAmount), "Record retrieved");
+        return $array;
+
     }
 
 
