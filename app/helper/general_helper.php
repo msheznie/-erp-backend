@@ -186,6 +186,10 @@ class Helper
                         $isSegmentWise = $policy->isServiceLineApproval;
                         $isCategoryWise = $policy->isCategoryApproval;
                         $isValueWise = $policy->isAmountApproval;
+                        $isAttachment = $policy->isAttachmentYN;
+                        if($isAttachment == -1){
+
+                        }
                     } else {
                         return ['success' => false, 'message' => 'Policy not available for this document.'];
                     }
