@@ -254,11 +254,15 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
     Route::resource('g_r_v_masters', 'GRVMasterAPIController');
-
     Route::resource('g_r_v_details', 'GRVDetailsAPIController');
+    Route::resource('document_attachments', 'DocumentAttachmentsAPIController');
+    Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
 
 });
 
 Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
+
+Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
+
 
 
