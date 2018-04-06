@@ -1,5 +1,14 @@
 <?php
-
+/**
+=============================================
+-- File Name : CompanyNavigationMenusAPIController.php
+-- Project Name : ERP
+-- Module Name :  Company assign
+-- Author : Mohamed Mubashir
+-- Create date : 14 - March 2018
+-- Description : This file contains assigning navigation to company
+-- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCompanyNavigationMenusAPIRequest;

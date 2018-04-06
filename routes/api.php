@@ -259,10 +259,35 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
     Route::resource('g_r_v_masters', 'GRVMasterAPIController');
-
     Route::resource('g_r_v_details', 'GRVDetailsAPIController');
+
+    Route::resource('document_attachments', 'DocumentAttachmentsAPIController');
+    Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
+    Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
+
+    Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval');
+    Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
+    Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
+    Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
+
+    Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
+    Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
+
+    Route::post('approveItem', 'ItemMasterAPIController@approveItem');
+    Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
+
+    Route::post('approveSupplier', 'SupplierMasterAPIController@approveSupplier');
+    Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier');
+
+    Route::post('approveCustomer', 'CustomerMasterAPIController@approveCustomer');
+    Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer');
+
+    Route::post('approveChartOfAccount', 'ChartOfAccountAPIController@approveChartOfAccount');
+    Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount');
+
 });
 
-Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
+
+Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
 
 

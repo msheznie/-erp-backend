@@ -1,5 +1,14 @@
 <?php
-
+/**
+=============================================
+-- File Name : UserGroupAssignAPIController.php
+-- Project Name : ERP
+-- Module Name :  User group assign
+-- Author : Mohamed Mubashir
+-- Create date : 14 - March 2018
+-- Description : This file contains assigning navigation from company to user group
+-- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUserGroupAssignAPIRequest;

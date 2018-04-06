@@ -110,16 +110,17 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $items = ItemAssigned::where('companySystemID', $companyId);
 
-        if ($financeCategoryId != 0) {
-            $items = $items->where('financeCategoryMaster', $financeCategoryId);
+
+        if ($policy == 0 && $financeCategoryId != 0) {
+            $items = $items->where('financeCategoryMaster',$financeCategoryId);
         }
 
         if (array_key_exists('search', $input)) {
-
             $search = $input['search'];
-
-            $items = $items->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+             $items = $items->where(function ($query) use ($search) {
+                 $query->where('itemPrimaryCode','LIKE',"%{$search}%")
+                       ->orWhere('itemDescription','LIKE',"%{$search}%");
+             });
         }
 
 

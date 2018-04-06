@@ -42,6 +42,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property integer isActive
  * @property integer isSupplierForiegn
  * @property integer supplierConfirmedYN
+ * @property integer supplierConfirmedEmpSystemID
  * @property string supplierConfirmedEmpID
  * @property string supplierConfirmedEmpName
  * @property string|\Carbon\Carbon supplierConfirmedDate
@@ -109,7 +110,9 @@ class SupplierMaster extends Model
         'supplierConfirmedYN',
         'supplierConfirmedEmpID',
         'supplierConfirmedEmpName',
+        'supplierConfirmedEmpSystemID',
         'supplierConfirmedDate',
+        'RollLevForApp_curr',
         'isCriticalYN',
         'companyLinkedTo',
         'createdUserGroup',
@@ -167,7 +170,9 @@ class SupplierMaster extends Model
         'isSupplierForiegn' => 'integer',
         'supplierConfirmedYN' => 'integer',
         'supplierConfirmedEmpID' => 'string',
+        'supplierConfirmedEmpSystemID' => 'integer',
         'supplierConfirmedEmpName' => 'string',
+        'RollLevForApp_curr' => 'integer',
         'isCriticalYN' => 'integer',
         'companyLinkedTo' => 'string',
         'createdUserGroup' => 'string',
@@ -204,7 +209,6 @@ class SupplierMaster extends Model
     public function supplierCurrency(){
             return $this->hasMany('App\Models\SupplierCurrency','supplierCodeSystem','currency');
     }
-
 
     public function subCategories(){
         return $this->belongsToMany('App\Models\SupplierCategorySub', 'suppliersubcategoryassign','supSubCategoryID','supplierID');

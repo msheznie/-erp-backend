@@ -4,10 +4,12 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDocumentApprovedAPIRequest;
 use App\Http\Requests\API\UpdateDocumentApprovedAPIRequest;
+use App\Models\ApprovalLevel;
 use App\Models\DocumentApproved;
 use App\Repositories\DocumentApprovedRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -126,4 +128,5 @@ class DocumentApprovedAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Document Approved deleted successfully');
     }
+
 }

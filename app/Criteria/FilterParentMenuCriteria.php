@@ -48,10 +48,5 @@ class FilterParentMenuCriteria implements CriteriaInterface
                             ->orderBy("sortOrder","asc");
                        }])
                       ->orderBy("sortOrder","asc");
-                   /*  ->whereHas('child',function ($q){
-                                                     $q->where('companyID',13)
-                                                         ->where('userGroupID',4);
-                                                 });*/
-                  // return $model->where('UserGroupSetupID',13699);
     }
 }
