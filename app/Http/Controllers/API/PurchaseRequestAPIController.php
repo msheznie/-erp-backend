@@ -26,6 +26,7 @@ use App\Models\Location;
 use App\Models\Months;
 use App\Models\Priority;
 use App\Models\PurchaseRequest;
+use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -92,8 +93,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $financeCategoryId = 0;
 
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-        ->where('companySystemID', $companyId)
-        ->first();
+            ->where('companySystemID', $companyId)
+            ->first();
 
         if ($allowFinanceCategory) {
             $policy = $allowFinanceCategory->isYesNO;
@@ -110,22 +111,21 @@ class PurchaseRequestAPIController extends AppBaseController
         $items = ItemAssigned::where('companySystemID', $companyId);
 
         if ($financeCategoryId != 0) {
-            $items = $items->where('financeCategoryMaster',$financeCategoryId);
+            $items = $items->where('financeCategoryMaster', $financeCategoryId);
         }
 
-         if(array_key_exists ('search' , $input )){
+        if (array_key_exists('search', $input)) {
 
-             $search = $input['search'];
+            $search = $input['search'];
 
-             $items = $items->where('itemPrimaryCode','LIKE',"%{$search}%")
-                            ->orWhere('itemDescription','LIKE',"%{$search}%");
+            $items = $items->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                ->orWhere('itemDescription', 'LIKE', "%{$search}%");
         }
-
 
 
         $items = $items
-                 ->take(20)
-                 ->get();
+            ->take(20)
+            ->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
@@ -217,6 +217,7 @@ class PurchaseRequestAPIController extends AppBaseController
      *
      * @return Response
      */
+
     public function getPurchaseRequestByDocumentType(Request $request)
     {
 
@@ -302,6 +303,33 @@ class PurchaseRequestAPIController extends AppBaseController
         ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
     }
 
+    public function getPurchaseRequestForPO(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyId'];
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $procumentOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($procumentOrder)) {
+            return $this->sendError('Procument Order not found');
+        }
+
+        $purchaseRequests = PurchaseRequest::where('companySystemID', $companyID)
+            ->where('approved', -1)
+            ->where('PRConfirmedYN', 1)
+            ->where('prClosedYN', 0)
+            ->where('cancelledYN', 0)
+            ->where('selectedForPO', 0)
+            ->where('supplyChainOnGoing', 0)
+            ->where('serviceLineSystemID', $procumentOrder->serviceLineSystemID)
+            ->orderBy('purchaseRequestID', 'DESC')
+            ->get();
+
+        return $this->sendResponse($purchaseRequests->toArray(), 'Purchase Request Details retrieved successfully');
+    }
+
     /**
      * Store a newly created PurchaseRequest in storage.
      * POST /purchaseRequests
@@ -353,7 +381,6 @@ class PurchaseRequestAPIController extends AppBaseController
         if ($companyDocumentAttachment) {
             $input['docRefNo'] = $companyDocumentAttachment->docRefNumber;
         }
-
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
@@ -431,7 +458,6 @@ class PurchaseRequestAPIController extends AppBaseController
             $input['PRConfirmedBySystemID'] = $user->employee['employeeSystemID'];
             $input['PRConfirmedDate'] = now();
         }
-
 
         $purchaseRequest = $this->purchaseRequestRepository->update($input, $id);
 
