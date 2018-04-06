@@ -1,27 +1,35 @@
 <?php
 /**
-=============================================
--- File Name : PurchaseOrderDetails.php
--- Project Name : ERP
--- Module Name :  Purchase Order Details
--- Author : Mohamed Fayas
--- Create date : 14 - March 2018
--- Description : This file contains the all CRUD for Purchase Order Details(item )
--- REVISION HISTORY
--- Date: 14-March 2018 By: Fayas Description: Added new functions named as getItemMasterPurchaseHistory(),exportPurchaseHistory(),
+ * =============================================
+ * -- File Name : PurchaseOrderDetails.php
+ * -- Project Name : ERP
+ * -- Module Name :  Purchase Order Details
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Purchase Order Details(item )
+ * -- REVISION HISTORY
+ * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getItemMasterPurchaseHistory(),exportPurchaseHistory(),
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseOrderDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderDetailsAPIRequest;
+use App\Http\Requests\API\storePurchaseOrderDetailsFromPR;
 use App\Models\PurchaseOrderDetails;
+use App\Models\ItemAssigned;
+use App\Models\ProcumentOrder;
+use App\Models\CompanyPolicyMaster;
+use App\Models\PurchaseRequestDetails;
+use App\Models\PurchaseRequest;
 use App\Repositories\PurchaseOrderDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+
 
 /**
  * Class PurchaseOrderDetailsController
@@ -93,7 +101,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'erp_purchaseorderdetails.GRVcostPerUnitSupTransCur',
                 'erp_purchaseordermaster.approvedDate',
                 'erp_purchaseordermaster.approved')
-             ->paginate(15);
+            ->paginate(15);
 
 
         return $this->sendResponse($purchaseOrderDetails, 'Purchase Order Details retrieved successfully');
@@ -106,7 +114,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
      * @param Request $request
      * @return Response
      */
-    public function exportPurchaseHistory(Request $request){
+    public function exportPurchaseHistory(Request $request)
+    {
 
         $type = $request['type'];
         $purchaseOrderDetails = DB::table('erp_purchaseorderdetails')
@@ -140,44 +149,43 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'erp_purchaseordermaster.approved')
             ->get();
 
-        foreach ($purchaseOrderDetails as $order)
-        {
+        foreach ($purchaseOrderDetails as $order) {
             $data[] = array(
                 //'purchaseOrderMasterID' => $order->purchaseOrderMasterID,
                 'Company Name' => $order->CompanyName,
-                'PO Code'=> $order->purchaseOrderCode,
-                'Supplier Code'=> $order->supplierPrimaryCode,
-                'Approved Date'=> date("d/m/Y", strtotime($order->approvedDate)),
-                'supplier Name'=> $order->supplierName,
-                'Part Number'=> $order->supplierPartNumber,
-                'UOM'=> $order->UnitShortCode,
-                'Currency'=> $order->CurrencyCode,
-                'PO Qty'=> $order->noQty,
-                'Unit Cost'=> $order->unitCost,
+                'PO Code' => $order->purchaseOrderCode,
+                'Supplier Code' => $order->supplierPrimaryCode,
+                'Approved Date' => date("d/m/Y", strtotime($order->approvedDate)),
+                'supplier Name' => $order->supplierName,
+                'Part Number' => $order->supplierPartNumber,
+                'UOM' => $order->UnitShortCode,
+                'Currency' => $order->CurrencyCode,
+                'PO Qty' => $order->noQty,
+                'Unit Cost' => $order->unitCost,
             );
         }
 
-        $csv =  \Excel::create('purchaseHistory', function($excel) use ($data) {
+        $csv = \Excel::create('purchaseHistory', function ($excel) use ($data) {
 
-            $excel->sheet('sheet name', function($sheet) use ($data)
-            {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
             });
-            $lastrow= $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J'.$lastrow)->getAlignment()->setWrapText(true);
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
 
         return $this->sendResponse($csv, 'successfully export');
     }
 
-    public function getItemsByProcumentOrder(Request $request){
+    public function getItemsByProcumentOrder(Request $request)
+    {
         $input = $request->all();
-        $prId = $input['purchaseOrderID'];
+        $poID = $input['purchaseOrderID'];
 
-        $items = PurchaseOrderDetails::where('purchaseOrderMasterID', $prId)
+        $items = PurchaseOrderDetails::where('purchaseOrderMasterID', $poID)
             ->with(['unit' => function ($query) {
             }])
             ->get();
@@ -195,11 +203,150 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
      */
     public function store(CreatePurchaseOrderDetailsAPIRequest $request)
     {
-        $input = $request->all();
+        $input = array_except($request->all(), 'unit');
+        $input = $this->convertArrayToValue($input);
+        $itemCode = $input['itemCode'];
+
+        $companySystemID = $input['companySystemID'];
+
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        $itemExist = PurchaseOrderDetails::where('itemCode', $input['itemCode'])
+            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+            ->first();
+
+        if (!empty($itemExist)) {
+            return $this->sendError('Added Item All Ready Exist');
+        }
+
+        if (empty($item)) {
+            return $this->sendError('Item not found');
+        }
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $companyPolicyMaster = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        if ($companyPolicyMaster) {
+            if (($companyPolicyMaster->isYesNO == 0) && ($purchaseOrder->financeCategory == 1)) {
+
+                $procumentOrdersExist = ProcumentOrder::where('companySystemID', $companySystemID)
+                    ->where('serviceLineSystemID', $purchaseOrder->serviceLineSystemID)
+                    ->where('approved', 0)
+                    ->where('poCancelledYN', 0)
+                    ->with(['detail' => function ($query) use ($itemCode) {
+                        $query->where('itemCode', $itemCode);
+                    }])->first();
+
+                if (!empty($procumentOrdersExist)) {
+                    return $this->sendError('The item you are trying to add is pending for approval in PO ' . $procumentOrdersExist->purchaseOrderCode);
+                }
+            }
+        }
+
+        $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
+        $input['serviceLineCode'] = $purchaseOrder->serviceLine;
+        $input['companySystemID'] = $item->companySystemID;
+        $input['companyID'] = $item->companyID;
+
+        $input['purchaseOrderMasterID'] = $input['purchaseOrderID'];
+        $input['itemCode'] = $item->itemCodeSystem;
+        $input['itemPrimaryCode'] = $item->itemPrimaryCode;
+        $input['itemDescription'] = $item->itemDescription;
+        $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
+        $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
+        $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->create($input);
 
         return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details saved successfully');
+    }
+
+    public function storePurchaseOrderDetailsFromPR(Request $request)
+    {
+        $input = $request->all();
+        $prDetail_arr = array();
+        $prDetail_insert = array();
+        $item = array();
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        foreach ($input['detailTable'] as $new) {
+            if ($new['isChecked'] && $new['poQty'] > 0) {
+
+                //checking the fullyOrdered or partial in po
+                $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
+                    ->where('purchaseRequestDetailsID', $new['purchaseRequestDetailsID'])
+                    ->first();
+
+                $totalAddedQty = $new['poQty'] + $detailSum['totalPoqty'];
+
+                if ($new['quantityRequested'] == $totalAddedQty) {
+                    $fullyOrdered = 2;
+                } else {
+                    $fullyOrdered = 1;
+                }
+
+                // checking the qty request is matching with sum total
+                if ($new['quantityRequested'] >= $totalAddedQty) {
+
+                    $prDetail_arr['companySystemID'] = $new['companySystemID'];
+                    $prDetail_arr['companyID'] = $new['companyID'];
+                    $prDetail_arr['purchaseRequestDetailsID'] = $new['purchaseRequestDetailsID'];
+                    $prDetail_arr['purchaseRequestID'] = $new['purchaseRequestID'];
+
+                    $prDetail_arr['itemCode'] = $new['itemCode'];
+                    $prDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
+                    $prDetail_arr['itemDescription'] = $new['itemDescription'];
+                    $prDetail_arr['comment'] = $new['comments'];
+                    $prDetail_arr['unitOfMeasure'] = $new['unitOfMeasure'];
+
+                    $prDetail_arr['purchaseOrderMasterID'] = $purchaseOrderID;
+                    $prDetail_arr['noQty'] = $new['poQty'];
+
+                    $prDetail_arr['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
+                    $prDetail_arr['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
+
+                    $item = $this->purchaseOrderDetailsRepository->create($prDetail_arr);
+
+                    $update = PurchaseRequestDetails::where('purchaseRequestDetailsID', $new['purchaseRequestDetailsID'])
+                        ->update(['selectedForPO' => -1, 'fullyOrdered' => $fullyOrdered]);
+                }
+
+                // fetching the total count records from purchase Request Details table
+                $purchaseRequestDetailTotalcount = PurchaseRequestDetails::select(DB::raw('count(purchaseRequestDetailsID) as detailCount'))
+                    ->where('purchaseRequestID', $new['purchaseRequestID'])
+                    ->first();
+
+                // fetching the total count records from purchase Request Details table where fullyOrdered = 2
+                $purchaseRequestDetailExist = PurchaseRequestDetails::select(DB::raw('count(purchaseRequestDetailsID) as count'))
+                    ->where('purchaseRequestID', $new['purchaseRequestID'])
+                    ->where('fullyOrdered', 2)
+                    ->where('selectedForPO', -1)
+                    ->first();
+
+                // Updating PR Master Table After All Detail Table records updated
+                if ($purchaseRequestDetailTotalcount['detailCount'] == $purchaseRequestDetailExist['count']) {
+                    $updatePR = PurchaseRequest::find($new['purchaseRequestID'])
+                        ->update(['selectedForPO' => -1, 'prClosedYN' => -1]);
+                }
+
+            }
+
+            //$item = PurchaseOrderDetails::insert($new);
+        }
+
+
+        return $this->sendResponse($item->toArray(), 'Purchase Order Details saved successfully');
+
     }
 
     /**
@@ -231,9 +378,11 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
      *
      * @return Response
      */
+
     public function update($id, UpdatePurchaseOrderDetailsAPIRequest $request)
     {
-        $input = $request->all();
+        $input = array_except($request->all(), 'unit');
+        $input = $this->convertArrayToValue($input);
 
         /** @var PurchaseOrderDetails $purchaseOrderDetails */
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->findWithoutFail($id);
@@ -244,7 +393,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseOrderDetails->toArray(), 'PurchaseOrderDetails updated successfully');
+        return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details updated successfully');
     }
 
     /**

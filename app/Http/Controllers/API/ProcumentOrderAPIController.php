@@ -27,6 +27,8 @@ use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\ItemAssigned;
+use App\Models\PurchaseOrderDetails;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -42,6 +44,7 @@ use Illuminate\Support\Facades\Auth;
  * Class ProcumentOrderController
  * @package App\Http\Controllers\API
  */
+
 class ProcumentOrderAPIController extends AppBaseController
 {
     /** @var  ProcumentOrderRepository */
@@ -78,6 +81,7 @@ class ProcumentOrderAPIController extends AppBaseController
      *
      * @return Response
      */
+
     public function store(CreateProcumentOrderAPIRequest $request)
     {
         $input = $request->all();
@@ -86,39 +90,39 @@ class ProcumentOrderAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
         $input['createdPcID'] = gethostname();
-        $input['createdUserID'] =  $user->employee['empID'];
-        $input['createdUserSystemID'] =   $user->employee['empCompanySystemID'];
+        $input['createdUserID'] = $user->employee['empID'];
+        $input['createdUserSystemID'] = $user->employee['empCompanySystemID'];
         $input['departmentID'] = 'PROC';
 
         $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
-            ->orderBy('purchaseOrderID','desc')
+            ->orderBy('purchaseOrderID', 'desc')
             ->first();
 
         $lastSerialNumber = 0;
-        if($lastSerial){
-            $lastSerialNumber =  intval($lastSerial->serialNumber) + 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
         }
 
         $input['serialNumber'] = $lastSerialNumber;
         $input['purchaseOrderCode'] = $lastSerialNumber;
 
-        $segment = SegmentMaster::where('serviceLineSystemID',$input['serviceLineSystemID'])->first();
-        if($segment){
+        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        if ($segment) {
             $input['serviceLine'] = $segment->ServiceLineCode;
         }
 
-        $document = DocumentMaster::where('documentSystemID',$input['documentSystemID'])->first();
-        if($document){
+        $document = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+        if ($document) {
             $input['documentID'] = $document->documentID;
         }
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        if($company){
+        if ($company) {
             $input['companyID'] = $company->CompanyID;
         }
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
-        if($supplier){
+        if ($supplier) {
             $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
             $input['supplierName'] = $supplier->supplierName;
             $input['supplierAddress'] = $supplier->address;
@@ -144,7 +148,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ProcumentOrder $procumentOrder */
-        $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procument Order not found');
@@ -164,11 +168,12 @@ class ProcumentOrderAPIController extends AppBaseController
      */
     public function update($id, UpdateProcumentOrderAPIRequest $request)
     {
+        //$empInfo = self::getEmployeeInfo();
         $userId = Auth::id();
-        $user =  $this->userRepository->with(['employee'])->findWithoutFail($userId);
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
         $input = $request->all();
-        $input = array_except($input,['created_by','confirmed_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var ProcumentOrder $procumentOrder */
@@ -178,15 +183,22 @@ class ProcumentOrderAPIController extends AppBaseController
             return $this->sendError('Procurement Order not found');
         }
 
-        $segment = SegmentMaster::where('serviceLineSystemID',$input['serviceLineSystemID'])->first();
-        if($segment){
+        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
         $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] =  $user->employee['empID'];
+        $input['modifiedUser'] = $user->employee['empID'];
+        $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
-        $input['modifiedUserSystemID'] =   $user->employee['employeeSystemID'];
+        if ($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) {
+            $input['poConfirmedYN'] = 1;
+            $input['poConfirmedByEmpSystemID'] = $user->employee['employeeSystemID'];
+            $input['poConfirmedByEmpID'] = $user->employee['empID'];
+            $input['poConfirmedByName'] = $user->employee['empName'];
+            $input['poConfirmedDate'] = now();
+        }
 
         $procumentOrder = $this->procumentOrderRepository->update($input, $id);
 
@@ -305,11 +317,14 @@ class ProcumentOrderAPIController extends AppBaseController
     }
 
 
-    public function getProcumentOrderFormData(Request $request){
+    public function getProcumentOrderFormData(Request $request)
+    {
 
         $companyId = $request['companyId'];
 
-        $segments = SegmentMaster::where("companySystemID",$companyId)->get();
+        $purchaseOrderID = $request['purchaseOrderID'];
+
+        $segments = SegmentMaster::where("companySystemID", $companyId)->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -322,10 +337,12 @@ class ProcumentOrderAPIController extends AppBaseController
         $years = ProcumentOrder::select(DB::raw("YEAR(createdDateTime) as year"))
             ->whereNotNull('createdDateTime')
             ->groupby('year')
-            ->orderby('year','desc')
+            ->orderby('year', 'desc')
             ->get();
 
         $supplier = SupplierMaster::select(DB::raw("supplierCodeSystem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
+            ->where('primaryCompanySystemID', $companyId)
+            ->where('isActive', 1)
             ->get();
 
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
@@ -335,28 +352,55 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $locations = Location::all();
 
-        $financialYears = array(array('value' => intval(date("Y")),'label' => date("Y")),
-            array('value' => intval(date("Y",strtotime("-1 year"))),'label' => date("Y",strtotime("-1 year"))));
+        $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
+            array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
 
-        $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID',17)
-            ->where('companySystemID',$companyId)
+        $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
+            ->where('companySystemID', $companyId)
             ->first();
 
-        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID',20)
-            ->where('companySystemID',$companyId)
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+            ->where('companySystemID', $companyId)
             ->first();
 
-        $conditions = array('checkBudget' => 0,'allowFinanceCategory' => 0);
+        $allowPRinPO = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
+            ->where('companySystemID', $companyId)
+            ->first();
 
-        if($checkBudget){
+        if(!empty($purchaseOrderID)){
+            $checkDetailExist = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+                ->where('companySystemID', $companyId)
+                ->first();
+
+            if(!empty($checkDetailExist)){
+                $detail = 1;
+            }
+        }
+
+        $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'detailExist' => 0, 'pullPRPolicy' => 0);
+
+        if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
         }
 
-        if($allowFinanceCategory){
+        if ($allowFinanceCategory) {
             $conditions['allowFinanceCategory'] = $allowFinanceCategory->isYesNO;
         }
 
+        if ($allowPRinPO) {
+            $conditions['pullPRPolicy'] = $allowPRinPO->isYesNO;
+        }
+
+        if(!empty($purchaseOrderID)){
+            $checkDetailExist = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+                ->where('companySystemID', $companyId)
+                ->first();
+
+            if(!empty($checkDetailExist)){
+                $conditions['detailExist'] = 1;
+            }
+        }
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
@@ -372,6 +416,55 @@ class ProcumentOrderAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getItemsOptionForProcumentOrder(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $policy = 1;
+
+        $financeCategoryId = 0;
+
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+            ->where('companySystemID', $companyId)
+            ->first();
+
+        if ($allowFinanceCategory) {
+            $policy = $allowFinanceCategory->isYesNO;
+
+            if ($policy == 0) {
+
+                $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
+
+                if ($purchaseOrder) {
+                    $financeCategoryId = $purchaseOrder->financeCategory;
+                }
+            }
+        }
+
+        $items = ItemAssigned::where('companySystemID', $companyId);
+
+        if ($financeCategoryId != 0) {
+            $items = $items->where('financeCategoryMaster', $financeCategoryId);
+        }
+
+        if (array_key_exists('search', $input)) {
+
+            $search = $input['search'];
+
+            $items = $items->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+        }
+
+        $items = $items
+            ->take(20)
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 
 
