@@ -26,6 +26,7 @@ use App\Models\Location;
 use App\Models\Months;
 use App\Models\Priority;
 use App\Models\PurchaseRequest;
+use App\Models\PurchaseRequestDetails;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -92,8 +93,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $financeCategoryId = 0;
 
         $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-        ->where('companySystemID', $companyId)
-        ->first();
+            ->where('companySystemID', $companyId)
+            ->first();
 
         if ($allowFinanceCategory) {
             $policy = $allowFinanceCategory->isYesNO;
@@ -110,25 +111,24 @@ class PurchaseRequestAPIController extends AppBaseController
         $items = ItemAssigned::where('companySystemID', $companyId);
 
         if ($policy == 0 && $financeCategoryId != 0) {
-            $items = $items->where('financeCategoryMaster',$financeCategoryId);
+            $items = $items->where('financeCategoryMaster', $financeCategoryId);
         }
 
-         if(array_key_exists ('search' , $input )){
+        if (array_key_exists('search', $input)) {
 
-             $search = $input['search'];
+            $search = $input['search'];
 
-             $items = $items->where(function ($query) use ($search) {
-                 $query->where('itemPrimaryCode','LIKE',"%{$search}%")
-                       ->orWhere('itemDescription','LIKE',"%{$search}%");
-             });
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
 
         }
-
 
 
         $items = $items
-                 ->take(20)
-                 ->get();
+            ->take(20)
+            ->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
@@ -409,7 +409,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by','PRConfirmedBy','PRConfirmedBySystemID','PRConfirmedDate']);
         $input = $this->convertArrayToValue($input);
 
         /** @var PurchaseRequest $purchaseRequest */
@@ -430,9 +430,46 @@ class PurchaseRequestAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
         if ($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1) {
-            $input['PRConfirmedBy'] = $user->employee['empID'];;
+
+
+
+
+             $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID',$id)
+                              ->where('quantityRequested','<',1)
+                              //->where('quantityRequested','<',0)
+                              ->count();
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+            }
+
+
+            $amount = PurchaseRequestDetails::where('purchaseRequestID',$id)
+                                              ->sum('totalCost');
+
+
+            /*$currencyConversion = \Helper::currencyConversion($item->companySystemID,
+                                                              $item->wacValueLocalCurrencyID,
+                                                               $purchaseRequest->currency,
+                                                              $amount);
+
+            $convertedAmount = $currencyConversion['documentAmount'];*/
+
+            $params = array('autoID' => $id,
+                            'company' => $purchaseRequest->companySystemID,
+                            'document' => $purchaseRequest->documentSystemID,
+                            'segment' => $input['serviceLineSystemID'],
+                            'category' => $input['financeCategory'],
+                            'amount' => $amount
+                            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+
+            /*$input['PRConfirmedBy'] = $user->employee['empID'];;
             $input['PRConfirmedBySystemID'] = $user->employee['employeeSystemID'];
-            $input['PRConfirmedDate'] = now();
+            $input['PRConfirmedDate'] = now();*/
         }
 
 

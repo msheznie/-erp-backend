@@ -118,11 +118,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
         //$input['estimatedCost'] = $item->wacValueLocal;
 
-       /* return array('Company Id' => $item->companySystemID,
-                      'PR Currency Id' => $purchaseRequest->currency,
-                      'Item Currency Id' => $item->wacValueLocalCurrencyID,
-                      'Amount' => $item->wacValueLocal);*/
-
         $currencyConversion = \Helper::currencyConversion($item->companySystemID,$item->wacValueLocalCurrencyID,$purchaseRequest->currency, $item->wacValueLocal);
 
         $input['estimatedCost'] = $currencyConversion['documentAmount'];

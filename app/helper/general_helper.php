@@ -75,9 +75,8 @@ class Helper
      * $param 2-company : company
      * $param 3-document : document
      * $param 4-segment : segment
-     * $param 5-department : department
-     * $param 6-category : category
-     * $param 7-amount : amount
+     * $param 5-category : category
+     * $param 6-amount : amount
      * no return values
      */
     public static function confirmDocument($params)

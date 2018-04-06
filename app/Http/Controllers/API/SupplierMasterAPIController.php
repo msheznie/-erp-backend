@@ -259,7 +259,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMasters = $this->supplierMasterRepository->create($input);
 
         $updateSupplierMasters = SupplierMaster::where('supplierCodeSystem',$supplierMasters['supplierCodeSystem'])->first();
-        $updateSupplierMasters->primarySupplierCode = 's0'.strval($supplierMasters->supplierCodeSystem);
+        $updateSupplierMasters->primarySupplierCode = 'S0'.strval($supplierMasters->supplierCodeSystem);
         $updateSupplierMasters->save();
 
         return $this->sendResponse($supplierMasters->toArray(), 'Supplier Master saved successfully');

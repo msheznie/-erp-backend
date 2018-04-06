@@ -335,7 +335,7 @@ class ItemMasterAPIController extends AppBaseController
                 $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
                 $confirm = \Helper::confirmDocument($params);
                 if(!$confirm["success"]){
-                    return $this->sendError($confirm["message"]);
+                    return $this->sendError($confirm["message"],500);
                 }
             }
             foreach ($input as $key => $value) {
