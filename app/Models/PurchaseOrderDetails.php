@@ -269,4 +269,8 @@ class PurchaseOrderDetails extends Model
         return $this->belongsTo(\App\Models\ProcumentOrder::class,'purchaseOrderMasterID','purchaseOrderID');
     }
 
+    public function unit(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+
 }

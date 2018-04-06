@@ -146,4 +146,6 @@ class ItemAssigned extends Model
         return $this->hasMany('App\Models\SupplierCurrency','supplierCodeSystem','currency');
     }
 
+
+
 }

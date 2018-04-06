@@ -136,10 +136,11 @@ class ChartOfAccountAPIController extends AppBaseController
             $employeeSystemID = $user->employee['employeeSystemID'];
 
             if ($input['confirmedYN'] == 1) {
-                $input['confirmedEmpSystemID'] = $employeeSystemID;
-                $input['confirmedEmpID'] = $empId;
-                $input['confirmedEmpName'] = $empName;
-                $input['confirmedEmpDate'] = date('Y-m-d H:i:s');
+                $params = array('autoID' => $input['chartOfAccountSystemID'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
+                $confirm = \Helper::confirmDocument($params);
+                if(!$confirm["success"]){
+                    return $this->sendError($confirm["message"]);
+                }
             }
 
 
@@ -327,12 +328,54 @@ class ChartOfAccountAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function getAllChartOfAccountApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $companyID = $request->selectedCompanyID;
+        $companyID = \Helper::getGroupCompany($companyID);
+        $empID = \Helper::getEmployeeSystemID();
+
+        $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType'])->join('erp_documentapproved', function($join) use ($companyID,$empID){
+            $join->on('documentSystemCode', 'chartOfAccountSystemID');
+            $join->on('RollLevForApp_curr', 'rollLevelOrder');
+            $join->where('erp_documentapproved.approvedYN', 0);
+            $join->where('erp_documentapproved.rejectedYN', 0);
+            $join->whereIn('erp_documentapproved.companySystemID', $companyID);
+            $join->where('erp_documentapproved.documentSystemID', 59);
+        })->join('employeesdepartments',function ($join) use ($companyID,$empID){
+            $join->on('approvalGroupID', 'employeeGroupID');
+            $join->whereIn('employeesdepartments.companySystemID',$companyID);
+            $join->where('employeesdepartments.documentSystemID', 59);
+            $join->where('employeesdepartments.employeeSystemID', $empID);
+        })->where('isApproved', 0)->
+        whereIn('primaryCompanySystemID',$companyID);
+        //dd(DB::getQueryLog());
+        return \DataTables::eloquent($chartOfAccount)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('chartOfAccountSystemID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
     /**
      * get form data for Chart of Account.
      * POST /getChartOfAccountFormData
      *
      */
-    public function getChartOfAccountFormData()
+    public function getChartOfAccountFormData(Request $request)
     {
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -347,14 +390,46 @@ class ChartOfAccountAPIController extends AppBaseController
         $chartOfAccount = ChartOfAccount::where('isMasterAccount', 1)->get(['AccountCode', 'AccountDescription']);
         //$chartOfAccount = ChartOfAccount::all('AccountCode', 'AccountDescription');
 
+        $selectedCompanyId = $request['selectedCompanyId'];
+
+        $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
+
+        /** all Companies by Group company  Drop Down */
+        $companiesByGroup = Company::where("masterComapanyID", $masterCompany->CompanyID)
+            ->where("isGroup", 0)->get();
+
+        /** all Company  Drop Down */
+        $allCompanies = Company::where("isGroup", 0)->get();
 
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,
             'yesNoSelection' => $yesNoSelection,
-            'chartOfAccount' => $chartOfAccount
+            'chartOfAccount' => $chartOfAccount,
+            'allCompanies' => $allCompanies,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+
+    public function approveChartOfAccount(Request $request){
+        $approve = \Helper::approveDocument($request);
+        if(!$approve["success"]){
+            return $this->sendError($approve["message"]);
+        }else{
+            return $this->sendResponse(array(),$approve["message"]);
+        }
+
+    }
+
+    public function rejectChartOfAccount(Request $request){
+        $reject = \Helper::rejectDocument($request);
+        if(!$reject["success"]){
+            return $this->sendError($reject["message"]);
+        }else{
+            return $this->sendResponse(array(),$reject["message"]);
+        }
+
     }
 
 

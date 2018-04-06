@@ -50,6 +50,8 @@ class ChartOfAccount extends Model
 
     public $fillable = [
         'documentSystemID',
+        'primaryCompanySystemID',
+        'primaryCompanyID',
         'documentID',
         'AccountCode',
         'AccountDescription',
@@ -63,7 +65,9 @@ class ChartOfAccount extends Model
         'approvedBy',
         'approvedDate',
         'approvedComment',
+        'approvedBySystemID',
         'isActive',
+        'RollLevForApp_curr',
         'isBank',
         'AllocationID',
         'relatedPartyYN',
@@ -89,6 +93,8 @@ class ChartOfAccount extends Model
      */
     protected $casts = [
         'chartOfAccountSystemID' => 'integer',
+        'primaryCompanySystemID' => 'integer',
+        'primaryCompanyID' => 'string',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'AccountCode' => 'string',
@@ -101,7 +107,9 @@ class ChartOfAccount extends Model
         'controlAccounts' => 'string',
         'isApproved' => 'integer',
         'approvedBy' => 'string',
+        'approvedBySystemID' => 'integer',
         'approvedComment' => 'string',
+        'RollLevForApp_curr' => 'integer',
         'isActive' => 'integer',
         'isBank' => 'integer',
         'AllocationID' => 'integer',
