@@ -1,5 +1,14 @@
 <?php
-
+/**
+=============================================
+-- File Name : UserGroupAPIController.php
+-- Project Name : ERP
+-- Module Name :  User Group Setup
+-- Author : Mohamed Mubashir
+-- Create date : 14 - March 2018
+-- Description : This file contains the all CRUD for User Group Setup
+-- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUserGroupAPIRequest;

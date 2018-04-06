@@ -264,8 +264,13 @@ class PurchaseOrderDetails extends Model
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      **/
-    public function erpPurchaseordermaster()
+    public function order()
     {
-        return $this->belongsTo(\App\Models\ErpPurchaseordermaster::class);
+        return $this->belongsTo(\App\Models\ProcumentOrder::class,'purchaseOrderMasterID','purchaseOrderID');
     }
+
+    public function unit(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+
 }

@@ -1,0 +1,242 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Class GRVDetails
+ * @package App\Models
+ * @version April 2, 2018, 3:53 am UTC
+ *
+ * @property integer grvAutoID
+ * @property string companyID
+ * @property string serviceLineCode
+ * @property integer purchaseOrderMastertID
+ * @property integer purchaseOrderDetailsID
+ * @property integer itemCode
+ * @property string itemPrimaryCode
+ * @property string itemDescription
+ * @property integer itemFinanceCategoryID
+ * @property integer itemFinanceCategorySubID
+ * @property integer financeGLcodebBSSystemID
+ * @property string financeGLcodebBS
+ * @property integer financeGLcodePLSystemID
+ * @property string financeGLcodePL
+ * @property integer includePLForGRVYN
+ * @property string supplierPartNumber
+ * @property integer unitOfMeasure
+ * @property float noQty
+ * @property float prvRecievedQty
+ * @property float poQty
+ * @property float unitCost
+ * @property float discountPercentage
+ * @property float discountAmount
+ * @property float netAmount
+ * @property string comment
+ * @property integer supplierDefaultCurrencyID
+ * @property float supplierDefaultER
+ * @property integer supplierItemCurrencyID
+ * @property float foreignToLocalER
+ * @property integer companyReportingCurrencyID
+ * @property float companyReportingER
+ * @property integer localCurrencyID
+ * @property float localCurrencyER
+ * @property float addonDistCost
+ * @property float GRVcostPerUnitLocalCur
+ * @property float GRVcostPerUnitSupDefaultCur
+ * @property float GRVcostPerUnitSupTransCur
+ * @property float GRVcostPerUnitComRptCur
+ * @property float landingCost_TransCur
+ * @property float landingCost_LocalCur
+ * @property float landingCost_RptCur
+ * @property float logisticsCharges_TransCur
+ * @property float logisticsCharges_LocalCur
+ * @property float logisticsChargest_RptCur
+ * @property integer assetAllocationDoneYN
+ * @property integer isContract
+ * @property integer timesReferred
+ * @property float totalWHTAmount
+ * @property float WHTBearedBySupplier
+ * @property float WHTBearedByCompany
+ * @property string extraComment
+ * @property integer vatRegisteredYN
+ * @property integer supplierVATEligible
+ * @property float VATPercentage
+ * @property float VATAmount
+ * @property float VATAmountLocal
+ * @property float VATAmountRpt
+ * @property string createdUserGroup
+ * @property string createdPcID
+ * @property string createdUserID
+ * @property string modifiedPc
+ * @property string modifiedUser
+ * @property string|\Carbon\Carbon createdDateTime
+ * @property string|\Carbon\Carbon timeStamp
+ */
+class GRVDetails extends Model
+{
+    //use SoftDeletes;
+
+    public $table = 'erp_grvdetails';
+    
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timeStamp';
+    protected $primaryKey  = 'grvDetailsID';
+
+    protected $dates = ['deleted_at'];
+
+
+    public $fillable = [
+        'grvAutoID',
+        'companyID',
+        'serviceLineCode',
+        'purchaseOrderMastertID',
+        'purchaseOrderDetailsID',
+        'itemCode',
+        'itemPrimaryCode',
+        'itemDescription',
+        'itemFinanceCategoryID',
+        'itemFinanceCategorySubID',
+        'financeGLcodebBSSystemID',
+        'financeGLcodebBS',
+        'financeGLcodePLSystemID',
+        'financeGLcodePL',
+        'includePLForGRVYN',
+        'supplierPartNumber',
+        'unitOfMeasure',
+        'noQty',
+        'prvRecievedQty',
+        'poQty',
+        'unitCost',
+        'discountPercentage',
+        'discountAmount',
+        'netAmount',
+        'comment',
+        'supplierDefaultCurrencyID',
+        'supplierDefaultER',
+        'supplierItemCurrencyID',
+        'foreignToLocalER',
+        'companyReportingCurrencyID',
+        'companyReportingER',
+        'localCurrencyID',
+        'localCurrencyER',
+        'addonDistCost',
+        'GRVcostPerUnitLocalCur',
+        'GRVcostPerUnitSupDefaultCur',
+        'GRVcostPerUnitSupTransCur',
+        'GRVcostPerUnitComRptCur',
+        'landingCost_TransCur',
+        'landingCost_LocalCur',
+        'landingCost_RptCur',
+        'logisticsCharges_TransCur',
+        'logisticsCharges_LocalCur',
+        'logisticsChargest_RptCur',
+        'assetAllocationDoneYN',
+        'isContract',
+        'timesReferred',
+        'totalWHTAmount',
+        'WHTBearedBySupplier',
+        'WHTBearedByCompany',
+        'extraComment',
+        'vatRegisteredYN',
+        'supplierVATEligible',
+        'VATPercentage',
+        'VATAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'createdUserGroup',
+        'createdPcID',
+        'createdUserID',
+        'modifiedPc',
+        'modifiedUser',
+        'createdDateTime',
+        'timeStamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'grvDetailsID' => 'integer',
+        'grvAutoID' => 'integer',
+        'companyID' => 'string',
+        'serviceLineCode' => 'string',
+        'purchaseOrderMastertID' => 'integer',
+        'purchaseOrderDetailsID' => 'integer',
+        'itemCode' => 'integer',
+        'itemPrimaryCode' => 'string',
+        'itemDescription' => 'string',
+        'itemFinanceCategoryID' => 'integer',
+        'itemFinanceCategorySubID' => 'integer',
+        'financeGLcodebBSSystemID' => 'integer',
+        'financeGLcodebBS' => 'string',
+        'financeGLcodePLSystemID' => 'integer',
+        'financeGLcodePL' => 'string',
+        'includePLForGRVYN' => 'integer',
+        'supplierPartNumber' => 'string',
+        'unitOfMeasure' => 'integer',
+        'noQty' => 'float',
+        'prvRecievedQty' => 'float',
+        'poQty' => 'float',
+        'unitCost' => 'float',
+        'discountPercentage' => 'float',
+        'discountAmount' => 'float',
+        'netAmount' => 'float',
+        'comment' => 'string',
+        'supplierDefaultCurrencyID' => 'integer',
+        'supplierDefaultER' => 'float',
+        'supplierItemCurrencyID' => 'integer',
+        'foreignToLocalER' => 'float',
+        'companyReportingCurrencyID' => 'integer',
+        'companyReportingER' => 'float',
+        'localCurrencyID' => 'integer',
+        'localCurrencyER' => 'float',
+        'addonDistCost' => 'float',
+        'GRVcostPerUnitLocalCur' => 'float',
+        'GRVcostPerUnitSupDefaultCur' => 'float',
+        'GRVcostPerUnitSupTransCur' => 'float',
+        'GRVcostPerUnitComRptCur' => 'float',
+        'landingCost_TransCur' => 'float',
+        'landingCost_LocalCur' => 'float',
+        'landingCost_RptCur' => 'float',
+        'logisticsCharges_TransCur' => 'float',
+        'logisticsCharges_LocalCur' => 'float',
+        'logisticsChargest_RptCur' => 'float',
+        'assetAllocationDoneYN' => 'integer',
+        'isContract' => 'integer',
+        'timesReferred' => 'integer',
+        'totalWHTAmount' => 'float',
+        'WHTBearedBySupplier' => 'float',
+        'WHTBearedByCompany' => 'float',
+        'extraComment' => 'string',
+        'vatRegisteredYN' => 'integer',
+        'supplierVATEligible' => 'integer',
+        'VATPercentage' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATAmountRpt' => 'float',
+        'createdUserGroup' => 'string',
+        'createdPcID' => 'string',
+        'createdUserID' => 'string',
+        'modifiedPc' => 'string',
+        'modifiedUser' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    public function master(){
+        return $this->belongsTo('App\Models\GRVMaster','grvAutoID','grvAutoID');
+    }
+    
+}

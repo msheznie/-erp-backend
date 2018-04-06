@@ -142,5 +142,10 @@ class ItemAssigned extends Model
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 
+    public function purchase_request_details(){
+        return $this->hasMany('App\Models\SupplierCurrency','supplierCodeSystem','currency');
+    }
+
+
 
 }
