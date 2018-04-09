@@ -73,7 +73,7 @@ class UnitAPIController extends AppBaseController
         $input = $request->all();
 
         $messages = array(
-            'UnitShortCode.unique'   => 'The Unit Short Code has already been taken'
+            'UnitShortCode.unique'   => 'Unit code already exists'
         );
 
         $validator = \Validator::make($input, [

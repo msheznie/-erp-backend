@@ -15,6 +15,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+use App\Repositories\UserRepository;
 
 /**
  * Class SegmentMasterController
@@ -25,10 +26,11 @@ class SegmentMasterAPIController extends AppBaseController
 {
     /** @var  SegmentMasterRepository */
     private $segmentMasterRepository;
-
-    public function __construct(SegmentMasterRepository $segmentMasterRepo)
+    private $userRepository;
+    public function __construct(SegmentMasterRepository $segmentMasterRepo, UserRepository $userRepo)
     {
         $this->segmentMasterRepository = $segmentMasterRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -65,7 +67,7 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         $messages = array(
-            'ServiceLineCode.unique'   => 'The Service Line Code has already been taken'
+            'ServiceLineCode.unique'   => 'Segment code already exists'
         );
 
         $validator = \Validator::make($input, [
@@ -75,6 +77,13 @@ class SegmentMasterAPIController extends AppBaseController
         if ($validator->fails()) {//echo 'in';exit;
             return $this->sendError($validator->messages(), 422 );
         }
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $empId = $user->employee['empID'];
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = $empId;
 
         $input['serviceLineMasterCode'] =  $input['ServiceLineCode'];
 
@@ -123,6 +132,12 @@ class SegmentMasterAPIController extends AppBaseController
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
         }
+
+        $userId = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
+        $empId = $user->employee['empID'];
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $empId;
 
         $segmentMaster = $this->segmentMasterRepository->update($input, $id);
 
@@ -237,7 +252,15 @@ class SegmentMasterAPIController extends AppBaseController
         if (is_array($input['isMaster']))
             $input['isMaster'] = $input['isMaster'][0];
 
+        $userId = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
+        $empId = $user->employee['empID'];
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $empId;
+
         $data =array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID']);
+
+
 
         $segmentMaster = $this->segmentMasterRepository->update($data, $input['serviceLineSystemID']);
 

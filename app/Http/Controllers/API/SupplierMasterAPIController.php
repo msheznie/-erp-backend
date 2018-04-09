@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
 use App\Models\Company;
 use App\Models\CountryMaster;
+use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Models\DocumentMaster;
 use App\Models\ChartOfAccount;
@@ -269,8 +270,8 @@ class SupplierMasterAPIController extends AppBaseController
     public function updateSupplierMaster(Request $request)
     {
         $input = $this->convertArrayToValue($request->all());
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $userId = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
         $empId = $user->employee['empID'];
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $empId;
@@ -302,10 +303,20 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Master not found');
         }
 
-        if($isConfirm){
+        if($isConfirm && $supplierMaster->supplierConfirmedYN == 0){
             /*$input['supplierConfirmedEmpID'] = $empId;
             $input['supplierConfirmedEmpName'] = $empName;
             $input['supplierConfirmedDate'] = now();*/
+
+            $checkDefaultCurrency = SupplierCurrency::where('supplierCodeSystem',$id)
+                                                           ->where('isDefault',-1)
+                                                           ->count();
+
+            if($checkDefaultCurrency == 0){
+                return $this->sendError("Default currency not found. Setup currency in currency tab",500);
+            }
+
+
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
             $confirm = \Helper::confirmDocument($params);
             if(!$confirm["success"]){

@@ -174,7 +174,10 @@ class CustomerMasterAPIController extends AppBaseController
         $yesNoSelection = YesNoSelection::all();
 
         /**Chart of Account Drop Down */
-        $chartOfAccounts = ChartOfAccount::all();
+        $chartOfAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
+                                                ->where('catogaryBLorPL', '=', 'BS')
+                                                ->orderBy('AccountDescription', 'asc')
+                                                ->get();
 
         /**Country Drop Down */
         $country = CountryMaster::orderBy('countryName', 'asc')->get();

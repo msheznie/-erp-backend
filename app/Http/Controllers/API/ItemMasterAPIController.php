@@ -275,6 +275,7 @@ class ItemMasterAPIController extends AppBaseController
         $document = DocumentMaster::where('documentID', 'ITMM')->first();
         $input['documentSystemID'] = $document->documentSystemID;
         $input['documentID'] = $document->documentID;
+        $input['isActive'] = 1;
 
         $itemMasters = $this->itemMasterRepository->create($input);
 
@@ -312,6 +313,14 @@ class ItemMasterAPIController extends AppBaseController
             if (empty($itemMaster)) {
                 return $this->sendError('Item Master not found');
             }
+
+             $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
+
+             if($company){
+                 $input['primaryCompanyID'] = $company->CompanyID;
+             }
+
+
             foreach ($input as $key => $value) {
                 if (is_array($input[$key])) {
                     if (count($input[$key]) > 0) {
@@ -322,12 +331,6 @@ class ItemMasterAPIController extends AppBaseController
                 }
             }
             if ($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1) {
-
-                //if approved no
-                //is approved  =1
-
-                // else approved yes
-                // call ur function
 
                 /*$input['itemConfirmedByEMPID'] = $empId;
                 $input['itemConfirmedByEMPName'] = $empName;

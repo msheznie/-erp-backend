@@ -107,6 +107,12 @@ class ChartOfAccountAPIController extends AppBaseController
         $input['documentSystemID'] = 59;
         $input['documentID'] = 'CAM';
 
+        $company = Company::where('companySystemID',$input['primaryCompanySystemID'])->first();
+
+        if($company){
+            $input['primaryCompanyID'] = $company->CompanyID;
+        }
+
         if (array_key_exists('chartOfAccountSystemID', $input)) {
 
             $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
@@ -128,14 +134,14 @@ class ChartOfAccountAPIController extends AppBaseController
             /** End of Validation */
 
 
-            $chartOfAccount->modifiedPc = gethostname();
-            $chartOfAccount->modifiedUser = $empId;
+            $input['modifiedPc'] = gethostname();
+            $input['modifiedUser'] = $empId;
 
 
             $empName = $user->employee['empName'];
             $employeeSystemID = $user->employee['employeeSystemID'];
 
-            if ($input['confirmedYN'] == 1) {
+            if ($input['confirmedYN'] == 1 && $chartOfAccount->confirmedYN == 0) {
                 $params = array('autoID' => $input['chartOfAccountSystemID'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
                 $confirm = \Helper::confirmDocument($params);
                 if(!$confirm["success"]){
