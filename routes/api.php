@@ -143,6 +143,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('user_group_assigns', 'UserGroupAssignAPIController');
     Route::get('checkUserGroupAccessRights','UserGroupAssignAPIController@checkUserGroupAccessRights');
     Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
+    Route::post('purchase_order_details_frm_pr', 'PurchaseOrderDetailsAPIController@storePurchaseOrderDetailsFromPR');
     /** Approval Level*/
     Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
     Route::get('getGroupFilterData', 'ApprovalLevelAPIController@getGroupFilterData');
@@ -226,11 +227,13 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('purchase_requests', 'PurchaseRequestAPIController');
     Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
     Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
+    Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO');
 
     Route::resource('procurement-order', 'ProcumentOrderAPIController');
     Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
     Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData');
     Route::get('getItemsByProcumentOrder', 'PurchaseOrderDetailsAPIController@getItemsByProcumentOrder');
+    Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -245,6 +248,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
     Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
     Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
+    Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO');
 
     Route::resource('document_approveds', 'DocumentApprovedAPIController');
     Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
@@ -256,6 +260,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::resource('g_r_v_masters', 'GRVMasterAPIController');
     Route::resource('g_r_v_details', 'GRVDetailsAPIController');
+
     Route::resource('document_attachments', 'DocumentAttachmentsAPIController');
     Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
     Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');

@@ -118,11 +118,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
         //$input['estimatedCost'] = $item->wacValueLocal;
 
-       /* return array('Company Id' => $item->companySystemID,
-                      'PR Currency Id' => $purchaseRequest->currency,
-                      'Item Currency Id' => $item->wacValueLocalCurrencyID,
-                      'Amount' => $item->wacValueLocal);*/
-
         $currencyConversion = \Helper::currencyConversion($item->companySystemID,$item->wacValueLocalCurrencyID,$purchaseRequest->currency, $item->wacValueLocal);
 
         $input['estimatedCost'] = $currencyConversion['documentAmount'];
@@ -318,7 +313,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     return $this->sendError("There is a purchase request (" . $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode . ") approved and PO is partially processed for the item you are trying to add. Please check again", 500);
                 }
 
-               /* $unApprovedPO*/
+                /* $unApprovedPO*/
             }
         }
 
@@ -436,5 +431,28 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $purchaseRequestDetails->delete();
 
         return $this->sendResponse($id, 'Purchase Request Details deleted successfully');
+    }
+
+    /**
+     * Display a listing all items for PO based on Purchase Request.
+     * GET|HEAD /getPurchaseRequestDetailForPO
+     *
+     * @param Request $request
+     * @return Response
+     */
+
+    public function getPurchaseRequestDetailForPO(Request $request)
+    {
+        $input = $request->all();
+        $prId = $input['purchaseRequestID'];
+
+        $detail = PurchaseRequestDetails::select(DB::raw('erp_purchaserequestdetails.*,"" as isChecked, "" as poQty'))
+            ->where('purchaseRequestID', $prId)
+            //->where('selectedForPO', 0)
+            ->where('prClosedYN', 0)
+            ->where('fullyOrdered','!=', 2)
+            ->get();
+        return $this->sendResponse($detail->toArray(), 'Purchase Request Details retrieved successfully');
+
     }
 }

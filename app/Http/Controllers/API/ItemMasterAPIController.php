@@ -317,19 +317,10 @@ class ItemMasterAPIController extends AppBaseController
         }
         if ($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1) {
 
-            //if approved no
-            //is approved  =1
-
-            // else approved yes
-            // call ur function
-
-            /*$input['itemConfirmedByEMPID'] = $empId;
-            $input['itemConfirmedByEMPName'] = $empName;
-            $input['itemConfirmedDate'] = now();*/
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
             $confirm = \Helper::confirmDocument($params);
-            if (!$confirm["success"]) {
-                return $this->sendError($confirm["message"]);
+            if(!$confirm["success"]){
+                return $this->sendError($confirm["message"],500);
             }
         }
         foreach ($input as $key => $value) {
