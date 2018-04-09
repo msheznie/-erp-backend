@@ -20,10 +20,12 @@ use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\ControlAccount;
 use App\Models\AccountsType;
+use App\Models\DocumentApproved;
 use App\Models\YesNoSelection;
 use App\Repositories\ChartOfAccountRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -347,26 +349,31 @@ class ChartOfAccountAPIController extends AppBaseController
         $companyID = \Helper::getGroupCompany($companyID);
         $empID = \Helper::getEmployeeSystemID();
 
-        $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType'])->join('erp_documentapproved', function($join) use ($companyID,$empID){
-            $join->on('documentSystemCode', 'chartOfAccountSystemID');
-            $join->on('RollLevForApp_curr', 'rollLevelOrder');
-            $join->where('erp_documentapproved.approvedYN', 0);
-            $join->where('erp_documentapproved.rejectedYN', 0);
-            $join->whereIn('erp_documentapproved.companySystemID', $companyID);
-            $join->where('erp_documentapproved.documentSystemID', 59);
-        })->join('employeesdepartments',function ($join) use ($companyID,$empID){
-            $join->on('approvalGroupID', 'employeeGroupID');
-            $join->whereIn('employeesdepartments.companySystemID',$companyID);
-            $join->where('employeesdepartments.documentSystemID', 59);
-            $join->where('employeesdepartments.employeeSystemID', $empID);
-        })->where('isApproved', 0)->
-        whereIn('primaryCompanySystemID',$companyID);
-        //dd(DB::getQueryLog());
-        return \DataTables::eloquent($chartOfAccount)
+        $chartOfAccount = DB::table('erp_documentapproved')->select('chartofaccounts.*','controlaccounts.description as controlaccountdescription','accountstype.description as accountstypedescription','erp_documentapproved.documentApprovedID','rollLevelOrder','approvalLevelID','documentSystemCode')->join('employeesdepartments',function ($query) use ($companyID,$empID) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                ->where('employeesdepartments.documentSystemID',59)->whereIn('employeesdepartments.companySystemID',$companyID)
+                ->where('employeesdepartments.employeeSystemID',$empID);
+        })->join('chartofaccounts',function ($query) use ($companyID,$empID) {
+            $query->on('chartOfAccountSystemID','=','erp_documentapproved.documentSystemCode')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->whereIn('primaryCompanySystemID',$companyID)
+                ->where('isApproved', 0)
+                ->where('chartofaccounts.confirmedYN', 1);
+        })
+            ->leftJoin('controlaccounts','controlaccounts.controlAccountsSystemID','=','chartofaccounts.controlAccountsSystemID')
+            ->leftJoin('accountstype','catogaryBLorPLID','=','accountsType')
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->where('erp_documentapproved.rejectedYN',0)
+            ->where('erp_documentapproved.documentSystemID',59)
+            ->whereIn('erp_documentapproved.companySystemID',$companyID);
+
+        return \DataTables::of($chartOfAccount)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('chartOfAccountSystemID', $input['order'][0]['dir']);
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
                     }
                 }
             })

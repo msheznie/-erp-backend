@@ -19,6 +19,7 @@ use App\Http\Requests\API\UpdateCustomerMasterAPIRequest;
 use App\Models\CustomerMaster;
 use App\Models\Company;
 use App\Models\CountryMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\YesNoSelection;
 use App\Models\CustomerAssigned;
@@ -26,6 +27,7 @@ use App\Models\ChartOfAccount;
 use App\Repositories\CustomerMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
@@ -125,27 +127,31 @@ class CustomerMasterAPIController extends AppBaseController
         $companyID = \Helper::getGroupCompany($companyID);
         $empID = \Helper::getEmployeeSystemID();
 
-        $customerMasters = CustomerMaster::with('country')->join('erp_documentapproved', function($join) use ($companyID,$empID){
-            $join->on('documentSystemCode', 'customerCodeSystem');
-            $join->on('RollLevForApp_curr', 'rollLevelOrder');
-            $join->where('erp_documentapproved.approvedYN', 0);
-            $join->where('erp_documentapproved.rejectedYN', 0);
-            $join->whereIn('erp_documentapproved.companySystemID', $companyID);
-            $join->where('erp_documentapproved.documentSystemID', 58);
-        })->join('employeesdepartments',function ($join) use ($companyID,$empID){
-            $join->on('approvalGroupID', 'employeeGroupID');
-            $join->whereIn('employeesdepartments.companySystemID',$companyID);
-            $join->where('employeesdepartments.documentSystemID', 58);
-            $join->where('employeesdepartments.employeeSystemID', $empID);
-        })->where('customermaster.approvedYN', 0)->
-        whereIn('primaryCompanySystemID',$companyID);
+        $customerMasters = DB::table('erp_documentapproved')->select('customermaster.*','countrymaster.countryName','erp_documentapproved.documentApprovedID','rollLevelOrder','approvalLevelID','documentSystemCode')->join('employeesdepartments',function ($query) use ($companyID,$empID) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                ->where('employeesdepartments.documentSystemID',58)
+                ->whereIn('employeesdepartments.companySystemID',$companyID)
+                ->where('employeesdepartments.employeeSystemID',$empID);
+        })->join('customermaster', function ($query) use ($companyID, $empID) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'customerCodeSystem')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->whereIn('primaryCompanySystemID', $companyID)
+                    ->where('customermaster.approvedYN', 0)
+                    ->where('customermaster.confirmedYN', 1);
+            })->where('erp_documentapproved.approvedYN', 0)
+            ->join('countrymaster', 'customerCountry','=','countryID')
+            ->where('erp_documentapproved.rejectedYN',0)
+            ->where('erp_documentapproved.documentSystemID',58)
+            ->whereIn('erp_documentapproved.companySystemID',$companyID);
 
-        return \DataTables::eloquent($customerMasters)
+        return \DataTables::of($customerMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {
                     if($input['order'][0]['column'] == 0)
                     {
-                        $query->orderBy('customerCodeSystem', $input['order'][0]['dir']);
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
                     }
                 }
             })

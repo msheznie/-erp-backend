@@ -140,5 +140,21 @@ class DocumentApproved extends Model
         return $this->belongsTo('App\Models\EmployeesDepartment','approvalGroupID','employeeGroupID');
     }
 
+    public function supplier(){
+        return $this->HasOne('App\Models\SupplierMaster','supplierCodeSystem','documentSystemCode');
+    }
+
+    public function item(){
+        return $this->HasOne('App\Models\ItemMaster','itemCodeSystem','documentSystemCode');
+    }
+
+    public function customer(){
+        return $this->HasOne('App\Models\CustomerMaster','customerCodeSystem','documentSystemCode');
+    }
+
+    public function account(){
+        return $this->HasOne('App\Models\ChartOfAccount','chartOfAccountSystemID','documentSystemCode');
+    }
+
 
 }

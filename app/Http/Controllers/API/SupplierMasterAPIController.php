@@ -1,16 +1,16 @@
 <?php
 /**
-=============================================
--- File Name : SupplierMasterAPIController.php
--- Project Name : ERP
--- Module Name :  Supplier Master
--- Author : Mohamed Fayas
--- Create date : 14 - March 2018
--- Description : This file contains the all CRUD for Supplier Master
--- REVISION HISTORY
--- Date: 14-March 2018 By: Fayas Description: Added new functions named as getSupplierMasterByCompany(),getAssignedCompaniesBySupplier(),
-
+ * =============================================
+ * -- File Name : SupplierMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Supplier Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Supplier Master
+ * -- REVISION HISTORY
+ * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getSupplierMasterByCompany(),getAssignedCompaniesBySupplier(),
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
@@ -18,6 +18,7 @@ use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
 use App\Models\Company;
 use App\Models\CountryMaster;
 use App\Models\SupplierCurrency;
+use App\Models\DocumentApproved;
 use App\Models\SupplierMaster;
 use App\Models\DocumentMaster;
 use App\Models\ChartOfAccount;
@@ -96,27 +97,26 @@ class SupplierMasterAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
         $supplierMasters = SupplierMaster::
-             //where('primaryCompanySystemID', $companyId)
-             with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
-                $query->where('isDefault', -1)
-                    ->with(['currencyMaster']);
-            }]);
-            //->select();
+        //where('primaryCompanySystemID', $companyId)
+        with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
+            $query->where('isDefault', -1)
+                ->with(['currencyMaster']);
+        }]);
+        //->select();
 
         /**
-         ['suppliermaster.primarySupplierCode',
-        'suppliermaster.supplierName',
-        'suppliermaster.creditPeriod',
-        //'suppliermaster.categoryDescription',
-        'suppliermaster.primaryCompanyID',
-        'suppliermaster.isActive'
-        ]*/
+         * ['suppliermaster.primarySupplierCode',
+         * 'suppliermaster.supplierName',
+         * 'suppliermaster.creditPeriod',
+         * //'suppliermaster.categoryDescription',
+         * 'suppliermaster.primaryCompanyID',
+         * 'suppliermaster.isActive'
+         * ]*/
 
         return \DataTables::eloquent($supplierMasters)
             ->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('supplierCodeSystem', $input['order'][0]['dir']);
                     }
                 }
@@ -152,30 +152,34 @@ class SupplierMasterAPIController extends AppBaseController
         $companyID = \Helper::getGroupCompany($companyID);
         $empID = \Helper::getEmployeeSystemID();
 
-        //DB::enableQueryLog();
-        $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
-            $query->where('isDefault', -1)
-                ->with(['currencyMaster']);
-        }])->join('erp_documentapproved', function($join) use ($companyID,$empID){
-            $join->on('documentSystemCode', 'supplierCodeSystem');
-            $join->on('RollLevForApp_curr', 'rollLevelOrder');
-            $join->where('erp_documentapproved.approvedYN', 0);
-            $join->where('erp_documentapproved.rejectedYN', 0);
-            $join->whereIn('erp_documentapproved.companySystemID', $companyID);
-            $join->where('erp_documentapproved.documentSystemID', 56);
-        })->join('employeesdepartments',function ($join) use ($companyID,$empID){
-            $join->on('approvalGroupID', 'employeeGroupID');
-            $join->whereIn('employeesdepartments.companySystemID',$companyID);
-            $join->where('employeesdepartments.documentSystemID', 56);
-            $join->where('employeesdepartments.employeeSystemID', $empID);
-        })->where('suppliermaster.approvedYN', 0)->
-        whereIn('primaryCompanySystemID',$companyID);
-        //dd(DB::getQueryLog());
-        return \DataTables::eloquent($supplierMasters)
+        $supplierMasters = DB::table('erp_documentapproved')->select('suppliermaster.*','erp_documentapproved.documentApprovedID','rollLevelOrder','currencymaster.CurrencyCode','suppliercategorymaster.categoryDescription','approvalLevelID','documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')->
+                on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')->
+                on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                    ->where('employeesdepartments.documentSystemID', 56)
+                    ->whereIn('employeesdepartments.companySystemID', $companyID)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('suppliermaster', function ($query) use ($companyID, $empID) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'supplierCodeSystem')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->whereIn('primaryCompanySystemID', $companyID)
+                    ->where('suppliermaster.approvedYN', 0)
+                    ->where('suppliermaster.supplierConfirmedYN', 1);
+            })
+            ->leftJoin('suppliercategorymaster', 'suppliercategorymaster.supCategoryMasterID', '=', 'suppliermaster.supCategoryMasterID')
+            ->leftJoin('currencymaster', 'suppliermaster.currency', '=', 'currencymaster.currencyID')
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 56)
+            ->whereIn('erp_documentapproved.companySystemID', $companyID);
+
+        return \DataTables::of($supplierMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('supplierCodeSystem', $input['order'][0]['dir']);
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -234,16 +238,16 @@ class SupplierMasterAPIController extends AppBaseController
 
         $input['uniqueTextcode'] = 'S';
 
-         if(array_key_exists ('supplierCountryID' , $input )){
-             $input['countryID'] = $input['supplierCountryID'];
-         }
+        if (array_key_exists('supplierCountryID', $input)) {
+            $input['countryID'] = $input['supplierCountryID'];
+        }
 
-        $company = Company::where('companySystemID',$input['primaryCompanySystemID'])->first();
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
         $input['primaryCompanyID'] = $company->CompanyID;
 
 
-        $document = DocumentMaster::where('documentID','SUPM')->first();
+        $document = DocumentMaster::where('documentID', 'SUPM')->first();
 
         $input['documentSystemID'] = $document->documentSystemID;
         $input['documentID'] = $document->documentID;
@@ -251,16 +255,18 @@ class SupplierMasterAPIController extends AppBaseController
         $input['isActive'] = 1;
         //$input['isCriticalYN'] = 1;
 
-        $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID',$input['liabilityAccountSysemID'])->first();
-        $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID',$input['UnbilledGRVAccountSystemID'])->first();
+        $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID', $input['liabilityAccountSysemID'])->first();
+        $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID', $input['UnbilledGRVAccountSystemID'])->first();
 
         $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
 
         $supplierMasters = $this->supplierMasterRepository->create($input);
 
+
         $updateSupplierMasters = SupplierMaster::where('supplierCodeSystem',$supplierMasters['supplierCodeSystem'])->first();
         $updateSupplierMasters->primarySupplierCode = 'S0'.strval($supplierMasters->supplierCodeSystem);
+
         $updateSupplierMasters->save();
 
         return $this->sendResponse($supplierMasters->toArray(), 'Supplier Master saved successfully');
@@ -287,12 +293,12 @@ class SupplierMasterAPIController extends AppBaseController
 
         $id = $input['supplierCodeSystem'];
 
-        if(array_key_exists ('supplierCountryID' , $input )){
+        if (array_key_exists('supplierCountryID', $input)) {
             $input['countryID'] = $input['supplierCountryID'];
         }
 
-        $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID',$input['liabilityAccountSysemID'])->first();
-        $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID',$input['UnbilledGRVAccountSystemID'])->first();
+        $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID', $input['liabilityAccountSysemID'])->first();
+        $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID', $input['UnbilledGRVAccountSystemID'])->first();
 
         $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
@@ -304,9 +310,6 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if($isConfirm && $supplierMaster->supplierConfirmedYN == 0){
-            /*$input['supplierConfirmedEmpID'] = $empId;
-            $input['supplierConfirmedEmpName'] = $empName;
-            $input['supplierConfirmedDate'] = now();*/
 
             $checkDefaultCurrency = SupplierCurrency::where('supplierCodeSystem',$id)
                                                            ->where('isDefault',-1)
@@ -319,12 +322,12 @@ class SupplierMasterAPIController extends AppBaseController
 
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
             $confirm = \Helper::confirmDocument($params);
-            if(!$confirm["success"]){
+            if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
         }
 
-         $supplierMaster = $this->supplierMasterRepository->update($input, $id);
+        $supplierMaster = $this->supplierMasterRepository->update($input, $id);
 
         return $this->sendResponse($supplierMaster->toArray(), 'SupplierMaster updated successfully');
     }
@@ -337,11 +340,11 @@ class SupplierMasterAPIController extends AppBaseController
             ->first();
         if ($supplier) {
             $supplierCompanies = DB::table('supplierassigned')
-                ->leftJoin('supplierimportance','supplierassigned.supplierImportanceID','=','supplierimportance.supplierImportanceID')
-                ->leftJoin('suppliernature','supplierassigned.supplierNatureID','=','suppliernature.supplierNatureID')
-                ->leftJoin('suppliertype','supplierassigned.supplierTypeID','=','suppliertype.supplierTypeID')
-                ->leftJoin('suppliercritical','supplierassigned.isCriticalYN','=','suppliercritical.suppliercriticalID')
-                ->leftJoin('yesnoselection','supplierassigned.isActive','=','yesnoselection.idyesNoselection')
+                ->leftJoin('supplierimportance', 'supplierassigned.supplierImportanceID', '=', 'supplierimportance.supplierImportanceID')
+                ->leftJoin('suppliernature', 'supplierassigned.supplierNatureID', '=', 'suppliernature.supplierNatureID')
+                ->leftJoin('suppliertype', 'supplierassigned.supplierTypeID', '=', 'suppliertype.supplierTypeID')
+                ->leftJoin('suppliercritical', 'supplierassigned.isCriticalYN', '=', 'suppliercritical.suppliercriticalID')
+                ->leftJoin('yesnoselection', 'supplierassigned.isActive', '=', 'yesnoselection.idyesNoselection')
                 ->where('supplierCodeSytem', $supplierId)
                 ->orderBy('supplierAssignedID', 'DESC')
                 ->get();
@@ -363,7 +366,7 @@ class SupplierMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var SupplierMaster $supplierMaster */
-         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
+        $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
         //$supplierMaster = SupplierMaster::where("supplierCodeSystem", $id)->first();
 
         if (empty($supplierMaster)) {
@@ -384,7 +387,7 @@ class SupplierMasterAPIController extends AppBaseController
      */
     public function update($id, UpdateSupplierMasterAPIRequest $request)
     {
-         $input = $request->all();
+        $input = $request->all();
 
         /** @var SupplierMaster $supplierMaster */
         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
@@ -421,22 +424,24 @@ class SupplierMasterAPIController extends AppBaseController
     }
 
 
-    public function approveSupplier(Request $request){
+    public function approveSupplier(Request $request)
+    {
         $approve = \Helper::approveDocument($request);
-        if(!$approve["success"]){
+        if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
-        }else{
-            return $this->sendResponse(array(),$approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
         }
 
     }
 
-    public function rejectSupplier(Request $request){
+    public function rejectSupplier(Request $request)
+    {
         $reject = \Helper::rejectDocument($request);
-        if(!$reject["success"]){
+        if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
-        }else{
-            return $this->sendResponse(array(),$reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
         }
 
     }
