@@ -187,8 +187,12 @@ class Helper
                         $isCategoryWise = $policy->isCategoryApproval;
                         $isValueWise = $policy->isAmountApproval;
                         $isAttachment = $policy->isAttachmentYN;
+                        //check for attachment is uploaded if attachment policy is set to must
                         if($isAttachment == -1){
-
+                            $docAttachment = Models\DocumentAttachments::where('companySystemID',$params["company"])->where('documentSystemID',$params["document"])->where('documentSystemCode',$params["autoID"])->first();
+                            if(!$docAttachment){
+                                return ['success' => false, 'message' => 'No attachment found'];
+                            }
                         }
                     } else {
                         return ['success' => false, 'message' => 'Policy not available for this document.'];
