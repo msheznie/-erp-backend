@@ -128,7 +128,10 @@ class SupplierMaster extends Model
         'WHTApplicable',
         'timestamp',
         'documentSystemID',
-        'documentID'
+        'documentID',
+        'vatEligible',
+        'vatNumber',
+        'vatPercentage'
     ];
 
     /**
@@ -186,7 +189,10 @@ class SupplierMaster extends Model
         'supplierTypeID' => 'integer',
         'WHTApplicable' => 'integer',
         'documentSystemID' => 'integer',
-        'documentID' => 'string'
+        'documentID' => 'string',
+        'vatEligible' => 'integer',
+        'vatNumber' => 'string',
+        'vatPercentage' => 'integer'
     ];
 
     /**

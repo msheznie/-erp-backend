@@ -168,6 +168,11 @@ class CurrencyMasterAPIController extends AppBaseController
                     $tem_sc->save();
                 }
             }
+
+            if($request['isDefault'] == true || $request['isDefault'] == 1){
+                $request['isDefault'] = -1;
+            }
+
             $supplierCurrency->isDefault  = $request['isDefault'];
             $supplierCurrency->isAssigned  = $request['isAssigned'];
             $supplierCurrency->save();

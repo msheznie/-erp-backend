@@ -91,7 +91,8 @@ class ProcumentOrderDetailAPIController extends AppBaseController
      */
     public function update($id, UpdateProcumentOrderDetailAPIRequest $request)
     {
-        $input = $request->all();
+        $input = array_except($request->all(), 'unit');
+        $input = $this->convertArrayToValue($input);
 
         /** @var ProcumentOrderDetail $procumentOrderDetail */
         $procumentOrderDetail = $this->procumentOrderDetailRepository->findWithoutFail($id);
@@ -102,7 +103,7 @@ class ProcumentOrderDetailAPIController extends AppBaseController
 
         $procumentOrderDetail = $this->procumentOrderDetailRepository->update($input, $id);
 
-        return $this->sendResponse($procumentOrderDetail->toArray(), 'ProcumentOrderDetail updated successfully');
+        return $this->sendResponse($procumentOrderDetail->toArray(), 'Procument Order Detail updated successfully');
     }
 
     /**

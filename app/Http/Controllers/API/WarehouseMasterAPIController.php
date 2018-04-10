@@ -76,7 +76,7 @@ class WarehouseMasterAPIController extends AppBaseController
         }
 
         $messages = array(
-            'wareHouseCode.unique'   => 'The Warehouse Code has already been taken'
+            'wareHouseCode.unique'   => 'Warehouse code already exists'
         );
 
         $validator = \Validator::make($input, [
