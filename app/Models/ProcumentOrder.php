@@ -144,7 +144,7 @@ class ProcumentOrder extends Model
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
 
-    protected $primaryKey  = 'purchaseOrderID';
+    protected $primaryKey = 'purchaseOrderID';
 
     protected $dates = ['deleted_at'];
 
@@ -405,31 +405,46 @@ class ProcumentOrder extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    public function created_by(){
-        return $this->belongsTo('App\Models\Employee','createdUserSystemID','employeeSystemID');
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
 
-    public function location(){
-        return $this->belongsTo('App\Models\Location','poLocation','locationID');
+    public function confirmed_by(){
+        return $this->belongsTo('App\Models\Employee','poConfirmedByEmpSystemID','employeeSystemID');
     }
 
-    public function segment(){
-        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    public function location()
+    {
+        return $this->belongsTo('App\Models\Location', 'poLocation', 'locationID');
     }
 
-    public function supplier(){
-        return $this->belongsTo('App\Models\SupplierMaster','supplierID','supplierCodeSystem');
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 
-    public function currency(){
-        return $this->belongsTo('App\Models\CurrencyMaster','supplierTransactionCurrencyID','currencyID');
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
     }
 
-    public function fcategory(){
-        return $this->belongsTo('App\Models\FinanceItemCategoryMaster','financeCategory','itemCategoryID');
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
+    }
+
+    public function fcategory()
+    {
+        return $this->belongsTo('App\Models\FinanceItemCategoryMaster', 'financeCategory', 'itemCategoryID');
+    }
+
+    public function detail()
+    {
+        return $this->belongsTo('App\Models\PurchaseOrderDetails', 'purchaseOrderID', 'purchaseOrderMasterID');
     }
 
 

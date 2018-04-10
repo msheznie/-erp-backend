@@ -92,6 +92,7 @@ class PurchaseOrderDetails extends Model
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
+
     protected $primaryKey  = 'purchaseOrderDetailsID';
 
 
@@ -100,9 +101,13 @@ class PurchaseOrderDetails extends Model
 
     public $fillable = [
         'companyID',
+        'companySystemID',
         'departmentID',
         'serviceLineCode',
+        'serviceLineSystemID',
         'purchaseOrderMasterID',
+        'purchaseRequestDetailsID',
+        'purchaseRequestID',
         'POProcessMasterID',
         'WO_purchaseOrderMasterID',
         'WP_purchaseOrderDetailsID',
@@ -181,9 +186,13 @@ class PurchaseOrderDetails extends Model
     protected $casts = [
         'purchaseOrderDetailsID' => 'integer',
         'companyID' => 'string',
+        'companySystemID' => 'integer',
         'departmentID' => 'string',
         'serviceLineCode' => 'string',
+        'serviceLineSystemID' => 'integer',
         'purchaseOrderMasterID' => 'integer',
+        'purchaseRequestDetailsID' => 'integer',
+        'purchaseRequestID' => 'integer',
         'POProcessMasterID' => 'integer',
         'WO_purchaseOrderMasterID' => 'integer',
         'WP_purchaseOrderDetailsID' => 'integer',
