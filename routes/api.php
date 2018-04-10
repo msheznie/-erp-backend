@@ -110,6 +110,8 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('finance_item_category_masters', 'FinanceItemCategoryMasterAPIController');
 
     Route::resource('item/masters', 'ItemMasterAPIController');
+    Route::post('itemMasterBulkCreate', 'ItemMasterAPIController@itemMasterBulkCreate');
+
     Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
     Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
     Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');

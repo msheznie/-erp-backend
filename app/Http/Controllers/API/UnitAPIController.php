@@ -89,6 +89,7 @@ class UnitAPIController extends AppBaseController
 
         $empId = $user->employee['empID'];
         $input['createdUserID'] = $empId;
+        $input['createdPcID'] = gethostname();
 
         $units = $this->unitRepository->create($input);
 
@@ -229,6 +230,7 @@ class UnitAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $input['modifiedUser'] = $empId;
+        $input['modifiedPc'] = gethostname();
         $data =array_except($input, ['UnitID', 'timeStamp', 'createdDateTime']);
 
         $unitMaster = $this->unitRepository->update($data, $input['UnitID']);

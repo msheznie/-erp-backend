@@ -354,6 +354,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
+        $input['PRRequestedDate'] = now();
+
         $input['departmentID'] = 'PROC';
 
         $lastSerial = PurchaseRequest::where('companySystemID', $input['companySystemID'])
@@ -460,12 +462,16 @@ class PurchaseRequestAPIController extends AppBaseController
         if ($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1) {
 
 
+            $checkItems = PurchaseRequestDetails::where('purchaseRequestID',$id)
+                                                  ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every request should have at least one item', 500);
+            }
 
-
-             $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID',$id)
+            $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID',$id)
                               ->where('quantityRequested','<',1)
-                              //->where('quantityRequested','<',0)
                               ->count();
+
             if ($checkQuantity > 0) {
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
             }
