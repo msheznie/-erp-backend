@@ -283,8 +283,16 @@ class SupplierMasterAPIController extends AppBaseController
         $input['modifiedUser'] = $empId;
         $empName = $user->employee['empName'];
 
+
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
+
+
+        if($company){
+            $input['primaryCompanyID'] = $company->CompanyID;
+        }
+
         $isConfirm = $input['supplierConfirmedYN'];
-        unset($input['companySystemID']);
+        //unset($input['companySystemID']);
         unset($input['supplierConfirmedYN']);
         unset($input['supplierConfirmedEmpID']);
         unset($input['supplierConfirmedEmpSystemID']);
