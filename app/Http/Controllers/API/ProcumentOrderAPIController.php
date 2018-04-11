@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 28-March 2018 By: Nazir Description: Added new functions named as getProcumentOrderByDocumentType() For load Master View
  * -- Date: 29-March 2018 By: Nazir Description: Added new functions named as getProcumentOrderFormData() for Master View Filter
+ * -- Date: 10-April 2018 By: Nazir Description: Added new functions named as getShippingAndInvoiceDetails() for pull details from erp_address table
  */
 namespace App\Http\Controllers\API;
 
@@ -29,6 +30,8 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\ItemAssigned;
 use App\Models\PurchaseOrderDetails;
+use App\Models\ErpAddress;
+use App\Models\PoPaymentTermTypes;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -36,6 +39,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -44,7 +48,6 @@ use Illuminate\Support\Facades\Auth;
  * Class ProcumentOrderController
  * @package App\Http\Controllers\API
  */
-
 class ProcumentOrderAPIController extends AppBaseController
 {
     /** @var  ProcumentOrderRepository */
@@ -85,6 +88,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function store(CreateProcumentOrderAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
@@ -111,14 +115,27 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['serviceLine'] = $segment->ServiceLineCode;
         }
 
+        if (isset($input['expectedDeliveryDate'])) {
+            if ($input['expectedDeliveryDate']) {
+                $input['expectedDeliveryDate'] = new Carbon($input['expectedDeliveryDate']);
+            }
+        }
+
         $document = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
         if ($document) {
             $input['documentID'] = $document->documentID;
         }
 
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+
+        //var_dump($companyCurrencyConversion);
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
             $input['companyID'] = $company->CompanyID;
+            $input['localCurrencyID'] = $company->localCurrencyID;
+            $input['companyReportingCurrencyID'] = $company->reportingCurrency;
+            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
@@ -130,6 +147,11 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['supplierFax'] = $supplier->fax;
             $input['supplierEmail'] = $supplier->supEmail;
             $input['creditPeriod'] = $supplier->creditPeriod;
+
+            $input['supplierDefaultCurrencyID'] = $supplier->currency;
+            //$input['supplierDefaultER'] = ;
+            $input['supplierTransactionER'] = 1;
+
         }
 
         $procumentOrders = $this->procumentOrderRepository->create($input);
@@ -145,6 +167,7 @@ class ProcumentOrderAPIController extends AppBaseController
      *
      * @return Response
      */
+
     public function show($id)
     {
         /** @var ProcumentOrder $procumentOrder */
@@ -176,6 +199,12 @@ class ProcumentOrderAPIController extends AppBaseController
         $input = array_except($input, ['created_by', 'confirmed_by']);
         $input = $this->convertArrayToValue($input);
 
+        if (isset($input['expectedDeliveryDate'])) {
+            if ($input['expectedDeliveryDate']) {
+                $input['expectedDeliveryDate'] = new Carbon($input['expectedDeliveryDate']);
+            }
+        }
+
         /** @var ProcumentOrder $procumentOrder */
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
@@ -193,11 +222,42 @@ class ProcumentOrderAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
         if ($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) {
-            $input['poConfirmedYN'] = 1;
-            $input['poConfirmedByEmpSystemID'] = $user->employee['employeeSystemID'];
-            $input['poConfirmedByEmpID'] = $user->employee['empID'];
-            $input['poConfirmedByName'] = $user->employee['empName'];
-            $input['poConfirmedDate'] = now();
+
+            $poDetailExist = PurchaseOrderDetails::select(DB::raw('purchaseOrderDetailsID'))
+                ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                ->first();
+
+            if (empty($poDetailExist)) {
+                return $this->sendError('PO Document cannot confirm without details');
+            }
+
+            unset($input['poConfirmedYN']);
+            unset($input['poConfirmedByEmpSystemID']);
+            unset($input['poConfirmedByEmpID']);
+            unset($input['poConfirmedByName']);
+            unset($input['poConfirmedDate']);
+
+            //getting total sum of PO detail Amount
+            $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+                ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                ->first();
+
+            if (!empty($poMasterSum)) {
+
+                $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSum['masterTotalSum']);
+
+                $input['poTotalComRptCurrency'] = $currencyConversionMaster['reportingAmount'];
+                $input['poTotalLocalCurrency'] = $currencyConversionMaster['localAmount'];
+                $input['poTotalSupplierDefaultCurrency'] = 0;
+                $input['poTotalSupplierTransactionCurrency'] = $poMasterSum['masterTotalSum'];
+
+                $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $poMasterSum['masterTotalSum']);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"]);
+                }
+            }
+
         }
 
         $procumentOrder = $this->procumentOrderRepository->update($input, $id);
@@ -368,12 +428,35 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
-        if(!empty($purchaseOrderID)){
+        $addressTypeShippings = DB::table("erp_address")
+            ->select('addressID','addressTypeDescription')
+            ->join("erp_addresstype", "erp_addresstype.addressTypeID", "=", "erp_address.addressTypeID")
+            ->where("erp_address.addressTypeID","1")
+            ->where("companySystemID", $companyId)
+            ->get();
+
+        $addressTypeInvoice = DB::table("erp_address")
+            ->select('addressID','addressTypeDescription')
+            ->join("erp_addresstype", "erp_addresstype.addressTypeID", "=", "erp_address.addressTypeID")
+            ->where("erp_address.addressTypeID","2")
+            ->where("companySystemID", $companyId)
+            ->get();
+
+        $addressTypeSold = DB::table("erp_address")
+            ->select('addressID','addressTypeDescription')
+            ->join("erp_addresstype", "erp_addresstype.addressTypeID", "=", "erp_address.addressTypeID")
+            ->where("erp_address.addressTypeID","3")
+            ->where("companySystemID", $companyId)
+            ->get();
+
+        $PoPaymentTermTypes = PoPaymentTermTypes::all();
+
+        if (!empty($purchaseOrderID)) {
             $checkDetailExist = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
                 ->where('companySystemID', $companyId)
                 ->first();
 
-            if(!empty($checkDetailExist)){
+            if (!empty($checkDetailExist)) {
                 $detail = 1;
             }
         }
@@ -392,12 +475,12 @@ class ProcumentOrderAPIController extends AppBaseController
             $conditions['pullPRPolicy'] = $allowPRinPO->isYesNO;
         }
 
-        if(!empty($purchaseOrderID)){
+        if (!empty($purchaseOrderID)) {
             $checkDetailExist = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
                 ->where('companySystemID', $companyId)
                 ->first();
 
-            if(!empty($checkDetailExist)){
+            if (!empty($checkDetailExist)) {
                 $conditions['detailExist'] = 1;
             }
         }
@@ -412,7 +495,11 @@ class ProcumentOrderAPIController extends AppBaseController
             'locations' => $locations,
             'financialYears' => $financialYears,
             'conditions' => $conditions,
-            'suppliers' => $supplier
+            'suppliers' => $supplier,
+            'addresstypeShippings' => $addressTypeShippings,
+            'addresstypeinvoice' => $addressTypeInvoice,
+            'addresstypesold' => $addressTypeSold,
+            'paymentterms' => $PoPaymentTermTypes
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -463,9 +550,23 @@ class ProcumentOrderAPIController extends AppBaseController
         $items = $items
             ->take(20)
             ->get();
-
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+
     }
 
+    public function getShippingAndInvoiceDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+        $addressID = $input['addressID'];
+
+        $erpAddressDetails = ErpAddress::where('addressID', $addressID)
+            ->where('companySystemID', $companyId)
+            ->first();
+
+        return $this->sendResponse($erpAddressDetails->toArray(), 'Data retrieved successfully');
+
+    }
 
 }

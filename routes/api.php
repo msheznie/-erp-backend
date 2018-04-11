@@ -236,6 +236,8 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData');
     Route::get('getItemsByProcumentOrder', 'PurchaseOrderDetailsAPIController@getItemsByProcumentOrder');
     Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder');
+    Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
+    Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -287,9 +289,17 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('approveChartOfAccount', 'ChartOfAccountAPIController@approveChartOfAccount');
     Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount');
 
-});
+    /** Po Related Tables Created by Nazir  */
+    Route::resource('erp_addresses', 'ErpAddressAPIController');
+    Route::resource('po_payment_terms', 'PoPaymentTermsAPIController');
+    Route::resource('po_advance_payments', 'PoAdvancePaymentAPIController');
+    Route::resource('procumentOrderPaymentTermsCRUD', 'PoPaymentTermsAPIController');
+    Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
 
+});
 
 Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
 
 
+
+Route::resource('po_payment_term_types', 'PoPaymentTermTypesAPIController');
