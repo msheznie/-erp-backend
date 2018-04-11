@@ -383,7 +383,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     $item = $this->purchaseOrderDetailsRepository->create($prDetail_arr);
 
                     $update = PurchaseRequestDetails::where('purchaseRequestDetailsID', $new['purchaseRequestDetailsID'])
-                        ->update(['selectedForPO' => -1, 'fullyOrdered' => $fullyOrdered]);
+                        ->update(['selectedForPO' => -1, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $totalAddedQty]);
                 }
 
                 // fetching the total count records from purchase Request Details table

@@ -408,6 +408,10 @@ class ProcumentOrderAPIController extends AppBaseController
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
             ->get();
 
+        $detailSum = PurchaseOrderDetails::select(DB::raw('sum(netAmount) as total'))
+            ->where('purchaseOrderMasterID', $purchaseOrderID)
+            ->get();
+
         $financeCategories = FinanceItemCategoryMaster::all();
 
         $locations = Location::all();
@@ -499,7 +503,8 @@ class ProcumentOrderAPIController extends AppBaseController
             'addresstypeShippings' => $addressTypeShippings,
             'addresstypeinvoice' => $addressTypeInvoice,
             'addresstypesold' => $addressTypeSold,
-            'paymentterms' => $PoPaymentTermTypes
+            'paymentterms' => $PoPaymentTermTypes,
+            'detailSum' => $detailSum
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

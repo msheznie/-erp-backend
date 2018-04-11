@@ -296,6 +296,8 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('procumentOrderPaymentTermsCRUD', 'PoPaymentTermsAPIController');
     Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
 
+    Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+
 });
 
 Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
