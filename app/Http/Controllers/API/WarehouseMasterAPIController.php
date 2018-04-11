@@ -215,6 +215,13 @@ class WarehouseMasterAPIController extends AppBaseController
         $warehouseMasters = WarehouseMaster::with(['location', 'company'])
             ->select('warehousemaster.*');
 
+        $search = $request->input('search.value');
+        if($search){
+            $warehouseMasters = $warehouseMasters->where('wareHouseCode','LIKE',"%{$search}%")
+                ->orWhere( 'wareHouseDescription', 'LIKE', "%{$search}%");
+        }
+
+
         return \DataTables::eloquent($warehouseMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {

@@ -182,6 +182,12 @@ class SegmentMasterAPIController extends AppBaseController
 
         $segmentMasters = SegmentMaster::with(['company']);
 
+        $search = $request->input('search.value');
+        if($search){
+            $segmentMasters =   $segmentMasters->where('ServiceLineCode','LIKE',"%{$search}%")
+                                             ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+        }
+
         return \DataTables::eloquent($segmentMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {

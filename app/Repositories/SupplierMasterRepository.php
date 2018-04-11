@@ -24,7 +24,7 @@ class SupplierMasterRepository extends BaseRepository
         //'uniqueTextcode',
         //'primaryCompanySystemID' => 'like',
         //'primaryCompanyID' => 'like',
-        //'primarySupplierCode' => 'like',
+        'primarySupplierCode' => 'like',
         //'secondarySupplierCode' => 'like',
         'supplierName' => 'like',
         /*'liabilityAccountSysemID',

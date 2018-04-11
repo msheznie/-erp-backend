@@ -180,6 +180,13 @@ class BankMasterAPIController extends AppBaseController
         }
 
         $bankMasters = BankMaster::select('*');
+
+        $search = $request->input('search.value');
+        if($search){
+            $bankMasters =   $bankMasters->where('bankShortCode','LIKE',"%{$search}%")
+                                         ->orWhere('bankName', 'LIKE', "%{$search}%");
+        }
+
         return \DataTables::eloquent($bankMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {

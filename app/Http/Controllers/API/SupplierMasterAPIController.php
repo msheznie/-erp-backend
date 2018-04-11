@@ -96,12 +96,17 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $companyId = $request['companyId'];
-        $supplierMasters = SupplierMaster::
-        //where('primaryCompanySystemID', $companyId)
-        with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
+        $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
             $query->where('isDefault', -1)
                 ->with(['currencyMaster']);
         }]);
+
+        $search = $request->input('search.value');
+        if($search){
+            $supplierMasters =   $supplierMasters->where('primarySupplierCode','LIKE',"%{$search}%")
+                                                 ->orWhere( 'supplierName', 'LIKE', "%{$search}%");
+        }
+        //supplierName
         //->select();
 
         /**

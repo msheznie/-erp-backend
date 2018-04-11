@@ -263,8 +263,8 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if (array_key_exists('approved', $input)) {
-            if ($input['approved'] == 0 || $input['approved'] == 1) {
-                $purchaseRequests->where('PRConfirmedYN', $input['PRConfirmedYN']);
+            if ($input['approved'] == 0 || $input['approved'] == -1) {
+                $purchaseRequests->where('approved', $input['approved']);
             }
         }
 
@@ -291,6 +291,12 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.serviceLineSystemID',
                 'erp_purchaserequest.financeCategory',
             ]);
+
+        $search = $request->input('search.value');
+        if($search){
+            $purchaseRequests =   $purchaseRequests->where('purchaseRequestCode','LIKE',"%{$search}%")
+                                                   ->orWhere('comments', 'LIKE', "%{$search}%");
+        }
 
         return \DataTables::eloquent($purchaseRequests)
             ->addColumn('Actions', 'Actions', "Actions")
