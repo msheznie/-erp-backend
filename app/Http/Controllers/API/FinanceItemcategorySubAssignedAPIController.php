@@ -126,12 +126,19 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
                 return $this->sendError('company Assigned not found');
             }
             foreach ($input as $key => $value) {
+
+                if($key == 'isAssigned' && ($value == true || $value == 1)){
+                    $value = -1;
+                }
+
                 $financeItemCategorySubAssigned->$key = $value;
             }
             $financeItemCategorySubAssigned->save();
         } else {
+
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
             $input['companyID'] = $company->CompanyID;
+            $input['isAssigned'] = -1;
             $input['mainItemCategoryID'] = $input['itemCategoryID'];
             $financeItemCategorySubAssigned = $this->financeItemcategorySubAssignedRepository->create($input);
         }

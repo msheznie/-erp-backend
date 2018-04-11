@@ -263,8 +263,8 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if (array_key_exists('approved', $input)) {
-            if ($input['approved'] == 0 || $input['approved'] == 1) {
-                $purchaseRequests->where('PRConfirmedYN', $input['PRConfirmedYN']);
+            if ($input['approved'] == 0 || $input['approved'] == -1) {
+                $purchaseRequests->where('approved', $input['approved']);
             }
         }
 
@@ -291,6 +291,12 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.serviceLineSystemID',
                 'erp_purchaserequest.financeCategory',
             ]);
+
+        $search = $request->input('search.value');
+        if($search){
+            $purchaseRequests =   $purchaseRequests->where('purchaseRequestCode','LIKE',"%{$search}%")
+                                                   ->orWhere('comments', 'LIKE', "%{$search}%");
+        }
 
         return \DataTables::eloquent($purchaseRequests)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -353,6 +359,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+        $input['PRRequestedDate'] = now();
 
         $input['departmentID'] = 'PROC';
 
@@ -460,12 +468,16 @@ class PurchaseRequestAPIController extends AppBaseController
         if ($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1) {
 
 
+            $checkItems = PurchaseRequestDetails::where('purchaseRequestID',$id)
+                                                  ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every request should have at least one item', 500);
+            }
 
-
-             $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID',$id)
+            $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID',$id)
                               ->where('quantityRequested','<',1)
-                              //->where('quantityRequested','<',0)
                               ->count();
+
             if ($checkQuantity > 0) {
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
             }

@@ -76,6 +76,12 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
         $financeItemCategoryMasters = FinanceItemCategoryMaster::select('financeitemcategorymaster.*');
 
+        $search = $request->input('search.value');
+        if($search){
+            $financeItemCategoryMasters =   $financeItemCategoryMasters->where('categoryDescription','LIKE',"%{$search}%")
+                ->orWhere('itemCodeDef', 'LIKE', "%{$search}%");
+        }
+
         return \DataTables::eloquent($financeItemCategoryMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {
@@ -113,6 +119,13 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $financeItemCategorySub = FinanceItemCategorySub::where('itemCategoryID',$request->get('itemCategoryID'))
                                                          ->with(['finance_gl_code_bs','finance_gl_code_pl'])
                                                          ->select('financeitemcategorysub.*');
+
+
+
+        $search = $request->input('search.value');
+        if($search){
+            $financeItemCategorySub = $financeItemCategorySub->where('categoryDescription','LIKE',"%{$search}%");
+        }
 
         return \DataTables::eloquent($financeItemCategorySub)
             ->order(function ($query) use ($input) {

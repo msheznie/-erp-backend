@@ -96,12 +96,17 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $companyId = $request['companyId'];
-        $supplierMasters = SupplierMaster::
-        //where('primaryCompanySystemID', $companyId)
-        with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
+        $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
             $query->where('isDefault', -1)
                 ->with(['currencyMaster']);
         }]);
+
+        $search = $request->input('search.value');
+        if($search){
+            $supplierMasters =   $supplierMasters->where('primarySupplierCode','LIKE',"%{$search}%")
+                                                 ->orWhere( 'supplierName', 'LIKE', "%{$search}%");
+        }
+        //supplierName
         //->select();
 
         /**
@@ -283,8 +288,16 @@ class SupplierMasterAPIController extends AppBaseController
         $input['modifiedUser'] = $empId;
         $empName = $user->employee['empName'];
 
+
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
+
+
+        if($company){
+            $input['primaryCompanyID'] = $company->CompanyID;
+        }
+
         $isConfirm = $input['supplierConfirmedYN'];
-        unset($input['companySystemID']);
+        //unset($input['companySystemID']);
         unset($input['supplierConfirmedYN']);
         unset($input['supplierConfirmedEmpID']);
         unset($input['supplierConfirmedEmpSystemID']);

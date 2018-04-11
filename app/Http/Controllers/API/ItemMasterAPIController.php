@@ -10,8 +10,10 @@
  * -- REVISION HISTORY
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getAllItemsMaster(),getItemMasterFormData(),
  * updateItemMaster(),getAssignedCompaniesByItem()
- * * -- Date: 03-April 2018 By: Mubashir Description: Added a new function getAllItemsMasterApproval() to display items to be approved
+ * -- Date: 03-April 2018 By: Mubashir Description: Added a new function getAllItemsMasterApproval() to display items to be approved
+ * -- Date: 10-April 2018 By: Fayas Description: Added a new function itemMasterBulkCreate().
  */
+
 
 namespace App\Http\Controllers\API;
 
@@ -69,6 +71,96 @@ class ItemMasterAPIController extends AppBaseController
     }
 
     /**
+     * Item Master Bulk Create.
+     * POST|HEAD /itemMasterBulkCreate
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function itemMasterBulkCreate(Request $request)
+    {
+
+        $input = $request->all();
+        //$input = $this->convertArrayToValue($input);
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
+
+        if(empty($company)){
+            return $this->sendError('Primary Company not found');
+        }
+
+        $document = DocumentMaster::where('documentID', 'ITMM')->first();
+
+        $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID', $input['financeCategoryMaster'])->first();
+
+        if (empty($financeCategoryMaster)) {
+            return $this->sendError('Finance Item Category not found');
+        }
+
+        $runningSerialOrder = $financeCategoryMaster->lastSerialOrder;
+        $code = $financeCategoryMaster->itemCodeDef;
+        $count = $financeCategoryMaster->numberOfDigits;
+        $createdItems = array();
+        DB::beginTransaction();
+        try {
+            foreach ($input['items'] as $item) {
+
+                $runningSerialOrder = $runningSerialOrder + 1;
+                $primaryCode = $code . str_pad($runningSerialOrder, $count, '0', STR_PAD_LEFT);
+
+                $item['runningSerialOrder'] = $runningSerialOrder;
+                $item['primaryCode'] = $primaryCode;
+                $item['primaryItemCode'] = $code;
+
+                $financeCategorySub = FinanceItemCategorySub::where('itemCategorySubID', $item['financeCategorySub'])->first();
+
+                if (empty($financeCategorySub)) {
+                    return $this->sendError('Finance Item Sub Category not found');
+                }
+
+                if ($document) {
+                    $item['documentSystemID'] = $document->documentSystemID;
+                    $item['documentID'] = $document->documentID;
+                }
+
+                $item['isActive'] = 1;
+                $item['createdPcID'] = gethostname();
+                $item['createdUserID'] = $empId;
+                $item['itemShortDescription'] = $item['itemDescription'];
+                $item['primaryCompanyID'] = $company->CompanyID;
+                $item['primaryCompanySystemID'] = $input['primaryCompanySystemID'];
+                $item['financeCategoryMaster'] = $input['financeCategoryMaster'];
+
+                $itemMaster = $this->itemMasterRepository->create($item);
+
+                if($input['itemConfirmedYN'] == true) {
+                    $params = array('autoID' => $itemMaster->itemCodeSystem, 'company' => $item["primaryCompanySystemID"], 'document' => $item["documentSystemID"]);
+                    $confirm = \Helper::confirmDocument($params);
+                    if (!$confirm["success"]) {
+                        return $this->sendError($confirm["message"], 500);
+                    }
+                }
+                array_push($createdItems, $itemMaster);
+            }
+
+            $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
+            $financeCategoryMaster->modifiedPc = gethostname();
+            $financeCategoryMaster->modifiedUser = $empId;
+            $financeCategoryMaster->save();
+
+            DB::commit();
+
+            return $this->sendResponse($createdItems, 'Item Master saved successfully');
+        }catch (\Exception $e){
+            DB::rollBack();
+        }
+
+    }
+
+    /**
      * Display a listing of the ItemMaster.
      * POST /getAllItemsMaster
      *
@@ -117,6 +209,12 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
+        $search = $request->input('search.value');
+        if($search){
+            $itemMasters =   $itemMasters->where('primaryCode','LIKE',"%{$search}%")
+                                         ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                                         ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+        }
 
         return \DataTables::eloquent($itemMasters)
             ->order(function ($query) use ($input) {
@@ -255,7 +353,7 @@ class ItemMasterAPIController extends AppBaseController
         $input['createdUserID'] = $empId;
 
         $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID', $input['financeCategoryMaster'])->first();
-        $input['createdUserID'] = $financeCategoryMaster->itemCodeDef;
+
         $runningSerialOrder = $financeCategoryMaster->lastSerialOrder + 1;
         $code = $financeCategoryMaster->itemCodeDef;
         $count = $financeCategoryMaster->numberOfDigits;
