@@ -282,4 +282,13 @@ class PurchaseOrderDetails extends Model
         return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
     }
 
+    public function financecategory(){
+        return $this->belongsTo('App\Models\FinanceItemCategoryMaster','itemFinanceCategoryID','itemCategoryID');
+    }
+
+    public function financecategorysub(){
+        return $this->belongsTo('App\Models\FinanceItemCategorySub','itemFinanceCategorySubID','itemCategorySubID');
+    }
+
+
 }

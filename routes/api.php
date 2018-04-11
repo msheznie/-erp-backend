@@ -29,6 +29,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('checkUser', 'UserAPIController@checkUser');
 
     Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
+    Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
 
     Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
 
@@ -284,6 +285,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::post('approveChartOfAccount', 'ChartOfAccountAPIController@approveChartOfAccount');
     Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount');
+
+    Route::post('generateReport', 'ReportAPIController@generateReport');
 
 });
 
