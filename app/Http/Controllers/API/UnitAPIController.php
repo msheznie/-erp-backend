@@ -180,10 +180,12 @@ class UnitAPIController extends AppBaseController
         }
 
         $unitMasters = Unit::select('UnitID', 'UnitShortCode', 'UnitDes')->select('units.*');
-//            ->when($keyword, function($query) use ($keyword){
-//                 return $query->where('UnitShortCode', 'LIKE', '%'.$keyword.'%')
-//                     ->orWhere('UnitDes', 'LIKE', '%'.$keyword.'%');
-//            });
+
+        $search = $request->input('search.value');
+        if($search){
+            $unitMasters =   $unitMasters->where('UnitShortCode','LIKE',"%{$search}%")
+                ->orWhere('UnitDes', 'LIKE', "%{$search}%");
+        }
 
         return \DataTables::eloquent($unitMasters)
             ->order(function ($query) use ($input) {

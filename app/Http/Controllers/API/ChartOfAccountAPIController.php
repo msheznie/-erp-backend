@@ -321,6 +321,12 @@ class ChartOfAccountAPIController extends AppBaseController
         }
         $chartOfAccount->select('chartofaccounts.*');
 
+        $search = $request->input('search.value');
+        if($search){
+            $chartOfAccount =   $chartOfAccount->where('AccountCode','LIKE',"%{$search}%")
+                                               ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+        }
+
         return \DataTables::eloquent($chartOfAccount)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {
