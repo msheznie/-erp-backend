@@ -253,10 +253,34 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
         }
 
-        $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
-        $input['serviceLineCode'] = $purchaseOrder->serviceLine;
-        $input['companySystemID'] = $item->companySystemID;
-        $input['companyID'] = $item->companyID;
+        $input['localCurrencyID'] = $purchaseOrder->localCurrencyID;
+        $input['localCurrencyER'] = $purchaseOrder->localCurrencyER;
+
+        $input['companyReportingCurrencyID'] = $purchaseOrder->companyReportingCurrencyID;
+        $input['companyReportingER'] = $purchaseOrder->companyReportingER;
+
+        $input['supplierDefaultCurrencyID'] = $purchaseOrder->supplierDefaultCurrencyID;
+        $input['supplierDefaultER'] = $purchaseOrder->supplierDefaultER;
+
+        if($input['unitCost'] > 0){
+            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['unitCost']);
+
+            $input['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+            $input['GRVcostPerUnitSupTransCur'] = $input['unitCost'];
+            $input['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
+
+            $input['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+            $input['purchaseRetcostPerUnitTranCur'] = $input['unitCost'];
+            $input['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
+        }
+
+        // adding supplier Default CurrencyID base currency conversion
+        if($input['unitCost'] > 0){
+            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $input['unitCost']);
+
+            $prDetail_arr['GRVcostPerUnitSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
+            $prDetail_arr['purchaseRetcostPerUniSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
+        }
 
         $input['purchaseOrderMasterID'] = $input['purchaseOrderID'];
         $input['itemCode'] = $item->itemCodeSystem;
@@ -265,6 +289,11 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
         $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+
+        $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
+        $input['serviceLineCode'] = $purchaseOrder->serviceLine;
+        $input['companySystemID'] = $item->companySystemID;
+        $input['companyID'] = $item->companyID;
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->create($input);
 
@@ -295,6 +324,9 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     $fullyOrdered = 1;
                 }
 
+                $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+                    ->first();
+
                 // checking the qty request is matching with sum total
                 if ($new['quantityRequested'] >= $totalAddedQty) {
 
@@ -311,9 +343,42 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                     $prDetail_arr['purchaseOrderMasterID'] = $purchaseOrderID;
                     $prDetail_arr['noQty'] = $new['poQty'];
+                    $prDetail_arr['requestedQty'] = $new['quantityRequested'];
+                    $prDetail_arr['requestedQty'] = $new['quantityRequested'];
 
                     $prDetail_arr['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                     $prDetail_arr['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
+
+                    $prDetail_arr['localCurrencyID'] = $purchaseOrder->localCurrencyID;
+                    $prDetail_arr['localCurrencyER'] = $purchaseOrder->localCurrencyER;
+
+                    $prDetail_arr['companyReportingCurrencyID'] = $purchaseOrder->companyReportingCurrencyID;
+                    $prDetail_arr['companyReportingER'] = $purchaseOrder->companyReportingER;
+
+                    $prDetail_arr['supplierDefaultCurrencyID'] = $purchaseOrder->supplierDefaultCurrencyID;
+                    $prDetail_arr['supplierDefaultER'] = $purchaseOrder->supplierDefaultER;
+
+                    $prDetail_arr['unitCost'] = $new['poUnitAmount'];
+
+                    if($new['poUnitAmount'] > 0){
+                        $currencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $new['poUnitAmount']);
+
+                        $prDetail_arr['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                        $prDetail_arr['GRVcostPerUnitSupTransCur'] = $new['poUnitAmount'];
+                        $prDetail_arr['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
+
+                        $prDetail_arr['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                        $prDetail_arr['purchaseRetcostPerUnitTranCur'] = $new['poUnitAmount'];
+                        $prDetail_arr['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
+                    }
+
+                    // adding supplier Default CurrencyID base currency conversion
+                    if($new['poUnitAmount'] > 0){
+                        $currencyConversionDefault = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $new['poUnitAmount']);
+
+                        $prDetail_arr['GRVcostPerUnitSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
+                        $prDetail_arr['purchaseRetcostPerUniSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
+                    }
 
                     $item = $this->purchaseOrderDetailsRepository->create($prDetail_arr);
 
@@ -345,7 +410,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($item->toArray(), 'Purchase Order Details saved successfully');
+        return $this->sendResponse('', 'Purchase Order Details saved successfully');
 
     }
 
@@ -389,6 +454,33 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if (empty($purchaseOrderDetails)) {
             return $this->sendError('Purchase Order Details not found');
+        }
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderMasterID'])
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        if($input['unitCost'] > 0){
+            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['unitCost']);
+
+            $input['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+            $input['GRVcostPerUnitSupTransCur'] = $input['unitCost'];
+            $input['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
+
+            $input['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+            $input['purchaseRetcostPerUnitTranCur'] = $input['unitCost'];
+            $input['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
+        }
+
+        // adding supplier Default CurrencyID base currency conversion
+        if($input['unitCost'] > 0){
+            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $input['unitCost']);
+
+            $input['GRVcostPerUnitSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
+            $input['purchaseRetcostPerUniSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
         }
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->update($input, $id);
