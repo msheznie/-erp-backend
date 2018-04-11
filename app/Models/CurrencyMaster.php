@@ -31,9 +31,9 @@ class CurrencyMaster extends Model
 
     public $table = 'currencymaster';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
-
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timeStamp';
+    protected $primaryKey  = 'currencyID';
 
     protected $dates = ['deleted_at'];
 

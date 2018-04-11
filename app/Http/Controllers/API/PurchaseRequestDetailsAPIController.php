@@ -27,7 +27,6 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Class PurchaseRequestDetailsController
@@ -119,12 +118,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
         //$input['estimatedCost'] = $item->wacValueLocal;
 
-        /* return array('Company Id' => $item->companySystemID,
-                       'PR Currency Id' => $purchaseRequest->currency,
-                       'Item Currency Id' => $item->wacValueLocalCurrencyID,
-                       'Amount' => $item->wacValueLocal);*/
-
-        $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+        $currencyConversion = \Helper::currencyConversion($item->companySystemID,$item->wacValueLocalCurrencyID,$purchaseRequest->currency, $item->wacValueLocal);
 
         $input['estimatedCost'] = $currencyConversion['documentAmount'];
 
@@ -452,15 +446,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input = $request->all();
         $prId = $input['purchaseRequestID'];
 
-        $detail = DB::table("erp_purchaserequestdetails")
-            ->select("*")
-            ->leftJoin(DB::raw('(SELECT purchaseRequestDetailsID, SUM(noQty) AS poTakenQty, "" as isChecked, "" as poQty, "" as poUnitAmount FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails'), function ($join) {
-                $join->on("erp_purchaserequestdetails.purchaseRequestDetailsID", "=", "podetails.purchaseRequestDetailsID");
-            })
+        $detail = PurchaseRequestDetails::select(DB::raw('erp_purchaserequestdetails.*,"" as isChecked, "" as poQty'))
             ->where('purchaseRequestID', $prId)
             //->where('selectedForPO', 0)
             ->where('prClosedYN', 0)
-            ->where('fullyOrdered', '!=', 2)
+            ->where('fullyOrdered','!=', 2)
             ->get();
         return $this->sendResponse($detail->toArray(), 'Purchase Request Details retrieved successfully');
 

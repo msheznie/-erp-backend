@@ -26,6 +26,7 @@ use App\Models\Location;
 use App\Models\Months;
 use App\Models\Priority;
 use App\Models\PurchaseRequest;
+use App\Models\PurchaseRequestDetails;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
@@ -112,15 +113,17 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
         if ($policy == 0 && $financeCategoryId != 0) {
-            $items = $items->where('financeCategoryMaster',$financeCategoryId);
+            $items = $items->where('financeCategoryMaster', $financeCategoryId);
         }
 
         if (array_key_exists('search', $input)) {
+
             $search = $input['search'];
-             $items = $items->where(function ($query) use ($search) {
-                 $query->where('itemPrimaryCode','LIKE',"%{$search}%")
-                       ->orWhere('itemDescription','LIKE',"%{$search}%");
-             });
+
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
         }
 
 
@@ -351,6 +354,8 @@ class PurchaseRequestAPIController extends AppBaseController
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
+        $input['PRRequestedDate'] = now();
+
         $input['departmentID'] = 'PROC';
 
         $lastSerial = PurchaseRequest::where('companySystemID', $input['companySystemID'])
@@ -434,7 +439,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by','PRConfirmedBy','PRConfirmedBySystemID','PRConfirmedDate']);
         $input = $this->convertArrayToValue($input);
 
         /** @var PurchaseRequest $purchaseRequest */
@@ -455,9 +460,50 @@ class PurchaseRequestAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
         if ($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1) {
-            $input['PRConfirmedBy'] = $user->employee['empID'];;
+
+
+            $checkItems = PurchaseRequestDetails::where('purchaseRequestID',$id)
+                                                  ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every request should have at least one item', 500);
+            }
+
+            $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID',$id)
+                              ->where('quantityRequested','<',1)
+                              ->count();
+
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+            }
+
+
+            $amount = PurchaseRequestDetails::where('purchaseRequestID',$id)
+                                              ->sum('totalCost');
+
+
+            /*$currencyConversion = \Helper::currencyConversion($item->companySystemID,
+                                                              $item->wacValueLocalCurrencyID,
+                                                               $purchaseRequest->currency,
+                                                              $amount);
+
+            $convertedAmount = $currencyConversion['documentAmount'];*/
+
+            $params = array('autoID' => $id,
+                            'company' => $purchaseRequest->companySystemID,
+                            'document' => $purchaseRequest->documentSystemID,
+                            'segment' => $input['serviceLineSystemID'],
+                            'category' => $input['financeCategory'],
+                            'amount' => $amount
+                            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+
+            /*$input['PRConfirmedBy'] = $user->employee['empID'];;
             $input['PRConfirmedBySystemID'] = $user->employee['employeeSystemID'];
-            $input['PRConfirmedDate'] = now();
+            $input['PRConfirmedDate'] = now();*/
         }
 
         $purchaseRequest = $this->purchaseRequestRepository->update($input, $id);

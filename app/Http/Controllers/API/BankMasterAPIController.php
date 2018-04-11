@@ -75,7 +75,7 @@ class BankMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $messages = array(
-            'bankShortCode.unique'   => 'The Bank Short Code has already been taken'
+            'bankShortCode.unique'   => 'Bank code already exists'
         );
 
         $validator = \Validator::make($input, [

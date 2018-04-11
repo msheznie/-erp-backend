@@ -79,6 +79,11 @@ class ItemAssignedAPIController extends AppBaseController
         if (array_key_exists("idItemAssigned", $input)) {
             $itemAssigneds = ItemAssigned::where('idItemAssigned', $input['idItemAssigned'])->first();
             $itemAssigneds->isActive = $input['isActive'];
+
+            if($input['isAssigned'] == 1 || $input['isAssigned'] == true){
+                $input['isAssigned'] = -1;
+            }
+
             $itemAssigneds->isAssigned = $input['isAssigned'];
             $itemAssigneds->save();
         } else {
@@ -87,6 +92,7 @@ class ItemAssignedAPIController extends AppBaseController
             $input['wacValueLocalCurrencyID'] = $company->localCurrencyID;
             $input['companyID'] = $company->CompanyID;
             $input['isActive'] = 1;
+            $input['isAssigned'] = -1;
             $input['itemPrimaryCode'] = $input['primaryCode'];
             $input['itemUnitOfMeasure'] = $input['unit'];
             $itemAssigneds = $this->itemAssignedRepository->create($input);

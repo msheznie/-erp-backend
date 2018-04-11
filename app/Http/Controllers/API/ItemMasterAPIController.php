@@ -10,13 +10,16 @@
  * -- REVISION HISTORY
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getAllItemsMaster(),getItemMasterFormData(),
  * updateItemMaster(),getAssignedCompaniesByItem()
- * * -- Date: 03-April 2018 By: Mubashir Description: Added a new function getAllItemsMasterApproval() to display items to be approved
+ * -- Date: 03-April 2018 By: Mubashir Description: Added a new function getAllItemsMasterApproval() to display items to be approved
+ * -- Date: 10-April 2018 By: Fayas Description: Added a new function itemMasterBulkCreate().
  */
+
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateItemMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemMasterAPIRequest;
+use App\Models\DocumentApproved;
 use App\Models\ItemMaster;
 use App\Models\Company;
 use App\Models\FinanceItemCategoryMaster;
@@ -65,6 +68,96 @@ class ItemMasterAPIController extends AppBaseController
         $itemMasters = $this->itemMasterRepository->all();
 
         return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');
+    }
+
+    /**
+     * Item Master Bulk Create.
+     * POST|HEAD /itemMasterBulkCreate
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function itemMasterBulkCreate(Request $request)
+    {
+
+        $input = $request->all();
+        //$input = $this->convertArrayToValue($input);
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
+
+        if(empty($company)){
+            return $this->sendError('Primary Company not found');
+        }
+
+        $document = DocumentMaster::where('documentID', 'ITMM')->first();
+
+        $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID', $input['financeCategoryMaster'])->first();
+
+        if (empty($financeCategoryMaster)) {
+            return $this->sendError('Finance Item Category not found');
+        }
+
+        $runningSerialOrder = $financeCategoryMaster->lastSerialOrder;
+        $code = $financeCategoryMaster->itemCodeDef;
+        $count = $financeCategoryMaster->numberOfDigits;
+        $createdItems = array();
+        DB::beginTransaction();
+        try {
+            foreach ($input['items'] as $item) {
+
+                $runningSerialOrder = $runningSerialOrder + 1;
+                $primaryCode = $code . str_pad($runningSerialOrder, $count, '0', STR_PAD_LEFT);
+
+                $item['runningSerialOrder'] = $runningSerialOrder;
+                $item['primaryCode'] = $primaryCode;
+                $item['primaryItemCode'] = $code;
+
+                $financeCategorySub = FinanceItemCategorySub::where('itemCategorySubID', $item['financeCategorySub'])->first();
+
+                if (empty($financeCategorySub)) {
+                    return $this->sendError('Finance Item Sub Category not found');
+                }
+
+                if ($document) {
+                    $item['documentSystemID'] = $document->documentSystemID;
+                    $item['documentID'] = $document->documentID;
+                }
+
+                $item['isActive'] = 1;
+                $item['createdPcID'] = gethostname();
+                $item['createdUserID'] = $empId;
+                $item['itemShortDescription'] = $item['itemDescription'];
+                $item['primaryCompanyID'] = $company->CompanyID;
+                $item['primaryCompanySystemID'] = $input['primaryCompanySystemID'];
+                $item['financeCategoryMaster'] = $input['financeCategoryMaster'];
+
+                $itemMaster = $this->itemMasterRepository->create($item);
+
+                if($input['itemConfirmedYN'] == true) {
+                    $params = array('autoID' => $itemMaster->itemCodeSystem, 'company' => $item["primaryCompanySystemID"], 'document' => $item["documentSystemID"]);
+                    $confirm = \Helper::confirmDocument($params);
+                    if (!$confirm["success"]) {
+                        return $this->sendError($confirm["message"], 500);
+                    }
+                }
+                array_push($createdItems, $itemMaster);
+            }
+
+            $financeCategoryMaster->lastSerialOrder = $runningSerialOrder;
+            $financeCategoryMaster->modifiedPc = gethostname();
+            $financeCategoryMaster->modifiedUser = $empId;
+            $financeCategoryMaster->save();
+
+            DB::commit();
+
+            return $this->sendResponse($createdItems, 'Item Master saved successfully');
+        }catch (\Exception $e){
+            DB::rollBack();
+        }
+
     }
 
     /**
@@ -152,39 +245,32 @@ class ItemMasterAPIController extends AppBaseController
         $companyID = $request->selectedCompanyID;
         $companyID = \Helper::getGroupCompany($companyID);
         $empID = \Helper::getEmployeeSystemID();
-        /*$itemMasters =  ItemMaster::whereHas('documentapproved', function($query) use ($companyID,$empID){
-            $query->where('documentSystemID', 57)
-                  ->where('approvedYN', 0)
-                   ->where('primaryCompanySystemID', $companyID)
-                   ->where('RollLevForApp_curr','rollLevelOrder')
-                   ->whereHas('employeesdepartment',function($query) use ($companyID,$empID){
-                       $query->where('companySystemID',$companyID)
-                             ->where('documentSystemID', 57)->where('employeeSystemID', $empID);
-                   });
-        })->where('primaryCompanySystemID',$companyID)->where('itemApprovedYN', 0)->get();
-        return $itemMasters;*/
 
-        //DB::enableQueryLog();
-        $itemMasters = ItemMaster::with(['unit','financeMainCategory','financeSubCategory'])->join('erp_documentapproved', function($join) use ($companyID,$empID){
-                $join->on('documentSystemCode', 'itemCodeSystem');
-                $join->on('RollLevForApp_curr', 'rollLevelOrder');
-                $join->where('erp_documentapproved.approvedYN', 0);
-                $join->where('erp_documentapproved.rejectedYN', 0);
-                $join->whereIn('erp_documentapproved.companySystemID', $companyID);
-                $join->where('erp_documentapproved.documentSystemID', 57);
-        })->join('employeesdepartments',function ($join) use ($companyID,$empID){
-            $join->on('approvalGroupID', 'employeeGroupID');
-            $join->whereIn('employeesdepartments.companySystemID',$companyID);
-            $join->where('employeesdepartments.documentSystemID', 57);
-            $join->where('employeesdepartments.employeeSystemID', $empID);
-        })->where('itemApprovedYN', 0)->
-        whereIn('primaryCompanySystemID',$companyID);
-        //dd(DB::getQueryLog());
-        return \DataTables::eloquent($itemMasters)
+        $itemMasters = DB::table('erp_documentapproved')->select('itemmaster.*','erp_documentapproved.documentApprovedID','financeitemcategorymaster.categoryDescription as financeitemcategorydescription','financeitemcategorysub.categoryDescription as financeitemcategorysubdescription','units.UnitShortCode','rollLevelOrder','financeGLcodePL','approvalLevelID','documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                ->where('employeesdepartments.documentSystemID', 57)
+                ->whereIn('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('itemmaster', function ($query) use ($companyID, $empID) {
+            $query->on('itemCodeSystem', '=', 'documentSystemCode')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->whereIn('itemmaster.primaryCompanySystemID', $companyID)
+                ->where('itemApprovedYN', 0);
+        })->leftJoin('units', 'UnitID', '=', 'unit')
+            ->leftJoin('financeitemcategorymaster', 'itemCategoryID', '=', 'financeCategoryMaster')
+            ->leftJoin('financeitemcategorysub', 'itemCategorySubID', '=', 'financeCategorySub')
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 57)
+            ->whereIn('erp_documentapproved.companySystemID', $companyID);
+
+        return \DataTables::of($itemMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -261,7 +347,7 @@ class ItemMasterAPIController extends AppBaseController
         $input['createdUserID'] = $empId;
 
         $financeCategoryMaster = FinanceItemCategoryMaster::where('itemCategoryID', $input['financeCategoryMaster'])->first();
-        $input['createdUserID'] = $financeCategoryMaster->itemCodeDef;
+
         $runningSerialOrder = $financeCategoryMaster->lastSerialOrder + 1;
         $code = $financeCategoryMaster->itemCodeDef;
         $count = $financeCategoryMaster->numberOfDigits;
@@ -275,6 +361,7 @@ class ItemMasterAPIController extends AppBaseController
         $document = DocumentMaster::where('documentID', 'ITMM')->first();
         $input['documentSystemID'] = $document->documentSystemID;
         $input['documentID'] = $document->documentID;
+        $input['isActive'] = 1;
 
         $itemMasters = $this->itemMasterRepository->create($input);
 
@@ -296,54 +383,52 @@ class ItemMasterAPIController extends AppBaseController
      */
     public function updateItemMaster(Request $request)
     {
-            $input = $request->all();
+        $input = $request->all();
 
-            $id = Auth::id();
-            $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-            $empId = $user->employee['empID'];
-            $input['modifiedPc'] = gethostname();
-            $input['modifiedUser'] = $empId;
-            $empName = $user->employee['empName'];
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $empId;
+        $empName = $user->employee['empName'];
 
-            $id = $input['itemCodeSystem'];
+        $id = $input['itemCodeSystem'];
 
-            $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
+        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
 
-            if (empty($itemMaster)) {
-                return $this->sendError('Item Master not found');
-            }
-            foreach ($input as $key => $value) {
-                if (is_array($input[$key])) {
-                    if (count($input[$key]) > 0) {
-                        $input[$key] = $input[$key][0];
-                    } else {
-                        $input[$key] = 0;
-                    }
+        if (empty($itemMaster)) {
+            return $this->sendError('Item Master not found');
+        }
+
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
+
+        if($company){
+            $input['primaryCompanyID'] = $company->CompanyID;
+        }
+
+
+        foreach ($input as $key => $value) {
+            if (is_array($input[$key])) {
+                if (count($input[$key]) > 0) {
+                    $input[$key] = $input[$key][0];
+                } else {
+                    $input[$key] = 0;
                 }
             }
-            if ($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1) {
-
-                //if approved no
-                //is approved  =1
-
-                // else approved yes
-                // call ur function
-
-                /*$input['itemConfirmedByEMPID'] = $empId;
-                $input['itemConfirmedByEMPName'] = $empName;
-                $input['itemConfirmedDate'] = now();*/
-                $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-                $confirm = \Helper::confirmDocument($params);
-                if(!$confirm["success"]){
-                    return $this->sendError($confirm["message"]);
-                }
+        }
+        if ($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1) {
+            $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
+            $confirm = \Helper::confirmDocument($params);
+            if(!$confirm["success"]){
+                return $this->sendError($confirm["message"],500);
             }
-            foreach ($input as $key => $value) {
-                $itemMaster->$key = $value;
-            }
+        }
+        foreach ($input as $key => $value) {
+            $itemMaster->$key = $value;
+        }
 
-            $itemMaster->save();
-            return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully');
+        $itemMaster->save();
+        return $this->sendResponse($itemMaster->toArray(), 'Itemmaster updated successfully');
 
     }
 
@@ -444,22 +529,24 @@ class ItemMasterAPIController extends AppBaseController
     }
 
 
-    public function approveItem(Request $request){
+    public function approveItem(Request $request)
+    {
         $approve = \Helper::approveDocument($request);
-        if(!$approve["success"]){
+        if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
-        }else{
-            return $this->sendResponse(array(),$approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
         }
 
     }
 
-    public function rejectItem(Request $request){
+    public function rejectItem(Request $request)
+    {
         $reject = \Helper::rejectDocument($request);
-        if(!$reject["success"]){
+        if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
-        }else{
-            return $this->sendResponse(array(),$reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
         }
 
     }
