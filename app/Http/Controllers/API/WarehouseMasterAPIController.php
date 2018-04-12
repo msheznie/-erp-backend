@@ -216,6 +216,13 @@ class WarehouseMasterAPIController extends AppBaseController
         $warehouseMasters = WarehouseMaster::with(['location', 'company'])
             ->select('warehousemaster.*');
 
+        $search = $request->input('search.value');
+        if($search){
+            $warehouseMasters = $warehouseMasters->where('wareHouseCode','LIKE',"%{$search}%")
+                ->orWhere( 'wareHouseDescription', 'LIKE', "%{$search}%");
+        }
+
+
         return \DataTables::eloquent($warehouseMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {
@@ -254,7 +261,7 @@ class WarehouseMasterAPIController extends AppBaseController
             $input['wareHouseLocation'] = $input['wareHouseLocation'][0];
 
         $messages = array(
-            'wareHouseCode.unique'   => 'The Warehouse Code has already been taken'
+            'wareHouseCode.unique'   => 'Warehouse code already exists'
         );
 
         $validator = \Validator::make($input, [

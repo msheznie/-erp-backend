@@ -90,6 +90,13 @@ class CustomerMasterAPIController extends AppBaseController
              //with(['categoryMaster', 'employee', 'supplierCurrency'])
              ->select('customermaster.*');
 
+        $search = $request->input('search.value');
+        if($search){
+            $customerMasters =   $customerMasters->where('CutomerCode','LIKE',"%{$search}%")
+                ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
+                ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+        }
+
         return \DataTables::eloquent($customerMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order') ) {

@@ -136,17 +136,20 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
             $financeItemCategorySubs = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
 
+            $input = array_except($input,['companySystemID']);
+
             if (empty($financeItemCategorySubs)) {
                 return $this->sendError('Sub category not found');
+            }
+
+            if($input['includePLForGRVYN'] == 1 || $input['includePLForGRVYN'] == true){
+                $input['includePLForGRVYN'] = -1;
             }
 
             foreach ($input as $key => $value) {
                 $financeItemCategorySubs->$key = $value;
             }
 
-            if($input['includePLForGRVYN'] == 1 || $input['includePLForGRVYN']){
-                $input['includePLForGRVYN'] = -1;
-            }
 
             $financeItemCategorySubs->modifiedPc = gethostname();
             $financeItemCategorySubs->modifiedUser = $empId;

@@ -83,7 +83,7 @@ class ChartOfAccountAPIController extends AppBaseController
         $accountCode = isset($input['AccountCode']) ? $input['AccountCode'] : '';
 
         $messages = array(
-            'AccountCode.unique' => 'The Account ' . $accountCode . ' code has already been taken'
+            'AccountCode.unique' => 'Account code' . $accountCode . ' already exists'
         );
 
 
@@ -320,6 +320,12 @@ class ChartOfAccountAPIController extends AppBaseController
             }
         }
         $chartOfAccount->select('chartofaccounts.*');
+
+        $search = $request->input('search.value');
+        if($search){
+            $chartOfAccount =   $chartOfAccount->where('AccountCode','LIKE',"%{$search}%")
+                                               ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+        }
 
         return \DataTables::eloquent($chartOfAccount)
             ->order(function ($query) use ($input) {

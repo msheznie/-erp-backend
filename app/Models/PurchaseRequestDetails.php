@@ -162,4 +162,8 @@ class PurchaseRequestDetails extends Model
     public function uom(){
         return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
     }
+
+    public function podetail(){
+        return $this->belongsTo('App\Models\PurchaseOrderDetails','purchaseRequestDetailsID','purchaseRequestDetailsID');
+    }
 }
