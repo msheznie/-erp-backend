@@ -328,7 +328,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     ->first();
 
                 // checking the qty request is matching with sum total
-                if ($new['quantityRequested'] >= $totalAddedQty) {
+                //if ($new['quantityRequested'] >= $totalAddedQty) {
+                if ($new['quantityRequested'] >= $new['poQty']) {
 
                     $prDetail_arr['companySystemID'] = $new['companySystemID'];
                     $prDetail_arr['companyID'] = $new['companyID'];
@@ -357,6 +358,11 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                     $prDetail_arr['supplierDefaultCurrencyID'] = $purchaseOrder->supplierDefaultCurrencyID;
                     $prDetail_arr['supplierDefaultER'] = $purchaseOrder->supplierDefaultER;
+
+                    $prDetail_arr['companySystemID'] = $purchaseOrder->companySystemID;
+                    $prDetail_arr['companyID'] = $purchaseOrder->companyID;
+                    $prDetail_arr['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
+                    $prDetail_arr['serviceLineCode'] = $purchaseOrder->serviceLineCode;
 
                     $prDetail_arr['unitCost'] = $new['poUnitAmount'];
 
@@ -403,14 +409,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     $updatePR = PurchaseRequest::find($new['purchaseRequestID'])
                         ->update(['selectedForPO' => -1, 'prClosedYN' => -1]);
                 }
+                return $this->sendResponse('', 'Purchase Order Details saved successfully');
 
+            }else{
+                return $this->sendError('Please Check Item Is Selected ');
             }
 
-            //$item = PurchaseOrderDetails::insert($new);
         }
-
-
-        return $this->sendResponse('', 'Purchase Order Details saved successfully');
 
     }
 
