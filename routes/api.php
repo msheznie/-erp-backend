@@ -317,6 +317,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
 
+    Route::post('exportReport', 'ReportAPIController@exportReport');
+
 });
 
 
