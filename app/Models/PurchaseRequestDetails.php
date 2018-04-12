@@ -166,4 +166,12 @@ class PurchaseRequestDetails extends Model
     public function podetail(){
         return $this->belongsTo('App\Models\PurchaseOrderDetails','purchaseRequestDetailsID','purchaseRequestDetailsID');
     }
+
+    public function purchase_request(){
+        return $this->belongsTo('App\Models\PurchaseRequest','purchaseRequestID','purchaseRequestID');
+    }
+
+    public function purchase_order_process_detail(){
+        return $this->belongsTo('App\Models\PurchaseOrderProcessDetails','purchaseRequestID','purchaseRequestID');
+    }
 }

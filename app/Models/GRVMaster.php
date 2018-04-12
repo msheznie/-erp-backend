@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Class GRVMaster
  * @package App\Models
- * @version April 2, 2018, 3:51 am UTC
+ * @version April 11, 2018, 12:12 pm UTC
  *
  * @property string grvType
  * @property integer companySystemID
@@ -89,7 +89,6 @@ class GRVMaster extends Model
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey  = 'grvAutoID';
-
 
     protected $dates = ['deleted_at'];
 

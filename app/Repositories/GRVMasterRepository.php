@@ -8,7 +8,7 @@ use InfyOm\Generator\Common\BaseRepository;
 /**
  * Class GRVMasterRepository
  * @package App\Repositories
- * @version April 2, 2018, 3:51 am UTC
+ * @version April 11, 2018, 12:12 pm UTC
  *
  * @method GRVMaster findWithoutFail($id, $columns = ['*'])
  * @method GRVMaster find($id, $columns = ['*'])

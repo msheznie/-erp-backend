@@ -2,6 +2,7 @@
     <thead>
         <tr>
             <th>Grvautoid</th>
+        <th>Companysystemid</th>
         <th>Companyid</th>
         <th>Servicelinecode</th>
         <th>Purchaseordermastertid</th>
@@ -58,6 +59,7 @@
         <th>Vatamount</th>
         <th>Vatamountlocal</th>
         <th>Vatamountrpt</th>
+        <th>Logisticsavailable</th>
         <th>Createdusergroup</th>
         <th>Createdpcid</th>
         <th>Createduserid</th>
@@ -72,6 +74,7 @@
     @foreach($gRVDetails as $gRVDetails)
         <tr>
             <td>{!! $gRVDetails->grvAutoID !!}</td>
+            <td>{!! $gRVDetails->companySystemID !!}</td>
             <td>{!! $gRVDetails->companyID !!}</td>
             <td>{!! $gRVDetails->serviceLineCode !!}</td>
             <td>{!! $gRVDetails->purchaseOrderMastertID !!}</td>
@@ -128,6 +131,7 @@
             <td>{!! $gRVDetails->VATAmount !!}</td>
             <td>{!! $gRVDetails->VATAmountLocal !!}</td>
             <td>{!! $gRVDetails->VATAmountRpt !!}</td>
+            <td>{!! $gRVDetails->logisticsAvailable !!}</td>
             <td>{!! $gRVDetails->createdUserGroup !!}</td>
             <td>{!! $gRVDetails->createdPcID !!}</td>
             <td>{!! $gRVDetails->createdUserID !!}</td>

@@ -282,4 +282,12 @@ class PurchaseOrderDetails extends Model
         return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
     }
 
+    public function reporting_currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster','companyReportingCurrencyID','currencyID');
+    }
+
+    public function grv_details(){
+        return $this->hasMany('App\Models\GRVDetails', 'purchaseOrderDetailsID', 'purchaseOrderDetailsID');
+    }
+
 }

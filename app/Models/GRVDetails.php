@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Class GRVDetails
  * @package App\Models
- * @version April 2, 2018, 3:53 am UTC
+ * @version April 11, 2018, 12:13 pm UTC
  *
  * @property integer grvAutoID
+ * @property integer companySystemID
  * @property string companyID
  * @property string serviceLineCode
  * @property integer purchaseOrderMastertID
@@ -67,6 +68,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float VATAmount
  * @property float VATAmountLocal
  * @property float VATAmountRpt
+ * @property integer logisticsAvailable
  * @property string createdUserGroup
  * @property string createdPcID
  * @property string createdUserID
@@ -90,6 +92,7 @@ class GRVDetails extends Model
 
     public $fillable = [
         'grvAutoID',
+        'companySystemID',
         'companyID',
         'serviceLineCode',
         'purchaseOrderMastertID',
@@ -146,6 +149,7 @@ class GRVDetails extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
+        'logisticsAvailable',
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
@@ -163,6 +167,7 @@ class GRVDetails extends Model
     protected $casts = [
         'grvDetailsID' => 'integer',
         'grvAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineCode' => 'string',
         'purchaseOrderMastertID' => 'integer',
@@ -219,6 +224,7 @@ class GRVDetails extends Model
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
+        'logisticsAvailable' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserID' => 'string',
@@ -235,8 +241,5 @@ class GRVDetails extends Model
         
     ];
 
-    public function master(){
-        return $this->belongsTo('App\Models\GRVMaster','grvAutoID','grvAutoID');
-    }
     
 }
