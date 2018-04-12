@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 26-March 2018 By: Fayas Description: Added new functions named as getPurchaseRequestByDocumentType()
  * -- Date: 27-March 2018 By: Fayas Description: Added new functions named as getPurchaseRequestFormData()
+ * -- Date: 11-April 2018 By: Fayas Description: Added new functions named as reportPrToGrv()
  */
 namespace App\Http\Controllers\API;
 
@@ -25,6 +26,7 @@ use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\Months;
 use App\Models\Priority;
+use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
 use App\Models\ProcumentOrder;
@@ -214,6 +216,56 @@ class PurchaseRequestAPIController extends AppBaseController
     }
 
     /**
+     * report for Pr To Grv
+     * get /reportPrToGrv
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function reportPrToGrv(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseRequests = PurchaseRequestDetails::
+                             where('purchaseRequestDetailsID',96870)->
+                             whereHas('purchase_request', function ($q) use ($input) {
+                                $q->where('companySystemID', $input['companyId'])
+                                    ->where('PRConfirmedYN', 1)
+                                    ->where('cancelledYN', 0);
+                            })
+                            /* ->whereHas('podetail', function ($pod) {
+                                    $pod->whereHas('order', function ($po) {
+                                        $po->where('poConfirmedYN', 1);
+                                    });
+                                })*/
+                            /*->whereHas('podetail', function ($pod) {
+                                $pod->where('purchaseOrderDetailsID',7123);
+                            })*/
+                            //7123
+                                ->with(['purchase_order_process_detail','purchase_request.confirmed_by','uom'])
+                               /* ->with(['purchase_request.confirmed_by', 'uom', 'podetail' => function ($q) {
+                                    $q->with(['order', 'reporting_currency', 'grv_details' => function ($grvd) {
+                                        $grvd->select(['purchaseOrderDetailsID','noQty'])->sum('noQty');
+                                    }]);
+                                }])*/
+                                ->orderBy('timeStamp', 'des')
+                                //->offset(300)
+                                ->take(5)
+                                ->get();
+
+       /* $purchaseRequests = PurchaseOrderDetails::where('purchaseOrderDetailsID',7123)
+                                                 ->with(['grv_details' => function($grvd){
+                                                     $grvd->select(['purchaseOrderDetailsID','noQty'])->sum('noQty');
+                                                 }])
+                                                 ->get();*/
+
+
+        return $this->sendResponse($purchaseRequests, 'Record retrieved successfully');
+    }
+
+    /**
      * get Purchase Request By Document Type.
      * POST /getPurchaseRequestByDocumentType
      *
@@ -293,9 +345,9 @@ class PurchaseRequestAPIController extends AppBaseController
             ]);
 
         $search = $request->input('search.value');
-        if($search){
-            $purchaseRequests =   $purchaseRequests->where('purchaseRequestCode','LIKE',"%{$search}%")
-                                                   ->orWhere('comments', 'LIKE', "%{$search}%");
+        if ($search) {
+            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                ->orWhere('comments', 'LIKE', "%{$search}%");
         }
 
         return \DataTables::eloquent($purchaseRequests)
@@ -448,7 +500,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by','PRConfirmedBy','PRConfirmedBySystemID','PRConfirmedDate']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'PRConfirmedBy', 'PRConfirmedBySystemID', 'PRConfirmedDate']);
         $input = $this->convertArrayToValue($input);
 
         /** @var PurchaseRequest $purchaseRequest */
@@ -471,23 +523,23 @@ class PurchaseRequestAPIController extends AppBaseController
         if ($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1) {
 
 
-            $checkItems = PurchaseRequestDetails::where('purchaseRequestID',$id)
-                                                  ->count();
+            $checkItems = PurchaseRequestDetails::where('purchaseRequestID', $id)
+                ->count();
             if ($checkItems == 0) {
                 return $this->sendError('Every request should have at least one item', 500);
             }
 
-            $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID',$id)
-                              ->where('quantityRequested','<',1)
-                              ->count();
+            $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID', $id)
+                ->where('quantityRequested', '<', 1)
+                ->count();
 
             if ($checkQuantity > 0) {
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
             }
 
 
-            $amount = PurchaseRequestDetails::where('purchaseRequestID',$id)
-                                              ->sum('totalCost');
+            $amount = PurchaseRequestDetails::where('purchaseRequestID', $id)
+                ->sum('totalCost');
 
 
             /*$currencyConversion = \Helper::currencyConversion($item->companySystemID,
@@ -498,12 +550,12 @@ class PurchaseRequestAPIController extends AppBaseController
             $convertedAmount = $currencyConversion['documentAmount'];*/
 
             $params = array('autoID' => $id,
-                            'company' => $purchaseRequest->companySystemID,
-                            'document' => $purchaseRequest->documentSystemID,
-                            'segment' => $input['serviceLineSystemID'],
-                            'category' => $input['financeCategory'],
-                            'amount' => $amount
-                            );
+                'company' => $purchaseRequest->companySystemID,
+                'document' => $purchaseRequest->documentSystemID,
+                'segment' => $input['serviceLineSystemID'],
+                'category' => $input['financeCategory'],
+                'amount' => $amount
+            );
 
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {

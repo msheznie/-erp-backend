@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
 use App\Models\Company;
 use App\Models\CountryMaster;
+use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\DocumentApproved;
 use App\Models\SupplierMaster;
@@ -457,5 +458,11 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendResponse(array(), $reject["message"]);
         }
 
+    }
+
+    public function getSuppliersByCompany(Request $request)
+    {
+        $supplierMaster = SupplierAssigned::where('companySystemID',$request->selectedCompanyId)->get();
+        return $this->sendResponse($supplierMaster, 'Supplier Master retrieved successfully');
     }
 }
