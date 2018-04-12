@@ -43,6 +43,7 @@ trait MakeGRVDetailsTrait
 
         return array_merge([
             'grvAutoID' => $fake->randomDigitNotNull,
+            'companySystemID' => $fake->randomDigitNotNull,
             'companyID' => $fake->word,
             'serviceLineCode' => $fake->word,
             'purchaseOrderMastertID' => $fake->randomDigitNotNull,
@@ -99,6 +100,7 @@ trait MakeGRVDetailsTrait
             'VATAmount' => $fake->randomDigitNotNull,
             'VATAmountLocal' => $fake->randomDigitNotNull,
             'VATAmountRpt' => $fake->randomDigitNotNull,
+            'logisticsAvailable' => $fake->randomDigitNotNull,
             'createdUserGroup' => $fake->word,
             'createdPcID' => $fake->word,
             'createdUserID' => $fake->word,

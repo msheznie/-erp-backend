@@ -299,12 +299,26 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('procumentOrderPaymentTermsCRUD', 'PoPaymentTermsAPIController');
     Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
 
+
+    Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
+
     Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+
 
     Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
 
     Route::resource('po_payment_term_types', 'PoPaymentTermTypesAPIController');
 
+    Route::resource('po_payment_term_types', 'PoPaymentTermTypesAPIController');
+
+    Route::resource('g_r_v_masters', 'GRVMasterAPIController');
+
+    Route::resource('g_r_v_details', 'GRVDetailsAPIController');
+
+    Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
+
 });
+
+
 
 
