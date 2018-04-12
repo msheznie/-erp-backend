@@ -290,4 +290,12 @@ class PurchaseOrderDetails extends Model
         return $this->hasMany('App\Models\GRVDetails', 'purchaseOrderDetailsID', 'purchaseOrderDetailsID');
     }
 
+    public function financecategory(){
+        return $this->belongsTo('App\Models\FinanceItemCategoryMaster','itemFinanceCategoryID','itemCategoryID');
+    }
+
+    public function financecategorysub(){
+        return $this->belongsTo('App\Models\FinanceItemCategorySub','itemFinanceCategorySubID','itemCategorySubID');
+    }
+
 }

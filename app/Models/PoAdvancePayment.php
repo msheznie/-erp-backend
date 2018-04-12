@@ -81,6 +81,7 @@ class PoAdvancePayment extends Model
         'reqAmountInPOTransCur',
         'reqAmountInPOLocalCur',
         'reqAmountInPORptCur',
+        'createdDateTime',
         'timestamp'
     ];
 

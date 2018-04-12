@@ -10,8 +10,13 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\Models\ProcumentOrder;
+use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
+use App\Models\PoPaymentTerms;
+use Carbon\Carbon;
 use Response;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Class PoAdvancePaymentController
@@ -22,10 +27,12 @@ class PoAdvancePaymentAPIController extends AppBaseController
 {
     /** @var  PoAdvancePaymentRepository */
     private $poAdvancePaymentRepository;
+    private $userRepository;
 
-    public function __construct(PoAdvancePaymentRepository $poAdvancePaymentRepo)
+    public function __construct(PoAdvancePaymentRepository $poAdvancePaymentRepo,  UserRepository $userRepo)
     {
         $this->poAdvancePaymentRepository = $poAdvancePaymentRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -55,8 +62,54 @@ class PoAdvancePaymentAPIController extends AppBaseController
     public function store(CreatePoAdvancePaymentAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['timestamp']);
+        $input = $this->convertArrayToValue($input);
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['poID'])
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
+        $input['serviceLineCode'] = $purchaseOrder->serviceLine;
+        $input['companySystemID'] = $purchaseOrder->companySystemID;
+        $input['companyID'] = $purchaseOrder->companyID;
+        $input['supplierID'] = $purchaseOrder->supplierID;
+        $input['SupplierPrimaryCode'] = $purchaseOrder->supplierPrimaryCode;
+        $input['currencyID'] = $purchaseOrder->supplierTransactionCurrencyID;
+
+        $input['poCode'] = $purchaseOrder->purchaseOrderCode;
+        $input['poTermID'] = $input['paymentTermID'];
+        $input['narration'] = $input['paymentTemDes'];
+
+        if (isset($input['comDate'])) {
+            if ($input['comDate']) {
+                $input['reqDate'] = new Carbon($input['comDate']);
+            }
+        }
+        $input['reqAmount'] = $input['comAmount'];
+        $input['reqAmountTransCur_amount'] = $input['comAmount'];
+
+        $companyCurrencyConversion = \Helper::currencyConversion( $purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['comAmount']);
+
+        $input['reqAmountInPOTransCur'] = $input['comAmount'];
+        $input['reqAmountInPOLocalCur'] = $companyCurrencyConversion['localAmount'];
+        $input['reqAmountInPORptCur'] = $companyCurrencyConversion['reportingAmount'];
+
+        $input['requestedByEmpID'] = $user->employee['empID'];
+        $input['requestedByEmpName'] = $user->employee['empName'];
 
         $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
+
+        if($poAdvancePayments){
+            $update = PoPaymentTerms::where('paymentTermID', $input['paymentTermID'])
+                ->update(['isRequested' => 1]);
+        }
 
         return $this->sendResponse($poAdvancePayments->toArray(), 'Po Advance Payment saved successfully');
     }
