@@ -291,6 +291,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount');
 
     Route::post('generateReport', 'ReportAPIController@generateReport');
+    Route::post('validateReport', 'ReportAPIController@validateReport');
 
     /** Po Related Tables Created by Nazir  */
     Route::resource('erp_addresses', 'ErpAddressAPIController');
