@@ -32,6 +32,8 @@ use App\Models\ItemAssigned;
 use App\Models\PurchaseOrderDetails;
 use App\Models\ErpAddress;
 use App\Models\PoPaymentTermTypes;
+use App\Models\SupplierAssigned;
+use App\Models\CompanyDocumentAttachment;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -107,6 +109,37 @@ class ProcumentOrderAPIController extends AppBaseController
             $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
         }
 
+        $erpAddress = ErpAddress::where("companySystemID", $input['companySystemID'])
+            ->where('isDefault', -1)
+            ->get();
+
+        if(!empty($erpAddress)){
+            foreach($erpAddress as $address){
+                if($address['addressTypeID'] == 1){
+                    $input['shippingAddressID']             = $address['addressID'];
+                    $input['shippingAddressDescriprion']    = $address['addressDescrption'];
+                    $input['shipTocontactPersonID']         = $address['contactPersonID'];
+                    $input['shipTocontactPersonTelephone']  = $address['contactPersonTelephone'];
+                    $input['shipTocontactPersonFaxNo']      = $address['contactPersonFaxNo'];
+                    $input['shipTocontactPersonEmail']      = $address['contactPersonEmail'];
+                }else if($address['addressTypeID'] == 2){
+                    $input['invoiceToAddressID']             = $address['addressID'];
+                    $input['invoiceToAddressDescription']    = $address['addressDescrption'];
+                    $input['invoiceTocontactPersonID']         = $address['contactPersonID'];
+                    $input['invoiceTocontactPersonTelephone']  = $address['contactPersonTelephone'];
+                    $input['invoiceTocontactPersonFaxNo']      = $address['contactPersonFaxNo'];
+                    $input['invoiceTocontactPersonEmail']      = $address['contactPersonEmail'];
+                }else if($address['addressTypeID'] == 3){
+                    $input['soldToAddressID']             = $address['addressID'];
+                    $input['soldToAddressDescriprion']    = $address['addressDescrption'];
+                    $input['soldTocontactPersonID']         = $address['contactPersonID'];
+                    $input['soldTocontactPersonTelephone']  = $address['contactPersonTelephone'];
+                    $input['soldTocontactPersonFaxNo']      = $address['contactPersonFaxNo'];
+                    $input['soldTocontactPersonEmail']      = $address['contactPersonEmail'];
+                }
+            }
+        }
+
         $input['serialNumber'] = $lastSerialNumber;
         $input['purchaseOrderCode'] = $lastSerialNumber;
 
@@ -124,6 +157,14 @@ class ProcumentOrderAPIController extends AppBaseController
         $document = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
         if ($document) {
             $input['documentID'] = $document->documentID;
+        }
+
+        $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID', $input['companySystemID'])
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->first();
+
+        if ($companyDocumentAttachment) {
+            $input['docRefNo'] = $companyDocumentAttachment->docRefNumber;
         }
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
@@ -293,7 +334,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
-            $sort = 'desc';
+            $sort ='desc';
         }
 
         $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
@@ -325,7 +366,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if (array_key_exists('approved', $input)) {
             if ($input['approved'] == 0 || $input['approved'] == 1) {
-                $procumentOrders->where('PRConfirmedYN', $input['PRConfirmedYN']);
+                $procumentOrders->where('approved', $input['approved']);
             }
         }
 
@@ -360,6 +401,12 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
                 'erp_purchaseordermaster.financeCategory',
             ]);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $procumentOrders = $procumentOrders->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                ->orWhere('narration', 'LIKE', "%{$search}%");
+        }
 
         return \DataTables::eloquent($procumentOrders)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -400,12 +447,17 @@ class ProcumentOrderAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get();
 
-        $supplier = SupplierMaster::select(DB::raw("supplierCodeSystem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
-            ->where('primaryCompanySystemID', $companyId)
+        $supplier = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
+            ->where('companySystemID', $companyId)
             ->where('isActive', 1)
+            ->where('isAssigned', -1)
             ->get();
 
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
+            ->get();
+
+        $detailSum = PurchaseOrderDetails::select(DB::raw('sum(netAmount) as total'))
+            ->where('purchaseOrderMasterID', $purchaseOrderID)
             ->get();
 
         $financeCategories = FinanceItemCategoryMaster::all();
@@ -429,23 +481,23 @@ class ProcumentOrderAPIController extends AppBaseController
             ->first();
 
         $addressTypeShippings = DB::table("erp_address")
-            ->select('addressID','addressTypeDescription')
+            ->select('addressID', 'addressTypeDescription')
             ->join("erp_addresstype", "erp_addresstype.addressTypeID", "=", "erp_address.addressTypeID")
-            ->where("erp_address.addressTypeID","1")
+            ->where("erp_address.addressTypeID", "1")
             ->where("companySystemID", $companyId)
             ->get();
 
         $addressTypeInvoice = DB::table("erp_address")
-            ->select('addressID','addressTypeDescription')
+            ->select('addressID', 'addressTypeDescription')
             ->join("erp_addresstype", "erp_addresstype.addressTypeID", "=", "erp_address.addressTypeID")
-            ->where("erp_address.addressTypeID","2")
+            ->where("erp_address.addressTypeID", "2")
             ->where("companySystemID", $companyId)
             ->get();
 
         $addressTypeSold = DB::table("erp_address")
-            ->select('addressID','addressTypeDescription')
+            ->select('addressID', 'addressTypeDescription')
             ->join("erp_addresstype", "erp_addresstype.addressTypeID", "=", "erp_address.addressTypeID")
-            ->where("erp_address.addressTypeID","3")
+            ->where("erp_address.addressTypeID", "3")
             ->where("companySystemID", $companyId)
             ->get();
 
@@ -499,7 +551,8 @@ class ProcumentOrderAPIController extends AppBaseController
             'addresstypeShippings' => $addressTypeShippings,
             'addresstypeinvoice' => $addressTypeInvoice,
             'addresstypesold' => $addressTypeSold,
-            'paymentterms' => $PoPaymentTermTypes
+            'paymentterms' => $PoPaymentTermTypes,
+            'detailSum' => $detailSum
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

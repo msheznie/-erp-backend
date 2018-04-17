@@ -12,6 +12,7 @@
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as getCompanyById()
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as getAllWarehouseMaster()
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as updateWarehouseMaster()
+-- Date: 10 - April 2018 By: Mubashir Description: Changed warehouse not found error message
  */
 namespace App\Http\Controllers\API;
 

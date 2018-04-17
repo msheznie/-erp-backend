@@ -466,7 +466,7 @@ class Helper
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
-
+        //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
@@ -552,6 +552,10 @@ class Helper
         $user = Models\User::find(Auth::id());
         $employee = Models\Employee::find($user->employee_id);
         return $employee;
+    }
+
+    public static function dateFormat($date){
+        return date("d/m/Y", strtotime($date));
     }
 
     /**

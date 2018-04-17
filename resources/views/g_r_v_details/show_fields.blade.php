@@ -10,6 +10,12 @@
     <p>{!! $gRVDetails->grvAutoID !!}</p>
 </div>
 
+<!-- Companysystemid Field -->
+<div class="form-group">
+    {!! Form::label('companySystemID', 'Companysystemid:') !!}
+    <p>{!! $gRVDetails->companySystemID !!}</p>
+</div>
+
 <!-- Companyid Field -->
 <div class="form-group">
     {!! Form::label('companyID', 'Companyid:') !!}
@@ -344,6 +350,12 @@
 <div class="form-group">
     {!! Form::label('VATAmountRpt', 'Vatamountrpt:') !!}
     <p>{!! $gRVDetails->VATAmountRpt !!}</p>
+</div>
+
+<!-- Logisticsavailable Field -->
+<div class="form-group">
+    {!! Form::label('logisticsAvailable', 'Logisticsavailable:') !!}
+    <p>{!! $gRVDetails->logisticsAvailable !!}</p>
 </div>
 
 <!-- Createdusergroup Field -->
