@@ -156,5 +156,9 @@ class DocumentApproved extends Model
         return $this->HasOne('App\Models\ChartOfAccount','chartOfAccountSystemID','documentSystemCode');
     }
 
+    public function employee(){
+        return $this->HasOne('App\Models\Employee','employeeSystemID','employeeSystemID');
+    }
+
 
 }

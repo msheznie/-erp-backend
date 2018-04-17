@@ -449,6 +449,11 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\PurchaseOrderDetails', 'purchaseOrderID', 'purchaseOrderMasterID');
     }
 
+    public function approved()
+    {
+        return $this->belongsTo('App\Models\DocumentApproved', 'purchaseOrderID', 'documentSystemCode');
+    }
+
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany

@@ -303,7 +303,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
 
-    Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+    //Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
 
     Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
@@ -319,6 +319,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
 
     Route::post('exportReport', 'ReportAPIController@exportReport');
+    Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
 
 });
 

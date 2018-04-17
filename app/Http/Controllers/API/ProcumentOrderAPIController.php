@@ -622,4 +622,17 @@ class ProcumentOrderAPIController extends AppBaseController
 
     }
 
+
+    public function getProcurementOrderRecord(Request $request)
+    {
+        $output = ProcumentOrder::where('purchaseOrderID',$request->purchaseOrderID)->with(['detail' => function($query){
+            $query->with('unit');
+        },'approved' => function($query){
+            $query->with('employee');
+            $query->where('documentSystemID',2);
+        }])->first();
+        return $this->sendResponse($output, 'Data retrieved successfully');
+
+    }
+
 }
