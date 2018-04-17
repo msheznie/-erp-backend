@@ -34,6 +34,7 @@ use App\Models\ErpAddress;
 use App\Models\PoPaymentTermTypes;
 use App\Models\SupplierAssigned;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\PoPaymentTerms;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -113,29 +114,29 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('isDefault', -1)
             ->get();
 
-        if(!empty($erpAddress)){
-            foreach($erpAddress as $address){
-                if($address['addressTypeID'] == 1){
-                    $input['shippingAddressID']             = $address['addressID'];
-                    $input['shippingAddressDescriprion']    = $address['addressDescrption'];
-                    $input['shipTocontactPersonID']         = $address['contactPersonID'];
-                    $input['shipTocontactPersonTelephone']  = $address['contactPersonTelephone'];
-                    $input['shipTocontactPersonFaxNo']      = $address['contactPersonFaxNo'];
-                    $input['shipTocontactPersonEmail']      = $address['contactPersonEmail'];
-                }else if($address['addressTypeID'] == 2){
-                    $input['invoiceToAddressID']             = $address['addressID'];
-                    $input['invoiceToAddressDescription']    = $address['addressDescrption'];
-                    $input['invoiceTocontactPersonID']         = $address['contactPersonID'];
-                    $input['invoiceTocontactPersonTelephone']  = $address['contactPersonTelephone'];
-                    $input['invoiceTocontactPersonFaxNo']      = $address['contactPersonFaxNo'];
-                    $input['invoiceTocontactPersonEmail']      = $address['contactPersonEmail'];
-                }else if($address['addressTypeID'] == 3){
-                    $input['soldToAddressID']             = $address['addressID'];
-                    $input['soldToAddressDescriprion']    = $address['addressDescrption'];
-                    $input['soldTocontactPersonID']         = $address['contactPersonID'];
-                    $input['soldTocontactPersonTelephone']  = $address['contactPersonTelephone'];
-                    $input['soldTocontactPersonFaxNo']      = $address['contactPersonFaxNo'];
-                    $input['soldTocontactPersonEmail']      = $address['contactPersonEmail'];
+        if (!empty($erpAddress)) {
+            foreach ($erpAddress as $address) {
+                if ($address['addressTypeID'] == 1) {
+                    $input['shippingAddressID'] = $address['addressID'];
+                    $input['shippingAddressDescriprion'] = $address['addressDescrption'];
+                    $input['shipTocontactPersonID'] = $address['contactPersonID'];
+                    $input['shipTocontactPersonTelephone'] = $address['contactPersonTelephone'];
+                    $input['shipTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
+                    $input['shipTocontactPersonEmail'] = $address['contactPersonEmail'];
+                } else if ($address['addressTypeID'] == 2) {
+                    $input['invoiceToAddressID'] = $address['addressID'];
+                    $input['invoiceToAddressDescription'] = $address['addressDescrption'];
+                    $input['invoiceTocontactPersonID'] = $address['contactPersonID'];
+                    $input['invoiceTocontactPersonTelephone'] = $address['contactPersonTelephone'];
+                    $input['invoiceTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
+                    $input['invoiceTocontactPersonEmail'] = $address['contactPersonEmail'];
+                } else if ($address['addressTypeID'] == 3) {
+                    $input['soldToAddressID'] = $address['addressID'];
+                    $input['soldToAddressDescriprion'] = $address['addressDescrption'];
+                    $input['soldTocontactPersonID'] = $address['contactPersonID'];
+                    $input['soldTocontactPersonTelephone'] = $address['contactPersonTelephone'];
+                    $input['soldTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
+                    $input['soldTocontactPersonEmail'] = $address['contactPersonEmail'];
                 }
             }
         }
@@ -262,6 +263,20 @@ class ProcumentOrderAPIController extends AppBaseController
         $input['modifiedUser'] = $user->employee['empID'];
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
+        //getting total sum of PO detail Amount
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+            ->first();
+
+          $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSum['masterTotalSum']);
+
+        $input['poTotalComRptCurrency'] = $currencyConversionMaster['reportingAmount'];
+        $input['poTotalLocalCurrency'] = $currencyConversionMaster['localAmount'];
+        $input['poTotalSupplierDefaultCurrency'] = 0;
+        $input['poTotalSupplierTransactionCurrency'] = $poMasterSum['masterTotalSum'];
+        $input['companyReportingER'] = $currencyConversionMaster['trasToRptER'];
+        $input['localCurrencyER'] = $currencyConversionMaster['trasToLocER'];
+
         if ($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) {
 
             $poDetailExist = PurchaseOrderDetails::select(DB::raw('purchaseOrderDetailsID'))
@@ -272,32 +287,44 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('PO Document cannot confirm without details');
             }
 
+            //po payment terms exist
+            $PoPaymentTerms = PoPaymentTerms::where('poID', $input['purchaseOrderID'])
+                ->where('LCPaymentYN', 2)
+                ->where('isRequested', 0)
+                ->first();
+
+            if (!empty($PoPaymentTerms)) {
+                return $this->sendError('Advance Payment Request is pending');
+            }
+
+            $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
+                ->get();
+
+            $detailSum = PurchaseOrderDetails::select(DB::raw('sum(netAmount) as total'))
+                ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                ->first();
+
+            if (!empty($poAdvancePaymentType)) {
+                foreach ($poAdvancePaymentType as $payment) {
+                    $paymentPercentageAmount = ($detailSum['total'] * $payment['comPercentage']) / 100;
+                    if ($payment['comAmount'] != $paymentPercentageAmount) {
+                        return $this->sendError('Payment terms is not matching with the PO total');
+                    }
+                }
+            }
+
             unset($input['poConfirmedYN']);
             unset($input['poConfirmedByEmpSystemID']);
             unset($input['poConfirmedByEmpID']);
             unset($input['poConfirmedByName']);
             unset($input['poConfirmedDate']);
 
-            //getting total sum of PO detail Amount
-            $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
-                ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-                ->first();
-
-            if (!empty($poMasterSum)) {
-
-                $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSum['masterTotalSum']);
-
-                $input['poTotalComRptCurrency'] = $currencyConversionMaster['reportingAmount'];
-                $input['poTotalLocalCurrency'] = $currencyConversionMaster['localAmount'];
-                $input['poTotalSupplierDefaultCurrency'] = 0;
-                $input['poTotalSupplierTransactionCurrency'] = $poMasterSum['masterTotalSum'];
-
-                $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $poMasterSum['masterTotalSum']);
-                $confirm = \Helper::confirmDocument($params);
-                if (!$confirm["success"]) {
-                    return $this->sendError($confirm["message"]);
-                }
+            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $poMasterSum['masterTotalSum']);
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"]);
             }
+
 
         }
 
@@ -334,7 +361,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
-            $sort ='desc';
+            $sort = 'desc';
         }
 
         $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
@@ -365,7 +392,7 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         if (array_key_exists('approved', $input)) {
-            if ($input['approved'] == 0 || $input['approved'] == 1) {
+            if ($input['approved'] == 0 || $input['approved'] == -1) {
                 $procumentOrders->where('approved', $input['approved']);
             }
         }
@@ -620,6 +647,19 @@ class ProcumentOrderAPIController extends AppBaseController
 
         return $this->sendResponse($erpAddressDetails->toArray(), 'Data retrieved successfully');
 
+    }
+
+    public function procumentOrderDetailTotal(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $detailSum = PurchaseOrderDetails::select(DB::raw('sum(netAmount) as total'))
+            ->where('purchaseOrderMasterID', $purchaseOrderID)
+            ->get();
+
+        return $this->sendResponse($detailSum->toArray(), 'Data retrieved successfully');
     }
 
 }

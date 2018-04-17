@@ -22,14 +22,13 @@ use Illuminate\Support\Facades\Auth;
  * Class PoAdvancePaymentController
  * @package App\Http\Controllers\API
  */
-
 class PoAdvancePaymentAPIController extends AppBaseController
 {
     /** @var  PoAdvancePaymentRepository */
     private $poAdvancePaymentRepository;
     private $userRepository;
 
-    public function __construct(PoAdvancePaymentRepository $poAdvancePaymentRepo,  UserRepository $userRepo)
+    public function __construct(PoAdvancePaymentRepository $poAdvancePaymentRepo, UserRepository $userRepo)
     {
         $this->poAdvancePaymentRepository = $poAdvancePaymentRepo;
         $this->userRepository = $userRepo;
@@ -76,7 +75,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
         }
 
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
-        $input['serviceLineCode'] = $purchaseOrder->serviceLine;
+        $input['serviceLineID'] = $purchaseOrder->serviceLine;
         $input['companySystemID'] = $purchaseOrder->companySystemID;
         $input['companyID'] = $purchaseOrder->companyID;
         $input['supplierID'] = $purchaseOrder->supplierID;
@@ -95,7 +94,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $input['reqAmount'] = $input['comAmount'];
         $input['reqAmountTransCur_amount'] = $input['comAmount'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion( $purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['comAmount']);
+        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['comAmount']);
 
         $input['reqAmountInPOTransCur'] = $input['comAmount'];
         $input['reqAmountInPOLocalCur'] = $companyCurrencyConversion['localAmount'];
@@ -106,7 +105,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
 
         $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
 
-        if($poAdvancePayments){
+        if ($poAdvancePayments) {
             $update = PoPaymentTerms::where('paymentTermID', $input['paymentTermID'])
                 ->update(['isRequested' => 1]);
         }
@@ -176,9 +175,30 @@ class PoAdvancePaymentAPIController extends AppBaseController
             return $this->sendError('Po Advance Payment not found');
         }
 
+
         $poAdvancePayment->delete();
 
         return $this->sendResponse($id, 'Po Advance Payment deleted successfully');
+    }
+
+    public function poPaymentTermsAdvanceDetailView(Request $request)
+    {
+        $input = $request->all();
+
+        $AdvancePayment = PoAdvancePayment::where('poTermID', $input['paymentTermID'])->first();
+
+        if (empty($AdvancePayment)) {
+            return $this->sendError('Po Payment Terms not found');
+        }
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $AdvancePayment->poID)->first();
+
+        $output = array('poMaster' => $purchaseOrder,
+            'advanceDetail' => $AdvancePayment
+
+        );
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
 
