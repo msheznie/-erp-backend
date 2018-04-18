@@ -164,7 +164,7 @@ class PurchaseRequestDetails extends Model
     }
 
     public function podetail(){
-        return $this->belongsTo('App\Models\PurchaseOrderDetails','purchaseRequestDetailsID','purchaseRequestDetailsID');
+        return $this->hasMany('App\Models\PurchaseOrderDetails','purchaseRequestDetailsID','purchaseRequestDetailsID');
     }
 
     public function purchase_request(){

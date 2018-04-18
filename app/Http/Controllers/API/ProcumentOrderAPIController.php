@@ -338,7 +338,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
                 //$detail['netAmount'] = $calculateItemDiscount * $itemDiscont['noQty'];
 
-                 PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
+                PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
                     ->update([
                         'GRVcostPerUnitLocalCur' => $currencyConversion['localAmount'],
                         'GRVcostPerUnitSupTransCur' => $calculateItemDiscount,
@@ -346,7 +346,7 @@ class ProcumentOrderAPIController extends AppBaseController
                         'purchaseRetcostPerUnitLocalCur' => $currencyConversion['localAmount'],
                         'purchaseRetcostPerUnitTranCur' => $calculateItemDiscount,
                         'purchaseRetcostPerUnitRptCur' => $currencyConversion['reportingAmount']
-                        ]);
+                    ]);
             }
         }
 
@@ -744,6 +744,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
     }
 
+
     public function procumentOrderDetailTotal(Request $request)
     {
         $input = $request->all();
@@ -755,6 +756,20 @@ class ProcumentOrderAPIController extends AppBaseController
             ->get();
 
         return $this->sendResponse($detailSum->toArray(), 'Data retrieved successfully');
+    }
+
+    public function getProcurementOrderRecord(Request $request)
+    {
+        $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['detail' => function ($query) {
+            $query->with('unit');
+        }, 'approved' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 2);
+        }, 'suppliercontact' => function ($query) {
+            $query->where('isDefault', -1);
+        }, 'company', 'transactioncurrency', 'companydocumentattachment'])->first();
+        return $this->sendResponse($output, 'Data retrieved successfully');
+
     }
 
 }

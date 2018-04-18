@@ -83,6 +83,7 @@ class UserGroupAPIController extends AppBaseController
             }
             $userGroups->companyID = $input["companyID"];
             $userGroups->description = $input["description"];
+            $userGroups->isActive = 1;
 
            $userGroups->save();
         }else{
@@ -152,7 +153,7 @@ class UserGroupAPIController extends AppBaseController
         if (empty($userGroup)) {
             return $this->sendError('User Group not found');
         }
-
+        $userGroup->navigationusergroup()->delete();
         $userGroup->delete();
 
         return $this->sendResponse($id, 'User Group deleted successfully');

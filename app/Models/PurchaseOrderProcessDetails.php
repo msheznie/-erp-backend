@@ -146,5 +146,7 @@ class PurchaseOrderProcessDetails extends Model
         
     ];
 
-    
+    public function po_details(){
+        return $this->hasMany('App\Models\PurchaseOrderDetails', 'purchaseProcessDetailID', 'purchaseProcessDetailID');
+    }
 }
