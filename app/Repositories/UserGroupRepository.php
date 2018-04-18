@@ -44,7 +44,7 @@ class UserGroupRepository extends BaseRepository
             }
         }else{
             $companiesByGroup = Company::where("masterCompanySystemIDReorting", $input['globalCompanyId'])
-                ->where("isGroup", 0)->pluck("companySystemID");
+                ->pluck("companySystemID");
             $userGroup->whereIn('srp_erp_usergroups.companyID',$companiesByGroup)->orderBy('userGroupID', 'desc');
         }
 

@@ -446,12 +446,32 @@ class ProcumentOrder extends Model
 
     public function detail()
     {
-        return $this->belongsTo('App\Models\PurchaseOrderDetails', 'purchaseOrderID', 'purchaseOrderMasterID');
+        return $this->hasMany('App\Models\PurchaseOrderDetails', 'purchaseOrderMasterID', 'purchaseOrderID');
     }
 
     public function approved()
     {
-        return $this->belongsTo('App\Models\DocumentApproved', 'purchaseOrderID', 'documentSystemCode');
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
+    }
+
+    public function suppliercontact()
+    {
+        return $this->belongsTo('App\Models\SupplierContactDetails', 'supplierID', 'supplierID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function transactioncurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
+    }
+
+    public function companydocumentattachment()
+    {
+        return $this->hasMany('App\Models\CompanyDocumentAttachment', 'documentSystemID', 'documentSystemID');
     }
 
 

@@ -630,7 +630,9 @@ class ProcumentOrderAPIController extends AppBaseController
         },'approved' => function($query){
             $query->with('employee');
             $query->where('documentSystemID',2);
-        }])->first();
+        },'suppliercontact' => function($query){
+        $query->where('isDefault',-1);
+    },'company','transactioncurrency','companydocumentattachment'])->first();
         return $this->sendResponse($output, 'Data retrieved successfully');
 
     }
