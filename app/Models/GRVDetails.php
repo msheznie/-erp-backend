@@ -241,5 +241,10 @@ class GRVDetails extends Model
         
     ];
 
+
+    public function grv_master(){
+        return $this->belongsTo('App\Models\GRVMaster','grvAutoID','grvAutoID');
+    }
+
     
 }

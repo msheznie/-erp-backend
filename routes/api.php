@@ -301,6 +301,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
+    Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
 
     Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
@@ -316,6 +317,9 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('g_r_v_details', 'GRVDetailsAPIController');
 
     Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
+
+
+
 
 });
 
