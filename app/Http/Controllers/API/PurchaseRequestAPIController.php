@@ -12,6 +12,7 @@
  * -- Date: 27-March 2018 By: Fayas Description: Added new functions named as getPurchaseRequestFormData()
  * -- Date: 11-April 2018 By: Fayas Description: Added new functions named as reportPrToGrv()
  * -- Date: 17-April 2018 By: Fayas Description: Added new functions named as reportPrToGrvFilterOptions()
+ * -- Date: 18-April 2018 By: Fayas Description: Added new functions named as getApprovedDetails()
  */
 namespace App\Http\Controllers\API;
 
@@ -21,7 +22,9 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\ItemAssigned;
 use App\Models\Location;
@@ -283,7 +286,9 @@ class PurchaseRequestAPIController extends AppBaseController
                                 });
                             });
                         });
-
+                    })
+                    ->when(request('grv') == 'inComplete', function ($q) {
+                        $q->whereIn('goodsRecievedYN',[0,1]);
                     });
                 })->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
                         return $q->whereIn('itemCode', $itemPrimaryCodes);
@@ -303,7 +308,10 @@ class PurchaseRequestAPIController extends AppBaseController
                                 return $q->whereBetween('grvDate', [$from, $to]);
                             });
                         }]);
-                    }]);
+                    }])
+                    ->when(request('grv') == 'inComplete', function ($q) {
+                        $q->whereIn('goodsRecievedYN',[0,1]);
+                    });
                 }])
                 ->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
                     return $q->whereIn('itemCode', $itemPrimaryCodes);
@@ -323,6 +331,58 @@ class PurchaseRequestAPIController extends AppBaseController
                                 ->make(true);
 
         return $this->sendResponse($purchaseRequests, 'Record retrieved successfully');
+    }
+
+    /**
+     * get Approval Details
+     * GET /getApprovedDetails
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function getApprovedDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $companySystemID = $input['companySystemID'];
+        $documentSystemCode = $input['documentSystemCode'];
+        $documentSystemID = $input['documentSystemID'];
+
+        $approveDetails = DocumentApproved::where('documentSystemID',$documentSystemID)
+                                          ->where('documentSystemCode',$documentSystemCode)
+                                          ->where('companySystemID',$companySystemID)
+                                          ->with(['approved_by'])
+                                          ->get();
+
+        foreach ($approveDetails as $value) {
+
+            if($value['approvedYN'] == 0){
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID',$companySystemID)
+                                                              ->where('documentSystemID',$documentSystemID)
+                                                              ->first();
+
+                if (empty($companyDocument)) {
+                    return $this->sendError('Policy not found');
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID',$value['approvalGroupID'])
+                                            ->where('companySystemID',$companySystemID)
+                                            ->where('documentSystemID',$documentSystemID);
+                                            //->get();
+
+                if($companyDocument['isServiceLineApproval'] == -1){
+                    $approvalList =   $approvalList->where('ServiceLineSystemID',$value['departmentSystemID']);
+                }
+                $approvalList = $approvalList
+                                  ->with(['employee'])
+                                  ->groupBy('employeeSystemID')
+                                  ->get();
+                $value['approval_list'] = $approvalList;
+            }
+        }
+
+        return $this->sendResponse($approveDetails, 'Record retrieved successfully');
     }
 
     /**

@@ -303,6 +303,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
+    Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
 
     Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
@@ -322,6 +323,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('exportReport', 'ReportAPIController@exportReport');
 
 });
+
 
 
 
