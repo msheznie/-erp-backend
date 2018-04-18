@@ -543,20 +543,22 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
-        if ($input['unitCost'] > 0) {
-            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['unitCost']);
+        $discountedUnitPrice = $input['unitCost'] - $input['discountAmount'];
+
+        if ($discountedUnitPrice > 0) {
+            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
 
             $input['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
-            $input['GRVcostPerUnitSupTransCur'] = $input['unitCost'];
+            $input['GRVcostPerUnitSupTransCur'] = $discountedUnitPrice;
             $input['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
 
             $input['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
-            $input['purchaseRetcostPerUnitTranCur'] = $input['unitCost'];
+            $input['purchaseRetcostPerUnitTranCur'] = $discountedUnitPrice;
             $input['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
         }
 
         // adding supplier Default CurrencyID base currency conversion
-        if ($input['unitCost'] > 0) {
+        if ($discountedUnitPrice > 0) {
             $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $input['unitCost']);
 
             $input['GRVcostPerUnitSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
@@ -689,7 +691,105 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
         }
 
+        //update po master
+        $updateMaster = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->update(['poTotalLocalCurrency' => 0, 'poTotalSupplierDefaultCurrency' => 0, 'poTotalSupplierTransactionCurrency' => 0, 'poTotalComRptCurrency' =>0, 'poDiscountAmount' => 0]);
+
 
         return $this->sendResponse($purchaseOrderID, 'Purchase Order Details deleted successfully');
+    }
+
+    public function procumentOrderTotalDiscountUD(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $updateDetailDiscount = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+            ->get();
+        if (!empty($updateDetailDiscount)) {
+
+            foreach ($updateDetailDiscount as $itemDiscont) {
+
+                $calculateItemDiscount = (($itemDiscont['netAmount'] - (($purchaseOrder->poDiscountAmount / $purchaseOrder->poTotalSupplierTransactionCurrency) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
+
+                $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateItemDiscount);
+
+                $detail['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                $detail['GRVcostPerUnitSupTransCur'] = $calculateItemDiscount;
+                $detail['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
+
+                $detail['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                $detail['purchaseRetcostPerUnitTranCur'] = $calculateItemDiscount;
+                $detail['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
+
+                //$detail['netAmount'] = $calculateItemDiscount * $itemDiscont['noQty'];
+
+                $this->purchaseOrderDetailsRepository->update($detail, $itemDiscont['purchaseOrderDetailsID']);
+            }
+
+            return $this->sendResponse($purchaseOrderID, 'Total discount updated successfully');
+
+        } else {
+            return $this->sendResponse($purchaseOrderID, 'Total discount updated successfully');
+        }
+
+    }
+
+    public function procumentOrderTotalTaxUD(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        if ($purchaseOrder->vatRegisteredYN == 0) {
+
+            $updateDetailVat = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+                ->get();
+
+            if (!empty($updateDetailVat)) {
+
+                foreach ($updateDetailVat as $itemDiscont) {
+
+                    $calculateItemTax = (($purchaseOrder->VATPercentage / 100) * $itemDiscont['GRVcostPerUnitSupTransCur']) + $itemDiscont['GRVcostPerUnitSupTransCur'];
+
+                    $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateItemTax);
+
+                    $detail['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                    $detail['GRVcostPerUnitSupTransCur'] = $calculateItemTax;
+                    $detail['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
+
+                    $detail['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                    $detail['purchaseRetcostPerUnitTranCur'] = $calculateItemTax;
+                    $detail['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
+
+                    $detail['VATPercentage'] = $purchaseOrder->VATPercentage;
+                    //$detail['netAmount'] = $calculateItemTax * $itemDiscont['noQty'];
+
+                    $this->purchaseOrderDetailsRepository->update($detail, $itemDiscont['purchaseOrderDetailsID']);
+                }
+
+                return $this->sendResponse($purchaseOrderID, 'Total tax updated successfully');
+
+            } else {
+                return $this->sendResponse($purchaseOrderID, 'Total Tax updated successfully');
+            }
+        }else{
+            return $this->sendResponse($purchaseOrderID, 'Total Tax updated successfully');
+        }
     }
 }

@@ -35,6 +35,7 @@ use App\Models\PoPaymentTermTypes;
 use App\Models\SupplierAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\PoPaymentTerms;
+use App\Models\SupplierCurrency;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -176,6 +177,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
             $input['localCurrencyID'] = $company->localCurrencyID;
             $input['companyReportingCurrencyID'] = $company->reportingCurrency;
+            $input['vatRegisteredYN'] = $company->vatRegisteredYN;
             $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
@@ -189,11 +191,24 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['supplierFax'] = $supplier->fax;
             $input['supplierEmail'] = $supplier->supEmail;
             $input['creditPeriod'] = $supplier->creditPeriod;
+        }
 
-            $input['supplierDefaultCurrencyID'] = $supplier->currency;
-            //$input['supplierDefaultER'] = ;
+        $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
+            ->where('isDefault', -1)
+            ->first();
+
+        if ($supplierCurrency) {
+            $input['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
             $input['supplierTransactionER'] = 1;
+        }
 
+        $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($supplierAssignedDetai) {
+            $input['supplierVATEligible'] = $supplierAssignedDetai->vatEligible;
+            $input['VATPercentage'] = $supplierAssignedDetai->vatPercentage;
         }
 
         $procumentOrders = $this->procumentOrderRepository->create($input);
@@ -254,6 +269,8 @@ class ProcumentOrderAPIController extends AppBaseController
             return $this->sendError('Procurement Order not found');
         }
 
+        $purchaseOrderID = $input['purchaseOrderID'];
+
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
@@ -268,7 +285,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
             ->first();
 
-          $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSum['masterTotalSum']);
+        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSum['masterTotalSum']);
 
         $input['poTotalComRptCurrency'] = $currencyConversionMaster['reportingAmount'];
         $input['poTotalLocalCurrency'] = $currencyConversionMaster['localAmount'];
@@ -276,6 +293,86 @@ class ProcumentOrderAPIController extends AppBaseController
         $input['poTotalSupplierTransactionCurrency'] = $poMasterSum['masterTotalSum'];
         $input['companyReportingER'] = $currencyConversionMaster['trasToRptER'];
         $input['localCurrencyER'] = $currencyConversionMaster['trasToLocER'];
+
+        $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
+        if ($supplier) {
+            $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
+            $input['supplierName'] = $supplier->supplierName;
+            $input['supplierAddress'] = $supplier->address;
+            $input['supplierTelephone'] = $supplier->telephone;
+            $input['supplierFax'] = $supplier->fax;
+            $input['supplierEmail'] = $supplier->supEmail;
+            $input['creditPeriod'] = $supplier->creditPeriod;
+            $input['supplierVATEligible'] = $supplier->vatEligible;
+        }
+
+        $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
+            ->where('isDefault', -1)
+            ->first();
+
+        if ($supplierCurrency) {
+            $input['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
+            $input['supplierTransactionER'] = 1;
+        }
+
+        $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($supplierAssignedDetai) {
+            $input['supplierVATEligible'] = $supplierAssignedDetai->vatEligible;
+            //$input['VATPercentage'] = $supplierAssignedDetai->vatPercentage;
+        }
+
+        // calculate total discount
+
+        $updateDetailDiscount = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+            ->get();
+        if (!empty($updateDetailDiscount)) {
+
+            foreach ($updateDetailDiscount as $itemDiscont) {
+
+                $calculateItemDiscount = (($itemDiscont['netAmount'] - (($procumentOrder->poDiscountAmount / $procumentOrder->poTotalSupplierTransactionCurrency) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
+
+                $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $procumentOrder->supplierTransactionCurrencyID, $procumentOrder->supplierTransactionCurrencyID, $calculateItemDiscount);
+
+                //$detail['netAmount'] = $calculateItemDiscount * $itemDiscont['noQty'];
+
+                 PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
+                    ->update([
+                        'GRVcostPerUnitLocalCur' => $currencyConversion['localAmount'],
+                        'GRVcostPerUnitSupTransCur' => $calculateItemDiscount,
+                        'GRVcostPerUnitComRptCur' => $currencyConversion['reportingAmount'],
+                        'purchaseRetcostPerUnitLocalCur' => $currencyConversion['localAmount'],
+                        'purchaseRetcostPerUnitTranCur' => $calculateItemDiscount,
+                        'purchaseRetcostPerUnitRptCur' => $currencyConversion['reportingAmount']
+                        ]);
+            }
+        }
+
+        // calculate total Tax for item
+
+        if (!empty($updateDetailDiscount)) {
+            foreach ($updateDetailDiscount as $itemDiscont) {
+
+                $calculateItemTax = (($procumentOrder->VATPercentage / 100) * $itemDiscont['GRVcostPerUnitSupTransCur']) + $itemDiscont['GRVcostPerUnitSupTransCur'];
+
+                $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $procumentOrder->supplierTransactionCurrencyID, $procumentOrder->supplierTransactionCurrencyID, $calculateItemTax);
+
+                //$detail['netAmount'] = $calculateItemTax * $itemDiscont['noQty'];
+
+                PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
+                    ->update([
+                        'GRVcostPerUnitLocalCur' => $currencyConversion['localAmount'],
+                        'GRVcostPerUnitSupTransCur' => $calculateItemTax,
+                        'GRVcostPerUnitComRptCur' => $currencyConversion['reportingAmount'],
+                        'purchaseRetcostPerUnitLocalCur' => $currencyConversion['localAmount'],
+                        'purchaseRetcostPerUnitTranCur' => $calculateItemTax,
+                        'purchaseRetcostPerUnitRptCur' => $currencyConversion['reportingAmount'],
+                        'VATPercentage' => $procumentOrder->VATPercentage
+                    ]);
+            }
+        }
 
         if ($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) {
 
@@ -324,8 +421,6 @@ class ProcumentOrderAPIController extends AppBaseController
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
-
-
         }
 
         $procumentOrder = $this->procumentOrderRepository->update($input, $id);

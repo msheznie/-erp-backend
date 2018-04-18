@@ -11,6 +11,8 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Models\ProcumentOrder;
+use App\Models\CurrencyMaster;
+use App\Models\PoPaymentTermTypes;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
 use App\Models\PoPaymentTerms;
@@ -193,9 +195,14 @@ class PoAdvancePaymentAPIController extends AppBaseController
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $AdvancePayment->poID)->first();
 
-        $output = array('poMaster' => $purchaseOrder,
-            'advanceDetail' => $AdvancePayment
+        $currency = CurrencyMaster::where('currencyID', $purchaseOrder->supplierTransactionCurrencyID)->first();
 
+        $detailPaymentType = PoPaymentTermTypes::where('paymentTermsCategoryID', $AdvancePayment->LCPaymentYN)->first();
+
+        $output = array('pomaster' => $purchaseOrder,
+            'advancedetail' => $AdvancePayment,
+            'currency' => $currency,
+            'ptype' => $detailPaymentType
         );
 
         return $this->sendResponse($output, 'Data retrieved successfully');
