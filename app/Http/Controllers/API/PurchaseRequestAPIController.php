@@ -483,10 +483,13 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('prClosedYN', 0)
             ->where('cancelledYN', 0)
             ->where('selectedForPO', 0)
-            ->where('supplyChainOnGoing', 0)
-            ->where('serviceLineSystemID', $procumentOrder->serviceLineSystemID)
-            ->orderBy('purchaseRequestID', 'DESC')
-            ->get();
+            ->where('supplyChainOnGoing', 0);
+        if (isset($procumentOrder->financeCategory)) {
+            $purchaseRequests = $purchaseRequests->where('financeCategory', $procumentOrder->financeCategory);
+        }
+        $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $procumentOrder->serviceLineSystemID)
+        ->orderBy('purchaseRequestID', 'DESC')
+        ->get();
 
         return $this->sendResponse($purchaseRequests->toArray(), 'Purchase Request Details retrieved successfully');
     }

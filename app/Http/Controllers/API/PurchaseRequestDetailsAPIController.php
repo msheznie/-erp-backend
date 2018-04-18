@@ -455,7 +455,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $detail = DB::table("erp_purchaserequestdetails")
             ->select("*")
-            ->leftJoin(DB::raw('(SELECT purchaseRequestDetailsID, SUM(noQty) AS poTakenQty, "" as isChecked, "" as poQty, "" as poUnitAmount FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails'), function ($join) {
+            ->leftJoin(DB::raw('(SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty, "" as isChecked, "" as poQty, "" as poUnitAmount FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails'), function ($join) {
                 $join->on("erp_purchaserequestdetails.purchaseRequestDetailsID", "=", "podetails.purchaseRequestDetailsID");
             })
             ->where('purchaseRequestID', $prId)
