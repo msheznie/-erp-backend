@@ -20,6 +20,7 @@ use App\Models\ProcumentOrder;
 use App\Models\CompanyPolicyMaster;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseRequest;
+use App\Models\SupplierAssigned;
 use App\Repositories\UserRepository;
 use App\Repositories\PurchaseOrderDetailsRepository;
 use Illuminate\Http\Request;
@@ -335,6 +336,9 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
         foreach ($input['detailTable'] as $new) {
 
             $PRMaster = PurchaseRequest::find($new['purchaseRequestID']);
@@ -364,9 +368,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         $prClosedYN = 0;
                         $selectedForPO = 0;
                     }
-
-                    $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
-                        ->first();
 
                     // checking the qty request is matching with sum total
                     //if ($new['quantityRequested'] >= $totalAddedQty) {
@@ -548,21 +549,21 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         if ($discountedUnitPrice > 0) {
             $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
 
-            $input['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
-            $input['GRVcostPerUnitSupTransCur'] = $discountedUnitPrice;
-            $input['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
+            $input['GRVcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
+            $input['GRVcostPerUnitSupTransCur'] = round($discountedUnitPrice, 8);
+            $input['GRVcostPerUnitComRptCur'] = round($currencyConversion['reportingAmount'], 8);
 
-            $input['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
-            $input['purchaseRetcostPerUnitTranCur'] = $discountedUnitPrice;
-            $input['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
+            $input['purchaseRetcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
+            $input['purchaseRetcostPerUnitTranCur'] = round($discountedUnitPrice, 8);
+            $input['purchaseRetcostPerUnitRptCur'] = round($currencyConversion['reportingAmount'], 8);
         }
 
         // adding supplier Default CurrencyID base currency conversion
         if ($discountedUnitPrice > 0) {
             $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $input['unitCost']);
 
-            $input['GRVcostPerUnitSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
-            $input['purchaseRetcostPerUniSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
+            $input['GRVcostPerUnitSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
+            $input['purchaseRetcostPerUniSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
         }
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->update($input, $id);
@@ -601,9 +602,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     ->update(['selectedForPO' => 0, 'prClosedYN' => 0, 'supplyChainOnGoing' => 0]);
             }
 
-
         }
-
 
         return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details updated successfully');
     }
@@ -693,7 +692,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         //update po master
         $updateMaster = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
-            ->update(['poTotalLocalCurrency' => 0, 'poTotalSupplierDefaultCurrency' => 0, 'poTotalSupplierTransactionCurrency' => 0, 'poTotalComRptCurrency' =>0, 'poDiscountAmount' => 0]);
+            ->update(['poTotalLocalCurrency' => 0, 'poTotalSupplierDefaultCurrency' => 0, 'poTotalSupplierTransactionCurrency' => 0, 'poTotalComRptCurrency' =>0, 'poDiscountAmount' => 0, 'VATAmount' => 0]);
 
 
         return $this->sendResponse($purchaseOrderID, 'Purchase Order Details deleted successfully');
