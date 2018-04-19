@@ -18,6 +18,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     /** Warehouse master Created by Fayas  */
     Route::resource('employees', 'EmployeeAPIController');
+    Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
 
@@ -139,6 +140,8 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('getUserGroupByCompanyDatatable', 'UserGroupAPIController@getUserGroupByCompanyDatatable');
     Route::resource('userGroups', 'UserGroupAPIController');
     Route::get('getUserGroup', 'UserGroupAPIController@getUserGroup');
+    Route::post('getUserGroupEmployeesByCompany', 'EmployeeNavigationAPIController@getUserGroupEmployeesByCompanyDatatable');
+
     Route::resource('assignUserGroupNavigation','UserGroupAssignAPIController');
     Route::get('getUserGroupNavigation','UserGroupAssignAPIController@getUserGroupNavigation');
     Route::get('getAllCompanies','CompanyAPIController@getAllCompanies');
@@ -335,3 +338,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 
 
+
+
+Route::resource('tax_authorities', 'TaxAuthorityAPIController');
+
+Route::resource('taxes', 'TaxAPIController');

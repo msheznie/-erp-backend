@@ -75,9 +75,14 @@ class ApprovalLevelRepository extends BaseRepository
                 $approvalLevel->where('erp_approvallevel.companySystemID',$input['selectedCompanyID']);
             }
         }else{
-            $companiesByGroup = Company::where("masterCompanySystemIDReorting", $input['globalCompanyId'])
-                ->where("isGroup", 0)->pluck("companySystemID");
-            $approvalLevel->whereIn('erp_approvallevel.companySystemID',$companiesByGroup);
+            if(\Helper::checkIsCompanyGroup($input['globalCompanyId'])){
+                $companiesByGroup = Company::where("masterCompanySystemIDReorting", $input['globalCompanyId'])
+                    ->where("isGroup", 0)->pluck("companySystemID");
+                $approvalLevel->whereIn('erp_approvallevel.companySystemID',$companiesByGroup);
+            }else{
+                $companiesByGroup = (array)$input['globalCompanyId'];
+                $approvalLevel->whereIn('erp_approvallevel.companySystemID',$companiesByGroup);
+            }
         }
 
         if(array_key_exists ('documentSystemID' , $input)){
@@ -85,7 +90,6 @@ class ApprovalLevelRepository extends BaseRepository
                 $approvalLevel->where('erp_approvallevel.documentSystemID',$input['documentSystemID']);
             }
         }
-
 
         //return datatables($approvalLevel)->toJson();
         return \DataTables::eloquent($approvalLevel)
