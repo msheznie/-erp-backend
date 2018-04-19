@@ -21,8 +21,8 @@ class EmployeeNavigation extends Model
 
     public $table = 'srp_erp_employeenavigation';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timestamp';
+    const UPDATED_AT = 'timestamp';
 
 
     protected $dates = ['deleted_at'];
@@ -31,6 +31,7 @@ class EmployeeNavigation extends Model
     public $fillable = [
         'empID',
         'userGroupID',
+        'employeeSystemID',
         'companyID',
         'timestamp'
     ];
@@ -43,6 +44,7 @@ class EmployeeNavigation extends Model
     protected $casts = [
         'employeeNavigationID' => 'integer',
         'empID' => 'string',
+        'employeeSystemID' => 'integer',
         'userGroupID' => 'integer',
         'companyID' => 'integer'
     ];
@@ -55,6 +57,20 @@ class EmployeeNavigation extends Model
     public static $rules = [
         
     ];
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companyID','companySystemID');
+    }
+
+    public function usergroup(){
+        return $this->belongsTo('App\Models\UserGroup','userGroupID','userGroupID');
+    }
+
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
+    }
+
+
 
     
 }

@@ -1,14 +1,15 @@
 <?php
 /**
-=============================================
--- File Name : EmployeeNavigationAPIController.php
--- Project Name : ERP
--- Module Name :  Employee Navigation
--- Author : Mohamed Fayas
--- Create date : 14 - March 2018
--- Description : This file contains the all CRUD for Employee Navigation
--- REVISION HISTORY
+ * =============================================
+ * -- File Name : EmployeeNavigationAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Employee Navigation
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Employee Navigation
+ * -- REVISION HISTORY
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateEmployeeNavigationAPIRequest;
@@ -25,7 +26,6 @@ use Response;
  * Class EmployeeNavigationController
  * @package App\Http\Controllers\API
  */
-
 class EmployeeNavigationAPIController extends AppBaseController
 {
     /** @var  EmployeeNavigationRepository */
@@ -134,6 +134,48 @@ class EmployeeNavigationAPIController extends AppBaseController
         $employeeNavigation->delete();
 
         return $this->sendResponse($id, 'Employee Navigation deleted successfully');
+    }
+
+    public function getUserGroupEmployeesByCompanyDatatable(Request $request)
+    {
+        $input = $request->all();
+        $userGroup = EmployeeNavigation::with(['company', 'usergroup', 'employee']);
+        if (array_key_exists('selectedCompanyID', $input)) {
+            if ($input['selectedCompanyID'] > 0) {
+                $userGroup->where('companyID', $input['selectedCompanyID']);
+            }
+        } else {
+            $companiesByGroup = "";
+            if (\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                $companiesByGroup = Company::where("masterCompanySystemIDReorting", $input['globalCompanyId'])
+                    ->pluck("companySystemID");
+            } else {
+                $companiesByGroup = (array)$input['globalCompanyId'];
+            }
+
+            $userGroup->whereIn('companyID', $companiesByGroup);
+        }
+
+        if (array_key_exists('userGroupID', $input)) {
+            $userGroup->where('userGroupID', $input['userGroupID']);
+        }
+        return \DataTables::eloquent($userGroup)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
+
+    }
+
+    public function assignEmployeeUsergroup(Request $request)
+    {
+        $assignEmployee = EmployeeNavigation::create($request);
+
     }
 
 }

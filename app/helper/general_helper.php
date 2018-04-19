@@ -554,8 +554,21 @@ class Helper
         return $employee;
     }
 
+    /**
+     * @param $date
+     * @return false|string
+     */
     public static function dateFormat($date){
         return date("d/m/Y", strtotime($date));
+    }
+
+    public static function checkIsCompanyGroup($companyID){
+        $isCompaniesGroup = Models\Company::where('companySystemID',$companyID)->where('isGroup',-1)->exists();
+        if($isCompaniesGroup){
+            return true;
+        }else{
+            return false;
+        }
     }
 
     /**
