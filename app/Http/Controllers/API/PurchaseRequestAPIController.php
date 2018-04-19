@@ -579,8 +579,9 @@ class PurchaseRequestAPIController extends AppBaseController
         $input['departmentID'] = 'PROC';
 
         $lastSerial = PurchaseRequest::where('companySystemID', $input['companySystemID'])
-            ->orderBy('purchaseRequestID', 'desc')
-            ->first();
+                                        ->where('documentSystemID',$input['documentSystemID'])
+                                        ->orderBy('purchaseRequestID', 'desc')
+                                        ->first();
 
         $lastSerialNumber = 0;
         if ($lastSerial) {
@@ -588,7 +589,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $input['serialNumber'] = $lastSerialNumber;
-        $input['purchaseRequestCode'] = $lastSerialNumber;
+
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
         if ($segment) {
@@ -617,6 +618,9 @@ class PurchaseRequestAPIController extends AppBaseController
         if ($company) {
             $input['companyID'] = $company->CompanyID;
         }
+        //FREE\PROC\FML\PR000040
+        $code  = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
+        $input['purchaseRequestCode'] =  $input['companyID'] .'\\'.$input['departmentID'].'\\'.$input['serviceLineCode'].'\\'.$input['documentID'].$code;
 
         $purchaseRequests = $this->purchaseRequestRepository->create($input);
 
