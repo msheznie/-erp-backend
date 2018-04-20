@@ -86,8 +86,17 @@ class CustomerMasterAPIController extends AppBaseController
         }
 
         $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
         $customerMasters = CustomerMaster::with(['country'])
              //with(['categoryMaster', 'employee', 'supplierCurrency'])
+             ->whereIn('primaryCompanySystemID',$childCompanies)
              ->select('customermaster.*');
 
         $search = $request->input('search.value');
@@ -178,10 +187,20 @@ class CustomerMasterAPIController extends AppBaseController
      */
 
     public function getCustomerFormData(Request $request){
+
         $selectedCompanyId = $request['selectedCompanyId'];
 
-        /** all Company  Drop Down */
-        $allCompanies = Company::where("isGroup",0)->get();
+        $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
+
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            /**  Companies by group  Drop Down */
+            $allCompanies = Company::where("masterComapanyID",$masterCompany->CompanyID)
+                ->where("isGroup",0)->get();
+        }else{
+            $allCompanies = Company::where("companySystemID",$selectedCompanyId)->get();
+        }
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();

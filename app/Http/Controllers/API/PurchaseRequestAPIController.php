@@ -13,6 +13,7 @@
  * -- Date: 11-April 2018 By: Fayas Description: Added new functions named as reportPrToGrv()
  * -- Date: 17-April 2018 By: Fayas Description: Added new functions named as reportPrToGrvFilterOptions()
  * -- Date: 18-April 2018 By: Fayas Description: Added new functions named as getApprovedDetails()
+ * -- Date: 20-April 2018 By: Fayas Description: Added new functions named as getPurchaseRequestApprovalByUser()
  */
 namespace App\Http\Controllers\API;
 
@@ -521,7 +522,102 @@ class PurchaseRequestAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
-        ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
+    }
+
+    /**
+     * get Purchase Request Approval By User.
+     * POST /getPurchaseRequestApprovalByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getPurchaseRequestApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId'])
+            ->where('documentSystemID', $input['documentId'])
+            ->with(['created_by' => function ($query) {
+                //$query->select(['empName']);
+            }, 'priority' => function ($query) {
+                //$query->select(['priorityDescription']);
+            }, 'location' => function ($query) {
+
+            }, 'segment' => function ($query) {
+
+            }, 'financeCategory' => function ($query) {
+
+            }]);
+
+
+        $companyID = \Helper::getGroupCompany($input['companyId']);
+        $empID = \Helper::getEmployeeSystemID();
+
+      /* $purchaseRequests = DB::table('erp_documentapproved')
+           ->select('customermaster.*','countrymaster.countryName','erp_documentapproved.documentApprovedID',
+                    'rollLevelOrder','approvalLevelID','documentSystemCode')
+           ->join('employeesdepartments',function ($query) use ($companyID,$empID) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                ->where('employeesdepartments.documentSystemID',58)
+                ->whereIn('employeesdepartments.companySystemID',$companyID)
+                ->where('employeesdepartments.employeeSystemID',$empID);
+            })->join('customermaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'customerCodeSystem')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->whereIn('primaryCompanySystemID', $companyID)
+                ->where('customermaster.approvedYN', 0)
+                ->where('customermaster.confirmedYN', 1);
+            })->where('erp_documentapproved.approvedYN', 0)
+            ->join('countrymaster', 'customerCountry','=','countryID')
+            ->where('erp_documentapproved.rejectedYN',0)
+            ->where('erp_documentapproved.documentSystemID',58)
+            ->whereIn('erp_documentapproved.companySystemID',$companyID);*/
+
+
+        $purchaseRequests = $purchaseRequests->select(
+            ['erp_purchaserequest.purchaseRequestID',
+                'erp_purchaserequest.purchaseRequestCode',
+                'erp_purchaserequest.createdDateTime',
+                'erp_purchaserequest.createdUserSystemID',
+                'erp_purchaserequest.comments',
+                'erp_purchaserequest.location',
+                'erp_purchaserequest.priority',
+                'erp_purchaserequest.cancelledYN',
+                'erp_purchaserequest.PRConfirmedYN',
+                'erp_purchaserequest.approved',
+                'erp_purchaserequest.timesReferred',
+                'erp_purchaserequest.serviceLineSystemID',
+                'erp_purchaserequest.financeCategory',
+            ]);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                ->orWhere('comments', 'LIKE', "%{$search}%");
+        }
+
+        return \DataTables::eloquent($purchaseRequests)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('purchaseRequestID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
     public function getPurchaseRequestForPO(Request $request)

@@ -81,7 +81,8 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
                          ->where('companyID',$request['companyId'])
                          ->first();
 
-        if(count($userGroup) > 0){
+        //if(count($userGroup) > 0){
+        if($userGroup){
             $request['userGroupId'] = $userGroup->userGroupID;
             //$this->navigationUserGroupSetupRepository->pushCriteria(new RequestCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new LimitOffsetCriteria($request));
