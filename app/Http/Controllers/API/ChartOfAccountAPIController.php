@@ -298,9 +298,20 @@ class ChartOfAccountAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        //$companyId = $request['companyId'];
+        $companyId = $request['companyId'];
 
-        $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType']);
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
+        $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType'])
+                                        ->whereIn('primaryCompanySystemID',$childCompanies);
+
+
 
         if (array_key_exists('controlAccountsSystemID', $input)) {
             if ($request['controlAccountsSystemID']) {
@@ -418,7 +429,17 @@ class ChartOfAccountAPIController extends AppBaseController
             ->where("isGroup", 0)->get();
 
         /** all Company  Drop Down */
-        $allCompanies = Company::where("isGroup", 0)->get();
+        //$allCompanies = Company::where("isGroup", 0)->get();
+
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            /**  Companies by group  Drop Down */
+            $allCompanies = Company::where("masterComapanyID",$masterCompany->CompanyID)
+                ->where("isGroup",0)->get();
+        }else{
+            $allCompanies = Company::where("companySystemID",$selectedCompanyId)->get();
+        }
 
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,

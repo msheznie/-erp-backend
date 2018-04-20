@@ -180,7 +180,18 @@ class SegmentMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $segmentMasters = SegmentMaster::with(['company']);
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
+        $segmentMasters = SegmentMaster::whereIn('companySystemID',$childCompanies)
+                                ->with(['company']);
 
         $search = $request->input('search.value');
         if($search){
@@ -205,8 +216,22 @@ class SegmentMasterAPIController extends AppBaseController
 
     public function getSegmentMasterFormData(Request $request)
     {
-        /** all Company  Drop Down */
-        $allCompanies = Company::select('companySystemID', 'CompanyID', 'CompanyName')->where("isGroup",0)->get();
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $masterCompany = Company::where("companySystemID",$selectedCompanyId)->first();
+            /**  Companies by group  Drop Down */
+            $allCompanies = Company::where("masterComapanyID",$masterCompany->CompanyID)
+                ->where("isGroup",0)
+                ->select('companySystemID', 'CompanyID', 'CompanyName')
+                ->get();
+        }else{
+            $allCompanies = Company::where("companySystemID",$selectedCompanyId)
+                ->select('companySystemID', 'CompanyID', 'CompanyName')
+                ->get();
+        }
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
