@@ -64,7 +64,12 @@ class EmployeeNavigationAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $employeeNavigations = $this->employeeNavigationRepository->create($input);
+        $validate = EmployeeNavigation::where('companyID',$request->companyID)->where('employeeSystemID',$request->employeeSystemID)->exists();
+        if($validate){
+            return $this->sendError('Employee already exist in a group fot the selected company');
+        }else{
+            $employeeNavigations = $this->employeeNavigationRepository->create($input);
+        }
 
         return $this->sendResponse($employeeNavigations->toArray(), 'Employee Navigation saved successfully');
     }
@@ -152,13 +157,17 @@ class EmployeeNavigationAPIController extends AppBaseController
             } else {
                 $companiesByGroup = (array)$input['globalCompanyId'];
             }
-
             $userGroup->whereIn('companyID', $companiesByGroup);
         }
 
         if (array_key_exists('userGroupID', $input)) {
             $userGroup->where('userGroupID', $input['userGroupID']);
         }
+
+        if (array_key_exists('employeeSystemID', $input)) {
+            $userGroup->where('employeeSystemID', $input['employeeSystemID']);
+        }
+
         return \DataTables::eloquent($userGroup)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
