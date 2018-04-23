@@ -8,6 +8,7 @@ use App\Models\PoPaymentTerms;
 use App\Repositories\PoPaymentTermsRepository;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Models\PoAdvancePayment;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -132,12 +133,14 @@ class PoPaymentTermsAPIController extends AppBaseController
     {
         /** @var PoPaymentTerms $poPaymentTerms */
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
-
+        ;
         if (empty($poPaymentTerms)) {
             return $this->sendError('Po Payment Terms not found');
         }
 
         $poPaymentTerms->delete();
+
+        $deleteAdvancePayment = PoAdvancePayment::where('poTermID', $id)->delete();
 
         return $this->sendResponse($id, 'Po Payment Terms deleted successfully');
     }
@@ -151,4 +154,5 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         return $this->sendResponse($poAdvancePaymentType->toArray(), 'Data retrieved successfully');
     }
+
 }

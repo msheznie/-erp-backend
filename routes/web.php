@@ -13,3 +13,7 @@ Route::resource('gRVMasters', 'GRVMasterController');
 Route::resource('gRVDetails', 'GRVDetailsController');
 
 Route::resource('purchaseOrderProcessDetails', 'PurchaseOrderProcessDetailsController');
+
+Route::resource('taxAuthorities', 'TaxAuthorityController');
+
+Route::resource('taxes', 'TaxController');

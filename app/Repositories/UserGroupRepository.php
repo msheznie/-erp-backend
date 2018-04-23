@@ -43,15 +43,18 @@ class UserGroupRepository extends BaseRepository
                 $userGroup->where('srp_erp_usergroups.companyID',$input['selectedCompanyID'])->orderBy('userGroupID', 'desc');
             }
         }else{
-            $companiesByGroup = Company::where("masterCompanySystemIDReorting", $input['globalCompanyId'])
-                ->where("isGroup", 0)->pluck("companySystemID");
+            $companiesByGroup = "";
+            if(\Helper::checkIsCompanyGroup($input['globalCompanyId'])){
+                $companiesByGroup = Company::where("masterCompanySystemIDReorting", $input['globalCompanyId'])
+                    ->pluck("companySystemID");
+            }else{
+                $companiesByGroup = (array)$input['globalCompanyId'];
+            }
+
             $userGroup->whereIn('srp_erp_usergroups.companyID',$companiesByGroup)->orderBy('userGroupID', 'desc');
         }
 
         return datatables($userGroup)->toJson();
-        /*return \DataTables::eloquent($userGroup)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->make(true);*/
     }
 
     public function getUserGroup($input)

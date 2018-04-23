@@ -18,6 +18,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     /** Warehouse master Created by Fayas  */
     Route::resource('employees', 'EmployeeAPIController');
+    Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
 
@@ -139,6 +140,8 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('getUserGroupByCompanyDatatable', 'UserGroupAPIController@getUserGroupByCompanyDatatable');
     Route::resource('userGroups', 'UserGroupAPIController');
     Route::get('getUserGroup', 'UserGroupAPIController@getUserGroup');
+    Route::post('getUserGroupEmployeesDatatable', 'EmployeeNavigationAPIController@getUserGroupEmployeesByCompanyDatatable');
+
     Route::resource('assignUserGroupNavigation','UserGroupAssignAPIController');
     Route::get('getUserGroupNavigation','UserGroupAssignAPIController@getUserGroupNavigation');
     Route::get('getAllCompanies','CompanyAPIController@getAllCompanies');
@@ -147,6 +150,12 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('checkUserGroupAccessRights','UserGroupAssignAPIController@checkUserGroupAccessRights');
     Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
     Route::post('purchase_order_details_frm_pr', 'PurchaseOrderDetailsAPIController@storePurchaseOrderDetailsFromPR');
+    Route::post('procumentOrderDeleteAllDetails', 'PurchaseOrderDetailsAPIController@procumentOrderDeleteAllDetails');
+    Route::get('procumentOrderDetailTotal', 'ProcumentOrderAPIController@procumentOrderDetailTotal');
+    Route::get('poPaymentTermsAdvanceDetailView', 'PoAdvancePaymentAPIController@poPaymentTermsAdvanceDetailView');
+    Route::post('procumentOrderTotalDiscountUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalDiscountUD');
+    Route::post('procumentOrderTotalTaxUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalTaxUD');
+
     /** Approval Level*/
     Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
     Route::get('getGroupFilterData', 'ApprovalLevelAPIController@getGroupFilterData');
@@ -302,8 +311,10 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
+    Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
+    Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
 
-    Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+    //Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
 
     Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
@@ -320,8 +331,17 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::post('exportReport', 'ReportAPIController@exportReport');
 
+    Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
+
+    Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
 });
 
 
 
 
+
+
+
+Route::resource('tax_authorities', 'TaxAuthorityAPIController');
+
+Route::resource('taxes', 'TaxAPIController');

@@ -125,7 +125,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                        'Amount' => $item->wacValueLocal);*/
 
         $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
-        $currencyConversion = \Helper::currencyConversion($item->companySystemID,$item->wacValueLocalCurrencyID,$purchaseRequest->currency, $item->wacValueLocal);
+        $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
 
         $input['estimatedCost'] = $currencyConversion['documentAmount'];
 
@@ -451,19 +451,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     public function getPurchaseRequestDetailForPO(Request $request)
     {
         $input = $request->all();
-        $prId = $input['purchaseRequestID'];
+        $prID = $input['purchaseRequestID'];
 
-        $detail = DB::table("erp_purchaserequestdetails")
-            ->select("*")
-            ->leftJoin(DB::raw('(SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty, "" as isChecked, "" as poQty, "" as poUnitAmount FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails'), function ($join) {
-                $join->on("erp_purchaserequestdetails.purchaseRequestDetailsID", "=", "podetails.purchaseRequestDetailsID");
-            })
-            ->where('purchaseRequestID', $prId)
-            //->where('selectedForPO', 0)
-            ->where('prClosedYN', 0)
-            ->where('fullyOrdered', '!=', 2)
-            ->get();
-        return $this->sendResponse($detail->toArray(), 'Purchase Request Details retrieved successfully');
+        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty, 0 as poUnitAmount,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = '.$prID.' AND prClosedYN = 0 AND fullyOrdered != 2 ');
+
+        return $this->sendResponse($detail, 'Purchase Request Details retrieved successfully');
 
     }
 }

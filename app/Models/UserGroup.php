@@ -59,4 +59,14 @@ class UserGroup extends Model
     public function company(){
         return $this->belongsTo('App\Models\Company','companyID','companySystemID');
     }
+
+    public function navigationusergroup(){
+        return $this->hasMany('App\Models\NavigationUserGroupSetup','userGroupID','userGroupID');
+    }
+
+    public function usergroupemployee(){
+        return $this->hasMany('App\Models\EmployeeNavigation','userGroupID','userGroupID');
+    }
+
+
 }

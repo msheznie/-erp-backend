@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\DB;
 
 class ReportAPIController extends AppBaseController
 {
+    /*validate each report*/
     public function validateReport(Request $request)
     {
         $reportID = $request->reportID;
@@ -43,12 +44,12 @@ class ReportAPIController extends AppBaseController
 
     }
 
-
+    /*generate report according to each report id*/
     public function generateReport(Request $request)
     {
         $reportID = 'POA';
         switch ($reportID) {
-            case 'POA':
+            case 'POA': //PO Analysis Report
                 $validatedData = $request->validate([
                     'daterange' => 'required',
                     'suppliers' => 'required',
@@ -64,7 +65,14 @@ class ReportAPIController extends AppBaseController
 
 
                 $startDate = new Carbon($request->daterange[0]);
+                $startDate = $startDate->addDays(1);
+                $startDate = $startDate->format('Y-m-d');
+
                 $endDate = new Carbon($request->daterange[1]);
+                $endDate = $endDate->addDays(1);
+                $endDate = $endDate->format('Y-m-d');
+
+
                 $companyID = "";
                 $checkIsGroup = Company::find($request->companySystemID);
                 if ($checkIsGroup->isGroup) {
@@ -77,7 +85,7 @@ class ReportAPIController extends AppBaseController
                 $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
 
-                if($request->reportType == 1) {
+                if($request->reportType == 1) { //PO Analysis Item Detail Report
                     $output = DB::table('erp_purchaseorderdetails')
                         ->join(DB::raw('(SELECT locationName,
                     ServiceLineDes as segment,
@@ -171,8 +179,7 @@ WHERE
                         ->with('orderCondition', $sort)
                         ->make(true);
 
-                }else if($request->reportType == 2){
-
+                }else if($request->reportType == 2){  //PO Wise Analysis Report
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('erp_purchaseordermaster.companyID,
                             erp_purchaseordermaster.purchaseOrderCode,
@@ -229,13 +236,40 @@ WHERE
                         ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N','<>',5)->where('erp_purchaseordermaster.approved','=',-1)->where('erp_purchaseordermaster.poCancelledYN','=',0);
 
                     $search = $request->input('search.value');
+                    $search = str_replace("\\","\\\\",$search);
                     if ($search) {
                         $output = $output->where('erp_purchaseordermaster.purchaseOrderCode', 'LIKE', "%{$search}%")
                             ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%")->orWhere('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
                     }
 
+                    $outputSUM = $output->get();
 
-                    return \DataTables::of($output)
+                    $POCapex = collect($outputSUM)->pluck('POCapex')->toArray();
+                    $POCapex = array_sum($POCapex);
+
+                    $POCapex = collect($outputSUM)->pluck('POCapex')->toArray();
+                    $POCapex = array_sum($POCapex);
+
+                    $TotalPOVal = collect($outputSUM)->pluck('TotalPOVal')->toArray();
+                    $TotalPOVal = array_sum($TotalPOVal);
+
+                    $TotalGRVValue = collect($outputSUM)->pluck('TotalGRVValue')->toArray();
+                    $TotalGRVValue = array_sum($TotalGRVValue);
+
+                    $GRVCapex = collect($outputSUM)->pluck('GRVCapex')->toArray();
+                    $GRVCapex = array_sum($GRVCapex);
+
+                    $GRVOpex = collect($outputSUM)->pluck('GRVOpex')->toArray();
+                    $GRVOpex = array_sum($GRVOpex);
+
+                    $capexBalance = collect($outputSUM)->pluck('capexBalance')->toArray();
+                    $capexBalance = array_sum($capexBalance);
+
+                    $opexBalance = collect($outputSUM)->pluck('opexBalance')->toArray();
+                    $opexBalance = array_sum($opexBalance);
+
+
+                    $dataRec = \DataTables::of($output)
                         ->order(function ($query) use ($input) {
                             if (request()->has('order')) {
                                 if ($input['order'][0]['column'] == 0) {
@@ -245,7 +279,19 @@ WHERE
                         })
                         ->addIndexColumn()
                         ->with('orderCondition', $sort)
+                        ->with('totalAmount', [
+                            'POCapex' => $POCapex,
+                            'POOpex' => $POCapex,
+                            'TotalGRVValue' => $TotalGRVValue,
+                            'GRVCapex' => $GRVCapex,
+                            'GRVOpex' => $GRVOpex,
+                            'capexBalance' => $capexBalance,
+                            'opexBalance' => $opexBalance,
+                            'TotalPOVal' => $TotalPOVal,
+                        ])
                         ->make(true);
+
+                    return $dataRec;
                 }
 
             default:
@@ -263,8 +309,15 @@ WHERE
                     'suppliers' => 'required',
                 ]);
 
+
                 $startDate = new Carbon($request->daterange[0]);
+                $startDate = $startDate->addDays(1);
+                $startDate = $startDate->format('Y-m-d');
+
                 $endDate = new Carbon($request->daterange[1]);
+                $endDate = $endDate->addDays(1);
+                $endDate = $endDate->format('Y-m-d');
+
                 $companyID = "";
                 $checkIsGroup = Company::find($request->companySystemID);
                 if ($checkIsGroup->isGroup) {

@@ -104,5 +104,8 @@ class EmployeesDepartment extends Model
         
     ];
 
+    public function employee(){
+        return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
+    }
     
 }

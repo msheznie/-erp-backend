@@ -167,8 +167,22 @@ class WarehouseMasterAPIController extends AppBaseController
      */
     public function getWarehouseMasterFormData(Request $request)
     {
-        /** all Company  Drop Down */
-        $allCompanies = Company::select('companySystemID', 'CompanyID', 'CompanyName')->where("isGroup",0)->get();
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $masterCompany = Company::where("companySystemID",$selectedCompanyId)->first();
+            /**  Companies by group  Drop Down */
+            $allCompanies = Company::where("masterComapanyID",$masterCompany->CompanyID)
+                ->where("isGroup",0)
+                ->select('companySystemID', 'CompanyID', 'CompanyName')
+                ->get();
+        }else{
+            $allCompanies = Company::where("companySystemID",$selectedCompanyId)
+                         ->select('companySystemID', 'CompanyID', 'CompanyName')
+                         ->get();
+        }
 
         /** all Locations Drop Down */
         $erpLocations = ErpLocation::select('locationID', 'locationName')->get();
@@ -213,7 +227,18 @@ class WarehouseMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
         $warehouseMasters = WarehouseMaster::with(['location', 'company'])
+            ->whereIn('companySystemID',$childCompanies)
             ->select('warehousemaster.*');
 
         $search = $request->input('search.value');

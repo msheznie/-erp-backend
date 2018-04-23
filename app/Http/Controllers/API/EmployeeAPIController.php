@@ -1,15 +1,16 @@
 <?php
 /**
-=============================================
--- File Name : EmployeeAPIController.php
--- Project Name : ERP
--- Module Name :  Employee
--- Author : Mohamed Fayas
--- Create date : 14 - March 2018
--- Description : This file contains the all CRUD for Employee
--- REVISION HISTORY
--- Date: 14-March 2018 By: Fayas Description: Added new functions named as getItemMasterPurchaseHistory(),exportPurchaseHistory(),
+ * =============================================
+ * -- File Name : EmployeeAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Employee
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Employee
+ * -- REVISION HISTORY
+ * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getItemMasterPurchaseHistory(),exportPurchaseHistory(),
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateEmployeeAPIRequest;
@@ -26,7 +27,6 @@ use Response;
  * Class EmployeeController
  * @package App\Http\Controllers\API
  */
-
 class EmployeeAPIController extends AppBaseController
 {
     /** @var  EmployeeRepository */
@@ -135,6 +135,26 @@ class EmployeeAPIController extends AppBaseController
         $employee->delete();
 
         return $this->sendResponse($id, 'Employee deleted successfully');
+    }
+
+
+    public function getTypeheadEmployees(Request $request)
+    {
+        $input = $request->all();
+        $employees = "";
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $employees = Employee::where(function ($query) use ($search) {
+                $query->where('empID', 'LIKE', "%{$search}%")
+                    ->orWhere('empName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $employees = $employees
+            ->take(20)
+            ->get();
+
+        return $this->sendResponse($employees->toArray(), 'Data retrieved successfully');
     }
 
 
