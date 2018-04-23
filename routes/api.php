@@ -248,6 +248,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder');
     Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
     Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
+    Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -301,6 +302,9 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::post('generateReport', 'ReportAPIController@generateReport');
     Route::post('validateReport', 'ReportAPIController@validateReport');
+
+    Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
+    Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
 
     /** Po Related Tables Created by Nazir  */
     Route::resource('erp_addresses', 'ErpAddressAPIController');

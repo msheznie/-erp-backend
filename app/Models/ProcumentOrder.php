@@ -192,6 +192,7 @@ class ProcumentOrder extends Model
         'supplierTransactionER',
         'poConfirmedYN',
         'poConfirmedByEmpID',
+        'poConfirmedByEmpSystemID',
         'poConfirmedByName',
         'poConfirmedDate',
         'poCancelledYN',
@@ -225,6 +226,8 @@ class ProcumentOrder extends Model
         'priority',
         'approved',
         'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
         'addOnPercent',
         'addOnDefaultPercent',
         'GRVTrackingID',
@@ -326,6 +329,7 @@ class ProcumentOrder extends Model
         'supplierTransactionCurrencyID' => 'integer',
         'supplierTransactionER' => 'float',
         'poConfirmedYN' => 'integer',
+        'poConfirmedByEmpSystemID' => 'integer',
         'poConfirmedByEmpID' => 'string',
         'poConfirmedByName' => 'string',
         'poCancelledYN' => 'integer',
@@ -357,6 +361,8 @@ class ProcumentOrder extends Model
         'soldTocontactPersonEmail' => 'string',
         'priority' => 'integer',
         'approved' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
         'addOnPercent' => 'float',
         'addOnDefaultPercent' => 'float',
         'GRVTrackingID' => 'integer',
@@ -415,8 +421,9 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
 
-    public function confirmed_by(){
-        return $this->belongsTo('App\Models\Employee','poConfirmedByEmpSystemID','employeeSystemID');
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'poConfirmedByEmpSystemID', 'employeeSystemID');
     }
 
     public function location()
@@ -473,7 +480,6 @@ class ProcumentOrder extends Model
     {
         return $this->hasMany('App\Models\CompanyDocumentAttachment', 'documentSystemID', 'documentSystemID');
     }
-
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
