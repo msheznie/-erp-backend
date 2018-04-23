@@ -318,15 +318,16 @@ class ItemMasterAPIController extends AppBaseController
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            /**  Companies by group  Drop Down */
-            $companiesByGroup = Company::where("masterComapanyID",$masterCompany->CompanyID)
-                ->where("isGroup",0)->get();
+             $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
         }else{
-            $companiesByGroup = Company::where("companySystemID",$selectedCompanyId)->get();
+            $subCompanies = [$selectedCompanyId];
         }
 
+        /**  Companies by group  Drop Down */
+        $companiesByGroup = Company::whereIn("companySystemID",$subCompanies)->get();
+
         /** all Company  Drop Down */
-        $allCompanies = Company::where("isGroup", 0)->get();
+        $allCompanies = Company::whereIn("companySystemID",$subCompanies)->get();
 
         /** all FinanceItemCategoryMaster Drop Down */
         $itemCategory = FinanceItemCategoryMaster::all();

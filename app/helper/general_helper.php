@@ -464,6 +464,44 @@ class Helper
                 $docInforArr["approvedBySystemID"] = 'approvedBySystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 break;
+            case 2:
+                $docInforArr["tableName"] = 'erp_purchaseordermaster';
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'purchaseOrderID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                break;
+            case 5:
+                $docInforArr["tableName"] = 'erp_purchaseordermaster';
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'purchaseOrderID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                break;
+            case 52:
+                $docInforArr["tableName"] = 'erp_purchaseordermaster';
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'purchaseOrderID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                break;
+            case 1:
+            case 50:
+            case 51:
+                $docInforArr["tableName"] = 'erp_purchaserequest';
+                $docInforArr["modelName"] = 'PurchaseRequest';
+                $docInforArr["primarykey"] = 'purchaseRequestID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }

@@ -248,6 +248,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder');
     Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
     Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
+    Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -302,6 +303,9 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('generateReport', 'ReportAPIController@generateReport');
     Route::post('validateReport', 'ReportAPIController@validateReport');
 
+    Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
+    Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
+
     /** Po Related Tables Created by Nazir  */
     Route::resource('erp_addresses', 'ErpAddressAPIController');
     Route::resource('po_payment_terms', 'PoPaymentTermsAPIController');
@@ -335,6 +339,9 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
 
+    Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest');
+    Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest');
+
     Route::resource('tax_authorities', 'TaxAuthorityAPIController');
     Route::post('getTaxAuthorityDatatable', 'TaxAuthorityAPIController@getTaxAuthorityDatatable');
     Route::get('getTaxAuthorityFormData', 'TaxAuthorityAPIController@getTaxAuthorityFormData');
@@ -345,7 +352,8 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getAuthorityByCompany', 'TaxAuthorityAPIController@getAuthorityByCompany');
     Route::get('getAccountByAuthority', 'TaxAuthorityAPIController@getAccountByAuthority');
 
+    Route::resource('tax_types', 'TaxTypeAPIController');
+
 });
 
 
-Route::resource('tax_types', 'TaxTypeAPIController');

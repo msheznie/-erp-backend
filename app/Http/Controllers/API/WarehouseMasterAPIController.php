@@ -172,18 +172,13 @@ class WarehouseMasterAPIController extends AppBaseController
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $masterCompany = Company::where("companySystemID",$selectedCompanyId)->first();
-            /**  Companies by group  Drop Down */
-            $allCompanies = Company::where("masterComapanyID",$masterCompany->CompanyID)
-                ->where("isGroup",0)
-                ->select('companySystemID', 'CompanyID', 'CompanyName')
-                ->get();
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
         }else{
-            $allCompanies = Company::where("companySystemID",$selectedCompanyId)
-                         ->select('companySystemID', 'CompanyID', 'CompanyName')
-                         ->get();
+            $subCompanies = [$selectedCompanyId];
         }
-
+        $allCompanies = Company::whereIn("companySystemID",$subCompanies)
+            ->select('companySystemID', 'CompanyID', 'CompanyName')
+            ->get();
         /** all Locations Drop Down */
         $erpLocations = ErpLocation::select('locationID', 'locationName')->get();
 

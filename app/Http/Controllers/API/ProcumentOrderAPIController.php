@@ -183,7 +183,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
         if ($documentMaster) {
-            $poCode = ($company->CompanyID.'\\'.$documentMaster['documentID']. str_pad($lastSerialNumber+1, 6, '0', STR_PAD_LEFT));
+            $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber + 1, 6, '0', STR_PAD_LEFT));
             $input['purchaseOrderCode'] = $poCode;
         }
 
@@ -258,7 +258,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by', 'expectedDeliveryDate']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'expectedDeliveryDate', 'totalOrderAmount']);
         $input = $this->convertArrayToValue($input);
 
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
@@ -397,7 +397,7 @@ class ProcumentOrderAPIController extends AppBaseController
             unset($input['poConfirmedByName']);
             unset($input['poConfirmedDate']);
 
-            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $poMasterSum['masterTotalSum']);
+            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $poMasterSumDeducted);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
@@ -475,7 +475,7 @@ class ProcumentOrderAPIController extends AppBaseController
                             'VATPercentage' => round($procumentOrder->VATPercentage, 8),
                             'VATAmount' => round($vatLineAmount, 8),
                             'VATAmountLocal' => round($currencyConversionForLineAmount['localAmount'], 8),
-                            'VATAmountRpt' => round( $currencyConversionForLineAmount['reportingAmount'], 8)
+                            'VATAmountRpt' => round($currencyConversionForLineAmount['reportingAmount'], 8)
                         ]);
                 }
             }
@@ -645,7 +645,6 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-
 
         $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
             ->where('companySystemID', $companyId)
@@ -825,6 +824,103 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment'])->first();
         return $this->sendResponse($output, 'Data retrieved successfully');
+
+    }
+
+    public function getPOMasterApproval(Request $request)
+    {
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        /*$companyID = \Helper::getGroupCompany($companyID);*/
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
+            ->where('documentSystemID', 2)
+            ->first();
+
+        $poMasters = DB::table('erp_documentapproved')->select(
+            'erp_purchaseordermaster.purchaseOrderID',
+            'erp_purchaseordermaster.purchaseOrderCode',
+            'erp_purchaseordermaster.documentSystemID',
+            'erp_purchaseordermaster.referenceNumber',
+            'erp_purchaseordermaster.expectedDeliveryDate',
+            'erp_purchaseordermaster.supplierPrimaryCode',
+            'erp_purchaseordermaster.supplierName',
+            'erp_purchaseordermaster.narration',
+            'erp_purchaseordermaster.serviceLine',
+            'erp_purchaseordermaster.createdDateTime',
+            'erp_purchaseordermaster.poConfirmedDate',
+            'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'rollLevelOrder',
+            'approvalLevelID',
+            'documentSystemCode'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->whereIn('employeesdepartments.documentSystemID', [2, 5, 52])
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_purchaseordermaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseOrderID')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_purchaseordermaster.companySystemID', $companyID)
+                ->where('erp_purchaseordermaster.approved', 0)
+                ->where('erp_purchaseordermaster.poConfirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [2, 5, 52])
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        return \DataTables::of($poMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveProcurementOrder(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectProcurementOrder(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
 
     }
 
