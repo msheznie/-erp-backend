@@ -102,8 +102,8 @@ class Helper
                 case 1:
                     $docInforArr["documentCodeColumnName"] = 'purchaseRequestCode';
                     $docInforArr["confirmColumnName"] = 'PRConfirmedYN';
-                    $docInforArr["confirmedBy"] = 'PRConfirmedByEmpName';
-                    $docInforArr["confirmedByEmpID"] = 'PRConfirmedBy';
+                    $docInforArr["confirmedBy"] = 'PRConfirmedBy';
+                    $docInforArr["confirmedByEmpID"] = 'PRConfirmedByEmpName';
                     $docInforArr["confirmedBySystemID"] = 'PRConfirmedBySystemID';
                     $docInforArr["confirmedDate"] = 'PRConfirmedDate';
                     $docInforArr["tableName"] = 'erp_purchaserequest';
@@ -461,6 +461,33 @@ class Helper
                 $docInforArr["approvedColumnName"] = 'isApproved';
                 $docInforArr["approvedBy"] = 'approvedBy';
                 $docInforArr["approvedBySystemID"] = 'approvedBySystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                break;
+            case 2:
+                $docInforArr["tableName"] = 'erp_purchaseordermaster';
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'purchaseOrderID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                break;
+            case 5:
+                $docInforArr["tableName"] = 'erp_purchaseordermaster';
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'purchaseOrderID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                break;
+            case 52:
+                $docInforArr["tableName"] = 'erp_purchaseordermaster';
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'purchaseOrderID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 break;
             case 1:

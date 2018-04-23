@@ -246,22 +246,48 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         if ($companyPolicyMaster) {
             if (($companyPolicyMaster->isYesNO == 0) && ($purchaseOrder->financeCategory == 1)) {
 
-                $procumentOrdersExist = ProcumentOrder::where('companySystemID', $companySystemID)
+                $checkWhether = ProcumentOrder::where('purchaseOrderID', '!=', $purchaseOrder->purchaseOrderID)
+                    ->where('companySystemID', $companySystemID)
                     ->where('serviceLineSystemID', $purchaseOrder->serviceLineSystemID)
+                    ->select([
+                        'erp_purchaseordermaster.purchaseOrderID',
+                        'erp_purchaseordermaster.companySystemID',
+                        'erp_purchaseordermaster.serviceLine',
+                        'erp_purchaseordermaster.purchaseOrderCode',
+                        'erp_purchaseordermaster.poConfirmedYN',
+                        'erp_purchaseordermaster.approved',
+                        'erp_purchaseordermaster.poCancelledYN'
+                    ])
+                    ->groupBy(
+                        'erp_purchaseordermaster.purchaseOrderID',
+                        'erp_purchaseordermaster.companySystemID',
+                        'erp_purchaseordermaster.serviceLine',
+                        'erp_purchaseordermaster.purchaseOrderCode',
+                        'erp_purchaseordermaster.poConfirmedYN',
+                        'erp_purchaseordermaster.approved',
+                        'erp_purchaseordermaster.poCancelledYN'
+                    );
+
+                $anyPendingApproval = $checkWhether->whereHas('detail', function ($query) use ($companySystemID, $purchaseOrder, $item) {
+                    $query->where('itemPrimaryCode', $item->itemPrimaryCode);
+                })
                     ->where('approved', 0)
                     ->where('poCancelledYN', 0)
-                    ->with(['detail' => function ($query) use ($itemCode) {
-                        $query->where('itemCode', $itemCode);
-                    }])->first();
+                    ->first();
+                /* approved=0 And cancelledYN=0*/
 
-                if (!empty($procumentOrdersExist)) {
-                    return $this->sendError('The item you are trying to add is pending for approval in PO ' . $procumentOrdersExist->purchaseOrderCode);
+                if (!empty($anyPendingApproval)) {
+                    return $this->sendError("There is a purchase order (" . $anyPendingApproval->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                 }
+
             }
         }
 
         $input['localCurrencyID'] = $purchaseOrder->localCurrencyID;
         $input['localCurrencyER'] = $purchaseOrder->localCurrencyER;
+
+        $input['supplierItemCurrencyID'] = $purchaseOrder->supplierTransactionCurrencyID;
+        $input['foreignToLocalER'] = $purchaseOrder->supplierTransactionER;
 
         $input['companyReportingCurrencyID'] = $purchaseOrder->companyReportingCurrencyID;
         $input['companyReportingER'] = $purchaseOrder->companyReportingER;
@@ -292,6 +318,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input['purchaseOrderMasterID'] = $input['purchaseOrderID'];
         $input['itemCode'] = $item->itemCodeSystem;
         $input['itemPrimaryCode'] = $item->itemPrimaryCode;
+        $input['supplierPartNumber'] = $item->secondaryItemCode;
         $input['itemDescription'] = $item->itemDescription;
         $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
         $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
@@ -531,6 +558,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input = array_except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
 
+        //$empInfo = self::getEmployeeInfo();
+        $userId = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
+
         /** @var PurchaseOrderDetails $purchaseOrderDetails */
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->findWithoutFail($id);
 
@@ -566,6 +597,9 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $input['GRVcostPerUnitSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
             $input['purchaseRetcostPerUniSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
         }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $user->employee['empID'];
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->update($input, $id);
 
