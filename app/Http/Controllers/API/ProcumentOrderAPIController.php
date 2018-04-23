@@ -11,6 +11,7 @@
  * -- Date: 28-March 2018 By: Nazir Description: Added new functions named as getProcumentOrderByDocumentType() For load Master View
  * -- Date: 29-March 2018 By: Nazir Description: Added new functions named as getProcumentOrderFormData() for Master View Filter
  * -- Date: 10-April 2018 By: Nazir Description: Added new functions named as getShippingAndInvoiceDetails() for pull details from erp_address table
+ * -- Date: 11-April 2018 By: Nazir Description: Added new functions named as procumentOrderDetailTotal() for pull details total from erp_purchaseorderdetails table
  */
 namespace App\Http\Controllers\API;
 
@@ -182,8 +183,9 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
         if ($documentMaster) {
-            $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber + 1, 6, '0', STR_PAD_LEFT));
+            $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['purchaseOrderCode'] = $poCode;
         }
 
@@ -560,6 +562,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrders = $procumentOrders->select(
             ['erp_purchaseordermaster.purchaseOrderID',
                 'erp_purchaseordermaster.purchaseOrderCode',
+                'erp_purchaseordermaster.documentSystemID',
                 'erp_purchaseordermaster.budgetYear',
                 'erp_purchaseordermaster.createdDateTime',
                 'erp_purchaseordermaster.createdUserSystemID',

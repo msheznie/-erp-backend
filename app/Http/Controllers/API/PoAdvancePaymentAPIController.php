@@ -199,6 +199,8 @@ class PoAdvancePaymentAPIController extends AppBaseController
 
         $detailPaymentType = PoPaymentTermTypes::where('paymentTermsCategoryID', $AdvancePayment->LCPaymentYN)->first();
 
+
+
         $output = array('pomaster' => $purchaseOrder,
             'advancedetail' => $AdvancePayment,
             'currency' => $currency,

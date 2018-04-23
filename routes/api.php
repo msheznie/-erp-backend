@@ -286,6 +286,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
 
     Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
+    Route::resource('procumentOrderAdvpaymentUD', 'ProcumentOrderDetailAPIController');
     Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
 
     Route::post('approveItem', 'ItemMasterAPIController@approveItem');
@@ -313,13 +314,12 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('procumentOrderPaymentTermsCRUD', 'PoPaymentTermsAPIController');
     Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
 
-
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
     Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
 
-    //Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
-
+    Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+    Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
     Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
 
