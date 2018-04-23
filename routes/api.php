@@ -334,14 +334,18 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
 
     Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
+
+    Route::resource('tax_authorities', 'TaxAuthorityAPIController');
+    Route::post('getTaxAuthorityDatatable', 'TaxAuthorityAPIController@getTaxAuthorityDatatable');
+    Route::get('getTaxAuthorityFormData', 'TaxAuthorityAPIController@getTaxAuthorityFormData');
+    Route::resource('taxes', 'TaxAPIController');
+    Route::get('getTaxMasterFormData', 'TaxAPIController@getTaxMasterFormData');
+    Route::post('getTaxMasterDatatable', 'TaxAPIController@getTaxMasterDatatable');
+
+    Route::get('getAuthorityByCompany', 'TaxAuthorityAPIController@getAuthorityByCompany');
+    Route::get('getAccountByAuthority', 'TaxAuthorityAPIController@getAccountByAuthority');
+
 });
 
 
-
-
-
-
-
-Route::resource('tax_authorities', 'TaxAuthorityAPIController');
-
-Route::resource('taxes', 'TaxAPIController');
+Route::resource('tax_types', 'TaxTypeAPIController');
