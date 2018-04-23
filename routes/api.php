@@ -140,7 +140,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('getUserGroupByCompanyDatatable', 'UserGroupAPIController@getUserGroupByCompanyDatatable');
     Route::resource('userGroups', 'UserGroupAPIController');
     Route::get('getUserGroup', 'UserGroupAPIController@getUserGroup');
-    Route::post('getUserGroupEmployeesByCompany', 'EmployeeNavigationAPIController@getUserGroupEmployeesByCompanyDatatable');
+    Route::post('getUserGroupEmployeesDatatable', 'EmployeeNavigationAPIController@getUserGroupEmployeesByCompanyDatatable');
 
     Route::resource('assignUserGroupNavigation','UserGroupAssignAPIController');
     Route::get('getUserGroupNavigation','UserGroupAssignAPIController@getUserGroupNavigation');
@@ -334,8 +334,10 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
 
     Route::post('exportReport', 'ReportAPIController@exportReport');
+
     Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
 
+    Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
 });
 
 

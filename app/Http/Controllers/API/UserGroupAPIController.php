@@ -154,6 +154,7 @@ class UserGroupAPIController extends AppBaseController
             return $this->sendError('User Group not found');
         }
         $userGroup->navigationusergroup()->delete();
+        $userGroup->usergroupemployee()->delete();
         $userGroup->delete();
 
         return $this->sendResponse($id, 'User Group deleted successfully');

@@ -179,7 +179,21 @@ class ItemMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $itemMasters = ItemMaster::with(['unit', 'financeMainCategory', 'financeSubCategory']);
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
+        $itemMasters = ItemMaster::with(['unit', 'financeMainCategory', 'financeSubCategory'])
+                                  ->whereIn('primaryCompanySystemID',$childCompanies);
+
+
+
         if (array_key_exists('financeCategoryMaster', $input)) {
             if ($request['financeCategoryMaster'] > 0) {
                 $itemMasters->where('financeCategoryMaster', $input['financeCategoryMaster']);
@@ -301,10 +315,15 @@ class ItemMasterAPIController extends AppBaseController
 
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
-        /** all Companies by Group company  Drop Down */
-        $companiesByGroup = Company::where("masterComapanyID", $masterCompany->CompanyID)
-            ->where("isGroup", 0)->get();
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
+        if($isGroup){
+            /**  Companies by group  Drop Down */
+            $companiesByGroup = Company::where("masterComapanyID",$masterCompany->CompanyID)
+                ->where("isGroup",0)->get();
+        }else{
+            $companiesByGroup = Company::where("companySystemID",$selectedCompanyId)->get();
+        }
 
         /** all Company  Drop Down */
         $allCompanies = Company::where("isGroup", 0)->get();

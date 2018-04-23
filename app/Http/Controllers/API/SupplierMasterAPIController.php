@@ -97,18 +97,25 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
         $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
             $query->where('isDefault', -1)
                 ->with(['currencyMaster']);
-        }]);
+        }])->whereIn('primaryCompanySystemID',$childCompanies);
 
         $search = $request->input('search.value');
         if($search){
             $supplierMasters =   $supplierMasters->where('primarySupplierCode','LIKE',"%{$search}%")
                                                  ->orWhere( 'supplierName', 'LIKE', "%{$search}%");
         }
-        //supplierName
-        //->select();
 
         /**
          * ['suppliermaster.primarySupplierCode',
