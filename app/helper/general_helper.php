@@ -54,14 +54,15 @@ class Helper
         $groupCompany = [];
         if ($companiesByGroup) {
             foreach ($companiesByGroup as $val) {
-                if ($val['child']) {
-                    foreach ($val['child'] as $val1) {
-                        $groupCompany[] = array('companySystemID' => $val1["companySystemID"], 'CompanyID' => $val1["CompanyID"], 'CompanyName' => $val1["CompanyName"]);
+                if (array_key_exists('child', $val)) {
+                    if ($val['child']) {
+                        foreach ($val['child'] as $val1) {
+                            $groupCompany[] = array('companySystemID' => $val1["companySystemID"], 'CompanyID' => $val1["CompanyID"], 'CompanyName' => $val1["CompanyName"]);
+                        }
                     }
                 } else {
                     $groupCompany[] = array('companySystemID' => $val["companySystemID"], 'CompanyID' => $val["CompanyID"], 'CompanyName' => $val["CompanyName"]);
                 }
-
             }
         }
         $groupCompany = array_column($groupCompany, 'companySystemID');
@@ -187,9 +188,9 @@ class Helper
                         $isValueWise = $policy->isAmountApproval;
                         $isAttachment = $policy->isAttachmentYN;
                         //check for attachment is uploaded if attachment policy is set to must
-                        if($isAttachment == -1){
-                            $docAttachment = Models\DocumentAttachments::where('companySystemID',$params["company"])->where('documentSystemID',$params["document"])->where('documentSystemCode',$params["autoID"])->first();
-                            if(!$docAttachment){
+                        if ($isAttachment == -1) {
+                            $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                            if (!$docAttachment) {
                                 return ['success' => false, 'message' => 'No attachment found'];
                             }
                         }
@@ -490,6 +491,17 @@ class Helper
                 $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 break;
+            case 1:
+            case 50:
+            case 51:
+                $docInforArr["tableName"] = 'erp_purchaserequest';
+                $docInforArr["modelName"] = 'PurchaseRequest';
+                $docInforArr["primarykey"] = 'purchaseRequestID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -508,7 +520,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => 1, $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
-                        }else{
+                        } else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
                         }
@@ -585,15 +597,17 @@ class Helper
      * @param $date
      * @return false|string
      */
-    public static function dateFormat($date){
+    public static function dateFormat($date)
+    {
         return date("d/m/Y", strtotime($date));
     }
 
-    public static function checkIsCompanyGroup($companyID){
-        $isCompaniesGroup = Models\Company::where('companySystemID',$companyID)->where('isGroup',-1)->exists();
-        if($isCompaniesGroup){
+    public static function checkIsCompanyGroup($companyID)
+    {
+        $isCompaniesGroup = Models\Company::where('companySystemID', $companyID)->where('isGroup', -1)->exists();
+        if ($isCompaniesGroup) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }

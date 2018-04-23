@@ -114,13 +114,22 @@ class CustomerAssignedAPIController extends AppBaseController
     {
 
         $customerId = $request->get('customerId');
-        $companies = Company::where('isGroup', 0)
+
+        $selectedCompanyId = $request->get('selectedCompanyId');
+
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $companies = Company::whereIn('companySystemID', $subCompanies)
             ->whereDoesntHave('customerAssigned',function ($query) use ($customerId) {
                 $query->where('customerCodeSystem', '=', $customerId);
             })
-            ->get(['companySystemID',
-                'CompanyID',
-                'CompanyName']);
+            ->get(['companySystemID','CompanyID','CompanyName']);
 
         return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
     }

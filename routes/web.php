@@ -17,3 +17,5 @@ Route::resource('purchaseOrderProcessDetails', 'PurchaseOrderProcessDetailsContr
 Route::resource('taxAuthorities', 'TaxAuthorityController');
 
 Route::resource('taxes', 'TaxController');
+
+Route::resource('taxTypes', 'TaxTypeController');

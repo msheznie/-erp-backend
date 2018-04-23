@@ -14,6 +14,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateEmployeeNavigationAPIRequest;
 use App\Http\Requests\API\UpdateEmployeeNavigationAPIRequest;
+use App\Models\Company;
 use App\Models\EmployeeNavigation;
 use App\Repositories\EmployeeNavigationRepository;
 use Illuminate\Http\Request;
@@ -151,13 +152,10 @@ class EmployeeNavigationAPIController extends AppBaseController
             }
         } else {
             $companiesByGroup = "";
-            if (\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
-                $companiesByGroup = Company::where("masterCompanySystemIDReorting", $input['globalCompanyId'])
-                    ->pluck("companySystemID");
-            } else {
-                $companiesByGroup = (array)$input['globalCompanyId'];
+            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                $companiesByGroup = $input['globalCompanyId'];
+                $userGroup->where('companyID', $companiesByGroup);
             }
-            $userGroup->whereIn('companyID', $companiesByGroup);
         }
 
         if (array_key_exists('userGroupID', $input)) {

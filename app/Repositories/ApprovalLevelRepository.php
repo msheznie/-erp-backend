@@ -75,13 +75,9 @@ class ApprovalLevelRepository extends BaseRepository
                 $approvalLevel->where('erp_approvallevel.companySystemID',$input['selectedCompanyID']);
             }
         }else{
-            if(\Helper::checkIsCompanyGroup($input['globalCompanyId'])){
-                $companiesByGroup = Company::where("masterCompanySystemIDReorting", $input['globalCompanyId'])
-                    ->where("isGroup", 0)->pluck("companySystemID");
-                $approvalLevel->whereIn('erp_approvallevel.companySystemID',$companiesByGroup);
-            }else{
-                $companiesByGroup = (array)$input['globalCompanyId'];
-                $approvalLevel->whereIn('erp_approvallevel.companySystemID',$companiesByGroup);
+            if(!\Helper::checkIsCompanyGroup($input['globalCompanyId'])){
+                $companiesByGroup = $input['globalCompanyId'];
+                $approvalLevel->where('erp_approvallevel.companySystemID',$companiesByGroup);
             }
         }
 
