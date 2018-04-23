@@ -131,7 +131,7 @@ class CurrencyMasterAPIController extends AppBaseController
         $supplierCurrency = new SupplierCurrency();
         $supplierCurrency->supplierCodeSystem = $request['supplierId'];
         $supplierCurrency->currencyID = $request['currencyId'];
-        $supplierCurrency->isAssigned = 1;
+        $supplierCurrency->isAssigned = -1;
         $supplierCurrency->isDefault = 0;
         $supplierCurrency->save();
 
@@ -179,6 +179,10 @@ class CurrencyMasterAPIController extends AppBaseController
 
             if ($request['isDefault'] == true || $request['isDefault'] == 1) {
                 $request['isDefault'] = -1;
+            }
+
+            if ($request['isAssigned'] == true || $request['isAssigned'] == 1) {
+                $request['isAssigned'] = -1;
             }
 
             $supplierCurrency->isDefault = $request['isDefault'];

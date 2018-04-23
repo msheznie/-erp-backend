@@ -334,6 +334,10 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
 
     Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
+
+    Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest');
+    Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest');
+
 });
 
 

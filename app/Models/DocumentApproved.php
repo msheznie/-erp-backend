@@ -164,4 +164,14 @@ class DocumentApproved extends Model
         return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
     }
 
+
+    public function employee_department_approve(){
+        return $this->belongsTo('App\Models\EmployeesDepartment','approvalGroupID','employeeGroupID')
+                                                    ->where('documentSystemID',$this->documentSystemID)
+                                                    ->where('companySystemID',$this->companySystemID);
+
+        //->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+        //->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+    }
+
 }

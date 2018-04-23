@@ -195,9 +195,9 @@ class CustomerMasterAPIController extends AppBaseController
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
             /**  Companies by group  Drop Down */
-            $allCompanies = Company::where("masterComapanyID",$masterCompany->CompanyID)
-                ->where("isGroup",0)->get();
+            $allCompanies = Company::whereIn("companySystemID",$subCompanies)->get();
         }else{
             $allCompanies = Company::where("companySystemID",$selectedCompanyId)->get();
         }

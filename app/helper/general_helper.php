@@ -102,8 +102,8 @@ class Helper
                 case 1:
                     $docInforArr["documentCodeColumnName"] = 'purchaseRequestCode';
                     $docInforArr["confirmColumnName"] = 'PRConfirmedYN';
-                    $docInforArr["confirmedBy"] = 'PRConfirmedBy';
-                    $docInforArr["confirmedByEmpID"] = 'PRConfirmedByEmpName';
+                    $docInforArr["confirmedBy"] = 'PRConfirmedByEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'PRConfirmedBy';
                     $docInforArr["confirmedBySystemID"] = 'PRConfirmedBySystemID';
                     $docInforArr["confirmedDate"] = 'PRConfirmedDate';
                     $docInforArr["tableName"] = 'erp_purchaserequest';
@@ -461,6 +461,17 @@ class Helper
                 $docInforArr["approvedColumnName"] = 'isApproved';
                 $docInforArr["approvedBy"] = 'approvedBy';
                 $docInforArr["approvedBySystemID"] = 'approvedBySystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                break;
+            case 1:
+            case 50:
+            case 51:
+                $docInforArr["tableName"] = 'erp_purchaserequest';
+                $docInforArr["modelName"] = 'PurchaseRequest';
+                $docInforArr["primarykey"] = 'purchaseRequestID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 break;
             default:

@@ -87,6 +87,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'erp_purchaseorderdetails.companyID',
                 'companymaster.CompanyName',
                 'erp_purchaseordermaster.purchaseOrderCode',
+                'erp_purchaseordermaster.purchaseOrderID',
                 'erp_purchaseordermaster.supplierPrimaryCode',
                 'erp_purchaseordermaster.supplierName',
                 'erp_purchaseordermaster.poLocation',
