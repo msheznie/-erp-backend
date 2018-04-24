@@ -37,6 +37,7 @@ use App\Models\SupplierAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\PoPaymentTerms;
 use App\Models\SupplierCurrency;
+use App\Models\GRVDetails;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -520,6 +521,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
             ->where('documentSystemID', $input['documentId'])
+            ->whereIn('poType_N', [$input['poType_N']])
             ->with(['created_by' => function ($query) {
                 //$query->select(['empName']);
             }, 'location' => function ($query) {
@@ -548,6 +550,18 @@ class ProcumentOrderAPIController extends AppBaseController
         if (array_key_exists('approved', $input)) {
             if ($input['approved'] == 0 || $input['approved'] == -1) {
                 $procumentOrders->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('grvRecieved', $input)) {
+            if ($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) {
+                $procumentOrders->where('grvRecieved', $input['grvRecieved']);
+            }
+        }
+
+        if (array_key_exists('invoicedBooked', $input)) {
+            if ($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) {
+                $procumentOrders->where('invoicedBooked', $input['invoicedBooked']);
             }
         }
 
@@ -582,6 +596,8 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.supplierTransactionCurrencyID',
                 'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
                 'erp_purchaseordermaster.financeCategory',
+                'erp_purchaseordermaster.grvRecieved',
+                'erp_purchaseordermaster.invoicedBooked',
             ]);
 
         $search = $request->input('search.value');
@@ -696,6 +712,10 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'detailExist' => 0, 'pullPRPolicy' => 0);
 
+        $grvRecieved = array(['id' => '0', 'value' => 'Not Received'], ['id' => '1', 'value' => 'Partial Received'], ['id' => '2', 'value' => 'Fully Received']);
+
+        $invoiceBooked = array(['id' => '0', 'value' => 'Not Invoiced'], ['id' => '1', 'value' => 'Partial Invoiced'], ['id' => '2', 'value' => 'Fully Invoiced']);
+
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
         }
@@ -733,7 +753,9 @@ class ProcumentOrderAPIController extends AppBaseController
             'addresstypeinvoice' => $addressTypeInvoice,
             'addresstypesold' => $addressTypeSold,
             'paymentterms' => $PoPaymentTermTypes,
-            'detailSum' => $detailSum
+            'detailSum' => $detailSum,
+            'grvRecieved' => $grvRecieved,
+            'invoiceBooked' => $invoiceBooked
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -832,7 +854,6 @@ class ProcumentOrderAPIController extends AppBaseController
 
     public function getPOMasterApproval(Request $request)
     {
-
         $input = $request->all();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -925,6 +946,30 @@ class ProcumentOrderAPIController extends AppBaseController
             return $this->sendResponse(array(), $reject["message"]);
         }
 
+    }
+
+    public function getGoodReceivedNoteDetailsForPO(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $detail = DB::select('SELECT erp_grvdetails.grvAutoID,erp_grvdetails.companyID,erp_grvdetails.purchaseOrderMastertID,erp_grvmaster.grvDate,erp_grvmaster.grvPrimaryCode,erp_grvmaster.grvDoRefNo,erp_grvdetails.itemPrimaryCode,
+erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,currencymaster.CurrencyCode,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
+
+        return $this->sendResponse($detail, 'Details retrieved successfully');
+
+    }
+
+    function getInvoiceDetailsForPO(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $detail = DB::select('SELECT erp_bookinvsuppmaster.bookingSuppMasInvAutoID,erp_bookinvsuppmaster.companyID,erp_bookinvsuppdet.purchaseOrderID,erp_bookinvsuppmaster.documentID,erp_grvmaster.grvPrimaryCode,erp_bookinvsuppmaster.bookingInvCode,erp_bookinvsuppmaster.bookingDate,erp_bookinvsuppmaster.comments,erp_bookinvsuppmaster.supplierInvoiceNo,erp_bookinvsuppmaster.confirmedYN,erp_bookinvsuppmaster.confirmedByName,erp_bookinvsuppmaster.approved,currencymaster.CurrencyCode,erp_bookinvsuppdet.totTransactionAmount FROM erp_bookinvsuppmaster INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID WHERE purchaseOrderID = ' . $purchaseOrderID . ' ');
+
+        return $this->sendResponse($detail, 'Details retrieved successfully');
     }
 
 }

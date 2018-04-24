@@ -276,6 +276,8 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('g_r_v_masters', 'GRVMasterAPIController');
     Route::resource('g_r_v_details', 'GRVDetailsAPIController');
 
+    Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+
     Route::resource('document_attachments', 'DocumentAttachmentsAPIController');
     Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
     Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
@@ -286,7 +288,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
 
     Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
-    Route::resource('procumentOrderAdvpaymentUD', 'ProcumentOrderDetailAPIController');
+    Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
     Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
 
     Route::post('approveItem', 'ItemMasterAPIController@approveItem');
@@ -306,6 +308,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
     Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
+    Route::get('getGoodReceivedNoteDetailsForPO', 'ProcumentOrderAPIController@getGoodReceivedNoteDetailsForPO');
+    Route::get('getInvoiceDetailsForPO', 'ProcumentOrderAPIController@getInvoiceDetailsForPO');
 
     /** Po Related Tables Created by Nazir  */
     Route::resource('erp_addresses', 'ErpAddressAPIController');
@@ -318,8 +322,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
     Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
 
-    Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
-    Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+    Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
     Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
 

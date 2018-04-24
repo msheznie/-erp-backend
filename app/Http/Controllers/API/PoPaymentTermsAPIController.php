@@ -91,6 +91,8 @@ class PoPaymentTermsAPIController extends AppBaseController
         if(!empty($purchaseOrder->expectedDeliveryDate) && !empty($supplier->creditPeriod)){
             $addedDate = strtotime("+$supplier->creditPeriod day", strtotime($purchaseOrder->expectedDeliveryDate));
             $input['comDate'] = date("Y-m-d", $addedDate);
+        }else{
+            $input['comDate'] = '';
         }
 
         $poPaymentTerms = $this->poPaymentTermsRepository->create($input);
