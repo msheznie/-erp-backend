@@ -360,3 +360,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 });
 
 
+
+
+Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+
+Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
