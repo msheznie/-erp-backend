@@ -318,8 +318,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
     Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
 
-    Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
-    Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+    //Route::resource('procumentOrderPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
     Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
 
@@ -357,3 +356,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 });
 
 
+
+
+Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+
+Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');

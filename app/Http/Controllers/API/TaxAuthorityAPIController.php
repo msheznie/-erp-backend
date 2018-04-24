@@ -197,7 +197,7 @@ class TaxAuthorityAPIController extends AppBaseController
 
     public function getAccountByAuthority(Request $request)
     {
-        $output = TaxAuthority::where('taxAuthourityMasterID', $request->taxAuthourityMasterID)->get();
+        $output = TaxAuthority::where('taxAuthourityMasterID', $request->taxAuthourityMasterID)->first();
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }
