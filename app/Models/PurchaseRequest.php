@@ -304,5 +304,10 @@ class PurchaseRequest extends Model
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 
-    
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','purchaseRequestID');
+    }
+
+
+
 }
