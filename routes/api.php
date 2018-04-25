@@ -357,6 +357,9 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::resource('tax_types', 'TaxTypeAPIController');
 
+    Route::post('cancelPurchaseRequest', 'PurchaseRequestAPIController@cancelPurchaseRequest');
+    Route::post('returnPurchaseRequest', 'PurchaseRequestAPIController@returnPurchaseRequest');
+
 });
 
 

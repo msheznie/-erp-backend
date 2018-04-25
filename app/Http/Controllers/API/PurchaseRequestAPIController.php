@@ -18,6 +18,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreatePurchaseRequestAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseRequestAPIRequest;
 use App\Models\Company;
@@ -271,7 +272,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 $q->whereIn(DB::raw("YEAR(PRRequestedDate)"), $years);
             })
             ->whereHas('details', function ($prd) use ($itemPrimaryCodes, $from, $to, $documentSearch) {
-                $prd->whereHas('podetail', function ($pod) use ($from, $to, $documentSearch) {
+                $prd->with(['podetail' => function ($pod) use ($from, $to, $documentSearch) {
                     $pod->whereHas('order', function ($po) use ($from, $to, $documentSearch) {
                         $po->where('poConfirmedYN', 1)
                             ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
@@ -289,10 +290,10 @@ class PurchaseRequestAPIController extends AppBaseController
                             });
                         });
                     })
-                        ->when(request('grv') == 'inComplete', function ($q) {
-                            $q->whereIn('goodsRecievedYN', [0, 1]);
-                        });
-                })->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
+                    ->when(request('grv') == 'inComplete', function ($q) {
+                        $q->whereIn('goodsRecievedYN', [0, 1]);
+                    });
+                }])->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
                     return $q->whereIn('itemCode', $itemPrimaryCodes);
                 });
             })
@@ -424,6 +425,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $output = array('items' => $items,
             'years' => $years);
 
+
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
@@ -446,19 +448,28 @@ class PurchaseRequestAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId'])
-            ->where('documentSystemID', $input['documentId'])
-            ->with(['created_by' => function ($query) {
-                //$query->select(['empName']);
-            }, 'priority' => function ($query) {
-                //$query->select(['priorityDescription']);
-            }, 'location' => function ($query) {
+        $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId']);
 
-            }, 'segment' => function ($query) {
 
-            }, 'financeCategory' => function ($query) {
+        if (array_key_exists('requestReview', $input)) {
+            if ($input['requestReview'] == 1) {
+                $purchaseRequests->where('cancelledYN', 0)
+                    ->where('approved', -1);
+            }
+        } else {
+            $purchaseRequests = $purchaseRequests->where('documentSystemID', $input['documentId']);
+        }
 
-            }]);
+           $purchaseRequests = $purchaseRequests->with(['created_by' => function ($query) {
+                                                   }, 'priority' => function ($query) {
+
+                                                   }, 'location' => function ($query) {
+
+                                                   }, 'segment' => function ($query) {
+
+                                                   }, 'financeCategory' => function ($query) {
+
+                                                   }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
@@ -504,10 +515,13 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.timesReferred',
                 'erp_purchaserequest.serviceLineSystemID',
                 'erp_purchaserequest.financeCategory',
+                'erp_purchaserequest.documentSystemID',
             ]);
 
         $search = $request->input('search.value');
+
         if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
             $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
                 ->orWhere('comments', 'LIKE', "%{$search}%");
         }
@@ -566,15 +580,15 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                     ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
 
-                    $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID',$companyId)
-                        ->where('documentSystemID',1)
-                        ->first();
+                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+                    ->where('documentSystemID', 1)
+                    ->first();
 
-                    if($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1){
-                        $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
-                    }
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
 
-                $query->whereIn('employeesdepartments.documentSystemID', [1,50,51])
+                $query->whereIn('employeesdepartments.documentSystemID', [1, 50, 51])
                     ->where('employeesdepartments.departmentSystemID', 3)
                     ->where('employeesdepartments.companySystemID', $companyId)
                     ->where('employeesdepartments.employeeSystemID', $empID);
@@ -587,21 +601,19 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->where('erp_purchaserequest.PRConfirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', 0)
-            ->join('employees','PRConfirmedBySystemID','employees.employeeSystemID')
-            ->join('financeitemcategorymaster','financeCategory','financeitemcategorymaster.itemCategoryID')
-            ->join('erp_priority','priority','erp_priority.priorityID')
-            ->join('erp_location','location','erp_location.locationID')
-            ->join('serviceline','erp_purchaserequest.serviceLineSystemID','serviceline.serviceLineSystemID')
-
+            ->join('employees', 'PRConfirmedBySystemID', 'employees.employeeSystemID')
+            ->join('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
+            ->join('erp_priority', 'priority', 'erp_priority.priorityID')
+            ->join('erp_location', 'location', 'erp_location.locationID')
+            ->join('serviceline', 'erp_purchaserequest.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
-            ->whereIn('erp_documentapproved.documentSystemID', [1,50,51])
+            ->whereIn('erp_documentapproved.documentSystemID', [1, 50, 51])
             ->where('erp_documentapproved.companySystemID', $companyId);
 
         return \DataTables::of($purchaseRequests)
             ->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
                     }
                 }
@@ -690,8 +702,8 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID', $input['companySystemID'])
-                                                                ->where('documentSystemID', $input['documentSystemID'])
-                                                                ->first();
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->first();
 
         if ($companyDocumentAttachment) {
             $input['docRefNo'] = $companyDocumentAttachment->docRefNumber;
@@ -727,11 +739,11 @@ class PurchaseRequestAPIController extends AppBaseController
     {
         /** @var PurchaseRequest $purchaseRequest */
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
-                                                                    'priority','location','details.uom','company','approved_by' => function($query){
-                                                                         $query->with('employee')
-                                                                               ->whereIn('documentSystemID',[1,50,51]);
-                                                                        }
-                                                                      ])->findWithoutFail($id);
+            'priority', 'location', 'details.uom', 'company', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->whereIn('documentSystemID', [1, 50, 51]);
+            }
+        ])->findWithoutFail($id);
 
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');
@@ -757,9 +769,9 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmed_by',
-                                        'priority','location','details','company','approved_by',
-                                       'PRConfirmedBy','PRConfirmedByEmpName',
-                                       'PRConfirmedBySystemID', 'PRConfirmedDate']);
+            'priority', 'location', 'details', 'company', 'approved_by',
+            'PRConfirmedBy', 'PRConfirmedByEmpName',
+            'PRConfirmedBySystemID', 'PRConfirmedDate']);
         $input = $this->convertArrayToValue($input);
 
         /** @var PurchaseRequest $purchaseRequest */
@@ -861,33 +873,129 @@ class PurchaseRequestAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function approvePurchaseRequest(Request $request){
+    public function approvePurchaseRequest(Request $request)
+    {
 
         $approve = \Helper::approveDocument($request);
-        if(!$approve["success"]){
+        if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
-        }else{
-            return $this->sendResponse(array(),$approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
         }
 
     }
 
     /**
      * Reject Purchase Request
-     * DELETE /rejectPurchaseRequest
+     * Post /rejectPurchaseRequest
      *
      * @param $request
      *
      * @return Response
      */
-    public function rejectPurchaseRequest(Request $request){
+    public function rejectPurchaseRequest(Request $request)
+    {
         $reject = \Helper::rejectDocument($request);
-        if(!$reject["success"]){
+        if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
-        }else{
-            return $this->sendResponse(array(),$reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
         }
 
     }
+
+
+    /**
+     * Cancel Purchase Request
+     * Post /cancelPurchaseRequest
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+    public function cancelPurchaseRequest(Request $request)
+    {
+
+        $input = $request->all();
+        $purchaseRequest = PurchaseRequest::find($input['purchaseRequestID']);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        $checkPo = PurchaseOrderDetails::where('purchaseRequestID',$input['purchaseRequestID'])->count();
+
+        if($checkPo > 0){
+            return $this->sendError('Cannot cancel. Order is created for this request');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $purchaseRequest->cancelledYN = 1;
+        $purchaseRequest->cancelledByEmpSystemID = $employee->employeeSystemID;
+        $purchaseRequest->cancelledByEmpID = $employee->empID;
+        $purchaseRequest->cancelledByEmpName = $employee->empName;
+        $purchaseRequest->cancelledComments = $input['cancelledComments'];
+        $purchaseRequest->cancelledDate = now();
+        $purchaseRequest->save();
+
+        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully canceled');
+
+    }
+
+    /**
+     * Return to amend Purchase Request
+     * Post /returnPurchaseRequest
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+    public function returnPurchaseRequest(Request $request)
+    {
+
+        $input = $request->all();
+        $purchaseRequest = PurchaseRequest::find($input['purchaseRequestID']);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        $checkPo = PurchaseOrderDetails::where('purchaseRequestID',$input['purchaseRequestID'])->count();
+
+        if($checkPo > 0){
+            return $this->sendError('Cannot cancel. Order is created for this request');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $documentApproval = DocumentApproved::where('companySystemID',$purchaseRequest->companySystemID)
+                                              ->where('documentSystemCode',$purchaseRequest->purchaseRequestID)
+                                              ->where('documentSystemID',$purchaseRequest->documentSystemID)
+                                              ->get();
+
+        $ids_to_delete  = array();
+        foreach ($documentApproval as $da){
+            array_push($ids_to_delete,$da->documentApprovedID);
+        }
+
+        DocumentApproved::destroy($ids_to_delete);
+
+        $purchaseRequest->PRConfirmedYN = 0;
+        $purchaseRequest->PRConfirmedBy = '';
+        $purchaseRequest->PRConfirmedByEmpName = '';
+        $purchaseRequest->PRConfirmedBySystemID = '';
+        $purchaseRequest->PRConfirmedDate = '';
+        $purchaseRequest->approved = 0;
+        $purchaseRequest->approvedDate = '';
+        $purchaseRequest->approvedByUserID = '';
+        $purchaseRequest->approvedByUserSystemID = '';
+        $purchaseRequest->save();
+
+        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
+
+    }
+
+
 
 }
