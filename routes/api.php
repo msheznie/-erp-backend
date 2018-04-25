@@ -155,6 +155,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('poPaymentTermsAdvanceDetailView', 'PoAdvancePaymentAPIController@poPaymentTermsAdvanceDetailView');
     Route::post('procumentOrderTotalDiscountUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalDiscountUD');
     Route::post('procumentOrderTotalTaxUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalTaxUD');
+    Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv');
 
     /** Approval Level*/
     Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
@@ -249,6 +250,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
     Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
     Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
+    Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -317,6 +319,8 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('po_advance_payments', 'PoAdvancePaymentAPIController');
     Route::resource('procumentOrderPaymentTermsCRUD', 'PoPaymentTermsAPIController');
     Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
+    Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel');
+    Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack');
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
@@ -365,3 +369,5 @@ Route::group(['middleware' => 'auth:api'], function(){
 Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
 
 Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+
+Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');

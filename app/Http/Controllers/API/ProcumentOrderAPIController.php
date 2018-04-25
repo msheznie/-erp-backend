@@ -1,7 +1,7 @@
 <?php
 /**
  * =============================================
- * -- File Name : PurchaseRequestAPIController.php
+ * -- File Name : ProcumentOrderAPIController.php
  * -- Project Name : ERP
  * -- Module Name :  Purchase Order
  * -- Author : Mohamed Nazir
@@ -12,6 +12,8 @@
  * -- Date: 29-March 2018 By: Nazir Description: Added new functions named as getProcumentOrderFormData() for Master View Filter
  * -- Date: 10-April 2018 By: Nazir Description: Added new functions named as getShippingAndInvoiceDetails() for pull details from erp_address table
  * -- Date: 11-April 2018 By: Nazir Description: Added new functions named as procumentOrderDetailTotal() for pull details total from erp_purchaseorderdetails table
+ * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as getProcumentOrderAllAmendments() For load PO Amendment Master View
+ * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as poCheckDetailExistinGrv() for check in grv details,erp_advancepaymentdetails table before closing a PO in amendment pull details total from erp_purchaseorderdetails table
  */
 namespace App\Http\Controllers\API;
 
@@ -25,6 +27,7 @@ use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\Location;
+use App\Models\DocumentApproved;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
@@ -38,6 +41,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\PoPaymentTerms;
 use App\Models\SupplierCurrency;
 use App\Models\GRVDetails;
+use App\Models\AdvancePaymentDetails;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -971,5 +975,190 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         return $this->sendResponse($detail, 'Details retrieved successfully');
     }
+
+    public function getProcumentOrderAllAmendments(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
+            ->where('approved', -1)
+            ->where('poCancelledYN', 0)
+            ->with(['created_by' => function ($query) {
+                //$query->select(['empName']);
+            }, 'location' => function ($query) {
+            }, 'supplier' => function ($query) {
+            }, 'currency' => function ($query) {
+            }, 'fcategory' => function ($query) {
+            }, 'segment' => function ($query) {
+            }]);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+        }
+
+        if (array_key_exists('grvRecieved', $input)) {
+            if ($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) {
+                $procumentOrders->where('grvRecieved', $input['grvRecieved']);
+            }
+        }
+
+        if (array_key_exists('invoicedBooked', $input)) {
+            if ($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) {
+                $procumentOrders->where('invoicedBooked', $input['invoicedBooked']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
+        }
+
+        if (array_key_exists('year', $input)) {
+            $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+        }
+
+        $procumentOrders = $procumentOrders->select(
+            ['erp_purchaseordermaster.purchaseOrderID',
+                'erp_purchaseordermaster.purchaseOrderCode',
+                'erp_purchaseordermaster.documentSystemID',
+                'erp_purchaseordermaster.budgetYear',
+                'erp_purchaseordermaster.createdDateTime',
+                'erp_purchaseordermaster.createdUserSystemID',
+                'erp_purchaseordermaster.narration',
+                'erp_purchaseordermaster.poLocation',
+                'erp_purchaseordermaster.poCancelledYN',
+                'erp_purchaseordermaster.poConfirmedYN',
+                'erp_purchaseordermaster.poConfirmedDate',
+                'erp_purchaseordermaster.approved',
+                'erp_purchaseordermaster.approvedDate',
+                'erp_purchaseordermaster.timesReferred',
+                'erp_purchaseordermaster.serviceLineSystemID',
+                'erp_purchaseordermaster.supplierID',
+                'erp_purchaseordermaster.supplierName',
+                'erp_purchaseordermaster.expectedDeliveryDate',
+                'erp_purchaseordermaster.referenceNumber',
+                'erp_purchaseordermaster.supplierTransactionCurrencyID',
+                'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
+                'erp_purchaseordermaster.financeCategory',
+                'erp_purchaseordermaster.grvRecieved',
+                'erp_purchaseordermaster.invoicedBooked',
+            ]);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $procumentOrders = $procumentOrders->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                ->orWhere('narration', 'LIKE', "%{$search}%");
+        }
+
+        return \DataTables::eloquent($procumentOrders)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+        ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
+    }
+
+    public function poCheckDetailExistinGrv(Request $request)
+    {
+        $purchaseOrderID = $request['purchaseOrderID'];
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $purchaseOrderID)
+            ->first();
+
+        if (!empty($detailExistGRV)) {
+            return $this->sendError('Cannot cancel. GRV is created for this PO ');
+        }
+
+        $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (!empty($detailExistAPD)) {
+            return $this->sendError('Cannot cancel. Advance Payment is created for this PO');
+        }
+
+        return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+    }
+
+    public function procumentOrderCancel(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->update([
+                'poCancelledYN' => -1,
+                'poCancelledBySystemID' => $user->employee['empCompanySystemID'],
+                'poCancelledBy' => $user->employee['empID'],
+                'poCancelledByName' => $user->employee['empName'],
+                'poCancelledDate' => date('Y-m-d H:i:s'),
+                'cancelledComments' => $input['cancelComments']
+            ]);
+
+        return $this->sendResponse($purchaseOrderID, 'PO canceled successfully ');
+    }
+
+    public function procumentOrderReturnBack(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->delete();
+
+        if($deleteApproval){
+            $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+                ->update([
+                    'poConfirmedYN' => 0,
+                    'poConfirmedByEmpSystemID' => '',
+                    'poConfirmedByEmpID' => '',
+                    'poConfirmedByName' => '',
+                    'poConfirmedDate' => null,
+                    'approved' => 0,
+                    'approvedDate' => null,
+                    'approvedByUserID' => '',
+                    'approvedByUserSystemID' => '',
+                ]);
+        }
+
+        return $this->sendResponse($purchaseOrderID, 'PO return back to amend successfully ');
+    }
+
 
 }
