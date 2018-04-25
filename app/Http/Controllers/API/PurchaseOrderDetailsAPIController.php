@@ -118,6 +118,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
      * @param Request $request
      * @return Response
      */
+
     public function exportPurchaseHistory(Request $request)
     {
 
@@ -249,23 +250,9 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $checkWhether = ProcumentOrder::where('purchaseOrderID', '!=', $purchaseOrder->purchaseOrderID)
                     ->where('companySystemID', $companySystemID)
                     ->where('serviceLineSystemID', $purchaseOrder->serviceLineSystemID)
-                    ->select([
-                        'erp_purchaseordermaster.purchaseOrderID',
-                        'erp_purchaseordermaster.companySystemID',
-                        'erp_purchaseordermaster.serviceLine',
-                        'erp_purchaseordermaster.purchaseOrderCode',
-                        'erp_purchaseordermaster.poConfirmedYN',
-                        'erp_purchaseordermaster.approved',
-                        'erp_purchaseordermaster.poCancelledYN'
-                    ])
-                    ->groupBy(
-                        'erp_purchaseordermaster.purchaseOrderID',
-                        'erp_purchaseordermaster.companySystemID',
-                        'erp_purchaseordermaster.serviceLine',
-                        'erp_purchaseordermaster.purchaseOrderCode',
-                        'erp_purchaseordermaster.poConfirmedYN',
-                        'erp_purchaseordermaster.approved',
-                        'erp_purchaseordermaster.poCancelledYN'
+                    ->select(['erp_purchaseordermaster.purchaseOrderID', 'erp_purchaseordermaster.companySystemID',
+                        'erp_purchaseordermaster.serviceLine', 'erp_purchaseordermaster.purchaseOrderCode', 'erp_purchaseordermaster.poConfirmedYN', 'erp_purchaseordermaster.approved', 'erp_purchaseordermaster.poCancelledYN'])
+                    ->groupBy('erp_purchaseordermaster.purchaseOrderID', 'erp_purchaseordermaster.companySystemID', 'erp_purchaseordermaster.serviceLine', 'erp_purchaseordermaster.purchaseOrderCode', 'erp_purchaseordermaster.poConfirmedYN', 'erp_purchaseordermaster.approved', 'erp_purchaseordermaster.poCancelledYN'
                     );
 
                 $anyPendingApproval = $checkWhether->whereHas('detail', function ($query) use ($companySystemID, $purchaseOrder, $item) {
@@ -274,7 +261,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     ->where('approved', 0)
                     ->where('poCancelledYN', 0)
                     ->first();
-                /* approved=0 And cancelledYN=0*/
 
                 if (!empty($anyPendingApproval)) {
                     return $this->sendError("There is a purchase order (" . $anyPendingApproval->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);

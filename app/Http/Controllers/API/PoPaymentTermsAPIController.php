@@ -5,6 +5,9 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePoPaymentTermsAPIRequest;
 use App\Http\Requests\API\UpdatePoPaymentTermsAPIRequest;
 use App\Models\PoPaymentTerms;
+use App\Models\SupplierMaster;
+use App\Models\ProcumentOrder;
+use App\Models\PurchaseOrderDetails;
 use App\Repositories\PoPaymentTermsRepository;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -57,11 +60,39 @@ class PoPaymentTermsAPIController extends AppBaseController
     public function store(CreatePoPaymentTermsAPIRequest $request)
     {
         $input = $request->all();
+        $purchaseOrderID = $input['poID'];
 
         if (isset($input['comDate'])) {
             if ($input['comDate']) {
                 $input['comDate'] = new Carbon($input['comDate']);
             }
+        }
+
+        $prDetailExist = PurchaseOrderDetails::select(DB::raw('purchaseOrderDetailsID'))
+            ->where('purchaseOrderMasterID', $purchaseOrderID)
+            ->first();
+
+        if(empty($prDetailExist)){
+            return $this->sendError('At least one item should added to create payment term');
+        }
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
+        if ($supplier) {
+            $input['inDays'] = $supplier->creditPeriod;
+        }
+
+        if(!empty($purchaseOrder->expectedDeliveryDate) && !empty($supplier->creditPeriod)){
+            $addedDate = strtotime("+$supplier->creditPeriod day", strtotime($purchaseOrder->expectedDeliveryDate));
+            $input['comDate'] = date("Y-m-d", $addedDate);
+        }else{
+            $input['comDate'] = '';
         }
 
         $poPaymentTerms = $this->poPaymentTermsRepository->create($input);
@@ -109,6 +140,26 @@ class PoPaymentTermsAPIController extends AppBaseController
                 $input['comDate'] = new Carbon($input['comDate']);
             }
         }
+
+        $purchaseOrderID = $input['poID'];
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
+        if ($supplier) {
+            $input['inDays'] = $supplier->creditPeriod;
+        }
+
+        if(!empty($purchaseOrder->expectedDeliveryDate) && !empty($supplier->creditPeriod)){
+            $addedDate = strtotime("+$supplier->creditPeriod day", strtotime($purchaseOrder->expectedDeliveryDate));
+            $input['comDate'] = date("Y-m-d", $addedDate);
+        }
+
         /** @var PoPaymentTerms $poPaymentTerms */
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
 
@@ -149,7 +200,8 @@ class PoPaymentTermsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
+        $poAdvancePaymentType = PoPaymentTerms::select(DB::raw('*, DATE_FORMAT(comDate, "%d/%m/%Y") as comDate'))
+            ->where('poID', $input['purchaseOrderID'])
             ->get();
 
         return $this->sendResponse($poAdvancePaymentType->toArray(), 'Data retrieved successfully');

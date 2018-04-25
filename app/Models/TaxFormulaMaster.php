@@ -6,70 +6,52 @@ use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Class TaxAuthority
+ * Class TaxFormulaMaster
  * @package App\Models
- * @version April 19, 2018, 5:02 am UTC
+ * @version April 24, 2018, 6:13 am UTC
  *
- * @property string authoritySystemCode
- * @property string authoritySecondaryCode
- * @property integer serialNo
- * @property string AuthorityName
- * @property integer currencyID
- * @property string telephone
- * @property string email
- * @property string fax
- * @property string address
- * @property integer taxPayableGLAutoID
+ * @property string Description
+ * @property integer taxType
  * @property integer companySystemID
  * @property string companyID
  * @property integer createdUserGroup
  * @property string createdPCID
  * @property string createdUserID
- * @property string createdUserName
  * @property string|\Carbon\Carbon createdDateTime
+ * @property string createdUserName
  * @property string modifiedPCID
  * @property string modifiedUserID
- * @property string modifiedUserName
  * @property string|\Carbon\Carbon modifiedDateTime
+ * @property string modifiedUserName
  * @property string|\Carbon\Carbon timestamp
  */
-class TaxAuthority extends Model
+class TaxFormulaMaster extends Model
 {
-    //use SoftDeletes;
+    use SoftDeletes;
 
-    public $table = 'erp_taxauthorithymaster';
-
-    const CREATED_AT = 'createdDateTime';
-    const UPDATED_AT = 'modifiedDateTime';
-
-    protected $primaryKey = "taxAuthourityMasterID";
+    public $table = 'erp_taxcalculationformulamaster';
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
 
 
     protected $dates = ['deleted_at'];
 
 
     public $fillable = [
-        'authoritySystemCode',
-        'authoritySecondaryCode',
-        'serialNo',
-        'AuthorityName',
-        'currencyID',
-        'telephone',
-        'email',
-        'fax',
-        'address',
-        'taxPayableGLAutoID',
+        'Description',
+        'taxType',
         'companySystemID',
         'companyID',
         'createdUserGroup',
         'createdPCID',
         'createdUserID',
-        'createdUserName',
         'createdDateTime',
+        'createdUserName',
         'modifiedPCID',
         'modifiedUserID',
-        'modifiedUserName',
         'modifiedDateTime',
+        'modifiedUserName',
         'timestamp'
     ];
 
@@ -79,17 +61,9 @@ class TaxAuthority extends Model
      * @var array
      */
     protected $casts = [
-        'taxAuthourityMasterID' => 'integer',
-        'authoritySystemCode' => 'string',
-        'authoritySecondaryCode' => 'string',
-        'serialNo' => 'integer',
-        'AuthorityName' => 'string',
-        'currencyID' => 'integer',
-        'telephone' => 'string',
-        'email' => 'string',
-        'fax' => 'string',
-        'address' => 'string',
-        'taxPayableGLAutoID' => 'integer',
+        'taxCalculationformulaID' => 'integer',
+        'Description' => 'string',
+        'taxType' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'createdUserGroup' => 'integer',
@@ -107,8 +81,8 @@ class TaxAuthority extends Model
      * @var array
      */
     public static $rules = [
-
+        
     ];
 
-
+    
 }

@@ -4,8 +4,12 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTaxAPIRequest;
 use App\Http\Requests\API\UpdateTaxAPIRequest;
+use App\Models\ChartOfAccount;
+use App\Models\Company;
 use App\Models\Tax;
+use App\Models\TaxType;
 use App\Repositories\TaxRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -16,7 +20,6 @@ use Response;
  * Class TaxController
  * @package App\Http\Controllers\API
  */
-
 class TaxAPIController extends AppBaseController
 {
     /** @var  TaxRepository */
@@ -54,6 +57,16 @@ class TaxAPIController extends AppBaseController
     public function store(CreateTaxAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $company = Company::find($input["companySystemID"]);
+        $input['companyID'] = $company->CompanyID;
+
+        if (isset($input['effectiveFrom'])) {
+            if ($input['effectiveFrom']) {
+                $input['effectiveFrom'] = new Carbon($input['effectiveFrom']);
+            }
+        }
 
         $taxes = $this->taxRepository->create($input);
 
@@ -92,7 +105,14 @@ class TaxAPIController extends AppBaseController
     public function update($id, UpdateTaxAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToValue($input);
+        $company = Company::find($input["companySystemID"]);
+        $input['companyID'] = $company->CompanyID;
+        if (isset($input['effectiveFrom'])) {
+            if ($input['effectiveFrom']) {
+                $input['effectiveFrom'] = new Carbon($input['effectiveFrom']);
+            }
+        }
         /** @var Tax $tax */
         $tax = $this->taxRepository->findWithoutFail($id);
 
@@ -125,5 +145,57 @@ class TaxAPIController extends AppBaseController
         $tax->delete();
 
         return $this->sendResponse($id, 'Tax deleted successfully');
+    }
+
+
+    public function getTaxMasterDatatable(Request $request)
+    {
+        $input = $request->all();
+        $tax = Tax::with(['authority', 'type']);
+        $companiesByGroup = "";
+
+        if (array_key_exists('selectedCompanyID', $input)) {
+            $tax = $tax->where('companySystemID', $input["selectedCompanyID"]);
+        } else {
+
+            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                $companiesByGroup = $input['globalCompanyId'];
+                $tax = $tax->where('companySystemID', $companiesByGroup);
+            }
+        }
+
+        return \DataTables::eloquent($tax)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('erp_taxmaster_new.taxMasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
+    }
+
+    public function getTaxMasterFormData(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companies = "";
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        if ($isGroup) {
+            $companies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companies = [$selectedCompanyId];
+        }
+        $companiesByGroup = Company::whereIn('companySystemID',$companies)->get();
+        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->where('controllAccountYN', 1)->get();
+
+        $taxType = TaxType::all();
+
+        $output = array('companies' => $companiesByGroup,
+            'taxType' => $taxType,
+            'chartOfAccount' => $chartOfAccount
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }
