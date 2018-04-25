@@ -727,7 +727,10 @@ class PurchaseRequestAPIController extends AppBaseController
     {
         /** @var PurchaseRequest $purchaseRequest */
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
-                                                                    'priority','location','details.uom','company'
+                                                                    'priority','location','details.uom','company','approved_by' => function($query){
+                                                                         $query->with('employee')
+                                                                               ->whereIn('documentSystemID',[1,50,51]);
+                                                                        }
                                                                       ])->findWithoutFail($id);
 
         if (empty($purchaseRequest)) {
@@ -754,7 +757,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmed_by',
-                                        'priority','location','details','company',
+                                        'priority','location','details','company','approved_by',
                                        'PRConfirmedBy','PRConfirmedByEmpName',
                                        'PRConfirmedBySystemID', 'PRConfirmedDate']);
         $input = $this->convertArrayToValue($input);
