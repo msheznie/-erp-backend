@@ -357,11 +357,9 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::resource('tax_types', 'TaxTypeAPIController');
 
+    Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+    Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable');
+    Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+    Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable');
+
 });
-
-
-
-
-Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
-
-Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');

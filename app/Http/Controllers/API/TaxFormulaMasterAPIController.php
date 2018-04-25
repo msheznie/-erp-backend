@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTaxFormulaMasterAPIRequest;
 use App\Http\Requests\API\UpdateTaxFormulaMasterAPIRequest;
+use App\Models\Company;
 use App\Models\TaxFormulaMaster;
 use App\Repositories\TaxFormulaMasterRepository;
 use Illuminate\Http\Request;
@@ -54,6 +55,9 @@ class TaxFormulaMasterAPIController extends AppBaseController
     public function store(CreateTaxFormulaMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $company = Company::find($input["companySystemID"]);
+        $input['companyID'] = $company->CompanyID;
 
         $taxFormulaMasters = $this->taxFormulaMasterRepository->create($input);
 
@@ -92,7 +96,10 @@ class TaxFormulaMasterAPIController extends AppBaseController
     public function update($id, UpdateTaxFormulaMasterAPIRequest $request)
     {
         $input = $request->all();
-
+        unset($input['type']);
+        $input = $this->convertArrayToValue($input);
+        $company = Company::find($input["companySystemID"]);
+        $input['companyID'] = $company->CompanyID;
         /** @var TaxFormulaMaster $taxFormulaMaster */
         $taxFormulaMaster = $this->taxFormulaMasterRepository->findWithoutFail($id);
 
@@ -125,5 +132,27 @@ class TaxFormulaMasterAPIController extends AppBaseController
         $taxFormulaMaster->delete();
 
         return $this->sendResponse($id, 'Tax Formula Master deleted successfully');
+    }
+
+    public function getTaxFormulaMasterDatatable(Request $request)
+    {
+        $input = $request->all();
+        $formula = TaxFormulaMaster::with('type');
+        $companiesByGroup = "";
+        if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+            $companiesByGroup = $input['globalCompanyId'];
+            $formula = $formula->where('companySystemID', $companiesByGroup);
+        }
+
+        return \DataTables::eloquent($formula)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('taxCalculationformulaID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
     }
 }

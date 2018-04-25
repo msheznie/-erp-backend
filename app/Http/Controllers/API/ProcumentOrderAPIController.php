@@ -13,6 +13,7 @@
  * -- Date: 10-April 2018 By: Nazir Description: Added new functions named as getShippingAndInvoiceDetails() for pull details from erp_address table
  * -- Date: 11-April 2018 By: Nazir Description: Added new functions named as procumentOrderDetailTotal() for pull details total from erp_purchaseorderdetails table
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
@@ -844,7 +845,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->with('unit');
         }, 'approved' => function ($query) {
             $query->with('employee');
-            $query->where('documentSystemID', 2);
+            $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment'])->first();

@@ -92,7 +92,8 @@ class TaxFormulaDetailAPIController extends AppBaseController
     public function update($id, UpdateTaxFormulaDetailAPIRequest $request)
     {
         $input = $request->all();
-
+        unset($input['taxmaster']);
+        $input = $this->convertArrayToValue($input);
         /** @var TaxFormulaDetail $taxFormulaDetail */
         $taxFormulaDetail = $this->taxFormulaDetailRepository->findWithoutFail($id);
 
@@ -125,5 +126,21 @@ class TaxFormulaDetailAPIController extends AppBaseController
         $taxFormulaDetail->delete();
 
         return $this->sendResponse($id, 'Tax Formula Detail deleted successfully');
+    }
+
+    public function getTaxFormulaDetailDatatable(Request $request){
+        $input = $request->all();
+        $formulaDetail = TaxFormulaDetail::with('taxmaster')->where('taxCalculationformulaID',$request->taxCalculationformulaID);
+
+        return \DataTables::eloquent($formulaDetail)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('formulaDetailID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
     }
 }
