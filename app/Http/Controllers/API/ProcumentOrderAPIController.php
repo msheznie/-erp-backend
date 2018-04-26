@@ -12,8 +12,10 @@
  * -- Date: 29-March 2018 By: Nazir Description: Added new functions named as getProcumentOrderFormData() for Master View Filter
  * -- Date: 10-April 2018 By: Nazir Description: Added new functions named as getShippingAndInvoiceDetails() for pull details from erp_address table
  * -- Date: 11-April 2018 By: Nazir Description: Added new functions named as procumentOrderDetailTotal() for pull details total from erp_purchaseorderdetails table
- * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as getProcumentOrderAllAmendments() For load PO Amendment Master View
+ * -- Date: 24-April 2018 By: Nazir Description: Added new functions named as getProcumentOrderAllAmendments() For load PO Amendment Master View
  * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as poCheckDetailExistinGrv() for check in grv details,erp_advancepaymentdetails table before closing a PO in amendment pull details total from erp_purchaseorderdetails table
+ * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as procumentOrderCancel() for cancel PO
+ * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as procumentOrderReturnBack() for cancel return back PO to start level PO
  */
 namespace App\Http\Controllers\API;
 
@@ -784,18 +786,18 @@ class ProcumentOrderAPIController extends AppBaseController
             $policy = $allowFinanceCategory->isYesNO;
 
             if ($policy == 0) {
+                $purchaseOrderMaster = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
 
-                $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
-
-                if ($purchaseOrder) {
-                    $financeCategoryId = $purchaseOrder->financeCategory;
+                if ($purchaseOrderMaster) {
+                    $financeCategoryId = $purchaseOrderMaster->financeCategory;
                 }
             }
         }
 
         $items = ItemAssigned::where('companySystemID', $companyId);
 
-        if ($financeCategoryId != 0) {
+
+        if ($policy == 0 && $financeCategoryId != 0) {
             $items = $items->where('financeCategoryMaster', $financeCategoryId);
         }
 
@@ -803,15 +805,17 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $search = $input['search'];
 
-            $items = $items->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
         }
 
         $items = $items
             ->take(20)
             ->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 
     public function getShippingAndInvoiceDetails(Request $request)
@@ -959,7 +963,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $purchaseOrderID = $input['purchaseOrderID'];
 
         $detail = DB::select('SELECT erp_grvdetails.grvAutoID,erp_grvdetails.companyID,erp_grvdetails.purchaseOrderMastertID,erp_grvmaster.grvDate,erp_grvmaster.grvPrimaryCode,erp_grvmaster.grvDoRefNo,erp_grvdetails.itemPrimaryCode,
-erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,currencymaster.CurrencyCode,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
+erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
 
         return $this->sendResponse($detail, 'Details retrieved successfully');
 
@@ -986,7 +990,6 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
-            ->where('approved', -1)
             ->where('poCancelledYN', 0)
             ->with(['created_by' => function ($query) {
                 //$query->select(['empName']);
@@ -1103,10 +1106,9 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $purchaseOrderID = $input['purchaseOrderID'];
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
-            ->first();
+        $employee = \Helper::getEmployeeInfo();
+
+        $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
@@ -1115,10 +1117,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
             ->update([
                 'poCancelledYN' => -1,
-                'poCancelledBySystemID' => $user->employee['empCompanySystemID'],
-                'poCancelledBy' => $user->employee['empID'],
-                'poCancelledByName' => $user->employee['empName'],
-                'poCancelledDate' => date('Y-m-d H:i:s'),
+                'poCancelledBySystemID' => $employee->employeeSystemID,
+                'poCancelledBy' => $employee->empID,
+                'poCancelledByName' => $employee->empName,
+                'poCancelledDate' => now(),
                 'cancelledComments' => $input['cancelComments']
             ]);
 
@@ -1131,8 +1133,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $purchaseOrderID = $input['purchaseOrderID'];
 
-        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
-            ->first();
+        $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
@@ -1142,7 +1143,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->where('documentSystemID', $input['documentSystemID'])
             ->delete();
 
-        if($deleteApproval){
+        if ($deleteApproval) {
             $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
                 ->update([
                     'poConfirmedYN' => 0,
@@ -1154,11 +1155,29 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                     'approvedDate' => null,
                     'approvedByUserID' => '',
                     'approvedByUserSystemID' => '',
+                    'RollLevForApp_curr' => 1
                 ]);
         }
 
         return $this->sendResponse($purchaseOrderID, 'PO return back to amend successfully ');
     }
 
+    public function reportSpentAnalysisBySupplierFilter(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+
+        $years = ProcumentOrder::select(DB::raw("YEAR(createdDateTime) as year"))
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get(['year']);
+
+        $output = array('years' => $years);
+
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
 
 }
