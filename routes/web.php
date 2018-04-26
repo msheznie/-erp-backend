@@ -25,3 +25,5 @@ Route::resource('taxFormulaMasters', 'TaxFormulaMasterController');
 Route::resource('taxFormulaDetails', 'TaxFormulaDetailController');
 
 Route::resource('advancePaymentDetails', 'AdvancePaymentDetailsController');
+
+Route::resource('alerts', 'AlertController');
