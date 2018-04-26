@@ -54,7 +54,7 @@ class TaxFormulaDetailAPIController extends AppBaseController
     public function store(CreateTaxFormulaDetailAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToValue($input);
         $taxFormulaDetails = $this->taxFormulaDetailRepository->create($input);
 
         return $this->sendResponse($taxFormulaDetails->toArray(), 'Tax Formula Detail saved successfully');

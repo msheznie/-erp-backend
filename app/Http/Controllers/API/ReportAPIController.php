@@ -36,8 +36,7 @@ class ReportAPIController extends AppBaseController
                     'suppliers' => 'required',
                     'reportType' => 'required',
                 ]);
-                return $this->sendResponse(array(), 'Success');
-
+                break;
             default:
                 return $this->sendError('Error Occurred');
         }

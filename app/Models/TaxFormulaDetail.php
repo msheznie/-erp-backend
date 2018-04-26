@@ -38,7 +38,7 @@ class TaxFormulaDetail extends Model
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'modifiedDateTime';
 
-
+    protected $primaryKey = 'formulaDetailID';
     protected $dates = ['deleted_at'];
 
 
@@ -100,6 +100,11 @@ class TaxFormulaDetail extends Model
     public function taxmaster()
     {
         return $this->hasOne('App\Models\Tax', 'taxMasterAutoID', 'taxMasterAutoID');
+    }
+
+    public function master()
+    {
+        return $this->hasOne('App\Models\TaxFormulaMaster', 'taxCalculationformulaID', 'taxCalculationformulaID');
     }
 
     
