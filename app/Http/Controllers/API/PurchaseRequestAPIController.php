@@ -290,9 +290,9 @@ class PurchaseRequestAPIController extends AppBaseController
                             });
                         });
                     })
-                    ->when(request('grv') == 'inComplete', function ($q) {
-                        $q->whereIn('goodsRecievedYN', [0, 1]);
-                    });
+                        ->when(request('grv') == 'inComplete', function ($q) {
+                            $q->whereIn('goodsRecievedYN', [0, 1]);
+                        });
                 }])->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
                     return $q->whereIn('itemCode', $itemPrimaryCodes);
                 });
@@ -453,23 +453,23 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if (array_key_exists('requestReview', $input)) {
             if ($input['requestReview'] == 1) {
-                $purchaseRequests->where('cancelledYN', 0)
-                    ->where('approved', -1);
+                $purchaseRequests->where('cancelledYN', 0);
+                //->where('approved', -1);
             }
         } else {
             $purchaseRequests = $purchaseRequests->where('documentSystemID', $input['documentId']);
         }
 
-           $purchaseRequests = $purchaseRequests->with(['created_by' => function ($query) {
-                                                   }, 'priority' => function ($query) {
+        $purchaseRequests = $purchaseRequests->with(['created_by' => function ($query) {
+        }, 'priority' => function ($query) {
 
-                                                   }, 'location' => function ($query) {
+        }, 'location' => function ($query) {
 
-                                                   }, 'segment' => function ($query) {
+        }, 'segment' => function ($query) {
 
-                                                   }, 'financeCategory' => function ($query) {
+        }, 'financeCategory' => function ($query) {
 
-                                                   }]);
+        }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
@@ -923,9 +923,9 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Purchase Request not found');
         }
 
-        $checkPo = PurchaseOrderDetails::where('purchaseRequestID',$input['purchaseRequestID'])->count();
+        $checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
 
-        if($checkPo > 0){
+        if ($checkPo > 0) {
             return $this->sendError('Cannot cancel. Order is created for this request');
         }
 
@@ -938,6 +938,40 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest->cancelledComments = $input['cancelledComments'];
         $purchaseRequest->cancelledDate = now();
         $purchaseRequest->save();
+
+        $emails = array();
+        $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+
+        $body = '<p>' . $cancelDocNameBody . ' is cancelled due to below reason.</p><p>Comment : ' . $input['cancelledComments'] . '</p>';
+        $subject = $cancelDocNameSubject . ' is cancelled';
+
+        if ($purchaseRequest->PRConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $purchaseRequest->PRConfirmedBySystemID,
+                'companySystemID' => $purchaseRequest->companySystemID,
+                'docSystemID' => $purchaseRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseRequest->purchaseRequestID);
+        }
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->get();
+
+        foreach ($documentApproval as $da) {
+            $emails[] = array('empSystemID' => $da->employeeSystemID,
+                'companySystemID' => $purchaseRequest->companySystemID,
+                'docSystemID' => $purchaseRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseRequest->purchaseRequestID);
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully canceled');
 
@@ -955,31 +989,19 @@ class PurchaseRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $purchaseRequest = PurchaseRequest::find($input['purchaseRequestID']);
+        $purchaseRequest = PurchaseRequest::with(['confirmed_by'])->find($input['purchaseRequestID']);
 
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');
         }
 
-        $checkPo = PurchaseOrderDetails::where('purchaseRequestID',$input['purchaseRequestID'])->count();
+        $checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
 
-        if($checkPo > 0){
+        if ($checkPo > 0) {
             return $this->sendError('Cannot cancel. Order is created for this request');
         }
 
         $employee = \Helper::getEmployeeInfo();
-
-        $documentApproval = DocumentApproved::where('companySystemID',$purchaseRequest->companySystemID)
-                                              ->where('documentSystemCode',$purchaseRequest->purchaseRequestID)
-                                              ->where('documentSystemID',$purchaseRequest->documentSystemID)
-                                              ->get();
-
-        $ids_to_delete  = array();
-        foreach ($documentApproval as $da){
-            array_push($ids_to_delete,$da->documentApprovedID);
-        }
-
-        DocumentApproved::destroy($ids_to_delete);
 
         $purchaseRequest->PRConfirmedYN = 0;
         $purchaseRequest->PRConfirmedBy = '';
@@ -990,12 +1012,49 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest->approvedDate = '';
         $purchaseRequest->approvedByUserID = '';
         $purchaseRequest->approvedByUserSystemID = '';
+        $purchaseRequest->RollLevForApp_curr = 1;
         $purchaseRequest->save();
 
+        $emails = array();
+        $ids_to_delete = array();
+
+        $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+
+        $body = '<p>' . $cancelDocNameBody . ' is return back to amend due to below reason.</p><p>Comment : ' . $input['ammendComments'] . '</p>';
+        $subject = $cancelDocNameSubject . ' is return back to amend';
+
+        if ($purchaseRequest->PRConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $purchaseRequest->PRConfirmedBySystemID,
+                'companySystemID' => $purchaseRequest->companySystemID,
+                'docSystemID' => $purchaseRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseRequest->purchaseRequestID);
+        }
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
+                                            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+                                            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                            ->get();
+
+        foreach ($documentApproval as $da) {
+            $emails[] = array('empSystemID' => $da->employeeSystemID,
+                'companySystemID' => $purchaseRequest->companySystemID,
+                'docSystemID' => $purchaseRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseRequest->purchaseRequestID);
+
+            array_push($ids_to_delete, $da->documentApprovedID);
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        DocumentApproved::destroy($ids_to_delete);
+
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
-
     }
-
-
 
 }

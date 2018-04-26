@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use App\Models\Employee;
 
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -362,16 +363,37 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::resource('tax_types', 'TaxTypeAPIController');
 
+    Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+    Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable');
+    Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+    Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable');
+
     Route::post('cancelPurchaseRequest', 'PurchaseRequestAPIController@cancelPurchaseRequest');
     Route::post('returnPurchaseRequest', 'PurchaseRequestAPIController@returnPurchaseRequest');
+    Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+
+    Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+
+    Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
 
 });
 
 
+Route::get('foo', function () {
 
+    $data = array('empSystemID'=> 11,
+                  'companySystemID' => 11,
+                  'docSystemID' => 1,
+                   'alertMessage' => 'Test Subject',
+                   'emailAlertMessage' => 'Test Body',
+                  'docSystemCode' => 15);
 
-Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+    $array = array();
 
-Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+    $array[] = $data;
+    $array[] = $data;
 
-Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
+    return \Email::sendEmail($array);
+});
+
+Route::resource('alerts', 'AlertAPIController');

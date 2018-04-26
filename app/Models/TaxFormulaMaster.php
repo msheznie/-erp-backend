@@ -27,12 +27,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class TaxFormulaMaster extends Model
 {
-    use SoftDeletes;
+    //use SoftDeletes;
 
     public $table = 'erp_taxcalculationformulamaster';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'modifiedDateTime';
+
+    protected $primaryKey = 'taxCalculationformulaID';
 
 
     protected $dates = ['deleted_at'];
@@ -83,6 +85,12 @@ class TaxFormulaMaster extends Model
     public static $rules = [
         
     ];
+
+    public function type()
+    {
+        /** one tax can have only one tax type */
+        return $this->hasOne('App\Models\TaxType', 'taxTypeID', 'taxType');
+    }
 
     
 }

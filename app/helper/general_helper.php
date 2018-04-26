@@ -260,6 +260,59 @@ class Helper
                         }
                         // insert rolls to document approved table
                         Models\DocumentApproved::insert($documentApproved);
+
+                        $documentApproved = Models\DocumentApproved::where("documentSystemID",$params["document"])
+                                                                     ->where("documentSystemCode",$sorceDocument[$docInforArr["primarykey"]])
+                                                                     ->where("rollLevelOrder",1)
+                                                                     ->first();
+                        if($documentApproved){
+
+                            if ($documentApproved->approvedYN == 0) {
+                                $companyDocument =  Models\CompanyDocumentAttachment::where('companySystemID',$documentApproved->companySystemID)
+                                    ->where('documentSystemID', $documentApproved->documentSystemID)
+                                    ->first();
+
+                                if (empty($companyDocument)) {
+                                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                                }
+
+                                $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
+                                    ->where('companySystemID', $documentApproved->companySystemID)
+                                    ->where('documentSystemID', $documentApproved->documentSystemID);
+
+                                if ($companyDocument['isServiceLineApproval'] == -1) {
+                                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproved->serviceLineSystemID);
+                                }
+
+                                $approvalList = $approvalList
+                                    ->with(['employee'])
+                                    ->groupBy('employeeSystemID')
+                                    ->get();
+
+                                $emails = array();
+                                $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
+
+                                $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
+
+                                $body = '<p>' . $approvedDocNameBody . '  is pending for your approval.</p>';
+                                $subject = "Pending ".$document->documentDescription." approval ".$documentApproved->documentCode;
+
+                                foreach ($approvalList as $da) {
+                                    if($da->employee){
+                                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                            'companySystemID' => $documentApproved->companySystemID,
+                                            'docSystemID' => $documentApproved->documentSystemID,
+                                            'alertMessage' => $subject,
+                                            'emailAlertMessage' => $body,
+                                            'docSystemCode' => $documentApproved->documentSystemCode);
+                                    }
+                                }
+
+                                $sendEmail = \Email::sendEmail($emails);
+
+                            }
+
+                        }
                         DB::commit();
                         return ['success' => true, 'message' => 'Successfully document confirmed'];
                     } else {
@@ -611,6 +664,21 @@ class Helper
         $user = Models\User::find(Auth::id());
         return $user->employee_id;
     }
+
+    /**
+     * send Email
+     * @return mixed
+     */
+    public static function sendEmail($data)
+    {
+
+
+
+
+
+
+    }
+
 
     public static function sendResponse($result, $message)
     {

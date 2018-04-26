@@ -17,6 +17,7 @@
  * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as procumentOrderCancel() for cancel PO
  * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as procumentOrderReturnBack() for cancel return back PO to start level PO
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
@@ -852,7 +853,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->with('unit');
         }, 'approved' => function ($query) {
             $query->with('employee');
-            $query->where('documentSystemID', 2);
+            $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment'])->first();
