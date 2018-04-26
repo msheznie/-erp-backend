@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use App\Models\Employee;
 
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -377,3 +378,21 @@ Route::group(['middleware' => 'auth:api'], function(){
 });
 
 
+Route::get('foo', function () {
+
+    $data = array('empSystemID'=> 11,
+                  'companySystemID' => 11,
+                  'docSystemID' => 1,
+                   'alertMessage' => 'Test Subject',
+                   'emailAlertMessage' => 'Test Body',
+                  'docSystemCode' => 15);
+
+    $array = array();
+
+    $array[] = $data;
+    $array[] = $data;
+
+    return \Email::sendEmail($array);
+});
+
+Route::resource('alerts', 'AlertAPIController');
