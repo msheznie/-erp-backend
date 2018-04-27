@@ -86,7 +86,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $this->procumentOrderRepository->pushCriteria(new LimitOffsetCriteria($request));
         $procumentOrders = $this->procumentOrderRepository->all();
 
-        return $this->sendResponse($procumentOrders->toArray(), 'Procument Orders retrieved successfully');
+        return $this->sendResponse($procumentOrders->toArray(), 'Procurement Orders retrieved successfully');
     }
 
     /**
@@ -101,6 +101,14 @@ class ProcumentOrderAPIController extends AppBaseController
     public function store(CreateProcumentOrderAPIRequest $request)
     {
         $input = $request->all();
+
+        if ($input['documentSystemID'] == 5) {
+            if (isset($input['WO_PeriodFrom'])) {
+                $WO_PeriodFrom = new Carbon($input['WO_PeriodFrom'][0]);
+                $WO_PeriodTo = new Carbon($input['WO_PeriodFrom'][1]);
+            }
+        }
+
         $input = $this->convertArrayToValue($input);
 
         $id = Auth::id();
@@ -148,6 +156,25 @@ class ProcumentOrderAPIController extends AppBaseController
                     $input['soldTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
                     $input['soldTocontactPersonEmail'] = $address['contactPersonEmail'];
                 }
+            }
+        }
+        //calculate total months in WO type
+        if ($input['documentSystemID'] == 5) {
+            if (isset($input['WO_PeriodFrom'])) {
+                $input['WO_PeriodFrom'] = $WO_PeriodFrom;
+                $input['WO_PeriodTo'] = $WO_PeriodTo;
+                $input['WO_NoOfGeneratedTimes'] = 0;
+                $ts1 = strtotime($WO_PeriodFrom);
+                $ts2 = strtotime($WO_PeriodTo);
+
+                $year1 = date('Y', $ts1);
+                $year2 = date('Y', $ts2);
+
+                $month1 = date('n', $ts1);
+                $month2 = date('n', $ts2);
+
+                $input['WO_NoOfAutoGenerationTimes'] = abs((($year2 - $year1) * 12) + ($month2 - $month1));
+
             }
         }
 
@@ -228,7 +255,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $procumentOrders = $this->procumentOrderRepository->create($input);
 
-        return $this->sendResponse($procumentOrders->toArray(), 'Procument Order saved successfully');
+        return $this->sendResponse($procumentOrders->toArray(), 'Procurement Order saved successfully');
     }
 
     /**
@@ -246,10 +273,10 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procument Order not found');
+            return $this->sendError('Procurement Order not found');
         }
 
-        return $this->sendResponse($procumentOrder->toArray(), 'Procument Order retrieved successfully');
+        return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
 
     /**
@@ -373,6 +400,14 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if (empty($poDetailExist)) {
                 return $this->sendError('PO Document cannot confirm without details');
+            }
+
+            $checkQuantity = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)
+                ->where('noQty', '<', 1)
+                ->count();
+
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
             }
 
             //po payment terms exist
@@ -509,12 +544,12 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procument Order not found');
+            return $this->sendError('Procurement Order not found');
         }
 
         $procumentOrder->delete();
 
-        return $this->sendResponse($id, 'Procument Order deleted successfully');
+        return $this->sendResponse($id, 'Procurement Order deleted successfully');
     }
 
     public function getProcumentOrderByDocumentType(Request $request)

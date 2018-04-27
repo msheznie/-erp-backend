@@ -634,7 +634,16 @@ class PurchaseRequestAPIController extends AppBaseController
             ->first();
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procument Order not found');
+            return $this->sendError('Procurement Order not found');
+        }
+
+        $documentSystemID = $procumentOrder->documentSystemID;
+        if($documentSystemID == 2){
+            $documentSystemIDChanged = 1 ;
+        }else if($documentSystemID == 5){
+            $documentSystemIDChanged = 50 ;
+        }else if($documentSystemID == 52){
+            $documentSystemIDChanged = 51 ;
         }
 
         $purchaseRequests = PurchaseRequest::where('companySystemID', $companyID)
@@ -643,7 +652,8 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('prClosedYN', 0)
             ->where('cancelledYN', 0)
             ->where('selectedForPO', 0)
-            ->where('supplyChainOnGoing', 0);
+            ->where('supplyChainOnGoing', 0)
+            ->where('documentSystemID', $documentSystemIDChanged);
         if (isset($procumentOrder->financeCategory)) {
             $purchaseRequests = $purchaseRequests->where('financeCategory', $procumentOrder->financeCategory);
         }
