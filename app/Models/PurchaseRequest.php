@@ -131,6 +131,7 @@ class PurchaseRequest extends Model
         'supplierCountryID',
         'financeCategory',
         'PRConfirmedYN',
+        'PRConfirmedByEmpName',
         'PRConfirmedBy',
         'PRConfirmedBySystemID',
         'PRConfirmedDate',
@@ -218,6 +219,7 @@ class PurchaseRequest extends Model
         'financeCategory' => 'integer',
         'PRConfirmedYN' => 'integer',
         'PRConfirmedBy' => 'string',
+        'PRConfirmedByEmpName' => 'string',
         'PRConfirmedBySystemID' => 'integer',
         'isActive' => 'integer',
         'approved' => 'integer',
@@ -297,5 +299,15 @@ class PurchaseRequest extends Model
     public function details(){
         return $this->hasMany('App\Models\PurchaseRequestDetails','purchaseRequestID','purchaseRequestID');
     }
-    
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','purchaseRequestID');
+    }
+
+
+
 }

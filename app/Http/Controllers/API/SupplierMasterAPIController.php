@@ -342,7 +342,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-            $confirm = \Helper::confirmDocument($params);
+           return $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }

@@ -209,7 +209,17 @@ class ChartOfAccountAPIController extends AppBaseController
 
     public function getNotAssignedCompaniesByChartOfAccount(Request $request){
         $chartOfAccountSystemID = $request->get('chartOfAccountSystemID');
-        $companies = Company::where('isGroup', 0)
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        $companies = Company::whereIn("companySystemID",$subCompanies)
             ->whereDoesntHave('chartOfAccountAssigned',function ($query) use ($chartOfAccountSystemID) {
                 $query->where('chartOfAccountSystemID', '=', $chartOfAccountSystemID);
             })
@@ -422,24 +432,20 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $selectedCompanyId = $request['selectedCompanyId'];
 
-        $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
-
-        /** all Companies by Group company  Drop Down */
-        $companiesByGroup = Company::where("masterComapanyID", $masterCompany->CompanyID)
-            ->where("isGroup", 0)->get();
-
         /** all Company  Drop Down */
-        //$allCompanies = Company::where("isGroup", 0)->get();
 
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            /**  Companies by group  Drop Down */
-            $allCompanies = Company::where("masterComapanyID",$masterCompany->CompanyID)
-                ->where("isGroup",0)->get();
+
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+
         }else{
-            $allCompanies = Company::where("companySystemID",$selectedCompanyId)->get();
+            $subCompanies = [$selectedCompanyId];
         }
+
+        /**  Companies by group  Drop Down */
+        $allCompanies = Company::whereIn("companySystemID",$subCompanies)->get();
 
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,

@@ -89,9 +89,9 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $input['narration'] = $input['paymentTemDes'];
 
         if (isset($input['comDate'])) {
-            if ($input['comDate']) {
-                $input['reqDate'] = new Carbon($input['comDate']);
-            }
+            $originalDate = $input['comDate'];
+            $myDateTime = DateTime::createFromFormat('Y-m-d', $originalDate);
+            $input['reqDate'] = $myDateTime;
         }
         $input['reqAmount'] = $input['comAmount'];
         $input['reqAmountTransCur_amount'] = $input['comAmount'];
@@ -104,6 +104,8 @@ class PoAdvancePaymentAPIController extends AppBaseController
 
         $input['requestedByEmpID'] = $user->employee['empID'];
         $input['requestedByEmpName'] = $user->employee['empName'];
+
+        return $input;
 
         $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
 
@@ -198,6 +200,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $currency = CurrencyMaster::where('currencyID', $purchaseOrder->supplierTransactionCurrencyID)->first();
 
         $detailPaymentType = PoPaymentTermTypes::where('paymentTermsCategoryID', $AdvancePayment->LCPaymentYN)->first();
+
 
         $output = array('pomaster' => $purchaseOrder,
             'advancedetail' => $AdvancePayment,

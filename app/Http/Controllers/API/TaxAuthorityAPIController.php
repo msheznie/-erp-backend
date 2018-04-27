@@ -4,6 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTaxAuthorityAPIRequest;
 use App\Http\Requests\API\UpdateTaxAuthorityAPIRequest;
+use App\Models\ChartOfAccount;
+use App\Models\Company;
+use App\Models\CurrencyMaster;
 use App\Models\TaxAuthority;
 use App\Repositories\TaxAuthorityRepository;
 use Illuminate\Http\Request;
@@ -16,7 +19,6 @@ use Response;
  * Class TaxAuthorityController
  * @package App\Http\Controllers\API
  */
-
 class TaxAuthorityAPIController extends AppBaseController
 {
     /** @var  TaxAuthorityRepository */
@@ -54,6 +56,19 @@ class TaxAuthorityAPIController extends AppBaseController
     public function store(CreateTaxAuthorityAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $lastSerial = TaxAuthority::max('serialNo');
+
+        $lastSerialNumber = 0;
+        if ($lastSerial) {
+            $lastSerialNumber = $lastSerial + 1;
+        }
+        $company = Company::find($input["companySystemID"]);
+        $authoritySystemCode = ($company->CompanyID . '\\' . 'AUT' . str_pad($lastSerialNumber + 1, 6, '0', STR_PAD_LEFT));
+        $input['authoritySystemCode'] = $authoritySystemCode;
+        $input['serialNo'] = $lastSerialNumber;
+        $input['companyID'] = $company->CompanyID;
 
         $taxAuthorities = $this->taxAuthorityRepository->create($input);
 
@@ -92,6 +107,7 @@ class TaxAuthorityAPIController extends AppBaseController
     public function update($id, UpdateTaxAuthorityAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
         /** @var TaxAuthority $taxAuthority */
         $taxAuthority = $this->taxAuthorityRepository->findWithoutFail($id);
@@ -125,5 +141,63 @@ class TaxAuthorityAPIController extends AppBaseController
         $taxAuthority->delete();
 
         return $this->sendResponse($id, 'Tax Authority deleted successfully');
+    }
+
+    public function getTaxAuthorityDatatable(Request $request)
+    {
+        $input = $request->all();
+        $authority = TaxAuthority::select('*');
+        $companiesByGroup = "";
+        if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+            $companiesByGroup = $input['globalCompanyId'];
+            $authority = $authority->where('companySystemID', $companiesByGroup);
+        }
+
+        return \DataTables::eloquent($authority)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('taxAuthourityMasterID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
+    }
+
+    public function getTaxAuthorityFormData(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companies = "";
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        if ($isGroup) {
+            $companies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companies = [$selectedCompanyId];
+        }
+        $companiesByGroup = Company::whereIn('companySystemID', $companies)->get();
+
+        $currency = CurrencyMaster::all();
+
+        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->where('controllAccountYN', 1)->get();
+
+        $output = array('companies' => $companiesByGroup,
+            'currency' => $currency,
+            'chartOfAccount' => $chartOfAccount,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getAuthorityByCompany(Request $request)
+    {
+        $output = TaxAuthority::where('companySystemID', $request->companySystemID)->get();
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getAccountByAuthority(Request $request)
+    {
+        $output = TaxAuthority::where('taxAuthourityMasterID', $request->taxAuthourityMasterID)->first();
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }

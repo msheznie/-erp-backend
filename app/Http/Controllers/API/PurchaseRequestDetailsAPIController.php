@@ -18,6 +18,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\GRVDetails;
 use App\Models\ItemAssigned;
+use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
@@ -125,7 +126,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                        'Amount' => $item->wacValueLocal);*/
 
         $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
-        $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
 
         $input['estimatedCost'] = $currencyConversion['documentAmount'];
 
@@ -199,13 +199,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
                 $anyPendingApproval = $checkWhether->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
                     $query->where('itemPrimaryCode', $item->itemPrimaryCode);
-                    /* $query->groupBy(
-                         'erp_purchaserequestdetails.itemCode',
-                         'erp_purchaserequestdetails.itemPrimaryCode',
-                         'erp_purchaserequestdetails.selectedForPO',
-                         'erp_purchaserequestdetails.prClosedYN',
-                         'erp_purchaserequestdetails.fullyOrdered'
-                     )->select([
+                                /* $query->groupBy(
+                                     'erp_purchaserequestdetails.itemCode',
+                                     'erp_purchaserequestdetails.itemPrimaryCode',
+                                     'erp_purchaserequestdetails.selectedForPO',
+                                     'erp_purchaserequestdetails.prClosedYN',
+                                     'erp_purchaserequestdetails.fullyOrdered'
+                                 )->select([
                                  'erp_purchaserequestdetails.itemCode',
                                  'erp_purchaserequestdetails.itemPrimaryCode',
                                  'erp_purchaserequestdetails.selectedForPO',
@@ -221,7 +221,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 if (!empty($anyPendingApproval)) {
                     return $this->sendError("There is a purchase request (" . $anyPendingApproval->purchaseRequestCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
                 }
-
 
                 $anyApprovedPRButPONotProcessed = PurchaseRequest::where('purchaseRequestID', '!=', $purchaseRequest->purchaseRequestID)
                     ->where('companySystemID', $companySystemID)
@@ -249,13 +248,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                             ->where('selectedForPO', 0)
                             ->where('prClosedYN', 0)
                             ->where('fullyOrdered', 0);
-                        /* $query->groupBy(
-                             'erp_purchaserequestdetails.itemCode',
-                             'erp_purchaserequestdetails.itemPrimaryCode',
-                             'erp_purchaserequestdetails.selectedForPO',
-                             'erp_purchaserequestdetails.prClosedYN',
-                             'erp_purchaserequestdetails.fullyOrdered'
-                         )->select([
+                                    /* $query->groupBy(
+                                         'erp_purchaserequestdetails.itemCode',
+                                         'erp_purchaserequestdetails.itemPrimaryCode',
+                                         'erp_purchaserequestdetails.selectedForPO',
+                                         'erp_purchaserequestdetails.prClosedYN',
+                                         'erp_purchaserequestdetails.fullyOrdered'
+                                     )->select([
                                      'erp_purchaserequestdetails.itemCode',
                                      'erp_purchaserequestdetails.itemPrimaryCode',
                                      'erp_purchaserequestdetails.selectedForPO',
@@ -297,13 +296,13 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                             ->where('selectedForPO', 0)
                             ->where('prClosedYN', 0)
                             ->where('fullyOrdered', 1);
-                        /* $query->groupBy(
-                             'erp_purchaserequestdetails.itemCode',
-                             'erp_purchaserequestdetails.itemPrimaryCode',
-                             'erp_purchaserequestdetails.selectedForPO',
-                             'erp_purchaserequestdetails.prClosedYN',
-                             'erp_purchaserequestdetails.fullyOrdered'
-                         )->select([
+                                    /* $query->groupBy(
+                                         'erp_purchaserequestdetails.itemCode',
+                                         'erp_purchaserequestdetails.itemPrimaryCode',
+                                         'erp_purchaserequestdetails.selectedForPO',
+                                         'erp_purchaserequestdetails.prClosedYN',
+                                         'erp_purchaserequestdetails.fullyOrdered'
+                                     )->select([
                                      'erp_purchaserequestdetails.itemCode',
                                      'erp_purchaserequestdetails.itemPrimaryCode',
                                      'erp_purchaserequestdetails.selectedForPO',
@@ -320,7 +319,22 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     return $this->sendError("There is a purchase request (" . $anyApprovedPRButPOPartiallyProcessed->purchaseRequestCode . ") approved and PO is partially processed for the item you are trying to add. Please check again", 500);
                 }
 
-                /* $unApprovedPO*/
+                /* PO check*/
+
+                $checkPOPending  = ProcumentOrder::where('companySystemID', $companySystemID)
+                                                    ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
+                                                    ->whereHas('detail', function ($query) use ($item) {
+                                                        $query->where('itemPrimaryCode', $item->itemPrimaryCode);
+                                                    })
+                                                    ->where('approved', 0)
+                                                    ->where('poCancelledYN', 0)
+                                                    ->first();
+
+                if (!empty($checkPOPending)) {
+                    return $this->sendError("There is a purchase order (" . $checkPOPending->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+                }
+                /* PO --> approved=-1 And cancelledYN=0 */
+
             }
         }
 

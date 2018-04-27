@@ -1,7 +1,7 @@
 <?php
 /**
  * =============================================
- * -- File Name : PurchaseRequestAPIController.php
+ * -- File Name : ProcumentOrderAPIController.php
  * -- Project Name : ERP
  * -- Module Name :  Purchase Order
  * -- Author : Mohamed Nazir
@@ -11,7 +11,13 @@
  * -- Date: 28-March 2018 By: Nazir Description: Added new functions named as getProcumentOrderByDocumentType() For load Master View
  * -- Date: 29-March 2018 By: Nazir Description: Added new functions named as getProcumentOrderFormData() for Master View Filter
  * -- Date: 10-April 2018 By: Nazir Description: Added new functions named as getShippingAndInvoiceDetails() for pull details from erp_address table
+ * -- Date: 11-April 2018 By: Nazir Description: Added new functions named as procumentOrderDetailTotal() for pull details total from erp_purchaseorderdetails table
+ * -- Date: 24-April 2018 By: Nazir Description: Added new functions named as getProcumentOrderAllAmendments() For load PO Amendment Master View
+ * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as poCheckDetailExistinGrv() for check in grv details,erp_advancepaymentdetails table before closing a PO in amendment pull details total from erp_purchaseorderdetails table
+ * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as procumentOrderCancel() for cancel PO
+ * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as procumentOrderReturnBack() for cancel return back PO to start level PO
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
@@ -24,6 +30,7 @@ use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\Location;
+use App\Models\DocumentApproved;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
@@ -36,6 +43,8 @@ use App\Models\SupplierAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\PoPaymentTerms;
 use App\Models\SupplierCurrency;
+use App\Models\GRVDetails;
+use App\Models\AdvancePaymentDetails;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -182,8 +191,9 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
         if ($documentMaster) {
-            $poCode = ($company->CompanyID.'\\'.$documentMaster['documentID']. str_pad($lastSerialNumber+1, 6, '0', STR_PAD_LEFT));
+            $poCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['purchaseOrderCode'] = $poCode;
         }
 
@@ -258,7 +268,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by', 'expectedDeliveryDate']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'expectedDeliveryDate', 'totalOrderAmount']);
         $input = $this->convertArrayToValue($input);
 
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
@@ -397,7 +407,7 @@ class ProcumentOrderAPIController extends AppBaseController
             unset($input['poConfirmedByName']);
             unset($input['poConfirmedDate']);
 
-            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $poMasterSum['masterTotalSum']);
+            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $poMasterSumDeducted);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
@@ -475,7 +485,7 @@ class ProcumentOrderAPIController extends AppBaseController
                             'VATPercentage' => round($procumentOrder->VATPercentage, 8),
                             'VATAmount' => round($vatLineAmount, 8),
                             'VATAmountLocal' => round($currencyConversionForLineAmount['localAmount'], 8),
-                            'VATAmountRpt' => round( $currencyConversionForLineAmount['reportingAmount'], 8)
+                            'VATAmountRpt' => round($currencyConversionForLineAmount['reportingAmount'], 8)
                         ]);
                 }
             }
@@ -518,6 +528,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
             ->where('documentSystemID', $input['documentId'])
+            ->whereIn('poType_N', [$input['poType_N']])
             ->with(['created_by' => function ($query) {
                 //$query->select(['empName']);
             }, 'location' => function ($query) {
@@ -549,6 +560,18 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('grvRecieved', $input)) {
+            if ($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) {
+                $procumentOrders->where('grvRecieved', $input['grvRecieved']);
+            }
+        }
+
+        if (array_key_exists('invoicedBooked', $input)) {
+            if ($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) {
+                $procumentOrders->where('invoicedBooked', $input['invoicedBooked']);
+            }
+        }
+
         if (array_key_exists('month', $input)) {
             $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
         }
@@ -560,6 +583,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrders = $procumentOrders->select(
             ['erp_purchaseordermaster.purchaseOrderID',
                 'erp_purchaseordermaster.purchaseOrderCode',
+                'erp_purchaseordermaster.documentSystemID',
                 'erp_purchaseordermaster.budgetYear',
                 'erp_purchaseordermaster.createdDateTime',
                 'erp_purchaseordermaster.createdUserSystemID',
@@ -579,6 +603,8 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.supplierTransactionCurrencyID',
                 'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
                 'erp_purchaseordermaster.financeCategory',
+                'erp_purchaseordermaster.grvRecieved',
+                'erp_purchaseordermaster.invoicedBooked',
             ]);
 
         $search = $request->input('search.value');
@@ -646,7 +672,6 @@ class ProcumentOrderAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-
         $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
             ->where('companySystemID', $companyId)
             ->first();
@@ -694,6 +719,10 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'detailExist' => 0, 'pullPRPolicy' => 0);
 
+        $grvRecieved = array(['id' => '0', 'value' => 'Not Received'], ['id' => '1', 'value' => 'Partial Received'], ['id' => '2', 'value' => 'Fully Received']);
+
+        $invoiceBooked = array(['id' => '0', 'value' => 'Not Invoiced'], ['id' => '1', 'value' => 'Partial Invoiced'], ['id' => '2', 'value' => 'Fully Invoiced']);
+
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
         }
@@ -731,7 +760,9 @@ class ProcumentOrderAPIController extends AppBaseController
             'addresstypeinvoice' => $addressTypeInvoice,
             'addresstypesold' => $addressTypeSold,
             'paymentterms' => $PoPaymentTermTypes,
-            'detailSum' => $detailSum
+            'detailSum' => $detailSum,
+            'grvRecieved' => $grvRecieved,
+            'invoiceBooked' => $invoiceBooked
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -756,18 +787,18 @@ class ProcumentOrderAPIController extends AppBaseController
             $policy = $allowFinanceCategory->isYesNO;
 
             if ($policy == 0) {
+                $purchaseOrderMaster = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
 
-                $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
-
-                if ($purchaseOrder) {
-                    $financeCategoryId = $purchaseOrder->financeCategory;
+                if ($purchaseOrderMaster) {
+                    $financeCategoryId = $purchaseOrderMaster->financeCategory;
                 }
             }
         }
 
         $items = ItemAssigned::where('companySystemID', $companyId);
 
-        if ($financeCategoryId != 0) {
+
+        if ($policy == 0 && $financeCategoryId != 0) {
             $items = $items->where('financeCategoryMaster', $financeCategoryId);
         }
 
@@ -775,15 +806,17 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $search = $input['search'];
 
-            $items = $items->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
         }
 
         $items = $items
             ->take(20)
             ->get();
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 
     public function getShippingAndInvoiceDetails(Request $request)
@@ -820,12 +853,332 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->with('unit');
         }, 'approved' => function ($query) {
             $query->with('employee');
-            $query->where('documentSystemID', 2);
+            $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment'])->first();
         return $this->sendResponse($output, 'Data retrieved successfully');
 
+    }
+
+    public function getPOMasterApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        /*$companyID = \Helper::getGroupCompany($companyID);*/
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
+            ->where('documentSystemID', 2)
+            ->first();
+
+        $poMasters = DB::table('erp_documentapproved')->select(
+            'erp_purchaseordermaster.purchaseOrderID',
+            'erp_purchaseordermaster.purchaseOrderCode',
+            'erp_purchaseordermaster.documentSystemID',
+            'erp_purchaseordermaster.referenceNumber',
+            'erp_purchaseordermaster.expectedDeliveryDate',
+            'erp_purchaseordermaster.supplierPrimaryCode',
+            'erp_purchaseordermaster.supplierName',
+            'erp_purchaseordermaster.narration',
+            'erp_purchaseordermaster.serviceLine',
+            'erp_purchaseordermaster.createdDateTime',
+            'erp_purchaseordermaster.poConfirmedDate',
+            'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'rollLevelOrder',
+            'approvalLevelID',
+            'documentSystemCode'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->whereIn('employeesdepartments.documentSystemID', [2, 5, 52])
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_purchaseordermaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseOrderID')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_purchaseordermaster.companySystemID', $companyID)
+                ->where('erp_purchaseordermaster.approved', 0)
+                ->where('erp_purchaseordermaster.poConfirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [2, 5, 52])
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        return \DataTables::of($poMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveProcurementOrder(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectProcurementOrder(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+
+    }
+
+    public function getGoodReceivedNoteDetailsForPO(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $detail = DB::select('SELECT erp_grvdetails.grvAutoID,erp_grvdetails.companyID,erp_grvdetails.purchaseOrderMastertID,erp_grvmaster.grvDate,erp_grvmaster.grvPrimaryCode,erp_grvmaster.grvDoRefNo,erp_grvdetails.itemPrimaryCode,
+erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
+
+        return $this->sendResponse($detail, 'Details retrieved successfully');
+
+    }
+
+    function getInvoiceDetailsForPO(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $detail = DB::select('SELECT erp_bookinvsuppmaster.bookingSuppMasInvAutoID,erp_bookinvsuppmaster.companyID,erp_bookinvsuppdet.purchaseOrderID,erp_bookinvsuppmaster.documentID,erp_grvmaster.grvPrimaryCode,erp_bookinvsuppmaster.bookingInvCode,erp_bookinvsuppmaster.bookingDate,erp_bookinvsuppmaster.comments,erp_bookinvsuppmaster.supplierInvoiceNo,erp_bookinvsuppmaster.confirmedYN,erp_bookinvsuppmaster.confirmedByName,erp_bookinvsuppmaster.approved,currencymaster.CurrencyCode,erp_bookinvsuppdet.totTransactionAmount FROM erp_bookinvsuppmaster INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID WHERE purchaseOrderID = ' . $purchaseOrderID . ' ');
+
+        return $this->sendResponse($detail, 'Details retrieved successfully');
+    }
+
+    public function getProcumentOrderAllAmendments(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
+            ->where('poCancelledYN', 0)
+            ->with(['created_by' => function ($query) {
+                //$query->select(['empName']);
+            }, 'location' => function ($query) {
+            }, 'supplier' => function ($query) {
+            }, 'currency' => function ($query) {
+            }, 'fcategory' => function ($query) {
+            }, 'segment' => function ($query) {
+            }]);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+        }
+
+        if (array_key_exists('grvRecieved', $input)) {
+            if ($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) {
+                $procumentOrders->where('grvRecieved', $input['grvRecieved']);
+            }
+        }
+
+        if (array_key_exists('invoicedBooked', $input)) {
+            if ($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) {
+                $procumentOrders->where('invoicedBooked', $input['invoicedBooked']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
+        }
+
+        if (array_key_exists('year', $input)) {
+            $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+        }
+
+        $procumentOrders = $procumentOrders->select(
+            ['erp_purchaseordermaster.purchaseOrderID',
+                'erp_purchaseordermaster.purchaseOrderCode',
+                'erp_purchaseordermaster.documentSystemID',
+                'erp_purchaseordermaster.budgetYear',
+                'erp_purchaseordermaster.createdDateTime',
+                'erp_purchaseordermaster.createdUserSystemID',
+                'erp_purchaseordermaster.narration',
+                'erp_purchaseordermaster.poLocation',
+                'erp_purchaseordermaster.poCancelledYN',
+                'erp_purchaseordermaster.poConfirmedYN',
+                'erp_purchaseordermaster.poConfirmedDate',
+                'erp_purchaseordermaster.approved',
+                'erp_purchaseordermaster.approvedDate',
+                'erp_purchaseordermaster.timesReferred',
+                'erp_purchaseordermaster.serviceLineSystemID',
+                'erp_purchaseordermaster.supplierID',
+                'erp_purchaseordermaster.supplierName',
+                'erp_purchaseordermaster.expectedDeliveryDate',
+                'erp_purchaseordermaster.referenceNumber',
+                'erp_purchaseordermaster.supplierTransactionCurrencyID',
+                'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
+                'erp_purchaseordermaster.financeCategory',
+                'erp_purchaseordermaster.grvRecieved',
+                'erp_purchaseordermaster.invoicedBooked',
+            ]);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $procumentOrders = $procumentOrders->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                ->orWhere('narration', 'LIKE', "%{$search}%");
+        }
+
+        return \DataTables::eloquent($procumentOrders)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+        ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
+    }
+
+    public function poCheckDetailExistinGrv(Request $request)
+    {
+        $purchaseOrderID = $request['purchaseOrderID'];
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $purchaseOrderID)
+            ->first();
+
+        if (!empty($detailExistGRV)) {
+            return $this->sendError('Cannot cancel. GRV is created for this PO ');
+        }
+
+        $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (!empty($detailExistAPD)) {
+            return $this->sendError('Cannot cancel. Advance Payment is created for this PO');
+        }
+
+        return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
+    }
+
+    public function procumentOrderCancel(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->update([
+                'poCancelledYN' => -1,
+                'poCancelledBySystemID' => $employee->employeeSystemID,
+                'poCancelledBy' => $employee->empID,
+                'poCancelledByName' => $employee->empName,
+                'poCancelledDate' => now(),
+                'cancelledComments' => $input['cancelComments']
+            ]);
+
+        return $this->sendResponse($purchaseOrderID, 'PO canceled successfully ');
+    }
+
+    public function procumentOrderReturnBack(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->delete();
+
+        if ($deleteApproval) {
+            $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+                ->update([
+                    'poConfirmedYN' => 0,
+                    'poConfirmedByEmpSystemID' => '',
+                    'poConfirmedByEmpID' => '',
+                    'poConfirmedByName' => '',
+                    'poConfirmedDate' => null,
+                    'approved' => 0,
+                    'approvedDate' => null,
+                    'approvedByUserID' => '',
+                    'approvedByUserSystemID' => '',
+                    'RollLevForApp_curr' => 1
+                ]);
+        }
+
+        return $this->sendResponse($purchaseOrderID, 'PO return back to amend successfully ');
+    }
+
+    public function reportSpentAnalysisBySupplierFilter(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+
+        $years = ProcumentOrder::select(DB::raw("YEAR(createdDateTime) as year"))
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get(['year']);
+
+        $output = array('years' => $years);
+
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
 }

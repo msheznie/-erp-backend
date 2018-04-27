@@ -222,6 +222,7 @@ return [
         'DataTables' => Yajra\DataTables\Facades\DataTables::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'Helper' => App\Helper\Helper::class,
+        'Email' => App\Helper\email::class,
 
     ],
 

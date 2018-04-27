@@ -54,14 +54,15 @@ class Helper
         $groupCompany = [];
         if ($companiesByGroup) {
             foreach ($companiesByGroup as $val) {
-                if ($val['child']) {
-                    foreach ($val['child'] as $val1) {
-                        $groupCompany[] = array('companySystemID' => $val1["companySystemID"], 'CompanyID' => $val1["CompanyID"], 'CompanyName' => $val1["CompanyName"]);
+                if (array_key_exists('child', $val)) {
+                    if ($val['child']) {
+                        foreach ($val['child'] as $val1) {
+                            $groupCompany[] = array('companySystemID' => $val1["companySystemID"], 'CompanyID' => $val1["CompanyID"], 'CompanyName' => $val1["CompanyName"]);
+                        }
                     }
                 } else {
                     $groupCompany[] = array('companySystemID' => $val["companySystemID"], 'CompanyID' => $val["CompanyID"], 'CompanyName' => $val["CompanyName"]);
                 }
-
             }
         }
         $groupCompany = array_column($groupCompany, 'companySystemID');
@@ -187,9 +188,9 @@ class Helper
                         $isValueWise = $policy->isAmountApproval;
                         $isAttachment = $policy->isAttachmentYN;
                         //check for attachment is uploaded if attachment policy is set to must
-                        if($isAttachment == -1){
-                            $docAttachment = Models\DocumentAttachments::where('companySystemID',$params["company"])->where('documentSystemID',$params["document"])->where('documentSystemCode',$params["autoID"])->first();
-                            if(!$docAttachment){
+                        if ($isAttachment == -1) {
+                            $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                            if (!$docAttachment) {
                                 return ['success' => false, 'message' => 'No attachment found'];
                             }
                         }
@@ -259,6 +260,59 @@ class Helper
                         }
                         // insert rolls to document approved table
                         Models\DocumentApproved::insert($documentApproved);
+
+                        $documentApproved = Models\DocumentApproved::where("documentSystemID",$params["document"])
+                                                                     ->where("documentSystemCode",$sorceDocument[$docInforArr["primarykey"]])
+                                                                     ->where("rollLevelOrder",1)
+                                                                     ->first();
+                        if($documentApproved){
+
+                            if ($documentApproved->approvedYN == 0) {
+                                $companyDocument =  Models\CompanyDocumentAttachment::where('companySystemID',$documentApproved->companySystemID)
+                                    ->where('documentSystemID', $documentApproved->documentSystemID)
+                                    ->first();
+
+                                if (empty($companyDocument)) {
+                                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                                }
+
+                                $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
+                                    ->where('companySystemID', $documentApproved->companySystemID)
+                                    ->where('documentSystemID', $documentApproved->documentSystemID);
+
+                                if ($companyDocument['isServiceLineApproval'] == -1) {
+                                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproved->serviceLineSystemID);
+                                }
+
+                                $approvalList = $approvalList
+                                    ->with(['employee'])
+                                    ->groupBy('employeeSystemID')
+                                    ->get();
+
+                                $emails = array();
+                                $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
+
+                                $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
+
+                                $body = '<p>' . $approvedDocNameBody . '  is pending for your approval.</p>';
+                                $subject = "Pending ".$document->documentDescription." approval ".$documentApproved->documentCode;
+
+                                foreach ($approvalList as $da) {
+                                    if($da->employee){
+                                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                            'companySystemID' => $documentApproved->companySystemID,
+                                            'docSystemID' => $documentApproved->documentSystemID,
+                                            'alertMessage' => $subject,
+                                            'emailAlertMessage' => $body,
+                                            'docSystemCode' => $documentApproved->documentSystemCode);
+                                    }
+                                }
+
+                                $sendEmail = \Email::sendEmail($emails);
+
+                            }
+
+                        }
                         DB::commit();
                         return ['success' => true, 'message' => 'Successfully document confirmed'];
                     } else {
@@ -435,6 +489,7 @@ class Helper
                 $docInforArr["approvedBy"] = 'itemApprovedBy';
                 $docInforArr["approvedBySystemID"] = 'itemApprovedBySystemID';
                 $docInforArr["approvedDate"] = 'itemApprovedDate';
+                $docInforArr["approveValue"] = 1;
                 break;
             case 56:
                 $docInforArr["tableName"] = 'suppliermaster';
@@ -444,6 +499,7 @@ class Helper
                 $docInforArr["approvedBy"] = 'approvedby';
                 $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = 1;
                 break;
             case 58:
                 $docInforArr["tableName"] = 'customermaster';
@@ -453,6 +509,7 @@ class Helper
                 $docInforArr["approvedBy"] = 'approvedEmpID';
                 $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = 1;
                 break;
             case 59:
                 $docInforArr["tableName"] = 'chartofaccounts';
@@ -462,6 +519,31 @@ class Helper
                 $docInforArr["approvedBy"] = 'approvedBy';
                 $docInforArr["approvedBySystemID"] = 'approvedBySystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = 1;
+                break;
+            case 2:
+            case 5:
+            case 52:
+                $docInforArr["tableName"] = 'erp_purchaseordermaster';
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'purchaseOrderID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                break;
+            case 1:
+            case 50:
+            case 51:
+                $docInforArr["tableName"] = 'erp_purchaserequest';
+                $docInforArr["modelName"] = 'PurchaseRequest';
+                $docInforArr["primarykey"] = 'purchaseRequestID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -480,8 +562,8 @@ class Helper
                         // get current employee detail
                         $empInfo = self::getEmployeeInfo();
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
-                            $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => 1, $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
-                        }else{
+                            $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
+                        } else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
                         }
@@ -558,15 +640,17 @@ class Helper
      * @param $date
      * @return false|string
      */
-    public static function dateFormat($date){
+    public static function dateFormat($date)
+    {
         return date("d/m/Y", strtotime($date));
     }
 
-    public static function checkIsCompanyGroup($companyID){
-        $isCompaniesGroup = Models\Company::where('companySystemID',$companyID)->where('isGroup',-1)->exists();
-        if($isCompaniesGroup){
+    public static function checkIsCompanyGroup($companyID)
+    {
+        $isCompaniesGroup = Models\Company::where('companySystemID', $companyID)->where('isGroup', -1)->exists();
+        if ($isCompaniesGroup) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -580,6 +664,21 @@ class Helper
         $user = Models\User::find(Auth::id());
         return $user->employee_id;
     }
+
+    /**
+     * send Email
+     * @return mixed
+     */
+    public static function sendEmail($data)
+    {
+
+
+
+
+
+
+    }
+
 
     public static function sendResponse($result, $message)
     {
