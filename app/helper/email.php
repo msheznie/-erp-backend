@@ -13,10 +13,13 @@
 namespace App\helper;
 
 use App\Models\Alert;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\ItemMaster;
+use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use App\Models\SupplierMaster;
 use App\Repositories\AlertRepository;
@@ -51,22 +54,29 @@ class email
         foreach ($array as $data) {
             $employee = Employee::where('employeeSystemID', $data['empSystemID'])->first();
 
+
             if (!empty($employee)) {
                 $data['empID'] = $employee->empID;
                 $data['empName'] = $employee->empName;
                 $data['empEmail'] = $employee->empEmail;
+            }else{
+                return ['success' => false, 'message' => 'Employee Not Found'];
             }
 
             $company = Company::where('companySystemID', $data['companySystemID'])->first();
 
             if (!empty($company)) {
                 $data['companyID'] = $company->CompanyID;
+            }else{
+                return ['success' => false, 'message' => 'Company Not Found'];
             }
 
             $document = DocumentMaster::where('documentSystemID', $data['docSystemID'])->first();
 
             if (!empty($document)) {
                 $data['docID'] = $document->documentID;
+            }else{
+                return ['success' => false, 'message' => 'Document Not Found'];
             }
 
             switch ($data['docSystemID']) { // check the document id and set relevant parameters
@@ -77,6 +87,15 @@ class email
                     if (!empty($purchaseRequest)) {
                         $data['docApprovedYN'] = $purchaseRequest->approved;
                         $data['docCode'] = $purchaseRequest->purchaseRequestCode;
+                    }
+                    break;
+                case 2:
+                case 5:
+                case 52:
+                    $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $data['docSystemCode'])->first();
+                    if (!empty($purchaseOrder)) {
+                        $data['docApprovedYN'] = $purchaseOrder->approved;
+                        $data['docCode']       = $purchaseOrder->purchaseOrderCode;
                     }
                     break;
                 case 56:
@@ -91,6 +110,20 @@ class email
                     if (!empty($item)) {
                         $data['docApprovedYN'] = $item->itemApprovedYN;
                         $data['docCode']       = $item->primaryCode;
+                    }
+                    break;
+                case 58:
+                    $customer = CustomerMaster::where('customerCodeSystem', $data['docSystemCode'])->first();
+                    if (!empty($customer)) {
+                        $data['docApprovedYN'] = $customer->approvedYN;
+                        $data['docCode']       = $customer->CutomerCode;
+                    }
+                    break;
+                case 59:
+                    $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $data['docSystemCode'])->first();
+                    if (!empty($chartOfAccount)) {
+                        $data['docApprovedYN'] = $chartOfAccount->isApproved;
+                        $data['docCode']       = $chartOfAccount->AccountCode;
                     }
                     break;
                 default:

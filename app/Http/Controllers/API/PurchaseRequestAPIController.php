@@ -968,9 +968,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
-            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
-            ->where('documentSystemID', $purchaseRequest->documentSystemID)
-            ->get();
+                                                ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+                                                ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                                ->where('approvedYN', -1)
+                                                ->get();
 
         foreach ($documentApproval as $da) {
             $emails[] = array('empSystemID' => $da->employeeSystemID,
@@ -982,6 +983,9 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"],500);
+        }
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully canceled');
 
@@ -1048,6 +1052,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
                                             ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
                                             ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                            ->where('approvedYN', -1)
                                             ->get();
 
         foreach ($documentApproval as $da) {
@@ -1062,6 +1067,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"],500);
+        }
+
         DocumentApproved::destroy($ids_to_delete);
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
