@@ -101,6 +101,8 @@ class Helper
             $docInforArr = array('documentCodeColumnName' => '', 'confirmColumnName' => '', 'confirmedBy' => '', 'confirmedBySystemID' => '', 'confirmedDate' => '', 'tableName' => '', 'modelName' => '', 'primarykey' => '');
             switch ($params["document"]) { // check the document id and set relavant parameters
                 case 1:
+                case 50:
+                case 51:
                     $docInforArr["documentCodeColumnName"] = 'purchaseRequestCode';
                     $docInforArr["confirmColumnName"] = 'PRConfirmedYN';
                     $docInforArr["confirmedBy"] = 'PRConfirmedBy';
@@ -112,6 +114,8 @@ class Helper
                     $docInforArr["primarykey"] = 'purchaseRequestID';
                     break;
                 case 2:
+                case 5:
+                case 52:
                     $docInforArr["documentCodeColumnName"] = 'purchaseOrderCode';
                     $docInforArr["confirmColumnName"] = 'poConfirmedYN';
                     $docInforArr["confirmedBy"] = 'poConfirmedByName';
@@ -309,6 +313,9 @@ class Helper
                                 }
 
                                 $sendEmail = \Email::sendEmail($emails);
+                                if (!$sendEmail["success"]) {
+                                    return ['success' => false, 'message' => $sendEmail["message"]];
+                                }
 
                             }
 
@@ -490,6 +497,8 @@ class Helper
                 $docInforArr["approvedBySystemID"] = 'itemApprovedBySystemID';
                 $docInforArr["approvedDate"] = 'itemApprovedDate';
                 $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "itemConfirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "itemConfirmedByEMPSystemID";
                 break;
             case 56:
                 $docInforArr["tableName"] = 'suppliermaster';
@@ -500,6 +509,8 @@ class Helper
                 $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "supplierConfirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "supplierConfirmedEmpSystemID";
                 break;
             case 58:
                 $docInforArr["tableName"] = 'customermaster';
@@ -510,6 +521,8 @@ class Helper
                 $docInforArr["approvedBySystemID"] = 'approvedEmpSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedEmpSystemID";
                 break;
             case 59:
                 $docInforArr["tableName"] = 'chartofaccounts';
@@ -520,6 +533,8 @@ class Helper
                 $docInforArr["approvedBySystemID"] = 'approvedBySystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 $docInforArr["approveValue"] = 1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedEmpSystemID";
                 break;
             case 2:
             case 5:
@@ -532,6 +547,8 @@ class Helper
                 $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "poConfirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "poConfirmedByEmpSystemID";
                 break;
             case 1:
             case 50:
@@ -544,6 +561,8 @@ class Helper
                 $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
                 $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "PRConfirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "PRConfirmedBySystemID";
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -569,6 +588,89 @@ class Helper
                         }
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
+
+                        $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+                        $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
+
+                        $emails = array();
+                        if(!empty($sourceModel)){
+                            $document     = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
+                            $subjectName  = $document->documentDescription . ' ' .$currentApproved->documentCode;
+                            $bodyName     = $document->documentDescription . ' ' .'<b>'.$currentApproved->documentCode.'</b>';
+
+                            if($sourceModel[$docInforArr["confirmedYN"]] == 1 ||  $sourceModel[$docInforArr["confirmedYN"]] == -1){
+
+                                if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
+                                    $subject = $subjectName." is fully approved";
+                                    $body    = $bodyName." is fully approved.";
+                                } else {
+
+                                    $companyDocument =  Models\CompanyDocumentAttachment::where('companySystemID',$currentApproved->companySystemID)
+                                        ->where('documentSystemID', $currentApproved->documentSystemID)
+                                        ->first();
+
+                                    if (empty($companyDocument)) {
+                                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                                    }
+
+                                    $nextLevel = $currentApproved->rollLevelOrder + 1;
+
+                                    $nextApproval = Models\DocumentApproved::where('companySystemID', $currentApproved->companySystemID)
+                                                                            ->where('documentSystemID', $currentApproved->documentSystemID)
+                                                                            ->where('documentSystemCode', $currentApproved->documentSystemCode)
+                                                                            ->where('rollLevelOrder',$nextLevel)
+                                                                            ->first();
+
+                                    $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $nextApproval->approvalGroupID)
+                                                                                ->where('companySystemID', $currentApproved->companySystemID)
+                                                                                ->where('documentSystemID', $currentApproved->documentSystemID);
+
+
+                                    if ($companyDocument['isServiceLineApproval'] == -1) {
+                                        $approvalList = $approvalList->where('ServiceLineSystemID', $currentApproved->serviceLineSystemID);
+                                    }
+
+                                    $approvalList = $approvalList
+                                        ->with(['employee'])
+                                        ->groupBy('employeeSystemID')
+                                        ->get();
+
+
+                                    $nextApprovalBody    = '<p>' .$bodyName. ' Level '.$currentApproved->rollLevelOrder.' is approved and pending for your approval.</p>';
+                                    $nextApprovalSubject = $subjectName." Level ".$currentApproved->rollLevelOrder." is approved and pending for your approval";
+                                    $nextApproveNameList = "";
+                                    foreach ($approvalList as $da) {
+                                        if($da->employee){
+
+                                            $nextApproveNameList = $nextApproveNameList .'<br>'.$da->employee->empName;
+
+                                            $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                                'companySystemID' => $nextApproval->companySystemID,
+                                                'docSystemID' => $nextApproval->documentSystemID,
+                                                'alertMessage' => $nextApprovalSubject,
+                                                'emailAlertMessage' => $nextApprovalBody,
+                                                'docSystemCode' => $nextApproval->documentSystemCode);
+                                        }
+                                    }
+
+                                    $subject = $subjectName." Level ".$currentApproved->rollLevelOrder." is approved and sent to next level approval";
+                                    $body    = $bodyName." Level ".$currentApproved->rollLevelOrder." is approved and sent to next level approval to below <br>" .$nextApproveNameList;
+                                }
+
+                                $emails[] = array('empSystemID' => $sourceModel[$docInforArr["confirmedEmpSystemID"]],
+                                    'companySystemID' => $currentApproved->companySystemID,
+                                    'docSystemID' => $currentApproved->documentSystemID,
+                                    'alertMessage' => $subject,
+                                    'emailAlertMessage' => $body,
+                                    'docSystemCode' => $input["documentSystemCode"]);
+                            }
+                        }
+
+                        $sendEmail = \Email::sendEmail($emails);
+                        if (!$sendEmail["success"]) {
+                            return ['success' => false, 'message' => $sendEmail["message"]];
+                        }
+
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
                     }
@@ -664,21 +766,6 @@ class Helper
         $user = Models\User::find(Auth::id());
         return $user->employee_id;
     }
-
-    /**
-     * send Email
-     * @return mixed
-     */
-    public static function sendEmail($data)
-    {
-
-
-
-
-
-
-    }
-
 
     public static function sendResponse($result, $message)
     {

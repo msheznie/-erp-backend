@@ -634,7 +634,16 @@ class PurchaseRequestAPIController extends AppBaseController
             ->first();
 
         if (empty($procumentOrder)) {
-            return $this->sendError('Procument Order not found');
+            return $this->sendError('Procurement Order not found');
+        }
+
+        $documentSystemID = $procumentOrder->documentSystemID;
+        if($documentSystemID == 2){
+            $documentSystemIDChanged = 1 ;
+        }else if($documentSystemID == 5){
+            $documentSystemIDChanged = 50 ;
+        }else if($documentSystemID == 52){
+            $documentSystemIDChanged = 51 ;
         }
 
         $purchaseRequests = PurchaseRequest::where('companySystemID', $companyID)
@@ -643,7 +652,8 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('prClosedYN', 0)
             ->where('cancelledYN', 0)
             ->where('selectedForPO', 0)
-            ->where('supplyChainOnGoing', 0);
+            ->where('supplyChainOnGoing', 0)
+            ->where('documentSystemID', $documentSystemIDChanged);
         if (isset($procumentOrder->financeCategory)) {
             $purchaseRequests = $purchaseRequests->where('financeCategory', $procumentOrder->financeCategory);
         }
@@ -958,9 +968,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
-            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
-            ->where('documentSystemID', $purchaseRequest->documentSystemID)
-            ->get();
+                                                ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+                                                ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                                ->where('approvedYN', -1)
+                                                ->get();
 
         foreach ($documentApproval as $da) {
             $emails[] = array('empSystemID' => $da->employeeSystemID,
@@ -972,6 +983,9 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"],500);
+        }
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully canceled');
 
@@ -1038,6 +1052,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
                                             ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
                                             ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                            ->where('approvedYN', -1)
                                             ->get();
 
         foreach ($documentApproval as $da) {
@@ -1052,6 +1067,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"],500);
+        }
+
         DocumentApproved::destroy($ids_to_delete);
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
