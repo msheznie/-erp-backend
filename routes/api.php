@@ -378,7 +378,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 });
 
-
+Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 Route::get('foo', function () {
 
     $data = array('empSystemID'=> 11,

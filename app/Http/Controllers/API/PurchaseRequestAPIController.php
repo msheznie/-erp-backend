@@ -15,6 +15,7 @@
  * -- Date: 18-April 2018 By: Fayas Description: Added new functions named as getApprovedDetails()
  * -- Date: 20-April 2018 By: Fayas Description: Added new functions named as getPurchaseRequestApprovalByUser()
  * -- Date: 23-April 2018 By: Fayas Description: Added new functions named as approvePurchaseRequest(),rejectPurchaseRequest
+ * -- Date: 26-April 2018 By: Fayas Description: Added new functions named as cancelPurchaseRequest(),returnPurchaseRequest
  */
 namespace App\Http\Controllers\API;
 
@@ -1064,6 +1065,37 @@ class PurchaseRequestAPIController extends AppBaseController
         DocumentApproved::destroy($ids_to_delete);
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
+    }
+
+
+    /**
+     * Display the specified PurchaseRequest print.
+     * GET|HEAD /printPurchaseRequest
+     *
+     * @param  int $request
+     *
+     * @return Response
+     */
+    public function printPurchaseRequest(Request $request)
+    {
+        $id = $request->get('id');
+        /** @var PurchaseRequest $purchaseRequest */
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
+            'priority', 'location', 'details.uom', 'company', 'approved_by' => function ($query) {
+                $query->with('employee')
+                      ->whereIn('documentSystemID', [1, 50, 51]);
+            }
+        ])->findWithoutFail($id);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        $array = array('request' => $purchaseRequest);
+
+        return view('home',$array);
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }
 
 }
