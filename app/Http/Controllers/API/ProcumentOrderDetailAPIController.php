@@ -40,7 +40,7 @@ class ProcumentOrderDetailAPIController extends AppBaseController
         $this->procumentOrderDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $procumentOrderDetails = $this->procumentOrderDetailRepository->all();
 
-        return $this->sendResponse($procumentOrderDetails->toArray(), 'Procument Order Details retrieved successfully');
+        return $this->sendResponse($procumentOrderDetails->toArray(), 'Procurement Order Details retrieved successfully');
     }
 
     /**
@@ -57,7 +57,7 @@ class ProcumentOrderDetailAPIController extends AppBaseController
 
         $procumentOrderDetails = $this->procumentOrderDetailRepository->create($input);
 
-        return $this->sendResponse($procumentOrderDetails->toArray(), 'Procument Order Detail saved successfully');
+        return $this->sendResponse($procumentOrderDetails->toArray(), 'Procurement Order Detail saved successfully');
     }
 
     /**
@@ -74,10 +74,10 @@ class ProcumentOrderDetailAPIController extends AppBaseController
         $procumentOrderDetail = $this->procumentOrderDetailRepository->findWithoutFail($id);
 
         if (empty($procumentOrderDetail)) {
-            return $this->sendError('Procument Order Detail not found');
+            return $this->sendError('Procurement Order Detail not found');
         }
 
-        return $this->sendResponse($procumentOrderDetail->toArray(), 'Procument Order Detail retrieved successfully');
+        return $this->sendResponse($procumentOrderDetail->toArray(), 'Procurement Order Detail retrieved successfully');
     }
 
     /**
@@ -98,12 +98,12 @@ class ProcumentOrderDetailAPIController extends AppBaseController
         $procumentOrderDetail = $this->procumentOrderDetailRepository->findWithoutFail($id);
 
         if (empty($procumentOrderDetail)) {
-            return $this->sendError('Procument Order Detail not found');
+            return $this->sendError('Procurement Order Detail not found');
         }
 
         $procumentOrderDetail = $this->procumentOrderDetailRepository->update($input, $id);
 
-        return $this->sendResponse($procumentOrderDetail->toArray(), 'Procument Order Detail updated successfully');
+        return $this->sendResponse($procumentOrderDetail->toArray(), 'Procurement Order Detail updated successfully');
     }
 
     /**
@@ -120,11 +120,11 @@ class ProcumentOrderDetailAPIController extends AppBaseController
         $procumentOrderDetail = $this->procumentOrderDetailRepository->findWithoutFail($id);
 
         if (empty($procumentOrderDetail)) {
-            return $this->sendError('Procument Order Detail not found');
+            return $this->sendError('Procurement Order Detail not found');
         }
 
         $procumentOrderDetail->delete();
 
-        return $this->sendResponse($id, 'Procument Order Detail deleted successfully');
+        return $this->sendResponse($id, 'Procurement Order Detail deleted successfully');
     }
 }
