@@ -379,6 +379,8 @@ Route::group(['middleware' => 'auth:api'], function(){
 
 });
 
+
+Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 Route::get('foo', function () {
 
     $data = array('empSystemID'=> 11,
@@ -395,5 +397,8 @@ Route::get('foo', function () {
 
     return \Email::sendEmail($array);
 });
+
 Route::get('test', 'TaxFormulaDetailAPIController@test');
 Route::resource('alerts', 'AlertAPIController');
+Route::resource('access_tokens', 'AccessTokensAPIController');
+Route::resource('users_log_histories', 'UsersLogHistoryAPIController');

@@ -2,6 +2,11 @@
 
 namespace App\Providers;
 
+use App\Events\logHistory;
+use App\Listeners\AfterLogin;
+use App\Listeners\RevokeOldTokens;
+use App\Models\AccessTokens;
+use Illuminate\Contracts\Logging\Log;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -13,9 +18,24 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-        'App\Events\Event' => [
+       /* 'App\Events\Event' => [
             'App\Listeners\EventListener',
+        ],*/
+        logHistory::class => [
+            AfterLogin::class,
+            RevokeOldTokens::class
+        ]
+      /* 'App\Events\logHistory' =>[
+            'App\Listeners\AfterLogin',
+            'App\Listeners\RevokeOldTokens',
+        ],*/
+      /*  'Laravel\Passport\Events\AccessTokenCreated' => [
+            'App\Listeners\RevokeOldTokens',
         ],
+
+        'Laravel\Passport\Events\RefreshTokenCreated' => [
+            'App\Listeners\PruneOldTokens',
+        ],*/
     ];
 
     /**
@@ -27,6 +47,19 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot();
 
-        //
+        $acc = AccessTokens::where('user_id',2637)->orderBy('created_at')->first();
+
+       AccessTokens::created(event(new logHistory($acc)));
+
+        AccessTokens::created(function (AccessTokens $accessToken) {
+            //event(new logHistory($accessToken));
+        });
+
+        /*AccessTokens::created(function (AccessTokens $model){
+            //Log::info('Before Event Call');
+            //Log::info($model);
+           // event(new logHistory($model));
+           // Log::info('After Event Call');
+        });*/
     }
 }
