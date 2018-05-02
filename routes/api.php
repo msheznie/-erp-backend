@@ -373,6 +373,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
 
     Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+    Route::get('getOtherTax', 'TaxFormulaDetailAPIController@getOtherTax');
 
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
 

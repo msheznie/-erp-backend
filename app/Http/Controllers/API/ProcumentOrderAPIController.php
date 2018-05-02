@@ -1200,9 +1200,18 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
     public function reportSpentAnalysisBySupplierFilter(Request $request)
     {
-        $input = $request->all();
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
-        $companyId = $input['companyId'];
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $allCompanies = Company::whereIn("companySystemID",$subCompanies)
+            ->select('companySystemID', 'CompanyID', 'CompanyName')
+            ->get();
 
         $years = ProcumentOrder::select(DB::raw("YEAR(createdDateTime) as year"))
             ->whereNotNull('createdDateTime')
@@ -1210,7 +1219,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->orderby('year', 'desc')
             ->get(['year']);
 
-        $output = array('years' => $years);
+        $output = array(
+            'allCompanies' => $allCompanies,
+            'years' => $years
+        );
 
 
         return $this->sendResponse($output, 'Record retrieved successfully');
