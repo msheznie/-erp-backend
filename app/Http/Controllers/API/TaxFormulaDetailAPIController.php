@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * --
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTaxFormulaDetailAPIRequest;
@@ -27,7 +28,6 @@ use Response;
  * Class TaxFormulaDetailController
  * @package App\Http\Controllers\API
  */
-
 class TaxFormulaDetailAPIController extends AppBaseController
 {
     /** @var  TaxFormulaDetailRepository */
@@ -88,7 +88,9 @@ class TaxFormulaDetailAPIController extends AppBaseController
             return $this->sendError('Tax Formula Detail not found');
         }
 
-        $taxMasters = Tax::whereIn('taxMasterAutoID',explode(',',$taxFormulaDetail->taxMasters))->get();
+        $taxMasters = TaxFormulaDetail::with(['taxmaster' => function ($query) {
+            $query->select('taxMasterAutoID', 'taxDescription');
+        }])->whereIn('formulaDetailID', explode(',', $taxFormulaDetail->taxMasters))->select('formulaDetailID', 'taxMasterAutoID')->get();
         $response = array('taxFormulaDetail' => $taxFormulaDetail, 'taxMasters' => $taxMasters);
 
         return $this->sendResponse($response, 'Tax Formula Detail retrieved successfully');
@@ -107,18 +109,21 @@ class TaxFormulaDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $formula = $input['formula'];
-        if($formula){
-            $input['formula'] = implode('~',$formula);
-            if($formula){
+        if ($formula) {
+            $input['formula'] = implode('~', $formula);
+            if ($input['formula']) {
                 $taxMaster = [];
-                foreach ($formula as $val){
+                foreach ($formula as $val) {
                     $firstChar = substr($val, 0, 1);
-                    if($firstChar == '#'){
+                    if ($firstChar == '#') {
                         $taxMaster[] = ltrim($val, '#');
                     }
                 }
-                $input['taxMasters'] = join(',',$taxMaster);
+                $input['taxMasters'] = join(',', $taxMaster);
             }
+        } else {
+            $input['taxMasters'] = null;
+            $input['formula'] = null;
         }
         unset($input['taxmaster']);
         $input = $this->convertArrayToValue($input);
@@ -156,9 +161,10 @@ class TaxFormulaDetailAPIController extends AppBaseController
         return $this->sendResponse($id, 'Tax Formula Detail deleted successfully');
     }
 
-    public function getTaxFormulaDetailDatatable(Request $request){
+    public function getTaxFormulaDetailDatatable(Request $request)
+    {
         $input = $request->all();
-        $formulaDetail = TaxFormulaDetail::with('taxmaster')->where('taxCalculationformulaID',$request->taxCalculationformulaID);
+        $formulaDetail = TaxFormulaDetail::with('taxmaster')->where('taxCalculationformulaID', $request->taxCalculationformulaID);
 
         return \DataTables::eloquent($formulaDetail)
             ->order(function ($query) use ($input) {
@@ -172,8 +178,14 @@ class TaxFormulaDetailAPIController extends AppBaseController
             ->make(true);
     }
 
-    public function getOtherTax(Request $request){
-        $formulaDetail = TaxFormulaDetail::with('taxmaster')->where('taxCalculationformulaID',$request->taxCalculationformulaID)->where('sortOrder','<',$request->sortOrder)->get();
+    public function getOtherTax(Request $request)
+    {
+        $formulaDetail = TaxFormulaDetail::with('taxmaster')->where('taxCalculationformulaID', $request->taxCalculationformulaID)->where('sortOrder', '<', $request->sortOrder)->get();
         return $this->sendResponse($formulaDetail, 'Tax Formula Detail deleted successfully');
+    }
+
+    public function test(){
+        $result = \Formula::taxFormulaDecode(16,1000);
+        return $this->sendResponse($result, 'Tax Formula Detail deleted successfully');
     }
 }

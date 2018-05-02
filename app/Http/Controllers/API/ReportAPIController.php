@@ -83,7 +83,6 @@ class ReportAPIController extends AppBaseController
                 $suppliers = (array)$request->suppliers;
                 $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
-
                 if($request->reportType == 1) { //PO Analysis Item Detail Report
                     $output = DB::table('erp_purchaseorderdetails')
                         ->join(DB::raw('(SELECT locationName,
