@@ -567,7 +567,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequests = DB::table('erp_documentapproved')
             ->select(
                 'erp_purchaserequest.*',
-                'employees.empName As confirmed_emp',
+                'employees.empName As created_emp',
                 'financeitemcategorymaster.categoryDescription As financeCategoryDescription',
                 'serviceline.ServiceLineDes As PRServiceLineDes',
                 'erp_location.locationName As PRLocationName',
@@ -602,7 +602,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->where('erp_purchaserequest.PRConfirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', 0)
-            ->join('employees', 'PRConfirmedBySystemID', 'employees.employeeSystemID')
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->join('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
             ->join('erp_priority', 'priority', 'erp_priority.priorityID')
             ->join('erp_location', 'location', 'erp_location.locationID')
@@ -610,6 +610,14 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [1, 50, 51])
             ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                                                 ->orWhere('comments', 'LIKE', "%{$search}%");
+        }
 
         return \DataTables::of($purchaseRequests)
             ->order(function ($query) use ($input) {
@@ -942,7 +950,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
 
-        $purchaseRequest->cancelledYN = 1;
+        $purchaseRequest->cancelledYN = -1;
         $purchaseRequest->cancelledByEmpSystemID = $employee->employeeSystemID;
         $purchaseRequest->cancelledByEmpID = $employee->empID;
         $purchaseRequest->cancelledByEmpName = $employee->empName;
@@ -1018,18 +1026,6 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
 
-        $purchaseRequest->PRConfirmedYN = 0;
-        $purchaseRequest->PRConfirmedBy = '';
-        $purchaseRequest->PRConfirmedByEmpName = '';
-        $purchaseRequest->PRConfirmedBySystemID = '';
-        $purchaseRequest->PRConfirmedDate = '';
-        $purchaseRequest->approved = 0;
-        $purchaseRequest->approvedDate = '';
-        $purchaseRequest->approvedByUserID = '';
-        $purchaseRequest->approvedByUserSystemID = '';
-        $purchaseRequest->RollLevForApp_curr = 1;
-        $purchaseRequest->save();
-
         $emails = array();
         $ids_to_delete = array();
 
@@ -1050,19 +1046,34 @@ class PurchaseRequestAPIController extends AppBaseController
                 'docSystemCode' => $purchaseRequest->purchaseRequestID);
         }
 
+        $purchaseRequest->PRConfirmedYN = 0;
+        $purchaseRequest->PRConfirmedBy = '';
+        $purchaseRequest->PRConfirmedByEmpName = '';
+        $purchaseRequest->PRConfirmedBySystemID = '';
+        $purchaseRequest->PRConfirmedDate = '';
+        $purchaseRequest->approved = 0;
+        $purchaseRequest->approvedDate = '';
+        $purchaseRequest->approvedByUserID = '';
+        $purchaseRequest->approvedByUserSystemID = '';
+        $purchaseRequest->RollLevForApp_curr = 1;
+        $purchaseRequest->save();
+
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
                                             ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
                                             ->where('documentSystemID', $purchaseRequest->documentSystemID)
-                                            ->where('approvedYN', -1)
+                                            //->where('approvedYN', -1)
                                             ->get();
 
         foreach ($documentApproval as $da) {
-            $emails[] = array('empSystemID' => $da->employeeSystemID,
-                'companySystemID' => $purchaseRequest->companySystemID,
-                'docSystemID' => $purchaseRequest->documentSystemID,
-                'alertMessage' => $subject,
-                'emailAlertMessage' => $body,
-                'docSystemCode' => $purchaseRequest->purchaseRequestID);
+
+            if($da->approvedYN == -1) {
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $purchaseRequest->companySystemID,
+                    'docSystemID' => $purchaseRequest->documentSystemID,
+                    'alertMessage' => $subject,
+                    'emailAlertMessage' => $body,
+                    'docSystemCode' => $purchaseRequest->purchaseRequestID);
+            }
 
             array_push($ids_to_delete, $da->documentApprovedID);
         }

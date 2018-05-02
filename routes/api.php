@@ -397,3 +397,7 @@ Route::get('foo', function () {
 });
 
 Route::resource('alerts', 'AlertAPIController');
+
+Route::resource('access_tokens', 'AccessTokensAPIController');
+
+Route::resource('users_log_histories', 'UsersLogHistoryAPIController');
