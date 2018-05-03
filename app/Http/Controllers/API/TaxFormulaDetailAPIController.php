@@ -185,7 +185,7 @@ class TaxFormulaDetailAPIController extends AppBaseController
     }
 
     public function test(){
-        $result = \Formula::taxFormulaDecode(16,1000);
+        $result = \Formula::taxFormulaDecode(15,1000);
         return $this->sendResponse($result, 'Tax Formula Detail deleted successfully');
     }
 }

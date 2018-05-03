@@ -33,7 +33,7 @@ class Formula
         $taxFormula = Models\TaxFormulaDetail::find($formulaDetailID);
         $globalFormula = $taxFormula->formula;
         $taxMasters = $taxFormula->taxMasters;
-        $sepFormulaArr['decoded_formula'] = self::decodeTaxFormula($taxMasters);
+        $sepFormulaArr[$formulaDetailID] = self::decodeTaxFormula($taxMasters);
         $globalFormula = '';
         $taxArr = Models\TaxFormulaDetail::whereIn('formulaDetailID',explode(',',$taxMasters))->get();
         if($taxArr){
