@@ -47,13 +47,13 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot();
 
-        $acc = AccessTokens::where('user_id',2637)->orderBy('created_at')->first();
+        //$acc = AccessTokens::where('user_id',2637)->orderBy('created_at')->first();
 
-       AccessTokens::created(event(new logHistory($acc)));
+		//AccessTokens::created(event(new logHistory($acc)));
 
-        AccessTokens::created(function (AccessTokens $accessToken) {
+        //AccessTokens::created(function (AccessTokens $accessToken) {
             //event(new logHistory($accessToken));
-        });
+        //});
 
         /*AccessTokens::created(function (AccessTokens $model){
             //Log::info('Before Event Call');

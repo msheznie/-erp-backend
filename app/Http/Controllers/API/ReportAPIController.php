@@ -17,8 +17,6 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
-use App\Models\ProcumentOrder;
-use App\Models\PurchaseOrderDetails;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,11 +47,6 @@ class ReportAPIController extends AppBaseController
         $reportID = 'POA';
         switch ($reportID) {
             case 'POA': //PO Analysis Report
-                $validatedData = $request->validate([
-                    'daterange' => 'required',
-                    'suppliers' => 'required',
-                    'reportType' => 'required',
-                ]);
 
                 $input = $request->all();
                 if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -106,11 +99,8 @@ class ReportAPIController extends AppBaseController
                     erp_purchaseordermaster.companySystemID
                      FROM erp_purchaseordermaster 
                      LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID 
-                     LEFT JOIN erp_location ON poLocation = erp_location.locationID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                     LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE approved = -1 AND (approvedDate BETWEEN "'.$startDate.'" AND "'.$endDate.'") AND erp_purchaseordermaster.companySystemID IN ('.join(',',$companyID).') AND erp_purchaseordermaster.supplierID IN ('.join(',',json_decode($suppliers)).')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderMasterID', '=', 'podet.purchaseOrderID');
-                            $query->whereBetween('podet.approvedDate', [$startDate, $endDate])
-                                ->where('podet.approved', -1)
-                                ->whereIN('podet.companySystemID', $companyID);
                         })->leftJoin('financeitemcategorymaster', function ($query) {
                             $query->on('itemFinanceCategoryID', '=', 'itemCategoryID');
                             $query->select('categoryDescription');
@@ -118,11 +108,8 @@ class ReportAPIController extends AppBaseController
                             $query->on('itemFinanceCategorySubID', '=', 'catSub.itemCategorySubID');
                         })
                         ->leftJoin('units', 'unitOfMeasure', '=', 'UnitID')
-                        ->leftJoin('erp_grvdetails as gdet', function ($join) use ($companyID) {
+                        ->leftJoin(DB::raw('(SELECT SUM(noQty) as noQty,purchaseOrderDetailsID FROM erp_grvdetails WHERE erp_grvdetails.companySystemID IN ('.join(',',$companyID).') GROUP BY purchaseOrderDetailsID) as gdet'), function ($join) use ($companyID) {
                             $join->on('erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'gdet.purchaseOrderDetailsID');
-                            $join->whereIN('gdet.companySystemID', $companyID);
-                            $join->selectRaw('SUM(gdet.noQty) as noQty');
-                            $join->groupBy('gdet.purchaseOrderDetailsID');
                         })->leftJoin(
                             DB::raw('(SELECT
     max(erp_grvmaster.grvDate) AS lastOfgrvDate,
@@ -132,7 +119,7 @@ FROM
     erp_grvmaster INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID 
     ) 
 WHERE
-    erp_grvmaster.approved=- 1 and purchaseOrderDetailsID>0 GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
+    erp_grvmaster.approved=- 1 and purchaseOrderDetailsID>0 AND erp_grvmaster.companySystemID IN ('.join(',',$companyID).') GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
                             function ($join) use ($companyID) {
                                 $join->on('erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'gdet2.purchaseOrderDetailsID');
                             })->selectRaw('erp_purchaseorderdetails.purchaseOrderMasterID,
@@ -163,7 +150,6 @@ WHERE
                         $output = $output->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
                             ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%");
                     }
-
 
                     return \DataTables::of($output)
                         ->order(function ($query) use ($input) {
@@ -210,9 +196,8 @@ WHERE
                     IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
 	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
 	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, 0, ( noQty * GRVcostPerUnitComRptCur ) ) ) AS POOpex
-                     FROM erp_purchaseorderdetails GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                     FROM erp_purchaseorderdetails WHERE companySystemID IN ('.join(',',$companyID).') GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderID', '=', 'podet.purchaseOrderMasterID');
-                            $query->whereIN('podet.companySystemID', $companyID);
                         })
                         ->leftJoin(DB::raw('(SELECT 
                     SUM( erp_grvdetails.noQty ) GRVQty,
@@ -223,15 +208,12 @@ WHERE
 	                approved,
 	                erp_grvdetails.companySystemID
                      FROM erp_grvdetails 
-                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID 
+                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE approved = -1 AND erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN ('.join(',',$companyID).')
                      GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
-                            $join->where('grvdet.purchaseOrderMastertID','<>', 0);
-                            $join->where('grvdet.approved','=', -1);
-                            $join->whereIN('grvdet.companySystemID', $companyID);
                         })
                         ->leftJoin('serviceline','erp_purchaseordermaster.serviceLineSystemID','=','serviceline.serviceLineSystemID')
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N','<>',5)->where('erp_purchaseordermaster.approved','=',-1)->where('erp_purchaseordermaster.poCancelledYN','=',0);
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N','<>',5)->where('erp_purchaseordermaster.approved','=',-1)->where('erp_purchaseordermaster.poCancelledYN','=',0)->whereIN('erp_purchaseordermaster.supplierID',json_decode($suppliers));
 
                     $search = $request->input('search.value');
                     $search = str_replace("\\","\\\\",$search);
@@ -245,8 +227,8 @@ WHERE
                     $POCapex = collect($outputSUM)->pluck('POCapex')->toArray();
                     $POCapex = array_sum($POCapex);
 
-                    $POCapex = collect($outputSUM)->pluck('POCapex')->toArray();
-                    $POCapex = array_sum($POCapex);
+                    $POOpex = collect($outputSUM)->pluck('POOpex')->toArray();
+                    $POOpex = array_sum($POOpex);
 
                     $TotalPOVal = collect($outputSUM)->pluck('TotalPOVal')->toArray();
                     $TotalPOVal = array_sum($TotalPOVal);
@@ -279,7 +261,7 @@ WHERE
                         ->with('orderCondition', $sort)
                         ->with('totalAmount', [
                             'POCapex' => $POCapex,
-                            'POOpex' => $POCapex,
+                            'POOpex' => $POOpex,
                             'TotalGRVValue' => $TotalGRVValue,
                             'GRVCapex' => $GRVCapex,
                             'GRVOpex' => $GRVOpex,
@@ -351,11 +333,8 @@ WHERE
                     erp_purchaseordermaster.companySystemID
                      FROM erp_purchaseordermaster 
                      LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID 
-                     LEFT JOIN erp_location ON poLocation = erp_location.locationID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                     LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE approved = -1 AND (approvedDate BETWEEN "'.$startDate.'" AND "'.$endDate.'") AND erp_purchaseordermaster.companySystemID IN ('.join(',',$companyID).') AND erp_purchaseordermaster.supplierID IN ('.join(',',json_decode($suppliers)).')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderMasterID', '=', 'podet.purchaseOrderID');
-                            $query->whereBetween('podet.approvedDate', [$startDate, $endDate])
-                                ->where('podet.approved', -1)
-                                ->whereIN('podet.companySystemID', $companyID);
                         })->leftJoin('financeitemcategorymaster', function ($query) {
                             $query->on('itemFinanceCategoryID', '=', 'itemCategoryID');
                             $query->select('categoryDescription');
@@ -363,11 +342,8 @@ WHERE
                             $query->on('itemFinanceCategorySubID', '=', 'catSub.itemCategorySubID');
                         })
                         ->leftJoin('units', 'unitOfMeasure', '=', 'UnitID')
-                        ->leftJoin('erp_grvdetails as gdet', function ($join) use ($companyID) {
+                        ->leftJoin(DB::raw('(SELECT SUM(noQty) as noQty,purchaseOrderDetailsID FROM erp_grvdetails WHERE erp_grvdetails.companySystemID IN ('.join(',',$companyID).') GROUP BY purchaseOrderDetailsID) as gdet'), function ($join) use ($companyID) {
                             $join->on('erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'gdet.purchaseOrderDetailsID');
-                            $join->whereIN('gdet.companySystemID', $companyID);
-                            $join->selectRaw('SUM(gdet.noQty) as noQty');
-                            $join->groupBy('gdet.purchaseOrderDetailsID');
                         })->leftJoin(
                             DB::raw('(SELECT
     max(erp_grvmaster.grvDate) AS lastOfgrvDate,
@@ -377,7 +353,7 @@ FROM
     erp_grvmaster INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID 
     ) 
 WHERE
-    erp_grvmaster.approved=- 1 and purchaseOrderDetailsID>0 GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
+    erp_grvmaster.approved=- 1 and purchaseOrderDetailsID>0 AND erp_grvmaster.companySystemID IN ('.join(',',$companyID).') GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
                             function ($join) use ($companyID) {
                                 $join->on('erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'gdet2.purchaseOrderDetailsID');
                             })->selectRaw('erp_purchaseorderdetails.purchaseOrderMasterID,
@@ -392,12 +368,11 @@ WHERE
                     erp_purchaseorderdetails.itemPrimaryCode,
                     erp_purchaseorderdetails.itemDescription,
                     erp_purchaseorderdetails.supplierPartNumber,
-                    erp_purchaseorderdetails.noQty,
-                    IFNULL(( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ),"0") AS unitCostWithOutDiscount,
-                    IFNULL(erp_purchaseorderdetails.GRVcostPerUnitComRptCur,"0") as unitCostWithDiscount,
-                    IFNULL(erp_purchaseorderdetails.discountPercentage,"0") as discountPercentage,
-                    IFNULL(( ( ( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) ) - erp_purchaseorderdetails.GRVcostPerUnitComRptCur ),"0") AS discountAmount,
-                    IFNULL(( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ),"0") AS total,
+                    erp_purchaseorderdetails.noQty,( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) AS unitCostWithOutDiscount,
+                    erp_purchaseorderdetails.GRVcostPerUnitComRptCur as unitCostWithDiscount,
+                    erp_purchaseorderdetails.discountPercentage,
+                    ( ( ( ( erp_purchaseorderdetails.GRVcostPerUnitComRptCur / ( 100- erp_purchaseorderdetails.discountPercentage ) ) * 100 ) ) - erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS discountAmount,
+                    ( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS total,
                     financeitemcategorymaster.categoryDescription as financecategory,
                     catSub.*,
                     units.UnitShortCode AS unitShortCode,
@@ -469,16 +444,15 @@ WHERE
                             IFNULL(podet.TotalPOVal,0) as TotalPOVal,
                             IFNULL(podet.POQty,0) as POQty,
                             podet.Type,
-                            IFNULL(podet.POCapex,"0") as POCapex,
-                            IFNULL(podet.POOpex,"0") as POOpex,
-                            IFNULL(grvdet.GRVQty,"0") as GRVQty,
-                            IFNULL(grvdet.TotalGRVValue,"0") as TotalGRVValue,
-                            IFNULL(grvdet.GRVCapex,"0") as GRVCapex,
-                            IFNULL(grvdet.GRVOpex,"0") as GRVOpex,
-                            IFNULL((IFNULL(podet.POCapex,0)-IFNULL(grvdet.GRVCapex,0)),"0") as capexBalance,
-                            IFNULL((IFNULL(podet.POOpex,0)-IFNULL(grvdet.GRVOpex,0)),"0") as opexBalance,
-                            ServiceLineDes as segment,
-                            erp_purchaseordermaster.purchaseOrderID'
+                            IFNULL(podet.POCapex,0) as POCapex,
+                            IFNULL(podet.POOpex,0) as POOpex,
+                            IFNULL(grvdet.GRVQty,0) as GRVQty,
+                            IFNULL(grvdet.TotalGRVValue,0) as TotalGRVValue,
+                            IFNULL(grvdet.GRVCapex,0) as GRVCapex,
+                            IFNULL(grvdet.GRVOpex,0) as GRVOpex,
+                            (IFNULL(podet.POCapex,0)-IFNULL(grvdet.GRVCapex,0)) as capexBalance,
+                            (IFNULL(podet.POOpex,0)-IFNULL(grvdet.GRVOpex,0)) as opexBalance,
+                            ServiceLineDes as segment'
                         )
                         ->join(DB::raw('(SELECT 
                         erp_purchaseorderdetails.companySystemID,
@@ -488,9 +462,8 @@ WHERE
                     IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
 	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
 	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, 0, ( noQty * GRVcostPerUnitComRptCur ) ) ) AS POOpex
-                     FROM erp_purchaseorderdetails GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                     FROM erp_purchaseorderdetails WHERE companySystemID IN ('.join(',',$companyID).') GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderID', '=', 'podet.purchaseOrderMasterID');
-                            $query->whereIN('podet.companySystemID', $companyID);
                         })
                         ->leftJoin(DB::raw('(SELECT 
                     SUM( erp_grvdetails.noQty ) GRVQty,
@@ -501,15 +474,12 @@ WHERE
 	                approved,
 	                erp_grvdetails.companySystemID
                      FROM erp_grvdetails 
-                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID 
+                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE approved = -1 AND erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN ('.join(',',$companyID).')
                      GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
-                            $join->where('grvdet.purchaseOrderMastertID','<>', 0);
-                            $join->where('grvdet.approved','=', -1);
-                            $join->whereIN('grvdet.companySystemID', $companyID);
                         })
                         ->leftJoin('serviceline','erp_purchaseordermaster.serviceLineSystemID','=','serviceline.serviceLineSystemID')
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N','<>',5)->where('erp_purchaseordermaster.approved','=',-1)->where('erp_purchaseordermaster.poCancelledYN','=',0)->orderBy('purchaseOrderID','desc')->get();
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N','<>',5)->where('erp_purchaseordermaster.approved','=',-1)->where('erp_purchaseordermaster.poCancelledYN','=',0)->whereIN('erp_purchaseordermaster.supplierID',json_decode($suppliers))->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
