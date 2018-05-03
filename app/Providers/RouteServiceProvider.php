@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Laravel\Passport\Passport;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -39,7 +40,17 @@ class RouteServiceProvider extends ServiceProvider
 
         //$this->mapWebRoutes();
 
-        //
+       /* Route::post('/oauth/token', [
+            'uses' => '\Laravel\Passport\Http\Controllers\AccessTokenController@issueToken',
+            'middleware' => 'throttle:3,5',
+        ]);*/
+
+
+      /*  Route::post('/oauth/token', [
+            'uses' => '\Laravel\Passport\Http\Controllers\AccessTokenController@issueToken',
+            //'middleware' => 'throttle',
+            //'middleware' => 'throttle:'.Passport::maxAttempts().','.Passport::decayMinutes(),
+         ]);*/
     }
 
     /**
@@ -71,9 +82,10 @@ class RouteServiceProvider extends ServiceProvider
              ->group(base_path('routes/api.php'));*/
 
         Route::prefix('api/v1')
-            ->middleware('api','cors')
+            ->middleware('api','cors','throttle')
             ->as('api.')
             ->namespace($this->namespace."\\API")
             ->group(base_path('routes/api.php'));
+
     }
 }

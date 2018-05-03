@@ -2,17 +2,15 @@
 
 namespace App\Listeners;
 
-use App\Models\AccessTokens;
 use App\Models\User;
 use App\Models\UsersLogHistory;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
-use App\Events\logHistory;
 
-class AfterLogin
+class LogSuccessfulLogin
 {
-
     /**
      * Create the event listener.
      *
@@ -20,26 +18,21 @@ class AfterLogin
      */
     public function __construct()
     {
-
+        //
     }
 
     /**
      * Handle the event.
      *
-     * @param  object  $event
+     * @param  Login  $event
      * @return void
      */
-    public function handle(logHistory $event)
+    public function handle(Login $event)
     {
-
-        Log::info('AfterLogin Listener');
-        //Log::info($event->accessToken);
-
-        //$accessToken = $event->accessToken;
-
-        if(!empty($accessToken)){
+        Log::info('Log success Listener');
+        if(!empty($event)){
             $logHistory = new UsersLogHistory();
-            $user = User::with(['employee'])->find($event->userId);
+            $user = User::with(['employee'])->find($event->user->id);
             if($user){
                 if($user->employee){
                     $logHistory->employee_id = $user->employee['employeeSystemID'];

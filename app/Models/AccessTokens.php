@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Events\logHistory;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Event;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class AccessTokens
@@ -30,10 +32,17 @@ class AccessTokens extends Model
 
     protected $dates = ['deleted_at'];
 
-   /* protected $dispatchesEvents = [
-        'created' => logHistory::class,
-    ];*/
+    protected $dispatchesEvents = [
+        //'created' => logHistory::class
+    ];
 
+ /*   public static function boot() {
+        parent::boot();
+        static::created(function($accessToken) {
+            Log::info("Access Tokens Created Event Fire: ".$accessToken);
+            Event:fire('accessTokens.created', $accessToken);
+        });
+    }*/
 
     public $fillable = [
         'user_id',
@@ -41,7 +50,9 @@ class AccessTokens extends Model
         'name',
         'scopes',
         'revoked',
-        'expires_at'
+        'expires_at',
+        'created_at',
+        'updated_at'
     ];
 
     /**
@@ -55,7 +66,9 @@ class AccessTokens extends Model
         'client_id' => 'integer',
         'name' => 'string',
         'scopes' => 'string',
-        'revoked' => 'boolean'
+        'revoked' => 'boolean',
+        'created_at' => 'string',
+        'updated_at' => 'string'
     ];
 
     /**

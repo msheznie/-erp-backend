@@ -158,9 +158,18 @@ class PurchaseRequestAPIController extends AppBaseController
     public function getPurchaseRequestFormData(Request $request)
     {
 
-        $companyId = $request['companyId'];
+        $input = $request->all();
+        $companyId = $input['companyId'];
 
-        $segments = SegmentMaster::where("companySystemID", $companyId)->get();
+        $segments = SegmentMaster::where("companySystemID", $companyId);
+
+        if (array_key_exists('isCreate', $input)) {
+            if($input['isCreate'] == 1){
+                $segments =  $segments->where('isActive',1);
+            }
+        }
+
+        $segments =  $segments->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();

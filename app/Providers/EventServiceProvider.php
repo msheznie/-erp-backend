@@ -6,6 +6,7 @@ use App\Events\logHistory;
 use App\Listeners\AfterLogin;
 use App\Listeners\RevokeOldTokens;
 use App\Models\AccessTokens;
+use App\Models\User;
 use Illuminate\Contracts\Logging\Log;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -18,24 +19,31 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-       /* 'App\Events\Event' => [
-            'App\Listeners\EventListener',
-        ],*/
-        logHistory::class => [
-            AfterLogin::class,
-            RevokeOldTokens::class
-        ]
-      /* 'App\Events\logHistory' =>[
-            'App\Listeners\AfterLogin',
-            'App\Listeners\RevokeOldTokens',
-        ],*/
-      /*  'Laravel\Passport\Events\AccessTokenCreated' => [
-            'App\Listeners\RevokeOldTokens',
+        /* 'App\Events\Event' => [
+             'App\Listeners\EventListener',
+         ],*/
+        /* 'accessTokens.created' => [
+              'App\Events\AccessToken@accessTokenCreated',
+          ],*/
+        /*   logHistory::class => [
+             AfterLogin::class
+             //RevokeOldTokens::class
+           ],*/
+        'Illuminate\Auth\Events\Login' => [
+            'App\Listeners\LogSuccessfulLogin',
+        ],
+        /*'App\Events\logHistory' =>[
+               'App\Listeners\AfterLogin'
+               //'App\Listeners\RevokeOldTokens',
+           ],*/
+        'Laravel\Passport\Events\AccessTokenCreated' => [
+            //'App\Listeners\AfterLogin'
+           // 'App\Listeners\RevokeOldTokens', //should uncomment
         ],
 
         'Laravel\Passport\Events\RefreshTokenCreated' => [
-            'App\Listeners\PruneOldTokens',
-        ],*/
+           // 'App\Listeners\PruneOldTokens',  //should uncomment
+        ],
     ];
 
     /**
@@ -47,19 +55,14 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot();
 
-        $acc = AccessTokens::where('user_id',2637)->orderBy('created_at')->first();
+        //$acc = AccessTokens::where('user_id', 2637)->orderBy('created_at', 'desc')->first();
 
-       AccessTokens::created(event(new logHistory($acc)));
+        //AccessTokens::created(event(new logHistory($acc)));
 
-        AccessTokens::created(function (AccessTokens $accessToken) {
-            //event(new logHistory($accessToken));
-        });
-
-        /*AccessTokens::created(function (AccessTokens $model){
-            //Log::info('Before Event Call');
-            //Log::info($model);
-           // event(new logHistory($model));
-           // Log::info('After Event Call');
+        /* AccessTokens::created(function ($accessToken) {
+            Log::info('Before Event Call');
+            event(new logHistory($accessToken));
         });*/
+
     }
 }
