@@ -15,7 +15,7 @@ use App\Models\Employee;
 |
 */
 
-Route::group(['middleware' => 'auth:api'], function(){
+Route::group(['middleware' => 'auth:api'], function () {
 
     /** Warehouse master Created by Fayas  */
     Route::resource('employees', 'EmployeeAPIController');
@@ -42,7 +42,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('supplier/masters/update', 'SupplierMasterAPIController@updateSupplierMaster');
 
     Route::get('supplier/assignedCompanies', 'SupplierMasterAPIController@getAssignedCompaniesBySupplier');
-    
+
     Route::get('allCurrencies', 'CurrencyMasterAPIController@getAllCurrencies');
     Route::get('supplier/currencies', 'CurrencyMasterAPIController@getCurrenciesBySupplier');
 
@@ -126,29 +126,29 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory');
     Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
 
-    Route::post('allItemFinanceCategories','FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
-    Route::post('allItemFinanceSubCategoriesByMainCategory','FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory');
-    Route::get('getSubCategoryFormData','FinanceItemCategoryMasterAPIController@getSubCategoryFormData');
+    Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
+    Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory');
+    Route::get('getSubCategoryFormData', 'FinanceItemCategoryMasterAPIController@getSubCategoryFormData');
 
-    Route::get('assignedCompaniesBySubCategory','FinanceItemcategorySubAssignedAPIController@assignedCompaniesBySubCategory');
+    Route::get('assignedCompaniesBySubCategory', 'FinanceItemcategorySubAssignedAPIController@assignedCompaniesBySubCategory');
 
     /** Company Navigation Menu access*/
-    Route::get('getGroupCompany','CompanyNavigationMenusAPIController@getGroupCompany');
-    Route::get('getCompanyNavigation','CompanyNavigationMenusAPIController@getCompanyNavigation');
+    Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompany');
+    Route::get('getCompanyNavigation', 'CompanyNavigationMenusAPIController@getCompanyNavigation');
     Route::resource('company_navigation_menuses', 'CompanyNavigationMenusAPIController');
-    Route::resource('assignCompanyNavigation','CompanyNavigationMenusAPIController');
+    Route::resource('assignCompanyNavigation', 'CompanyNavigationMenusAPIController');
     /** Company user group*/
     Route::post('getUserGroupByCompanyDatatable', 'UserGroupAPIController@getUserGroupByCompanyDatatable');
     Route::resource('userGroups', 'UserGroupAPIController');
     Route::get('getUserGroup', 'UserGroupAPIController@getUserGroup');
     Route::post('getUserGroupEmployeesDatatable', 'EmployeeNavigationAPIController@getUserGroupEmployeesByCompanyDatatable');
 
-    Route::resource('assignUserGroupNavigation','UserGroupAssignAPIController');
-    Route::get('getUserGroupNavigation','UserGroupAssignAPIController@getUserGroupNavigation');
-    Route::get('getAllCompanies','CompanyAPIController@getAllCompanies');
-    Route::get('getNotAssignedCompanies','FinanceItemcategorySubAssignedAPIController@getNotAssignedCompanies');
+    Route::resource('assignUserGroupNavigation', 'UserGroupAssignAPIController');
+    Route::get('getUserGroupNavigation', 'UserGroupAssignAPIController@getUserGroupNavigation');
+    Route::get('getAllCompanies', 'CompanyAPIController@getAllCompanies');
+    Route::get('getNotAssignedCompanies', 'FinanceItemcategorySubAssignedAPIController@getNotAssignedCompanies');
     Route::resource('user_group_assigns', 'UserGroupAssignAPIController');
-    Route::get('checkUserGroupAccessRights','UserGroupAssignAPIController@checkUserGroupAccessRights');
+    Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUserGroupAccessRights');
     Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
     Route::post('purchase_order_details_frm_pr', 'PurchaseOrderDetailsAPIController@storePurchaseOrderDetailsFromPR');
     Route::post('procumentOrderDeleteAllDetails', 'PurchaseOrderDetailsAPIController@procumentOrderDeleteAllDetails');
@@ -181,7 +181,6 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount');
     Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
     Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
-
 
 
     Route::resource('erp_locations', 'ErpLocationAPIController');
@@ -323,6 +322,9 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel');
     Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack');
     Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter');
+    Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis');
+    Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport');
+    Route::post('reportSpentAnalysisHeader', 'ProcumentOrderAPIController@reportSpentAnalysisHeader');
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
@@ -370,23 +372,35 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     Route::post('cancelPurchaseRequest', 'PurchaseRequestAPIController@cancelPurchaseRequest');
     Route::post('returnPurchaseRequest', 'PurchaseRequestAPIController@returnPurchaseRequest');
+    Route::post('manualClosePurchaseRequest', 'PurchaseRequestAPIController@manualClosePurchaseRequest');
     Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
 
     Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+    Route::get('getOtherTax', 'TaxFormulaDetailAPIController@getOtherTax');
 
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
 
+    Route::resource('alerts', 'AlertAPIController');
+    Route::resource('access_tokens', 'AccessTokensAPIController');
+    Route::resource('users_log_histories', 'UsersLogHistoryAPIController');
+
+
+    Route::resource('addresses', 'AddressAPIController');
+    Route::post('getAllAddresses', 'AddressAPIController@getAllAddresses');
+
+    Route::resource('address_types', 'AddressTypeAPIController');
 });
 
 
+Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 Route::get('foo', function () {
 
-    $data = array('empSystemID'=> 11,
-                  'companySystemID' => 11,
-                  'docSystemID' => 1,
-                   'alertMessage' => 'Test Subject',
-                   'emailAlertMessage' => 'Test Body',
-                  'docSystemCode' => 15);
+    $data = array('empSystemID' => 11,
+        'companySystemID' => 11,
+        'docSystemID' => 1,
+        'alertMessage' => 'Test Subject',
+        'emailAlertMessage' => 'Test Body',
+        'docSystemCode' => 15);
 
     $array = array();
 
@@ -396,4 +410,4 @@ Route::get('foo', function () {
     return \Email::sendEmail($array);
 });
 
-Route::resource('alerts', 'AlertAPIController');
+Route::get('test', 'TaxFormulaDetailAPIController@test');

@@ -101,7 +101,13 @@ class PurchaseRequestDetails extends Model
         'prClosedYN',
         'fullyOrdered',
         'poTrackingID',
-        'timeStamp'
+        'timeStamp',
+        'manuallyClosed',
+        'manuallyClosedByEmpSystemID',
+        'manuallyClosedByEmpID',
+        'manuallyClosedByEmpName',
+        'manuallyClosedDate',
+        'manuallyClosedComment'
     ];
 
     /**
@@ -147,7 +153,13 @@ class PurchaseRequestDetails extends Model
         'selectedForPO' => 'integer',
         'prClosedYN' => 'integer',
         'fullyOrdered' => 'integer',
-        'poTrackingID' => 'integer'
+        'poTrackingID' => 'integer',
+        'manuallyClosed' => 'integer',
+        'manuallyClosedByEmpSystemID' => 'integer',
+        'manuallyClosedByEmpID' => 'string',
+        'manuallyClosedByEmpName' => 'string',
+        'manuallyClosedDate' => 'string',
+        'manuallyClosedComment' => 'string'
     ];
 
     /**

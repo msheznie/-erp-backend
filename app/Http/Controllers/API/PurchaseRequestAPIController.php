@@ -6,7 +6,7 @@
  * -- Module Name :  Purchase Request
  * -- Author : Mohamed Fayas
  * -- Create date : 26 - March 2018
- * -- Description : This file contains the all CRUD for PPurchase Request
+ * -- Description : This file contains the all CRUD for Purchase Request
  * -- REVISION HISTORY
  * -- Date: 26-March 2018 By: Fayas Description: Added new functions named as getPurchaseRequestByDocumentType()
  * -- Date: 27-March 2018 By: Fayas Description: Added new functions named as getPurchaseRequestFormData()
@@ -15,6 +15,8 @@
  * -- Date: 18-April 2018 By: Fayas Description: Added new functions named as getApprovedDetails()
  * -- Date: 20-April 2018 By: Fayas Description: Added new functions named as getPurchaseRequestApprovalByUser()
  * -- Date: 23-April 2018 By: Fayas Description: Added new functions named as approvePurchaseRequest(),rejectPurchaseRequest
+ * -- Date: 26-April 2018 By: Fayas Description: Added new functions named as cancelPurchaseRequest(),returnPurchaseRequest
+ * -- Date: 04-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequest()
  */
 namespace App\Http\Controllers\API;
 
@@ -157,9 +159,18 @@ class PurchaseRequestAPIController extends AppBaseController
     public function getPurchaseRequestFormData(Request $request)
     {
 
-        $companyId = $request['companyId'];
+        $input = $request->all();
+        $companyId = $input['companyId'];
 
-        $segments = SegmentMaster::where("companySystemID", $companyId)->get();
+        $segments = SegmentMaster::where("companySystemID", $companyId);
+
+        if (array_key_exists('isCreate', $input)) {
+            if($input['isCreate'] == 1){
+                $segments =  $segments->where('isActive',1);
+            }
+        }
+
+        $segments =  $segments->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -566,7 +577,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequests = DB::table('erp_documentapproved')
             ->select(
                 'erp_purchaserequest.*',
-                'employees.empName As confirmed_emp',
+                'employees.empName As created_emp',
                 'financeitemcategorymaster.categoryDescription As financeCategoryDescription',
                 'serviceline.ServiceLineDes As PRServiceLineDes',
                 'erp_location.locationName As PRLocationName',
@@ -601,7 +612,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->where('erp_purchaserequest.PRConfirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', 0)
-            ->join('employees', 'PRConfirmedBySystemID', 'employees.employeeSystemID')
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->join('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
             ->join('erp_priority', 'priority', 'erp_priority.priorityID')
             ->join('erp_location', 'location', 'erp_location.locationID')
@@ -609,6 +620,14 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [1, 50, 51])
             ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                ->orWhere('comments', 'LIKE', "%{$search}%");
+        }
 
         return \DataTables::of($purchaseRequests)
             ->order(function ($query) use ($input) {
@@ -941,7 +960,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
 
-        $purchaseRequest->cancelledYN = 1;
+        $purchaseRequest->cancelledYN = -1;
         $purchaseRequest->cancelledByEmpSystemID = $employee->employeeSystemID;
         $purchaseRequest->cancelledByEmpID = $employee->empID;
         $purchaseRequest->cancelledByEmpName = $employee->empName;
@@ -968,10 +987,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
-                                                ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
-                                                ->where('documentSystemID', $purchaseRequest->documentSystemID)
-                                                ->where('approvedYN', -1)
-                                                ->get();
+            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->where('approvedYN', -1)
+            ->get();
 
         foreach ($documentApproval as $da) {
             $emails[] = array('empSystemID' => $da->employeeSystemID,
@@ -1017,18 +1036,6 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
 
-        $purchaseRequest->PRConfirmedYN = 0;
-        $purchaseRequest->PRConfirmedBy = '';
-        $purchaseRequest->PRConfirmedByEmpName = '';
-        $purchaseRequest->PRConfirmedBySystemID = '';
-        $purchaseRequest->PRConfirmedDate = '';
-        $purchaseRequest->approved = 0;
-        $purchaseRequest->approvedDate = '';
-        $purchaseRequest->approvedByUserID = '';
-        $purchaseRequest->approvedByUserSystemID = '';
-        $purchaseRequest->RollLevForApp_curr = 1;
-        $purchaseRequest->save();
-
         $emails = array();
         $ids_to_delete = array();
 
@@ -1049,19 +1056,34 @@ class PurchaseRequestAPIController extends AppBaseController
                 'docSystemCode' => $purchaseRequest->purchaseRequestID);
         }
 
+        $purchaseRequest->PRConfirmedYN = 0;
+        $purchaseRequest->PRConfirmedBy = '';
+        $purchaseRequest->PRConfirmedByEmpName = '';
+        $purchaseRequest->PRConfirmedBySystemID = '';
+        $purchaseRequest->PRConfirmedDate = '';
+        $purchaseRequest->approved = 0;
+        $purchaseRequest->approvedDate = '';
+        $purchaseRequest->approvedByUserID = '';
+        $purchaseRequest->approvedByUserSystemID = '';
+        $purchaseRequest->RollLevForApp_curr = 1;
+        $purchaseRequest->save();
+
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
-                                            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
-                                            ->where('documentSystemID', $purchaseRequest->documentSystemID)
-                                            ->where('approvedYN', -1)
-                                            ->get();
+            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            //->where('approvedYN', -1)
+            ->get();
 
         foreach ($documentApproval as $da) {
-            $emails[] = array('empSystemID' => $da->employeeSystemID,
-                'companySystemID' => $purchaseRequest->companySystemID,
-                'docSystemID' => $purchaseRequest->documentSystemID,
-                'alertMessage' => $subject,
-                'emailAlertMessage' => $body,
-                'docSystemCode' => $purchaseRequest->purchaseRequestID);
+
+            if($da->approvedYN == -1) {
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $purchaseRequest->companySystemID,
+                    'docSystemID' => $purchaseRequest->documentSystemID,
+                    'alertMessage' => $subject,
+                    'emailAlertMessage' => $body,
+                    'docSystemCode' => $purchaseRequest->purchaseRequestID);
+            }
 
             array_push($ids_to_delete, $da->documentApprovedID);
         }
@@ -1074,6 +1096,152 @@ class PurchaseRequestAPIController extends AppBaseController
         DocumentApproved::destroy($ids_to_delete);
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
+    }
+    /**
+     * manual Close Purchase Request
+     * Post /manualClosePurchaseRequest
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+    public function manualClosePurchaseRequest(Request $request)
+    {
+
+        $input = $request->all();
+        $purchaseRequest = PurchaseRequest::with(['confirmed_by','details'])->find($input['purchaseRequestID']);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if($purchaseRequest->manuallyClosed == 1){
+            return $this->sendError('This request already closed');
+        }
+
+        if($purchaseRequest->selectedForPO != 0 || $purchaseRequest->supplyChainOnGoing != 0 || $purchaseRequest->prClosedYN != 0 ){
+            return $this->sendError('You can not close this, request is currently processing');
+        }
+
+        if($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1){
+            return $this->sendError('You can only close approved request');
+        }
+
+        /*$checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
+
+        if ($checkPo > 0) {
+            return $this->sendError('Cannot cancel. Order is created for this request');
+        }*/
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $emails = array();
+        $ids_to_delete = array();
+
+        $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+
+        $body = '<p>' . $cancelDocNameBody . ' is manually closed due to below reason.</p><p>Comment : ' . $input['manuallyClosedComment'] . '</p>';
+        $subject = $cancelDocNameSubject . ' is closed';
+
+        if ($purchaseRequest->PRConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $purchaseRequest->PRConfirmedBySystemID,
+                'companySystemID' => $purchaseRequest->companySystemID,
+                'docSystemID' => $purchaseRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseRequest->purchaseRequestID);
+        }
+
+        $purchaseRequest->manuallyClosed = 1;
+        $purchaseRequest->manuallyClosedByEmpSystemID = $employee->employeeSystemID;
+        $purchaseRequest->manuallyClosedByEmpID = $employee->empID;
+        $purchaseRequest->manuallyClosedByEmpName = $employee->empName;
+        $purchaseRequest->manuallyClosedComment = $input['manuallyClosedComment'];
+        $purchaseRequest->manuallyClosedDate = now();
+        $purchaseRequest->save();
+
+        $purchaseDetails = PurchaseRequestDetails::where('purchaseRequestID',$purchaseRequest->purchaseRequestID)
+            ->where('selectedForPO',0)
+            ->where('fullyOrdered','!=',2)
+            ->get();
+
+        foreach ($purchaseDetails as $det){
+
+            $detail = PurchaseRequestDetails::where('purchaseRequestDetailsID',$det['purchaseRequestDetailsID'])->first();
+
+            if($detail){
+                if($detail->selectedForPO == 0 and $detail->fullyOrdered != 2 ){
+                    $detail->manuallyClosed = 1;
+                    $detail->manuallyClosedByEmpSystemID = $employee->employeeSystemID;
+                    $detail->manuallyClosedByEmpID = $employee->empID;
+                    $detail->manuallyClosedByEmpName = $employee->empName;
+                    $detail->manuallyClosedComment = $input['manuallyClosedComment'];
+                    $detail->manuallyClosedDate = now();
+                    $detail->save();
+                }
+            }
+        }
+
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->get();
+
+        foreach ($documentApproval as $da) {
+            if($da->approvedYN == -1) {
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $purchaseRequest->companySystemID,
+                    'docSystemID' => $purchaseRequest->documentSystemID,
+                    'alertMessage' => $subject,
+                    'emailAlertMessage' => $body,
+                    'docSystemCode' => $purchaseRequest->purchaseRequestID);
+            }
+
+            //  array_push($ids_to_delete, $da->documentApprovedID);
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"],500);
+        }
+
+        // DocumentApproved::destroy($ids_to_delete);
+
+        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully closed');
+    }
+
+    /**
+     * Display the specified PurchaseRequest print.
+     * GET|HEAD /printPurchaseRequest
+     *
+     * @param  int $request
+     *
+     * @return Response
+     */
+    public function printPurchaseRequest(Request $request)
+    {
+        $id = $request->get('id');
+        /** @var PurchaseRequest $purchaseRequest */
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
+            'priority', 'location', 'details.uom', 'company', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->whereIn('documentSystemID', [1, 50, 51]);
+            }
+        ])->findWithoutFail($id);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        $array = array('request' => $purchaseRequest);
+
+        return view('home',$array);
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }
 
 }

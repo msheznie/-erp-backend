@@ -180,7 +180,13 @@ class PurchaseRequest extends Model
         'modifiedUser',
         'createdDateTime',
         'timeStamp',
-        'modifiedUserSystemID'
+        'modifiedUserSystemID',
+        'manuallyClosed',
+        'manuallyClosedByEmpSystemID',
+        'manuallyClosedByEmpID',
+        'manuallyClosedByEmpName',
+        'manuallyClosedDate',
+        'manuallyClosedComment'
     ];
 
     /**
@@ -257,7 +263,13 @@ class PurchaseRequest extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'manuallyClosed' => 'integer',
+        'manuallyClosedByEmpSystemID' => 'integer',
+        'manuallyClosedByEmpID' => 'string',
+        'manuallyClosedByEmpName' => 'string',
+        'manuallyClosedDate' => 'string',
+        'manuallyClosedComment' => 'string'
     ];
 
     /**

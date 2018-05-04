@@ -20,7 +20,6 @@ use InfyOm\Generator\Utils\ResponseUtil;
 
 class Helper
 {
-
     /**
      * Get all the documents
      * @return mixed
@@ -265,14 +264,14 @@ class Helper
                         // insert rolls to document approved table
                         Models\DocumentApproved::insert($documentApproved);
 
-                        $documentApproved = Models\DocumentApproved::where("documentSystemID",$params["document"])
-                                                                     ->where("documentSystemCode",$sorceDocument[$docInforArr["primarykey"]])
-                                                                     ->where("rollLevelOrder",1)
-                                                                     ->first();
-                        if($documentApproved){
+                        $documentApproved = Models\DocumentApproved::where("documentSystemID", $params["document"])
+                            ->where("documentSystemCode", $sorceDocument[$docInforArr["primarykey"]])
+                            ->where("rollLevelOrder", 1)
+                            ->first();
+                        if ($documentApproved) {
 
                             if ($documentApproved->approvedYN == 0) {
-                                $companyDocument =  Models\CompanyDocumentAttachment::where('companySystemID',$documentApproved->companySystemID)
+                                $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $documentApproved->companySystemID)
                                     ->where('documentSystemID', $documentApproved->documentSystemID)
                                     ->first();
 
@@ -299,10 +298,10 @@ class Helper
                                 $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
                                 $body = '<p>' . $approvedDocNameBody . '  is pending for your approval.</p>';
-                                $subject = "Pending ".$document->documentDescription." approval ".$documentApproved->documentCode;
+                                $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
 
                                 foreach ($approvalList as $da) {
-                                    if($da->employee){
+                                    if ($da->employee) {
                                         $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
                                             'companySystemID' => $documentApproved->companySystemID,
                                             'docSystemID' => $documentApproved->documentSystemID,
@@ -593,19 +592,19 @@ class Helper
                         $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
 
                         $emails = array();
-                        if(!empty($sourceModel)){
-                            $document     = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
-                            $subjectName  = $document->documentDescription . ' ' .$currentApproved->documentCode;
-                            $bodyName     = $document->documentDescription . ' ' .'<b>'.$currentApproved->documentCode.'</b>';
+                        if (!empty($sourceModel)) {
+                            $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
+                            $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
+                            $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
-                            if($sourceModel[$docInforArr["confirmedYN"]] == 1 ||  $sourceModel[$docInforArr["confirmedYN"]] == -1){
+                            if ($sourceModel[$docInforArr["confirmedYN"]] == 1 || $sourceModel[$docInforArr["confirmedYN"]] == -1) {
 
                                 if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
-                                    $subject = $subjectName." is fully approved";
-                                    $body    = $bodyName." is fully approved.";
+                                    $subject = $subjectName . " is fully approved";
+                                    $body = $bodyName . " is fully approved.";
                                 } else {
 
-                                    $companyDocument =  Models\CompanyDocumentAttachment::where('companySystemID',$currentApproved->companySystemID)
+                                    $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
                                         ->where('documentSystemID', $currentApproved->documentSystemID)
                                         ->first();
 
@@ -616,14 +615,14 @@ class Helper
                                     $nextLevel = $currentApproved->rollLevelOrder + 1;
 
                                     $nextApproval = Models\DocumentApproved::where('companySystemID', $currentApproved->companySystemID)
-                                                                            ->where('documentSystemID', $currentApproved->documentSystemID)
-                                                                            ->where('documentSystemCode', $currentApproved->documentSystemCode)
-                                                                            ->where('rollLevelOrder',$nextLevel)
-                                                                            ->first();
+                                        ->where('documentSystemID', $currentApproved->documentSystemID)
+                                        ->where('documentSystemCode', $currentApproved->documentSystemCode)
+                                        ->where('rollLevelOrder', $nextLevel)
+                                        ->first();
 
                                     $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $nextApproval->approvalGroupID)
-                                                                                ->where('companySystemID', $currentApproved->companySystemID)
-                                                                                ->where('documentSystemID', $currentApproved->documentSystemID);
+                                        ->where('companySystemID', $currentApproved->companySystemID)
+                                        ->where('documentSystemID', $currentApproved->documentSystemID);
 
 
                                     if ($companyDocument['isServiceLineApproval'] == -1) {
@@ -636,13 +635,13 @@ class Helper
                                         ->get();
 
 
-                                    $nextApprovalBody    = '<p>' .$bodyName. ' Level '.$currentApproved->rollLevelOrder.' is approved and pending for your approval.</p>';
-                                    $nextApprovalSubject = $subjectName." Level ".$currentApproved->rollLevelOrder." is approved and pending for your approval";
+                                    $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval.</p>';
+                                    $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
                                     $nextApproveNameList = "";
                                     foreach ($approvalList as $da) {
-                                        if($da->employee){
+                                        if ($da->employee) {
 
-                                            $nextApproveNameList = $nextApproveNameList .'<br>'.$da->employee->empName;
+                                            $nextApproveNameList = $nextApproveNameList . '<br>' . $da->employee->empName;
 
                                             $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
                                                 'companySystemID' => $nextApproval->companySystemID,
@@ -653,8 +652,8 @@ class Helper
                                         }
                                     }
 
-                                    $subject = $subjectName." Level ".$currentApproved->rollLevelOrder." is approved and sent to next level approval";
-                                    $body    = $bodyName." Level ".$currentApproved->rollLevelOrder." is approved and sent to next level approval to below <br>" .$nextApproveNameList;
+                                    $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
+                                    $body = $bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below <br>" . $nextApproveNameList;
                                 }
 
                                 $emails[] = array('empSystemID' => $sourceModel[$docInforArr["confirmedEmpSystemID"]],
