@@ -55,13 +55,13 @@ class Handler extends ExceptionHandler
    {
    	$error = $this->convertExceptionToResponse($e);
    	$response = [];
-   	//if($error->getStatusCode() == 500) {
+   	if($error->getStatusCode() == 500) {
    	       $response['error'] = $e->getMessage();
    		if(env('APP_DEBUG', true)) {
    			$response['trace'] = $e->getTraceAsString();
   			$response['code'] = $e->getCode();
   		}
-   	//}
+   	}
    	return response()->json($response, $error->getStatusCode());
    }
     /**
