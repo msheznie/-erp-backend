@@ -626,7 +626,7 @@ class PurchaseRequestAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
-                                                 ->orWhere('comments', 'LIKE', "%{$search}%");
+                ->orWhere('comments', 'LIKE', "%{$search}%");
         }
 
         return \DataTables::of($purchaseRequests)
@@ -987,10 +987,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
-                                                ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
-                                                ->where('documentSystemID', $purchaseRequest->documentSystemID)
-                                                ->where('approvedYN', -1)
-                                                ->get();
+            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->where('approvedYN', -1)
+            ->get();
 
         foreach ($documentApproval as $da) {
             $emails[] = array('empSystemID' => $da->employeeSystemID,
@@ -1069,10 +1069,10 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest->save();
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
-                                            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
-                                            ->where('documentSystemID', $purchaseRequest->documentSystemID)
-                                            //->where('approvedYN', -1)
-                                            ->get();
+            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            //->where('approvedYN', -1)
+            ->get();
 
         foreach ($documentApproval as $da) {
 
@@ -1164,9 +1164,9 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest->save();
 
         $purchaseDetails = PurchaseRequestDetails::where('purchaseRequestID',$purchaseRequest->purchaseRequestID)
-                                                   ->where('selectedForPO',0)
-                                                   ->where('fullyOrdered','!=',2)
-                                                   ->get();
+            ->where('selectedForPO',0)
+            ->where('fullyOrdered','!=',2)
+            ->get();
 
         foreach ($purchaseDetails as $det){
 
@@ -1187,9 +1187,9 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
-                                            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
-                                            ->where('documentSystemID', $purchaseRequest->documentSystemID)
-                                            ->get();
+            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->get();
 
         foreach ($documentApproval as $da) {
             if($da->approvedYN == -1) {
@@ -1201,7 +1201,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     'docSystemCode' => $purchaseRequest->purchaseRequestID);
             }
 
-          //  array_push($ids_to_delete, $da->documentApprovedID);
+            //  array_push($ids_to_delete, $da->documentApprovedID);
         }
 
         $sendEmail = \Email::sendEmail($emails);
@@ -1209,7 +1209,7 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError($sendEmail["message"],500);
         }
 
-       // DocumentApproved::destroy($ids_to_delete);
+        // DocumentApproved::destroy($ids_to_delete);
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully closed');
     }
@@ -1229,7 +1229,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
             'priority', 'location', 'details.uom', 'company', 'approved_by' => function ($query) {
                 $query->with('employee')
-                      ->whereIn('documentSystemID', [1, 50, 51]);
+                    ->whereIn('documentSystemID', [1, 50, 51]);
             }
         ])->findWithoutFail($id);
 

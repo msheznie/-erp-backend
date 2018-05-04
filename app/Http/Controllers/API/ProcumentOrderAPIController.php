@@ -16,6 +16,8 @@
  * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as poCheckDetailExistinGrv() for check in grv details,erp_advancepaymentdetails table before closing a PO in amendment pull details total from erp_purchaseorderdetails table
  * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as procumentOrderCancel() for cancel PO
  * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as procumentOrderReturnBack() for cancel return back PO to start level PO
+ * -- Date: 03-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysis() for load Spent Analysis by Report master view
+ * -- Date: 03-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysisExport() for report Spent Analysis export to excel report
  */
 
 namespace App\Http\Controllers\API;
@@ -561,17 +563,19 @@ class ProcumentOrderAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
-            ->where('documentSystemID', $input['documentId'])
-            ->whereIn('poType_N', [$input['poType_N']])
-            ->with(['created_by' => function ($query) {
-                //$query->select(['empName']);
-            }, 'location' => function ($query) {
-            }, 'supplier' => function ($query) {
-            }, 'currency' => function ($query) {
-            }, 'fcategory' => function ($query) {
-            }, 'segment' => function ($query) {
-            }]);
+        $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId']);
+        $procumentOrders->where('documentSystemID', $input['documentId']);
+        if ($input['poType_N'] != 1) {
+            $procumentOrders->where('poType_N', $input['poType_N']);
+        }
+        $procumentOrders->with(['created_by' => function ($query) {
+            //$query->select(['empName']);
+        }, 'location' => function ($query) {
+        }, 'supplier' => function ($query) {
+        }, 'currency' => function ($query) {
+        }, 'fcategory' => function ($query) {
+        }, 'segment' => function ($query) {
+        }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
@@ -1160,7 +1164,45 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'cancelledComments' => $input['cancelComments']
             ]);
 
-        return $this->sendResponse($purchaseOrderID, 'PO canceled successfully ');
+        $emails = array();
+        $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderID . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderID;
+
+        $body = '<p>' . $cancelDocNameBody . ' is cancelled due to below reason.</p><p>Comment : ' . $input['cancelComments'] . '</p>';
+        $subject = $cancelDocNameSubject . ' is cancelled';
+
+        if ($purchaseOrder->PRConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $purchaseOrder->poConfirmedByEmpSystemID,
+                'companySystemID' => $purchaseOrder->companySystemID,
+                'docSystemID' => $purchaseOrder->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseOrder->purchaseOrderID);
+        }
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemCode', $purchaseOrder->purchaseOrderID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
+            ->where('approvedYN', -1)
+            ->get();
+
+        foreach ($documentApproval as $da) {
+            $emails[] = array('empSystemID' => $da->employeeSystemID,
+                'companySystemID' => $purchaseOrder->companySystemID,
+                'docSystemID' => $purchaseOrder->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseOrder->purchaseOrderID);
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"], 500);
+        }
+
+        return $this->sendResponse($purchaseOrderID, 'Order canceled successfully ');
     }
 
     public function procumentOrderReturnBack(Request $request)
@@ -1168,6 +1210,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $input = $request->all();
 
         $purchaseOrderID = $input['purchaseOrderID'];
+
+        $emails = array();
 
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 
@@ -1193,6 +1237,46 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                     'approvedByUserSystemID' => '',
                     'RollLevForApp_curr' => 1
                 ]);
+        }
+
+        $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderID . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderID;
+
+        $body = '<p>' . $cancelDocNameBody . ' is return back to amend due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+        $subject = $cancelDocNameSubject . ' is return back to amend';
+
+        if ($purchaseOrder->PRConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $purchaseOrder->PRConfirmedBySystemID,
+                'companySystemID' => $purchaseOrder->companySystemID,
+                'docSystemID' => $purchaseOrder->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseOrder->purchaseOrderID);
+        }
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemCode', $purchaseOrder->purchaseOrderID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
+            //->where('approvedYN', -1)
+            ->get();
+
+        foreach ($documentApproval as $da) {
+
+            if ($da->approvedYN == -1) {
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $purchaseOrder->companySystemID,
+                    'docSystemID' => $purchaseOrder->documentSystemID,
+                    'alertMessage' => $subject,
+                    'emailAlertMessage' => $body,
+                    'docSystemCode' => $purchaseOrder->purchaseOrderID);
+            }
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"], 500);
         }
 
         return $this->sendResponse($purchaseOrderID, 'PO return back to amend successfully ');
@@ -1248,6 +1332,12 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             $startMonthCN = new Carbon($lastYear . '-01-01');
             $endMonthCN = new Carbon($firstYear . '-12-31');
 
+            if(now() > $endMonthCN){
+                $endMonthCN = new Carbon($firstYear . '-12-31');
+            }else{
+                $endMonthCN = now();
+            }
+
             $start = $startMonthCN->startOfMonth();
             $end = $endMonthCN->startOfMonth();
 
@@ -1279,8 +1369,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $supplierReportGRVBase = array();
 
         if ($validator->fails()) {//echo 'in';exit;
-            return $this->sendError($validator->messages(), 422 );
-            exit();
+            return $supplierReportGRVBase = array();
+            return $this->sendError($validator->messages(), 422);
         }
 
         $firstYear = reset($input['years']);
@@ -1289,6 +1379,11 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $startMonthCN = new Carbon($lastYear . '-01-01');
         $endMonthCN = new Carbon($firstYear . '-12-31');
 
+        if(now() > $endMonthCN){
+            $endMonthCN = new Carbon($firstYear . '-12-31');
+        }else{
+            $endMonthCN = now();
+        }
         $start = $startMonthCN->startOfMonth();
         $end = $endMonthCN->startOfMonth();
         $feilds = "";
@@ -1303,7 +1398,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             } else if ($input['currency'] == 2) {
                 $currencyField = 'GRVcostPerUnitComRptCur';
             }
-        }else if($input['documentId'] == 2){
+        } else if ($input['documentId'] == 2) {
             if ($input['currency'] == 1) {
                 $currencyField = 'totLocalAmount';
             } else if ($input['currency'] == 2) {
@@ -1323,7 +1418,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                         $feilds .= "SUM(if(DATE_FORMAT(erp_grvmaster.grvDate,'%Y-%m') = '$key',$currencyField * noQty ,0)) as `$key`,";
                         $colums .= "GRVDet.`$key` as $key,";
                     } else {
-                        $feilds .= "SUM(if(DATE_FORMAT(InvoiceDet.postedDate,'%Y-%m') = '$key',$currencyField * noQty ,0)) as `$key`,";
+                        $feilds .= "SUM(if(DATE_FORMAT(erp_bookinvsuppmaster.postedDate,'%Y-%m') = '$key',$currencyField,0)) as `$key`,";
                         $colums .= "InvoiceDet.`$key` as $key,";
                     }
 
@@ -1342,8 +1437,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 	erp_purchaseordermaster.supplierName,
 	PODet.POlocalAmount,
 	PODet.PORptAmount,
-	GRVDet.GRVlocalTotal,
-	GRVDet.GRVRptTotal,
+	GRVDet.LinelocalTotal,
+	GRVDet.LineRptTotal,
 	InvoiceDet.InvoicelocalAmount,
 	InvoiceDet.InvoiceRptAmount
 FROM
@@ -1382,10 +1477,10 @@ INNER JOIN (
 		noQty,
 		sum(
 			GRVcostPerUnitLocalCur * noQty
-		) AS GRVlocalTotal,
+		) AS LinelocalTotal,
 		sum(
 			GRVcostPerUnitComRptCur * noQty
-		) AS GRVRptTotal
+		) AS LineRptTotal
 	FROM
 		erp_grvdetails
 	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
@@ -1420,7 +1515,7 @@ LEFT JOIN (
 WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
-AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(GRVDet.grvDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID' );
+AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(GRVDet.grvDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID');
         } else if ($input['documentId'] == 2) {
             $supplierReportGRVBase = DB::select('SELECT
          InvoiceDet.*,
@@ -1431,12 +1526,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 	erp_purchaseordermaster.supplierName,
 	PODet.POlocalAmount,
 	PODet.PORptAmount,
-	GRVDet.GRVlocalAmount,
-	GRVDet.GRVRptAmount,
-	GRVDet.grvDate,
-	GRVDet.GRVcostPerUnitLocalCur,
-	GRVDet.GRVcostPerUnitComRptCur,
-	GRVDet.noQty
+	InvoiceDet.LinelocalTotal,
+	InvoiceDet.LineRptTotal
 FROM
 	erp_purchaseordermaster
 INNER JOIN (
@@ -1494,10 +1585,10 @@ LEFT JOIN (
 		erp_bookinvsuppmaster.postedDate,
 		sum(
 			erp_bookinvsuppdet.totLocalAmount
-		) AS InvoicelocalAmount,
+		) AS LinelocalTotal,
 		sum(
 			erp_bookinvsuppdet.totRptAmount
-		) AS InvoiceRptAmount
+		) AS LineRptTotal
 	FROM
 		erp_bookinvsuppdet
 	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
@@ -1505,13 +1596,13 @@ LEFT JOIN (
 		erp_bookinvsuppmaster.approved = - 1
 	AND erp_bookinvsuppmaster.cancelYN = 0
 	GROUP BY
-		erp_bookinvsuppdet.purchaseOrderID
+		erp_bookinvsuppdet.purchaseOrderID,
 		erp_bookinvsuppmaster.supplierID
 ) AS InvoiceDet ON InvoiceDet.purchaseOrderID = erp_purchaseordermaster.purchaseOrderID
 WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
-AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ')');
+AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID');
         }
         $alltotal = array();
         $i = 0;
@@ -1529,12 +1620,22 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                 $i++;
             }
         }
-        if ($input['currency'] == 1) {
-            $tot = collect($supplierReportGRVBase)->pluck('GRVlocalTotal')->toArray();
-            $pageTotal = array_sum($tot);
-        } else {
-            $tot = collect($supplierReportGRVBase)->pluck('GRVRptTotal')->toArray();
-            $pageTotal = array_sum($tot);
+        if ($input['documentId'] == 1) {
+            if ($input['currency'] == 1) {
+                $tot = collect($supplierReportGRVBase)->pluck('LinelocalTotal')->toArray();
+                $pageTotal = array_sum($tot);
+            } else {
+                $tot = collect($supplierReportGRVBase)->pluck('LineRptTotal')->toArray();
+                $pageTotal = array_sum($tot);
+            }
+        } else if ($input['documentId'] == 2) {
+            if ($input['currency'] == 1) {
+                $tot = collect($supplierReportGRVBase)->pluck('LinelocalTotal')->toArray();
+                $pageTotal = array_sum($tot);
+            } else {
+                $tot = collect($supplierReportGRVBase)->pluck('LineRptTotal')->toArray();
+                $pageTotal = array_sum($tot);
+            }
         }
 
 
@@ -1562,7 +1663,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $supplierReportGRVBase = array();
 
         if ($validator->fails()) {//echo 'in';exit;
-            return $this->sendError($validator->messages(), 422 );
+            return $this->sendError($validator->messages(), 422);
             exit();
         }
 
@@ -1574,21 +1675,28 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $startMonthCN = new Carbon($lastYear . '-01-01');
         $endMonthCN = new Carbon($firstYear . '-12-31');
 
+        if(now() > $endMonthCN){
+            $endMonthCN = new Carbon($firstYear . '-12-31');
+        }else{
+            $endMonthCN = now();
+        }
+
         $start = $startMonthCN->startOfMonth();
         $end = $endMonthCN->startOfMonth();
+
         $feilds = "";
         $colums = "";
 
         $commaSeperatedYears = join($input['years'], ",");
         $commaSeperatedCompany = join($input['companySystemID'], ",");
 
-        IF ($input['documentId'] == 1) {
+        if ($input['documentId'] == 1) {
             if ($input['currency'] == 1) {
                 $currencyField = 'GRVcostPerUnitLocalCur';
             } else if ($input['currency'] == 2) {
                 $currencyField = 'GRVcostPerUnitComRptCur';
             }
-        }else if($input['documentId'] == 2){
+        } else if ($input['documentId'] == 2) {
             if ($input['currency'] == 1) {
                 $currencyField = 'totLocalAmount';
             } else if ($input['currency'] == 2) {
@@ -1608,7 +1716,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                         $feilds .= "SUM(if(DATE_FORMAT(erp_grvmaster.grvDate,'%Y-%m') = '$key',$currencyField * noQty ,0)) as `$key`,";
                         $colums .= "GRVDet.`$key` as $key,";
                     } else {
-                        $feilds .= "SUM(if(DATE_FORMAT(InvoiceDet.postedDate,'%Y-%m') = '$key',$currencyField * noQty ,0)) as `$key`,";
+                        $feilds .= "SUM(if(DATE_FORMAT(erp_bookinvsuppmaster.postedDate,'%Y-%m') = '$key',$currencyField,0)) as `$key`,";
                         $colums .= "InvoiceDet.`$key` as $key,";
                     }
 
@@ -1705,7 +1813,7 @@ LEFT JOIN (
 WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
-AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(GRVDet.grvDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID' );
+AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(GRVDet.grvDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID');
         } else if ($input['documentId'] == 2) {
             $supplierReportGRVBase = DB::select('SELECT
          InvoiceDet.*,
@@ -1716,12 +1824,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 	erp_purchaseordermaster.supplierName,
 	PODet.POlocalAmount,
 	PODet.PORptAmount,
-	GRVDet.GRVlocalAmount,
-	GRVDet.GRVRptAmount,
-	GRVDet.grvDate,
-	GRVDet.GRVcostPerUnitLocalCur,
-	GRVDet.GRVcostPerUnitComRptCur,
-	GRVDet.noQty
+	InvoiceDet.LinelocalTotal,
+	InvoiceDet.LineRptTotal
 FROM
 	erp_purchaseordermaster
 INNER JOIN (
@@ -1779,10 +1883,10 @@ LEFT JOIN (
 		erp_bookinvsuppmaster.postedDate,
 		sum(
 			erp_bookinvsuppdet.totLocalAmount
-		) AS InvoicelocalAmount,
+		) AS LinelocalTotal,
 		sum(
 			erp_bookinvsuppdet.totRptAmount
-		) AS InvoiceRptAmount
+		) AS LineRptTotal
 	FROM
 		erp_bookinvsuppdet
 	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
@@ -1790,13 +1894,13 @@ LEFT JOIN (
 		erp_bookinvsuppmaster.approved = - 1
 	AND erp_bookinvsuppmaster.cancelYN = 0
 	GROUP BY
-		erp_bookinvsuppdet.purchaseOrderID
+		erp_bookinvsuppdet.purchaseOrderID,
 		erp_bookinvsuppmaster.supplierID
 ) AS InvoiceDet ON InvoiceDet.purchaseOrderID = erp_purchaseordermaster.purchaseOrderID
 WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
-AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ')');
+AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID');
         }
         $alltotal = array();
         $i = 0;
@@ -1814,12 +1918,19 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                 $i++;
             }
         }
-        if ($input['currency'] == 1) {
-            $tot = collect($supplierReportGRVBase)->pluck('GRVlocalTotal')->toArray();
-            $pageTotal = array_sum($tot);
-        } else {
-            $tot = collect($supplierReportGRVBase)->pluck('GRVRptTotal')->toArray();
-            $pageTotal = array_sum($tot);
+
+        if ($input['documentId'] == 1) {
+            if ($input['currency'] == 1) {
+                $currencyField = 'GRVcostPerUnitLocalCur';
+            } else if ($input['currency'] == 2) {
+                $currencyField = 'GRVcostPerUnitComRptCur';
+            }
+        } else if ($input['documentId'] == 2) {
+            if ($input['currency'] == 1) {
+                $currencyField = 'totLocalAmount';
+            } else if ($input['currency'] == 2) {
+                $currencyField = 'totRptAmount';
+            }
         }
 
         foreach ($supplierReportGRVBase as $val) {
