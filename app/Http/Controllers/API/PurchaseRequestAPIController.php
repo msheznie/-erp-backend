@@ -6,7 +6,7 @@
  * -- Module Name :  Purchase Request
  * -- Author : Mohamed Fayas
  * -- Create date : 26 - March 2018
- * -- Description : This file contains the all CRUD for PPurchase Request
+ * -- Description : This file contains the all CRUD for Purchase Request
  * -- REVISION HISTORY
  * -- Date: 26-March 2018 By: Fayas Description: Added new functions named as getPurchaseRequestByDocumentType()
  * -- Date: 27-March 2018 By: Fayas Description: Added new functions named as getPurchaseRequestFormData()
@@ -16,6 +16,7 @@
  * -- Date: 20-April 2018 By: Fayas Description: Added new functions named as getPurchaseRequestApprovalByUser()
  * -- Date: 23-April 2018 By: Fayas Description: Added new functions named as approvePurchaseRequest(),rejectPurchaseRequest
  * -- Date: 26-April 2018 By: Fayas Description: Added new functions named as cancelPurchaseRequest(),returnPurchaseRequest
+ * -- Date: 04-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequest()
  */
 namespace App\Http\Controllers\API;
 
@@ -1096,7 +1097,122 @@ class PurchaseRequestAPIController extends AppBaseController
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
     }
+    /**
+     * manual Close Purchase Request
+     * Post /manualClosePurchaseRequest
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+    public function manualClosePurchaseRequest(Request $request)
+    {
 
+        $input = $request->all();
+        $purchaseRequest = PurchaseRequest::with(['confirmed_by','details'])->find($input['purchaseRequestID']);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if($purchaseRequest->manuallyClosed == 1){
+            return $this->sendError('This request already closed');
+        }
+
+        if($purchaseRequest->selectedForPO != 0 || $purchaseRequest->supplyChainOnGoing != 0 || $purchaseRequest->prClosedYN != 0 ){
+            return $this->sendError('You can not close this, request is currently processing');
+        }
+
+        if($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1){
+            return $this->sendError('You can only close approved request');
+        }
+
+        /*$checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
+
+        if ($checkPo > 0) {
+            return $this->sendError('Cannot cancel. Order is created for this request');
+        }*/
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $emails = array();
+        $ids_to_delete = array();
+
+        $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+
+        $body = '<p>' . $cancelDocNameBody . ' is manually closed due to below reason.</p><p>Comment : ' . $input['manuallyClosedComment'] . '</p>';
+        $subject = $cancelDocNameSubject . ' is closed';
+
+        if ($purchaseRequest->PRConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $purchaseRequest->PRConfirmedBySystemID,
+                'companySystemID' => $purchaseRequest->companySystemID,
+                'docSystemID' => $purchaseRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseRequest->purchaseRequestID);
+        }
+
+        $purchaseRequest->manuallyClosed = 1;
+        $purchaseRequest->manuallyClosedByEmpSystemID = $employee->employeeSystemID;
+        $purchaseRequest->manuallyClosedByEmpID = $employee->empID;
+        $purchaseRequest->manuallyClosedByEmpName = $employee->empName;
+        $purchaseRequest->manuallyClosedComment = $input['manuallyClosedComment'];
+        $purchaseRequest->manuallyClosedDate = now();
+        $purchaseRequest->save();
+
+        $purchaseDetails = PurchaseRequestDetails::where('purchaseRequestID',$purchaseRequest->purchaseRequestID)
+                                                   ->where('selectedForPO',0)
+                                                   ->where('fullyOrdered','!=',2)
+                                                   ->get();
+
+        foreach ($purchaseDetails as $det){
+
+            $detail = PurchaseRequestDetails::where('purchaseRequestDetailsID',$det['purchaseRequestDetailsID'])->first();
+
+            if($detail){
+                if($detail->selectedForPO == 0 and $detail->fullyOrdered != 2 ){
+                    $detail->manuallyClosed = 1;
+                    $detail->manuallyClosedByEmpSystemID = $employee->employeeSystemID;
+                    $detail->manuallyClosedByEmpID = $employee->empID;
+                    $detail->manuallyClosedByEmpName = $employee->empName;
+                    $detail->manuallyClosedComment = $input['manuallyClosedComment'];
+                    $detail->manuallyClosedDate = now();
+                    $detail->save();
+                }
+            }
+        }
+
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
+                                            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+                                            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                            ->get();
+
+        foreach ($documentApproval as $da) {
+            if($da->approvedYN == -1) {
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $purchaseRequest->companySystemID,
+                    'docSystemID' => $purchaseRequest->documentSystemID,
+                    'alertMessage' => $subject,
+                    'emailAlertMessage' => $body,
+                    'docSystemCode' => $purchaseRequest->purchaseRequestID);
+            }
+
+          //  array_push($ids_to_delete, $da->documentApprovedID);
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"],500);
+        }
+
+       // DocumentApproved::destroy($ids_to_delete);
+
+        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully closed');
+    }
 
     /**
      * Display the specified PurchaseRequest print.
