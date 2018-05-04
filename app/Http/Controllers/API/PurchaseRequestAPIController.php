@@ -1097,7 +1097,6 @@ class PurchaseRequestAPIController extends AppBaseController
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
     }
 
-
     /**
      * Display the specified PurchaseRequest print.
      * GET|HEAD /printPurchaseRequest
