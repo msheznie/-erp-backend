@@ -10,6 +10,7 @@
  * -- Description : This file contains the all CRUD for Address
  * -- REVISION HISTORY
  * -- Date: 04-May 2018 By: Fayas Description: Added new functions named as getAllAddresses()
+ * -- Date: 08-May 2018 By: Fayas Description: Added new functions named as getAddressFormData()
  */
 
 namespace App\Http\Controllers\API;
@@ -17,6 +18,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateAddressAPIRequest;
 use App\Http\Requests\API\UpdateAddressAPIRequest;
 use App\Models\Address;
+use App\Models\AddressType;
+use App\Models\Company;
 use App\Repositories\AddressRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -122,11 +125,59 @@ class AddressAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $company = Company::where('companySystemID',$input['companySystemID'])->first();
+
+        if($company){
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        if(array_key_exists ('isDefault' , $input )) {
+            if ($input['isDefault'] == true || $input['isDefault'] == 1) {
+                $input['isDefault'] = -1;
+
+                $activeAddress = Address::where('companySystemID',$input['companySystemID'])
+                                        ->where('addressTypeID', $input['addressTypeID'])
+                                        ->where('isDefault',-1)
+                                        ->get();
+
+                foreach ($activeAddress as $ad){
+                    $temAddress = Address::where('addressID',$ad['addressID'])->first();
+                    $temAddress->isDefault = 0;
+                    $temAddress->save();
+                }
+            }
+        }
         $addresses = $this->addressRepository->create($input);
 
         return $this->sendResponse($addresses->toArray(), 'Address saved successfully');
     }
 
+    /**
+     * get form data for Customer Master.
+     * GET /getCustomerFormData
+     *
+     * @param Request $request
+     * @return Response
+     */
+
+    public function getAddressFormData(Request $request){
+
+       $types = AddressType::all();
+
+        $output = array(
+            'types' => $types
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    /**
+     * Display a listing of the purchase address.
+     * GET|HEAD /getAllAddresses
+     *
+     * @param Request $request
+     * @return Response
+     */
     public function getAllAddresses(Request $request)
     {
         $input = $request->all();
@@ -148,13 +199,14 @@ class AddressAPIController extends AppBaseController
         }
 
         $addresses = Address::whereIn('companySystemID',$childCompanies)
+                                        ->with(['type'])
                                         ->select('erp_address.*');
 
         $search = $request->input('search.value');
         if($search){
-            /*$customerMasters =   $customerMasters->where('CutomerCode','LIKE',"%{$search}%")
-                ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
-                ->orWhere('CustomerName', 'LIKE', "%{$search}%")*/;
+            $addresses =   $addresses //->where('contactPersonEmail','LIKE',"%{$search}%")
+                                    ->where('addressDescrption', 'LIKE', "%{$search}%");
+                                    //->orWhere('contactPersonID', 'LIKE', "%{$search}%");
         }
 
         return \DataTables::eloquent($addresses)
@@ -275,11 +327,36 @@ class AddressAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $input = $this->convertArrayToValue($input);
+
         /** @var Address $address */
         $address = $this->addressRepository->findWithoutFail($id);
 
         if (empty($address)) {
             return $this->sendError('Address not found');
+        }
+
+        $company = Company::where('companySystemID',$input['companySystemID'])->first();
+
+        if($company){
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        if(array_key_exists ('isDefault' , $input )) {
+            if ($input['isDefault'] == true || $input['isDefault'] == 1) {
+                $input['isDefault'] = -1;
+
+                $activeAddress = Address::where('companySystemID',$input['companySystemID'])
+                    ->where('addressTypeID', $input['addressTypeID'])
+                    ->where('isDefault',-1)
+                    ->get();
+
+                foreach ($activeAddress as $ad){
+                    $temAddress = Address::where('addressID',$ad['addressID'])->first();
+                    $temAddress->isDefault = 0;
+                    $temAddress->save();
+                }
+            }
         }
 
         $address = $this->addressRepository->update($input, $id);
