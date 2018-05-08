@@ -29,11 +29,16 @@ class ReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'POA':
-                $validatedData = $request->validate([
+                $validator = \Validator::make($request->all(), [
                     'daterange' => 'required',
                     'suppliers' => 'required',
                     'reportType' => 'required',
                 ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422 );
+                }
+
                 break;
             default:
                 return $this->sendError('Error Occurred');

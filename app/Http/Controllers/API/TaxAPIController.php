@@ -167,10 +167,15 @@ class TaxAPIController extends AppBaseController
         if (array_key_exists('selectedCompanyID', $input)) {
             $tax = $tax->where('companySystemID', $input["selectedCompanyID"]);
         } else {
-
-            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
-                $companiesByGroup = $input['globalCompanyId'];
-                $tax = $tax->where('companySystemID', $companiesByGroup);
+            if(array_key_exists ('selectedCompanyID' , $input)){
+                if($input['selectedCompanyID'] > 0){
+                    $tax = $tax->where('companySystemID', $input['selectedCompanyID']);
+                }
+            }else {
+                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                    $companiesByGroup = $input['globalCompanyId'];
+                    $tax = $tax->where('companySystemID', $companiesByGroup);
+                }
             }
         }
 
