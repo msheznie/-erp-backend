@@ -675,7 +675,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $purchaseOrderID = $request['purchaseOrderID'];
 
-        $segments = SegmentMaster::where("companySystemID", $companyId)->get();
+        $segments = SegmentMaster::where("companySystemID", $companyId);
+        $segments = $segments->where('isActive', 1);
+        $segments = $segments->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -1332,9 +1334,9 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             $startMonthCN = new Carbon($lastYear . '-01-01');
             $endMonthCN = new Carbon($firstYear . '-12-31');
 
-            if(now() > $endMonthCN){
+            if (now() > $endMonthCN) {
                 $endMonthCN = new Carbon($firstYear . '-12-31');
-            }else{
+            } else {
                 $endMonthCN = now();
             }
 
@@ -1379,9 +1381,9 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $startMonthCN = new Carbon($lastYear . '-01-01');
         $endMonthCN = new Carbon($firstYear . '-12-31');
 
-        if(now() > $endMonthCN){
+        if (now() > $endMonthCN) {
             $endMonthCN = new Carbon($firstYear . '-12-31');
-        }else{
+        } else {
             $endMonthCN = now();
         }
         $start = $startMonthCN->startOfMonth();
@@ -1675,9 +1677,9 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $startMonthCN = new Carbon($lastYear . '-01-01');
         $endMonthCN = new Carbon($firstYear . '-12-31');
 
-        if(now() > $endMonthCN){
+        if (now() > $endMonthCN) {
             $endMonthCN = new Carbon($firstYear . '-12-31');
-        }else{
+        } else {
             $endMonthCN = now();
         }
 
