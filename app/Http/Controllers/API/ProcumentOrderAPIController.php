@@ -273,7 +273,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ProcumentOrder $procumentOrder */
-        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($id);
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment'])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
