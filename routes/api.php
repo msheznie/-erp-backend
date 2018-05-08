@@ -328,7 +328,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
-    Route::get('getApprovedDetails', 'ProcumentOrderAPIController@getApprovedDetails');
+    Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
 
     Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
@@ -372,6 +372,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('cancelPurchaseRequest', 'PurchaseRequestAPIController@cancelPurchaseRequest');
     Route::post('returnPurchaseRequest', 'PurchaseRequestAPIController@returnPurchaseRequest');
+    Route::post('manualClosePurchaseRequest', 'PurchaseRequestAPIController@manualClosePurchaseRequest');
     Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
 
     Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
@@ -379,6 +380,15 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
 
+    Route::resource('alerts', 'AlertAPIController');
+    Route::resource('access_tokens', 'AccessTokensAPIController');
+    Route::resource('users_log_histories', 'UsersLogHistoryAPIController');
+
+
+    Route::resource('addresses', 'AddressAPIController');
+    Route::post('getAllAddresses', 'AddressAPIController@getAllAddresses');
+
+    Route::resource('address_types', 'AddressTypeAPIController');
 });
 
 
@@ -401,6 +411,3 @@ Route::get('foo', function () {
 });
 
 Route::get('test', 'TaxFormulaDetailAPIController@test');
-Route::resource('alerts', 'AlertAPIController');
-Route::resource('access_tokens', 'AccessTokensAPIController');
-Route::resource('users_log_histories', 'UsersLogHistoryAPIController');

@@ -108,7 +108,7 @@ return [
 
     'options' => [
 
-        'softDelete' => true,
+        'softDelete' => false,
 
         'tables_searchable_default' => false,
     ],
@@ -140,7 +140,7 @@ return [
 
     'add_on' => [
 
-        'swagger'       => false,
+        'swagger'       => true,
 
         'tests'         => true,
 
@@ -148,7 +148,7 @@ return [
 
         'menu'          => [
 
-            'enabled'       => true,
+            'enabled'       => false,
 
             'menu_file'     => 'layouts/menu.blade.php',
         ],

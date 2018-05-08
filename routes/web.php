@@ -31,3 +31,7 @@ Route::resource('alerts', 'AlertController');
 Route::resource('accessTokens', 'AccessTokensController');
 
 Route::resource('usersLogHistories', 'UsersLogHistoryController');
+
+Route::resource('addresses', 'AddressController');
+
+Route::resource('addressTypes', 'AddressTypeController');
