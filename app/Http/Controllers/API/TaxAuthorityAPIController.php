@@ -158,9 +158,15 @@ class TaxAuthorityAPIController extends AppBaseController
         $input = $request->all();
         $authority = TaxAuthority::select('*');
         $companiesByGroup = "";
-        if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
-            $companiesByGroup = $input['globalCompanyId'];
-            $authority = $authority->where('companySystemID', $companiesByGroup);
+        if(array_key_exists ('selectedCompanyID' , $input)){
+            if($input['selectedCompanyID'] > 0){
+                $authority = $authority->where('companySystemID', $input['selectedCompanyID']);
+            }
+        }else {
+            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                $companiesByGroup = $input['globalCompanyId'];
+                $authority = $authority->where('companySystemID', $companiesByGroup);
+            }
         }
 
         return \DataTables::eloquent($authority)

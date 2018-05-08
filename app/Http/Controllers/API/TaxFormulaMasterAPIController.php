@@ -139,9 +139,15 @@ class TaxFormulaMasterAPIController extends AppBaseController
         $input = $request->all();
         $formula = TaxFormulaMaster::with('type');
         $companiesByGroup = "";
-        if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
-            $companiesByGroup = $input['globalCompanyId'];
-            $formula = $formula->where('companySystemID', $companiesByGroup);
+        if(array_key_exists ('selectedCompanyID' , $input)){
+            if($input['selectedCompanyID'] > 0){
+                $formula = $formula->where('companySystemID', $input['selectedCompanyID']);
+            }
+        }else {
+            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                $companiesByGroup = $input['globalCompanyId'];
+                $formula = $formula->where('companySystemID', $companiesByGroup);
+            }
         }
 
         return \DataTables::eloquent($formula)
