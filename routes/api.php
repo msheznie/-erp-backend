@@ -387,6 +387,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('addresses', 'AddressAPIController');
     Route::post('getAllAddresses', 'AddressAPIController@getAllAddresses');
+    Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData');
 
     Route::resource('address_types', 'AddressTypeAPIController');
 });
