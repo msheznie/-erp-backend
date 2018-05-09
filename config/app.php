@@ -148,6 +148,8 @@ return [
         Illuminate\View\ViewServiceProvider::class,
         Yajra\DataTables\DataTablesServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
+        Barryvdh\DomPDF\ServiceProvider::class,
+
 
         /*
          * Package Service Providers...
@@ -224,7 +226,7 @@ return [
         'Helper' => App\Helper\Helper::class,
         'Email' => App\Helper\email::class,
         'Formula' => App\Helper\Formula::class,
-
+        'PDF' => Barryvdh\DomPDF\Facade::class,
     ],
 
 ];

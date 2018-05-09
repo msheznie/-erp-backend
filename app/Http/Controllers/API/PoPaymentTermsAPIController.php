@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PoPaymentTermsAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Po Payment Terms
+ * -- Author : Mohamed Nazir
+ * -- Create date : 20 - April 2018
+ * -- Description : This file contains the all CRUD for Po Payment Terms
+ * -- REVISION HISTORY
+ * -- Date: 20-April 2018 By: Nazir Description: Added new functions named as getProcumentOrderPaymentTerms(),
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePoPaymentTermsAPIRequest;

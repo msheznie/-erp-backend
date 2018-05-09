@@ -659,6 +659,18 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Procurement Order not found');
         }
 
+        //checking segment is active
+
+        $segments = SegmentMaster::where("serviceLineSystemID", $procumentOrder->serviceLineSystemID)
+            ->where('companySystemID', $companyID)
+            ->where('isActive', 1)
+            ->first();
+
+        if(empty($segments)){
+            return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+
         $documentSystemID = $procumentOrder->documentSystemID;
         if ($documentSystemID == 2) {
             $documentSystemIDChanged = 1;
@@ -675,6 +687,7 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('cancelledYN', 0)
             ->where('selectedForPO', 0)
             ->where('supplyChainOnGoing', 0)
+            ->where('manuallyClosed', 0)
             ->where('documentSystemID', $documentSystemIDChanged);
         if (isset($procumentOrder->financeCategory)) {
             $purchaseRequests = $purchaseRequests->where('financeCategory', $procumentOrder->financeCategory);

@@ -298,7 +298,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by', 'expectedDeliveryDate', 'totalOrderAmount']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'expectedDeliveryDate', 'totalOrderAmount', 'segment']);
         $input = $this->convertArrayToValue($input);
 
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
@@ -1045,7 +1045,6 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
             ->where('poCancelledYN', 0)
-            ->where('manuallyClosed', 0)
             ->with(['created_by' => function ($query) {
                 //$query->select(['empName']);
             }, 'location' => function ($query) {
@@ -1232,6 +1231,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
+        }
+
+        if ($purchaseOrder->manuallyClosed == 1) {
+            return $this->sendError('You cannot revert back this request as it is closed manually.');
         }
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
@@ -2102,6 +2105,29 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         return $this->sendResponse($procumentOrder, 'Purchase Order successfully closed');
+    }
+
+
+    public function poPrintPDF(Request $request){
+
+        $procumentOrder = $this->procumentOrderRepository->findWithoutFail($request->purchaseOrderID);
+
+        if (empty($procumentOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder)->with(['detail' => function ($query) {
+            $query->with('unit');
+        }, 'approved' => function ($query) {
+            $query->with('employee');
+            $query->whereIN('documentSystemID', [2, 5, 52]);
+        }, 'suppliercontact' => function ($query) {
+            $query->where('isDefault', -1);
+        }, 'company', 'transactioncurrency', 'companydocumentattachment'])->first();
+
+        $order = array('podata', $outputRecord);
+
+        return $html = view('print.purchase_order_print_pdf', $order);
     }
 
 

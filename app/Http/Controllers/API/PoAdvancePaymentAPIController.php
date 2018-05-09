@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PoAdvancePaymentAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Po Advance Payment
+ * -- Author : Mohamed Nazir
+ * -- Create date : 02 - April 2018
+ * -- Description : This file contains the all CRUD for Po Advance Payment
+ * -- REVISION HISTORY
+ **/
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePoAdvancePaymentAPIRequest;

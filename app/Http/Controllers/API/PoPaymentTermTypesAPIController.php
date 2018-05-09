@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PoPaymentTermTypesAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Po Payment Term Types
+ * -- Author : Mohamed Nazir
+ * -- Create date : 02 - April 2018
+ * -- Description : This file contains the all CRUD for Po Payment Term Types
+ * -- REVISION HISTORY
+ **/
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePoPaymentTermTypesAPIRequest;
