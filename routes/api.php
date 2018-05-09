@@ -251,7 +251,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
     Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
     Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments');
-    Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -323,6 +322,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel');
     Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack');
     Route::post('manualCloseProcurementOrder', 'ProcumentOrderAPIController@manualCloseProcurementOrder');
+    Route::post('procumentOrderSegmentchk', 'ProcumentOrderAPIController@procumentOrderSegmentchk');
 
     Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter');
     Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis');
@@ -393,9 +393,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData');
 
     Route::resource('address_types', 'AddressTypeAPIController');
+    Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 });
 
-Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
+
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 Route::get('foo', function () {
 
