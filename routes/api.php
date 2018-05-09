@@ -321,6 +321,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
     Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel');
     Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack');
+    Route::post('manualCloseProcurementOrder', 'ProcumentOrderAPIController@manualCloseProcurementOrder');
+
     Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter');
     Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis');
     Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport');
