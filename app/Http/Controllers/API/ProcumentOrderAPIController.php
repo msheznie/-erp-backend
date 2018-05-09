@@ -18,6 +18,7 @@
  * -- Date: 25-April 2018 By: Nazir Description: Added new functions named as procumentOrderReturnBack() for cancel return back PO to start level PO
  * -- Date: 03-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysis() for load Spent Analysis by Report master view
  * -- Date: 03-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysisExport() for report Spent Analysis export to excel report
+ * -- Date: 08-May 2018 By: Nazir Description: Added new functions named as manualCloseProcurementOrder()
  */
 
 namespace App\Http\Controllers\API;
@@ -272,7 +273,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ProcumentOrder $procumentOrder */
-        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($id);
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment'])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
@@ -313,6 +314,17 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
+        }
+
+        //checking segment is active
+
+        $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
+        ->where('companySystemID', $input['companySystemID'])
+        ->where('isActive', 1)
+        ->first();
+
+        if(empty($segments)){
+            return $this->sendError('Selected segment is not active. Please select an active segment');
         }
 
         $purchaseOrderID = $input['purchaseOrderID'];
@@ -675,7 +687,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $purchaseOrderID = $request['purchaseOrderID'];
 
-        $segments = SegmentMaster::where("companySystemID", $companyId)->get();
+        $segments = SegmentMaster::where("companySystemID", $companyId);
+        $segments = $segments->where('isActive', 1);
+        $segments = $segments->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -1031,6 +1045,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $procumentOrders = ProcumentOrder::where('companySystemID', $input['companyId'])
             ->where('poCancelledYN', 0)
+            ->where('manuallyClosed', 0)
             ->with(['created_by' => function ($query) {
                 //$query->select(['empName']);
             }, 'location' => function ($query) {
@@ -1332,9 +1347,9 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             $startMonthCN = new Carbon($lastYear . '-01-01');
             $endMonthCN = new Carbon($firstYear . '-12-31');
 
-            if(now() > $endMonthCN){
+            if (now() > $endMonthCN) {
                 $endMonthCN = new Carbon($firstYear . '-12-31');
-            }else{
+            } else {
                 $endMonthCN = now();
             }
 
@@ -1379,9 +1394,9 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $startMonthCN = new Carbon($lastYear . '-01-01');
         $endMonthCN = new Carbon($firstYear . '-12-31');
 
-        if(now() > $endMonthCN){
+        if (now() > $endMonthCN) {
             $endMonthCN = new Carbon($firstYear . '-12-31');
-        }else{
+        } else {
             $endMonthCN = now();
         }
         $start = $startMonthCN->startOfMonth();
@@ -1675,9 +1690,9 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $startMonthCN = new Carbon($lastYear . '-01-01');
         $endMonthCN = new Carbon($firstYear . '-12-31');
 
-        if(now() > $endMonthCN){
+        if (now() > $endMonthCN) {
             $endMonthCN = new Carbon($firstYear . '-12-31');
-        }else{
+        } else {
             $endMonthCN = now();
         }
 
@@ -1964,6 +1979,129 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         return $this->sendResponse(array(), 'successfully export');
 
+    }
+
+    /**
+     * manual Close Purchase Order
+     * Post /manualCloseProcurementOrder
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+    public function manualCloseProcurementOrder(Request $request)
+    {
+        $input = $request->all();
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($input['purchaseOrderID']);
+
+        if (empty($procumentOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        if($procumentOrder->poClosedYN == 1){
+            return $this->sendError('You can not close this order, this is already closed');
+        }
+
+        if($procumentOrder->grvRecieved == 2){
+            return $this->sendError('You can not close this order, this is already fully received');
+        }
+
+        if($procumentOrder->manuallyClosed == 1){
+            return $this->sendError('This order already manually closed');
+        }
+
+        if($procumentOrder->approved != -1 || $procumentOrder->poCancelledYN == -1){
+            return $this->sendError('You can only close approved order');
+        }
+
+        $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $input['purchaseOrderID'])
+            ->first();
+
+        if (!empty($detailExistGRV)) {
+            return $this->sendError('Cannot close. GRV is created for this PO ');
+        }
+
+        $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $input['purchaseOrderID'])
+            ->first();
+
+        if (!empty($detailExistAPD)) {
+            return $this->sendError('Cannot close. Advance Payment is created for this PO');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $emails = array();
+
+        $document = DocumentMaster::where('documentSystemID', $procumentOrder->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $procumentOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $procumentOrder->purchaseOrderCode;
+
+        $body = '<p>' . $cancelDocNameBody . ' is manually closed due to below reason.</p><p>Comment : ' . $input['manuallyClosedComment'] . '</p>';
+        $subject = $cancelDocNameSubject . ' is closed';
+
+        if ($procumentOrder->poConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $procumentOrder->poConfirmedByEmpSystemID,
+                'companySystemID' => $procumentOrder->companySystemID,
+                'docSystemID' => $procumentOrder->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $procumentOrder->purchaseOrderID);
+        }
+
+        $procumentOrder->manuallyClosed = 1;
+        $procumentOrder->manuallyClosedByEmpSystemID = $employee->employeeSystemID;
+        $procumentOrder->manuallyClosedByEmpID = $employee->empID;
+        $procumentOrder->manuallyClosedByEmpName = $employee->empName;
+        $procumentOrder->manuallyClosedComment = $input['manuallyClosedComment'];
+        $procumentOrder->manuallyClosedDate = now();
+        $procumentOrder->save();
+
+        $purchaseDetails = PurchaseOrderDetails::where('purchaseOrderMasterID',$procumentOrder->purchaseOrderID)
+            ->where('GRVSelectedYN',0)
+            ->where('goodsRecievedYN','!=',2)
+            ->get();
+
+        foreach ($purchaseDetails as $det){
+
+            $detail = PurchaseOrderDetails::where('purchaseOrderDetailsID',$det['purchaseOrderDetailsID'])->first();
+
+            if($detail){
+                if($detail->GRVSelectedYN == 0 and $detail->goodsRecievedYN != 2){
+                    $detail->manuallyClosed = 1;
+                    $detail->manuallyClosedByEmpSystemID = $employee->employeeSystemID;
+                    $detail->manuallyClosedByEmpID = $employee->empID;
+                    $detail->manuallyClosedByEmpName = $employee->empName;
+                    $detail->manuallyClosedComment = $input['manuallyClosedComment'];
+                    $detail->manuallyClosedDate = now();
+                    $detail->save();
+                }
+            }
+        }
+
+
+        $documentApproval = DocumentApproved::where('companySystemID', $procumentOrder->companySystemID)
+            ->where('documentSystemCode', $procumentOrder->purchaseOrderID)
+            ->where('documentSystemID', $procumentOrder->documentSystemID)
+            ->get();
+
+        foreach ($documentApproval as $da) {
+            if($da->approvedYN == -1) {
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $procumentOrder->companySystemID,
+                    'docSystemID' => $procumentOrder->documentSystemID,
+                    'alertMessage' => $subject,
+                    'emailAlertMessage' => $body,
+                    'docSystemCode' => $procumentOrder->purchaseOrderID);
+            }
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"],500);
+        }
+
+        return $this->sendResponse($procumentOrder, 'Purchase Order successfully closed');
     }
 
 

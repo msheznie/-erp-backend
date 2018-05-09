@@ -104,7 +104,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
 
         $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
-            ->first();
+                                           ->first();
 
         $input['budgetYear'] = $purchaseRequest->budgetYear;
 

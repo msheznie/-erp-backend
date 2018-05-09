@@ -130,5 +130,8 @@ class Address extends Model
         
     ];
 
+    public function type(){
+        return $this->belongsTo('App\Models\AddressType','addressTypeID','addressTypeID');
+    }
     
 }
