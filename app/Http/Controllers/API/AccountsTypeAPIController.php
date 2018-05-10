@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : AccountsTypeAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Accounts Type
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file contains the all CRUD for Accounts Type
+ * -- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAccountsTypeAPIRequest;

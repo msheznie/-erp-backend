@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PriorityAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Priority
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file contains the all CRUD for Priority
+ * -- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePriorityAPIRequest;

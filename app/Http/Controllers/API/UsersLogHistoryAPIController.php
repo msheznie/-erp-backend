@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : UsersLogHistoryAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Users Log History
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file contains the all CRUD for Users Log History
+ * -- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUsersLogHistoryAPIRequest;

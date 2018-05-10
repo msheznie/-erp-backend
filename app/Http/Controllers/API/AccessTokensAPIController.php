@@ -1,6 +1,14 @@
 <?php
-
-
+/**
+ * =============================================
+ * -- File Name : AccessTokensAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Access Tokens
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file contains the all CRUD for Access Tokens
+ * -- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAccessTokensAPIRequest;

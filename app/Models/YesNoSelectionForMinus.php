@@ -6,7 +6,7 @@
  * -- Module Name :  Yes No Selection For Minus
  * -- Author : Mohamed Fayas
  * -- Create date : 26 - March 2018
- * -- Description : This file contains the all CRUD for  Yes No Selection For Minus
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
  */
 namespace App\Models;
