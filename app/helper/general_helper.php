@@ -777,6 +777,7 @@ class Helper
         return $user->employee_id;
     }
 
+
     public static function sendResponse($result, $message)
     {
         return Response::json(ResponseUtil::makeResponse($message, $result));
