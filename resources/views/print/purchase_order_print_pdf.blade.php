@@ -499,7 +499,7 @@
         <tr>
             <td width="100px" valign="top"><span class="font-weight-bold">Delivery Terms</span></td>
             <td width="50" valign="top"><span class="font-weight-bold">:</span></td>
-            <td class="text-right">
+            <td>
                 @if ($podata->transactioncurrency)
                     {{$podata->deliveryTerms}}
                 @endif
@@ -508,7 +508,7 @@
         <tr>
             <td valign="top"><span class="font-weight-bold">Panalty Terms</span></td>
             <td valign="top"><span class="font-weight-bold">:</span></td>
-            <td class="text-right">
+            <td>
                 @if ($podata->transactioncurrency)
                     {{$podata->panaltyTerms}}
                 @endif
@@ -517,7 +517,7 @@
         <tr>
             <td valign="top"><span class="font-weight-bold">Payment Terms</span></td>
             <td valign="top"><span class="font-weight-bold">:</span></td>
-            <td class="text-right">
+            <td>
                 @if ($podata->transactioncurrency)
                     {{$podata->paymentTerms}}
                 @endif
