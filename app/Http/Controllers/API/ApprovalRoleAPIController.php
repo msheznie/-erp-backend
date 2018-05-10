@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ApprovalRoleAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Approval Setup
+ * -- Author : Mubashir
+ * -- Create date : 23 - April 2018
+ * -- Description : This file contains the all CRUD for Approval Role
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateApprovalRoleAPIRequest;

@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : TaxFormulaMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Report
+ * -- Author : Mubashir
+ * -- Create date : 23 - April 2018
+ * -- Description : This file contains all CRUD for tax formula detail
+ * -- REVISION HISTORY
+ * --
+ */
 
 namespace App\Http\Controllers\API;
 

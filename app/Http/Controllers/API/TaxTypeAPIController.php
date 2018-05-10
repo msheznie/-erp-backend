@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : TaxTypeAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Tax Setup
+ * -- Author : Mubashir
+ * -- Create date : 23 - April 2018
+ * -- Description : This file contains all CRUD for tax type
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTaxTypeAPIRequest;
