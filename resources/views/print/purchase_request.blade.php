@@ -41,7 +41,6 @@
 </head>
 <body>
 <div class="card-body" id="print-section">
-
     <table>
         <tr style="width:100%">
             <td style="width: 30%">

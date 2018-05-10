@@ -393,10 +393,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData');
 
     Route::resource('address_types', 'AddressTypeAPIController');
-    Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
+
 });
-
-
+Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 Route::get('foo', function () {
 
