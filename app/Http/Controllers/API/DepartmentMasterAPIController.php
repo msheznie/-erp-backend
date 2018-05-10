@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : DepartmentMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  General
+ * -- Author : Mubashir
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Department master.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDepartmentMasterAPIRequest;

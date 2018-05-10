@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : CompanyPolicyMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Approval
+ * -- Author : Mubashir
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Company Policy.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCompanyPolicyMasterAPIRequest;

@@ -472,6 +472,11 @@ class ProcumentOrder extends Model
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
     }
 
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
+    }
+
     public function suppliercontact()
     {
         return $this->belongsTo('App\Models\SupplierContactDetails', 'supplierID', 'supplierID');

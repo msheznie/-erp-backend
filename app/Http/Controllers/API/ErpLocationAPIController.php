@@ -1,5 +1,14 @@
 <?php
-
+/**
+=============================================
+-- File Name : BankAssignController.php
+-- Project Name : ERP
+-- Module Name :  System Admin
+-- Author : Pasan Madhuranga
+-- Create date : 21 - March 2018
+-- Description : This file contains the all CRUD for Bank Assigned
+-- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateErpLocationAPIRequest;

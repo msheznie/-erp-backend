@@ -2119,8 +2119,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
     public function getProcumentOrderPrintPDF(Request $request)
     {
-        $input = $request->all();
-        $id = $input['id'];
+        $id = $request->get('id');
 
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
@@ -2130,16 +2129,20 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['detail' => function ($query) {
             $query->with('unit');
-        }, 'approved' => function ($query) {
+        }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment'])->get();
 
-        $order = array('podata' => $outputRecord[0]);
+        $refernaceDoc= CompanyDocumentAttachment::where('companySystemID', $procumentOrder->companySystemID)
+            ->where('documentSystemID', $procumentOrder->documentSystemID)
+            ->first();
 
-        return $html = view('print.purchase_order_print_pdf', $order);
+        $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc);
+
+        $html = view('print.purchase_order_print_pdf', $order);
 
         //return \PDF::loadHTML($html)->setPaper('a4', 'landscape')->setWarnings(false)->download('purchase_order_'.$id.'.pdf');
 
