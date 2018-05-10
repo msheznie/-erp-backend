@@ -1,7 +1,16 @@
 <?php
 
 namespace App\Models;
-
+/**
+ * =============================================
+ * -- File Name : AccessTokens.php
+ * -- Project Name : ERP
+ * -- Module Name :  Access Tokens
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 use App\Events\logHistory;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;

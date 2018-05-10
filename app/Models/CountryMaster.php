@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : CountryMaster.php
+ * -- Project Name : ERP
+ * -- Module Name : Country Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
