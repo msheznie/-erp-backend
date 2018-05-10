@@ -250,6 +250,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
     Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
     Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
+    Route::post('getApprovedPOForCurrentUser', 'ProcumentOrderAPIController@getApprovedPOForCurrentUser');
     Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments');
 
     Route::resource('priorities', 'PriorityAPIController');

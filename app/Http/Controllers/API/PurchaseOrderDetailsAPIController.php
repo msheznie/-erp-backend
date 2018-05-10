@@ -11,6 +11,9 @@
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getItemMasterPurchaseHistory(),exportPurchaseHistory(),
  * -- Date: 21-March 2018 By: Nazir Description: Added new functions named as getItemsByProcumentOrder(),
  * -- Date: 28-March 2018 By: Nazir Description: Added new functions named as storePurchaseOrderDetailsFromPR(),
+ * -- Date: 10-April 2018 By: Nazir Description: Added new functions named as procumentOrderDeleteAllDetails(),
+ * -- Date: 12-April 2018 By: Nazir Description: Added new functions named as procumentOrderTotalDiscountUD(),
+ * -- Date: 13-April 2018 By: Nazir Description: Added new functions named as procumentOrderTotalTaxUD(),
  */
 namespace App\Http\Controllers\API;
 

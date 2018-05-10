@@ -20,6 +20,7 @@
  * -- Date: 03-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysisExport() for report Spent Analysis export to excel report
  * -- Date: 08-May 2018 By: Nazir Description: Added new functions named as manualCloseProcurementOrder()
  * -- Date: 09-May 2018 By: Nazir Description: Added new functions named as getProcumentOrderPrintPDF()
+ * -- Date: 10-May 2018 By: Nazir Description: Added new functions named as getAllApprovedPO()
  */
 
 namespace App\Http\Controllers\API;
@@ -689,7 +690,9 @@ class ProcumentOrderAPIController extends AppBaseController
         $purchaseOrderID = $request['purchaseOrderID'];
 
         $segments = SegmentMaster::where("companySystemID", $companyId);
-        $segments = $segments->where('isActive', 1);
+        if(isset($request['type']) && $request['type'] != 'filter'){
+            $segments = $segments->where('isActive', 1);
+        }
         $segments = $segments->get();
 
         /** Yes and No Selection */
@@ -926,7 +929,6 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        /*$companyID = \Helper::getGroupCompany($companyID);*/
         $empID = \Helper::getEmployeeSystemID();
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
@@ -2180,6 +2182,71 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         return $this->sendResponse($purchaseOrderID, 'sucess');
+    }
+
+    public function getApprovedPOForCurrentUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $poMasters = DB::table('erp_documentapproved')->select(
+            'erp_purchaseordermaster.purchaseOrderID',
+            'erp_purchaseordermaster.purchaseOrderCode',
+            'erp_purchaseordermaster.documentSystemID',
+            'erp_purchaseordermaster.referenceNumber',
+            'erp_purchaseordermaster.expectedDeliveryDate',
+            'erp_purchaseordermaster.supplierPrimaryCode',
+            'erp_purchaseordermaster.supplierName',
+            'erp_purchaseordermaster.narration',
+            'erp_purchaseordermaster.serviceLine',
+            'erp_purchaseordermaster.createdDateTime',
+            'erp_purchaseordermaster.poConfirmedDate',
+            'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'rollLevelOrder',
+            'approvalLevelID',
+            'documentSystemCode'
+        )->join('erp_purchaseordermaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseOrderID')
+                ->where('erp_purchaseordermaster.companySystemID', $companyID)
+                ->where('erp_purchaseordermaster.approved', -1)
+                ->where('erp_purchaseordermaster.poConfirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
+            ->whereIn('erp_documentapproved.documentSystemID', [2, 5, 52])
+            ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $poMasters = $poMasters->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                ->orWhere('narration', 'LIKE', "%{$search}%");
+        }
+
+        return \DataTables::of($poMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
     }
 
 
