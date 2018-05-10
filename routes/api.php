@@ -321,6 +321,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
     Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel');
     Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack');
+    Route::post('manualCloseProcurementOrder', 'ProcumentOrderAPIController@manualCloseProcurementOrder');
+    Route::post('procumentOrderSegmentchk', 'ProcumentOrderAPIController@procumentOrderSegmentchk');
+
     Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter');
     Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis');
     Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport');
@@ -390,6 +393,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData');
 
     Route::resource('address_types', 'AddressTypeAPIController');
+    Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 });
 
 
