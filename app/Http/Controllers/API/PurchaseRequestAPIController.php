@@ -863,6 +863,14 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Purchase Request not found');
         }
 
+        if($purchaseRequest->cancelledYN == -1){
+            return $this->sendError('This Purchase Request closed. You can not edit.',500);
+        }
+
+        if($purchaseRequest->approved == 1){
+            return $this->sendError('This Purchase Request fully approved. You can not edit.',500);
+        }
+
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
