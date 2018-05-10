@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * =============================================
+ * -- File Name : ApprovalGroupsAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Approval Setup
+ * -- Author : Mubashir
+ * -- Create date : 23 - April 2018
+ * -- Description : This file contains the all CRUD for Approval Group.
+ * -- REVISION HISTORY
+ * --
+ */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateApprovalGroupsAPIRequest;

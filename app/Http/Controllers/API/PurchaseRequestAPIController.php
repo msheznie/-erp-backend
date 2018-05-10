@@ -164,12 +164,14 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $segments = SegmentMaster::where("companySystemID", $companyId);
 
-        /*if (array_key_exists('isCreate', $input)) {
-            if($input['isCreate'] == 1){
+        if (array_key_exists('isFilter', $input)) {
+            if($input['isFilter'] != 1){
                 $segments =  $segments->where('isActive',1);
             }
-        }*/
-        $segments = $segments->where('isActive', 1);
+        }else{
+            $segments = $segments->where('isActive', 1);
+        }
+
         $segments = $segments->get();
 
         /** Yes and No Selection */
@@ -861,6 +863,14 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Purchase Request not found');
         }
 
+        if($purchaseRequest->cancelledYN == -1){
+            return $this->sendError('This Purchase Request closed. You can not edit.',500);
+        }
+
+        if($purchaseRequest->approved == 1){
+            return $this->sendError('This Purchase Request fully approved. You can not edit.',500);
+        }
+
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
@@ -1283,7 +1293,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $id = $request->get('id');
         /** @var PurchaseRequest $purchaseRequest */
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
-            'priority', 'location', 'details.uom', 'company', 'approved_by' => function ($query) {
+            'priority_pdf', 'location', 'details.uom', 'company', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->whereIn('documentSystemID', [1, 50, 51]);
             }
@@ -1294,20 +1304,23 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $array = array('request' => $purchaseRequest);
+        $time = strtotime("now");
+        $fileName = 'purchase_request_'.$id.'_'.$time.'.pdf';
 
-         $html = view('print.purchase_request', $array);
+        $html = view('print.purchase_request', $array);
 
-       //return \PDF::loadHTML($html)->setPaper('a4', 'landscape')->setWarnings(false)->download('purchase_request_'.$id.'.pdf');
+        //return $html;
+        //return $this->sendResponse($html->render(), 'Purchase Request retrieved successfully');
+        //return \PDF::loadHTML($html)->setPaper('a4', 'landscape')->setWarnings(false)->download($fileName);
 
        // die();
 
-      //  $pdf = \PDF::loadView('print.purchase_request', $array);
-      //  return $pdf->download('purchase_request_'.$id.'.pdf');
+        //  $pdf = \PDF::loadView('print.purchase_request', $array);
+        //  return $pdf->download('purchase_request_'.$id.'.pdf');
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
-
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }

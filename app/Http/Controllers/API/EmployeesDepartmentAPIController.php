@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : EmployeesDepartmentAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Report
+ * -- Author : Mubashir
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Employees department.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateEmployeesDepartmentAPIRequest;

@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ChartOfAccountsAssignedAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Chart Of Account
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Chart Of Account assign.
+ * -- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateChartOfAccountsAssignedAPIRequest;

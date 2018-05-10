@@ -1,5 +1,13 @@
 <?php
-
+/**
+=============================================
+-- File Name : CompanyNavigationMenus.php
+-- Project Name : ERP
+-- Module Name :  Navigation
+-- Author : Mubashir
+-- Create date : 14 - March 2018
+-- Description : This file is used to interact with database table and it contains relationships to the tables.
+ */
 namespace App\Models;
 
 use Eloquent as Model;
