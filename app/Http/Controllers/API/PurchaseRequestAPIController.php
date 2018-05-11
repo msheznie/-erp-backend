@@ -17,6 +17,7 @@
  * -- Date: 23-April 2018 By: Fayas Description: Added new functions named as approvePurchaseRequest(),rejectPurchaseRequest
  * -- Date: 26-April 2018 By: Fayas Description: Added new functions named as cancelPurchaseRequest(),returnPurchaseRequest
  * -- Date: 04-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequest()
+ * -- Date: 11-May 2018 By: Fayas Description: Added new functions named as getPurchaseRequestApprovedByUser()
  */
 namespace App\Http\Controllers\API;
 
@@ -286,10 +287,15 @@ class PurchaseRequestAPIController extends AppBaseController
             })
             ->whereHas('details', function ($prd) use ($itemPrimaryCodes, $from, $to, $documentSearch,$input) {
 
-                if($input['date_by'] == 'approvedDate' || $input['date_by'] == 'grvDate' || $input['grv'] == 'inComplete' || $input['documentId'] == 2 || count($input['itemPrimaryCodes']) > 0){
+                if($input['date_by'] == 'approvedDate' ||
+                    $input['date_by'] == 'grvDate' ||
+                    $input['grv'] == 'inComplete' ||
+                    $input['documentId'] == 2 ||
+                    count($input['itemPrimaryCodes']) > 0){
+
                     $prd->whereHas('podetail',function ($pod) use ($from, $to, $documentSearch) {
-                        $pod->whereHas('order', function ($po) use ($from, $to, $documentSearch) {
-                                $po->where('poConfirmedYN', 1)
+                       return $pod->whereHas('order', function ($po) use ($from, $to, $documentSearch) {
+                               return $po->where('poConfirmedYN', 1)
                                     ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
                                         return $q->whereBetween('approvedDate', [$from, $to]);
                                     })
@@ -341,11 +347,6 @@ class PurchaseRequestAPIController extends AppBaseController
                     });
                 }
             })
-          /* ->with(['confirmed_by', 'details' => function ($prd){
-                $prd->with(['uom', 'podetail' => function ($q) {
-                    $q->with(['order', 'reporting_currency', 'grv_details.grv_master']);
-                }]);
-            }]);*/
             ->with(['confirmed_by', 'details' => function ($prd) use ($itemPrimaryCodes, $from, $to, $documentSearch) {
                 $prd->with(['uom', 'podetail' => function ($q) use ($from, $to, $documentSearch) {
                     $q->with(['order' => function ($q) use ($from, $to, $documentSearch) {
@@ -356,12 +357,12 @@ class PurchaseRequestAPIController extends AppBaseController
                             ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
                                 return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
                             });
-                    }, 'reporting_currency', 'grv_details' => function ($q) use ($from, $to) {
-                        $q->with(['grv_master' => function ($q) use ($from, $to) {
-                            $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
-                                return $q->whereBetween('grvDate', [$from, $to]);
-                            });
-                        }]);
+                            }, 'reporting_currency', 'grv_details' => function ($q) use ($from, $to) {
+                                $q->with(['grv_master' => function ($q) use ($from, $to) {
+                                    $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                        return $q->whereBetween('grvDate', [$from, $to]);
+                                    });
+                                }]);
                     }])
                     ->when(request('grv') == 'inComplete', function ($q) {
                         return $q->whereIn('goodsRecievedYN', [0, 1]);
@@ -660,6 +661,99 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [1, 50, 51])
             ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                ->orWhere('comments', 'LIKE', "%{$search}%");
+        }
+
+        return \DataTables::of($purchaseRequests)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    /**
+     * get Purchase Request fully Approved By User.
+     * POST /getPurchaseRequestApprovedByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getPurchaseRequestApprovedByUser(Request $request)
+    {
+
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+         $empID = \Helper::getEmployeeSystemID();
+
+
+        $purchaseRequests = DB::table('erp_documentapproved')
+            ->select(
+                'erp_purchaserequest.*',
+                'employees.empName As created_emp',
+                'financeitemcategorymaster.categoryDescription As financeCategoryDescription',
+                'serviceline.ServiceLineDes As PRServiceLineDes',
+                'erp_location.locationName As PRLocationName',
+                'erp_priority.priorityDescription As PRPriorityDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            /*->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+                    ->where('documentSystemID', 1)
+                    ->first();
+
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
+
+                $query->whereIn('employeesdepartments.documentSystemID', [1, 50, 51])
+                    ->where('employeesdepartments.departmentSystemID', 3)
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })*/
+            ->join('erp_purchaserequest', function ($query) use ($companyId) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseRequestID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_purchaserequest.companySystemID', $companyId)
+                    ->where('erp_purchaserequest.approved', -1)
+                    ->where('erp_purchaserequest.PRConfirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->join('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
+            ->join('erp_priority', 'priority', 'erp_priority.priorityID')
+            ->join('erp_location', 'location', 'erp_location.locationID')
+            ->join('serviceline', 'erp_purchaserequest.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [1, 50, 51])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
 
         $search = $request->input('search.value');
 

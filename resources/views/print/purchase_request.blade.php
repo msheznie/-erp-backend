@@ -93,24 +93,28 @@
 </head>
 <body>
 <div class="card-body" id="print-section">
+
     <table>
+        <tr style="width: 100%">
+            <td colspan="3">
+                @if($request->company)
+                    <h6> {{$request->company->CompanyName}}</h6>
+                @endif
+            </td>
+        </tr>
+        <tr style="width: 100%">
+            <td colspan="3">
+                @if($request->company)
+                    <h6>{{$request->company->CompanyAddress}}</h6>
+                @endif
+            </td>
+        </tr>
+    </table>
+
+    <table style="width: 100%">
         <tr style="width:100%">
             <td style="width: 30%">
                 <table>
-                    <tr style="width: 100%">
-                        <td colspan="3">
-                                @if($request->company)
-                                <h6> {{$request->company->CompanyName}}</h6>
-                                @endif
-                        </td>
-                    </tr>
-                    <tr style="width: 100%">
-                        <td colspan="3">
-                                @if($request->company)
-                                    <h6>{{$request->company->CompanyAddress}}</h6>
-                                @endif
-                        </td>
-                    </tr>
                     <tr>
                         <td width="50px">
                             <span class="font-weight-bold">Priority </span>
@@ -238,6 +242,10 @@
                 <th class="text-left">UOM</th>
                 <th class="text-left">QTY Requested</th>
                 <th class="text-left">QTY On Order</th>
+
+                @if($request->approved == -1)
+                <th  class="text-left">PO Qty</th>
+                @endif
             </tr>
             </thead>
             <tbody>
@@ -253,6 +261,11 @@
                     </td>
                     <td class="text-right">{{$item->quantityRequested}}</td>
                     <td class="text-right">{{$item->quantityOnOrder}}</td>
+                    @if($request->approved == -1)
+                    <td class="text-right">
+                        <b>{{$item->poQuantity}} </b>
+                    </td>
+                    @endif
                 </tr>
             @endforeach
             </tbody>

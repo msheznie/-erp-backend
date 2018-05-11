@@ -89,12 +89,12 @@ class CompanyPolicyMasterAPIController extends AppBaseController
                 return $q->where('companyPolicyCategoryDescription', 'LIKE', "%{$search}%");
             });
         }])
-            ->when($search,function ($q) use($search){
-               return  $q->whereHas('policyCategory',function ($q) use($search){
-                   return $q->where('companyPolicyCategoryDescription', 'LIKE', "%{$search}%");
-               });
-            })
-            ->whereIn('companySystemID',$childCompanies);
+        ->when($search,function ($q) use($search){
+           return  $q->whereHas('policyCategory',function ($q) use($search){
+               return $q->where('companyPolicyCategoryDescription', 'LIKE', "%{$search}%");
+           });
+        })
+        ->whereIn('companySystemID',$childCompanies);
 
 
         if (array_key_exists('companyPolicyCategoryID', $input)) {
