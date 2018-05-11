@@ -261,7 +261,6 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('months', 'MonthsAPIController');
 
-    Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
     Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
     Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
     Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
@@ -394,6 +393,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData');
 
     Route::resource('address_types', 'AddressTypeAPIController');
+    Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy');
+    Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions');
+
 
 });
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -416,3 +418,6 @@ Route::get('foo', function () {
 });
 
 Route::get('test', 'TaxFormulaDetailAPIController@test');
+
+
+Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');

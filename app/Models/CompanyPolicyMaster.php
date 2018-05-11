@@ -90,5 +90,13 @@ class CompanyPolicyMaster extends Model
         
     ];
 
+    public function company(){
+        return $this->belongsTo('App\Models\Company', 'companySystemID','companySystemID');
+    }
+
+    public function policyCategory(){
+        return $this->belongsTo('App\Models\CompanyPolicyCategory', 'companyPolicyCategoryID','companyPolicyCategoryID');
+    }
+
     
 }
