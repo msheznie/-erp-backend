@@ -318,6 +318,14 @@ class ProcumentOrderAPIController extends AppBaseController
             return $this->sendError('Procurement Order not found');
         }
 
+        if($procumentOrder->poCancelledYN == -1){
+            return $this->sendError('This Purchase Order closed. You can not edit.',500);
+        }
+
+        if($procumentOrder->approved == -1){
+            return $this->sendError('This Purchase Order fully approved. You can not edit.',500);
+        }
+
         //checking segment is active
 
         $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
@@ -2247,6 +2255,27 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             ->addColumn('Actions', 'Actions', "Actions")
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
+    }
+
+    public function getGRVDrilldownSpentAnalysis(Request $request)
+    {
+        $input = $request->all();
+
+        $monthExp = explode('-',$input['month']);
+
+        $expYear = $monthExp[0];
+        $expMonth = $monthExp[1];
+
+        $commaSeperatedYears = join($input['years'], ",");
+        $commaSeperatedCompany = join($input['companySystemID'], ",");
+
+        $supplierID = $input['supplierID'];
+
+        $detail = DB::select('SELECT erp_grvdetails.grvAutoID,erp_grvdetails.companyID,erp_grvdetails.purchaseOrderMastertID,erp_grvmaster.grvDate,erp_grvmaster.grvPrimaryCode,erp_grvmaster.grvDoRefNo,erp_grvdetails.itemPrimaryCode,
+erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost,erp_grvmaster.grvDate,erp_grvdetails.GRVcostPerUnitLocalCur,erp_grvmaster.supplierID FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE supplierID = '.$supplierID.' AND erp_grvmaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(erp_grvmaster.grvDate) = (' . $expYear . ') AND month(erp_grvmaster.grvDate) = (' . $expMonth . ')');
+
+        return $this->sendResponse($detail, 'Details retrieved successfully');
+
     }
 
 
