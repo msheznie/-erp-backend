@@ -121,7 +121,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
-        $input['createdUserSystemID'] = $user->employee['empCompanySystemID'];
+        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
         $input['departmentID'] = 'PROC';
 
         $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
