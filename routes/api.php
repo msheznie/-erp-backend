@@ -292,6 +292,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
     Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
     Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
+    Route::get('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRights');
 
     Route::post('approveItem', 'ItemMasterAPIController@approveItem');
     Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
@@ -394,6 +395,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('address_types', 'AddressTypeAPIController');
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
+
+
 });
 
 

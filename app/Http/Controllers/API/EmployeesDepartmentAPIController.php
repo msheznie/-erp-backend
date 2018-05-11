@@ -8,12 +8,15 @@
  * -- Create date : 14 - March 2018
  * -- Description : This file contains the all CRUD for Employees department.
  * -- REVISION HISTORY
- * --
+ * -- Date: 11-May 2018 By: Mubashir Description: Added new function getApprovalAccessRights(),
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateEmployeesDepartmentAPIRequest;
 use App\Http\Requests\API\UpdateEmployeesDepartmentAPIRequest;
+use App\Models\ApprovalGroups;
+use App\Models\Company;
 use App\Models\EmployeesDepartment;
 use App\Repositories\EmployeesDepartmentRepository;
 use Illuminate\Http\Request;
@@ -26,7 +29,6 @@ use Response;
  * Class EmployeesDepartmentController
  * @package App\Http\Controllers\API
  */
-
 class EmployeesDepartmentAPIController extends AppBaseController
 {
     /** @var  EmployeesDepartmentRepository */
@@ -135,5 +137,26 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $employeesDepartment->delete();
 
         return $this->sendResponse($id, 'Employees Department deleted successfully');
+    }
+
+    public function getApprovalAccessRights(Request $request)
+    {
+        $employeesDepartment = EmployeesDepartment::where('employeeSystemID',$request->employeeSystemID)->get();
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companiesByGroup="";
+        if(\Helper::checkIsCompanyGroup($selectedCompanyId)){
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $companiesByGroup = (array)$selectedCompanyId;
+        }
+        $groupCompany = Company::whereIN("companySystemID", $companiesByGroup)->get();
+        if (empty($employeesDepartment)) {
+            return $this->sendError('No records found');
+        }
+
+        $employeesDepartment = array('employeesDepartment' => $employeesDepartment, 'company' => $groupCompany, 'approvalGroup' => ApprovalGroups::all());
+
+        return $this->sendResponse($employeesDepartment, 'Employees Department retrieved successfully');
+
     }
 }
