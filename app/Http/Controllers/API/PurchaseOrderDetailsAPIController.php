@@ -313,7 +313,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
-        $input['createdUserSystemID'] = $user->employee['empCompanySystemID'];
+        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->create($input);
 
@@ -423,7 +423,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                         $prDetail_arr['createdPcID'] = gethostname();
                         $prDetail_arr['createdUserID'] = $user->employee['empID'];
-                        $prDetail_arr['createdUserSystemID'] = $user->employee['empCompanySystemID'];
+                        $prDetail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
                         $prDetail_arr['unitCost'] = $new['poUnitAmount'];
                         $prDetail_arr['netAmount'] = ($new['poUnitAmount'] * $new['poQty']);
