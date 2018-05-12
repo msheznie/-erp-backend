@@ -1,5 +1,16 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : SegmentMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name : Segment Master
+ * -- Author : Mohamed Nazir
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Segment Master
+ * -- REVISION HISTORY
+ * -- Date: 15-March 2018 By: Nazir Description: Added new functions named as getAllSegmentMaster()
+ * -- Date: 16-March 2018 By: Nazir Description: Added new functions named as getSegmentMasterFormData()
+ **/
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSegmentMasterAPIRequest;
@@ -286,9 +297,7 @@ class SegmentMasterAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $empId;
 
-        $data =array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID']);
-
-
+        $data = array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID']);
 
         $segmentMaster = $this->segmentMasterRepository->update($data, $input['serviceLineSystemID']);
 

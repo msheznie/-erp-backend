@@ -38,7 +38,7 @@ class EventServiceProvider extends ServiceProvider
            ],*/
         'Laravel\Passport\Events\AccessTokenCreated' => [
             //'App\Listeners\AfterLogin'
-           // 'App\Listeners\RevokeOldTokens', //should uncomment
+            'App\Listeners\RevokeOldTokens', //should uncomment
         ],
 
         'Laravel\Passport\Events\RefreshTokenCreated' => [

@@ -33,27 +33,11 @@ class RevokeOldTokens
     public function handle(AccessTokenCreated $event)
     {
 
-        ///$accessToken = $event->accessToken;
-
-        /*$allAccessTokens = AccessTokens::where('id','!=',$event->tokenId)
-                                       ->where('user_id', $event->userId)
-                                       ->where('client_id', $event->clientId)
-                                       ->where('revoked', 0)
-                                       ->get();
-
-        Log::info('Start revoked');
-        foreach ($allAccessTokens as $token){
-            Log::info($token['id']);
-            $temToken = AccessTokens::find($token['id']);
-            $temToken->revoked = 1;
-            $temToken->save();
-        }*/
-
-     DB::table('oauth_access_tokens')
+    /* DB::table('oauth_access_tokens')
         ->where('id', '<>', $event->tokenId)
         ->where('user_id', $event->userId)
         ->where('client_id', $event->clientId)
-        ->update(['revoked' => true]);
+        ->update(['revoked' => true]);*/
 
        if(!empty($event->tokenId)){
             $logHistory = new UsersLogHistory();

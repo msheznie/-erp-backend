@@ -35,3 +35,5 @@ Route::resource('usersLogHistories', 'UsersLogHistoryController');
 Route::resource('addresses', 'AddressController');
 
 Route::resource('addressTypes', 'AddressTypeController');
+
+Route::resource('companyPolicyCategories', 'CompanyPolicyCategoryController');

@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PoAdvancePaymentAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Po Advance Payment
+ * -- Author : Mohamed Nazir
+ * -- Create date : 02 - April 2018
+ * -- Description : This file contains the all CRUD for Po Advance Payment
+ * -- REVISION HISTORY
+ * -- Date: 02-April 2018 By: Nazir Description: Added new functions named as poPaymentTermsAdvanceDetailView()
+ **/
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePoAdvancePaymentAPIRequest;
@@ -89,9 +99,8 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $input['narration'] = $input['paymentTemDes'];
 
         if (isset($input['comDate'])) {
-            $originalDate = $input['comDate'];
-            $myDateTime = DateTime::createFromFormat('Y-m-d', $originalDate);
-            $input['reqDate'] = $myDateTime;
+            $masterDate = str_replace('/', '-', $input['comDate']);
+            $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
         }
         $input['reqAmount'] = $input['comAmount'];
         $input['reqAmountTransCur_amount'] = $input['comAmount'];
@@ -104,8 +113,6 @@ class PoAdvancePaymentAPIController extends AppBaseController
 
         $input['requestedByEmpID'] = $user->employee['empID'];
         $input['requestedByEmpName'] = $user->employee['empName'];
-
-        return $input;
 
         $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
 

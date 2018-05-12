@@ -23,12 +23,14 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
 use App\Repositories\PurchaseRequestDetailsRepository;
+use App\Repositories\PurchaseRequestRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
+
 
 /**
  * Class PurchaseRequestDetailsController
@@ -39,9 +41,12 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     /** @var  PurchaseRequestDetailsRepository */
     private $purchaseRequestDetailsRepository;
 
-    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo)
+    private $purchaseRequestRepository;
+
+    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo,PurchaseRequestRepository $purchaseRequestRepo)
     {
         $this->purchaseRequestDetailsRepository = $purchaseRequestDetailsRepo;
+        $this->purchaseRequestRepository = $purchaseRequestRepo;
     }
 
     /**
@@ -106,13 +111,20 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
                                            ->first();
 
-        $input['budgetYear'] = $purchaseRequest->budgetYear;
-
 
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request Details not found');
         }
 
+        if($purchaseRequest->cancelledYN == -1){
+            return $this->sendError('This Purchase Request already closed. You can not add.',500);
+        }
+
+        if($purchaseRequest->approved == 1){
+            return $this->sendError('This Purchase Request fully approved. You can not add.',500);
+        }
+
+        $input['budgetYear'] = $purchaseRequest->budgetYear;
         $input['itemPrimaryCode'] = $item->itemPrimaryCode;
         $input['itemDescription'] = $item->itemDescription;
         $input['partNumber'] = $item->secondaryItemCode;
@@ -426,6 +438,16 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         if (empty($purchaseRequestDetails)) {
             return $this->sendError('Purchase Request Details not found');
         }
+        $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($input['purchaseRequestID']);
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+        if($purchaseRequest->cancelledYN == -1){
+            return $this->sendError('This Purchase Request already closed. You can not edit.',500);
+        }
+        if($purchaseRequest->approved == 1){
+            return $this->sendError('This Purchase Request fully approved. You can not edit.',500);
+        }
 
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->update($input, $id);
 
@@ -449,6 +471,17 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             return $this->sendError('Purchase Request Details not found');
         }
 
+        $purchaseRequest = $this->purchaseRequestRepository->findWithoutFail($purchaseRequestDetails->purchaseRequestID);
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+        if($purchaseRequest->cancelledYN == -1){
+            return $this->sendError('This Purchase Request already closed. You can not delete.',500);
+        }
+        if($purchaseRequest->approved == 1){
+            return $this->sendError('This Purchase Request fully approved. You can not delete.',500);
+        }
+
         $purchaseRequestDetails->delete();
 
         return $this->sendResponse($id, 'Purchase Request Details deleted successfully');
@@ -467,7 +500,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input = $request->all();
         $prID = $input['purchaseRequestID'];
 
-        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty, 0 as poUnitAmount,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = '.$prID.' AND prClosedYN = 0 AND fullyOrdered != 2 ');
+        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty, 0 as poUnitAmount,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = '.$prID.' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');
 
         return $this->sendResponse($detail, 'Purchase Request Details retrieved successfully');
 

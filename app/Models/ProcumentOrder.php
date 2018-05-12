@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ProcumentOrder.php
+ * -- Project Name : ERP
+ * -- Module Name :  Procument Order
+ * -- Author : Nazir
+ * -- Create date : 18 - April 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -468,6 +478,11 @@ class ProcumentOrder extends Model
     }
 
     public function approved()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
+    }
+
+    public function approved_by()
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
     }

@@ -1,7 +1,8 @@
 {{--@extends('layouts.app')--}}
 
 <div class="card-body" id="print-section">
-    <div class="row">
+    test
+  {{--  <div class="row">
         <div class="col-xs-5 col-sm-5 col-md-5 col-lg-5">
             <h6><span *ngIf="request.company">{{$request->company->CompanyName}}</span></h6>
             <h6><span *ngIf="request.company">{{$request->company->CompanyAddress}}</span></h6>
@@ -26,9 +27,9 @@
                     <td width="170px"><span class="font-weight-bold">Location</span></td>
                     <td width="10px"><span class="font-weight-bold">:</span></td>
                     <td>
-                        {{--<span *ngIf="request.location">
+                        --}}{{--<span *ngIf="request.location">
                             {{$request->location->locationName}}
-                        </span>--}}
+                        </span>--}}{{--
                     </td>
                 </tr>
                 <tr>
@@ -37,7 +38,7 @@
                     <td><span>{{$request->comments}}</span></td>
                 </tr>
             </table>
-        </div>
+        </div>--}}
         {{--<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
             <h3 style="bottom: 0;position: absolute;"><span *ngIf="request.documentSystemID == 1">Purchase</span><span *ngIf="request.documentSystemID == 50">Work</span><span *ngIf="request.documentSystemID == 51">Direct</span> Requisition </h3>
         </div>

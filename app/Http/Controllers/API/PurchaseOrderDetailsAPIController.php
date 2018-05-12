@@ -1,14 +1,19 @@
 <?php
 /**
  * =============================================
- * -- File Name : PurchaseOrderDetails.php
+ * -- File Name : PurchaseOrderDetailsAPIController.php
  * -- Project Name : ERP
  * -- Module Name :  Purchase Order Details
  * -- Author : Mohamed Fayas
  * -- Create date : 14 - March 2018
- * -- Description : This file contains the all CRUD for Purchase Order Details(item )
+ * -- Description : This file contains the all CRUD for Purchase Order Details(item)
  * -- REVISION HISTORY
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getItemMasterPurchaseHistory(),exportPurchaseHistory(),
+ * -- Date: 21-March 2018 By: Nazir Description: Added new functions named as getItemsByProcumentOrder(),
+ * -- Date: 28-March 2018 By: Nazir Description: Added new functions named as storePurchaseOrderDetailsFromPR(),
+ * -- Date: 10-April 2018 By: Nazir Description: Added new functions named as procumentOrderDeleteAllDetails(),
+ * -- Date: 12-April 2018 By: Nazir Description: Added new functions named as procumentOrderTotalDiscountUD(),
+ * -- Date: 13-April 2018 By: Nazir Description: Added new functions named as procumentOrderTotalTaxUD(),
  */
 namespace App\Http\Controllers\API;
 
@@ -107,17 +112,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 'erp_purchaseordermaster.approved')
             ->paginate(15);
 
-
         return $this->sendResponse($purchaseOrderDetails, 'Purchase Order Details retrieved successfully');
     }
-
-    /**
-     * Export cvs - list of PurchaseOrderDetails by Item.
-     * GET /getItemMasterPurchaseHistory
-     *
-     * @param Request $request
-     * @return Response
-     */
 
     public function exportPurchaseHistory(Request $request)
     {
@@ -317,7 +313,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
-        $input['createdUserSystemID'] = $user->employee['empCompanySystemID'];
+        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->create($input);
 
@@ -427,7 +423,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                         $prDetail_arr['createdPcID'] = gethostname();
                         $prDetail_arr['createdUserID'] = $user->employee['empID'];
-                        $prDetail_arr['createdUserSystemID'] = $user->employee['empCompanySystemID'];
+                        $prDetail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
                         $prDetail_arr['unitCost'] = $new['poUnitAmount'];
                         $prDetail_arr['netAmount'] = ($new['poUnitAmount'] * $new['poQty']);
@@ -667,7 +663,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 ->update(['selectedForPO' => 0, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $poQty, 'prClosedYN' => 0]);
         }
 
-        return $this->sendResponse($id, 'Purchase Order Details deleted successfully');
+        return $this->sendResponse($id, 'Purchase Order details deleted successfully');
     }
 
     public function procumentOrderDeleteAllDetails(Request $request)

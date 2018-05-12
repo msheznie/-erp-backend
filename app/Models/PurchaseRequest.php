@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PurchaseRequest.php
+ * -- Project Name : ERP
+ * -- Module Name : Purchase Request
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -294,12 +303,15 @@ class PurchaseRequest extends Model
     public function priority(){
         return $this->belongsTo('App\Models\Priority','priority','priorityID');
     }
-
-
+    public function priority_pdf(){
+        return $this->belongsTo('App\Models\Priority','priority','priorityID');
+    }
     public function location(){
         return $this->belongsTo('App\Models\Location','location','locationID');
     }
-
+    public function location_pdf(){
+        return $this->belongsTo('App\Models\Location','location','locationID');
+    }
     public function segment(){
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
