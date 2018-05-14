@@ -85,16 +85,20 @@ class CompanyPolicyMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
 
         $companyPolicyMasters = CompanyPolicyMaster::with(['company','policyCategory' => function($q) use($search){
-            $q->when($search, function ($q) use ($search) {
+            $q->where('isActive',-1)
+              ->when($search, function ($q) use ($search) {
                 return $q->where('companyPolicyCategoryDescription', 'LIKE', "%{$search}%");
             });
         }])
-            ->when($search,function ($q) use($search){
-               return  $q->whereHas('policyCategory',function ($q) use($search){
-                   return $q->where('companyPolicyCategoryDescription', 'LIKE', "%{$search}%");
-               });
-            })
-            ->whereIn('companySystemID',$childCompanies);
+        ->whereHas('policyCategory',function ($q){
+            $q->where('isActive',-1);
+        })
+        ->when($search,function ($q) use($search){
+           return  $q->whereHas('policyCategory',function ($q) use($search){
+               return $q->where('companyPolicyCategoryDescription', 'LIKE', "%{$search}%");
+           });
+        })
+        ->whereIn('companySystemID',$childCompanies);
 
 
         if (array_key_exists('companyPolicyCategoryID', $input)) {

@@ -107,24 +107,18 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
-            $query->where('isDefault', -1)
-                ->with(['currencyMaster']);
-        }])->whereIn('primaryCompanySystemID',$childCompanies);
+                                    $query->where('isDefault', -1)
+                                        ->with(['currencyMaster']);
+                                }])
+                                ->whereIn('primaryCompanySystemID',$childCompanies);
 
         $search = $request->input('search.value');
         if($search){
-            $supplierMasters =   $supplierMasters->where('primarySupplierCode','LIKE',"%{$search}%")
-                                                 ->orWhere( 'supplierName', 'LIKE', "%{$search}%");
+            $supplierMasters =   $supplierMasters->where(function ($query) use($search) {
+                    $query->where('primarySupplierCode','LIKE',"%{$search}%")
+                           ->orWhere( 'supplierName', 'LIKE', "%{$search}%");
+                });
         }
-
-        /**
-         * ['suppliermaster.primarySupplierCode',
-         * 'suppliermaster.supplierName',
-         * 'suppliermaster.creditPeriod',
-         * //'suppliermaster.categoryDescription',
-         * 'suppliermaster.primaryCompanyID',
-         * 'suppliermaster.isActive'
-         * ]*/
 
         return \DataTables::eloquent($supplierMasters)
             ->order(function ($query) use ($input) {

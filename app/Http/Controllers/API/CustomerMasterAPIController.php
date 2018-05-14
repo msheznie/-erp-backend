@@ -101,9 +101,11 @@ class CustomerMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if($search){
-            $customerMasters =   $customerMasters->where('CutomerCode','LIKE',"%{$search}%")
-                ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
-                ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+            $customerMasters =   $customerMasters->where(function ($query) use($search) {
+                $query->where('CutomerCode','LIKE',"%{$search}%")
+                    ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
+                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::eloquent($customerMasters)

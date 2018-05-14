@@ -238,8 +238,10 @@ class WarehouseMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if($search){
-            $warehouseMasters = $warehouseMasters->where('wareHouseCode','LIKE',"%{$search}%")
-                ->orWhere( 'wareHouseDescription', 'LIKE', "%{$search}%");
+            $warehouseMasters =   $warehouseMasters->where(function ($query) use($search) {
+                $query->where('wareHouseCode','LIKE',"%{$search}%")
+                    ->orWhere( 'wareHouseDescription', 'LIKE', "%{$search}%");
+            });
         }
 
 
