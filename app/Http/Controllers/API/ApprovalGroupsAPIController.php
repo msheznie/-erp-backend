@@ -168,7 +168,17 @@ class ApprovalGroupsAPIController extends AppBaseController
     }
 
     public function getApprovalGroupByCompanyDatatable(Request $request){
-        $approvalGroup = ApprovalGroups::with('document')->orderBy('rightsGroupId','desc');
+        $search = $request->input('search.value');
+        $approvalGroup = ApprovalGroups::with(['document' => function ($query) use ($search){
+            if ($search) {
+                $query->where('documentDescription', 'LIKE', "%{$search}%");
+            }
+        }])->orderBy('rightsGroupId','desc');
+
+        if ($search) {
+            $approvalGroup = $approvalGroup->where('rightsGroupDes', 'LIKE', "%{$search}%");
+        }
+
         $input = $request->all();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {

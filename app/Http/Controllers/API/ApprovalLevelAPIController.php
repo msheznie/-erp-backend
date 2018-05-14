@@ -205,6 +205,7 @@ class ApprovalLevelAPIController extends AppBaseController
         }else{
             $companiesByGroup = (array)$selectedCompanyId;
         }
+
         $groupCompany = Company::whereIN("companySystemID", $companiesByGroup)->get();
 
         /** all document Drop Down */
