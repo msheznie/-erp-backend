@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PurchaseOrderProcessDetailsAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Purchase Order Process Details
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file contains the all CRUD for Purchase Order Process Details
+ * -- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseOrderProcessDetailsAPIRequest;

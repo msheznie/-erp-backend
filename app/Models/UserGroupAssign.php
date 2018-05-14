@@ -3,12 +3,11 @@
  * =============================================
  * -- File Name : UserGroupAssign.php
  * -- Project Name : ERP
- * -- Module Name :  Navigation
- * -- Author :Mubashir
- * -- Create date : 14 - March 2018
+ * -- Module Name : User Group Assign
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
- * --
  */
 namespace App\Models;
 

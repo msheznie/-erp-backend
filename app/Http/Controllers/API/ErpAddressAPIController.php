@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ErpAddressAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Erp Address
+ * -- Author : Mohamed Nazir
+ * -- Create date :  26 - April 2018
+ * -- Description : This file contains the all CRUD for Erp Address
+ * -- REVISION HISTORY
+ **/
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateErpAddressAPIRequest;

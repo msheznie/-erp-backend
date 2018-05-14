@@ -11,6 +11,9 @@
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getItemMasterPurchaseHistory(),exportPurchaseHistory(),
  * -- Date: 21-March 2018 By: Nazir Description: Added new functions named as getItemsByProcumentOrder(),
  * -- Date: 28-March 2018 By: Nazir Description: Added new functions named as storePurchaseOrderDetailsFromPR(),
+ * -- Date: 10-April 2018 By: Nazir Description: Added new functions named as procumentOrderDeleteAllDetails(),
+ * -- Date: 12-April 2018 By: Nazir Description: Added new functions named as procumentOrderTotalDiscountUD(),
+ * -- Date: 13-April 2018 By: Nazir Description: Added new functions named as procumentOrderTotalTaxUD(),
  */
 namespace App\Http\Controllers\API;
 
@@ -310,7 +313,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
-        $input['createdUserSystemID'] = $user->employee['empCompanySystemID'];
+        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->create($input);
 
@@ -420,7 +423,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                         $prDetail_arr['createdPcID'] = gethostname();
                         $prDetail_arr['createdUserID'] = $user->employee['empID'];
-                        $prDetail_arr['createdUserSystemID'] = $user->employee['empCompanySystemID'];
+                        $prDetail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
                         $prDetail_arr['unitCost'] = $new['poUnitAmount'];
                         $prDetail_arr['netAmount'] = ($new['poUnitAmount'] * $new['poQty']);

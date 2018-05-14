@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Segment Master
  * -- REVISION HISTORY
  * -- Date: 15-March 2018 By: Nazir Description: Added new functions named as getAllSegmentMaster()
+ * -- Date: 16-March 2018 By: Nazir Description: Added new functions named as getSegmentMasterFormData()
  **/
 namespace App\Http\Controllers\API;
 
@@ -205,8 +206,11 @@ class SegmentMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if($search){
-            $segmentMasters =   $segmentMasters->where('ServiceLineCode','LIKE',"%{$search}%")
-                                             ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+
+            $segmentMasters =   $segmentMasters->where(function ($query) use($search) {
+                $query->where('ServiceLineCode','LIKE',"%{$search}%")
+                    ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::eloquent($segmentMasters)

@@ -250,6 +250,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
     Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
     Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
+    Route::post('getApprovedPOForCurrentUser', 'ProcumentOrderAPIController@getApprovedPOForCurrentUser');
     Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments');
 
     Route::resource('priorities', 'PriorityAPIController');
@@ -260,7 +261,6 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('months', 'MonthsAPIController');
 
-    Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
     Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
     Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
     Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
@@ -312,6 +312,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
     Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
     Route::get('getGoodReceivedNoteDetailsForPO', 'ProcumentOrderAPIController@getGoodReceivedNoteDetailsForPO');
+    Route::post('getGRVDrilldownSpentAnalysis', 'ProcumentOrderAPIController@getGRVDrilldownSpentAnalysis');
     Route::get('getInvoiceDetailsForPO', 'ProcumentOrderAPIController@getInvoiceDetailsForPO');
 
     /** Po Related Tables Created by Nazir  */
@@ -353,6 +354,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
 
     Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
+    Route::post('getPurchaseRequestApprovedByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovedByUser');
 
     Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest');
     Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest');
@@ -395,10 +397,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('address_types', 'AddressTypeAPIController');
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
-
+    Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy');
+    Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions');
 
 });
-
 
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 Route::get('foo', function () {
@@ -419,3 +421,4 @@ Route::get('foo', function () {
 });
 
 Route::get('test', 'TaxFormulaDetailAPIController@test');
+Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
