@@ -166,10 +166,10 @@ class PurchaseRequestAPIController extends AppBaseController
         $segments = SegmentMaster::where("companySystemID", $companyId);
 
         if (array_key_exists('isFilter', $input)) {
-            if($input['isFilter'] != 1){
-                $segments =  $segments->where('isActive',1);
+            if ($input['isFilter'] != 1) {
+                $segments = $segments->where('isActive', 1);
             }
-        }else{
+        } else {
             $segments = $segments->where('isActive', 1);
         }
 
@@ -273,6 +273,10 @@ class PurchaseRequestAPIController extends AppBaseController
             $years = $input['years'];
         }
 
+        if (!array_key_exists('documentId', $input)) {
+            $input['documentId'] = 0;
+        }
+
         $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId'])
             ->where('PRConfirmedYN', 1)
             ->where('cancelledYN', 0)
@@ -285,24 +289,25 @@ class PurchaseRequestAPIController extends AppBaseController
             ->when(request('date_by') == 'all' && count($years) > 0, function ($q) use ($years) {
                 $q->whereIn(DB::raw("YEAR(PRRequestedDate)"), $years);
             })
-            ->whereHas('details', function ($prd) use ($itemPrimaryCodes, $from, $to, $documentSearch,$input) {
+            ->whereHas('details', function ($prd) use ($itemPrimaryCodes, $from, $to, $documentSearch, $input) {
 
-                if($input['date_by'] == 'approvedDate' ||
+                if ($input['date_by'] == 'approvedDate' ||
                     $input['date_by'] == 'grvDate' ||
                     $input['grv'] == 'inComplete' ||
                     $input['documentId'] == 2 ||
-                    count($input['itemPrimaryCodes']) > 0){
+                    count($input['itemPrimaryCodes']) > 0
+                ) {
 
-                    $prd->whereHas('podetail',function ($pod) use ($from, $to, $documentSearch) {
-                       return $pod->whereHas('order', function ($po) use ($from, $to, $documentSearch) {
-                               return $po->where('poConfirmedYN', 1)
-                                    ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
-                                        return $q->whereBetween('approvedDate', [$from, $to]);
-                                    })
-                                    ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
-                                        return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
-                                    });
-                            })
+                    $prd->whereHas('podetail', function ($pod) use ($from, $to, $documentSearch) {
+                        return $pod->whereHas('order', function ($po) use ($from, $to, $documentSearch) {
+                            return $po->where('poConfirmedYN', 1)
+                                ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
+                                    return $q->whereBetween('approvedDate', [$from, $to]);
+                                })
+                                ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
+                                    return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
+                                });
+                             })
                             ->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
                                 return $q->whereHas('grv_details', function ($q) use ($from, $to) {
                                     $q->whereHas('grv_master', function ($q) use ($from, $to) {
@@ -316,10 +321,10 @@ class PurchaseRequestAPIController extends AppBaseController
                                 return $q->whereIn('goodsRecievedYN', [0, 1]);
                             });
                     })
-                    ->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
-                        return $q->whereIn('itemCode', $itemPrimaryCodes);
-                    });
-               }else{
+                        ->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
+                            return $q->whereIn('itemCode', $itemPrimaryCodes);
+                        });
+                } else {
                     $prd->with(['podetail' => function ($pod) use ($from, $to, $documentSearch) {
                         $pod->whereHas('order', function ($po) use ($from, $to, $documentSearch) {
                             $po->where('poConfirmedYN', 1)
@@ -329,27 +334,78 @@ class PurchaseRequestAPIController extends AppBaseController
                                 ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
                                     return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
                                 });
-                        })
-                        ->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
-                            return $q->whereHas('grv_details', function ($q) use ($from, $to) {
-                                $q->whereHas('grv_master', function ($q) use ($from, $to) {
-                                    $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
-                                        return $q->whereBetween('grvDate', [$from, $to]);
+                            })
+                            ->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                return $q->whereHas('grv_details', function ($q) use ($from, $to) {
+                                    $q->whereHas('grv_master', function ($q) use ($from, $to) {
+                                        $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                            return $q->whereBetween('grvDate', [$from, $to]);
+                                        });
                                     });
                                 });
+                            })
+                            ->when(request('grv') == 'inComplete', function ($q) {
+                                return $q->whereIn('goodsRecievedYN', [0, 1]);
                             });
-                        })
-                        ->when(request('grv') == 'inComplete', function ($q) {
-                            return $q->whereIn('goodsRecievedYN', [0, 1]);
-                        });
                     }])->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
                         return $q->whereIn('itemCode', $itemPrimaryCodes);
                     });
                 }
             })
             ->with(['confirmed_by', 'details' => function ($prd) use ($itemPrimaryCodes, $from, $to, $documentSearch) {
-                $prd->with(['uom', 'podetail' => function ($q) use ($from, $to, $documentSearch) {
-                    $q->with(['order' => function ($q) use ($from, $to, $documentSearch) {
+
+                $prd->when(request('date_by') == 'approvedDate' ||
+                    request('date_by') == 'grvDate' ||
+                    request('grv') == 'inComplete' ||
+                    request('documentId') == 2 ||
+                    count(request('itemPrimaryCodes')) > 0, function ($q) use ($from, $to, $documentSearch) {
+
+                    $q->whereHas('podetail', function ($q) use ($from, $to, $documentSearch) {
+                        $q->with(['order' => function ($q) use ($from, $to, $documentSearch) {
+                            $q->where('poConfirmedYN', 1)
+                                ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
+                                    return $q->whereBetween('approvedDate', [$from, $to]);
+                                })
+                                ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
+                                    return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
+                                });
+                        }, 'reporting_currency', 'grv_details' => function ($q) use ($from, $to) {
+
+                            $q->with(['grv_master' => function ($q) use ($from, $to) {
+                                $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                    return $q->whereBetween('grvDate', [$from, $to]);
+                                });
+                            }]);
+                        }])
+                        ->when(request('grv') == 'inComplete', function ($q) {
+                            return $q->whereIn('goodsRecievedYN', [0, 1]);
+                        });
+                    });
+
+                })->with(['uom', 'podetail' => function ($q) use ($from, $to, $documentSearch) {
+
+                    $q->when(request('date_by') == 'approvedDate' ||
+                        request('date_by') == 'grvDate' ||
+                        request('grv') == 'inComplete' ||
+                        request('documentId') == 2 ||
+                        count(request('itemPrimaryCodes')) > 0, function ($q) use ($from, $to, $documentSearch) {
+
+                            $q->with(['grv_details' => function ($q) use ($from, $to) {
+                                $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                    $q->with(['grv_master' => function ($q) use ($from, $to) {
+                                        $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                            return $q->whereBetween('grvDate', [$from, $to]);
+                                        });
+                                    }]);
+                                })->with(['grv_master' => function ($q) use ($from, $to) {
+                                    $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                        return $q->whereBetween('grvDate', [$from, $to]);
+                                    });
+                                }]);
+                            }]);
+
+
+                    })->with(['order' => function ($q) use ($from, $to, $documentSearch) {
                         $q->where('poConfirmedYN', 1)
                             ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
                                 return $q->whereBetween('approvedDate', [$from, $to]);
@@ -357,12 +413,18 @@ class PurchaseRequestAPIController extends AppBaseController
                             ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
                                 return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
                             });
-                            }, 'reporting_currency', 'grv_details' => function ($q) use ($from, $to) {
-                                $q->with(['grv_master' => function ($q) use ($from, $to) {
-                                    $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
-                                        return $q->whereBetween('grvDate', [$from, $to]);
-                                    });
-                                }]);
+                    }, 'reporting_currency', 'grv_details' => function ($q) use ($from, $to) {
+                        $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                            $q->whereHas('grv_master', function ($q) use ($from, $to) {
+                                $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                    return $q->whereBetween('grvDate', [$from, $to]);
+                                });
+                            });
+                        })->with(['grv_master' => function ($q) use ($from, $to) {
+                            $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                return $q->whereBetween('grvDate', [$from, $to]);
+                            });
+                        }]);
                     }])
                     ->when(request('grv') == 'inComplete', function ($q) {
                         return $q->whereIn('goodsRecievedYN', [0, 1]);
@@ -373,8 +435,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 });
             }]);
 
-
-        return \DataTables::of($purchaseRequests)
+        $data = \DataTables::of($purchaseRequests)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -385,7 +446,9 @@ class PurchaseRequestAPIController extends AppBaseController
             ->addIndexColumn()
             ->make(true);
 
-        return $this->sendResponse($purchaseRequests, 'Record retrieved successfully');
+        return $data;
+
+        //return $this->sendResponse($purchaseRequests, 'Record retrieved successfully');
     }
 
     /**
@@ -574,8 +637,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
-                ->orWhere('comments', 'LIKE', "%{$search}%");
+            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%");
+                                               //->orWhere('comments', 'LIKE', "%{$search}%");
         }
 
         return \DataTables::eloquent($purchaseRequests)
@@ -704,7 +767,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-         $empID = \Helper::getEmployeeSystemID();
+        $empID = \Helper::getEmployeeSystemID();
 
 
         $purchaseRequests = DB::table('erp_documentapproved')
@@ -739,17 +802,17 @@ class PurchaseRequestAPIController extends AppBaseController
             })*/
             ->join('erp_purchaserequest', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseRequestID')
-                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    //->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->where('erp_purchaserequest.companySystemID', $companyId)
                     ->where('erp_purchaserequest.approved', -1)
                     ->where('erp_purchaserequest.PRConfirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', -1)
-            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
-            ->join('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
-            ->join('erp_priority', 'priority', 'erp_priority.priorityID')
-            ->join('erp_location', 'location', 'erp_location.locationID')
-            ->join('serviceline', 'erp_purchaserequest.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
+            ->leftJoin('erp_priority', 'priority', 'erp_priority.priorityID')
+            ->leftJoin('erp_location', 'location', 'erp_location.locationID')
+            ->leftJoin('serviceline', 'erp_purchaserequest.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [1, 50, 51])
             ->where('erp_documentapproved.companySystemID', $companyId)
@@ -797,7 +860,7 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('isActive', 1)
             ->first();
 
-        if(empty($segments)){
+        if (empty($segments)) {
             return $this->sendError('Selected segment is not active. Please select an active segment');
         }
 
@@ -957,12 +1020,12 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Purchase Request not found');
         }
 
-        if($purchaseRequest->cancelledYN == -1){
-            return $this->sendError('This Purchase Request closed. You can not edit.',500);
+        if ($purchaseRequest->cancelledYN == -1) {
+            return $this->sendError('This Purchase Request closed. You can not edit.', 500);
         }
 
-        if($purchaseRequest->approved == 1){
-            return $this->sendError('This Purchase Request fully approved. You can not edit.',500);
+        if ($purchaseRequest->approved == 1) {
+            return $this->sendError('This Purchase Request fully approved. You can not edit.', 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -1129,7 +1192,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
 
-        $body = '<p>' . $cancelDocNameBody . ' is cancelled due to below reason.</p><p>Comment : ' . $input['cancelledComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' is cancelled by '. $employee->empName.' due to below reason.</p><p>Comment : ' . $input['cancelledComments'] . '</p>';
         $subject = $cancelDocNameSubject . ' is cancelled';
 
         if ($purchaseRequest->PRConfirmedYN == 1) {
@@ -1190,7 +1253,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
 
         if ($checkPo > 0) {
-            return $this->sendError('Cannot cancel. Order is created for this request');
+            return $this->sendError('Cannot return back to amend. Order is created for this request');
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -1203,7 +1266,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
 
-        $body = '<p>' . $cancelDocNameBody . ' is return back to amend due to below reason.</p><p>Comment : ' . $input['ammendComments'] . '</p>';
+        $body = '<p>' . $cancelDocNameBody . ' is return back to amend by '.$employee->empName.' due to below reason.</p><p>Comment : ' . $input['ammendComments'] . '</p>';
         $subject = $cancelDocNameSubject . ' is return back to amend';
 
         if ($purchaseRequest->PRConfirmedYN == 1) {
@@ -1399,7 +1462,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $array = array('request' => $purchaseRequest);
         $time = strtotime("now");
-        $fileName = 'purchase_request_'.$id.'_'.$time.'.pdf';
+        $fileName = 'purchase_request_' . $id . '_' . $time . '.pdf';
 
         $html = view('print.purchase_request', $array);
 
@@ -1407,7 +1470,7 @@ class PurchaseRequestAPIController extends AppBaseController
         //return $this->sendResponse($html->render(), 'Purchase Request retrieved successfully');
         //return \PDF::loadHTML($html)->setPaper('a4', 'landscape')->setWarnings(false)->download($fileName);
 
-       // die();
+        // die();
 
         //  $pdf = \PDF::loadView('print.purchase_request', $array);
         //  return $pdf->download('purchase_request_'.$id.'.pdf');

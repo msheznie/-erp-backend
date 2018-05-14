@@ -236,6 +236,7 @@
         <table class="table table-bordered" style="width: 100%">
             <thead>
             <tr class="theme-tr-head">
+                <th></th>
                 <th class="text-left">Item Code</th>
                 <th class="text-left">Item Description</th>
                 <th class="text-left">Part Number</th>
@@ -251,6 +252,7 @@
             <tbody>
             @foreach ($request->details as $item)
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                    <td>{{$loop->iteration}}</td>
                     <td>{{$item->itemPrimaryCode}}</td>
                     <td>{{$item->itemDescription}}</td>
                     <td> {{$item->partNumber}}</td>
