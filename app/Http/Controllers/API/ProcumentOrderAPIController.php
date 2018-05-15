@@ -674,8 +674,11 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if ($search) {
-            $procumentOrders = $procumentOrders->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                ->orWhere('narration', 'LIKE', "%{$search}%");
+            $search = str_replace("\\", "\\\\", $search);
+            $procumentOrders =   $procumentOrders->where(function ($query) use($search) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::eloquent($procumentOrders)
@@ -1122,9 +1125,13 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $search = $request->input('search.value');
         if ($search) {
-            $procumentOrders = $procumentOrders->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                ->orWhere('narration', 'LIKE', "%{$search}%");
+            $search = str_replace("\\", "\\\\", $search);
+            $procumentOrders =   $procumentOrders->where(function ($query) use($search) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
         }
+
 
         return \DataTables::eloquent($procumentOrders)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -2242,8 +2249,10 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $poMasters = $poMasters->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                ->orWhere('narration', 'LIKE', "%{$search}%");
+            $poMasters =   $poMasters->where(function ($query) use($search) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::of($poMasters)
