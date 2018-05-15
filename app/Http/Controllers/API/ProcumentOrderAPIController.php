@@ -24,6 +24,7 @@
  * -- Date: 10-May 2018 By: Nazir Description: Added new functions named as getAllApprovedPO()
  * -- Date: 10-May 2018 By: Nazir Description: Added new functions named as getApprovedPOForCurrentUser()
  * -- Date: 11-May 2018 By: Nazir Description: Added new functions named as getGRVDrilldownSpentAnalysis()
+ * -- Date: 15-May 2018 By: Nazir Description: Added new functions named as manualCloseProcurementOrderPrecheck()
  */
 
 namespace App\Http\Controllers\API;
@@ -673,8 +674,11 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if ($search) {
-            $procumentOrders = $procumentOrders->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                ->orWhere('narration', 'LIKE', "%{$search}%");
+            $search = str_replace("\\", "\\\\", $search);
+            $procumentOrders =   $procumentOrders->where(function ($query) use($search) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::eloquent($procumentOrders)
@@ -1121,9 +1125,13 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $search = $request->input('search.value');
         if ($search) {
-            $procumentOrders = $procumentOrders->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                ->orWhere('narration', 'LIKE', "%{$search}%");
+            $search = str_replace("\\", "\\\\", $search);
+            $procumentOrders =   $procumentOrders->where(function ($query) use($search) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
         }
+
 
         return \DataTables::eloquent($procumentOrders)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -2241,8 +2249,10 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $poMasters = $poMasters->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                ->orWhere('narration', 'LIKE', "%{$search}%");
+            $poMasters =   $poMasters->where(function ($query) use($search) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::of($poMasters)
@@ -2343,10 +2353,58 @@ AND PODet.supplierID = ' . $supplierID . '');
         } else if ($input['documentId'] == 2) {
 
         }
-
-
         return $this->sendResponse($detail, 'Details retrieved successfully');
 
+    }
+
+    /**
+     * manual Close Purchase Order
+     * Post /manualCloseProcurementOrderPrecheck
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+    public function manualCloseProcurementOrderPrecheck(Request $request)
+    {
+        $input = $request->all();
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($input['purchaseOrderID']);
+
+        if (empty($procumentOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        if ($procumentOrder->poClosedYN == 1) {
+            return $this->sendError('You can not close this order, this is already closed');
+        }
+
+        if ($procumentOrder->grvRecieved == 2) {
+            return $this->sendError('Cannot close. GRV is fully received.');
+        }
+
+        if ($procumentOrder->manuallyClosed == 1) {
+            return $this->sendError('This order already manually closed');
+        }
+
+        if ($procumentOrder->approved != -1 || $procumentOrder->poCancelledYN == -1) {
+            return $this->sendError('You can only close approved order');
+        }
+
+        $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $input['purchaseOrderID'])
+            ->first();
+
+        if (!empty($detailExistGRV)) {
+            return $this->sendError('Cannot close. GRV is created for this PO ');
+        }
+
+        $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $input['purchaseOrderID'])
+            ->first();
+
+        if (!empty($detailExistAPD)) {
+            return $this->sendError('Cannot close. Advance Payment is created for this PO');
+        }
+
+        return $this->sendResponse($procumentOrder, 'Details retrieved successfully');
     }
 
 
