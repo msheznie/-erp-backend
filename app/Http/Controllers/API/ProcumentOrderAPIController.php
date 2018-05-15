@@ -20,7 +20,10 @@
  * -- Date: 03-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysisExport() for report Spent Analysis export to excel report
  * -- Date: 08-May 2018 By: Nazir Description: Added new functions named as manualCloseProcurementOrder()
  * -- Date: 09-May 2018 By: Nazir Description: Added new functions named as getProcumentOrderPrintPDF()
+ * -- Date: 10-May 2018 By: Nazir Description: Added new functions named as procumentOrderSegmentchk()
  * -- Date: 10-May 2018 By: Nazir Description: Added new functions named as getAllApprovedPO()
+ * -- Date: 10-May 2018 By: Nazir Description: Added new functions named as getApprovedPOForCurrentUser()
+ * -- Date: 11-May 2018 By: Nazir Description: Added new functions named as getGRVDrilldownSpentAnalysis()
  */
 
 namespace App\Http\Controllers\API;
@@ -318,12 +321,12 @@ class ProcumentOrderAPIController extends AppBaseController
             return $this->sendError('Procurement Order not found');
         }
 
-        if($procumentOrder->poCancelledYN == -1){
-            return $this->sendError('This Purchase Order closed. You can not edit.',500);
+        if ($procumentOrder->poCancelledYN == -1) {
+            return $this->sendError('This Purchase Order closed. You can not edit.', 500);
         }
 
-        if($procumentOrder->approved == -1){
-            return $this->sendError('This Purchase Order fully approved. You can not edit.',500);
+        if ($procumentOrder->approved == -1) {
+            return $this->sendError('This Purchase Order fully approved. You can not edit.', 500);
         }
 
         //checking segment is active
@@ -698,7 +701,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $purchaseOrderID = $request['purchaseOrderID'];
 
         $segments = SegmentMaster::where("companySystemID", $companyId);
-        if(isset($request['type']) && $request['type'] != 'filter'){
+        if (isset($request['type']) && $request['type'] != 'filter') {
             $segments = $segments->where('isActive', 1);
         }
         $segments = $segments->get();
@@ -1667,7 +1670,6 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             }
         }
 
-
         $dataRec = \DataTables::of($supplierReportGRVBase)
             ->addIndexColumn()
             ->with('totalAmount', $alltotal)
@@ -2146,7 +2148,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment'])->get();
 
-        $refernaceDoc= CompanyDocumentAttachment::where('companySystemID', $procumentOrder->companySystemID)
+        $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $procumentOrder->companySystemID)
             ->where('documentSystemID', $procumentOrder->documentSystemID)
             ->first();
 
@@ -2163,10 +2165,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
     }
 
-    public function procumentOrderSegmentchk(Request $request){
+    public function procumentOrderSegmentchk(Request $request)
+    {
 
         $input = $request->all();
 
@@ -2261,7 +2264,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
     {
         $input = $request->all();
 
-        $monthExp = explode('-',$input['month']);
+        $monthExp = explode('-', $input['month']);
 
         $expYear = $monthExp[0];
         $expMonth = $monthExp[1];
@@ -2271,8 +2274,76 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $supplierID = $input['supplierID'];
 
-        $detail = DB::select('SELECT erp_grvdetails.grvAutoID,erp_grvdetails.companyID,erp_grvdetails.purchaseOrderMastertID,erp_grvmaster.grvDate,erp_grvmaster.grvPrimaryCode,erp_grvmaster.grvDoRefNo,erp_grvdetails.itemPrimaryCode,
-erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost,erp_grvmaster.grvDate,erp_grvdetails.GRVcostPerUnitLocalCur,erp_grvmaster.supplierID FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE supplierID = '.$supplierID.' AND erp_grvmaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(erp_grvmaster.grvDate) = (' . $expYear . ') AND month(erp_grvmaster.grvDate) = (' . $expMonth . ')');
+        if ($input['documentId'] == 1) {
+            $detail = DB::select('SELECT
+	GRVDet.*, PODet.purchaseOrderMasterID,
+	PODet.companyID,
+	PODet.supplierID,
+	erp_purchaseordermaster.supplierPrimaryCode,
+	erp_purchaseordermaster.supplierName,
+	PODet.POlocalAmount,
+	PODet.PORptAmount
+FROM
+	erp_purchaseordermaster
+INNER JOIN (
+	SELECT
+		erp_purchaseorderdetails.purchaseOrderMasterID,
+		erp_purchaseordermaster.companyID,
+		erp_purchaseordermaster.supplierID,
+		erp_purchaseordermaster.approvedDate,
+		sum(
+			GRVcostPerUnitLocalCur * noQty
+		) AS POlocalAmount,
+		sum(
+			GRVcostPerUnitComRptCur * noQty
+		) AS PORptAmount
+	FROM
+		erp_purchaseorderdetails
+	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
+	WHERE
+		erp_purchaseordermaster.approved = - 1
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	GROUP BY
+		erp_purchaseorderdetails.purchaseOrderMasterID
+) AS PODet ON erp_purchaseordermaster.purchaseOrderID = PODet.purchaseOrderMasterID
+INNER JOIN (
+	SELECT
+		erp_grvdetails.purchaseOrderMastertID,
+		erp_grvmaster.grvDate,
+		erp_grvmaster.grvPrimaryCode,
+		erp_grvmaster.grvConfirmedYN,
+		erp_grvmaster.approved as grvApproved,
+		erp_grvmaster.companySystemID,
+		supplierID,
+		approvedDate,
+		GRVcostPerUnitLocalCur,
+		GRVcostPerUnitComRptCur,
+		noQty,
+		sum(
+			GRVcostPerUnitLocalCur * noQty
+		) AS LinelocalTotal,
+		sum(
+			GRVcostPerUnitComRptCur * noQty
+		) AS LineRptTotal
+	FROM
+		erp_grvdetails
+	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+	WHERE
+		erp_grvmaster.approved = - 1
+	AND erp_grvmaster.grvCancelledYN = 0
+	AND YEAR (erp_grvmaster.grvDate) = (' . $expYear . ') AND MONTH (erp_grvmaster.grvDate) = (' . $expMonth . ')
+	GROUP BY
+		erp_grvdetails.purchaseOrderMastertID
+) AS GRVDet ON GRVDet.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
+WHERE
+	erp_purchaseordermaster.approved = -1
+AND erp_purchaseordermaster.poCancelledYN = 0
+AND GRVDet.companySystemID IN (' . $commaSeperatedCompany . ')
+AND PODet.supplierID = ' . $supplierID . '');
+        } else if ($input['documentId'] == 2) {
+
+        }
+
 
         return $this->sendResponse($detail, 'Details retrieved successfully');
 

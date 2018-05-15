@@ -344,8 +344,10 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if($search){
-            $chartOfAccount =   $chartOfAccount->where('AccountCode','LIKE',"%{$search}%")
-                                               ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            $chartOfAccount =   $chartOfAccount->where(function ($query) use($search) {
+                $query->where('AccountCode','LIKE',"%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::eloquent($chartOfAccount)

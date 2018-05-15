@@ -54,11 +54,9 @@ class Helper
         $groupCompany = [];
         if ($companiesByGroup) {
             foreach ($companiesByGroup as $val) {
-                if (array_key_exists('child', $val)) {
-                    if ($val['child']) {
-                        foreach ($val['child'] as $val1) {
-                            $groupCompany[] = array('companySystemID' => $val1["companySystemID"], 'CompanyID' => $val1["CompanyID"], 'CompanyName' => $val1["CompanyName"]);
-                        }
+                if ($val['child']) {
+                    foreach ($val['child'] as $val1) {
+                        $groupCompany[] = array('companySystemID' => $val1["companySystemID"], 'CompanyID' => $val1["CompanyID"], 'CompanyName' => $val1["CompanyName"]);
                     }
                 } else {
                     $groupCompany[] = array('companySystemID' => $val["companySystemID"], 'CompanyID' => $val["CompanyID"], 'CompanyName' => $val["CompanyName"]);
@@ -178,7 +176,7 @@ class Helper
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
                 //checking whether document approved table has a data for the same document
-                $docExist = Models\DocumentApproved::where('documentSystemID',$params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
                     //check document is already confirmed
                     $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
@@ -333,7 +331,7 @@ class Helper
                         DB::rollback();
                         return ['success' => false, 'message' => 'Document is already confirmed'];
                     }
-                }else {
+                } else {
                     DB::rollback();
                     return ['success' => false, 'message' => 'Document approval data is already generated.'];
                 }

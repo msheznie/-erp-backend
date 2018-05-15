@@ -3,7 +3,7 @@
     <title>Purchase Order</title>
     <style>
         body {
-            font-size: 12px;
+            font-size: 11px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
         }
 
@@ -17,19 +17,17 @@
 
         h6, h3 {
             margin-bottom: 0.1rem;
-            font-family: inherit;
             font-weight: 500;
             line-height: 1.2;
             color: inherit;
         }
 
-
-        table > tbody > tr > td {
-            font-size: 11.5px;
+        table > tbody > th > tr > td {
+            font-size: 11px;
         }
 
         .theme-tr-head {
-            background-color: #DEDEDE !important;
+            background-color: #EBEBEB !important;
         }
 
         .text-left {
@@ -44,28 +42,24 @@
             font-weight: 700 !important;
         }
 
-        .table th, .table td {
-            border-top: 1px solid #c2cfd6 !important;
+        .table th {
+            border: 1px solid rgb(127,127,127) !important;
         }
 
         .table th, .table td {
-            padding: 0.4rem !important;
+            padding: 0.3rem !important;
         }
 
         .table th {
-            background-color: #c2cfd6 !important;
+            background-color: #EBEBEB !important;
         }
 
         tfoot > tr > td {
-            border: 1px solid #a4b7c1;
+            border: 1px solid rgb(127,127,127);
         }
 
         .text-right {
             text-align: right !important;
-        }
-
-        table-bordered > thead > tr > th, .table-bordered > tbody > tr > th, .table-bordered > tfoot > tr > th, .table-bordered > thead > tr > td, .table-bordered > tbody > tr > td, .table-bordered > tfoot > tr > td {
-            border: 1px solid #a4b7c1;
         }
 
         .font-weight-bold {
@@ -77,10 +71,6 @@
             border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
 
-        table > thead > tr > th {
-            font-size: 11.5px;
-        }
-
         th {
             text-align: inherit;
             font-weight: bold;
@@ -89,12 +79,14 @@
         .white-space-pre-line {
             white-space: pre-line;
         }
+
         p {
             margin-top: 0 !important;
         }
-        .title{
-            font-size: 1.3125rem;
-            font-weight: 500;
+
+        .title {
+            font-size: 13px;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -103,23 +95,30 @@
     <table style="width:100%">
         <tr>
             <td width="60%">
-                <h3>
-                    @if ($podata->documentSystemID == 2)
-                        Purchase Order
-                    @elseif ($podata->documentSystemID == 5 && $podata->poType_N == 5)
-                        Work Order
-                    @elseif ($podata->documentSystemID == 5 && $podata->poType_N == 6)
-                        Sub Work Order
-                    @elseif ($podata->documentSystemID == 52)
-                        Direct Order
-                    @endif
-                </h3>
+                <table>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>
+                            <h3 class="font-weight-bold">
+                                @if ($podata->documentSystemID == 2)
+                                    Purchase Order
+                                @elseif ($podata->documentSystemID == 5 && $podata->poType_N == 5)
+                                    Work Order
+                                @elseif ($podata->documentSystemID == 5 && $podata->poType_N == 6)
+                                    Sub Work Order
+                                @elseif ($podata->documentSystemID == 52)
+                                    Direct Order
+                                @endif
+                            </h3>
+                        </td>
+                    </tr>
+                </table>
             </td>
             <td width="40%">
                 <table>
                     <tr>
                         <td>
-                            <h3>
+                            <h3 class="font-weight-bold">
                                 @if ($podata->company)
                                     {{$podata->company->CompanyName}}
                                 @endif
@@ -129,8 +128,8 @@
                 </table>
                 <table>
                     <tr>
-                        <td width="170px"><span class="font-weight-bold">Purchase Order Number</span></td>
-                        <td width="40px"><span class="font-weight-bold">:</span></td>
+                        <td><span class="font-weight-bold">Purchase Order Number</span></td>
+                        <td><span class="font-weight-bold">:</span></td>
                         <td>
                             @if ($podata->purchaseOrderCode)
                                 {{$podata->purchaseOrderCode}}
@@ -161,12 +160,12 @@
     <table style="width:100%">
         <tr>
             <td style="width: 60%">
-                <table>
+                <table style="width: 100%">
                     <tr>
                         <td colspan="3"><span class="title">Sold To:</span></td>
                     </tr>
                     <tr>
-                        <td colspan="3"><p>
+                        <td style="width: 100%" colspan="3"><p>
                                 @if ($podata->company)
                                     {{$podata->company->CompanyName}}
                                 @endif
@@ -174,7 +173,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="3"><p>
+                        <td style="width: 100%" colspan="3"><p>
                                 @if ($podata->soldToAddressDescriprion)
                                     {{$podata->soldToAddressDescriprion}}
                                 @endif
@@ -182,49 +181,52 @@
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="3"><span class="title">Sold To:</span></td>
+                        <td style="width: 100%" colspan="3"><span class="title">&nbsp;</span></td>
+                    </tr>
+                </table>
+                <table style="width: 100%">
+                    <tr>
+                        <td style="width: 20%"><span class="font-weight-bold">Order Contact</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">{{$podata->soldTocontactPersonID}}</td>
                     </tr>
                     <tr>
-                        <td width="170px"><span class="font-weight-bold">Order Contact</span></td>
-                        <td width="40px"><span class="font-weight-bold">:</span></td>
-                        <td>{{$podata->soldTocontactPersonID}} </td>
+                        <td style="width: 20%"><span class="font-weight-bold">Phone</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">{{$podata->soldTocontactPersonTelephone}} </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Phone</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>{{$podata->soldTocontactPersonTelephone}} </td>
+                        <td style="width: 20%"><span class="font-weight-bold">Fax</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">{{$podata->soldTocontactPersonFaxNo}} </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Fax</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>{{$podata->soldTocontactPersonFaxNo}} </td>
-                    </tr>
-                    <tr>
-                        <td><span class="font-weight-bold">Email</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>{{$podata->soldTocontactPersonEmail}} </td>
+                        <td style="width: 20%"><span class="font-weight-bold">Email</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">{{$podata->soldTocontactPersonEmail}} </td>
                     </tr>
                 </table>
             </td>
             <td style="width: 40%">
-                <table>
+                <table style="width:100%">
                     <tr>
-                        <td><span class="title">Supplier:</span></td>
+                        <td colspan="3"><span class="title">Supplier:</span></td>
                     </tr>
                     <tr>
-                        <td>{{$podata->supplierPrimaryCode}}</td>
+                        <td colspan="3">{{$podata->supplierPrimaryCode}}</td>
                     </tr>
                     <tr>
-                        <td>{{$podata->supplierName}}</td>
+                        <td colspan="3">{{$podata->supplierName}}</td>
                     </tr>
                     <tr>
-                        <td>{{$podata->supplierAddress}}</td>
+                        <td colspan="3">{{$podata->supplierAddress}}</td>
                     </tr>
-                </table>
-                <table>
                     <tr>
-                        <td width="170px"><span class="font-weight-bold">Contact</span></td>
-                        <td width="40px"><span class="font-weight-bold">:</span></td>
+                        <td colspan="3">{{$podata->soldToAddressDescriprion}}</td>
+                    </tr>
+                    <tr>
+                        <td><span class="font-weight-bold">Contact</span></td>
+                        <td><span class="font-weight-bold">:</span></td>
                         <td>
                             @if ($podata->suppliercontact)
                                 {{$podata->suppliercontact->contactPersonName}}
@@ -232,27 +234,27 @@
                         </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Phone</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>
+                        <td style="width: 20%"><span class="font-weight-bold">Phone</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">
                             @if ($podata->suppliercontact)
                                 {{$podata->suppliercontact->contactPersonTelephone}}
                             @endif
                         </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Fax</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>
+                        <td style="width: 20%"><span class="font-weight-bold">Fax</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">
                             @if ($podata->suppliercontact)
                                 {{$podata->suppliercontact->contactPersonFax}}
                             @endif
                         </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Email</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>
+                        <td style="width: 20%"><span class="font-weight-bold">Email</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">
                             @if ($podata->suppliercontact)
                                 {{$podata->suppliercontact->contactPersonEmail}}
                             @endif
@@ -270,11 +272,10 @@
             <td style="width: 60%">
                 <table>
                     <tr>
-                        <td><span class="title">Ship To:</span></td>
+                        <td colspan="3"><span class="title">Ship To:</span></td>
                     </tr>
                     <tr>
-                        <td>
-                            <p>
+                        <td colspan="3"><p>
                                 @if ($podata->company)
                                     {{$podata->company->CompanyName}}
                                 @endif
@@ -282,46 +283,42 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>
-                            <p>
-                                @if ($podata->shippingAddressDescriprion)
-                                    {{$podata->shippingAddressDescriprion}}
-                                @endif
-                            </p>
-                        </td>
+                        <td colspan="3">{{$podata->shippingAddressDescriprion}} </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><span class="title">&nbsp;</span></td>
                     </tr>
                 </table>
                 <table>
                     <tr>
-                        <td width="170px"><span class="font-weight-bold">Ship Contact</span></td>
-                        <td width="40px"><span class="font-weight-bold">:</span></td>
-                        <td>{{$podata->shipTocontactPersonID}} </td>
+                        <td style="width: 20%"><span class="font-weight-bold">Ship Contact</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">{{$podata->shipTocontactPersonID}} </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Phone</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>{{$podata->shipTocontactPersonTelephone}} </td>
+                        <td style="width: 20%"><span class="font-weight-bold">Phone</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">{{$podata->shipTocontactPersonTelephone}} </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Fax</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>{{$podata->shipTocontactPersonFaxNo}} </td>
+                        <td style="width: 20%"><span class="font-weight-bold">Fax</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">{{$podata->shipTocontactPersonFaxNo}} </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Email</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>{{$podata->shipTocontactPersonEmail}} </td>
+                        <td style="width: 20%"><span class="font-weight-bold">Email</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">{{$podata->shipTocontactPersonEmail}} </td>
                     </tr>
                 </table>
             </td>
             <td style="width: 40%">
                 <table>
                     <tr>
-                        <td><span class="title">Invoice To:</span></td>
+                        <td colspan="3"><span class="title">Invoice To:</span></td>
                     </tr>
                     <tr>
-                        <td>
-                            <p>
+                        <td colspan="3"><p>
                                 @if ($podata->company)
                                     {{$podata->company->CompanyName}}
                                 @endif
@@ -329,47 +326,39 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>
-                            <p>
-                                @if ($podata->invoiceToAddressDescription)
-                                    {{$podata->invoiceToAddressDescription}}
-                                @endif
-                            </p>
-                        </td>
+                        <td colspan="3">{{$podata->invoiceToAddressDescription}} </td>
                     </tr>
-                </table>
-                <table>
                     <tr>
-                        <td width="170px"><span class="font-weight-bold">Payment Contact</span></td>
-                        <td width="40px"><span class="font-weight-bold">:</span></td>
-                        <td>
+                        <td style="width: 20%"><span class="font-weight-bold">Payment Contact</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">
                             @if ($podata->suppliercontact)
                                 {{$podata->invoiceTocontactPersonID}}
                             @endif
                         </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Phone</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>
+                        <td style="width: 20%"><span class="font-weight-bold">Phone</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">
                             @if ($podata->suppliercontact)
                                 {{$podata->invoiceTocontactPersonTelephone}}
                             @endif
                         </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Fax</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>
+                        <td style="width: 20%"><span class="font-weight-bold">Fax</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">
                             @if ($podata->suppliercontact)
                                 {{$podata->invoiceTocontactPersonFaxNo}}
                             @endif
                         </td>
                     </tr>
                     <tr>
-                        <td><span class="font-weight-bold">Email</span></td>
-                        <td><span class="font-weight-bold">:</span></td>
-                        <td>
+                        <td style="width: 20%"><span class="font-weight-bold">Email</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 78%">
                             @if ($podata->suppliercontact)
                                 {{$podata->invoiceTocontactPersonEmail}}
                             @endif
@@ -382,11 +371,11 @@
 </div>
 <hr>
 <div class="row">
-    <table style="width:50%">
+    <table style="width:100%">
         <tr>
-            <td style="width:10.5%"><span class="font-weight-bold">Narration</span></td>
-            <td style="width:10%"><span class="font-weight-bold">:</span></td>
-            <td style="width:20%">{{$podata->narration}}</td>
+            <td style="width:5%"><span class="font-weight-bold">Narration</span></td>
+            <td style="width:3%"><span class="font-weight-bold">:</span></td>
+            <td style="width:92%">{{$podata->narration}}</td>
         </tr>
     </table>
 </div>
@@ -394,16 +383,16 @@
     <table style="width:100%">
         <tr>
             <td style="width:90%">
-                <table>
+                <table style="padding-bottom: 1%">
                     <tr>
-                        <td style="width: 0%"><span class="font-weight-bold">Expected Date</span></td>
-                        <td style="width: 0%"><span class="font-weight-bold">:</span></td>
-                        <td style="width: 23%">{{ \App\helper\Helper::dateFormat($podata->expectedDeliveryDate)}}</td>
+                        <td style="width: 8%"><span class="font-weight-bold">Expected Date</span></td>
+                        <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                        <td style="width: 90%">{{ \App\helper\Helper::dateFormat($podata->expectedDeliveryDate)}}</td>
                     </tr>
                 </table>
             </td>
             <td style="width:10%">
-                <table>
+                <table style="padding-bottom: 2%">
                     <tr>
                         <td><span class="font-weight-bold">Currency</span></td>
                         <td><span class="font-weight-bold">:</span></td>
@@ -421,17 +410,17 @@
 <div class="row">
     <table style="width:100%" class="table table-bordered table-sm">
         <thead>
-        <tr>
-            <th>#</th>
-            <th>Item Code</th>
-            <th>Item Description</th>
-            <th>Supp.Part No</th>
-            <th>UOM</th>
-            <th>Qty</th>
-            <th>Unit Cost</th>
-            <th>Dis. Per Unit</th>
-            <th>Net Cost Pern Unit</th>
-            <th>Net Amount</th>
+        <tr style="border-top: 1px solid black;">
+            <th style="text-align: center; width: 2%;">#</th>
+            <th style="text-align: center; width: 8%;">Item Code</th>
+            <th style="text-align: center; width: 20%;">Item Description</th>
+            <th style="text-align: center; width: 5%;">Sup.Part No</th>
+            <th style="text-align: center ; width: 5%;">UOM</th>
+            <th style="text-align: center ; width: 5%;">Qty</th>
+            <th style="text-align: center ; width: 10%;">Unit Cost</th>
+            <th style="text-align: center ; width: 8%;">Dis. Per Unit</th>
+            <th style="text-align: center ; width: 10%;">Net Cost Per Unit</th>
+            <th style="text-align: center ; width: 13%;">Net Amount</th>
         </tr>
         </thead>
         <tbody>
@@ -442,7 +431,7 @@
             {{ $netUnitCost = 0 }}
             {{ $subTotal += $det->netAmount }}
             {{ $netUnitCost = $det->unitCost - $det->discountAmount }}
-            <tr>
+            <tr style="border-bottom: 1px solid black;">
                 <td>{{ $x = 1 }}</td>
                 <td>{{$det->itemPrimaryCode}}</td>
                 <td>{{$det->itemDescription}}</td>
@@ -459,92 +448,101 @@
         </tbody>
         <tfoot>
         <tr>
-            <td colspan="9" class="text-right"><span class="font-weight-bold" style="font-size: 12px">Sub Total</span>
+            <td colspan="7" style="border-bottom: none;border-left: none;"></td>
+            <td colspan="2" class="text-right"><span class="font-weight-bold" style="font-size: 11px">Sub Total</span>
             </td>
-            <td class="text-right" style="font-size: 12px">
+            <td class="text-right" style="font-size: 11px">
+                <span class="font-weight-bold">
                 @if ($podata->detail)
-                    {{number_format($subTotal, 2)}}
-                @endif
+                        {{number_format($subTotal, 2)}}
+                    @endif
+                </span>
             </td>
         </tr>
         <tr>
-            <td colspan="9" class="text-right"><span class="font-weight-bold" style="font-size: 12px">Discount</span>
+            <td colspan="7" style="border: none;"></td>
+            <td colspan="2" class="text-right" style="font-size: 11px"><span class="font-weight-bold"
+                                                                             style="font-size: 11px">Discount</span>
             </td>
-            <td class="text-right" style="font-size: 12px"><span class="font-weight-bold">
+            <td class="text-right" style="font-size: 11px"><span class="font-weight-bold">
                      {{number_format($podata->poDiscountAmount, 2)}}
-                </span></td>
+                </span>
+            </td>
         </tr>
         @if ($podata->supplierVATEligible)
-            <td colspan="9" class="text-right"><span
-                        class="font-weight-bold" style="font-size: 12px">Tax Amount({{$podata->VATPercentage .'%'}}
-                    )</span></td>
-            <td class="text-right" style="font-size: 12px"><span
-                        class="font-weight-bold">{{number_format($podata->VATAmount, 2)}}</span>
-            </td>
+            <tr>
+                <td colspan="7" style="border: none;"></td>
+                <td colspan="2" class="text-right"><span
+                            class="font-weight-bold" style="font-size: 11px">Tax Amount({{$podata->VATPercentage .'%'}}
+                        )</span></td>
+                <td class="text-right" style="font-size: 11px"><span
+                            class="font-weight-bold">{{number_format($podata->VATAmount, 2)}}</span>
+                </td>
+            </tr>
         @endif
         <tr>
-            <td colspan="9" class="text-right"><span class="font-weight-bold" style="font-size: 12px">Net Amount</span>
+            <td colspan="7" style="border: none;"></td>
+            <td colspan="2" class="text-right"><span class="font-weight-bold" style="font-size: 11px">Net Amount</span>
             </td>
-            <td class="text-right" style="font-size: 12px">
+            <td class="text-right" style="font-size: 11px">
+                <span class="font-weight-bold">
                 @if ($podata->detail)
-                    {{number_format($subTotal - $podata->poDiscountAmount + $podata->VATAmount, 2)}}
-                @endif
+                        {{number_format($subTotal - $podata->poDiscountAmount + $podata->VATAmount, 2)}}
+                    @endif
+                </span>
             </td>
         </tr>
         </tfoot>
     </table>
 </div>
 <div class="row">
-    <table style="width:100%">
+    <table style="width:100%;padding-top: 3%;">
         <tr>
-            <td width="100px" valign="top"><span class="font-weight-bold">Delivery Terms</span></td>
-            <td width="50" valign="top"><span class="font-weight-bold">:</span></td>
-            <td>
-                @if ($podata->transactioncurrency)
-                    {{$podata->deliveryTerms}}
-                @endif
-            </td>
-        </tr>
-        <tr>
-            <td valign="top"><span class="font-weight-bold">Panalty Terms</span></td>
-            <td valign="top"><span class="font-weight-bold">:</span></td>
-            <td>
-                @if ($podata->transactioncurrency)
-                    {{$podata->panaltyTerms}}
-                @endif
-            </td>
-        </tr>
-        <tr>
-            <td valign="top"><span class="font-weight-bold">Payment Terms</span></td>
-            <td valign="top"><span class="font-weight-bold">:</span></td>
-            <td>
-                @if ($podata->transactioncurrency)
-                    {{$podata->paymentTerms}}
-                @endif
-            </td>
+            <td style="width:13%"><span class="font-weight-bold">Delivery Terms</span></td>
+            <td style="width:2%"><span class="font-weight-bold">:</span></td>
+            <td style="width:85%">{{$podata->deliveryTerms}}</td>
         </tr>
     </table>
 </div>
-<table style="padding: 5px;">
-    <tr>
-        <td><span class="font-weight-bold">Electronically Approved By :</span></td>
-    </tr>
-    <tr>
-        &nbsp;
-    </tr>
-</table>
 <div class="row">
+    <table style="width:100%;padding-top: 3%;">
+        <tr style="padding-bottom: 2%;">
+            <td style="width:13%"><span class="font-weight-bold">Penalty Terms</span></td>
+            <td style="width:2%"><span class="font-weight-bold">:</span></td>
+            <td style="width:85%">{{$podata->panaltyTerms}}</td>
+        </tr>
+    </table>
+</div>
+<div class="row">
+    <table style="width:100%;padding-top: 3%;">
+        <tr style="padding-bottom: 2%;">
+            <td style="width:13%"><span class="font-weight-bold">Payment Terms</span></td>
+            <td style="width:2%"><span class="font-weight-bold">:</span></td>
+            <td style="width:85%">{{$podata->paymentTerms}}</td>
+        </tr>
+    </table>
+</div>
+
+<div style="position: fixed; bottom: 80px;">
+    <table style="padding-top: 3px;">
+        <tr>
+            <td><span class="font-weight-bold">Electronically Approved By :</span></td>
+        </tr>
+        <tr>
+            &nbsp;
+        </tr>
+    </table>
     <table style="width:100%;padding: 5px;">
         <tr>
             @if ($podata->approved_by)
                 @foreach ($podata->approved_by as $det)
-                    <td style="padding-right: 25px">
+                    <td style="padding-right: 25px;font-size: 9px;">
                         <div>
                             @if($det->employee)
                                 {{$det->employee->empFullName }}
                             @endif
                         </div>
-                        <div><span>{{$det->approvedDate }}</span></div>
+                        <div><span>{{ \App\helper\Helper::dateFormat($det->approvedDate)}}</span></div>
                         <div style="width: 3px"></div>
                     </td>
                 @endforeach
@@ -553,7 +551,7 @@
     </table>
 </div>
 <div class="row">
-    <table style="width:100%; margin-bottom: 10%;padding: 5px;">
+    <table style="width:100%;position: fixed; bottom: 0px;">
         <tr>
             <td style="width:100%">
                 <p><span class="font-weight-bold"><span [innerHTML]="docRefNumber"

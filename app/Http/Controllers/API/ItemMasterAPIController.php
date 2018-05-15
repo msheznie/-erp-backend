@@ -225,9 +225,11 @@ class ItemMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         if($search){
-            $itemMasters =   $itemMasters->where('primaryCode','LIKE',"%{$search}%")
-                                         ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
-                                         ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            $itemMasters =   $itemMasters->where(function ($query) use($search) {
+                $query->where('primaryCode','LIKE',"%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::eloquent($itemMasters)
