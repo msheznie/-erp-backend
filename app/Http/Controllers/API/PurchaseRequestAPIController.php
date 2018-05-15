@@ -637,8 +637,10 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%");
-                                               //->orWhere('comments', 'LIKE', "%{$search}%");
+            $purchaseRequests =   $purchaseRequests->where(function ($query) use($search) {
+                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                      ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::eloquent($purchaseRequests)
@@ -782,27 +784,8 @@ class PurchaseRequestAPIController extends AppBaseController
                 'rollLevelOrder',
                 'approvalLevelID',
                 'documentSystemCode')
-            /*->join('employeesdepartments', function ($query) use ($companyId, $empID) {
-                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
-                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
-                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-
-                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
-                    ->where('documentSystemID', 1)
-                    ->first();
-
-                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
-                    $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
-                }
-
-                $query->whereIn('employeesdepartments.documentSystemID', [1, 50, 51])
-                    ->where('employeesdepartments.departmentSystemID', 3)
-                    ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID);
-            })*/
             ->join('erp_purchaserequest', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseRequestID')
-                    //->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->where('erp_purchaserequest.companySystemID', $companyId)
                     ->where('erp_purchaserequest.approved', -1)
                     ->where('erp_purchaserequest.PRConfirmedYN', 1);
