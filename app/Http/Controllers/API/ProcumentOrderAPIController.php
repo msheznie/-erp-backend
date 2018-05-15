@@ -1151,6 +1151,13 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
     public function poCheckDetailExistinGrv(Request $request)
     {
         $purchaseOrderID = $request['purchaseOrderID'];
+        $type = $request['type'];
+
+        if($type == 1){
+            $comment = 'cancel';
+        }else{
+            $comment = 'revert';
+        }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
             ->first();
@@ -1163,14 +1170,14 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->first();
 
         if (!empty($detailExistGRV)) {
-            return $this->sendError('Cannot cancel. GRV is created for this PO ');
+            return $this->sendError('Cannot '.$comment.' it back to amend. GRV is created for this PO');
         }
 
         $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)
             ->first();
 
         if (!empty($detailExistAPD)) {
-            return $this->sendError('Cannot cancel. Advance Payment is created for this PO');
+            return $this->sendError('Cannot '.$comment.'. Advance Payment is created for this PO');
         }
 
         return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
