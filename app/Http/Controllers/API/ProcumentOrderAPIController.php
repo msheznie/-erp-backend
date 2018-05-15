@@ -655,6 +655,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.createdUserSystemID',
                 'erp_purchaseordermaster.narration',
                 'erp_purchaseordermaster.poLocation',
+                'erp_purchaseordermaster.manuallyClosed',
                 'erp_purchaseordermaster.poCancelledYN',
                 'erp_purchaseordermaster.poConfirmedYN',
                 'erp_purchaseordermaster.poConfirmedDate',
@@ -1109,6 +1110,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'erp_purchaseordermaster.poLocation',
                 'erp_purchaseordermaster.poCancelledYN',
                 'erp_purchaseordermaster.poConfirmedYN',
+                'erp_purchaseordermaster.manuallyClosed',
                 'erp_purchaseordermaster.poConfirmedDate',
                 'erp_purchaseordermaster.approved',
                 'erp_purchaseordermaster.approvedDate',
@@ -1134,7 +1136,6 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
-
 
         return \DataTables::eloquent($procumentOrders)
             ->addColumn('Actions', 'Actions', "Actions")
