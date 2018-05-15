@@ -18,6 +18,7 @@
  * -- Date: 26-April 2018 By: Fayas Description: Added new functions named as cancelPurchaseRequest(),returnPurchaseRequest
  * -- Date: 04-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequest()
  * -- Date: 11-May 2018 By: Fayas Description: Added new functions named as getPurchaseRequestApprovedByUser()
+ * -- Date: 15-May 2018 By: Fayas Description: Added new functions named as purchaseRequestsPOHistory()
  */
 namespace App\Http\Controllers\API;
 
@@ -962,6 +963,35 @@ class PurchaseRequestAPIController extends AppBaseController
         /** @var PurchaseRequest $purchaseRequest */
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
             'priority', 'location', 'details.uom', 'company', 'segment', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->whereIn('documentSystemID', [1, 50, 51]);
+            }
+        ])->findWithoutFail($id);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
+    }
+
+
+    /**
+     * Display the specified PurchaseRequest PO History.
+     * GET|HEAD /purchaseRequests/{id}
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function purchaseRequestsPOHistory(Request $request)
+    {
+        $id = $request->get('id');
+        /** @var PurchaseRequest $purchaseRequest */
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
+            'priority', 'location', 'details' => function($q){
+                  $q->with(['uom','podetail.order.created_by']);
+            }, 'company', 'segment', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->whereIn('documentSystemID', [1, 50, 51]);
             }

@@ -400,25 +400,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy');
     Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions');
 
+    Route::get('purchaseRequestsPOHistory', 'PurchaseRequestAPIController@purchaseRequestsPOHistory');
+
 });
 
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
-Route::get('foo', function () {
-
-    $data = array('empSystemID' => 11,
-        'companySystemID' => 11,
-        'docSystemID' => 1,
-        'alertMessage' => 'Test Subject',
-        'emailAlertMessage' => 'Test Body',
-        'docSystemCode' => 15);
-
-    $array = array();
-
-    $array[] = $data;
-    $array[] = $data;
-
-    return \Email::sendEmail($array);
-});
-
 Route::get('test', 'TaxFormulaDetailAPIController@test');
 Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
