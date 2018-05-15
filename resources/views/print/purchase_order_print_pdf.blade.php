@@ -2,6 +2,11 @@
 <head>
     <title>Purchase Order</title>
     <style>
+        @page {
+            margin-left: 8px;
+            margin-right: 8px;
+            margin-top: 5px;
+        }
         body {
             font-size: 11px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
