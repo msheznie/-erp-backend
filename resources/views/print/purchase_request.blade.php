@@ -6,12 +6,15 @@
             font-size: 12px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         }
+
         h3 {
             font-size: 24.5px;
         }
+
         h6 {
             font-size: 14px;
         }
+
         h6, h3 {
             margin-top: 0px;
             margin-bottom: 0px;
@@ -20,48 +23,62 @@
             line-height: 1.2;
             color: inherit;
         }
+
         table > tbody > tr > td {
             font-size: 11.5px;
         }
+
         .theme-tr-head {
             background-color: #DEDEDE !important;
         }
+
         .text-left {
             text-align: left;
         }
+
         .text-right {
             text-align: right;
         }
+
         .text-center {
             text-align: center;
         }
+
         .font-weight-bold {
             font-weight: 700 !important;
         }
+
         tr td {
             padding: 5px 0;
         }
+
         .table thead th {
             border-bottom: none !important;
         }
+
         .white-space-pre-line {
             white-space: pre-line;
             white-space: pre;
             word-wrap: normal;
         }
+
         .text-muted {
-            color:#dedede !important;
+            color: #dedede !important;
         }
+
         .font-weight-bold {
             font-weight: 700 !important;
         }
+
         .table thead th {
             vertical-align: bottom;
             border-bottom: 2px solid #c2cfd6;
         }
-        table.table-bordered{
+
+        table.table-bordered {
             border: 1px solid #000;
         }
+
         .table th, .table td {
             padding: 6.4px !important;
         }
@@ -70,19 +87,21 @@
             border-collapse: collapse;
         }
 
-        table.table-bordered,.table-bordered th,.table-bordered td {
+        table.table-bordered, .table-bordered th, .table-bordered td {
             border: 1px solid black;
         }
 
         table > thead > tr > th {
             font-size: 11.5px;
         }
+
         hr {
             margin-top: 16px;
             margin-bottom: 16px;
             border: 0;
             border-top: 1px solid
         }
+
         hr {
             -webkit-box-sizing: content-box;
             box-sizing: content-box;
@@ -208,10 +227,33 @@
                         </td>
                     </tr>
                     <tr>
-                        <td rowspan="3" colspan="3"  style="bottom: 0;position: absolute;">
+                        <td rowspan="3" colspan="3" style="bottom: 0;position: absolute;">
                                 <span class="font-weight-bold">
                                     <h3 class="text-muted">
-                                    @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1)
+
+                                        @if($request->PRConfirmedYN == 0 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == 0)
+                                            Not Confirmed & Not Approved
+                                        @endif
+                                        @if($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == 0)
+                                            Confirmed & Not Approved
+                                        @endif
+                                        @if($request->PRConfirmedYN == 1 && ($request->approved == -1 ||  $request->approved == 1 ) && ($request->timesReferred == 0 || $request->timesReferred > 0 ) && $request->cancelledYN == 0)
+                                            Fully Approved
+                                        @endif
+                                        @if($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred > 0 && $request->cancelledYN == 0)
+                                            Referred Back
+                                        @endif
+                                        @if($request->PRConfirmedYN == 0 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == -1)
+                                            Cancelled
+                                        @endif
+                                        @if($request->PRConfirmedYN == 1 && $request->approved == -1 && $request->timesReferred == 0 && $request->cancelledYN == -1)
+                                            Cancelled
+                                        @endif
+                                        @if($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == -1)
+                                            Cancelled
+                                        @endif
+
+                                      {{--  @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1)
                                             Confirmed
                                         @endif
                                         @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1 && $request->approved == 0)
@@ -222,9 +264,9 @@
                                         @endif
                                         @if($request->cancelledYN == -1)
                                             Cancelled
-                                        @endif
+                                        @endif--}}
                                      </h3>
-                                </span>
+                        </span>
                         </td>
                     </tr>
                 </table>
@@ -245,7 +287,7 @@
                 <th class="text-left">QTY On Order</th>
 
                 @if($request->approved == -1)
-                <th  class="text-left">PO Qty</th>
+                    <th class="text-left">PO Qty</th>
                 @endif
             </tr>
             </thead>
@@ -264,9 +306,9 @@
                     <td class="text-right">{{$item->quantityRequested}}</td>
                     <td class="text-right">{{$item->quantityOnOrder}}</td>
                     @if($request->approved == -1)
-                    <td class="text-right">
-                        <b>{{$item->poQuantity}} </b>
-                    </td>
+                        <td class="text-right">
+                            <b>{{$item->poQuantity}} </b>
+                        </td>
                     @endif
                 </tr>
             @endforeach
@@ -316,22 +358,22 @@
         </table>
     </div>
     <div class="row" style="margin-top: 10px">
-            <span class="font-weight-bold">Electronically Approved By :</span>
+        <span class="font-weight-bold">Electronically Approved By :</span>
     </div>
     <div style="margin-top: 10px">
-                <table>
-                    <tr>
-                        @foreach ($request->approved_by as $det)
-                            <td style="padding-right: 25px" class="text-center">
-                                    @if($det->employee)
-                                        {{$det->employee->empFullName }}
-                                    @endif
-                                    <br><br>
-                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                            </td>
-                        @endforeach
-                    </tr>
-                </table>
+        <table>
+            <tr>
+                @foreach ($request->approved_by as $det)
+                    <td style="padding-right: 25px" class="text-center">
+                        @if($det->employee)
+                            {{$det->employee->empFullName }}
+                        @endif
+                        <br><br>
+                        {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                    </td>
+                @endforeach
+            </tr>
+        </table>
     </div>
     <div style="margin-top: 100px">
         <span class="white-space-pre-line font-weight-bold">{!! nl2br($request->docRefNo) !!}</span>

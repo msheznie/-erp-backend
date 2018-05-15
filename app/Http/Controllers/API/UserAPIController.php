@@ -115,9 +115,11 @@ class UserAPIController extends AppBaseController
             $setCompanies = array();
 
             foreach ($companies as $com){
-                $label = $com->company->CompanyID." - ".$com->company->CompanyName;
-                $temp = array('value' => $com->company->companySystemID,'label' => $label);
-                array_push($setCompanies,$temp);
+                if(!empty($com->company)){
+                    $label = $com->company->CompanyID." - ".$com->company->CompanyName;
+                    $temp = array('value' => $com->company->companySystemID,'label' => $label);
+                    array_push($setCompanies,$temp);
+                }
             }
 
            /* $companies = DB::table('employeesdepartments')
