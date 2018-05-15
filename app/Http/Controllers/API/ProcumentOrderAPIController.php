@@ -25,6 +25,7 @@
  * -- Date: 10-May 2018 By: Nazir Description: Added new functions named as getApprovedPOForCurrentUser()
  * -- Date: 11-May 2018 By: Nazir Description: Added new functions named as getGRVDrilldownSpentAnalysis()
  * -- Date: 15-May 2018 By: Nazir Description: Added new functions named as manualCloseProcurementOrderPrecheck()
+ * -- Date: 15-May 2018 By: Nazir Description: Added new functions named as getGRVDrilldownSpentAnalysisTotal()
  */
 
 namespace App\Http\Controllers\API;
@@ -323,11 +324,11 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         if ($procumentOrder->poCancelledYN == -1) {
-            return $this->sendError('This Purchase Order closed. You can not edit.', 500);
+            return $this->sendError('This Purchase Order closed. You cannot edit.', 500);
         }
 
         if ($procumentOrder->approved == -1) {
-            return $this->sendError('This Purchase Order fully approved. You can not edit.', 500);
+            return $this->sendError('This Purchase Order fully approved. You cannot edit.', 500);
         }
 
         //checking segment is active
@@ -675,9 +676,10 @@ class ProcumentOrderAPIController extends AppBaseController
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $procumentOrders =   $procumentOrders->where(function ($query) use($search) {
+            $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%");
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
 
@@ -880,7 +882,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $items = $items->where(function ($query) use ($search) {
                 $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
 
@@ -966,7 +969,6 @@ class ProcumentOrderAPIController extends AppBaseController
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
-            'rollLevelOrder',
             'approvalLevelID',
             'documentSystemCode'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
@@ -1126,9 +1128,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $procumentOrders =   $procumentOrders->where(function ($query) use($search) {
+            $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%");
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
 
@@ -1153,9 +1156,9 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $purchaseOrderID = $request['purchaseOrderID'];
         $type = $request['type'];
 
-        if($type == 1){
+        if ($type == 1) {
             $comment = 'cancel';
-        }else{
+        } else {
             $comment = 'revert';
         }
 
@@ -1170,14 +1173,19 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->first();
 
         if (!empty($detailExistGRV)) {
-            return $this->sendError('Cannot '.$comment.' it back to amend. GRV is created for this PO');
+            if ($type == 1) {
+                return $this->sendError('Cannot cancel, GRV is created for this PO');
+            } else {
+                return $this->sendError('Cannot revert it back to amend. GRV is created for this PO');
+            }
+
         }
 
         $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)
             ->first();
 
         if (!empty($detailExistAPD)) {
-            return $this->sendError('Cannot '.$comment.'. Advance Payment is created for this PO');
+            return $this->sendError('Cannot ' . $comment . '. Advance Payment is created for this PO');
         }
 
         return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
@@ -1210,8 +1218,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderID . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderID;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
         $body = '<p>' . $cancelDocNameBody . ' is cancelled due to below reason.</p><p>Comment : ' . $input['cancelComments'] . '</p>';
         $subject = $cancelDocNameSubject . ' is cancelled';
@@ -1266,30 +1274,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             return $this->sendError('You cannot revert back this request as it is closed manually.');
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
-            ->where('documentSystemID', $input['documentSystemID'])
-            ->delete();
-
-        if ($deleteApproval) {
-            $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
-                ->update([
-                    'poConfirmedYN' => 0,
-                    'poConfirmedByEmpSystemID' => '',
-                    'poConfirmedByEmpID' => '',
-                    'poConfirmedByName' => '',
-                    'poConfirmedDate' => null,
-                    'approved' => 0,
-                    'approvedDate' => null,
-                    'approvedByUserID' => '',
-                    'approvedByUserSystemID' => '',
-                    'RollLevForApp_curr' => 1
-                ]);
-        }
-
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderID . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderID;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
         $body = '<p>' . $cancelDocNameBody . ' is return back to amend due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $subject = $cancelDocNameSubject . ' is return back to amend';
@@ -1321,10 +1309,32 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             }
         }
 
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->delete();
+
+        if ($deleteApproval) {
+            $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+                ->update([
+                    'poConfirmedYN' => 0,
+                    'poConfirmedByEmpSystemID' => '',
+                    'poConfirmedByEmpID' => '',
+                    'poConfirmedByName' => '',
+                    'poConfirmedDate' => null,
+                    'approved' => 0,
+                    'approvedDate' => null,
+                    'approvedByUserID' => '',
+                    'approvedByUserSystemID' => '',
+                    'RollLevForApp_curr' => 1
+                ]);
+        }
+
+
         $sendEmail = \Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
+
 
         return $this->sendResponse($purchaseOrderID, 'PO return back to amend successfully ');
     }
@@ -2030,11 +2040,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         if ($procumentOrder->poClosedYN == 1) {
-            return $this->sendError('You can not close this order, this is already closed');
+            return $this->sendError('You cannot close this order, this is already closed');
         }
 
         if ($procumentOrder->grvRecieved == 2) {
-            return $this->sendError('You can not close this order, this is already fully received');
+            return $this->sendError('You cannot close this order, this is already fully received');
         }
 
         if ($procumentOrder->manuallyClosed == 1) {
@@ -2109,7 +2119,6 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                 }
             }
         }
-
 
         $documentApproval = DocumentApproved::where('companySystemID', $procumentOrder->companySystemID)
             ->where('documentSystemCode', $procumentOrder->purchaseOrderID)
@@ -2239,7 +2248,6 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
-            'rollLevelOrder',
             'approvalLevelID',
             'documentSystemCode'
         )->join('erp_purchaseordermaster', function ($query) use ($companyID, $empID) {
@@ -2256,9 +2264,10 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $poMasters =   $poMasters->where(function ($query) use($search) {
+            $poMasters = $poMasters->where(function ($query) use ($search) {
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%");
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
 
@@ -2292,6 +2301,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $supplierID = $input['supplierID'];
 
         if ($input['documentId'] == 1) {
+
             $detail = DB::select('SELECT
 	GRVDet.*, PODet.purchaseOrderMasterID,
 	PODet.companyID,
@@ -2299,7 +2309,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 	erp_purchaseordermaster.supplierPrimaryCode,
 	erp_purchaseordermaster.supplierName,
 	PODet.POlocalAmount,
-	PODet.PORptAmount
+	PODet.PORptAmount,
+	warehousemaster.wareHouseDescription
 FROM
 	erp_purchaseordermaster
 INNER JOIN (
@@ -2326,11 +2337,14 @@ INNER JOIN (
 INNER JOIN (
 	SELECT
 		erp_grvdetails.purchaseOrderMastertID,
+		erp_grvdetails.itemPrimaryCode,
+        erp_grvdetails.itemDescription,
 		erp_grvmaster.grvDate,
 		erp_grvmaster.grvPrimaryCode,
 		erp_grvmaster.grvConfirmedYN,
 		erp_grvmaster.approved as grvApproved,
 		erp_grvmaster.companySystemID,
+		erp_grvmaster.grvLocation,
 		supplierID,
 		approvedDate,
 		GRVcostPerUnitLocalCur,
@@ -2352,13 +2366,37 @@ INNER JOIN (
 	GROUP BY
 		erp_grvdetails.purchaseOrderMastertID
 ) AS GRVDet ON GRVDet.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
+INNER JOIN warehousemaster ON GRVDet.grvLocation = warehousemaster.wareHouseSystemCode
 WHERE
 	erp_purchaseordermaster.approved = -1
 AND erp_purchaseordermaster.poCancelledYN = 0
 AND GRVDet.companySystemID IN (' . $commaSeperatedCompany . ')
 AND PODet.supplierID = ' . $supplierID . '');
         } else if ($input['documentId'] == 2) {
-
+            $detail = DB::select('SELECT
+	erp_bookinvsuppmaster.bookingSuppMasInvAutoID,
+	erp_bookinvsuppmaster.companyID,
+	erp_bookinvsuppdet.purchaseOrderID,
+	erp_bookinvsuppmaster.documentID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_bookinvsuppmaster.bookingInvCode,
+	erp_bookinvsuppmaster.bookingDate,
+	erp_bookinvsuppmaster.comments,
+	erp_bookinvsuppmaster.supplierInvoiceNo,
+	erp_bookinvsuppmaster.confirmedYN,
+	erp_bookinvsuppmaster.confirmedByName,
+	erp_bookinvsuppmaster.approved,
+	currencymaster.CurrencyCode,
+	erp_bookinvsuppdet.totLocalAmount,
+	erp_bookinvsuppdet.totRptAmount
+FROM
+	erp_bookinvsuppmaster
+INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID
+LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID
+WHERE
+	erp_bookinvsuppmaster.supplierID =  ' . $supplierID . '
+		AND YEAR (erp_bookinvsuppmaster.postedDate) = (' . $expYear . ') AND MONTH (erp_bookinvsuppmaster.postedDate) = (' . $expMonth . ')');
         }
         return $this->sendResponse($detail, 'Details retrieved successfully');
 
@@ -2372,6 +2410,7 @@ AND PODet.supplierID = ' . $supplierID . '');
      *
      * @return Response
      */
+
     public function manualCloseProcurementOrderPrecheck(Request $request)
     {
         $input = $request->all();
@@ -2382,7 +2421,7 @@ AND PODet.supplierID = ' . $supplierID . '');
         }
 
         if ($procumentOrder->poClosedYN == 1) {
-            return $this->sendError('You can not close this order, this is already closed');
+            return $this->sendError('You cannot close this order, this is already closed');
         }
 
         if ($procumentOrder->grvRecieved == 2) {
@@ -2412,6 +2451,117 @@ AND PODet.supplierID = ' . $supplierID . '');
         }
 
         return $this->sendResponse($procumentOrder, 'Details retrieved successfully');
+    }
+
+    public function getGRVDrilldownSpentAnalysisTotal(Request $request)
+    {
+        $input = $request->all();
+
+        $commaSeperatedYears = join($input['years'], ",");
+        $commaSeperatedCompany = join($input['companySystemID'], ",");
+
+        $supplierID = $input['supplierID'];
+
+        if ($input['documentId'] == 1) {
+
+            $detail = DB::select('SELECT
+	GRVDet.*, PODet.purchaseOrderMasterID,
+	PODet.companyID,
+	PODet.supplierID,
+	erp_purchaseordermaster.supplierPrimaryCode,
+	erp_purchaseordermaster.supplierName,
+	PODet.POlocalAmount,
+	PODet.PORptAmount,
+	warehousemaster.wareHouseDescription
+FROM
+	erp_purchaseordermaster
+INNER JOIN (
+	SELECT
+		erp_purchaseorderdetails.purchaseOrderMasterID,
+		erp_purchaseordermaster.companyID,
+		erp_purchaseordermaster.supplierID,
+		erp_purchaseordermaster.approvedDate,
+		sum(
+			GRVcostPerUnitLocalCur * noQty
+		) AS POlocalAmount,
+		sum(
+			GRVcostPerUnitComRptCur * noQty
+		) AS PORptAmount
+	FROM
+		erp_purchaseorderdetails
+	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
+	WHERE
+		erp_purchaseordermaster.approved = - 1
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	GROUP BY
+		erp_purchaseorderdetails.purchaseOrderMasterID
+) AS PODet ON erp_purchaseordermaster.purchaseOrderID = PODet.purchaseOrderMasterID
+INNER JOIN (
+	SELECT
+		erp_grvdetails.purchaseOrderMastertID,
+		erp_grvdetails.itemPrimaryCode,
+        erp_grvdetails.itemDescription,
+		erp_grvmaster.grvDate,
+		erp_grvmaster.grvPrimaryCode,
+		erp_grvmaster.grvConfirmedYN,
+		erp_grvmaster.approved as grvApproved,
+		erp_grvmaster.companySystemID,
+		erp_grvmaster.grvLocation,
+		supplierID,
+		approvedDate,
+		GRVcostPerUnitLocalCur,
+		GRVcostPerUnitComRptCur,
+		noQty,
+		sum(
+			GRVcostPerUnitLocalCur * noQty
+		) AS LinelocalTotal,
+		sum(
+			GRVcostPerUnitComRptCur * noQty
+		) AS LineRptTotal
+	FROM
+		erp_grvdetails
+	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+	WHERE
+		erp_grvmaster.approved = - 1
+	AND erp_grvmaster.grvCancelledYN = 0
+	AND YEAR (erp_grvmaster.grvDate) IN (' . $commaSeperatedYears . ')
+	GROUP BY
+		erp_grvdetails.purchaseOrderMastertID
+) AS GRVDet ON GRVDet.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
+INNER JOIN warehousemaster ON GRVDet.grvLocation = warehousemaster.wareHouseSystemCode
+WHERE
+	erp_purchaseordermaster.approved = -1
+AND erp_purchaseordermaster.poCancelledYN = 0
+AND GRVDet.companySystemID IN (' . $commaSeperatedCompany . ')
+AND PODet.supplierID = ' . $supplierID . '');
+        } else if ($input['documentId'] == 2) {
+            $detail = DB::select('SELECT
+	erp_bookinvsuppmaster.bookingSuppMasInvAutoID,
+	erp_bookinvsuppmaster.companyID,
+	erp_bookinvsuppdet.purchaseOrderID,
+	erp_bookinvsuppmaster.documentID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_bookinvsuppmaster.bookingInvCode,
+	erp_bookinvsuppmaster.bookingDate,
+	erp_bookinvsuppmaster.comments,
+	erp_bookinvsuppmaster.supplierInvoiceNo,
+	erp_bookinvsuppmaster.confirmedYN,
+	erp_bookinvsuppmaster.confirmedByName,
+	erp_bookinvsuppmaster.approved,
+	currencymaster.CurrencyCode,
+	erp_bookinvsuppdet.totLocalAmount,
+	erp_bookinvsuppdet.totRptAmount
+FROM
+	erp_bookinvsuppmaster
+INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID
+LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID
+WHERE
+	erp_bookinvsuppmaster.supplierID =  ' . $supplierID . ' AND erp_bookinvsuppmaster.companySystemID IN (' . $commaSeperatedCompany . ')
+		AND YEAR (erp_bookinvsuppmaster.postedDate) IN (' . $commaSeperatedYears . ')');
+        }
+        return $this->sendResponse($detail, 'Details retrieved successfully');
+
     }
 
 
