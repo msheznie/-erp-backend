@@ -227,6 +227,16 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
 
+        if (isset($input['partiallyGRVAllowed']) && $input['partiallyGRVAllowed']) {
+            $input['partiallyGRVAllowed'] = -1;
+        } else {
+            $input['partiallyGRVAllowed'] = 0;
+        }
+        if (isset($input['logisticsAvailable']) && $input['logisticsAvailable']) {
+            $input['logisticsAvailable'] = -1;
+        } else {
+            $input['logisticsAvailable'] = 0;
+        }
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
         if ($documentMaster) {
@@ -357,7 +367,16 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->modifiedUser = $user->employee['empID'];
         $procumentOrderUpdate->modifiedUserSystemID = $user->employee['employeeSystemID'];
 
-
+        if ($input['partiallyGRVAllowed']) {
+            $procumentOrderUpdate->partiallyGRVAllowed = -1;
+        } else {
+            $procumentOrderUpdate->partiallyGRVAllowed = 0;
+        }
+        if ($input['logisticsAvailable']) {
+            $procumentOrderUpdate->logisticsAvailable = -1;
+        } else {
+            $procumentOrderUpdate->logisticsAvailable = 0;
+        }
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
@@ -883,8 +902,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $items = $items->where(function ($query) use ($search) {
                 $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
             });
         }
 
