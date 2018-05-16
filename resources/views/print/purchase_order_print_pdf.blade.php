@@ -7,6 +7,7 @@
             margin-right: 8px;
             margin-top: 5px;
         }
+
         body {
             font-size: 11px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
@@ -48,7 +49,7 @@
         }
 
         .table th {
-            border: 1px solid rgb(127,127,127) !important;
+            border: 1px solid rgb(127, 127, 127) !important;
         }
 
         .table th, .table td {
@@ -60,7 +61,7 @@
         }
 
         tfoot > tr > td {
-            border: 1px solid rgb(127,127,127);
+            border: 1px solid rgb(127, 127, 127);
         }
 
         .text-right {
@@ -93,10 +94,65 @@
             font-size: 13px;
             font-weight: 600;
         }
+
+        /** Define the footer rules **/
+        footer {
+            position: fixed;
+            bottom: 0cm;
+            left: 0cm;
+            right: 0cm;
+            height: 2cm;
+        }
+
+        .footer .page-number:after {
+            content: counter(page);
+        }
+
+        #watermark {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            padding-top: 45%;
+            z-index: -1000;
+        }
+
+        .watermarkText{
+            color: #dedede !important;
+            font-size: 30px;
+            font-weight: 700 !important;
+            text-align: center !important;
+            font-family: fantasy !important;
+        }
     </style>
 </head>
 <body>
+
 <div class="row" id="print-section">
+    <div id="watermark">
+         <span class="watermarkText"><h3 class="text-muted">
+                 @if($podata->poConfirmedYN == 0 && $podata->approved == 0 && $podata->timesReferred == 0 && $podata->poCancelledYN == 0)
+                     Not Confirmed & Not Approved
+                 @endif
+                 @if($podata->poConfirmedYN == 1 && $podata->approved == 0 && $podata->timesReferred == 0 && $podata->poCancelledYN == 0)
+                     Confirmed & Not Approved
+                 @endif
+                 @if($podata->poConfirmedYN == 1 && $podata->approved == -1 && ($podata->timesReferred == 0 || $podata->timesReferred > 0 ) && $podata->poCancelledYN == 0)
+                     Fully Approved
+                 @endif
+                 @if($podata->poConfirmedYN == 1 && $podata->approved == 0 && $podata->timesReferred > 0 && $podata->poCancelledYN == 0)
+                     Referred Back
+                 @endif
+                 @if($podata->poConfirmedYN == 0 && $podata->approved == 0 && $podata->timesReferred == 0 && $podata->poCancelledYN == -1)
+                     Cancelled
+                 @endif
+                 @if($podata->poConfirmedYN == 1 && $podata->approved == -1 && $podata->timesReferred == 0 && $podata->poCancelledYN == -1)
+                     Cancelled
+                 @endif
+                 @if($podata->poConfirmedYN == 1 && $podata->approved == 0 && $podata->timesReferred == 0 && $podata->poCancelledYN == -1)
+                     Cancelled
+                 @endif
+             </h3></span>
+    </div>
     <table style="width:100%">
         <tr>
             <td width="60%">
@@ -555,17 +611,26 @@
         </tr>
     </table>
 </div>
-<div class="row">
+<footer>
     <table style="width:100%;position: fixed; bottom: 0px;">
         <tr>
-            <td style="width:100%">
+            <td style="width:33%">
                 <p><span class="font-weight-bold"><span [innerHTML]="docRefNumber"
                                                         class="white-space-pre-line">{!! nl2br($docRef["docRefNumber"]) !!}</span></span>
                 </p>
-
+            </td>
+            <td style="width:33%; text-align: center;">
+                <span class="footer" style="text-align: center">Page <span class="page-number"></span></span><br>
+                @if ($podata->company)
+                    {{$podata->company->CompanyName}}
+                @endif
+            </td>
+            <td style="width:33%">
+                <span style="margin-left: 30%;">Printed Date : {{ \App\helper\Helper::dateFormat(now())}}</span>
             </td>
         </tr>
     </table>
-</div>
+
+</footer>
 </body>
 </html>

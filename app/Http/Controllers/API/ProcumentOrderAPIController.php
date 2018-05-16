@@ -2197,7 +2197,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc);
 
-        $html = view('print.purchase_order_print_pdf', $order);
+         $html = view('print.purchase_order_print_pdf', $order);
 
         //return \PDF::loadHTML($html)->setPaper('a4', 'landscape')->setWarnings(false)->download('purchase_order_'.$id.'.pdf');
 
