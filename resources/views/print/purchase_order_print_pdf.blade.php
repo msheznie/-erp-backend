@@ -486,7 +486,6 @@
         </thead>
         <tbody>
         {{ $subTotal = 0 }}
-
         {{ $x = 1 }}
         @foreach ($podata->detail as $det)
             {{ $netUnitCost = 0 }}
@@ -495,7 +494,7 @@
             <tr style="border-bottom: 1px solid black;">
                 <td>{{ $x = 1 }}</td>
                 <td>{{$det->itemPrimaryCode}}</td>
-                <td>{{$det->itemDescription}}</td>
+                <td>{{$det->itemDescription}} <br> {{$det->comment}}</td>
                 <td>{{$det->supplierPartNumber}}</td>
                 <td>{{$det->unit->UnitShortCode}}</td>
                 <td class="text-right">{{$det->noQty}}</td>
