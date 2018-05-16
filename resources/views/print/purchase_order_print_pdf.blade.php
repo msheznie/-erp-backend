@@ -96,12 +96,8 @@
         }
 
         /** Define the footer rules **/
-        footer {
-            position: fixed;
-            bottom: 0cm;
-            left: 0cm;
-            right: 0cm;
-            height: 2cm;
+        .footer {
+            bottom: 0;
         }
 
         .footer .page-number:after {
@@ -130,26 +126,11 @@
 <div class="row" id="print-section">
     <div id="watermark">
          <span class="watermarkText"><h3 class="text-muted">
-                 @if($podata->poConfirmedYN == 0 && $podata->approved == 0 && $podata->timesReferred == 0 && $podata->poCancelledYN == 0)
+                 @if($podata->poConfirmedYN == 0 && $podata->approved == 0)
                      Not Confirmed & Not Approved
                  @endif
-                 @if($podata->poConfirmedYN == 1 && $podata->approved == 0 && $podata->timesReferred == 0 && $podata->poCancelledYN == 0)
+                 @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
                      Confirmed & Not Approved
-                 @endif
-                 @if($podata->poConfirmedYN == 1 && $podata->approved == -1 && ($podata->timesReferred == 0 || $podata->timesReferred > 0 ) && $podata->poCancelledYN == 0)
-                     Fully Approved
-                 @endif
-                 @if($podata->poConfirmedYN == 1 && $podata->approved == 0 && $podata->timesReferred > 0 && $podata->poCancelledYN == 0)
-                     Referred Back
-                 @endif
-                 @if($podata->poConfirmedYN == 0 && $podata->approved == 0 && $podata->timesReferred == 0 && $podata->poCancelledYN == -1)
-                     Cancelled
-                 @endif
-                 @if($podata->poConfirmedYN == 1 && $podata->approved == -1 && $podata->timesReferred == 0 && $podata->poCancelledYN == -1)
-                     Cancelled
-                 @endif
-                 @if($podata->poConfirmedYN == 1 && $podata->approved == 0 && $podata->timesReferred == 0 && $podata->poCancelledYN == -1)
-                     Cancelled
                  @endif
              </h3></span>
     </div>
@@ -610,7 +591,7 @@
         </tr>
     </table>
 </div>
-<footer>
+<div class="footer">
     <table style="width:100%;position: fixed; bottom: 0px;">
         <tr>
             <td style="width:33%">
@@ -629,7 +610,7 @@
             </td>
         </tr>
     </table>
-
-</footer>
+</div>
 </body>
 </html>
+
