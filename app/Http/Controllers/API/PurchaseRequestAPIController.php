@@ -626,6 +626,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.serviceLineSystemID',
                 'erp_purchaserequest.financeCategory',
                 'erp_purchaserequest.documentSystemID',
+                'erp_purchaserequest.manuallyClosed',
             ]);
 
         $search = $request->input('search.value');
@@ -1028,11 +1029,11 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if ($purchaseRequest->cancelledYN == -1) {
-            return $this->sendError('This Purchase Request closed. You can not edit.', 500);
+            return $this->sendError('This Purchase Request closed. You cannot edit.', 500);
         }
 
         if ($purchaseRequest->approved == 1) {
-            return $this->sendError('This Purchase Request fully approved. You can not edit.', 500);
+            return $this->sendError('This Purchase Request fully approved. You cannot edit.', 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -1354,7 +1355,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if ($purchaseRequest->selectedForPO != 0 || $purchaseRequest->supplyChainOnGoing != 0 || $purchaseRequest->prClosedYN != 0) {
-            return $this->sendError('You can not close this, request is currently processing');
+            return $this->sendError('You cannot close this, request is currently processing');
         }
 
         if ($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1) {
@@ -1487,7 +1488,11 @@ class PurchaseRequestAPIController extends AppBaseController
         //  return $pdf->download('purchase_request_'.$id.'.pdf');
 
         $pdf = \App::make('dompdf.wrapper');
+
+        $pdf->getDomPDF()->set_option("enable_php", true);
+
         $pdf->loadHTML($html);
+
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');

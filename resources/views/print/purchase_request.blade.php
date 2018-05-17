@@ -237,7 +237,7 @@
                                         @if($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == 0)
                                             Confirmed & Not Approved
                                         @endif
-                                        @if($request->PRConfirmedYN == 1 && ($request->approved == -1 ||  $request->approved == 1 ) && ($request->timesReferred == 0 || $request->timesReferred > 0 ) && $request->cancelledYN == 0)
+                                        @if($request->PRConfirmedYN == 1 && ($request->approved == -1 ||  $request->approved == 1 ) && (request.timesReferred == 0 || request.timesReferred > 0 ) && request.cancelledYN == 0)
                                             Fully Approved
                                         @endif
                                         @if($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred > 0 && $request->cancelledYN == 0)
@@ -253,7 +253,8 @@
                                             Cancelled
                                         @endif
 
-                                      {{--  @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1)
+
+                                        @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1)
                                             Confirmed
                                         @endif
                                         @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1 && $request->approved == 0)
@@ -264,9 +265,9 @@
                                         @endif
                                         @if($request->cancelledYN == -1)
                                             Cancelled
-                                        @endif--}}
-                                     </h3>
-                        </span>
+                                        @endif
+</h3>
+</span>
                         </td>
                     </tr>
                 </table>
