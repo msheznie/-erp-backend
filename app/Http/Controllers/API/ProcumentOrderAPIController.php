@@ -25,6 +25,8 @@
  * -- Date: 10-May 2018 By: Nazir Description: Added new functions named as getApprovedPOForCurrentUser()
  * -- Date: 11-May 2018 By: Nazir Description: Added new functions named as getGRVDrilldownSpentAnalysis()
  * -- Date: 15-May 2018 By: Nazir Description: Added new functions named as manualCloseProcurementOrderPrecheck()
+ * -- Date: 15-May 2018 By: Nazir Description: Added new functions named as getGRVDrilldownSpentAnalysisTotal(),
+ * -- Date: 16-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrder(),
  */
 
 namespace App\Http\Controllers\API;
@@ -226,6 +228,16 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
 
+        if (isset($input['partiallyGRVAllowed']) && $input['partiallyGRVAllowed']) {
+            $input['partiallyGRVAllowed'] = -1;
+        } else {
+            $input['partiallyGRVAllowed'] = 0;
+        }
+        if (isset($input['logisticsAvailable']) && $input['logisticsAvailable']) {
+            $input['logisticsAvailable'] = -1;
+        } else {
+            $input['logisticsAvailable'] = 0;
+        }
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
         if ($documentMaster) {
@@ -285,6 +297,12 @@ class ProcumentOrderAPIController extends AppBaseController
             return $this->sendError('Procurement Order not found');
         }
 
+        $employee = \Helper::getEmployeeInfo();
+        $procumentOrder->isAmendAccess = 0;
+        if ($procumentOrder->WO_amendYN == -1 && $procumentOrder->WO_amendRequestedByEmpID == $employee->empID) {
+            $procumentOrder->isAmendAccess = 1;
+        }
+
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
 
@@ -304,7 +322,10 @@ class ProcumentOrderAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by', 'expectedDeliveryDate', 'totalOrderAmount', 'segment']);
+
+        $isAmendAccess = $input['isAmendAccess'];
+
+        $input = array_except($input, ['created_by', 'confirmed_by', 'expectedDeliveryDate', 'totalOrderAmount', 'segment', 'isAmendAccess']);
         $input = $this->convertArrayToValue($input);
 
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
@@ -322,12 +343,21 @@ class ProcumentOrderAPIController extends AppBaseController
             return $this->sendError('Procurement Order not found');
         }
 
-        if ($procumentOrder->poCancelledYN == -1) {
-            return $this->sendError('This Purchase Order closed. You can not edit.', 500);
+        $oldPoTotalSupplierTransactionCurrency = $procumentOrder->poTotalSupplierTransactionCurrency;
+        $employee = \Helper::getEmployeeInfo();
+        //$employee->employeeSystemID;
+
+        if ($procumentOrder->WO_amendYN == -1 && $isAmendAccess == 1 && $procumentOrder->WO_amendRequestedByEmpID != $employee->empID) {
+            return $this->sendError('You cannot amend this order, this is already amending by ' . $procumentOrder->WO_amendRequestedByEmpID, 500);
         }
 
-        if ($procumentOrder->approved == -1) {
-            return $this->sendError('This Purchase Order fully approved. You can not edit.', 500);
+        if ($procumentOrder->poCancelledYN == -1) {
+            return $this->sendError('This Purchase Order closed. You cannot edit.', 500);
+        }
+
+
+        if ($procumentOrder->approved == -1 && $procumentOrder->WO_amendYN != -1 && $isAmendAccess != 1) {
+            return $this->sendError('This Purchase Order fully approved. You cannot edit.', 500);
         }
 
         //checking segment is active
@@ -356,7 +386,16 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->modifiedUser = $user->employee['empID'];
         $procumentOrderUpdate->modifiedUserSystemID = $user->employee['employeeSystemID'];
 
-
+        if ($input['partiallyGRVAllowed']) {
+            $procumentOrderUpdate->partiallyGRVAllowed = -1;
+        } else {
+            $procumentOrderUpdate->partiallyGRVAllowed = 0;
+        }
+        if ($input['logisticsAvailable']) {
+            $procumentOrderUpdate->logisticsAvailable = -1;
+        } else {
+            $procumentOrderUpdate->logisticsAvailable = 0;
+        }
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
@@ -420,7 +459,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->vatRegisteredYN = $company->vatRegisteredYN;
         }
 
-        if ($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) {
+        if (($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) || $isAmendAccess == 1) {
 
             $poDetailExist = PurchaseOrderDetails::select(DB::raw('purchaseOrderDetailsID'))
                 ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
@@ -470,10 +509,13 @@ class ProcumentOrderAPIController extends AppBaseController
             unset($input['poConfirmedByName']);
             unset($input['poConfirmedDate']);
 
-            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $poMasterSumDeducted);
-            $confirm = \Helper::confirmDocument($params);
-            if (!$confirm["success"]) {
-                return $this->sendError($confirm["message"]);
+
+            if ($isAmendAccess != 1) {
+                $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $poMasterSumDeducted);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"]);
+                }
             }
         }
         //updating PO Master
@@ -481,9 +523,6 @@ class ProcumentOrderAPIController extends AppBaseController
                 $procumentOrderUpdate->poDiscountPercentage = $input['poDiscountPercentage'];
                 $procumentOrderUpdate->VATPercentage = $input['VATPercentage'];
                 $procumentOrderUpdate->VATAmount = $input['VATAmount'];*/
-
-
-        $procumentOrderUpdate->save();
 
         //$procumentOrder = $this->procumentOrderRepository->update($input, $id);
         $updateDetailDiscount = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
@@ -554,6 +593,62 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
         }
+        $procumentOrderUpdate->save();
+
+        if ($procumentOrder->WO_amendYN == -1 && $isAmendAccess == 1 && $procumentOrder->WO_amendRequestedByEmpID == $employee->empID) {
+
+            $procumentOrderUpdate->WO_amendYN = 0;
+            $procumentOrderUpdate->WO_confirmedYN = 1;
+            $procumentOrderUpdate->WO_amendRequestedByEmpID = null;
+            $procumentOrderUpdate->WO_amendRequestedDate = null;
+            $procumentOrderUpdate->save();
+
+
+            if ($procumentOrderUpdate->poTotalSupplierTransactionCurrency != $oldPoTotalSupplierTransactionCurrency) {
+                $emails = array();
+
+                $document = DocumentMaster::where('documentSystemID', $procumentOrder->documentSystemID)->first();
+
+                $cancelDocNameBody = $document->documentDescription . ' <b>' . $procumentOrder->purchaseOrderCode . '</b>';
+                $cancelDocNameSubject = $document->documentDescription . ' ' . $procumentOrder->purchaseOrderCode;
+
+                $body = '<p>' . $cancelDocNameBody . ' has been changed by ' . $employee->empName . '. Current total amount of the order is ' . $procumentOrderUpdate->poTotalSupplierTransactionCurrency . '.Previous total amount was ' . $oldPoTotalSupplierTransactionCurrency . '.';
+                $subject = $cancelDocNameSubject . ' has been changed';
+
+                if ($procumentOrder->poConfirmedYN == 1) {
+                    $emails[] = array('empSystemID' => $procumentOrder->poConfirmedByEmpSystemID,
+                        'companySystemID' => $procumentOrder->companySystemID,
+                        'docSystemID' => $procumentOrder->documentSystemID,
+                        'alertMessage' => $subject,
+                        'emailAlertMessage' => $body,
+                        'docSystemCode' => $procumentOrder->purchaseOrderID);
+                }
+
+                $documentApproval = DocumentApproved::where('companySystemID', $procumentOrder->companySystemID)
+                    ->where('documentSystemCode', $procumentOrder->purchaseOrderID)
+                    ->where('documentSystemID', $procumentOrder->documentSystemID)
+                    ->get();
+
+                foreach ($documentApproval as $da) {
+                    if ($da->approvedYN == -1) {
+                        $emails[] = array('empSystemID' => $da->employeeSystemID,
+                            'companySystemID' => $procumentOrder->companySystemID,
+                            'docSystemID' => $procumentOrder->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $procumentOrder->purchaseOrderID);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return $this->sendError($sendEmail["message"], 500);
+                }
+
+            }
+
+        }
+
 
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order updated successfully');
     }
@@ -654,6 +749,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.createdUserSystemID',
                 'erp_purchaseordermaster.narration',
                 'erp_purchaseordermaster.poLocation',
+                'erp_purchaseordermaster.manuallyClosed',
                 'erp_purchaseordermaster.poCancelledYN',
                 'erp_purchaseordermaster.poConfirmedYN',
                 'erp_purchaseordermaster.poConfirmedDate',
@@ -675,9 +771,10 @@ class ProcumentOrderAPIController extends AppBaseController
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $procumentOrders =   $procumentOrders->where(function ($query) use($search) {
+            $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%");
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
 
@@ -966,7 +1063,6 @@ class ProcumentOrderAPIController extends AppBaseController
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
-            'rollLevelOrder',
             'approvalLevelID',
             'documentSystemCode'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
@@ -1107,6 +1203,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'erp_purchaseordermaster.poLocation',
                 'erp_purchaseordermaster.poCancelledYN',
                 'erp_purchaseordermaster.poConfirmedYN',
+                'erp_purchaseordermaster.manuallyClosed',
                 'erp_purchaseordermaster.poConfirmedDate',
                 'erp_purchaseordermaster.approved',
                 'erp_purchaseordermaster.approvedDate',
@@ -1126,12 +1223,12 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $procumentOrders =   $procumentOrders->where(function ($query) use($search) {
+            $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%");
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
-
 
         return \DataTables::eloquent($procumentOrders)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -1151,6 +1248,13 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
     public function poCheckDetailExistinGrv(Request $request)
     {
         $purchaseOrderID = $request['purchaseOrderID'];
+        $type = $request['type'];
+
+        if ($type == 1) {
+            $comment = 'cancel';
+        } else {
+            $comment = 'revert';
+        }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
             ->first();
@@ -1163,14 +1267,19 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->first();
 
         if (!empty($detailExistGRV)) {
-            return $this->sendError('Cannot cancel. GRV is created for this PO ');
+            if ($type == 1) {
+                return $this->sendError('Cannot cancel, GRV is created for this PO');
+            } else {
+                return $this->sendError('Cannot revert it back to amend. GRV is created for this PO');
+            }
+
         }
 
         $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)
             ->first();
 
         if (!empty($detailExistAPD)) {
-            return $this->sendError('Cannot cancel. Advance Payment is created for this PO');
+            return $this->sendError('Cannot ' . $comment . '. Advance Payment is created for this PO');
         }
 
         return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
@@ -1203,8 +1312,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderID . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderID;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
         $body = '<p>' . $cancelDocNameBody . ' is cancelled due to below reason.</p><p>Comment : ' . $input['cancelComments'] . '</p>';
         $subject = $cancelDocNameSubject . ' is cancelled';
@@ -1259,30 +1368,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             return $this->sendError('You cannot revert back this request as it is closed manually.');
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
-            ->where('documentSystemID', $input['documentSystemID'])
-            ->delete();
-
-        if ($deleteApproval) {
-            $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
-                ->update([
-                    'poConfirmedYN' => 0,
-                    'poConfirmedByEmpSystemID' => '',
-                    'poConfirmedByEmpID' => '',
-                    'poConfirmedByName' => '',
-                    'poConfirmedDate' => null,
-                    'approved' => 0,
-                    'approvedDate' => null,
-                    'approvedByUserID' => '',
-                    'approvedByUserSystemID' => '',
-                    'RollLevForApp_curr' => 1
-                ]);
-        }
-
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderID . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderID;
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
 
         $body = '<p>' . $cancelDocNameBody . ' is return back to amend due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $subject = $cancelDocNameSubject . ' is return back to amend';
@@ -1314,10 +1403,32 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             }
         }
 
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->delete();
+
+        if ($deleteApproval) {
+            $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+                ->update([
+                    'poConfirmedYN' => 0,
+                    'poConfirmedByEmpSystemID' => null,
+                    'poConfirmedByEmpID' => null,
+                    'poConfirmedByName' => null,
+                    'poConfirmedDate' => null,
+                    'approved' => 0,
+                    'approvedDate' => null,
+                    'approvedByUserID' => null,
+                    'approvedByUserSystemID' => null,
+                    'RollLevForApp_curr' => 1
+                ]);
+        }
+
+
         $sendEmail = \Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
+
 
         return $this->sendResponse($purchaseOrderID, 'PO return back to amend successfully ');
     }
@@ -2023,11 +2134,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         if ($procumentOrder->poClosedYN == 1) {
-            return $this->sendError('You can not close this order, this is already closed');
+            return $this->sendError('You cannot close this order, this is already closed');
         }
 
         if ($procumentOrder->grvRecieved == 2) {
-            return $this->sendError('You can not close this order, this is already fully received');
+            return $this->sendError('You cannot close this order, this is already fully received');
         }
 
         if ($procumentOrder->manuallyClosed == 1) {
@@ -2103,7 +2214,6 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             }
         }
 
-
         $documentApproval = DocumentApproved::where('companySystemID', $procumentOrder->companySystemID)
             ->where('documentSystemCode', $procumentOrder->purchaseOrderID)
             ->where('documentSystemID', $procumentOrder->documentSystemID)
@@ -2162,7 +2272,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc);
 
-        $html = view('print.purchase_order_print_pdf', $order);
+         $html = view('print.purchase_order_print_pdf', $order);
 
         //return \PDF::loadHTML($html)->setPaper('a4', 'landscape')->setWarnings(false)->download('purchase_order_'.$id.'.pdf');
 
@@ -2173,6 +2283,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
+
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
     }
 
@@ -2232,7 +2343,6 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
-            'rollLevelOrder',
             'approvalLevelID',
             'documentSystemCode'
         )->join('erp_purchaseordermaster', function ($query) use ($companyID, $empID) {
@@ -2249,9 +2359,10 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $poMasters =   $poMasters->where(function ($query) use($search) {
+            $poMasters = $poMasters->where(function ($query) use ($search) {
                 $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%");
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
 
@@ -2285,6 +2396,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $supplierID = $input['supplierID'];
 
         if ($input['documentId'] == 1) {
+
             $detail = DB::select('SELECT
 	GRVDet.*, PODet.purchaseOrderMasterID,
 	PODet.companyID,
@@ -2292,7 +2404,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 	erp_purchaseordermaster.supplierPrimaryCode,
 	erp_purchaseordermaster.supplierName,
 	PODet.POlocalAmount,
-	PODet.PORptAmount
+	PODet.PORptAmount,
+	warehousemaster.wareHouseDescription
 FROM
 	erp_purchaseordermaster
 INNER JOIN (
@@ -2319,11 +2432,14 @@ INNER JOIN (
 INNER JOIN (
 	SELECT
 		erp_grvdetails.purchaseOrderMastertID,
+		erp_grvdetails.itemPrimaryCode,
+        erp_grvdetails.itemDescription,
 		erp_grvmaster.grvDate,
 		erp_grvmaster.grvPrimaryCode,
 		erp_grvmaster.grvConfirmedYN,
 		erp_grvmaster.approved as grvApproved,
 		erp_grvmaster.companySystemID,
+		erp_grvmaster.grvLocation,
 		supplierID,
 		approvedDate,
 		GRVcostPerUnitLocalCur,
@@ -2345,13 +2461,37 @@ INNER JOIN (
 	GROUP BY
 		erp_grvdetails.purchaseOrderMastertID
 ) AS GRVDet ON GRVDet.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
+INNER JOIN warehousemaster ON GRVDet.grvLocation = warehousemaster.wareHouseSystemCode
 WHERE
 	erp_purchaseordermaster.approved = -1
 AND erp_purchaseordermaster.poCancelledYN = 0
 AND GRVDet.companySystemID IN (' . $commaSeperatedCompany . ')
 AND PODet.supplierID = ' . $supplierID . '');
         } else if ($input['documentId'] == 2) {
-
+            $detail = DB::select('SELECT
+	erp_bookinvsuppmaster.bookingSuppMasInvAutoID,
+	erp_bookinvsuppmaster.companyID,
+	erp_bookinvsuppdet.purchaseOrderID,
+	erp_bookinvsuppmaster.documentID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_bookinvsuppmaster.bookingInvCode,
+	erp_bookinvsuppmaster.bookingDate,
+	erp_bookinvsuppmaster.comments,
+	erp_bookinvsuppmaster.supplierInvoiceNo,
+	erp_bookinvsuppmaster.confirmedYN,
+	erp_bookinvsuppmaster.confirmedByName,
+	erp_bookinvsuppmaster.approved,
+	currencymaster.CurrencyCode,
+	erp_bookinvsuppdet.totLocalAmount,
+	erp_bookinvsuppdet.totRptAmount
+FROM
+	erp_bookinvsuppmaster
+INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID
+LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID
+WHERE
+	erp_bookinvsuppmaster.supplierID =  ' . $supplierID . '
+		AND YEAR (erp_bookinvsuppmaster.postedDate) = (' . $expYear . ') AND MONTH (erp_bookinvsuppmaster.postedDate) = (' . $expMonth . ')');
         }
         return $this->sendResponse($detail, 'Details retrieved successfully');
 
@@ -2365,6 +2505,7 @@ AND PODet.supplierID = ' . $supplierID . '');
      *
      * @return Response
      */
+
     public function manualCloseProcurementOrderPrecheck(Request $request)
     {
         $input = $request->all();
@@ -2375,7 +2516,7 @@ AND PODet.supplierID = ' . $supplierID . '');
         }
 
         if ($procumentOrder->poClosedYN == 1) {
-            return $this->sendError('You can not close this order, this is already closed');
+            return $this->sendError('You cannot close this order, this is already closed');
         }
 
         if ($procumentOrder->grvRecieved == 2) {
@@ -2405,6 +2546,174 @@ AND PODet.supplierID = ' . $supplierID . '');
         }
 
         return $this->sendResponse($procumentOrder, 'Details retrieved successfully');
+    }
+
+    public function getGRVDrilldownSpentAnalysisTotal(Request $request)
+    {
+        $input = $request->all();
+
+        $commaSeperatedYears = join($input['years'], ",");
+        $commaSeperatedCompany = join($input['companySystemID'], ",");
+
+        $supplierID = $input['supplierID'];
+
+        if ($input['documentId'] == 1) {
+
+            $detail = DB::select('SELECT
+	GRVDet.*, PODet.purchaseOrderMasterID,
+	PODet.companyID,
+	PODet.supplierID,
+	erp_purchaseordermaster.supplierPrimaryCode,
+	erp_purchaseordermaster.supplierName,
+	PODet.POlocalAmount,
+	PODet.PORptAmount,
+	warehousemaster.wareHouseDescription
+FROM
+	erp_purchaseordermaster
+INNER JOIN (
+	SELECT
+		erp_purchaseorderdetails.purchaseOrderMasterID,
+		erp_purchaseordermaster.companyID,
+		erp_purchaseordermaster.supplierID,
+		erp_purchaseordermaster.approvedDate,
+		sum(
+			GRVcostPerUnitLocalCur * noQty
+		) AS POlocalAmount,
+		sum(
+			GRVcostPerUnitComRptCur * noQty
+		) AS PORptAmount
+	FROM
+		erp_purchaseorderdetails
+	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
+	WHERE
+		erp_purchaseordermaster.approved = - 1
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	GROUP BY
+		erp_purchaseorderdetails.purchaseOrderMasterID
+) AS PODet ON erp_purchaseordermaster.purchaseOrderID = PODet.purchaseOrderMasterID
+INNER JOIN (
+	SELECT
+		erp_grvdetails.purchaseOrderMastertID,
+		erp_grvdetails.itemPrimaryCode,
+        erp_grvdetails.itemDescription,
+		erp_grvmaster.grvDate,
+		erp_grvmaster.grvPrimaryCode,
+		erp_grvmaster.grvConfirmedYN,
+		erp_grvmaster.approved as grvApproved,
+		erp_grvmaster.companySystemID,
+		erp_grvmaster.grvLocation,
+		supplierID,
+		approvedDate,
+		GRVcostPerUnitLocalCur,
+		GRVcostPerUnitComRptCur,
+		noQty,
+		sum(
+			GRVcostPerUnitLocalCur * noQty
+		) AS LinelocalTotal,
+		sum(
+			GRVcostPerUnitComRptCur * noQty
+		) AS LineRptTotal
+	FROM
+		erp_grvdetails
+	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+	WHERE
+		erp_grvmaster.approved = - 1
+	AND erp_grvmaster.grvCancelledYN = 0
+	AND YEAR (erp_grvmaster.grvDate) IN (' . $commaSeperatedYears . ')
+	GROUP BY
+		erp_grvdetails.purchaseOrderMastertID
+) AS GRVDet ON GRVDet.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
+INNER JOIN warehousemaster ON GRVDet.grvLocation = warehousemaster.wareHouseSystemCode
+WHERE
+	erp_purchaseordermaster.approved = -1
+AND erp_purchaseordermaster.poCancelledYN = 0
+AND GRVDet.companySystemID IN (' . $commaSeperatedCompany . ')
+AND PODet.supplierID = ' . $supplierID . '');
+        } else if ($input['documentId'] == 2) {
+            $detail = DB::select('SELECT
+	erp_bookinvsuppmaster.bookingSuppMasInvAutoID,
+	erp_bookinvsuppmaster.companyID,
+	erp_bookinvsuppdet.purchaseOrderID,
+	erp_bookinvsuppmaster.documentID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_bookinvsuppmaster.bookingInvCode,
+	erp_bookinvsuppmaster.bookingDate,
+	erp_bookinvsuppmaster.comments,
+	erp_bookinvsuppmaster.supplierInvoiceNo,
+	erp_bookinvsuppmaster.confirmedYN,
+	erp_bookinvsuppmaster.confirmedByName,
+	erp_bookinvsuppmaster.approved,
+	currencymaster.CurrencyCode,
+	erp_bookinvsuppdet.totLocalAmount,
+	erp_bookinvsuppdet.totRptAmount
+FROM
+	erp_bookinvsuppmaster
+INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID
+LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID
+WHERE
+	erp_bookinvsuppmaster.supplierID =  ' . $supplierID . ' AND erp_bookinvsuppmaster.companySystemID IN (' . $commaSeperatedCompany . ')
+		AND YEAR (erp_bookinvsuppmaster.postedDate) IN (' . $commaSeperatedYears . ')');
+        }
+        return $this->sendResponse($detail, 'Details retrieved successfully');
+
+    }
+
+    /**
+     * amend Procurement Order
+     * Post /amendProcurementOrder
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+
+    public function amendProcurementOrder(Request $request)
+    {
+
+        $input = $request->all();
+        $procurementOrder = ProcumentOrder::with(['created_by', 'confirmed_by'])
+            ->where('purchaseOrderID', $input['purchaseOrderID'])
+            ->first();
+
+        if (empty($procurementOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        if ($procurementOrder->poConfirmedYN != 1) {
+            return $this->sendError('You cannot amend this order, this is not confirm', 500);
+        }
+
+        if ($procurementOrder->poClosedYN == 1) {
+            return $this->sendError('You cannot amend this order, this is already closed', 500);
+        }
+
+        if ($procurementOrder->manuallyClosed == 1) {
+            return $this->sendError('You cannot amend this order, this order manually closed');
+        }
+
+        if ($procurementOrder->grvRecieved != 0) {
+            return $this->sendError('You cannot amend this order. GRV is fully or partially received.', 500);
+        }
+
+        if ($procurementOrder->poCancelledYN == -1) {
+            return $this->sendError('You cannot amend this order, this is already canceled', 500);
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        if ( $procurementOrder->WO_amendYN == -1 && $procurementOrder->WO_amendRequestedByEmpID != $employee->empID) {
+            return $this->sendError('You cannot amend this order, this is already amending by ' . $procurementOrder->WO_amendRequestedByEmpID, 500);
+        }
+
+        $procurementOrder->WO_amendYN = -1;
+        $procurementOrder->WO_confirmedYN = 0;
+        //$procurementOrder->WO_amendRequestedByEmpSystemID = $employee->employeeSystemID;
+        $procurementOrder->WO_amendRequestedByEmpID = $employee->empID;
+        $procurementOrder->WO_amendRequestedDate = now();
+        $procurementOrder->save();
+
+        return $this->sendResponse($procurementOrder, 'Order updated successfully');
     }
 
 
