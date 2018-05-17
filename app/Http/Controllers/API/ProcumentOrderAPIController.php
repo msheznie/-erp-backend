@@ -1411,14 +1411,14 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
                 ->update([
                     'poConfirmedYN' => 0,
-                    'poConfirmedByEmpSystemID' => '',
-                    'poConfirmedByEmpID' => '',
-                    'poConfirmedByName' => '',
+                    'poConfirmedByEmpSystemID' => null,
+                    'poConfirmedByEmpID' => null,
+                    'poConfirmedByName' => null,
                     'poConfirmedDate' => null,
                     'approved' => 0,
                     'approvedDate' => null,
-                    'approvedByUserID' => '',
-                    'approvedByUserSystemID' => '',
+                    'approvedByUserID' => null,
+                    'approvedByUserSystemID' => null,
                     'RollLevForApp_curr' => 1
                 ]);
         }
@@ -2272,7 +2272,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc);
 
-        $html = view('print.purchase_order_print_pdf', $order);
+         $html = view('print.purchase_order_print_pdf', $order);
 
         //return \PDF::loadHTML($html)->setPaper('a4', 'landscape')->setWarnings(false)->download('purchase_order_'.$id.'.pdf');
 
@@ -2283,6 +2283,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
+
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
     }
 
