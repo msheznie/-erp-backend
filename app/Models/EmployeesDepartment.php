@@ -117,5 +117,25 @@ class EmployeesDepartment extends Model
     public function employee(){
         return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
     }
+
+    public function department(){
+        return $this->belongsTo('App\Models\DepartmentMaster','departmentSystemID','departmentSystemID');
+    }
+
+    public function serviceline(){
+        return $this->belongsTo('App\Models\SegmentMaster','ServiceLineSystemID','serviceLineSystemID');
+    }
+
+    public function document(){
+        return $this->belongsTo('App\Models\DocumentMaster','documentSystemID','documentSystemID');
+    }
+
+    public function approvalgroup(){
+        return $this->belongsTo('App\Models\ApprovalGroups','employeeGroupID','rightsGroupId');
+    }
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
     
 }

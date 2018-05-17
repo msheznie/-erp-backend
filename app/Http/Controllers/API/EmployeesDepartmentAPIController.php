@@ -17,6 +17,8 @@ use App\Http\Requests\API\CreateEmployeesDepartmentAPIRequest;
 use App\Http\Requests\API\UpdateEmployeesDepartmentAPIRequest;
 use App\Models\ApprovalGroups;
 use App\Models\Company;
+use App\Models\DepartmentMaster;
+use App\Models\DocumentMaster;
 use App\Models\EmployeesDepartment;
 use App\Repositories\EmployeesDepartmentRepository;
 use Illuminate\Http\Request;
@@ -67,9 +69,10 @@ class EmployeesDepartmentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $employeesDepartments = $this->employeesDepartmentRepository->create($input);
+        //$employeesDepartments = $this->employeesDepartmentRepository->create($input);
+        $employeesDepartments = EmployeesDepartment::insert($input);
 
-        return $this->sendResponse($employeesDepartments->toArray(), 'Employees Department saved successfully');
+        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
     }
 
     /**
@@ -139,9 +142,37 @@ class EmployeesDepartmentAPIController extends AppBaseController
         return $this->sendResponse($id, 'Employees Department deleted successfully');
     }
 
-    public function getApprovalAccessRights(Request $request)
+    public function getApprovalAccessRightsDatatable(Request $request)
     {
-        $employeesDepartment = EmployeesDepartment::where('employeeSystemID',$request->employeeSystemID)->get();
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $employeesDepartment = EmployeesDepartment::with(['company','department','serviceline','document','approvalgroup'])->where('employeeSystemID',$request->employeeSystemID);
+
+        return \DataTables::eloquent($employeesDepartment)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('employeesDepartmentsID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+
+    }
+
+    public function getApprovalAccessRightsFormData(Request $request)
+    {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup="";
         if(\Helper::checkIsCompanyGroup($selectedCompanyId)){
@@ -150,13 +181,25 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
         $groupCompany = Company::whereIN("companySystemID", $companiesByGroup)->get();
-        if (empty($employeesDepartment)) {
-            return $this->sendError('No records found');
-        }
 
-        $employeesDepartment = array('employeesDepartment' => $employeesDepartment, 'company' => $groupCompany, 'approvalGroup' => ApprovalGroups::all());
+        $department = DepartmentMaster::where('showInCombo',-1)->get();
+
+        $employeesDepartment = array('company' => $groupCompany, 'approvalGroup' => ApprovalGroups::all(),'department' => $department);
 
         return $this->sendResponse($employeesDepartment, 'Employees Department retrieved successfully');
 
     }
+
+    public function getDepartmentDocument(Request $request){
+        $document = DocumentMaster::where('departmentSystemID',$request['departmentSystemID'])->get();
+
+        if (empty($document)) {
+            return $this->sendError('Document not found');
+        }
+
+        return $this->sendResponse($document, 'Document retrieved successfully');
+    }
+
+
+
 }

@@ -292,7 +292,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
     Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
     Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
-    Route::get('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRights');
+    Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
+    Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
+    Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
 
     Route::post('approveItem', 'ItemMasterAPIController@approveItem');
     Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
