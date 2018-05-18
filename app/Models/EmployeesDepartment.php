@@ -8,6 +8,7 @@
  * -- Create date : 23 - April 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
+ * -- Date: 17-May 2018 By: Mubashir Description: Added relationship to table,
  * --
  */
 namespace App\Models;

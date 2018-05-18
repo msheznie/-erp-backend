@@ -50,6 +50,7 @@ class DepartmentMaster extends Model
 
 
     protected $dates = ['deleted_at'];
+    protected $primaryKey = 'departmentSystemID';
 
 
     public $fillable = [
