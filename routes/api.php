@@ -409,6 +409,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('amendProcurementOrder', 'ProcumentOrderAPIController@amendProcurementOrder');
     Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck');
+    Route::get('procumentOrderPrHistory', 'ProcumentOrderAPIController@procumentOrderPrHistory');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

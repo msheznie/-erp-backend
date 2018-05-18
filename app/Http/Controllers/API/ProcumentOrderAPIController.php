@@ -27,6 +27,7 @@
  * -- Date: 15-May 2018 By: Nazir Description: Added new functions named as manualCloseProcurementOrderPrecheck()
  * -- Date: 15-May 2018 By: Nazir Description: Added new functions named as getGRVDrilldownSpentAnalysisTotal(),
  * -- Date: 16-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrder(),
+ * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as procumentOrderPrHistory(),
  */
 
 namespace App\Http\Controllers\API;
@@ -778,8 +779,18 @@ class ProcumentOrderAPIController extends AppBaseController
             });
         }
 
+
+        $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
+                                                ->where('companySystemID', $input['companyId'])->first();
+
+        $policy = 0;
+
+        if(!empty($historyPolicy)){
+            $policy = $historyPolicy->isYesNO;
+        }
+
         return \DataTables::eloquent($procumentOrders)
-            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Actions',$policy)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -2714,6 +2725,33 @@ WHERE
         $procurementOrder->save();
 
         return $this->sendResponse($procurementOrder, 'Order updated successfully');
+    }
+
+    /**
+     * Display the specified Procument Order Pr history.
+     * GET|HEAD /procumentOrderPrHistory
+     *
+     *  @param $request
+     *
+     * @return Response
+     */
+
+    public function procumentOrderPrHistory(Request $request)
+    {
+        $id = $request->get('id');
+
+        /** @var ProcumentOrder $procumentOrder */
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment','company','detail' => function($q){
+
+            $q->with(['unit','requestDetail.purchase_request.confirmed_by']);
+
+        }])->findWithoutFail($id);
+
+        if (empty($procumentOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
 
 
