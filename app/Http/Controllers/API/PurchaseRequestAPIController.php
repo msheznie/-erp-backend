@@ -1291,14 +1291,14 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $purchaseRequest->PRConfirmedYN = 0;
-        $purchaseRequest->PRConfirmedBy = '';
-        $purchaseRequest->PRConfirmedByEmpName = '';
-        $purchaseRequest->PRConfirmedBySystemID = '';
-        $purchaseRequest->PRConfirmedDate = '';
+        $purchaseRequest->PRConfirmedBy = NULL;
+        $purchaseRequest->PRConfirmedByEmpName = NULL;
+        $purchaseRequest->PRConfirmedBySystemID = NULL;
+        $purchaseRequest->PRConfirmedDate = NULL;
         $purchaseRequest->approved = 0;
-        $purchaseRequest->approvedDate = '';
-        $purchaseRequest->approvedByUserID = '';
-        $purchaseRequest->approvedByUserSystemID = '';
+        $purchaseRequest->approvedDate = NULL;
+        $purchaseRequest->approvedByUserID = NULL;
+        $purchaseRequest->approvedByUserSystemID = NULL;
         $purchaseRequest->RollLevForApp_curr = 1;
         $purchaseRequest->save();
 
@@ -1489,11 +1489,11 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $pdf = \App::make('dompdf.wrapper');
 
-        $pdf->getDomPDF()->set_option("enable_php", true);
+        //$pdf->getDomPDF()->set_option("enable_php", true);
 
         $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }
