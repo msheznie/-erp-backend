@@ -67,7 +67,7 @@ class EmployeeNavigationAPIController extends AppBaseController
 
         $validate = EmployeeNavigation::where('companyID',$request->companyID)->where('employeeSystemID',$request->employeeSystemID)->exists();
         if($validate){
-            return $this->sendError('Employee already exist in a group fot the selected company');
+            return $this->sendError('Selected employee already exists in the selected user group');
         }else{
             $employeeNavigations = $this->employeeNavigationRepository->create($input);
         }
