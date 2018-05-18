@@ -8,6 +8,7 @@
  * -- Create date : 23 - April 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
+ * -- Date: 17-May 2018 By: Mubashir Description: Added relationship to table,
  * --
  */
 namespace App\Models;
@@ -116,6 +117,26 @@ class EmployeesDepartment extends Model
 
     public function employee(){
         return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
+    }
+
+    public function department(){
+        return $this->belongsTo('App\Models\DepartmentMaster','departmentSystemID','departmentSystemID');
+    }
+
+    public function serviceline(){
+        return $this->belongsTo('App\Models\SegmentMaster','ServiceLineSystemID','serviceLineSystemID');
+    }
+
+    public function document(){
+        return $this->belongsTo('App\Models\DocumentMaster','documentSystemID','documentSystemID');
+    }
+
+    public function approvalgroup(){
+        return $this->belongsTo('App\Models\ApprovalGroups','employeeGroupID','rightsGroupId');
+    }
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
     
 }

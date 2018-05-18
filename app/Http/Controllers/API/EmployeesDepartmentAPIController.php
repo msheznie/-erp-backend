@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Employees department.
  * -- REVISION HISTORY
  * -- Date: 11-May 2018 By: Mubashir Description: Added new function getApprovalAccessRights(),
+ * -- Date: 18-May 2018 By: Mubashir Description: Added new function getApprovalAccessRightsFormData() and getDepartmentDocument(),
  */
 
 namespace App\Http\Controllers\API;
@@ -17,7 +18,10 @@ use App\Http\Requests\API\CreateEmployeesDepartmentAPIRequest;
 use App\Http\Requests\API\UpdateEmployeesDepartmentAPIRequest;
 use App\Models\ApprovalGroups;
 use App\Models\Company;
+use App\Models\DepartmentMaster;
+use App\Models\DocumentMaster;
 use App\Models\EmployeesDepartment;
+use App\Models\SegmentMaster;
 use App\Repositories\EmployeesDepartmentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -67,9 +71,29 @@ class EmployeesDepartmentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $employeesDepartments = $this->employeesDepartmentRepository->create($input);
+        foreach ($input as $key=> $val){
+            if($val['companySystemID']){
+                $companyID = Company::find($val['companySystemID']);
+                $input[$key]['companyId'] = $companyID->CompanyID;
+            }
+            if($val['documentSystemID']){
+                $documentID = DocumentMaster::find($val['documentSystemID']);
+                $input[$key]['documentID'] = $documentID->documentID;
+            }
+            if($val['departmentSystemID']){
+                $departmentID = DepartmentMaster::find($val['departmentSystemID']);
+                $input[$key]['departmentID'] = $departmentID->DepartmentID;
+            }
+            if($val['ServiceLineSystemID']){
+                $ServiceLineID = SegmentMaster::find($val['ServiceLineSystemID']);
+                $input[$key]['ServiceLineID'] = $ServiceLineID->ServiceLineCode;
+            }
+        }
 
-        return $this->sendResponse($employeesDepartments->toArray(), 'Employees Department saved successfully');
+        //$employeesDepartments = $this->employeesDepartmentRepository->create($input);
+        $employeesDepartments = EmployeesDepartment::insert($input);
+
+        return $this->sendResponse($employeesDepartments, 'Employees Department saved successfully');
     }
 
     /**
@@ -139,9 +163,53 @@ class EmployeesDepartmentAPIController extends AppBaseController
         return $this->sendResponse($id, 'Employees Department deleted successfully');
     }
 
-    public function getApprovalAccessRights(Request $request)
+    public function getApprovalAccessRightsDatatable(Request $request)
     {
-        $employeesDepartment = EmployeesDepartment::where('employeeSystemID',$request->employeeSystemID)->get();
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $employeesDepartment = EmployeesDepartment::with(['company','department','serviceline','document','approvalgroup'])->where('employeeSystemID',$request->employeeSystemID);
+        $search = $request->input('search.value');
+        if($search){
+            $employeesDepartment = $employeesDepartment->where(function ($q) use($search){
+                $q->whereHas('company',function ($query) use($search) {
+                    $query->where('CompanyID','LIKE',"%{$search}%");
+                })->orWhereHas('department',function ($query) use($search) {
+                    $query->where('DepartmentDescription','LIKE',"%{$search}%");
+                })->orWhereHas('serviceline',function ($query) use($search) {
+                    $query->where('ServiceLineDes','LIKE',"%{$search}%");
+                })->orWhereHas('document',function ($query) use($search) {
+                    $query->where('documentDescription','LIKE',"%{$search}%");
+                })->orWhereHas('approvalgroup',function ($query) use($search) {
+                    $query->where('rightsGroupDes','LIKE',"%{$search}%");
+                });
+            });
+        }
+
+        return \DataTables::eloquent($employeesDepartment)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('employeesDepartmentsID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+
+    }
+
+    public function getApprovalAccessRightsFormData(Request $request)
+    {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup="";
         if(\Helper::checkIsCompanyGroup($selectedCompanyId)){
@@ -150,13 +218,19 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
         $groupCompany = Company::whereIN("companySystemID", $companiesByGroup)->get();
-        if (empty($employeesDepartment)) {
-            return $this->sendError('No records found');
-        }
-
-        $employeesDepartment = array('employeesDepartment' => $employeesDepartment, 'company' => $groupCompany, 'approvalGroup' => ApprovalGroups::all());
-
+        $department = DepartmentMaster::where('showInCombo',-1)->get();
+        $employeesDepartment = array('company' => $groupCompany, 'approvalGroup' => ApprovalGroups::all(),'department' => $department);
         return $this->sendResponse($employeesDepartment, 'Employees Department retrieved successfully');
-
     }
+
+    public function getDepartmentDocument(Request $request){
+        $document = DocumentMaster::where('departmentSystemID',$request['departmentSystemID'])->get();
+        if (empty($document)) {
+            return $this->sendError('Document not found');
+        }
+        return $this->sendResponse($document, 'Document retrieved successfully');
+    }
+
+
+
 }

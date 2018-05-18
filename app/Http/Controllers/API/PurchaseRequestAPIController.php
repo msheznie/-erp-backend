@@ -19,6 +19,7 @@
  * -- Date: 04-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequest()
  * -- Date: 11-May 2018 By: Fayas Description: Added new functions named as getPurchaseRequestApprovedByUser()
  * -- Date: 15-May 2018 By: Fayas Description: Added new functions named as purchaseRequestsPOHistory()
+ * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequestPreCheck()
  */
 namespace App\Http\Controllers\API;
 
@@ -626,6 +627,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.serviceLineSystemID',
                 'erp_purchaserequest.financeCategory',
                 'erp_purchaserequest.documentSystemID',
+                'erp_purchaserequest.manuallyClosed',
             ]);
 
         $search = $request->input('search.value');
@@ -1028,11 +1030,11 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if ($purchaseRequest->cancelledYN == -1) {
-            return $this->sendError('This Purchase Request closed. You can not edit.', 500);
+            return $this->sendError('This Purchase Request closed. You cannot edit.', 500);
         }
 
         if ($purchaseRequest->approved == 1) {
-            return $this->sendError('This Purchase Request fully approved. You can not edit.', 500);
+            return $this->sendError('This Purchase Request fully approved. You cannot edit.', 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -1290,14 +1292,14 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $purchaseRequest->PRConfirmedYN = 0;
-        $purchaseRequest->PRConfirmedBy = '';
-        $purchaseRequest->PRConfirmedByEmpName = '';
-        $purchaseRequest->PRConfirmedBySystemID = '';
-        $purchaseRequest->PRConfirmedDate = '';
+        $purchaseRequest->PRConfirmedBy = NULL;
+        $purchaseRequest->PRConfirmedByEmpName = NULL;
+        $purchaseRequest->PRConfirmedBySystemID = NULL;
+        $purchaseRequest->PRConfirmedDate = NULL;
         $purchaseRequest->approved = 0;
-        $purchaseRequest->approvedDate = '';
-        $purchaseRequest->approvedByUserID = '';
-        $purchaseRequest->approvedByUserSystemID = '';
+        $purchaseRequest->approvedDate = NULL;
+        $purchaseRequest->approvedByUserID = NULL;
+        $purchaseRequest->approvedByUserSystemID = NULL;
         $purchaseRequest->RollLevForApp_curr = 1;
         $purchaseRequest->save();
 
@@ -1332,6 +1334,39 @@ class PurchaseRequestAPIController extends AppBaseController
     }
 
     /**
+     * manual Close Purchase Request pre check
+     * Post /manualClosePurchaseRequestPreCheck
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+    public function manualClosePurchaseRequestPreCheck(Request $request)
+    {
+
+        $input = $request->all();
+        $purchaseRequest = PurchaseRequest::with(['confirmed_by', 'details'])->find($input['purchaseRequestID']);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($purchaseRequest->manuallyClosed == 1) {
+            return $this->sendError('This request already closed');
+        }
+
+        if ($purchaseRequest->selectedForPO != 0 || $purchaseRequest->supplyChainOnGoing != 0 || $purchaseRequest->prClosedYN != 0) {
+            return $this->sendError('You cannot close this, request is currently processing');
+        }
+
+        if ($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1) {
+            return $this->sendError('You can only close approved request');
+        }
+
+        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully closed');
+    }
+
+    /**
      * manual Close Purchase Request
      * Post /manualClosePurchaseRequest
      *
@@ -1354,7 +1389,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if ($purchaseRequest->selectedForPO != 0 || $purchaseRequest->supplyChainOnGoing != 0 || $purchaseRequest->prClosedYN != 0) {
-            return $this->sendError('You can not close this, request is currently processing');
+            return $this->sendError('You cannot close this, request is currently processing');
         }
 
         if ($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1) {
@@ -1487,8 +1522,12 @@ class PurchaseRequestAPIController extends AppBaseController
         //  return $pdf->download('purchase_request_'.$id.'.pdf');
 
         $pdf = \App::make('dompdf.wrapper');
+
+        //$pdf->getDomPDF()->set_option("enable_php", true);
+
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }

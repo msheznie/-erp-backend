@@ -147,7 +147,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         if (isset($input['comDate'])) {
             if ($input['comDate']) {
-                $input['comDate'] = new Carbon($input['comDate']);
+               // $input['comDate'] = new Carbon($input['comDate']);
             }
         }
 
