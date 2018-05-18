@@ -2,6 +2,12 @@
 <head>
     <title>Purchase Request</title>
     <style>
+        @page {
+            margin-left: 30px;
+            margin-right: 30px;
+            margin-top: 30px;
+            margin-bottom: 0px;
+        }
         body {
             font-size: 12px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -231,30 +237,25 @@
                                 <span class="font-weight-bold">
                                     <h3 class="text-muted">
 
+
                                         @if($request->PRConfirmedYN == 0 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == 0)
                                             Not Confirmed & Not Approved
-                                        @endif
-                                        @if($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == 0)
+                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == 0)
                                             Confirmed & Not Approved
-                                        @endif
-                                        @if($request->PRConfirmedYN == 1 && ($request->approved == -1 ||  $request->approved == 1 ) && (request.timesReferred == 0 || request.timesReferred > 0 ) && request.cancelledYN == 0)
+                                        @elseif($request->PRConfirmedYN == 1 && ($request->approved == -1 ||  $request->approved == 1 ) && ($request->timesReferred == 0 || $request->timesReferred > 0 ) && $request->cancelledYN == 0)
                                             Fully Approved
-                                        @endif
-                                        @if($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred > 0 && $request->cancelledYN == 0)
+                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred > 0 && $request->cancelledYN == 0)
                                             Referred Back
-                                        @endif
-                                        @if($request->PRConfirmedYN == 0 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == -1)
+                                        @elseif($request->PRConfirmedYN == 0 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == -1)
                                             Cancelled
-                                        @endif
-                                        @if($request->PRConfirmedYN == 1 && $request->approved == -1 && $request->timesReferred == 0 && $request->cancelledYN == -1)
+                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == -1 && $request->timesReferred == 0 && $request->cancelledYN == -1)
                                             Cancelled
-                                        @endif
-                                        @if($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == -1)
+                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == -1)
                                             Cancelled
                                         @endif
 
 
-                                        @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1)
+                                       {{-- @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1)
                                             Confirmed
                                         @endif
                                         @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1 && $request->approved == 0)
@@ -265,7 +266,7 @@
                                         @endif
                                         @if($request->cancelledYN == -1)
                                             Cancelled
-                                        @endif
+                                        @endif--}}
 </h3>
 </span>
                         </td>
@@ -276,7 +277,7 @@
     </table>
     {{--<hr>--}}
     <div style="margin-top: 30px">
-        <table class="table table-bordered" style="width: 100%">
+        <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
                 <th></th>
@@ -317,19 +318,16 @@
         </table>
     </div>
     {{--<hr>--}}
-    <div style="margin-top: 60px">
+    <div class="row" style="margin-top: 60px;margin-left: -8px">
         <table>
-            <tr style="width:100%">
-                <td style="width:60%">
-                    <table>
+            <tr width="100%">
+                <td width="60%">
+                    <table width="100%">
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Confirmed By </span>
+                                <span class="font-weight-bold">Confirmed By :</span>
                             </td>
-                            <td width="10px">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td>
+                            <td width="400px">
                                 @if($request->confirmed_by)
                                     {{$request->confirmed_by->empName}}
                                 @endif
@@ -337,17 +335,14 @@
                         </tr>
                     </table>
                 </td>
-                <td width="30px">
+                <td width="10%">
 
                 </td>
-                <td>
+                <td width="30%">
                     <table>
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Review By </span>
-                            </td>
-                            <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span class="font-weight-bold">Reviewed By :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
