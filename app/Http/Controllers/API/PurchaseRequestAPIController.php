@@ -19,6 +19,7 @@
  * -- Date: 04-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequest()
  * -- Date: 11-May 2018 By: Fayas Description: Added new functions named as getPurchaseRequestApprovedByUser()
  * -- Date: 15-May 2018 By: Fayas Description: Added new functions named as purchaseRequestsPOHistory()
+ * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequestPreCheck()
  */
 namespace App\Http\Controllers\API;
 
@@ -1330,6 +1331,39 @@ class PurchaseRequestAPIController extends AppBaseController
         DocumentApproved::destroy($ids_to_delete);
 
         return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
+    }
+
+    /**
+     * manual Close Purchase Request pre check
+     * Post /manualClosePurchaseRequestPreCheck
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+    public function manualClosePurchaseRequestPreCheck(Request $request)
+    {
+
+        $input = $request->all();
+        $purchaseRequest = PurchaseRequest::with(['confirmed_by', 'details'])->find($input['purchaseRequestID']);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($purchaseRequest->manuallyClosed == 1) {
+            return $this->sendError('This request already closed');
+        }
+
+        if ($purchaseRequest->selectedForPO != 0 || $purchaseRequest->supplyChainOnGoing != 0 || $purchaseRequest->prClosedYN != 0) {
+            return $this->sendError('You cannot close this, request is currently processing');
+        }
+
+        if ($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1) {
+            return $this->sendError('You can only close approved request');
+        }
+
+        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully closed');
     }
 
     /**

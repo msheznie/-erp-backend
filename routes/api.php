@@ -408,6 +408,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
 
     Route::post('amendProcurementOrder', 'ProcumentOrderAPIController@amendProcurementOrder');
+    Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
