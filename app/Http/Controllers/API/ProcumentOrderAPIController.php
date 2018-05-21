@@ -2133,34 +2133,20 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             return $this->sendError('Procurement Order not found');
         }
 
-        if ($procumentOrder->poClosedYN == 1) {
-            return $this->sendError('You cannot close this order, this is already closed');
-        }
-
         if ($procumentOrder->grvRecieved == 2) {
             return $this->sendError('You cannot close this order, this is already fully received');
         }
 
         if ($procumentOrder->manuallyClosed == 1) {
-            return $this->sendError('This order already manually closed');
+            return $this->sendError('You cannot close this order, this order already manually closed');
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->poCancelledYN == -1) {
-            return $this->sendError('You can only close approved order');
+            return $this->sendError('You cannot close this order, this order is only approved');
         }
 
-        $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $input['purchaseOrderID'])
-            ->first();
-
-        if (!empty($detailExistGRV)) {
-            return $this->sendError('Cannot close. GRV is created for this PO ');
-        }
-
-        $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $input['purchaseOrderID'])
-            ->first();
-
-        if (!empty($detailExistAPD)) {
-            return $this->sendError('Cannot close. Advance Payment is created for this PO');
+        if ($procumentOrder->approved != -1 || $procumentOrder->grvRecieved == 0) {
+            return $this->sendError('You cannot close this order, You can only close partially received order' );
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -2511,39 +2497,31 @@ WHERE
         $input = $request->all();
         $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by'])->findWithoutFail($input['purchaseOrderID']);
 
+
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
         }
 
-        if ($procumentOrder->poClosedYN == 1) {
-            return $this->sendError('You cannot close this order, this is already closed');
-        }
+        /*        if ($procumentOrder->poClosedYN == 1) {
+                    return $this->sendError('You cannot close this order, this is already closed');
+                }*/
 
         if ($procumentOrder->grvRecieved == 2) {
-            return $this->sendError('Cannot close. GRV is fully received.');
+            return $this->sendError('You cannot close this order, this is already fully received');
         }
 
         if ($procumentOrder->manuallyClosed == 1) {
-            return $this->sendError('This order already manually closed');
+            return $this->sendError('You cannot close this order, this order already manually closed');
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->poCancelledYN == -1) {
-            return $this->sendError('You can only close approved order');
+            return $this->sendError('You cannot close this order, this order is only approved');
         }
 
-        $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $input['purchaseOrderID'])
-            ->first();
-
-        if (!empty($detailExistGRV)) {
-            return $this->sendError('Cannot close. GRV is created for this PO ');
+        if ($procumentOrder->approved != -1 || $procumentOrder->grvRecieved == 0) {
+            return $this->sendError('You cannot close this order, You can only close partially received order' );
         }
 
-        $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $input['purchaseOrderID'])
-            ->first();
-
-        if (!empty($detailExistAPD)) {
-            return $this->sendError('Cannot close. Advance Payment is created for this PO');
-        }
 
         return $this->sendResponse($procumentOrder, 'Details retrieved successfully');
     }
