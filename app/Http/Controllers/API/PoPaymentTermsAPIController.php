@@ -212,6 +212,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         $poAdvancePaymentType = PoPaymentTerms::select(DB::raw('*, DATE_FORMAT(comDate, "%d/%m/%Y") as comDate'))
             ->where('poID', $input['purchaseOrderID'])
+            ->orderBy('paymentTermID', 'ASC')
             ->get();
 
         return $this->sendResponse($poAdvancePaymentType->toArray(), 'Data retrieved successfully');

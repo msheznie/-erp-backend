@@ -477,7 +477,7 @@
       {{ $subTotal += $det->netAmount }}
       {{ $netUnitCost = $det->unitCost - $det->discountAmount }}
       <tr style="border-bottom: 1px solid black;">
-        <td>{{ $x = 1 }}</td>
+        <td>{{ $x }}</td>
         <td>{{$det->itemPrimaryCode}}</td>
         <td>{{$det->itemDescription}} <br> {{$det->comment}}</td>
         <td>{{$det->supplierPartNumber}}</td>

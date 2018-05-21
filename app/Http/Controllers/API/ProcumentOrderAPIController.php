@@ -1389,8 +1389,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $body = '<p>' . $cancelDocNameBody . ' is return back to amend due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $subject = $cancelDocNameSubject . ' is return back to amend';
 
-        if ($purchaseOrder->PRConfirmedYN == 1) {
-            $emails[] = array('empSystemID' => $purchaseOrder->PRConfirmedBySystemID,
+        if ($purchaseOrder->poConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $purchaseOrder->poConfirmedByEmpSystemID,
                 'companySystemID' => $purchaseOrder->companySystemID,
                 'docSystemID' => $purchaseOrder->documentSystemID,
                 'alertMessage' => $subject,
