@@ -1464,7 +1464,7 @@ class PurchaseRequestAPIController extends AppBaseController
         if ($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1) {
             return $this->sendError('You can only close approved request');
         }
-        
+
         $employee = \Helper::getEmployeeInfo();
 
         $emails = array();

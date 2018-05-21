@@ -28,6 +28,7 @@
  * -- Date: 15-May 2018 By: Nazir Description: Added new functions named as getGRVDrilldownSpentAnalysisTotal(),
  * -- Date: 16-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrder(),
  * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as procumentOrderPrHistory(),
+ * -- Date: 21-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrderPreCheck(),
  */
 
 namespace App\Http\Controllers\API;
@@ -2723,6 +2724,51 @@ WHERE
         $procurementOrder->WO_amendRequestedByEmpID = $employee->empID;
         $procurementOrder->WO_amendRequestedDate = now();
         $procurementOrder->save();
+
+        return $this->sendResponse($procurementOrder, 'Order updated successfully');
+    }
+
+
+    /**
+     * amend Procurement Order pre check
+     * Post /amendProcurementOrder
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+
+    public function amendProcurementOrderPreCheck(Request $request)
+    {
+
+        $input = $request->all();
+        $procurementOrder = ProcumentOrder::with(['created_by', 'confirmed_by'])
+            ->where('purchaseOrderID', $input['purchaseOrderID'])
+            ->first();
+
+        if (empty($procurementOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        if ($procurementOrder->poConfirmedYN != 1) {
+            return $this->sendError('You cannot amend this order, this is not confirm', 500);
+        }
+
+        if ($procurementOrder->poClosedYN == 1) {
+            return $this->sendError('You cannot amend this order, this is already closed', 500);
+        }
+
+        if ($procurementOrder->manuallyClosed == 1) {
+            return $this->sendError('You cannot amend this order, this order manually closed');
+        }
+
+        if ($procurementOrder->grvRecieved != 0) {
+            return $this->sendError('You cannot amend this order. GRV is fully or partially received.', 500);
+        }
+
+        if ($procurementOrder->poCancelledYN == -1) {
+            return $this->sendError('You cannot amend this order, this is already canceled', 500);
+        }
 
         return $this->sendResponse($procurementOrder, 'Order updated successfully');
     }
