@@ -2514,10 +2514,6 @@ WHERE
             return $this->sendError('Procurement Order not found');
         }
 
-        /*        if ($procumentOrder->poClosedYN == 1) {
-                    return $this->sendError('You cannot close this order, this is already closed');
-                }*/
-
         if ($procumentOrder->grvRecieved == 2) {
             return $this->sendError('You cannot close this order, this is already fully received');
         }
