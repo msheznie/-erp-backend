@@ -173,7 +173,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $employeesDepartment = EmployeesDepartment::with(['company','department','serviceline','document','approvalgroup'])->where('employeeSystemID',$request->employeeSystemID);
+        $employeesDepartment = EmployeesDepartment::with(['company','department','serviceline','document','approvalgroup'])->where('employeeSystemID',$request->employeeSystemID)->selectRaw('*,false as selected');
         $search = $request->input('search.value');
         if($search){
             $employeesDepartment = $employeesDepartment->where(function ($q) use($search){
@@ -229,6 +229,12 @@ class EmployeesDepartmentAPIController extends AppBaseController
             return $this->sendError('Document not found');
         }
         return $this->sendResponse($document, 'Document retrieved successfully');
+    }
+
+    function deleteAllAccessRights(Request $request){
+        $employeesDepartment = EmployeesDepartment::where('employeeSystemID',$request->employeeSystemID);
+        $employeesDepartment->delete();
+        return $this->sendResponse(array(), 'Employees Department deleted successfully');
     }
 
 
