@@ -27,6 +27,8 @@
  * -- Date: 15-May 2018 By: Nazir Description: Added new functions named as manualCloseProcurementOrderPrecheck()
  * -- Date: 15-May 2018 By: Nazir Description: Added new functions named as getGRVDrilldownSpentAnalysisTotal(),
  * -- Date: 16-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrder(),
+ * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as procumentOrderPrHistory(),
+ * -- Date: 21-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrderPreCheck(),
  */
 
 namespace App\Http\Controllers\API;
@@ -778,8 +780,18 @@ class ProcumentOrderAPIController extends AppBaseController
             });
         }
 
+
+        $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
+                                                ->where('companySystemID', $input['companyId'])->first();
+
+        $policy = 0;
+
+        if(!empty($historyPolicy)){
+            $policy = $historyPolicy->isYesNO;
+        }
+
         return \DataTables::eloquent($procumentOrders)
-            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Actions',$policy)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -2692,6 +2704,78 @@ WHERE
         $procurementOrder->save();
 
         return $this->sendResponse($procurementOrder, 'Order updated successfully');
+    }
+
+
+    /**
+     * amend Procurement Order pre check
+     * Post /amendProcurementOrder
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+
+    public function amendProcurementOrderPreCheck(Request $request)
+    {
+
+        $input = $request->all();
+        $procurementOrder = ProcumentOrder::with(['created_by', 'confirmed_by'])
+            ->where('purchaseOrderID', $input['purchaseOrderID'])
+            ->first();
+
+        if (empty($procurementOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        if ($procurementOrder->poConfirmedYN != 1) {
+            return $this->sendError('You cannot amend this order, this is not confirm', 500);
+        }
+
+        if ($procurementOrder->poClosedYN == 1) {
+            return $this->sendError('You cannot amend this order, this is already closed', 500);
+        }
+
+        if ($procurementOrder->manuallyClosed == 1) {
+            return $this->sendError('You cannot amend this order, this order manually closed');
+        }
+
+        if ($procurementOrder->grvRecieved != 0) {
+            return $this->sendError('You cannot amend this order. GRV is fully or partially received.', 500);
+        }
+
+        if ($procurementOrder->poCancelledYN == -1) {
+            return $this->sendError('You cannot amend this order, this is already canceled', 500);
+        }
+
+        return $this->sendResponse($procurementOrder, 'Order updated successfully');
+    }
+
+    /**
+     * Display the specified Procument Order Pr history.
+     * GET|HEAD /procumentOrderPrHistory
+     *
+     *  @param $request
+     *
+     * @return Response
+     */
+
+    public function procumentOrderPrHistory(Request $request)
+    {
+        $id = $request->get('id');
+
+        /** @var ProcumentOrder $procumentOrder */
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment','company','detail' => function($q){
+
+            $q->with(['unit','requestDetail.purchase_request.confirmed_by']);
+
+        }])->findWithoutFail($id);
+
+        if (empty($procumentOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
 
 

@@ -312,4 +312,8 @@ class PurchaseOrderDetails extends Model
         return $this->belongsTo('App\Models\FinanceItemCategorySub','itemFinanceCategorySubID','itemCategorySubID');
     }
 
+    public function requestDetail(){
+        return $this->belongsTo('App\Models\PurchaseRequestDetails','purchaseRequestDetailsID','purchaseRequestDetailsID');
+    }
+
 }
