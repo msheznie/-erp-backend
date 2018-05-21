@@ -20,6 +20,7 @@
  * -- Date: 11-May 2018 By: Fayas Description: Added new functions named as getPurchaseRequestApprovedByUser()
  * -- Date: 15-May 2018 By: Fayas Description: Added new functions named as purchaseRequestsPOHistory()
  * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequestPreCheck()
+ * -- Date: 21-May 2018 By: Fayas Description: Added new functions named as returnPurchaseRequestPreCheck(),cancelPurchaseRequestPreCheck()
  */
 namespace App\Http\Controllers\API;
 
@@ -1160,6 +1161,41 @@ class PurchaseRequestAPIController extends AppBaseController
 
     }
 
+    /**
+     * Cancel Purchase Request pre check
+     * Post /cancelPurchaseRequest
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+    public function cancelPurchaseRequestPreCheck(Request $request)
+    {
+
+        $input = $request->all();
+        $purchaseRequest = PurchaseRequest::find($input['purchaseRequestID']);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($purchaseRequest->cancelledYN == -1) {
+            return $this->sendError('You cannot cancel this request as it is already cancelled');
+        }
+
+        if ($purchaseRequest->manuallyClosed == 1) {
+            return $this->sendError('You cannot cancel this request as it is closed manually');
+        }
+
+        $checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
+
+        if ($checkPo > 0) {
+            return $this->sendError('Cannot cancel. Order is created for this request');
+        }
+
+        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully canceled');
+
+    }
 
     /**
      * Cancel Purchase Request
@@ -1179,7 +1215,11 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Purchase Request not found');
         }
 
-        if ($purchaseRequest->manuallyClosed == -1) {
+        if ($purchaseRequest->cancelledYN == -1) {
+            return $this->sendError('You cannot cancel this request as it is already cancelled');
+        }
+
+        if ($purchaseRequest->manuallyClosed == 1) {
             return $this->sendError('You cannot cancel this request as it is closed manually');
         }
 
@@ -1242,6 +1282,36 @@ class PurchaseRequestAPIController extends AppBaseController
     }
 
     /**
+     * Return to amend Purchase Request pre check
+     * Post /returnPurchaseRequest
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+    public function returnPurchaseRequestPreCheck(Request $request)
+    {
+        $input = $request->all();
+        $purchaseRequest = PurchaseRequest::with(['confirmed_by'])->find($input['purchaseRequestID']);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($purchaseRequest->manuallyClosed == 1) {
+            return $this->sendError('You cannot revert back this request as it is closed manually');
+        }
+
+        $checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
+
+        if ($checkPo > 0) {
+            return $this->sendError('Cannot return back to amend. Order is created for this request');
+        }
+
+        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
+    }
+
+    /**
      * Return to amend Purchase Request
      * Post /returnPurchaseRequest
      *
@@ -1259,7 +1329,7 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError('Purchase Request not found');
         }
 
-        if ($purchaseRequest->manuallyClosed == -1) {
+        if ($purchaseRequest->manuallyClosed == 1) {
             return $this->sendError('You cannot revert back this request as it is closed manually');
         }
 
@@ -1306,7 +1376,6 @@ class PurchaseRequestAPIController extends AppBaseController
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
             ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
             ->where('documentSystemID', $purchaseRequest->documentSystemID)
-            //->where('approvedYN', -1)
             ->get();
 
         foreach ($documentApproval as $da) {
@@ -1352,7 +1421,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if ($purchaseRequest->manuallyClosed == 1) {
-            return $this->sendError('This request already closed');
+            return $this->sendError('This request already manually closed');
         }
 
         if ($purchaseRequest->selectedForPO != 0 || $purchaseRequest->supplyChainOnGoing != 0 || $purchaseRequest->prClosedYN != 0) {
@@ -1395,13 +1464,7 @@ class PurchaseRequestAPIController extends AppBaseController
         if ($purchaseRequest->approved != -1 || $purchaseRequest->cancelledYN == -1) {
             return $this->sendError('You can only close approved request');
         }
-
-        /*$checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
-
-        if ($checkPo > 0) {
-            return $this->sendError('Cannot cancel. Order is created for this request');
-        }*/
-
+        
         $employee = \Helper::getEmployeeInfo();
 
         $emails = array();
