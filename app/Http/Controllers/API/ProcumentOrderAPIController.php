@@ -35,6 +35,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
+use App\Models\Employee;
 use App\Models\Months;
 use App\Models\Company;
 use App\Models\SupplierMaster;
@@ -2689,7 +2690,16 @@ WHERE
         $employee = \Helper::getEmployeeInfo();
 
         if ( $procurementOrder->WO_amendYN == -1 && $procurementOrder->WO_amendRequestedByEmpID != $employee->empID) {
-            return $this->sendError('You cannot amend this order, this is already amending by ' . $procurementOrder->WO_amendRequestedByEmpID, 500);
+
+            $amendEmpName =  $procurementOrder->WO_amendRequestedByEmpID;
+            $amendEmp = Employee::where('empID','=',$amendEmpName)->first();
+
+            if($amendEmp){
+                $amendEmpName =  $amendEmp->empName;
+                return $this->sendError('You cannot amend this order, this is already amending by ' . $amendEmpName, 500);
+            }
+
+            return $this->sendError('You cannot amend this order, this is already amending.', 500);
         }
 
         $procurementOrder->WO_amendYN = -1;
@@ -2742,6 +2752,20 @@ WHERE
 
         if ($procurementOrder->poCancelledYN == -1) {
             return $this->sendError('You cannot amend this order, this is already canceled', 500);
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+        if ( $procurementOrder->WO_amendYN == -1 && $procurementOrder->WO_amendRequestedByEmpID != $employee->empID) {
+
+            $amendEmpName =  $procurementOrder->WO_amendRequestedByEmpID;
+            $amendEmp = Employee::where('empID','=',$amendEmpName)->first();
+
+            if($amendEmp){
+                $amendEmpName =  $amendEmp->empName;
+                return $this->sendError('You cannot amend this order, this is already amending by ' . $amendEmpName, 500);
+            }
+
+            return $this->sendError('You cannot amend this order, this is already amending.', 500);
         }
 
         return $this->sendResponse($procurementOrder, 'Order updated successfully');
