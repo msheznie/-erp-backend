@@ -295,6 +295,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
     Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
     Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
+    Route::post('deleteAllAccessRights', 'EmployeesDepartmentAPIController@deleteAllAccessRights');
 
     Route::post('approveItem', 'ItemMasterAPIController@approveItem');
     Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
@@ -409,7 +410,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('amendProcurementOrder', 'ProcumentOrderAPIController@amendProcurementOrder');
     Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck');
+    Route::get('returnPurchaseRequestPreCheck', 'PurchaseRequestAPIController@returnPurchaseRequestPreCheck');
+    Route::get('cancelPurchaseRequestPreCheck', 'PurchaseRequestAPIController@cancelPurchaseRequestPreCheck');
     Route::get('procumentOrderPrHistory', 'ProcumentOrderAPIController@procumentOrderPrHistory');
+    Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
