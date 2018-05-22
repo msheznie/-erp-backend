@@ -354,7 +354,7 @@ class CustomerMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CustomerMaster $customerMaster */
-        $customerMaster = $this->customerMasterRepository->findWithoutFail($id);
+        $customerMaster = $this->customerMasterRepository->with(['finalApprovedBy'])->findWithoutFail($id);
        // $customerMasters = CustomerMaster::where('customerCodeSystem', $id)->first();
         if (empty($customerMaster)) {
             return $this->sendError('Customer Master not found');
@@ -375,6 +375,8 @@ class CustomerMasterAPIController extends AppBaseController
     public function update($id, UpdateCustomerMasterAPIRequest $request)
     {
         $input = $request->all();
+
+        $input = array_except($input, ['final_approved_by']);
 
         /** @var CustomerMaster $customerMaster */
         $customerMaster = $this->customerMasterRepository->findWithoutFail($id);

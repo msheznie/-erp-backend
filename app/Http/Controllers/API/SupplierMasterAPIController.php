@@ -305,6 +305,7 @@ class SupplierMasterAPIController extends AppBaseController
         unset($input['supplierConfirmedEmpSystemID']);
         unset($input['supplierConfirmedEmpName']);
         unset($input['supplierConfirmedDate']);
+        unset($input['finalApprovedBy']);
 
         $id = $input['supplierCodeSystem'];
 
@@ -381,7 +382,7 @@ class SupplierMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var SupplierMaster $supplierMaster */
-        $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);
+        $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy'])->findWithoutFail($id);
         //$supplierMaster = SupplierMaster::where("supplierCodeSystem", $id)->first();
 
         if (empty($supplierMaster)) {

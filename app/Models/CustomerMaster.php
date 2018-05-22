@@ -183,4 +183,9 @@ class CustomerMaster extends Model
     public function country(){
         return $this->belongsTo('App\Models\CountryMaster','customerCountry','countryID');
     }
+
+    public function finalApprovedBy()
+    {
+        return $this->belongsTo('App\Models\Employee','approvedEmpSystemID','employeeSystemID');
+    }
 }
