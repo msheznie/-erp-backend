@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4d2713e06db6ef2e07272819ec6db282",
+    "content-hash": "0f03492facdd2568ceb1816bac3ba123",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -3137,6 +3137,60 @@
                 "stylesheet"
             ],
             "time": "2016-07-19T19:14:21+00:00"
+        },
+        {
+            "name": "seguce92/laravel-dompdf",
+            "version": "v2.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/seguce92/laravel-dompdf.git",
+                "reference": "9d97d626e6f197dc93c39ff67033883385961b6f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/seguce92/laravel-dompdf/zipball/9d97d626e6f197dc93c39ff67033883385961b6f",
+                "reference": "9d97d626e6f197dc93c39ff67033883385961b6f",
+                "shasum": ""
+            },
+            "require": {
+                "dompdf/dompdf": "^0.8",
+                "illuminate/support": "5.1.x|5.2.x|5.3.x|5.4.x|5.5.x|5.6.x",
+                "php": ">=5.5.9"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Seguce92\\DomPDF\\ServiceProvider"
+                    ],
+                    "aliases": [
+                        "Seguce92\\DomPDF\\Facade"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Seguce92\\DomPDF\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sergio Gualberto Cruz Espinoza",
+                    "email": "seguce92@gmail.com",
+                    "homepage": "https://mascodigo.net/"
+                }
+            ],
+            "description": "A DOMPDF Wrapper for Laravel forks barryvdh/laravel-dompdf package",
+            "keywords": [
+                "dompdf",
+                "laravel",
+                "pdf"
+            ],
+            "time": "2018-04-29T00:06:11+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",

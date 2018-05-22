@@ -8,6 +8,7 @@
             margin-top: 30px;
             margin-bottom: 0px;
         }
+
         body {
             font-size: 12px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -114,9 +115,34 @@
             height: 0;
             overflow: visible;
         }
+
+        .header,
+        .footer {
+            width: 100%;
+            text-align: left;
+            position: fixed;
+        }
+
+        .header {
+            top: 0px;
+        }
+
+        .footer {
+            bottom: 40px;
+        }
+
+        .pagenum:before {
+            content: counter(page);
+        }
+        #watermark { position: fixed; bottom: 0px; right: 0px; width: 200px; height: 200px; opacity: .1; }
     </style>
 </head>
 <body>
+<div class="footer">
+    {{--Footer Page <span class="pagenum"></span>--}}
+    <span class="white-space-pre-line font-weight-bold">{!! nl2br($request->docRefNo) !!}</span>
+</div>
+<div id="watermark"></div>
 <div class="card-body" id="print-section">
 
     <table>
@@ -236,39 +262,19 @@
                         <td rowspan="3" colspan="3" style="bottom: 0;position: absolute;">
                                 <span class="font-weight-bold">
                                     <h3 class="text-muted">
-
-
-                                        @if($request->PRConfirmedYN == 0 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == 0)
-                                            Not Confirmed & Not Approved
-                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == 0)
-                                            Confirmed & Not Approved
-                                        @elseif($request->PRConfirmedYN == 1 && ($request->approved == -1 ||  $request->approved == 1 ) && ($request->timesReferred == 0 || $request->timesReferred > 0 ) && $request->cancelledYN == 0)
-                                            Fully Approved
-                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred > 0 && $request->cancelledYN == 0)
-                                            Referred Back
-                                        @elseif($request->PRConfirmedYN == 0 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == -1)
-                                            Cancelled
-                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == -1 && $request->timesReferred == 0 && $request->cancelledYN == -1)
-                                            Cancelled
-                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred == 0 && $request->cancelledYN == -1)
-                                            Cancelled
-                                        @endif
-
-
-                                       {{-- @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1)
-                                            Confirmed
-                                        @endif
-                                        @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1 && $request->approved == 0)
-                                            & Not Approved
-                                        @endif
-                                        @if($request->cancelledYN == 0 && $request->PRConfirmedYN == 1 && $request->approved == -1)
-                                            & Approved
-                                        @endif
                                         @if($request->cancelledYN == -1)
                                             Cancelled
-                                        @endif--}}
-</h3>
-</span>
+                                        @elseif($request->PRConfirmedYN == 0 && $request->approved == 0)
+                                            Not Confirmed
+                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == 0  && $request->timesReferred == 0)
+                                            Pending Approval
+                                        @elseif($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred > 0)
+                                            Referred Back
+                                        @elseif($request->PRConfirmedYN == 1 && ($request->approved == 1 || $request->approved == -1))
+                                            Fully Approved
+                                        @endif
+                                        </h3>
+`                                </span>
                         </td>
                     </tr>
                 </table>
@@ -370,9 +376,6 @@
                 @endforeach
             </tr>
         </table>
-    </div>
-    <div style="margin-top: 100px">
-        <span class="white-space-pre-line font-weight-bold">{!! nl2br($request->docRefNo) !!}</span>
     </div>
 </div>
 </body>

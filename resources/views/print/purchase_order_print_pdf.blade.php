@@ -95,18 +95,6 @@
       font-weight: 600;
     }
 
-    /** Define the footer rules **/
-    footer {
-      position: fixed;
-      bottom: 0cm;
-      left: 0cm;
-      right: 0cm;
-      height: 2cm;
-    }
-
-    .footer .page-number:after {
-      content: counter(page);
-    }
 
     #watermark {
       position: fixed;
@@ -123,21 +111,59 @@
       text-align: center !important;
       font-family: fantasy !important;
     }
+
+    .header,
+    .footer {
+      width: 100%;
+      text-align: center;
+      position: fixed;
+    }
+    .header {
+      top: 0px;
+    }
+    .footer {
+      bottom: 100px;
+    }
+    .pagenum:before {
+      content: counter(page);
+    }
+    #watermark { position: fixed;width: 80%; height: 1000px; opacity: 0.9;transform: rotate(-20deg);left:0;
+      transform-origin: 20% 20%;  z-index: -1000; font-family:Arial !important;}
   </style>
 </head>
 <body>
-
-<div class="row" id="print-section">
-  <div id="watermark">
+<div class="footer">
+   <table style="width:100%;position: fixed; bottom: 0px;">
+     <tr>
+       <td style="width:33%">
+         <p><span class="font-weight-bold"><span [innerHTML]="docRefNumber"
+                                                 class="white-space-pre-line">{!! nl2br($docRef["docRefNumber"]) !!}</span></span>
+         </p>
+       </td>
+       <td style="width:33%; text-align: center;">
+         <span  style="text-align: center">Page <span class="page-number"></span></span><br>
+         @if ($podata->company)
+           {{$podata->company->CompanyName}}
+         @endif
+       </td>
+       <td style="width:33%">
+         <span style="margin-left: 30%;">Printed Date : {{ \App\helper\Helper::dateFormat(now())}}</span>
+       </td>
+     </tr>
+   </table>
+</div>
+<div id="watermark">
          <span class="watermarkText"><h3 class="text-muted">
+                 Not Confirmed & Not Approved
              @if($podata->poConfirmedYN == 0 && $podata->approved == 0)
-               Not Confirmed & Not Approved
-             @endif
-             @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
-               Confirmed & Not Approved
-             @endif
+                     Not Confirmed & Not Approved
+                 @endif
+                 @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
+                     Confirmed & Not Approved
+                 @endif
            </h3></span>
-  </div>
+</div>
+<div class="row">
   <table style="width:100%">
     <tr>
       <td width="60%">
@@ -477,7 +503,7 @@
       {{ $subTotal += $det->netAmount }}
       {{ $netUnitCost = $det->unitCost - $det->discountAmount }}
       <tr style="border-bottom: 1px solid black;">
-        <td>{{ $x = 1 }}</td>
+        <td>{{ $x  }}</td>
         <td>{{$det->itemPrimaryCode}}</td>
         <td>{{$det->itemDescription}} <br> {{$det->comment}}</td>
         <td>{{$det->supplierPartNumber}}</td>
@@ -568,7 +594,7 @@
   </table>
 </div>
 
-<div style="position: fixed; bottom: 80px;">
+<div>
   <table style="padding-top: 3px;">
     <tr>
       <td><span class="font-weight-bold">Electronically Approved By :</span></td>
@@ -595,26 +621,7 @@
     </tr>
   </table>
 </div>
-<footer>
-  <table style="width:100%;position: fixed; bottom: 0px;">
-    <tr>
-      <td style="width:33%">
-        <p><span class="font-weight-bold"><span [innerHTML]="docRefNumber"
-                                                class="white-space-pre-line">{!! nl2br($docRef["docRefNumber"]) !!}</span></span>
-        </p>
-      </td>
-      <td style="width:33%; text-align: center;">
-        <span class="footer" style="text-align: center">Page <span class="page-number"></span></span><br>
-        @if ($podata->company)
-          {{$podata->company->CompanyName}}
-        @endif
-      </td>
-      <td style="width:33%">
-        <span style="margin-left: 30%;">Printed Date : {{ \App\helper\Helper::dateFormat(now())}}</span>
-      </td>
-    </tr>
-  </table>
 
-</footer>
+
 </body>
 </html>

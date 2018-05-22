@@ -1585,7 +1585,13 @@ class PurchaseRequestAPIController extends AppBaseController
         //  return $pdf->download('purchase_request_'.$id.'.pdf');
 
         $pdf = \App::make('dompdf.wrapper');
+        //$pdf->setWatermarkText('example', '150px');
 
+        $text = 'watermark';
+        $opacity = 0.9;
+        $size = '100px';
+
+        //$pdf->setWatermarkText($text, $size,$opacity, $rotate = '10deg', $top = '30%');
         //$pdf->getDomPDF()->set_option("enable_php", true);
 
         $pdf->loadHTML($html);

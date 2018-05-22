@@ -19,6 +19,7 @@
         "laravelcollective/html": "^5.5.0",
         "maatwebsite/excel": "^2.1",
         "prettus/l5-repository": "^2.6",
+        "seguce92/laravel-dompdf": "^2.1",
         "yajra/laravel-datatables-oracle": "^8.4"
     },
     "require-dev": {
