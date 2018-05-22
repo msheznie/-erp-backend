@@ -1389,8 +1389,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $body = '<p>' . $cancelDocNameBody . ' is return back to amend due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
         $subject = $cancelDocNameSubject . ' is return back to amend';
 
-        if ($purchaseOrder->PRConfirmedYN == 1) {
-            $emails[] = array('empSystemID' => $purchaseOrder->PRConfirmedBySystemID,
+        if ($purchaseOrder->poConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $purchaseOrder->poConfirmedByEmpSystemID,
                 'companySystemID' => $purchaseOrder->companySystemID,
                 'docSystemID' => $purchaseOrder->documentSystemID,
                 'alertMessage' => $subject,
@@ -2514,10 +2514,6 @@ WHERE
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
         }
-
-        /*        if ($procumentOrder->poClosedYN == 1) {
-                    return $this->sendError('You cannot close this order, this is already closed');
-                }*/
 
         if ($procumentOrder->grvRecieved == 2) {
             return $this->sendError('You cannot close this order, this is already fully received');

@@ -153,15 +153,16 @@
    </table>
 </div>
 <div id="watermark">
-         <span class="watermarkText"><h3 class="text-muted">
-                 Not Confirmed & Not Approved
+         <span class="watermarkText">
+           <h3 class="text-muted">
              @if($podata->poConfirmedYN == 0 && $podata->approved == 0)
                      Not Confirmed & Not Approved
                  @endif
                  @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
                      Confirmed & Not Approved
                  @endif
-           </h3></span>
+           </h3>
+         </span>
 </div>
 <div class="row">
   <table style="width:100%">
@@ -621,7 +622,5 @@
     </tr>
   </table>
 </div>
-
-
 </body>
 </html>

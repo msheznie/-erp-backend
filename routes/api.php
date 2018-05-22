@@ -295,6 +295,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
     Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
     Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
+    Route::post('deleteAllAccessRights', 'EmployeesDepartmentAPIController@deleteAllAccessRights');
 
     Route::post('approveItem', 'ItemMasterAPIController@approveItem');
     Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
