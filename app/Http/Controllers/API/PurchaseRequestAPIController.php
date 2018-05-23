@@ -769,7 +769,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $companyId = $input['companyId'];
         $empID = \Helper::getEmployeeSystemID();
 
-
+        $search = $request->input('search.value');
         $purchaseRequests = DB::table('erp_documentapproved')
             ->select(
                 'erp_purchaserequest.*',
@@ -782,7 +782,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'rollLevelOrder',
                 'approvalLevelID',
                 'documentSystemCode')
-            ->join('erp_purchaserequest', function ($query) use ($companyId) {
+            ->join('erp_purchaserequest', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseRequestID')
                     ->where('erp_purchaserequest.companySystemID', $companyId)
                     ->where('erp_purchaserequest.approved', -1)
@@ -799,13 +799,13 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('erp_documentapproved.companySystemID', $companyId)
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
-        $search = $request->input('search.value');
-
-        if ($search) {
+        $purchaseRequests = $purchaseRequests->when($search != "", function ($q) use ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
-                ->orWhere('comments', 'LIKE', "%{$search}%");
-        }
+            $q->where(function ($query) use ($search) {
+                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
+        });
 
         return \DataTables::of($purchaseRequests)
             ->order(function ($query) use ($input) {
