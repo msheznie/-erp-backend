@@ -21,6 +21,7 @@
  * -- Date: 15-May 2018 By: Fayas Description: Added new functions named as purchaseRequestsPOHistory()
  * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequestPreCheck()
  * -- Date: 21-May 2018 By: Fayas Description: Added new functions named as returnPurchaseRequestPreCheck(),cancelPurchaseRequestPreCheck()
+ * -- Date: 23-May 2018 By: Fayas Description: Added new functions named as purchaseRequestAudit()
  */
 namespace App\Http\Controllers\API;
 
@@ -975,7 +976,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
     /**
      * Display the specified PurchaseRequest PO History.
-     * GET|HEAD /purchaseRequests/{id}
+     * GET|HEAD /purchaseRequestsPOHistory
      *
      * @param  int $id
      *
@@ -1000,6 +1001,28 @@ class PurchaseRequestAPIController extends AppBaseController
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }
+
+    /**
+     * Display the specified PurchaseRequest Audit.
+     * GET|HEAD /purchaseRequestAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function purchaseRequestAudit(Request $request)
+    {
+        $id = $request->get('id');
+        /** @var PurchaseRequest $purchaseRequest */
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','cancelled_by','manually_closed_by','modified_by'])->findWithoutFail($id);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
+    }
+
 
     /**
      * Update the specified PurchaseRequest in storage.
