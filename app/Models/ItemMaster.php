@@ -180,4 +180,9 @@ class ItemMaster extends Model
     public function documentapproved(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemCodeSystem');
     }
+
+    public function finalApprovedBy()
+    {
+        return $this->belongsTo('App\Models\Employee','itemApprovedBySystemID','employeeSystemID');
+    }
 }

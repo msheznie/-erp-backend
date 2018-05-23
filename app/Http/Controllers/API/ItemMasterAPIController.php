@@ -422,6 +422,8 @@ class ItemMasterAPIController extends AppBaseController
 
         $id = $input['itemCodeSystem'];
 
+
+        unset($input['final_approved_by']);
         $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
 
         if (empty($itemMaster)) {
@@ -499,7 +501,7 @@ class ItemMasterAPIController extends AppBaseController
     {
         /** @var ItemMaster $itemMaster */
         //$itemMaster = $this->itemMasterRepository->findWithoutFail($id);
-        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
+        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->with(['finalApprovedBy'])->first();
 
 
         if (empty($itemMaster)) {

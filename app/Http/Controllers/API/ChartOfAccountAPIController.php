@@ -78,6 +78,7 @@ class ChartOfAccountAPIController extends AppBaseController
     {
 
         $input = $request->all();
+        $input = array_except($input, ['final_approved_by']);
 
         /** Validation massage : Common for Add & Update */
         $accountCode = isset($input['AccountCode']) ? $input['AccountCode'] : '';
@@ -242,7 +243,7 @@ class ChartOfAccountAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ChartOfAccount $chartOfAccount */
-        $chartOfAccount = $this->chartOfAccountRepository->findWithoutFail($id);
+        $chartOfAccount = $this->chartOfAccountRepository->with(['finalApprovedBy'])->findWithoutFail($id);
 
         if (empty($chartOfAccount)) {
             return $this->sendError('Chart Of Account not found');

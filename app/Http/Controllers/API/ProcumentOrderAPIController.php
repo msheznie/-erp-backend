@@ -783,16 +783,16 @@ class ProcumentOrderAPIController extends AppBaseController
 
 
         $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
-                                                ->where('companySystemID', $input['companyId'])->first();
+            ->where('companySystemID', $input['companyId'])->first();
 
         $policy = 0;
 
-        if(!empty($historyPolicy)){
+        if (!empty($historyPolicy)) {
             $policy = $historyPolicy->isYesNO;
         }
 
         return \DataTables::eloquent($procumentOrders)
-            ->addColumn('Actions',$policy)
+            ->addColumn('Actions', $policy)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -1231,6 +1231,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'erp_purchaseordermaster.financeCategory',
                 'erp_purchaseordermaster.grvRecieved',
                 'erp_purchaseordermaster.invoicedBooked',
+                'erp_purchaseordermaster.documentSystemID',
+                'erp_purchaseordermaster.poType_N',
             ]);
 
         $search = $request->input('search.value');
@@ -1331,7 +1333,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $body = '<p>' . $cancelDocNameBody . ' is cancelled due to below reason.</p><p>Comment : ' . $input['cancelComments'] . '</p>';
         $subject = $cancelDocNameSubject . ' is cancelled';
 
-        if ($purchaseOrder->PRConfirmedYN == 1) {
+        if ($purchaseOrder->poConfirmedYN == 1) {
             $emails[] = array('empSystemID' => $purchaseOrder->poConfirmedByEmpSystemID,
                 'companySystemID' => $purchaseOrder->companySystemID,
                 'docSystemID' => $purchaseOrder->documentSystemID,
@@ -2159,7 +2161,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->grvRecieved == 0) {
-            return $this->sendError('You cannot close this order, You can only close partially received order' );
+            return $this->sendError('You cannot close this order, You can only close partially received order');
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -2269,16 +2271,27 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             ->where('documentSystemID', $procumentOrder->documentSystemID)
             ->first();
 
-        $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc);
+        $currencyDecimal = CurrencyMaster::select('DecimalPlaces')->where('currencyID', $procumentOrder->supplierTransactionCurrencyID)
+            ->first();
+        $decimal = 2;
+        if (!empty($currencyDecimal)) {
+            $decimal = $currencyDecimal['DecimalPlaces'];
+        }
 
-         $html = view('print.purchase_order_print_pdf', $order);
+        $documentTitle = 'Purchase Order';
+        if ($procumentOrder->documentSystemID == 2) {
+            $documentTitle = 'Purchase Order';
+        } else if ($procumentOrder->documentSystemID == 5 && $procumentOrder->poType_N == 5) {
+            $documentTitle = 'Work Order';
+        } else if ($procumentOrder->documentSystemID == 5 && $procumentOrder->poType_N == 6) {
+            $documentTitle = 'Sub Work Order';
+        } else if ($procumentOrder->documentSystemID == 52) {
+            $documentTitle = 'Direct Order';
+        }
 
-        //return \PDF::loadHTML($html)->setPaper('a4', 'landscape')->setWarnings(false)->download('purchase_order_'.$id.'.pdf');
+        $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc, 'numberFormatting' => $decimal, 'title' => $documentTitle);
 
-        // die();
-
-        //  $pdf = \PDF::loadView('print.purchase_request', $array);
-        //  return $pdf->download('purchase_request_'.$id.'.pdf');
+        $html = view('print.purchase_order_print_pdf', $order);
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
@@ -2528,7 +2541,7 @@ WHERE
         }
 
         if ($procumentOrder->approved != -1 || $procumentOrder->grvRecieved == 0) {
-            return $this->sendError('You cannot close this order, You can only close partially received order' );
+            return $this->sendError('You cannot close this order, You can only close partially received order');
         }
 
 
@@ -2689,13 +2702,13 @@ WHERE
 
         $employee = \Helper::getEmployeeInfo();
 
-        if ( $procurementOrder->WO_amendYN == -1 && $procurementOrder->WO_amendRequestedByEmpID != $employee->empID) {
+        if ($procurementOrder->WO_amendYN == -1 && $procurementOrder->WO_amendRequestedByEmpID != $employee->empID) {
 
-            $amendEmpName =  $procurementOrder->WO_amendRequestedByEmpID;
-            $amendEmp = Employee::where('empID','=',$amendEmpName)->first();
+            $amendEmpName = $procurementOrder->WO_amendRequestedByEmpID;
+            $amendEmp = Employee::where('empID', '=', $amendEmpName)->first();
 
-            if($amendEmp){
-                $amendEmpName =  $amendEmp->empName;
+            if ($amendEmp) {
+                $amendEmpName = $amendEmp->empName;
                 return $this->sendError('You cannot amend this order, this is already amending by ' . $amendEmpName, 500);
             }
 
@@ -2755,13 +2768,13 @@ WHERE
         }
 
         $employee = \Helper::getEmployeeInfo();
-        if ( $procurementOrder->WO_amendYN == -1 && $procurementOrder->WO_amendRequestedByEmpID != $employee->empID) {
+        if ($procurementOrder->WO_amendYN == -1 && $procurementOrder->WO_amendRequestedByEmpID != $employee->empID) {
 
-            $amendEmpName =  $procurementOrder->WO_amendRequestedByEmpID;
-            $amendEmp = Employee::where('empID','=',$amendEmpName)->first();
+            $amendEmpName = $procurementOrder->WO_amendRequestedByEmpID;
+            $amendEmp = Employee::where('empID', '=', $amendEmpName)->first();
 
-            if($amendEmp){
-                $amendEmpName =  $amendEmp->empName;
+            if ($amendEmp) {
+                $amendEmpName = $amendEmp->empName;
                 return $this->sendError('You cannot amend this order, this is already amending by ' . $amendEmpName, 500);
             }
 
@@ -2775,7 +2788,7 @@ WHERE
      * Display the specified Procument Order Pr history.
      * GET|HEAD /procumentOrderPrHistory
      *
-     *  @param $request
+     * @param $request
      *
      * @return Response
      */
@@ -2785,9 +2798,9 @@ WHERE
         $id = $request->get('id');
 
         /** @var ProcumentOrder $procumentOrder */
-        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment','company','detail' => function($q){
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'segment', 'company', 'detail' => function ($q) {
 
-            $q->with(['unit','requestDetail.purchase_request.confirmed_by']);
+            $q->with(['unit', 'requestDetail.purchase_request.confirmed_by']);
 
         }])->findWithoutFail($id);
 
