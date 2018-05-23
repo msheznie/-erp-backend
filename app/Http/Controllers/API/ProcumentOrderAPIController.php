@@ -1434,7 +1434,12 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                     'approvedDate' => null,
                     'approvedByUserID' => null,
                     'approvedByUserSystemID' => null,
-                    'RollLevForApp_curr' => 1
+                    'RollLevForApp_curr' => 1,
+                    'sentToSupplier' => 0,
+                    'sentToSupplierByEmpSystemID' => null,
+                    'sentToSupplierByEmpID' => null,
+                    'sentToSupplierByEmpName' => null,
+                    'sentToSupplierDate' => null
                 ]);
         }
 
