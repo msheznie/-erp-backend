@@ -21,6 +21,7 @@
  * -- Date: 15-May 2018 By: Fayas Description: Added new functions named as purchaseRequestsPOHistory()
  * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequestPreCheck()
  * -- Date: 21-May 2018 By: Fayas Description: Added new functions named as returnPurchaseRequestPreCheck(),cancelPurchaseRequestPreCheck()
+ * -- Date: 23-May 2018 By: Fayas Description: Added new functions named as purchaseRequestAudit()
  */
 namespace App\Http\Controllers\API;
 
@@ -769,7 +770,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $companyId = $input['companyId'];
         $empID = \Helper::getEmployeeSystemID();
 
-
+        $search = $request->input('search.value');
         $purchaseRequests = DB::table('erp_documentapproved')
             ->select(
                 'erp_purchaserequest.*',
@@ -782,7 +783,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'rollLevelOrder',
                 'approvalLevelID',
                 'documentSystemCode')
-            ->join('erp_purchaserequest', function ($query) use ($companyId) {
+            ->join('erp_purchaserequest', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseRequestID')
                     ->where('erp_purchaserequest.companySystemID', $companyId)
                     ->where('erp_purchaserequest.approved', -1)
@@ -799,13 +800,13 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('erp_documentapproved.companySystemID', $companyId)
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
-        $search = $request->input('search.value');
-
-        if ($search) {
+        $purchaseRequests = $purchaseRequests->when($search != "", function ($q) use ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
-                ->orWhere('comments', 'LIKE', "%{$search}%");
-        }
+            $q->where(function ($query) use ($search) {
+                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
+        });
 
         return \DataTables::of($purchaseRequests)
             ->order(function ($query) use ($input) {
@@ -975,7 +976,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
     /**
      * Display the specified PurchaseRequest PO History.
-     * GET|HEAD /purchaseRequests/{id}
+     * GET|HEAD /purchaseRequestsPOHistory
      *
      * @param  int $id
      *
@@ -1000,6 +1001,28 @@ class PurchaseRequestAPIController extends AppBaseController
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }
+
+    /**
+     * Display the specified PurchaseRequest Audit.
+     * GET|HEAD /purchaseRequestAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function purchaseRequestAudit(Request $request)
+    {
+        $id = $request->get('id');
+        /** @var PurchaseRequest $purchaseRequest */
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','cancelled_by','manually_closed_by','modified_by'])->findWithoutFail($id);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
+    }
+
 
     /**
      * Update the specified PurchaseRequest in storage.
@@ -1585,7 +1608,13 @@ class PurchaseRequestAPIController extends AppBaseController
         //  return $pdf->download('purchase_request_'.$id.'.pdf');
 
         $pdf = \App::make('dompdf.wrapper');
+        //$pdf->setWatermarkText('example', '150px');
 
+        $text = 'watermark';
+        $opacity = 0.9;
+        $size = '100px';
+
+        //$pdf->setWatermarkText($text, $size,$opacity, $rotate = '10deg', $top = '30%');
         //$pdf->getDomPDF()->set_option("enable_php", true);
 
         $pdf->loadHTML($html);

@@ -78,7 +78,7 @@ class UserAPIController extends AppBaseController
             if (empty($user)) {
                 return $this->sendError('User not found');
             }
-            return $this->sendResponse($user->toArray(), 'User retrieved successfully');
+            return $this->sendResponse([], 'User retrieved successfully');
 
         } catch (\Exception $exception) {
             return $this->sendError('User not found');
@@ -133,7 +133,7 @@ class UserAPIController extends AppBaseController
                 ->get();*/
 
 
-            $data = array('companies' => $setCompanies,'default_company' =>  $user->employee['empCompanyID']);
+            $data = array('companies' => $setCompanies,'default_company' =>  $user->employee['empCompanySystemID']);
 
 
             return $data;

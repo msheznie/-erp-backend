@@ -231,4 +231,11 @@ class SupplierMaster extends Model
         return $this->belongsToMany('App\Models\SupplierCategorySub', 'suppliersubcategoryassign','supSubCategoryID','supplierID');
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function finalApprovedBy()
+    {
+        return $this->belongsTo('App\Models\Employee','approvedEmpSystemID','employeeSystemID');
+    }
 }

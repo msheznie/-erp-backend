@@ -267,7 +267,7 @@ class ItemMasterAPIController extends AppBaseController
         $companyID = $request->selectedCompanyID;
         $companyID = \Helper::getGroupCompany($companyID);
         $empID = \Helper::getEmployeeSystemID();
-
+        $search = $request->input('search.value');
         $itemMasters = DB::table('erp_documentapproved')->select('itemmaster.*','erp_documentapproved.documentApprovedID','financeitemcategorymaster.categoryDescription as financeitemcategorydescription','financeitemcategorysub.categoryDescription as financeitemcategorysubdescription','units.UnitShortCode','rollLevelOrder','financeGLcodePL','approvalLevelID','documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -275,11 +275,18 @@ class ItemMasterAPIController extends AppBaseController
                 ->where('employeesdepartments.documentSystemID', 57)
                 ->whereIn('employeesdepartments.companySystemID', $companyID)
                 ->where('employeesdepartments.employeeSystemID', $empID);
-        })->join('itemmaster', function ($query) use ($companyID, $empID) {
+        })->join('itemmaster', function ($query) use ($companyID, $empID,$search) {
             $query->on('itemCodeSystem', '=', 'documentSystemCode')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->whereIn('itemmaster.primaryCompanySystemID', $companyID)
-                ->where('itemApprovedYN', 0);
+                ->where('itemApprovedYN', 0)
+                ->when($search != "", function ($q) use($search){
+                    $q->where(function ($query) use($search) {
+                        $query->where('primaryCode', 'LIKE', "%{$search}%")
+                            ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                            ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                    });
+                });
         })->leftJoin('units', 'UnitID', '=', 'unit')
             ->leftJoin('financeitemcategorymaster', 'itemCategoryID', '=', 'financeCategoryMaster')
             ->leftJoin('financeitemcategorysub', 'itemCategorySubID', '=', 'financeCategorySub')
@@ -422,6 +429,8 @@ class ItemMasterAPIController extends AppBaseController
 
         $id = $input['itemCodeSystem'];
 
+
+        unset($input['final_approved_by']);
         $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
 
         if (empty($itemMaster)) {
@@ -499,7 +508,7 @@ class ItemMasterAPIController extends AppBaseController
     {
         /** @var ItemMaster $itemMaster */
         //$itemMaster = $this->itemMasterRepository->findWithoutFail($id);
-        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->first();
+        $itemMaster = ItemMaster::where("itemCodeSystem", $id)->with(['finalApprovedBy'])->first();
 
 
         if (empty($itemMaster)) {

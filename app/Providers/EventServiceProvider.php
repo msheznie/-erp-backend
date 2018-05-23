@@ -42,7 +42,7 @@ class EventServiceProvider extends ServiceProvider
         ],
 
         'Laravel\Passport\Events\RefreshTokenCreated' => [
-           // 'App\Listeners\PruneOldTokens',  //should uncomment
+            'App\Listeners\PruneOldTokens',  //should uncomment
         ],
     ];
 

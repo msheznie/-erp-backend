@@ -86,6 +86,11 @@ class PoAdvancePaymentAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
+        if (empty($input['comAmount']) || $input['comAmount'] == 0) {
+            return $this->sendError('Amount should be greater than 0');
+        }
+
+
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
         $input['serviceLineID'] = $purchaseOrder->serviceLine;
         $input['companySystemID'] = $purchaseOrder->companySystemID;

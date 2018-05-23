@@ -145,6 +145,8 @@ class CustomerMasterAPIController extends AppBaseController
         $companyID = \Helper::getGroupCompany($companyID);
         $empID = \Helper::getEmployeeSystemID();
 
+        $search = $request->input('search.value');
+
         $customerMasters = DB::table('erp_documentapproved')->select('customermaster.*','countrymaster.countryName','erp_documentapproved.documentApprovedID','rollLevelOrder','approvalLevelID','documentSystemCode')->join('employeesdepartments',function ($query) use ($companyID,$empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -152,12 +154,19 @@ class CustomerMasterAPIController extends AppBaseController
                 ->where('employeesdepartments.documentSystemID',58)
                 ->whereIn('employeesdepartments.companySystemID',$companyID)
                 ->where('employeesdepartments.employeeSystemID',$empID);
-        })->join('customermaster', function ($query) use ($companyID, $empID) {
+        })->join('customermaster', function ($query) use ($companyID, $empID,$search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'customerCodeSystem')
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->whereIn('primaryCompanySystemID', $companyID)
                     ->where('customermaster.approvedYN', 0)
-                    ->where('customermaster.confirmedYN', 1);
+                    ->where('customermaster.confirmedYN', 1)
+                    ->when($search != "", function ($q) use($search){
+                        $q->where(function ($query) use($search) {
+                            $query->where('CutomerCode','LIKE',"%{$search}%")
+                                ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
+                                ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+                        });
+                    });
             })->where('erp_documentapproved.approvedYN', 0)
             ->join('countrymaster', 'customerCountry','=','countryID')
             ->where('erp_documentapproved.rejectedYN',0)
@@ -354,7 +363,7 @@ class CustomerMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CustomerMaster $customerMaster */
-        $customerMaster = $this->customerMasterRepository->findWithoutFail($id);
+        $customerMaster = $this->customerMasterRepository->with(['finalApprovedBy'])->findWithoutFail($id);
        // $customerMasters = CustomerMaster::where('customerCodeSystem', $id)->first();
         if (empty($customerMaster)) {
             return $this->sendError('Customer Master not found');
@@ -375,6 +384,8 @@ class CustomerMasterAPIController extends AppBaseController
     public function update($id, UpdateCustomerMasterAPIRequest $request)
     {
         $input = $request->all();
+
+        $input = array_except($input, ['final_approved_by']);
 
         /** @var CustomerMaster $customerMaster */
         $customerMaster = $this->customerMasterRepository->findWithoutFail($id);

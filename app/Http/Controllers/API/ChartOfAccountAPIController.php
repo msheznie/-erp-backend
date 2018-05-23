@@ -78,6 +78,7 @@ class ChartOfAccountAPIController extends AppBaseController
     {
 
         $input = $request->all();
+        $input = array_except($input, ['final_approved_by']);
 
         /** Validation massage : Common for Add & Update */
         $accountCode = isset($input['AccountCode']) ? $input['AccountCode'] : '';
@@ -242,7 +243,7 @@ class ChartOfAccountAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ChartOfAccount $chartOfAccount */
-        $chartOfAccount = $this->chartOfAccountRepository->findWithoutFail($id);
+        $chartOfAccount = $this->chartOfAccountRepository->with(['finalApprovedBy'])->findWithoutFail($id);
 
         if (empty($chartOfAccount)) {
             return $this->sendError('Chart Of Account not found');
@@ -378,18 +379,27 @@ class ChartOfAccountAPIController extends AppBaseController
         $companyID = \Helper::getGroupCompany($companyID);
         $empID = \Helper::getEmployeeSystemID();
 
+        $search = $request->input('search.value');
+
         $chartOfAccount = DB::table('erp_documentapproved')->select('chartofaccounts.*','controlaccounts.description as controlaccountdescription','accountstype.description as accountstypedescription','erp_documentapproved.documentApprovedID','rollLevelOrder','approvalLevelID','documentSystemCode')->join('employeesdepartments',function ($query) use ($companyID,$empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
-                ->where('employeesdepartments.documentSystemID',59)->whereIn('employeesdepartments.companySystemID',$companyID)
+                ->where('employeesdepartments.documentSystemID',59)
+                ->whereIn('employeesdepartments.companySystemID',$companyID)
                 ->where('employeesdepartments.employeeSystemID',$empID);
-        })->join('chartofaccounts',function ($query) use ($companyID,$empID) {
+        })->join('chartofaccounts',function ($query) use ($companyID,$empID,$search) {
             $query->on('chartOfAccountSystemID','=','erp_documentapproved.documentSystemCode')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->whereIn('primaryCompanySystemID',$companyID)
                 ->where('isApproved', 0)
-                ->where('chartofaccounts.confirmedYN', 1);
+                ->where('chartofaccounts.confirmedYN', 1)
+                ->when($search != "", function ($q) use($search){
+                    $q->where(function ($query) use($search) {
+                        $query->where('AccountCode','LIKE',"%{$search}%")
+                            ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+                    });
+                });
         })
             ->leftJoin('controlaccounts','controlaccounts.controlAccountsSystemID','=','chartofaccounts.controlAccountsSystemID')
             ->leftJoin('accountstype','catogaryBLorPLID','=','accountsType')

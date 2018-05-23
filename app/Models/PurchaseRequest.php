@@ -296,6 +296,18 @@ class PurchaseRequest extends Model
         return $this->belongsTo('App\Models\Employee','createdUserSystemID','employeeSystemID');
     }
 
+    public function cancelled_by(){
+        return $this->belongsTo('App\Models\Employee','cancelledByEmpSystemID','employeeSystemID');
+    }
+
+    public function manually_closed_by(){
+        return $this->belongsTo('App\Models\Employee','manuallyClosedByEmpSystemID','employeeSystemID');
+    }
+
+    public function modified_by(){
+        return $this->belongsTo('App\Models\Employee','modifiedUserSystemID','employeeSystemID');
+    }
+
     public function confirmed_by(){
         return $this->belongsTo('App\Models\Employee','PRConfirmedBySystemID','employeeSystemID');
     }

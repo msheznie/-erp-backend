@@ -156,5 +156,10 @@ class ChartOfAccount extends Model
         return $this->belongsTo('App\Models\AccountsType', 'catogaryBLorPLID', 'accountsType');
     }
 
+    public function finalApprovedBy()
+    {
+        return $this->belongsTo('App\Models\Employee','approvedBySystemID','employeeSystemID');
+    }
+
 
 }
