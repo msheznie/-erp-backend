@@ -29,6 +29,7 @@
  * -- Date: 16-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrder(),
  * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as procumentOrderPrHistory(),
  * -- Date: 21-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrderPreCheck(),
+ * -- Date: 24-May 2018 By: Nazir Description: Added new functions named as ProcurementOrderAudit(),
  */
 
 namespace App\Http\Controllers\API;
@@ -2814,6 +2815,28 @@ WHERE
         }
 
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
+    }
+
+    /**
+     * Display the specified Procurement Order Audit.
+     * GET|HEAD /ProcurementOrderAudit
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+
+    public function ProcurementOrderAudit(Request $request){
+
+        $id = $request->get('id');
+
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by','cancelled_by','manually_closed_by','modified_by'])->findWithoutFail($id);
+
+        if (empty($procumentOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        return $this->sendResponse($procumentOrder->toArray(), 'Purchase Order retrieved successfully');
     }
 
 
