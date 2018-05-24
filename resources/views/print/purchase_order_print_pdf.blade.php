@@ -103,7 +103,7 @@
             position: fixed;
             width: 100%;
             height: 100%;
-            padding-top: 45%;
+            padding-top: 31%;
             z-index: -1000;
         }
 
@@ -113,6 +113,14 @@
             font-weight: 700 !important;
             text-align: center !important;
             font-family: fantasy !important;
+        }
+        #watermark {
+            height: 1000px;
+            opacity: 0.9;
+            left: 0;
+            transform-origin: 20% 20%;
+            z-index: -1000;
+            font-family: Arial !important;
         }
 
         .footer {
@@ -135,17 +143,7 @@
             content: counter(page);
         }
 
-        #watermark {
-            position: fixed;
-            width: 80%;
-            height: 1000px;
-            opacity: 0.9;
-            transform: rotate(-20deg);
-            left: 0;
-            transform-origin: 20% 20%;
-            z-index: -1000;
-            font-family: Arial !important;
-        }
+
     </style>
 </head>
 <body>
@@ -611,7 +609,7 @@
     </table>
 </div>
 <div class="row">
-    <table style="width:100%;padding-top: 3%;">
+    <table style="width:100%;padding-top: 3%;padding-bottom: 50px">
         <tr>
             <td style="width:13%"><span class="font-weight-bold">Delivery Terms</span></td>
             <td style="width:2%"><span class="font-weight-bold">:</span></td>
@@ -620,7 +618,7 @@
     </table>
 </div>
 <div class="row">
-    <table style="width:100%;padding-top: 3%;">
+    <table style="width:100%;padding-top: 3%;padding-bottom: 50px">
         <tr style="padding-bottom: 2%;">
             <td style="width:13%"><span class="font-weight-bold">Penalty Terms</span></td>
             <td style="width:2%"><span class="font-weight-bold">:</span></td>
@@ -629,7 +627,7 @@
     </table>
 </div>
 <div class="row">
-    <table style="width:100%;padding-top: 3%;">
+    <table style="width:100%;padding-top: 3%;padding-bottom: 50px">
         <tr style="padding-bottom: 2%;">
             <td style="width:13%"><span class="font-weight-bold">Payment Terms</span></td>
             <td style="width:2%"><span class="font-weight-bold">:</span></td>

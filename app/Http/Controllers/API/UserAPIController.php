@@ -133,7 +133,7 @@ class UserAPIController extends AppBaseController
                 ->get();*/
 
 
-            $data = array('companies' => $setCompanies,'default_company' =>  $user->employee['empCompanyID']);
+            $data = array('companies' => $setCompanies,'default_company' =>  $user->employee['empCompanySystemID']);
 
 
             return $data;

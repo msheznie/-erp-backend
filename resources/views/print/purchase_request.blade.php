@@ -371,7 +371,9 @@
                             {{$det->employee->empFullName }}
                         @endif
                         <br><br>
-                        {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                        @if($det->employee)
+                          {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                        @endif
                     </td>
                 @endforeach
             </tr>

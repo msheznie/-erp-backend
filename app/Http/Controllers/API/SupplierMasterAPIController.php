@@ -159,6 +159,8 @@ class SupplierMasterAPIController extends AppBaseController
         $companyID = \Helper::getGroupCompany($companyID);
         $empID = \Helper::getEmployeeSystemID();
 
+        $search = $request->input('search.value');
+
         $supplierMasters = DB::table('erp_documentapproved')->select('suppliermaster.*','erp_documentapproved.documentApprovedID','rollLevelOrder','currencymaster.CurrencyCode','suppliercategorymaster.categoryDescription','approvalLevelID','documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')->
@@ -168,12 +170,18 @@ class SupplierMasterAPIController extends AppBaseController
                     ->whereIn('employeesdepartments.companySystemID', $companyID)
                     ->where('employeesdepartments.employeeSystemID', $empID);
             })
-            ->join('suppliermaster', function ($query) use ($companyID, $empID) {
+            ->join('suppliermaster', function ($query) use ($companyID, $empID,$search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'supplierCodeSystem')
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->whereIn('primaryCompanySystemID', $companyID)
                     ->where('suppliermaster.approvedYN', 0)
-                    ->where('suppliermaster.supplierConfirmedYN', 1);
+                    ->where('suppliermaster.supplierConfirmedYN', 1)
+                    ->when($search != "", function ($q) use($search){
+                        $q->where(function ($query) use($search) {
+                            $query->where('primarySupplierCode','LIKE',"%{$search}%")
+                                ->orWhere( 'supplierName', 'LIKE', "%{$search}%");
+                        });
+                     });
             })
             ->leftJoin('suppliercategorymaster', 'suppliercategorymaster.supCategoryMasterID', '=', 'suppliermaster.supCategoryMasterID')
             ->leftJoin('currencymaster', 'suppliermaster.currency', '=', 'currencymaster.currencyID')

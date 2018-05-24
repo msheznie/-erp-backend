@@ -20,6 +20,7 @@ use App\Models\ApprovalGroups;
 use App\Models\Company;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentMaster;
+use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\SegmentMaster;
 use App\Repositories\EmployeesDepartmentRepository;
@@ -88,6 +89,11 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $ServiceLineID = SegmentMaster::find($val['ServiceLineSystemID']);
                 $input[$key]['ServiceLineID'] = $ServiceLineID->ServiceLineCode;
             }
+            if($val['employeeSystemID']){
+                $employeeID = Employee::find($val['employeeSystemID']);
+                $input[$key]['employeeID'] = $employeeID->empID;
+            }
+            $input[$key]['timeStamp'] = date("Y-m-d H:m:s");
         }
 
         //$employeesDepartments = $this->employeesDepartmentRepository->create($input);
@@ -175,6 +181,42 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $employeesDepartment = EmployeesDepartment::with(['company','department','serviceline','document','approvalgroup'])->where('employeeSystemID',$request->employeeSystemID)->selectRaw('*,false as selected');
         $search = $request->input('search.value');
+
+        if (array_key_exists('companySystemID', $input)) {
+            if ($input['companySystemID'] > 0) {
+                $employeesDepartment->whereHas('company',function ($q) use($input){
+                    $q->where('companySystemID',$input['companySystemID']);
+                });
+            }
+        }
+        if (array_key_exists('documentSystemID', $input)) {
+            if ($input['documentSystemID'] > 0) {
+                $employeesDepartment->whereHas('document',function ($q) use($input){
+                    $q->where('documentSystemID',$input['documentSystemID']);
+                });
+            }
+        }
+        if (array_key_exists('departmentSystemID', $input)) {
+            if ($input['departmentSystemID'] > 0) {
+                $employeesDepartment->whereHas('department',function ($q) use($input){
+                    $q->where('departmentSystemID',$input['departmentSystemID']);
+                });
+            }
+        }
+        if (array_key_exists('servicelineSystemID', $input)) {
+            if ($input['servicelineSystemID'] > 0) {
+                $employeesDepartment->whereHas('serviceline',function ($q) use($input){
+                    $q->where('servicelineSystemID',$input['servicelineSystemID']);
+                });
+            }
+        }
+        if (array_key_exists('approvalGroupID', $input)) {
+            if ($input['approvalGroupID'] > 0) {
+                $employeesDepartment->whereHas('approvalgroup',function ($q) use($input){
+                    $q->where('employeeGroupID',$input['approvalGroupID']);
+                });
+            }
+        }
         if($search){
             $employeesDepartment = $employeesDepartment->where(function ($q) use($search){
                 $q->whereHas('company',function ($query) use($search) {
