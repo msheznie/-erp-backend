@@ -72,24 +72,24 @@ class EmployeesDepartmentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        foreach ($input as $key=> $val){
-            if($val['companySystemID']){
+        foreach ($input as $key => $val) {
+            if ($val['companySystemID']) {
                 $companyID = Company::find($val['companySystemID']);
                 $input[$key]['companyId'] = $companyID->CompanyID;
             }
-            if($val['documentSystemID']){
+            if ($val['documentSystemID']) {
                 $documentID = DocumentMaster::find($val['documentSystemID']);
                 $input[$key]['documentID'] = $documentID->documentID;
             }
-            if($val['departmentSystemID']){
+            if ($val['departmentSystemID']) {
                 $departmentID = DepartmentMaster::find($val['departmentSystemID']);
                 $input[$key]['departmentID'] = $departmentID->DepartmentID;
             }
-            if($val['ServiceLineSystemID']){
+            if ($val['ServiceLineSystemID']) {
                 $ServiceLineID = SegmentMaster::find($val['ServiceLineSystemID']);
                 $input[$key]['ServiceLineID'] = $ServiceLineID->ServiceLineCode;
             }
-            if($val['employeeSystemID']){
+            if ($val['employeeSystemID']) {
                 $employeeID = Employee::find($val['employeeSystemID']);
                 $input[$key]['employeeID'] = $employeeID->empID;
             }
@@ -179,65 +179,78 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $employeesDepartment = EmployeesDepartment::with(['company','department','serviceline','document','approvalgroup'])->where('employeeSystemID',$request->employeeSystemID)->selectRaw('*,false as selected');
+        $employeesDepartment = EmployeesDepartment::with(['company', 'department', 'serviceline', 'document', 'approvalgroup'])->where('employeeSystemID', $request->employeeSystemID)->selectRaw('*,false as selected');
         $search = $request->input('search.value');
 
         if (array_key_exists('companySystemID', $input)) {
             if ($input['companySystemID'] > 0) {
-                $employeesDepartment->whereHas('company',function ($q) use($input){
-                    $q->where('companySystemID',$input['companySystemID']);
+                $employeesDepartment->whereHas('company', function ($q) use ($input) {
+                    $q->where('companySystemID', $input['companySystemID']);
                 });
+            }else {
+                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                    $employeesDepartment->where('companySystemID',$input['globalCompanyId']);
+                }else{
+                    $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                    $employeesDepartment->whereIN('companySystemID',$companiesByGroup);
+                }
+            }
+        }else{
+            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                $employeesDepartment->where('companySystemID',$input['globalCompanyId']);
+            }else{
+                $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                $employeesDepartment->whereIN('companySystemID',$companiesByGroup);
             }
         }
         if (array_key_exists('documentSystemID', $input)) {
             if ($input['documentSystemID'] > 0) {
-                $employeesDepartment->whereHas('document',function ($q) use($input){
-                    $q->where('documentSystemID',$input['documentSystemID']);
+                $employeesDepartment->whereHas('document', function ($q) use ($input) {
+                    $q->where('documentSystemID', $input['documentSystemID']);
                 });
             }
         }
         if (array_key_exists('departmentSystemID', $input)) {
             if ($input['departmentSystemID'] > 0) {
-                $employeesDepartment->whereHas('department',function ($q) use($input){
-                    $q->where('departmentSystemID',$input['departmentSystemID']);
+                $employeesDepartment->whereHas('department', function ($q) use ($input) {
+                    $q->where('departmentSystemID', $input['departmentSystemID']);
                 });
             }
         }
         if (array_key_exists('servicelineSystemID', $input)) {
             if ($input['servicelineSystemID'] > 0) {
-                $employeesDepartment->whereHas('serviceline',function ($q) use($input){
-                    $q->where('servicelineSystemID',$input['servicelineSystemID']);
+                $employeesDepartment->whereHas('serviceline', function ($q) use ($input) {
+                    $q->where('servicelineSystemID', $input['servicelineSystemID']);
                 });
             }
         }
         if (array_key_exists('approvalGroupID', $input)) {
             if ($input['approvalGroupID'] > 0) {
-                $employeesDepartment->whereHas('approvalgroup',function ($q) use($input){
-                    $q->where('employeeGroupID',$input['approvalGroupID']);
+                $employeesDepartment->whereHas('approvalgroup', function ($q) use ($input) {
+                    $q->where('employeeGroupID', $input['approvalGroupID']);
                 });
             }
         }
-        if($search){
-            $employeesDepartment = $employeesDepartment->where(function ($q) use($search){
-                $q->whereHas('company',function ($query) use($search) {
-                    $query->where('CompanyID','LIKE',"%{$search}%");
-                })->orWhereHas('department',function ($query) use($search) {
-                    $query->where('DepartmentDescription','LIKE',"%{$search}%");
-                })->orWhereHas('serviceline',function ($query) use($search) {
-                    $query->where('ServiceLineDes','LIKE',"%{$search}%");
-                })->orWhereHas('document',function ($query) use($search) {
-                    $query->where('documentDescription','LIKE',"%{$search}%");
-                })->orWhereHas('approvalgroup',function ($query) use($search) {
-                    $query->where('rightsGroupDes','LIKE',"%{$search}%");
+        if ($search) {
+            $employeesDepartment = $employeesDepartment->where(function ($q) use ($search) {
+                $q->whereHas('company', function ($query) use ($search) {
+                    $query->where('CompanyID', 'LIKE', "%{$search}%");
+                })->orWhereHas('department', function ($query) use ($search) {
+                    $query->where('DepartmentDescription', 'LIKE', "%{$search}%");
+                })->orWhereHas('serviceline', function ($query) use ($search) {
+                    $query->where('ServiceLineDes', 'LIKE', "%{$search}%");
+                })->orWhereHas('document', function ($query) use ($search) {
+                    $query->where('documentDescription', 'LIKE', "%{$search}%");
+                })->orWhereHas('approvalgroup', function ($query) use ($search) {
+                    $query->where('rightsGroupDes', 'LIKE', "%{$search}%");
                 });
             });
         }
 
         return \DataTables::eloquent($employeesDepartment)
             ->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('employeesDepartmentsID', $input['order'][0]['dir']);
                     }
                 }
@@ -253,32 +266,60 @@ class EmployeesDepartmentAPIController extends AppBaseController
     public function getApprovalAccessRightsFormData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
-        $companiesByGroup="";
-        if(\Helper::checkIsCompanyGroup($selectedCompanyId)){
+        $companiesByGroup = "";
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
             $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
-        }else{
+        } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
         $groupCompany = Company::whereIN("companySystemID", $companiesByGroup)->get();
-        $department = DepartmentMaster::where('showInCombo',-1)->get();
-        $employeesDepartment = array('company' => $groupCompany, 'approvalGroup' => ApprovalGroups::all(),'department' => $department);
+        $department = DepartmentMaster::where('showInCombo', -1)->get();
+        $employeesDepartment = array('company' => $groupCompany, 'approvalGroup' => ApprovalGroups::all(), 'department' => $department);
         return $this->sendResponse($employeesDepartment, 'Employees Department retrieved successfully');
     }
 
-    public function getDepartmentDocument(Request $request){
-        $document = DocumentMaster::where('departmentSystemID',$request['departmentSystemID'])->get();
+    public function getDepartmentDocument(Request $request)
+    {
+        $document = DocumentMaster::where('departmentSystemID', $request['departmentSystemID'])->get();
         if (empty($document)) {
             return $this->sendError('Document not found');
         }
         return $this->sendResponse($document, 'Document retrieved successfully');
     }
 
-    function deleteAllAccessRights(Request $request){
-        $employeesDepartment = EmployeesDepartment::where('employeeSystemID',$request->employeeSystemID);
+    function deleteAllAccessRights(Request $request)
+    {
+        $input = $request->all();
+
+        $employeesDepartment = EmployeesDepartment::where('employeeSystemID', $request->employeeSystemID);
+        if (array_key_exists('companySystemID', $input)) {
+            if ($input['companySystemID'] > 0) {
+                $employeesDepartment->where('companySystemID', $request->companySystemID);
+            }
+        }
+        if (array_key_exists('documentSystemID', $input)) {
+            if ($input['documentSystemID'] > 0) {
+                $employeesDepartment->where('documentSystemID', $request->documentSystemID);
+            }
+        }
+        if (array_key_exists('departmentSystemID', $input)) {
+            if ($input['departmentSystemID'] > 0) {
+                $employeesDepartment->where('departmentSystemID', $request->departmentSystemID);
+            }
+        }
+        if (array_key_exists('servicelineSystemID', $input)) {
+            if ($input['servicelineSystemID'] > 0) {
+                $employeesDepartment->where('servicelineSystemID', $request->servicelineSystemID);
+            }
+        }
+        if (array_key_exists('approvalGroupID', $input)) {
+            if ($input['approvalGroupID'] > 0) {
+                $employeesDepartment->where('approvalGroupID', $request->approvalGroupID);
+            }
+        }
         $employeesDepartment->delete();
         return $this->sendResponse(array(), 'Employees Department deleted successfully');
     }
-
 
 
 }
