@@ -29,6 +29,11 @@
  * -- Date: 16-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrder(),
  * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as procumentOrderPrHistory(),
  * -- Date: 21-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrderPreCheck(),
+<<<<<<< HEAD
+ * -- Date: 24-May 2018 By: Fayas Description: Added new functions named as procumentOrderChangeSupplier(),
+=======
+ * -- Date: 24-May 2018 By: Nazir Description: Added new functions named as ProcurementOrderAudit(),
+>>>>>>> faa2c9d2283d02f11a95ffe09172857f309ce6b6
  */
 
 namespace App\Http\Controllers\API;
@@ -433,7 +438,7 @@ class ProcumentOrderAPIController extends AppBaseController
             ->first();
 
         if ($supplierCurrency) {
-            $procumentOrderUpdate->supplierDefaultCurrencyID = $supplier->currencyID;
+            $procumentOrderUpdate->supplierDefaultCurrencyID = $supplierCurrency->currencyID;
             $procumentOrderUpdate->supplierTransactionER = 1;
         }
 
@@ -2814,6 +2819,174 @@ WHERE
         }
 
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
+    }
+
+    /**
+     * changes the Po supplier
+     * Post /procumentOrderChangeSupplier
+     * @param $request
+     *
+     * @return Response
+     */
+
+
+    public function procumentOrderChangeSupplier(Request $request)
+    {
+        $id = $request->get('id');
+
+        $input = $request->all();
+
+
+        /** @var ProcumentOrder $procumentOrder */
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID',$id)->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        $input['companySystemID'] = $purchaseOrder->companySystemID;
+
+        $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
+
+        if (empty($supplier)) {
+            return $this->sendError('Supplier not found');
+        }
+
+        if ($supplier) {
+            $purchaseOrder->supplierID = $input['supplierID'];
+            $purchaseOrder->supplierPrimaryCode = $supplier->primarySupplierCode;
+            $purchaseOrder->supplierName = $supplier->supplierName;
+            $purchaseOrder->supplierAddress = $supplier->address;
+            $purchaseOrder->supplierTelephone = $supplier->telephone;
+            $purchaseOrder->supplierFax = $supplier->fax;
+            $purchaseOrder->supplierEmail = $supplier->supEmail;
+            $purchaseOrder->creditPeriod = $supplier->creditPeriod;
+            $purchaseOrder->supplierVATEligible = $supplier->vatEligible;
+        }
+
+        $currency =  SupplierCurrency::where('supplierCodeSystem', $input['supplierTransactionCurrencyID'])->first();
+
+        if (empty($currency)) {
+            return $this->sendError('Currency not found');
+        }
+
+        $purchaseOrder->supplierTransactionCurrencyID = $input['supplierTransactionCurrencyID'];
+
+
+        $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
+                                            ->where('isDefault', -1)
+                                            ->first();
+
+        if ($supplierCurrency) {
+            $purchaseOrder->supplierDefaultCurrencyID = $supplierCurrency->currencyID;
+            $purchaseOrder->supplierTransactionER = 1;
+            $erCurrency = CurrencyMaster::where('currencyID',$supplierCurrency->currencyID)->first();
+            $purchaseOrder->supplierDefaultER = $erCurrency->ExchangeRate;
+        }
+
+        $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
+                                                ->where('companySystemID', $purchaseOrder->companySystemID)
+                                                ->first();
+
+        if ($supplierAssignedDetai) {
+            $purchaseOrder->supplierVATEligible = $supplierAssignedDetai->vatEligible;
+            //$input['VATPercentage'] = $supplierAssignedDetai->vatPercentage;
+        }
+
+        if ($purchaseOrder->VATAmount > 0) {
+
+            $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->VATAmount);
+
+            $purchaseOrder->VATAmountLocal = round($currencyConversionVatAmount['localAmount'], 8);
+            $purchaseOrder->VATAmountRpt = round($currencyConversionVatAmount['reportingAmount'], 8);
+        } else {
+            $purchaseOrder->VATAmountLocal = 0;
+            $purchaseOrder->VATAmountRpt = 0;
+        }
+
+        //getting total sum of PO detail Amount
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            ->where('purchaseOrderMasterID', $purchaseOrder->purchaseOrderID)
+            ->first();
+
+        $poMasterSumDeducted = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) + $purchaseOrder->VATAmount;
+
+        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $poMasterSumDeducted);
+
+        $purchaseOrder->poTotalComRptCurrency = round($currencyConversionMaster['reportingAmount'], 8);
+        $purchaseOrder->poTotalLocalCurrency = round($currencyConversionMaster['localAmount'], 8);
+        $purchaseOrder->poTotalSupplierDefaultCurrency = 0;
+        $purchaseOrder->poTotalSupplierTransactionCurrency = round($poMasterSumDeducted, 8);
+        $purchaseOrder->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
+        $purchaseOrder->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
+
+
+        $purchaseOrder->save();
+
+        foreach ($purchaseOrder->detail as $item){
+
+            $purchaseOrderDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID',$item->purchaseOrderDetailsID)->first();
+
+            $purchaseOrderDetail->supplierItemCurrencyID = $purchaseOrder->supplierTransactionCurrencyID;
+            $purchaseOrderDetail->foreignToLocalER = $purchaseOrder->supplierTransactionER;
+
+            $purchaseOrderDetail->supplierDefaultCurrencyID = $purchaseOrder->supplierDefaultCurrencyID;
+            $purchaseOrderDetail->supplierDefaultER = $purchaseOrder->supplierDefaultER;
+
+            $purchaseOrderDetail->companyReportingER = $purchaseOrder->companyReportingER;
+            $purchaseOrderDetail->localCurrencyER = $purchaseOrder->localCurrencyER;
+            $purchaseOrderDetail->VATAmountLocal = $purchaseOrder->VATAmountLocal;
+            $purchaseOrderDetail->VATAmountRpt = $purchaseOrder->VATAmountRpt;
+
+            if ($purchaseOrderDetail->unitCost > 0) {
+                $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->unitCost);
+
+                //$purchaseOrderDetail->unitCost =
+
+                $purchaseOrderDetail->GRVcostPerUnitLocalCur = $currencyConversion['localAmount'];
+                $purchaseOrderDetail->GRVcostPerUnitSupTransCur = $purchaseOrderDetail->unitCost;
+                $purchaseOrderDetail->GRVcostPerUnitComRptCur = $currencyConversion['reportingAmount'];
+
+                $purchaseOrderDetail->purchaseRetcostPerUnitLocalCur = $currencyConversion['localAmount'];
+                $purchaseOrderDetail->purchaseRetcostPerUnitTranCur = $purchaseOrderDetail->unitCost;
+                $purchaseOrderDetail->purchaseRetcostPerUnitRptCur = $currencyConversion['reportingAmount'];
+
+            }
+
+            // adding supplier Default CurrencyID base currency conversion
+            if ($purchaseOrderDetail->unitCost > 0) {
+                $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $purchaseOrder->unitCost);
+
+                $purchaseOrderDetail->GRVcostPerUnitSupDefaultCur = $currencyConversionDefault['documentAmount'];
+                $purchaseOrderDetail->purchaseRetcostPerUniSupDefaultCur = $currencyConversionDefault['documentAmount'];
+            }
+
+            $purchaseOrderDetail->save();
+        }
+
+
+
+        return $this->sendResponse($purchaseOrder->toArray(), 'Procurement Order retrieved successfully');
+    }
+
+    /**
+     * Display the specified Procurement Order Audit.
+     * GET|HEAD /ProcurementOrderAudit
+     * @param $request
+     *
+     * @return Response
+     */
+    public function ProcurementOrderAudit(Request $request){
+
+        $id = $request->get('id');
+
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by','cancelled_by','manually_closed_by','modified_by'])->findWithoutFail($id);
+
+        if (empty($procumentOrder)) {
+            return $this->sendError('Procurement Order not found');
+        }
+
+        return $this->sendResponse($procumentOrder->toArray(), 'Purchase Order retrieved successfully');
     }
 
 
