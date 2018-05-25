@@ -115,7 +115,7 @@
         font-size: 10px;
         padding-top: -20px;
     }
-    .pagenum:before {
+    .pagenum:after {
         content: counter(page);
     }
 
@@ -128,7 +128,6 @@
         width: 100%;
         height: 100%;
         padding-top: 31%;
-        z-index: -1000;
     }
 
     .watermarkText {
@@ -141,16 +140,17 @@
 
     #watermark {
         height: 1000px;
-        opacity: 0.9;
+        opacity: 0.6;
         left: 0;
         transform-origin: 20% 20%;
-        z-index: -1000;
+        z-index: 1000;
     }
+
 
 </style>
 
 <div class="footer">
-    <table style="width:100%; margin-top: 1%">
+    <table style="width:100%; margin-top: 2%">
         <tr>
             <td><span class="font-weight-bold">Electronically Approved By :</span></td>
         </tr>
@@ -158,7 +158,7 @@
             &nbsp;
         </tr>
     </table>
-    <table style="width:100%;">
+    <table style="width:100%;padding-top: 2%">
         <tr>
             @if ($podata->approved_by)
                 @foreach ($podata->approved_by as $det)
@@ -186,19 +186,19 @@
             </td>
         </tr>
         <tr>
-            <td style="width:33%;font-size: 10px;">
+            <td style="width:33%;font-size: 10px;vertical-align: top;">
                 <p><span class="font-weight-bold"><span [innerHTML]="docRefNumber"
                                                         class="white-space-pre-line">{!! nl2br($docRef["docRefNumber"]) !!}</span></span>
                 </p>
             </td>
-            <td style="width:33%; text-align: center;font-size: 10px;">
+            <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
                 <span style="text-align: center">Page <span class="pagenum"></span></span><br>
                 @if ($podata->company)
                     {{$podata->company->CompanyName}}
                 @endif
             </td>
-            <td style="width:33%;font-size: 10px;">
-                <span style="margin-left: 35%;">Printed Date : {{ \App\helper\Helper::dateFormat(now())}}</span>
+            <td style="width:33%;font-size: 10px;vertical-align: top;">
+                <span style="margin-left: 38%;">Printed Date :  {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
@@ -490,9 +490,9 @@
     <div class="row">
         <table style="width:100%">
             <tr>
-                <td style="width:5%"><span class="font-weight-bold">Narration</span></td>
-                <td style="width:3%"><span class="font-weight-bold">:</span></td>
-                <td style="width:92%">{!! nl2br($podata->narration) !!}</td>
+                <td style="width:5%;vertical-align: top;"><span class="font-weight-bold">Narration</span></td>
+                <td style="width:3%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:92%;vertical-align: top;">{!! nl2br($podata->narration) !!}</td>
             </tr>
         </table>
     </div>
@@ -525,7 +525,7 @@
         </table>
     </div>
     <div class="row">
-        <table style="width:100%; padding-bottom: 60px" class="table table-bordered table-striped table-sm">
+        <table style="width:100%;" class="table table-bordered table-striped table-sm">
             <thead>
             <tr style="border-top: 1px solid black;">
                 <th style="text-align: center; width: 2%;">#</th>
@@ -562,13 +562,17 @@
                 {{ $x++ }}
             @endforeach
             </tbody>
-            <tfoot>
+        </table>
+    </div>
+    <div class="row">
+        <table style="width:100%;" class="table table-bordered">
+            <tbody>
             <tr>
-                <td colspan="7" style="border-bottom: none !important;border-left: none !important;"></td>
-                <td colspan="2" class="text-right"><span class="font-weight-bold"
+                <td  style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                <td  class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;"><span class="font-weight-bold"
                                                          style="font-size: 11px">Sub Total</span>
                 </td>
-                <td class="text-right" style="font-size: 11px">
+                <td class="text-right" style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                 <span class="font-weight-bold">
                 @if ($podata->detail)
                         {{number_format($subTotal, $numberFormatting)}}
@@ -577,36 +581,33 @@
                 </td>
             </tr>
             <tr>
-                <td colspan="7"
-                    style="border-bottom: none !important;border-top: none !important;border-left: none !important;"></td>
-                <td colspan="2" class="text-right" style="font-size: 11px"><span class="font-weight-bold"
+                <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
+                <td class="text-right" style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127)!important;"><span class="font-weight-bold"
                                                                                  style="font-size: 11px">Discount</span>
                 </td>
-                <td class="text-right" style="font-size: 11px"><span class="font-weight-bold">
+                <td class="text-right" style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span class="font-weight-bold">
                      {{number_format($podata->poDiscountAmount, $numberFormatting)}}
                 </span>
                 </td>
             </tr>
             @if ($podata->supplierVATEligible)
                 <tr>
-                    <td colspan="7"
-                        style="border-bottom: none !important;border-top: none !important;border-left: none !important;"></td>
-                    <td colspan="2" class="text-right"><span
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
+                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
                                 class="font-weight-bold"
                                 style="font-size: 11px">Tax Amount({{$podata->VATPercentage .'%'}}
                             )</span></td>
-                    <td class="text-right" style="font-size: 11px"><span
+                    <td class="text-right" style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
                                 class="font-weight-bold">{{number_format($podata->VATAmount, $numberFormatting)}}</span>
                     </td>
                 </tr>
             @endif
             <tr>
-                <td colspan="7"
-                    style="border-bottom: none !important;border-top: none !important;border-left: none !important;"></td>
-                <td colspan="2" class="text-right"><span class="font-weight-bold"
+                <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
+                <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span class="font-weight-bold"
                                                          style="font-size: 11px">Net Amount</span>
                 </td>
-                <td class="text-right" style="font-size: 11px">
+                <td class="text-right" style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                 <span class="font-weight-bold">
                 @if ($podata->detail)
                         {{number_format($subTotal - $podata->poDiscountAmount + $podata->VATAmount, $numberFormatting)}}
@@ -614,33 +615,33 @@
                 </span>
                 </td>
             </tr>
-            </tfoot>
+            </tbody>
         </table>
     </div>
     <div class="row">
         <table style="width:100%;padding-top: 3%;">
             <tr>
-                <td style="width:13%"><span class="font-weight-bold">Delivery Terms</span></td>
-                <td style="width:2%"><span class="font-weight-bold">:</span></td>
-                <td style="width:85%">{!! nl2br($podata->deliveryTerms) !!}</td>
+                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Delivery Terms</span></td>
+                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:85%;vertical-align: top;">{!! nl2br($podata->deliveryTerms) !!}</td>
             </tr>
         </table>
     </div>
     <div class="row">
         <table style="width:100%;padding-top: 3%;">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%"><span class="font-weight-bold">Penalty Terms</span></td>
-                <td style="width:2%"><span class="font-weight-bold">:</span></td>
-                <td style="width:85%">{!! nl2br($podata->panaltyTerms) !!}</td>
+                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Penalty Terms</span></td>
+                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:85%;vertical-align: top;">{!! nl2br($podata->panaltyTerms) !!}</td>
             </tr>
         </table>
     </div>
     <div class="row">
         <table style="width:100%;padding-top: 3%;padding-bottom: 50px">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%"><span class="font-weight-bold">Payment Terms</span></td>
-                <td style="width:2%"><span class="font-weight-bold">:</span></td>
-                <td style="width:85%">{!! nl2br($podata->paymentTerms) !!}</td>
+                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Payment Terms</span></td>
+                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:85%;vertical-align: top;">{!! nl2br($podata->paymentTerms) !!}</td>
             </tr>
         </table>
     </div>
