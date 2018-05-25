@@ -1014,7 +1014,11 @@ class PurchaseRequestAPIController extends AppBaseController
     {
         $id = $request->get('id');
         /** @var PurchaseRequest $purchaseRequest */
-        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by','cancelled_by','manually_closed_by','modified_by'])->findWithoutFail($id);
+        $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
+            'cancelled_by','manually_closed_by','modified_by','approved_by' => function ($query) {
+                $query->with('employee')
+                    ->whereIn('documentSystemID', [1, 50, 51]);
+            }])->findWithoutFail($id);
 
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');
