@@ -335,6 +335,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter');
     Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis');
     Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport');
+    Route::post('reportSpentAnalysisDrilldownExport', 'ProcumentOrderAPIController@reportSpentAnalysisDrilldownExport');
     Route::post('reportSpentAnalysisHeader', 'ProcumentOrderAPIController@reportSpentAnalysisHeader');
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
