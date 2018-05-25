@@ -29,11 +29,9 @@
  * -- Date: 16-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrder(),
  * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as procumentOrderPrHistory(),
  * -- Date: 21-May 2018 By: Fayas Description: Added new functions named as amendProcurementOrderPreCheck(),
-<<<<<<< HEAD
  * -- Date: 24-May 2018 By: Fayas Description: Added new functions named as procumentOrderChangeSupplier(),
-=======
  * -- Date: 24-May 2018 By: Nazir Description: Added new functions named as ProcurementOrderAudit(),
->>>>>>> faa2c9d2283d02f11a95ffe09172857f309ce6b6
+ * -- Date: 25-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysisDrilldownExport(),
  */
 
 namespace App\Http\Controllers\API;
@@ -2301,7 +2299,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc, 'numberFormatting' => $decimal, 'title' => $documentTitle);
 
-        $html = view('print.purchase_order_print_pdf', $order);
+         $html = view('print.purchase_order_print_pdf', $order);
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
@@ -2516,7 +2514,179 @@ WHERE
 		AND YEAR (erp_bookinvsuppmaster.postedDate) = (' . $expYear . ') AND MONTH (erp_bookinvsuppmaster.postedDate) = (' . $expMonth . ')');
         }
         return $this->sendResponse($detail, 'Details retrieved successfully');
+    }
 
+    /**
+     * Report spent dnalysis drill down Export
+     * Post /reportSpentAnalysisDrilldownExport
+     *
+     * @param $request
+     *
+     * @return Response
+     */
+
+    public function reportSpentAnalysisDrilldownExport(Request $request)
+    {
+
+        $input = $request->all();
+
+        $monthExp = explode('-', $input['month']);
+
+        $expYear = $monthExp[0];
+        $expMonth = $monthExp[1];
+
+        $type = $request->type;
+
+        $commaSeperatedYears = join($input['years'], ",");
+        $commaSeperatedCompany = join($input['companySystemID'], ",");
+
+        $supplierID = $input['supplierID'];
+
+        if ($input['documentId'] == 1) {
+
+            $detail = DB::select('SELECT
+	GRVDet.*, PODet.purchaseOrderMasterID,
+	PODet.companyID,
+	PODet.supplierID,
+	erp_purchaseordermaster.supplierPrimaryCode,
+	erp_purchaseordermaster.supplierName,
+	PODet.POlocalAmount,
+	PODet.PORptAmount,
+	warehousemaster.wareHouseDescription
+FROM
+	erp_purchaseordermaster
+INNER JOIN (
+	SELECT
+		erp_purchaseorderdetails.purchaseOrderMasterID,
+		erp_purchaseordermaster.companyID,
+		erp_purchaseordermaster.supplierID,
+		erp_purchaseordermaster.approvedDate,
+		sum(
+			GRVcostPerUnitLocalCur * noQty
+		) AS POlocalAmount,
+		sum(
+			GRVcostPerUnitComRptCur * noQty
+		) AS PORptAmount
+	FROM
+		erp_purchaseorderdetails
+	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
+	WHERE
+		erp_purchaseordermaster.approved = - 1
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	GROUP BY
+		erp_purchaseorderdetails.purchaseOrderMasterID
+) AS PODet ON erp_purchaseordermaster.purchaseOrderID = PODet.purchaseOrderMasterID
+INNER JOIN (
+	SELECT
+		erp_grvdetails.purchaseOrderMastertID,
+		erp_grvdetails.itemPrimaryCode,
+        erp_grvdetails.itemDescription,
+		erp_grvmaster.grvDate,
+		erp_grvmaster.grvPrimaryCode,
+		erp_grvmaster.grvConfirmedYN,
+		erp_grvmaster.approved as grvApproved,
+		erp_grvmaster.companySystemID,
+		erp_grvmaster.grvLocation,
+		supplierID,
+		approvedDate,
+		GRVcostPerUnitLocalCur,
+		GRVcostPerUnitComRptCur,
+		noQty,
+		sum(
+			GRVcostPerUnitLocalCur * noQty
+		) AS LinelocalTotal,
+		sum(
+			GRVcostPerUnitComRptCur * noQty
+		) AS LineRptTotal
+	FROM
+		erp_grvdetails
+	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+	WHERE
+		erp_grvmaster.approved = - 1
+	AND erp_grvmaster.grvCancelledYN = 0
+	AND YEAR (erp_grvmaster.grvDate) = (' . $expYear . ') AND MONTH (erp_grvmaster.grvDate) = (' . $expMonth . ')
+	GROUP BY
+		erp_grvdetails.purchaseOrderMastertID
+) AS GRVDet ON GRVDet.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
+INNER JOIN warehousemaster ON GRVDet.grvLocation = warehousemaster.wareHouseSystemCode
+WHERE
+	erp_purchaseordermaster.approved = -1
+AND erp_purchaseordermaster.poCancelledYN = 0
+AND GRVDet.companySystemID IN (' . $commaSeperatedCompany . ')
+AND PODet.supplierID = ' . $supplierID . '');
+
+            $data = array();
+            foreach ($detail as $order) {
+                $testArray['GRV Date'] = date("d/m/Y", strtotime($order->grvDate));
+                $testArray['GRV Number'] = $order->grvPrimaryCode;
+                $testArray['Supplier Name'] = $order->supplierName;
+                $testArray['WareHouse Name'] = $order->wareHouseDescription;
+                $testArray['Item Code'] = $order->itemPrimaryCode;
+                $testArray['Item Description'] = $order->itemDescription;
+                if($input['currency'] == 1){
+                    $testArray['Amount'] = number_format($order->LinelocalTotal, 2);
+                }else{
+                    $testArray['Amount'] = number_format($order->LineRptTotal, 2);
+                }
+                array_push($data, $testArray);
+            }
+
+
+        } else if ($input['documentId'] == 2) {
+            $detail = DB::select('SELECT
+	erp_bookinvsuppmaster.bookingSuppMasInvAutoID,
+	erp_bookinvsuppmaster.companyID,
+	erp_bookinvsuppdet.purchaseOrderID,
+	erp_bookinvsuppmaster.documentID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_bookinvsuppmaster.bookingInvCode,
+	erp_bookinvsuppmaster.bookingDate,
+	erp_bookinvsuppmaster.comments,
+	erp_bookinvsuppmaster.supplierInvoiceNo,
+	erp_bookinvsuppmaster.confirmedYN,
+	erp_bookinvsuppmaster.confirmedByName,
+	erp_bookinvsuppmaster.approved,
+	currencymaster.CurrencyCode,
+	erp_bookinvsuppdet.totLocalAmount,
+	erp_bookinvsuppdet.totRptAmount
+FROM
+	erp_bookinvsuppmaster
+INNER JOIN erp_bookinvsuppdet ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+LEFT JOIN currencymaster ON erp_bookinvsuppmaster.supplierTransactionCurrencyID = currencymaster.currencyID
+LEFT JOIN erp_grvmaster ON erp_bookinvsuppdet.grvAutoID = erp_grvmaster.grvAutoID
+WHERE
+	erp_bookinvsuppmaster.supplierID =  ' . $supplierID . '
+		AND YEAR (erp_bookinvsuppmaster.postedDate) = (' . $expYear . ') AND MONTH (erp_bookinvsuppmaster.postedDate) = (' . $expMonth . ')');
+
+            $data = array();
+            foreach ($detail as $order) {
+                $testArray['GRV Code'] = $order->grvPrimaryCode;
+                $testArray['Invoice Doc Code'] = $order->bookingInvCode;
+                $testArray['Document Date'] = date("d/m/Y", strtotime($order->bookingDate));
+                $testArray['Supplier Invoice No'] = $order->supplierInvoiceNo;
+                $testArray['Comments'] = $order->comments;
+                $testArray['Currency'] = $order->CurrencyCode;
+                if($input['currency'] == 1){
+                    $testArray['Amount'] = number_format($order->totLocalAmount, 2);
+                }else{
+                    $testArray['Amount'] = number_format($order->totRptAmount, 2);
+                }
+                array_push($data, $testArray);
+            }
+        }
+
+
+        $csv = \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
+
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
     }
 
     /**
@@ -2838,7 +3008,7 @@ WHERE
 
 
         /** @var ProcumentOrder $procumentOrder */
-        $purchaseOrder = ProcumentOrder::where('purchaseOrderID',$id)->first();
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $id)->first();
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Procurement Order not found');
@@ -2864,7 +3034,7 @@ WHERE
             $purchaseOrder->supplierVATEligible = $supplier->vatEligible;
         }
 
-        $currency =  SupplierCurrency::where('supplierCodeSystem', $input['supplierTransactionCurrencyID'])->first();
+        $currency = SupplierCurrency::where('supplierCodeSystem', $input['supplierTransactionCurrencyID'])->first();
 
         if (empty($currency)) {
             return $this->sendError('Currency not found');
@@ -2874,19 +3044,19 @@ WHERE
 
 
         $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
-                                            ->where('isDefault', -1)
-                                            ->first();
+            ->where('isDefault', -1)
+            ->first();
 
         if ($supplierCurrency) {
             $purchaseOrder->supplierDefaultCurrencyID = $supplierCurrency->currencyID;
             $purchaseOrder->supplierTransactionER = 1;
-            $erCurrency = CurrencyMaster::where('currencyID',$supplierCurrency->currencyID)->first();
+            $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
             $purchaseOrder->supplierDefaultER = $erCurrency->ExchangeRate;
         }
 
         $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
-                                                ->where('companySystemID', $purchaseOrder->companySystemID)
-                                                ->first();
+            ->where('companySystemID', $purchaseOrder->companySystemID)
+            ->first();
 
         if ($supplierAssignedDetai) {
             $purchaseOrder->supplierVATEligible = $supplierAssignedDetai->vatEligible;
@@ -2923,9 +3093,9 @@ WHERE
 
         $purchaseOrder->save();
 
-        foreach ($purchaseOrder->detail as $item){
+        foreach ($purchaseOrder->detail as $item) {
 
-            $purchaseOrderDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID',$item->purchaseOrderDetailsID)->first();
+            $purchaseOrderDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID', $item->purchaseOrderDetailsID)->first();
 
             $purchaseOrderDetail->supplierItemCurrencyID = $purchaseOrder->supplierTransactionCurrencyID;
             $purchaseOrderDetail->foreignToLocalER = $purchaseOrder->supplierTransactionER;
@@ -2965,7 +3135,6 @@ WHERE
         }
 
 
-
         return $this->sendResponse($purchaseOrder->toArray(), 'Procurement Order retrieved successfully');
     }
 
@@ -2976,11 +3145,12 @@ WHERE
      *
      * @return Response
      */
-    public function ProcurementOrderAudit(Request $request){
+    public function ProcurementOrderAudit(Request $request)
+    {
 
         $id = $request->get('id');
 
-        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by','cancelled_by','manually_closed_by','modified_by'])->findWithoutFail($id);
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'cancelled_by', 'manually_closed_by', 'modified_by'])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');

@@ -3,7 +3,7 @@
     @page {
         margin-left: 3%;
         margin-right: 3%;
-        margin-top: 5px;
+        margin-top: 4%;
     }
 
     .footer {
@@ -55,7 +55,7 @@
     }
 
     .table th, .table td {
-        padding: 0.3rem !important;
+        padding: 0.4rem !important;
         vertical-align: top;
         border-bottom: 1px solid rgb(127, 127, 127) !important;
     }
@@ -408,24 +408,24 @@
                     </table>
                     <table>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Ship Contact</span></td>
+                            <td style="width: 34%"><span class="font-weight-bold">Ship Contact</span></td>
                             <td style="width: 2%"><span class="font-weight-bold">:</span></td>
-                            <td style="width: 78%">{{$podata->shipTocontactPersonID}} </td>
+                            <td style="width: 64%">{{$podata->shipTocontactPersonID}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Phone</span></td>
+                            <td style="width: 28%"><span class="font-weight-bold">Phone</span></td>
                             <td style="width: 2%"><span class="font-weight-bold">:</span></td>
-                            <td style="width: 78%">{{$podata->shipTocontactPersonTelephone}} </td>
+                            <td style="width: 70%">{{$podata->shipTocontactPersonTelephone}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Fax</span></td>
+                            <td style="width: 28%"><span class="font-weight-bold">Fax</span></td>
                             <td style="width: 2%"><span class="font-weight-bold">:</span></td>
-                            <td style="width: 78%">{{$podata->shipTocontactPersonFaxNo}} </td>
+                            <td style="width: 70%">{{$podata->shipTocontactPersonFaxNo}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Email</span></td>
+                            <td style="width: 28%"><span class="font-weight-bold">Email</span></td>
                             <td style="width: 2%"><span class="font-weight-bold">:</span></td>
-                            <td style="width: 78%">{{$podata->shipTocontactPersonEmail}} </td>
+                            <td style="width: 70%">{{$podata->shipTocontactPersonEmail}} </td>
                         </tr>
                     </table>
                 </td>
@@ -490,9 +490,9 @@
     <div class="row">
         <table style="width:100%">
             <tr>
-                <td style="width:5%;vertical-align: top;"><span class="font-weight-bold">Narration</span></td>
-                <td style="width:3%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
-                <td style="width:92%;vertical-align: top;">{!! nl2br($podata->narration) !!}</td>
+                <td style="width:11%;vertical-align: top;"><span class="font-weight-bold">Narration</span></td>
+                <td style="width:1%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:88%;vertical-align: top;">{!! nl2br($podata->narration) !!}</td>
             </tr>
         </table>
     </div>
@@ -502,9 +502,9 @@
                 <td style="width:88%">
                     <table style="padding-bottom: 1%">
                         <tr>
-                            <td style="width: 8%"><span class="font-weight-bold">Expected Date</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
-                            <td style="width: 90%">{{ \App\helper\Helper::dateFormat($podata->expectedDeliveryDate)}}</td>
+                            <td style="width: 7%"><span class="font-weight-bold">Expected Date</span></td>
+                            <td style="width: 1%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 92%">{{ \App\helper\Helper::dateFormat($podata->expectedDeliveryDate)}}</td>
                         </tr>
                     </table>
                 </td>
