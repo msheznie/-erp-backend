@@ -9,6 +9,8 @@
  * -- Description : This file contains the all CRUD for Po Advance Payment
  * -- REVISION HISTORY
  * -- Date: 02-April 2018 By: Nazir Description: Added new functions named as poPaymentTermsAdvanceDetailView()
+ * -- Date: 05-April 2018 By: Nazir Description: Added new functions named as loadPoPaymentTermsLogistic()
+ * -- Date: 05-April 2018 By: Nazir Description: Added new functions named as storePoPaymentTermsLogistic()
  **/
 namespace App\Http\Controllers\API;
 
@@ -137,6 +139,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
      *
      * @return Response
      */
+
     public function show($id)
     {
         /** @var PoAdvancePayment $poAdvancePayment */
@@ -191,7 +194,6 @@ class PoAdvancePaymentAPIController extends AppBaseController
             return $this->sendError('Po Advance Payment not found');
         }
 
-
         $poAdvancePayment->delete();
 
         return $this->sendResponse($id, 'Po Advance Payment deleted successfully');
@@ -221,6 +223,75 @@ class PoAdvancePaymentAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Data retrieved successfully');
+    }
+
+    public function loadPoPaymentTermsLogistic(Request $request)
+    {
+        $input = $request->all();
+        $poID = $input['purchaseOrderID'];
+
+        $items = PoAdvancePayment::where('poID', $poID)
+            ->where('poTermID', 0)
+            ->with(['currency', 'supplier_by' => function ($query) {
+            }])->get();
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    public function storePoPaymentTermsLogistic(Request $request)
+    {
+        $input = $request->all();
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['poID'])
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        if (empty($input['comAmount']) || $input['comAmount'] == 0) {
+            return $this->sendError('Amount should be greater than 0');
+        }
+
+
+        $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
+        $input['serviceLineID'] = $purchaseOrder->serviceLine;
+        $input['companySystemID'] = $purchaseOrder->companySystemID;
+        $input['companyID'] = $purchaseOrder->companyID;
+        $input['supplierID'] = $purchaseOrder->supplierID;
+        $input['SupplierPrimaryCode'] = $purchaseOrder->supplierPrimaryCode;
+        $input['currencyID'] = $purchaseOrder->supplierTransactionCurrencyID;
+
+        $input['poCode'] = $purchaseOrder->purchaseOrderCode;
+        $input['poTermID'] = $input['paymentTermID'];
+        $input['narration'] = $input['paymentTemDes'];
+
+        if (isset($input['comDate'])) {
+            $masterDate = str_replace('/', '-', $input['comDate']);
+            $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
+        }
+        $input['reqAmount'] = $input['comAmount'];
+        $input['reqAmountTransCur_amount'] = $input['comAmount'];
+
+        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['comAmount']);
+
+        $input['reqAmountInPOTransCur'] = $input['comAmount'];
+        $input['reqAmountInPOLocalCur'] = $companyCurrencyConversion['localAmount'];
+        $input['reqAmountInPORptCur'] = $companyCurrencyConversion['reportingAmount'];
+
+        $input['requestedByEmpID'] = $user->employee['empID'];
+        $input['requestedByEmpName'] = $user->employee['empName'];
+
+        $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
+
+        if ($poAdvancePayments) {
+            $update = PoPaymentTerms::where('paymentTermID', $input['paymentTermID'])
+                ->update(['isRequested' => 1]);
+        }
+
+        return $this->sendResponse($poAdvancePayments->toArray(), 'Po Advance Payment saved successfully');
     }
 
 

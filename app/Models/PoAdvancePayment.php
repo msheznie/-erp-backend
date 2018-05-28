@@ -135,7 +135,7 @@ class PoAdvancePayment extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function poterms()
@@ -143,5 +143,15 @@ class PoAdvancePayment extends Model
         return $this->belongsTo('App\Models\PoPaymentTerms', 'poTermID', 'paymentTermID');
     }
 
-    
+    public function supplier_by()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
+    }
+
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID', 'currencyID');
+    }
+
+
 }

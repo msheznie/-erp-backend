@@ -32,6 +32,7 @@
  * -- Date: 24-May 2018 By: Fayas Description: Added new functions named as procumentOrderChangeSupplier(),
  * -- Date: 24-May 2018 By: Nazir Description: Added new functions named as ProcurementOrderAudit(),
  * -- Date: 25-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysisDrilldownExport(),
+ * -- Date: 28-May 2018 By: Nazir Description: Added new functions named as getGRVBasedPODropdowns(),
  */
 
 namespace App\Http\Controllers\API;
@@ -2299,7 +2300,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc, 'numberFormatting' => $decimal, 'title' => $documentTitle);
 
-         $html = view('print.purchase_order_print_pdf', $order);
+        $html = view('print.purchase_order_print_pdf', $order);
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
@@ -2623,9 +2624,9 @@ AND PODet.supplierID = ' . $supplierID . '');
                 $testArray['WareHouse Name'] = $order->wareHouseDescription;
                 $testArray['Item Code'] = $order->itemPrimaryCode;
                 $testArray['Item Description'] = $order->itemDescription;
-                if($input['currency'] == 1){
+                if ($input['currency'] == 1) {
                     $testArray['Amount'] = number_format($order->LinelocalTotal, 2);
-                }else{
+                } else {
                     $testArray['Amount'] = number_format($order->LineRptTotal, 2);
                 }
                 array_push($data, $testArray);
@@ -2666,9 +2667,9 @@ WHERE
                 $testArray['Supplier Invoice No'] = $order->supplierInvoiceNo;
                 $testArray['Comments'] = $order->comments;
                 $testArray['Currency'] = $order->CurrencyCode;
-                if($input['currency'] == 1){
+                if ($input['currency'] == 1) {
                     $testArray['Amount'] = number_format($order->totLocalAmount, 2);
-                }else{
+                } else {
                     $testArray['Amount'] = number_format($order->totRptAmount, 2);
                 }
                 array_push($data, $testArray);
@@ -3151,7 +3152,7 @@ WHERE
         $id = $request->get('id');
 
         $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by',
-            'cancelled_by','manually_closed_by','modified_by','sent_supplier_by','approved_by' => function ($query) {
+            'cancelled_by', 'manually_closed_by', 'modified_by', 'sent_supplier_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->whereIn('documentSystemID', [2, 5, 52]);
             }])->findWithoutFail($id);
@@ -3161,6 +3162,32 @@ WHERE
         }
 
         return $this->sendResponse($procumentOrder->toArray(), 'Purchase Order retrieved successfully');
+    }
+
+    public function getGRVBasedPODropdowns(Request $request)
+    {
+        $input = $request->all();
+
+        $detail = DB::select('SELECT
+	erp_grvmaster.grvAutoID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_grvdetails.purchaseOrderMastertID
+FROM
+	erp_grvmaster
+INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+WHERE
+	erp_grvmaster.grvConfirmedYN = 1
+AND erp_grvmaster.approved = 0
+GROUP BY
+	erp_grvmaster.grvAutoID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_grvdetails.purchaseOrderMastertID
+HAVING
+	erp_grvdetails.purchaseOrderMastertID = '.$input['poID'].'
+ORDER BY
+	erp_grvmaster.grvAutoID DESC');
+
+        return $this->sendResponse($detail, 'GRV Currencies retrieved successfully');
     }
 
 

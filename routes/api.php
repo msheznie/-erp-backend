@@ -252,6 +252,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
     Route::post('getApprovedPOForCurrentUser', 'ProcumentOrderAPIController@getApprovedPOForCurrentUser');
     Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments');
+    Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns');
+    Route::get('getLogisticsItemsByProcumentOrder', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogistic');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -279,6 +281,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('g_r_v_details', 'GRVDetailsAPIController');
 
     Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+    Route::post('storePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@storePoPaymentTermsLogistic');
 
     Route::resource('document_attachments', 'DocumentAttachmentsAPIController');
     Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
