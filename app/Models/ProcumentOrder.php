@@ -447,16 +447,24 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\Employee', 'poConfirmedByEmpSystemID', 'employeeSystemID');
     }
 
-    public function cancelled_by(){
-        return $this->belongsTo('App\Models\Employee','poCancelledBySystemID','employeeSystemID');
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'poCancelledBySystemID', 'employeeSystemID');
     }
 
-    public function manually_closed_by(){
-        return $this->belongsTo('App\Models\Employee','manuallyClosedByEmpSystemID','employeeSystemID');
+    public function manually_closed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'manuallyClosedByEmpSystemID', 'employeeSystemID');
     }
 
-    public function modified_by(){
-        return $this->belongsTo('App\Models\Employee','modifiedUserSystemID','employeeSystemID');
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function sent_supplier_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'sentToSupplierByEmpSystemID', 'employeeSystemID');
     }
 
     public function location()

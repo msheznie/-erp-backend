@@ -3150,7 +3150,11 @@ WHERE
 
         $id = $request->get('id');
 
-        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'cancelled_by', 'manually_closed_by', 'modified_by'])->findWithoutFail($id);
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by',
+            'cancelled_by','manually_closed_by','modified_by','sent_supplier_by','approved_by' => function ($query) {
+                $query->with('employee')
+                    ->whereIn('documentSystemID', [2, 5, 52]);
+            }])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
