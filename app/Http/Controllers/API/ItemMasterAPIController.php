@@ -264,8 +264,18 @@ class ItemMasterAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $companyID = $request->selectedCompanyID;
-        $companyID = \Helper::getGroupCompany($companyID);
+
+        $companyId = $request->selectedCompanyID;
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $companyID = \Helper::getGroupCompany($companyId);
+        }else{
+            $companyID = [$companyId];
+        }
+
+
         $empID = \Helper::getEmployeeSystemID();
         $search = $request->input('search.value');
         $itemMasters = DB::table('erp_documentapproved')->select('itemmaster.*','erp_documentapproved.documentApprovedID','financeitemcategorymaster.categoryDescription as financeitemcategorydescription','financeitemcategorysub.categoryDescription as financeitemcategorysubdescription','units.UnitShortCode','rollLevelOrder','financeGLcodePL','approvalLevelID','documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
@@ -275,7 +285,8 @@ class ItemMasterAPIController extends AppBaseController
                 ->where('employeesdepartments.documentSystemID', 57)
                 ->whereIn('employeesdepartments.companySystemID', $companyID)
                 ->where('employeesdepartments.employeeSystemID', $empID);
-        })->join('itemmaster', function ($query) use ($companyID, $empID,$search) {
+        })
+            ->join('itemmaster', function ($query) use ($companyID, $empID,$search) {
             $query->on('itemCodeSystem', '=', 'documentSystemCode')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->whereIn('itemmaster.primaryCompanySystemID', $companyID)
@@ -287,7 +298,8 @@ class ItemMasterAPIController extends AppBaseController
                             ->orWhere('itemDescription', 'LIKE', "%{$search}%");
                     });
                 });
-        })->leftJoin('units', 'UnitID', '=', 'unit')
+        })
+            ->leftJoin('units', 'UnitID', '=', 'unit')
             ->leftJoin('financeitemcategorymaster', 'itemCategoryID', '=', 'financeCategoryMaster')
             ->leftJoin('financeitemcategorysub', 'itemCategorySubID', '=', 'financeCategorySub')
             ->where('erp_documentapproved.approvedYN', 0)
