@@ -603,10 +603,15 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if ($procumentOrder->WO_amendYN == -1 && $isAmendAccess == 1 && $procumentOrder->WO_amendRequestedByEmpID == $employee->empID) {
 
+            $employee = \Helper::getEmployeeInfo();
             $procumentOrderUpdate->WO_amendYN = 0;
             $procumentOrderUpdate->WO_confirmedYN = 1;
-            $procumentOrderUpdate->WO_amendRequestedByEmpID = null;
-            $procumentOrderUpdate->WO_amendRequestedDate = null;
+            // $procumentOrderUpdate->WO_amendRequestedByEmpID = null;
+            // $procumentOrderUpdate->WO_amendRequestedByEmpSystemID = null;
+            // $procumentOrderUpdate->WO_amendRequestedDate = null;
+            $procumentOrderUpdate->WO_confirmedDate = now();
+            $procumentOrderUpdate->WO_confirmedByEmpID = $employee->empID;
+
             $procumentOrderUpdate->save();
 
 
@@ -2897,7 +2902,7 @@ WHERE
 
         $procurementOrder->WO_amendYN = -1;
         $procurementOrder->WO_confirmedYN = 0;
-        //$procurementOrder->WO_amendRequestedByEmpSystemID = $employee->employeeSystemID;
+        $procurementOrder->WO_amendRequestedByEmpSystemID = $employee->employeeSystemID;
         $procurementOrder->WO_amendRequestedByEmpID = $employee->empID;
         $procurementOrder->WO_amendRequestedDate = now();
         $procurementOrder->save();
