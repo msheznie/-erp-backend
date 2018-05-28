@@ -32,6 +32,7 @@
  * -- Date: 24-May 2018 By: Fayas Description: Added new functions named as procumentOrderChangeSupplier(),
  * -- Date: 24-May 2018 By: Nazir Description: Added new functions named as ProcurementOrderAudit(),
  * -- Date: 25-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysisDrilldownExport(),
+ * -- Date: 28-May 2018 By: Nazir Description: Added new functions named as getGRVBasedPODropdowns(),
  */
 
 namespace App\Http\Controllers\API;
@@ -3182,6 +3183,32 @@ WHERE
         }
 
         return $this->sendResponse($procumentOrder->toArray(), 'Purchase Order retrieved successfully');
+    }
+
+    public function getGRVBasedPODropdowns(Request $request)
+    {
+        $input = $request->all();
+
+        $detail = DB::select('SELECT
+	erp_grvmaster.grvAutoID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_grvdetails.purchaseOrderMastertID
+FROM
+	erp_grvmaster
+INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+WHERE
+	erp_grvmaster.grvConfirmedYN = 1
+AND erp_grvmaster.approved = 0
+GROUP BY
+	erp_grvmaster.grvAutoID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_grvdetails.purchaseOrderMastertID
+HAVING
+	erp_grvdetails.purchaseOrderMastertID = '.$input['poID'].'
+ORDER BY
+	erp_grvmaster.grvAutoID DESC');
+
+        return $this->sendResponse($detail, 'GRV Currencies retrieved successfully');
     }
 
 

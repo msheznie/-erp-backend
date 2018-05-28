@@ -141,8 +141,16 @@ class CustomerMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $companyID = $request->selectedCompanyID;
-        $companyID = \Helper::getGroupCompany($companyID);
+        $companyId = $request->selectedCompanyID;
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $companyID = \Helper::getGroupCompany($companyId);
+        }else{
+            $companyID = [$companyId];
+        }
+
         $empID = \Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
