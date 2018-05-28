@@ -603,10 +603,15 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if ($procumentOrder->WO_amendYN == -1 && $isAmendAccess == 1 && $procumentOrder->WO_amendRequestedByEmpID == $employee->empID) {
 
+            $employee = \Helper::getEmployeeInfo();
             $procumentOrderUpdate->WO_amendYN = 0;
             $procumentOrderUpdate->WO_confirmedYN = 1;
-            $procumentOrderUpdate->WO_amendRequestedByEmpID = null;
-            $procumentOrderUpdate->WO_amendRequestedDate = null;
+            // $procumentOrderUpdate->WO_amendRequestedByEmpID = null;
+            // $procumentOrderUpdate->WO_amendRequestedByEmpSystemID = null;
+            // $procumentOrderUpdate->WO_amendRequestedDate = null;
+            $procumentOrderUpdate->WO_confirmedDate = now();
+            $procumentOrderUpdate->WO_confirmedByEmpID = $employee->empID;
+
             $procumentOrderUpdate->save();
 
 
@@ -2299,7 +2304,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc, 'numberFormatting' => $decimal, 'title' => $documentTitle);
 
-         $html = view('print.purchase_order_print_pdf', $order);
+        $html = view('print.purchase_order_print_pdf', $order);
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
@@ -2623,9 +2628,9 @@ AND PODet.supplierID = ' . $supplierID . '');
                 $testArray['WareHouse Name'] = $order->wareHouseDescription;
                 $testArray['Item Code'] = $order->itemPrimaryCode;
                 $testArray['Item Description'] = $order->itemDescription;
-                if($input['currency'] == 1){
+                if ($input['currency'] == 1) {
                     $testArray['Amount'] = number_format($order->LinelocalTotal, 2);
-                }else{
+                } else {
                     $testArray['Amount'] = number_format($order->LineRptTotal, 2);
                 }
                 array_push($data, $testArray);
@@ -2666,9 +2671,9 @@ WHERE
                 $testArray['Supplier Invoice No'] = $order->supplierInvoiceNo;
                 $testArray['Comments'] = $order->comments;
                 $testArray['Currency'] = $order->CurrencyCode;
-                if($input['currency'] == 1){
+                if ($input['currency'] == 1) {
                     $testArray['Amount'] = number_format($order->totLocalAmount, 2);
-                }else{
+                } else {
                     $testArray['Amount'] = number_format($order->totRptAmount, 2);
                 }
                 array_push($data, $testArray);
@@ -2897,7 +2902,7 @@ WHERE
 
         $procurementOrder->WO_amendYN = -1;
         $procurementOrder->WO_confirmedYN = 0;
-        //$procurementOrder->WO_amendRequestedByEmpSystemID = $employee->employeeSystemID;
+        $procurementOrder->WO_amendRequestedByEmpSystemID = $employee->employeeSystemID;
         $procurementOrder->WO_amendRequestedByEmpID = $employee->empID;
         $procurementOrder->WO_amendRequestedDate = now();
         $procurementOrder->save();
@@ -3031,7 +3036,6 @@ WHERE
             $purchaseOrder->supplierFax = $supplier->fax;
             $purchaseOrder->supplierEmail = $supplier->supEmail;
             $purchaseOrder->creditPeriod = $supplier->creditPeriod;
-            $purchaseOrder->supplierVATEligible = $supplier->vatEligible;
         }
 
         $currency = SupplierCurrency::where('supplierCodeSystem', $input['supplierTransactionCurrencyID'])->first();
@@ -3060,10 +3064,10 @@ WHERE
 
         if ($supplierAssignedDetai) {
             $purchaseOrder->supplierVATEligible = $supplierAssignedDetai->vatEligible;
-            //$input['VATPercentage'] = $supplierAssignedDetai->vatPercentage;
+            $purchaseOrder->VATPercentage = $supplierAssignedDetai->vatPercentage;
         }
 
-        if ($purchaseOrder->VATAmount > 0) {
+        if($purchaseOrder->supplierVATEligible == 1){
 
             $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->VATAmount);
 
@@ -3105,27 +3109,44 @@ WHERE
 
             $purchaseOrderDetail->companyReportingER = $purchaseOrder->companyReportingER;
             $purchaseOrderDetail->localCurrencyER = $purchaseOrder->localCurrencyER;
-            $purchaseOrderDetail->VATAmountLocal = $purchaseOrder->VATAmountLocal;
-            $purchaseOrderDetail->VATAmountRpt = $purchaseOrder->VATAmountRpt;
 
-            if ($purchaseOrderDetail->unitCost > 0) {
-                $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->unitCost);
 
-                //$purchaseOrderDetail->unitCost =
+            if ($purchaseOrder->poDiscountAmount > 0) {
 
-                $purchaseOrderDetail->GRVcostPerUnitLocalCur = $currencyConversion['localAmount'];
-                $purchaseOrderDetail->GRVcostPerUnitSupTransCur = $purchaseOrderDetail->unitCost;
-                $purchaseOrderDetail->GRVcostPerUnitComRptCur = $currencyConversion['reportingAmount'];
+                $calculateItemDiscount = (($purchaseOrderDetail->netAmount - (($purchaseOrder->poDiscountAmount / $purchaseOrder->poTotalSupplierTransactionCurrency) * $purchaseOrderDetail->netAmount)) / $purchaseOrderDetail->noQty);
+            } else {
+                $calculateItemDiscount = $purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount;
+            }
+            $calculateItemTax = (($purchaseOrder->VATPercentage / 100) * $calculateItemDiscount) + $calculateItemDiscount;
 
-                $purchaseOrderDetail->purchaseRetcostPerUnitLocalCur = $currencyConversion['localAmount'];
-                $purchaseOrderDetail->purchaseRetcostPerUnitTranCur = $purchaseOrderDetail->unitCost;
-                $purchaseOrderDetail->purchaseRetcostPerUnitRptCur = $currencyConversion['reportingAmount'];
+            $currencyConversion = \Helper::currencyConversion($purchaseOrderDetail->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateItemTax);
 
+            $vatLineAmount = ($calculateItemTax - $calculateItemDiscount);
+
+
+            $purchaseOrderDetail->GRVcostPerUnitLocalCur = round($currencyConversion['localAmount'], 8);
+            $purchaseOrderDetail->GRVcostPerUnitSupTransCur = round($calculateItemTax, 8);
+            $purchaseOrderDetail->GRVcostPerUnitComRptCur = round($currencyConversion['reportingAmount'], 8);
+            $purchaseOrderDetail->purchaseRetcostPerUnitLocalCur = round($currencyConversion['localAmount'], 8);
+            $purchaseOrderDetail->purchaseRetcostPerUnitTranCur = round($calculateItemTax, 8);
+            $purchaseOrderDetail->purchaseRetcostPerUnitRptCur = round($currencyConversion['reportingAmount'], 8);
+
+            if($purchaseOrder->supplierVATEligible == 1){
+                $currencyConversionForLineAmount = \Helper::currencyConversion($purchaseOrderDetail->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $vatLineAmount);
+                $purchaseOrderDetail->VATPercentage = round($purchaseOrder->VATPercentage, 8);
+                $purchaseOrderDetail->VATAmount = round($vatLineAmount, 8);
+                $purchaseOrderDetail->VATAmountLocal = round($currencyConversionForLineAmount['localAmount'], 8);
+                $purchaseOrderDetail->VATAmountRpt = round($currencyConversionForLineAmount['reportingAmount'], 8);
+            }else{
+                $purchaseOrderDetail->VATPercentage = 0;
+                $purchaseOrderDetail->VATAmount = 0;
+                $purchaseOrderDetail->VATAmountLocal = 0;
+                $purchaseOrderDetail->VATAmountRpt = 0;
             }
 
             // adding supplier Default CurrencyID base currency conversion
             if ($purchaseOrderDetail->unitCost > 0) {
-                $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $purchaseOrder->unitCost);
+                $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $purchaseOrderDetail->unitCost);
 
                 $purchaseOrderDetail->GRVcostPerUnitSupDefaultCur = $currencyConversionDefault['documentAmount'];
                 $purchaseOrderDetail->purchaseRetcostPerUniSupDefaultCur = $currencyConversionDefault['documentAmount'];
@@ -3150,7 +3171,11 @@ WHERE
 
         $id = $request->get('id');
 
-        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by', 'cancelled_by', 'manually_closed_by', 'modified_by'])->findWithoutFail($id);
+        $procumentOrder = $this->procumentOrderRepository->with(['created_by', 'confirmed_by',
+            'cancelled_by', 'manually_closed_by', 'modified_by', 'sent_supplier_by', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->whereIn('documentSystemID', [2, 5, 52]);
+            }])->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
