@@ -3011,6 +3011,7 @@ WHERE
         $id = $request->get('id');
 
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
 
         /** @var ProcumentOrder $procumentOrder */
@@ -3069,9 +3070,7 @@ WHERE
         }
 
         if($purchaseOrder->supplierVATEligible == 1){
-
             $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->VATAmount);
-
             $purchaseOrder->VATAmountLocal = round($currencyConversionVatAmount['localAmount'], 8);
             $purchaseOrder->VATAmountRpt = round($currencyConversionVatAmount['reportingAmount'], 8);
         } else {
@@ -3113,7 +3112,6 @@ WHERE
 
 
             if ($purchaseOrder->poDiscountAmount > 0) {
-
                 $calculateItemDiscount = (($purchaseOrderDetail->netAmount - (($purchaseOrder->poDiscountAmount / $purchaseOrder->poTotalSupplierTransactionCurrency) * $purchaseOrderDetail->netAmount)) / $purchaseOrderDetail->noQty);
             } else {
                 $calculateItemDiscount = $purchaseOrderDetail->unitCost - $purchaseOrderDetail->discountAmount;
@@ -3148,7 +3146,6 @@ WHERE
             // adding supplier Default CurrencyID base currency conversion
             if ($purchaseOrderDetail->unitCost > 0) {
                 $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $purchaseOrderDetail->unitCost);
-
                 $purchaseOrderDetail->GRVcostPerUnitSupDefaultCur = $currencyConversionDefault['documentAmount'];
                 $purchaseOrderDetail->purchaseRetcostPerUniSupDefaultCur = $currencyConversionDefault['documentAmount'];
             }
