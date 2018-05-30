@@ -135,6 +135,9 @@
             content: counter(page);
         }
         #watermark { position: fixed; bottom: 0px; right: 0px; width: 200px; height: 200px; opacity: .1; }
+        .content {
+            margin-bottom: 45px;
+        }
     </style>
 </head>
 <body>
@@ -143,7 +146,7 @@
     <span class="white-space-pre-line font-weight-bold">{!! nl2br($request->docRefNo) !!}</span>
 </div>
 <div id="watermark"></div>
-<div class="card-body" id="print-section">
+<div class="card-body content" id="print-section">
 
     <table>
         <tr style="width: 100%">

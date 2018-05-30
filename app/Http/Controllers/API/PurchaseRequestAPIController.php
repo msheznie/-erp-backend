@@ -718,7 +718,7 @@ class PurchaseRequestAPIController extends AppBaseController
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
-            ->join('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
+            ->leftJoin('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
             ->join('erp_priority', 'priority', 'erp_priority.priorityID')
             ->join('erp_location', 'location', 'erp_location.locationID')
             ->join('serviceline', 'erp_purchaserequest.serviceLineSystemID', 'serviceline.serviceLineSystemID')
