@@ -310,9 +310,10 @@ ORDER BY
         $input['reqAmount'] = $input['detail']['reqAmount'];
         $input['reqAmountTransCur_amount'] = $input['detail']['reqAmount'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
+        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $input['detail']['currencyID'], $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
-        $input['reqAmountInPOTransCur'] = $input['detail']['reqAmount'];
+        //$input['detail']['reqAmount'];
+        $input['reqAmountInPOTransCur'] = $companyCurrencyConversion['documentAmount'];
         $input['reqAmountInPOLocalCur'] = $companyCurrencyConversion['localAmount'];
         $input['reqAmountInPORptCur'] = $companyCurrencyConversion['reportingAmount'];
 

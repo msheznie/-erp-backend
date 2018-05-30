@@ -1353,6 +1353,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'cancelledComments' => $input['cancelComments']
             ]);
 
+        if($purchaseOrder->approved == -1){
+
+        }
+
         $emails = array();
         $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
 
