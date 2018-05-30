@@ -37,3 +37,5 @@ Route::resource('addresses', 'AddressController');
 Route::resource('addressTypes', 'AddressTypeController');
 
 Route::resource('companyPolicyCategories', 'CompanyPolicyCategoryController');
+
+Route::resource('budgetConsumedDatas', 'BudgetConsumedDataController');

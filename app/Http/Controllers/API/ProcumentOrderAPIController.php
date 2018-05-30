@@ -63,6 +63,7 @@ use App\Models\PoPaymentTerms;
 use App\Models\SupplierCurrency;
 use App\Models\GRVDetails;
 use App\Models\AdvancePaymentDetails;
+use App\Models\BudgetConsumedData;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -499,7 +500,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $PoPaymentTerms = PoPaymentTerms::where('poID', $input['purchaseOrderID'])
                 ->first();
 
-            if(empty($PoPaymentTerms)){
+            if (empty($PoPaymentTerms)) {
                 return $this->sendError('PO should have at least one payment term');
             }
 
@@ -1353,7 +1354,20 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'cancelledComments' => $input['cancelComments']
             ]);
 
-        if($purchaseOrder->approved == -1){
+        $idsDeleted = array();
+        if ($purchaseOrder->approved == -1) {
+
+            $budgetDetail = BudgetConsumedData::where('companySystemID', $purchaseOrder->companySystemID)
+                ->where('documentSystemCode', $purchaseOrderID)
+                ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                ->get();
+
+            if (!empty($budgetDetail)) {
+                foreach ($budgetDetail as $bd) {
+                    array_push($idsDeleted, $bd->budgetConsumedDataAutoID);
+                }
+                BudgetConsumedData::destroy($idsDeleted);
+            }
 
         }
 
@@ -1476,6 +1490,21 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 ]);
         }
 
+        $idsDeleted = array();
+        if ($purchaseOrder->approved == -1) {
+
+            $budgetDetail = BudgetConsumedData::where('companySystemID', $purchaseOrder->companySystemID)
+                ->where('documentSystemCode', $purchaseOrderID)
+                ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                ->get();
+
+            if (!empty($budgetDetail)) {
+                foreach ($budgetDetail as $bd) {
+                    array_push($idsDeleted, $bd->budgetConsumedDataAutoID);
+                }
+                BudgetConsumedData::destroy($idsDeleted);
+            }
+        }
 
         $sendEmail = \Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
