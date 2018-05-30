@@ -26,6 +26,7 @@ use App\Models\ProcumentOrder;
 use App\Models\CurrencyMaster;
 use App\Models\PoPaymentTermTypes;
 use App\Repositories\UserRepository;
+use App\Models\SupplierMaster;
 use Illuminate\Support\Facades\DB;
 use App\Models\PoPaymentTerms;
 use Carbon\Carbon;
@@ -232,6 +233,9 @@ class PoAdvancePaymentAPIController extends AppBaseController
 
         $items = PoAdvancePayment::where('poID', $poID)
             ->where('poTermID', 0)
+            ->where('confirmedYN', 1)
+            ->where('isAdvancePaymentYN', 1)
+            ->where('approvedYN', -1)
             ->with(['currency', 'supplier_by' => function ($query) {
             }])->get();
 
@@ -244,55 +248,96 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['poID'])
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])
             ->first();
 
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
         }
 
-        if (empty($input['comAmount']) || $input['comAmount'] == 0) {
-            return $this->sendError('Amount should be greater than 0');
+        $supplier = SupplierMaster::where('supplierCodeSystem', $input['detail']['supplierID'])->first();
+
+        if (empty($supplier)) {
+            return $this->sendError('Supplier not found');
         }
 
+        // checking grv detail exist
+
+        $detail = DB::select('SELECT
+	erp_grvmaster.grvAutoID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_grvdetails.purchaseOrderMastertID
+FROM
+	erp_grvmaster
+INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+WHERE
+	erp_grvmaster.grvConfirmedYN = 1
+AND erp_grvmaster.approved = 0
+GROUP BY
+	erp_grvmaster.grvAutoID,
+	erp_grvmaster.grvPrimaryCode,
+	erp_grvdetails.purchaseOrderMastertID
+HAVING
+	erp_grvdetails.purchaseOrderMastertID = '.$input['purchaseOrderID'].'
+ORDER BY
+	erp_grvmaster.grvAutoID DESC');
+
+        if( !empty($detail) && empty($input['detail']['grvAutoID'])){
+            return $this->sendError('Please select a GRV as there is a GRV done for this PO');
+        }
 
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
         $input['serviceLineID'] = $purchaseOrder->serviceLine;
         $input['companySystemID'] = $purchaseOrder->companySystemID;
         $input['companyID'] = $purchaseOrder->companyID;
-        $input['supplierID'] = $purchaseOrder->supplierID;
         $input['SupplierPrimaryCode'] = $purchaseOrder->supplierPrimaryCode;
-        $input['currencyID'] = $purchaseOrder->supplierTransactionCurrencyID;
 
+        $input['poID'] = $input['purchaseOrderID'];
         $input['poCode'] = $purchaseOrder->purchaseOrderCode;
-        $input['poTermID'] = $input['paymentTermID'];
-        $input['narration'] = $input['paymentTemDes'];
+        $input['narration'] = $input['detail']['narration'];
 
-        if (isset($input['comDate'])) {
-            $masterDate = str_replace('/', '-', $input['comDate']);
+        //grv code sorting
+        if(isset($input['detail']['grvAutoID']) && !empty($input['detail']['grvAutoID'])){
+            $input['grvAutoID'] = $input['detail']['grvAutoID'];
+        }else{
+            $input['grvAutoID'] = 0;
+        }
+        if (isset($input['detail']['reqDate'])) {
+            $masterDate = str_replace('/', '-', $input['detail']['reqDate']);
             $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
         }
-        $input['reqAmount'] = $input['comAmount'];
-        $input['reqAmountTransCur_amount'] = $input['comAmount'];
+        $input['currencyID'] = $input['detail']['currencyID'];
+        $input['reqAmount'] = $input['detail']['reqAmount'];
+        $input['reqAmountTransCur_amount'] = $input['detail']['reqAmount'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['comAmount']);
+        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
-        $input['reqAmountInPOTransCur'] = $input['comAmount'];
+        $input['reqAmountInPOTransCur'] = $input['detail']['reqAmount'];
         $input['reqAmountInPOLocalCur'] = $companyCurrencyConversion['localAmount'];
         $input['reqAmountInPORptCur'] = $companyCurrencyConversion['reportingAmount'];
 
         $input['requestedByEmpID'] = $user->employee['empID'];
         $input['requestedByEmpName'] = $user->employee['empName'];
 
-        $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
-
-        if ($poAdvancePayments) {
-            $update = PoPaymentTerms::where('paymentTermID', $input['paymentTermID'])
-                ->update(['isRequested' => 1]);
+        //updating supplier details coloums
+        if ($supplier) {
+            $input['supplierID'] = $input['detail']['supplierID'];
+            $input['SupplierPrimaryCode'] = $supplier->primarySupplierCode;
         }
+
+        //updating default coloums
+        $input['poTermID'] = 0;
+        $input['confirmedYN'] = 1;
+        $input['approvedYN'] = -1;
+        $input['isAdvancePaymentYN'] = 1;
+        $input['selectedToPayment'] = 0;
+        $input['fullyPaid'] = 0;
+
+        $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
 
         return $this->sendResponse($poAdvancePayments->toArray(), 'Po Advance Payment saved successfully');
     }
+
 
 
 }
