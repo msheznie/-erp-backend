@@ -718,7 +718,7 @@ class PurchaseRequestAPIController extends AppBaseController
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
-            ->join('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
+            ->leftJoin('financeitemcategorymaster', 'financeCategory', 'financeitemcategorymaster.itemCategoryID')
             ->join('erp_priority', 'priority', 'erp_priority.priorityID')
             ->join('erp_location', 'location', 'erp_location.locationID')
             ->join('serviceline', 'erp_purchaserequest.serviceLineSystemID', 'serviceline.serviceLineSystemID')
@@ -960,7 +960,7 @@ class PurchaseRequestAPIController extends AppBaseController
     {
         /** @var PurchaseRequest $purchaseRequest */
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
-            'priority', 'location', 'details.uom', 'company', 'segment', 'approved_by' => function ($query) {
+            'priority_pdf', 'location_pdf', 'details.uom', 'company', 'segment', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->whereIn('documentSystemID', [1, 50, 51]);
             }
@@ -1045,7 +1045,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmed_by',
-            'priority', 'location', 'details', 'company', 'approved_by',
+            'priority_pdf', 'location_pdf', 'details', 'company', 'approved_by',
             'PRConfirmedBy', 'PRConfirmedByEmpName',
             'PRConfirmedBySystemID', 'PRConfirmedDate', 'segment']);
         $input = $this->convertArrayToValue($input);

@@ -52,6 +52,16 @@ class UserGroupRepository extends BaseRepository
 
             $userGroup->orderBy('userGroupID', 'desc');
         }
+        $search = $input['search']['value'];
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $userGroup = $userGroup->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%")
+                    ->orWhereHas('company', function ($query) use ($search) {
+                        $query->where('CompanyName', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
 
         return \DataTables::eloquent($userGroup)
             ->order(function ($query) use ($input) {
