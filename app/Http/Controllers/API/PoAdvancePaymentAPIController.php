@@ -10,7 +10,8 @@
  * -- REVISION HISTORY
  * -- Date: 02-April 2018 By: Nazir Description: Added new functions named as poPaymentTermsAdvanceDetailView()
  * -- Date: 05-April 2018 By: Nazir Description: Added new functions named as loadPoPaymentTermsLogistic()
- * -- Date: 05-April 2018 By: Nazir Description: Added new functions named as storePoPaymentTermsLogistic()
+ * -- Date: 29-May 2018 By: Nazir Description: Added new functions named as storePoPaymentTermsLogistic()
+ * -- Date: 31-April 2018 By: Nazir Description: Added new functions named as getLogisticPrintDetail()
  **/
 namespace App\Http\Controllers\API;
 
@@ -278,11 +279,11 @@ GROUP BY
 	erp_grvmaster.grvPrimaryCode,
 	erp_grvdetails.purchaseOrderMastertID
 HAVING
-	erp_grvdetails.purchaseOrderMastertID = '.$input['purchaseOrderID'].'
+	erp_grvdetails.purchaseOrderMastertID = ' . $input['purchaseOrderID'] . '
 ORDER BY
 	erp_grvmaster.grvAutoID DESC');
 
-        if( !empty($detail) && empty($input['detail']['grvAutoID'])){
+        if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
             return $this->sendError('Please select a GRV as there is a GRV done for this PO');
         }
 
@@ -297,9 +298,9 @@ ORDER BY
         $input['narration'] = $input['detail']['narration'];
 
         //grv code sorting
-        if(isset($input['detail']['grvAutoID']) && !empty($input['detail']['grvAutoID'])){
+        if (isset($input['detail']['grvAutoID']) && !empty($input['detail']['grvAutoID'])) {
             $input['grvAutoID'] = $input['detail']['grvAutoID'];
-        }else{
+        } else {
             $input['grvAutoID'] = 0;
         }
         if (isset($input['detail']['reqDate'])) {
@@ -310,9 +311,10 @@ ORDER BY
         $input['reqAmount'] = $input['detail']['reqAmount'];
         $input['reqAmountTransCur_amount'] = $input['detail']['reqAmount'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
+        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $input['detail']['currencyID'], $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
-        $input['reqAmountInPOTransCur'] = $input['detail']['reqAmount'];
+        //$input['detail']['reqAmount'];
+        $input['reqAmountInPOTransCur'] = $companyCurrencyConversion['documentAmount'];
         $input['reqAmountInPOLocalCur'] = $companyCurrencyConversion['localAmount'];
         $input['reqAmountInPORptCur'] = $companyCurrencyConversion['reportingAmount'];
 
@@ -338,6 +340,17 @@ ORDER BY
         return $this->sendResponse($poAdvancePayments->toArray(), 'Po Advance Payment saved successfully');
     }
 
+    public function getLogisticPrintDetail(Request $request)
+    {
+        $input = $request->all();
+        $poAdvPaymentID = $input['poAdvPaymentID'];
+
+        $items = PoAdvancePayment::where('poAdvPaymentID', $poAdvPaymentID)
+            ->with(['company', 'currency', 'supplier_by' => function ($query) {
+            }])->get();
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
 
 
 }

@@ -153,5 +153,10 @@ class PoAdvancePayment extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID', 'currencyID');
     }
 
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
 
 }
