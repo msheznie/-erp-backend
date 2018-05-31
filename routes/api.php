@@ -422,7 +422,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('procumentOrderPrHistory', 'ProcumentOrderAPIController@procumentOrderPrHistory');
     Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck');
     Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier');
+
+    Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
+
+    Route::resource('purchase_order_statuses', 'PurchaseOrderStatusAPIController');
+    Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder');
+    Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
+
+
