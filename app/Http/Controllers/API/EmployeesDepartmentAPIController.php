@@ -183,6 +183,9 @@ class EmployeesDepartmentAPIController extends AppBaseController
         $search = $request->input('search.value');
 
         if (array_key_exists('companySystemID', $input)) {
+            if(is_array($input['companySystemID'])){
+                $input['companySystemID'] = $input['companySystemID'][0];
+            }
             if ($input['companySystemID'] > 0) {
                 $employeesDepartment->whereHas('company', function ($q) use ($input) {
                     $q->where('companySystemID', $input['companySystemID']);
