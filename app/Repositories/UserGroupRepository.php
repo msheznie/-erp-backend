@@ -37,6 +37,7 @@ class UserGroupRepository extends BaseRepository
 
     public function getUserGroupByCompanyDatatable($input)
     {
+
         $userGroup = $this->model->with('company');
         if(array_key_exists ('selectedCompanyID' , $input)){
             if($input['selectedCompanyID'] > 0){
@@ -62,7 +63,16 @@ class UserGroupRepository extends BaseRepository
             });
         }
 
-        return datatables($userGroup)->toJson();
+        return \DataTables::eloquent($userGroup)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('userGroupID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
     }
 
     public function getUserGroup($input)
