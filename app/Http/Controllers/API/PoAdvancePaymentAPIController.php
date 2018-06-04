@@ -246,6 +246,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
     public function storePoPaymentTermsLogistic(Request $request)
     {
         $input = $request->all();
+
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
@@ -307,11 +308,11 @@ ORDER BY
             $masterDate = str_replace('/', '-', $input['detail']['reqDate']);
             $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
         }
-        $input['currencyID'] = $input['detail']['currencyID'];
+        $input['currencyID'] = $input['detail']['currencyID'][0];
         $input['reqAmount'] = $input['detail']['reqAmount'];
         $input['reqAmountTransCur_amount'] = $input['detail']['reqAmount'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $input['detail']['currencyID'], $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
+        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID,  $input['currencyID'], $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
         //$input['detail']['reqAmount'];
         $input['reqAmountInPOTransCur'] = $companyCurrencyConversion['documentAmount'];
