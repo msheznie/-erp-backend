@@ -253,6 +253,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovedPOForCurrentUser', 'ProcumentOrderAPIController@getApprovedPOForCurrentUser');
     Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments');
     Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns');
+    Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail');
     Route::get('getLogisticsItemsByProcumentOrder', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogistic');
 
     Route::resource('priorities', 'PriorityAPIController');
@@ -294,6 +295,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
     Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
+    Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
     Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
     Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
     Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
@@ -423,10 +425,20 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier');
 
     Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger');
+
+    Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
+
+    Route::resource('purchase_order_statuses', 'PurchaseOrderStatusAPIController');
+    Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder');
+    Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck');
+    Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 
 
-Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
+
+
+Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
+

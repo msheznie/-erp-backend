@@ -156,6 +156,8 @@ WHERE
                             ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%");
                     }
 
+                    $output->orderBy('podet.approvedDate','ASC');
+
                     return \DataTables::of($output)
                         ->order(function ($query) use ($input) {
                             if (request()->has('order')) {
@@ -169,6 +171,7 @@ WHERE
                         ->make(true);
 
                 }else if($request->reportType == 2){  //PO Wise Analysis Report
+                    //DB::enableQueryLog();
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('erp_purchaseordermaster.companyID,
                             erp_purchaseordermaster.purchaseOrderCode,
@@ -200,20 +203,20 @@ WHERE
                     SUM( erp_purchaseorderdetails.noQty ) AS POQty,
                     IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
 	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
-	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, 0, ( noQty * GRVcostPerUnitComRptCur ) ) ) AS POOpex
+	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID != 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POOpex
                      FROM erp_purchaseorderdetails WHERE companySystemID IN ('.join(',',$companyID).') GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderID', '=', 'podet.purchaseOrderMasterID');
                         })
                         ->leftJoin(DB::raw('(SELECT 
                     SUM( erp_grvdetails.noQty ) GRVQty,
 	                SUM( noQty * GRVcostPerUnitComRptCur ) AS TotalGRVValue,
-	                SUM( IF ( itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS GRVCapex,
-	                SUM( IF ( itemFinanceCategoryID = 3, 0, ( noQty * GRVcostPerUnitComRptCur ) ) ) AS GRVOpex,
+	                SUM( IF ( itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 )) AS GRVCapex,
+	                SUM( IF ( itemFinanceCategoryID != 3,( noQty * GRVcostPerUnitComRptCur ),0 )) AS GRVOpex,
 	                erp_grvdetails.purchaseOrderMastertID,
 	                approved,
 	                erp_grvdetails.companySystemID
                      FROM erp_grvdetails 
-                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE approved = -1 AND erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN ('.join(',',$companyID).')
+                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN ('.join(',',$companyID).')
                      GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
                         })
@@ -226,8 +229,10 @@ WHERE
                         $output = $output->where('erp_purchaseordermaster.purchaseOrderCode', 'LIKE', "%{$search}%")
                             ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%")->orWhere('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
                     }
-
+                    $output->orderBy('approvedDate','ASC');
                     $outputSUM = $output->get();
+                    //dd(DB::getQueryLog());
+
 
                     $POCapex = collect($outputSUM)->pluck('POCapex')->toArray();
                     $POCapex = array_sum($POCapex);
@@ -382,7 +387,7 @@ WHERE
                     catSub.*,
                     units.UnitShortCode AS unitShortCode,
                     podet.*')
-                        ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID)->get();
+                        ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID)->orderBy('podet.approvedDate','ASC')->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
@@ -424,7 +429,7 @@ WHERE
                     $csv = \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data);
+                            $sheet->fromArray($data,null,'A1',true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                             $sheet->setAutoSize(true);
                             $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
@@ -462,29 +467,29 @@ WHERE
                         ->join(DB::raw('(SELECT 
                         erp_purchaseorderdetails.companySystemID,
                     erp_purchaseorderdetails.purchaseOrderMasterID,
-                    SUM( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS TotalPOVal,
-                    SUM( erp_purchaseorderdetails.noQty ) AS POQty,
+                    IFNULL(SUM( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ),0) AS TotalPOVal,
+                    IFNULL(SUM( erp_purchaseorderdetails.noQty ),0) AS POQty,
                     IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
 	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
-	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, 0, ( noQty * GRVcostPerUnitComRptCur ) ) ) AS POOpex
+	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID != 3, ( noQty * GRVcostPerUnitComRptCur ),0 ) ) AS POOpex
                      FROM erp_purchaseorderdetails WHERE companySystemID IN ('.join(',',$companyID).') GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderID', '=', 'podet.purchaseOrderMasterID');
                         })
                         ->leftJoin(DB::raw('(SELECT 
                     SUM( erp_grvdetails.noQty ) GRVQty,
 	                SUM( noQty * GRVcostPerUnitComRptCur ) AS TotalGRVValue,
-	                SUM( IF ( itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS GRVCapex,
-	                SUM( IF ( itemFinanceCategoryID = 3, 0, ( noQty * GRVcostPerUnitComRptCur ) ) ) AS GRVOpex,
+	                SUM( IF ( itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 )) AS GRVCapex,
+	                SUM( IF ( itemFinanceCategoryID != 3,( noQty * GRVcostPerUnitComRptCur ),0 )) AS GRVOpex,
 	                erp_grvdetails.purchaseOrderMastertID,
 	                approved,
 	                erp_grvdetails.companySystemID
                      FROM erp_grvdetails 
-                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE approved = -1 AND erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN ('.join(',',$companyID).')
+                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN ('.join(',',$companyID).')
                      GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
                         })
                         ->leftJoin('serviceline','erp_purchaseordermaster.serviceLineSystemID','=','serviceline.serviceLineSystemID')
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N','<>',5)->where('erp_purchaseordermaster.approved','=',-1)->where('erp_purchaseordermaster.poCancelledYN','=',0)->whereIN('erp_purchaseordermaster.supplierID',json_decode($suppliers))->whereBetween('approvedDate', array($startDate, $endDate))->get();
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N','<>',5)->where('erp_purchaseordermaster.approved','=',-1)->where('erp_purchaseordermaster.poCancelledYN','=',0)->whereIN('erp_purchaseordermaster.supplierID',json_decode($suppliers))->whereBetween('approvedDate', array($startDate, $endDate))->orderBy('approvedDate','ASC')->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
@@ -510,7 +515,7 @@ WHERE
 
                     $csv = \Excel::create('po_wise_analysis', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data);
+                            $sheet->fromArray($data,null,'A1',true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                             $sheet->setAutoSize(true);
                             $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
