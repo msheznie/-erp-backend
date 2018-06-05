@@ -416,6 +416,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->supplierTransactionER = 1;
         }
 
+
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
@@ -440,43 +441,37 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $procumentOrderUpdate->poTotalSupplierDefaultCurrency = round($currencyConversionMaster['documentAmount'], 8);
 
+        if ($procumentOrder->supplierID != $input['supplierID']) {
+            $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
+            if ($supplier) {
 
-        $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
-        if ($supplier) {
+                $procumentOrderUpdate->supplierPrimaryCode = $supplier->primarySupplierCode;
+                $procumentOrderUpdate->supplierName = $supplier->supplierName;
+                $procumentOrderUpdate->supplierAddress = $supplier->address;
+                $procumentOrderUpdate->supplierTelephone = $supplier->telephone;
+                $procumentOrderUpdate->supplierFax = $supplier->fax;
+                $procumentOrderUpdate->supplierEmail = $supplier->supEmail;
+                $procumentOrderUpdate->creditPeriod = $supplier->creditPeriod;
+                //$procumentOrderUpdate->supplierVATEligible = $supplier->vatEligible;
+            }
 
-            $procumentOrderUpdate->supplierPrimaryCode = $supplier->primarySupplierCode;
-            $procumentOrderUpdate->supplierName = $supplier->supplierName;
-            $procumentOrderUpdate->supplierAddress = $supplier->address;
-            $procumentOrderUpdate->supplierTelephone = $supplier->telephone;
-            $procumentOrderUpdate->supplierFax = $supplier->fax;
-            $procumentOrderUpdate->supplierEmail = $supplier->supEmail;
-            $procumentOrderUpdate->creditPeriod = $supplier->creditPeriod;
-            //$procumentOrderUpdate->supplierVATEligible = $supplier->vatEligible;
+            $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->first();
+
+            if ($supplierAssignedDetai) {
+                $procumentOrderUpdate->supplierVATEligible = $supplierAssignedDetai->vatEligible;
+                //$procumentOrderUpdate->VATPercentage = $supplierAssignedDetai->vatPercentage;
+                //$input['VATPercentage'] = $supplierAssignedDetai->vatPercentage;
+            }
         }
 
-        $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
-            ->where('companySystemID', $input['companySystemID'])
-            ->first();
+        if ($procumentOrder->companySystemID != $input['companySystemID']) {
 
-        if ($supplierAssignedDetai) {
-            $procumentOrderUpdate->supplierVATEligible = $supplierAssignedDetai->vatEligible;
-            //$input['VATPercentage'] = $supplierAssignedDetai->vatPercentage;
-        }
-
-        if ($input['VATAmount'] > 0) {
-
-            $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $input['VATAmount']);
-
-            $procumentOrderUpdate->VATAmountLocal = round($currencyConversionVatAmount['localAmount'], 8);
-            $procumentOrderUpdate->VATAmountRpt = round($currencyConversionVatAmount['reportingAmount'], 8);
-        } else {
-            $procumentOrderUpdate->VATAmountLocal = 0;
-            $procumentOrderUpdate->VATAmountRpt = 0;
-        }
-
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        if ($company) {
-            $procumentOrderUpdate->vatRegisteredYN = $company->vatRegisteredYN;
+            $company = Company::where('companySystemID', $input['companySystemID'])->first();
+            if ($company) {
+                $procumentOrderUpdate->vatRegisteredYN = $company->vatRegisteredYN;
+            }
         }
 
         if (($procumentOrder->poConfirmedYN == 0 && $input['poConfirmedYN'] == 1) || $isAmendAccess == 1) {
@@ -622,6 +617,29 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
         }
+
+        //calculate tax amount according to the percantage for tax update
+
+        //getting total sum of PO detail Amount
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+            ->first();
+
+        //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
+        if ($input['VATPercentage'] > 0 && $input['supplierVATEligible'] == 1) {
+            $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $input['poDiscountAmount']) * ($input['VATPercentage'] / 100);
+
+            $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculatVatAmount);
+
+            $procumentOrderUpdate->VATAmount = $calculatVatAmount;
+            $procumentOrderUpdate->VATAmountLocal = round($currencyConversionVatAmount['localAmount'], 8);
+            $procumentOrderUpdate->VATAmountRpt = round($currencyConversionVatAmount['reportingAmount'], 8);
+
+        } else {
+            $procumentOrderUpdate->VATAmountLocal = 0;
+            $procumentOrderUpdate->VATAmountRpt = 0;
+        }
+
         $procumentOrderUpdate->save();
 
         if ($procumentOrder->WO_amendYN == -1 && $isAmendAccess == 1 && $procumentOrder->WO_amendRequestedByEmpID == $employee->empID) {
@@ -3261,8 +3279,6 @@ ORDER BY
 
         return $this->sendResponse($detail, 'GRV Currencies retrieved successfully');
     }
-
-
 
 
 }

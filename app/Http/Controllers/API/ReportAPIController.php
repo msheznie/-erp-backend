@@ -156,7 +156,7 @@ WHERE
                             ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%");
                     }
 
-                    $output->orderBy('podet.approvedDate','DESC');
+                    $output->orderBy('podet.approvedDate','ASC');
 
                     return \DataTables::of($output)
                         ->order(function ($query) use ($input) {
@@ -229,7 +229,7 @@ WHERE
                         $output = $output->where('erp_purchaseordermaster.purchaseOrderCode', 'LIKE', "%{$search}%")
                             ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%")->orWhere('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
                     }
-                    $output->orderBy('approvedDate','DESC');
+                    $output->orderBy('approvedDate','ASC');
                     $outputSUM = $output->get();
                     //dd(DB::getQueryLog());
 
@@ -387,7 +387,7 @@ WHERE
                     catSub.*,
                     units.UnitShortCode AS unitShortCode,
                     podet.*')
-                        ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID)->orderBy('podet.approvedDate','DESC')->get();
+                        ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID)->orderBy('podet.approvedDate','ASC')->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
@@ -429,7 +429,7 @@ WHERE
                     $csv = \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data);
+                            $sheet->fromArray($data,null,'A1',true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                             $sheet->setAutoSize(true);
                             $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
@@ -467,8 +467,8 @@ WHERE
                         ->join(DB::raw('(SELECT 
                         erp_purchaseorderdetails.companySystemID,
                     erp_purchaseorderdetails.purchaseOrderMasterID,
-                    SUM( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS TotalPOVal,
-                    SUM( erp_purchaseorderdetails.noQty ) AS POQty,
+                    IFNULL(SUM( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ),0) AS TotalPOVal,
+                    IFNULL(SUM( erp_purchaseorderdetails.noQty ),0) AS POQty,
                     IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
 	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
 	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID != 3, ( noQty * GRVcostPerUnitComRptCur ),0 ) ) AS POOpex
@@ -489,7 +489,7 @@ WHERE
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
                         })
                         ->leftJoin('serviceline','erp_purchaseordermaster.serviceLineSystemID','=','serviceline.serviceLineSystemID')
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N','<>',5)->where('erp_purchaseordermaster.approved','=',-1)->where('erp_purchaseordermaster.poCancelledYN','=',0)->whereIN('erp_purchaseordermaster.supplierID',json_decode($suppliers))->whereBetween('approvedDate', array($startDate, $endDate))->orderBy('approvedDate','DESC')->get();
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N','<>',5)->where('erp_purchaseordermaster.approved','=',-1)->where('erp_purchaseordermaster.poCancelledYN','=',0)->whereIN('erp_purchaseordermaster.supplierID',json_decode($suppliers))->whereBetween('approvedDate', array($startDate, $endDate))->orderBy('approvedDate','ASC')->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
@@ -515,7 +515,7 @@ WHERE
 
                     $csv = \Excel::create('po_wise_analysis', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
-                            $sheet->fromArray($data);
+                            $sheet->fromArray($data,null,'A1',true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                             $sheet->setAutoSize(true);
                             $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
