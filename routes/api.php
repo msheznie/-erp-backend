@@ -425,14 +425,25 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck');
     Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier');
 
+    Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger');
+
     Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
 
     Route::resource('purchase_order_statuses', 'PurchaseOrderStatusAPIController');
     Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder');
     Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck');
+    Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail');
+    Route::post('reportOrderStatus', 'PurchaseOrderStatusAPIController@reportOrderStatus');
+    Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions');
+    Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 
+
+
+
 Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
+
