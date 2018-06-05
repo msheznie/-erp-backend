@@ -38,4 +38,18 @@ class AppBaseController extends BaseController
         return $input;
     }
 
+    public function convertArrayToSelectedValue ($input,$params){
+        foreach ($input as $key => $value) {
+            if(in_array($key,$params)){
+                if (is_array($input[$key])){
+                    if(count($input[$key]) > 0){
+                        $input[$key] = $input[$key][0];
+                    }
+                }
+            }
+        }
+        return $input;
+    }
+
+
 }

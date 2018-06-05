@@ -172,6 +172,7 @@ class ItemMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('financeCategoryMaster','financeCategorySub','isActive','itemApprovedYN','itemConfirmedYN'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -179,8 +180,7 @@ class ItemMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $companyId = $request['companyId'];
-
+        $companyId = $input['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
@@ -195,30 +195,29 @@ class ItemMasterAPIController extends AppBaseController
 
 
         if (array_key_exists('financeCategoryMaster', $input)) {
-            if ($request['financeCategoryMaster'] > 0) {
+            if ($input['financeCategoryMaster'] > 0 && $input['financeCategoryMaster'] != null) {
                 $itemMasters->where('financeCategoryMaster', $input['financeCategoryMaster']);
             }
         }
 
         if (array_key_exists('financeCategorySub', $input)) {
-
-            if ($request['financeCategorySub'] > 0) {
+            if ($input['financeCategorySub'] > 0 && $input['financeCategoryMaster'] != null) {
                 $itemMasters->where('financeCategorySub', $input['financeCategorySub']);
             }
         }
 
         if (array_key_exists('isActive', $input)) {
-            if ($input['isActive'] == 0 || $input['isActive'] == 1) {
+            if (($input['isActive'] == 0 || $input['isActive'] == 1) && $input['isActive'] != null) {
                 $itemMasters->where('isActive', $input['isActive']);
             }
         }
         if (array_key_exists('itemApprovedYN', $input)) {
-            if ($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1) {
+            if (($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1) && $input['itemApprovedYN'] != null) {
                 $itemMasters->where('itemApprovedYN', $input['itemApprovedYN']);
             }
         }
         if (array_key_exists('itemConfirmedYN', $input)) {
-            if ($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1) {
+            if (($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1) && $input['itemConfirmedYN'] != null) {
                 $itemMasters->where('itemConfirmedYN', $input['itemConfirmedYN']);
             }
         }
