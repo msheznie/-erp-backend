@@ -31,6 +31,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('checkUser', 'UserAPIController@checkUser');
 
     Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
+    Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
     Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
 
     Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
@@ -431,7 +432,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('purchase_order_statuses', 'PurchaseOrderStatusAPIController');
     Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder');
     Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck');
+    Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail');
+    Route::post('reportOrderStatus', 'PurchaseOrderStatusAPIController@reportOrderStatus');
+    Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions');
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

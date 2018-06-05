@@ -581,6 +581,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+
         // calculate total Tax for item if
         if ($input['supplierVATEligible'] == 1 && $input['vatRegisteredYN'] == 0) {
 
@@ -617,7 +618,7 @@ class ProcumentOrderAPIController extends AppBaseController
                             'purchaseRetcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
                             'purchaseRetcostPerUnitTranCur' => round($calculateItemTax, 8),
                             'purchaseRetcostPerUnitRptCur' => round($currencyConversion['reportingAmount'], 8),
-                            'VATPercentage' => $procumentOrder->VATPercentage,
+                            'VATPercentage' => $input['VATPercentage'],
                             'VATAmount' => round($vatLineAmount, 8),
                             'VATAmountLocal' => round($currencyConversionForLineAmount['localAmount'], 8),
                             'VATAmountRpt' => round($currencyConversionForLineAmount['reportingAmount'], 8)
@@ -656,6 +657,35 @@ class ProcumentOrderAPIController extends AppBaseController
                             'VATAmount' => 0,
                             'VATAmountLocal' => 0,
                             'VATAmountRpt' => 0
+                        ]);
+                }
+            }
+        }
+
+        if ($input['supplierVATEligible'] == 1) {
+
+            if (!empty($updateDetailDiscount)) {
+                foreach ($updateDetailDiscount as $itemDiscont) {
+
+                    if ($input['poDiscountAmount'] > 0) {
+
+                        $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['poDiscountAmount'] / $input['poTotalSupplierTransactionCurrency']) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
+                    } else {
+                        $calculateItemDiscount = $itemDiscont['unitCost'] - $itemDiscont['discountAmount'];
+                    }
+
+                    $calculateItemTax = (($input['VATPercentage'] / 100) * $calculateItemDiscount) + $calculateItemDiscount;
+
+                    $vatLineAmount = ($calculateItemTax - $calculateItemDiscount);
+
+                    $currencyConversionForLineAmount = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatLineAmount);
+
+                    PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
+                        ->update([
+                            'VATPercentage' => $input['VATPercentage'],
+                            'VATAmount' => round($vatLineAmount, 8),
+                            'VATAmountLocal' => round($currencyConversionForLineAmount['localAmount'], 8),
+                            'VATAmountRpt' => round($currencyConversionForLineAmount['reportingAmount'], 8)
                         ]);
                 }
             }
