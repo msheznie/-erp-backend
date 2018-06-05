@@ -534,4 +534,15 @@ class ProcumentOrder extends Model
     {
         return $this->hasMany(\App\Models\ErpPurchaseorderdetail::class);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     **/
+    public function status()
+    {
+        return $this->hasMany('\App\Models\PurchaseOrderStatus','purchaseOrderID','purchaseOrderID');
+    }
+
+
+
 }
