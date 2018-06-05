@@ -10,15 +10,22 @@
  * -- REVISION HISTORY
  *  Date: 30-May 2018 By: Fayas Description: Added new functions named as getAllStatusByPurchaseOrder()
  *  Date: 31-May 2018 By: Fayas Description: Added new functions named as destroyPreCheck()
+ *  Date: 05-June 2018 By: Fayas Description: Added new functions named as reportOrderStatus(),purchaseOrderStatusesSendEmail(),reportOrderStatusFilterOptions()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseOrderStatusAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderStatusAPIRequest;
+use App\Models\Company;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\Employee;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderStatus;
+use App\Models\SupplierMaster;
 use App\Providers\AuthServiceProvider;
 use App\Repositories\PurchaseOrderStatusRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +37,6 @@ use Response;
  * Class PurchaseOrderStatusController
  * @package App\Http\Controllers\API
  */
-
 class PurchaseOrderStatusAPIController extends AppBaseController
 {
     /** @var  PurchaseOrderStatusRepository */
@@ -96,15 +102,15 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $purchaseOrder = ProcumentOrder::where('purchaseOrderID',$input['purchaseOrderID'])->first();
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->first();
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
         }
 
-        $procumentOrderStatus = PurchaseOrderStatus::where('purchaseOrderID',$input['purchaseOrderID'])
-                                                          ->with(['category'])
-                                                          ->orderBy('POStatusID','desc')
-                                                          ->paginate($input['itemPerPage']);
+        $procumentOrderStatus = PurchaseOrderStatus::where('purchaseOrderID', $input['purchaseOrderID'])
+            ->with(['category'])
+            ->orderBy('POStatusID', 'desc')
+            ->paginate($input['itemPerPage']);
 
 
         return $this->sendResponse($procumentOrderStatus, 'Procurement Order retrieved successfully');
@@ -152,7 +158,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $purchaseOrder = ProcumentOrder::where('purchaseOrderID',$input['purchaseOrderID'])->first();
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->first();
         if (empty($purchaseOrder)) {
             return $this->sendError('Purchase Order not found');
         }
@@ -168,8 +174,6 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         return $this->sendResponse($purchaseOrderStatuses->toArray(), 'Purchase Order Status saved successfully');
     }
-
-
 
 
     /**
@@ -335,8 +339,8 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             return $this->sendError('Purchase Order Status not found');
         }
 
-        if( $employee->employeeSystemID != $purchaseOrderStatus->updatedByEmpSystemID){
-            return $this->sendError('You unable to delete this status',500);
+        if ($employee->employeeSystemID != $purchaseOrderStatus->updatedByEmpSystemID) {
+            return $this->sendError('You unable to delete this status', 500);
         }
 
         $purchaseOrderStatus->delete();
@@ -367,21 +371,203 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             return $this->sendError('Purchase Order Status not found');
         }
 
-        if($employee->employeeSystemID  != $purchaseOrderStatus->updatedByEmpSystemID){
+        if ($employee->employeeSystemID != $purchaseOrderStatus->updatedByEmpSystemID) {
 
-            if($type == 1){
+            if ($type == 1) {
                 $errorMessage = "You unable to edit this status";
-            }else if($type == 2){
+            } else if ($type == 2) {
                 $errorMessage = "You unable to delete this status";
-            }else if($type == 3){
+            } else if ($type == 3) {
                 $errorMessage = "You unable to send emails";
             }
 
-            return $this->sendError($errorMessage,500);
+            return $this->sendError($errorMessage, 500);
         }
 
         return $this->sendResponse($id, 'Purchase Order Status deleted successfully');
     }
 
+    /**
+     * purchase order statuses send Emails to approved users
+     * POST|HEAD /purchaseOrderStatusesSendEmail
+     *
+     * @param  $request
+     *
+     * @return Response
+     */
 
+    public function purchaseOrderStatusesSendEmail(Request $request)
+    {
+        $id = $request->get('POStatusID');
+        $type = $request->get('type');
+        $employee = \Helper::getEmployeeInfo();
+        $errorMessage = "Server Error";
+
+        /** @var PurchaseOrderStatus $purchaseOrderStatus */
+        $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);
+
+        if (empty($purchaseOrderStatus)) {
+            return $this->sendError('Purchase Order Status not found');
+        }
+
+        if ($employee->employeeSystemID != $purchaseOrderStatus->updatedByEmpSystemID) {
+
+            if ($type == 1) {
+                $errorMessage = "You unable to edit this status";
+            } else if ($type == 2) {
+                $errorMessage = "You unable to delete this status";
+            } else if ($type == 3) {
+                $errorMessage = "You unable to send emails";
+            }
+
+            return $this->sendError($errorMessage, 500);
+        }
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderStatus->purchaseOrderID)->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $statusCategory = PurchaseOrderStatus::where('POCategoryID', $purchaseOrderStatus->POCategoryID)->first();
+
+        $emails = array();
+        $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
+
+        $emailBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $emailSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
+
+        $body = '<p>' . $emailBody . '  is updated with a new status by ' . $purchaseOrderStatus->updatedByEmpName . '.</p><p>Status : ' . $statusCategory->description . '</p><p>Comment : ' . $purchaseOrderStatus->comments . '</p>';
+        $subject = $emailSubject . ' is updated with a new status';
+
+        if ($purchaseOrder->poConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $purchaseOrder->poConfirmedByEmpSystemID,
+                'companySystemID' => $purchaseOrder->companySystemID,
+                'docSystemID' => $purchaseOrder->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseOrder->purchaseOrderID);
+        }
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemCode', $purchaseOrder->purchaseOrderID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
+            ->where('approvedYN', -1)
+            ->get();
+
+        foreach ($documentApproval as $da) {
+            $emails[] = array('empSystemID' => $da->employeeSystemID,
+                'companySystemID' => $purchaseOrder->companySystemID,
+                'docSystemID' => $purchaseOrder->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $purchaseOrder->purchaseOrderID);
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"], 500);
+        }
+
+        return $this->sendResponse($id, 'Purchase Order Status deleted successfully');
+    }
+
+    /**
+     * report Order Status
+     * POST|HEAD /reportOrderStatus
+     *
+     * @param  $request
+     *
+     * @return Response
+     */
+    public function reportOrderStatus(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $purchaseOrders = ProcumentOrder::where('companySystemID', $input['companySystemID'])
+                                          ->where('approved',-1)
+                                          ->with(['supplier','currency','status' => function($q){
+                                               $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
+                                          },'supplier' => function($q){
+                                              $q->with(['country']);
+                                          }]);
+
+        if (array_key_exists('dateRange', $input)) {
+            $from = ((new Carbon($input['dateRange'][0]))->addDays(1)->format('Y-m-d'));
+            $to = ((new Carbon($input['dateRange'][1]))->addDays(1)->format('Y-m-d'));
+
+            $purchaseOrders = $purchaseOrders->whereBetween('createdDateTime', [$from, $to]);
+        }
+        if (array_key_exists('suppliers', $input)) {
+            $suppliers = (array)$input['suppliers'];
+            $suppliers = collect($suppliers)->pluck('supplierCodeSystem');
+            $purchaseOrders = $purchaseOrders->whereIn('supplierID', $suppliers);
+        }
+
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+          /*  $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });*/
+        }
+
+        return \DataTables::eloquent($purchaseOrders)
+            ->addColumn('Actions', 1)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    /**
+     * reportOrderStatusFilterOptions
+     * GET|HEAD /reportOrderStatusFilterOptions
+     *
+     * @param  $request
+     *
+     * @return Response
+     */
+    public function reportOrderStatusFilterOptions(Request $request){
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $companies = Company::whereIn("companySystemID",$subCompanies)
+            ->select('companySystemID', 'CompanyID', 'CompanyName')
+            ->get();
+
+        $filterSuppliers = ProcumentOrder::where('companySystemID', $selectedCompanyId)
+                                             ->select('supplierID')
+                                             ->groupBy('supplierID')
+                                             ->pluck('supplierID');
+
+        $suppliers = SupplierMaster::whereIn('supplierCodeSystem',$filterSuppliers)->select(['supplierCodeSystem','primarySupplierCode','supplierName'])->get();
+        $output = array(
+            'companies' => $companies,
+            'suppliers' => $suppliers
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
 }

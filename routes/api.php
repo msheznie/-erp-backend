@@ -429,6 +429,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('purchase_order_statuses', 'PurchaseOrderStatusAPIController');
     Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder');
     Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck');
+    Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail');
+    Route::post('reportOrderStatus', 'PurchaseOrderStatusAPIController@reportOrderStatus');
+    Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
