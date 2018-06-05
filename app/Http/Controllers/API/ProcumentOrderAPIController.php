@@ -562,14 +562,18 @@ class ProcumentOrderAPIController extends AppBaseController
 
                     $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
 
+                    $currencyConversionLineDefaultDiscount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierDefaultCurrencyID'], $calculateItemDiscount);
+
                     //$detail['netAmount'] = $calculateItemDiscount * $itemDiscont['noQty'];
 
                     PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
                         ->update([
                             'GRVcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
+                            'GRVcostPerUnitSupDefaultCur' => round($currencyConversionLineDefaultDiscount['documentAmount'], 8),
                             'GRVcostPerUnitSupTransCur' => round($calculateItemDiscount, 8),
                             'GRVcostPerUnitComRptCur' => round($currencyConversion['reportingAmount'], 8),
                             'purchaseRetcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
+                            'purchaseRetcostPerUniSupDefaultCur' => round($currencyConversionLineDefaultDiscount['documentAmount'], 8),
                             'purchaseRetcostPerUnitTranCur' => round($calculateItemDiscount, 8),
                             'purchaseRetcostPerUnitRptCur' => round($currencyConversion['reportingAmount'], 8),
                         ]);
@@ -600,15 +604,20 @@ class ProcumentOrderAPIController extends AppBaseController
 
                     $currencyConversionForLineAmount = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatLineAmount);
 
+                    $currencyConversionLineDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierDefaultCurrencyID'], $calculateItemTax);
+
+
                     PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
                         ->update([
                             'GRVcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
+                            'GRVcostPerUnitSupDefaultCur' => round($currencyConversionLineDefault['documentAmount'], 8),
                             'GRVcostPerUnitSupTransCur' => round($calculateItemTax, 8),
                             'GRVcostPerUnitComRptCur' => round($currencyConversion['reportingAmount'], 8),
+                            'purchaseRetcostPerUniSupDefaultCur' => round($currencyConversionLineDefault['documentAmount'], 8),
                             'purchaseRetcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
                             'purchaseRetcostPerUnitTranCur' => round($calculateItemTax, 8),
                             'purchaseRetcostPerUnitRptCur' => round($currencyConversion['reportingAmount'], 8),
-                            'VATPercentage' => round($procumentOrder->VATPercentage, 8),
+                            'VATPercentage' => $procumentOrder->VATPercentage,
                             'VATAmount' => round($vatLineAmount, 8),
                             'VATAmountLocal' => round($currencyConversionForLineAmount['localAmount'], 8),
                             'VATAmountRpt' => round($currencyConversionForLineAmount['reportingAmount'], 8)
@@ -616,6 +625,40 @@ class ProcumentOrderAPIController extends AppBaseController
                 }
             }
 
+        } else {
+            if (!empty($updateDetailDiscount)) {
+                foreach ($updateDetailDiscount as $itemDiscont) {
+
+                    if ($input['poDiscountAmount'] > 0) {
+
+                        $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['poDiscountAmount'] / $input['poTotalSupplierTransactionCurrency']) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
+                    } else {
+                        $calculateItemDiscount = $itemDiscont['unitCost'] - $itemDiscont['discountAmount'];
+                    }
+
+                    $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID']
+                        , $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
+
+                    $currencyConversionLineDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierDefaultCurrencyID'], $calculateItemDiscount);
+
+                    PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
+                        ->update([
+                            'GRVcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
+                            'GRVcostPerUnitSupDefaultCur' => round($currencyConversionLineDefault['documentAmount'], 8),
+                            'GRVcostPerUnitSupTransCur' => round($calculateItemDiscount, 8),
+                            'GRVcostPerUnitComRptCur' => round($currencyConversion['reportingAmount'], 8),
+                            'purchaseRetcostPerUniSupDefaultCur' => round($currencyConversionLineDefault['documentAmount'], 8),
+                            'purchaseRetcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
+                            'purchaseRetcostPerUnitTranCur' => round($calculateItemDiscount, 8),
+                            'purchaseRetcostPerUnitRptCur' => round($currencyConversion['reportingAmount'], 8),
+                            //'VATPercentage' => $procumentOrder->VATPercentage,
+                            'VATPercentage' => 0,
+                            'VATAmount' => 0,
+                            'VATAmountLocal' => 0,
+                            'VATAmountRpt' => 0
+                        ]);
+                }
+            }
         }
 
         //calculate tax amount according to the percantage for tax update
