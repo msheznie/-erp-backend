@@ -432,6 +432,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder');
     Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck');
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
+    Route::post('getErpLedgerByFilter', 'ErpItemLedgerAPIController@getErpLedgerByFilter');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

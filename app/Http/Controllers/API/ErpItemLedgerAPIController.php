@@ -321,43 +321,6 @@ class ErpItemLedgerAPIController extends AppBaseController
     }
 
     public function getErpLedgerByFilter(Request $request){
-//        ->select('erp_itemledger.companyID',
-//            'companymaster.CompanyName',
-//            'erp_itemledger.documentID',
-//            'erp_documentmaster.documentDescription',
-//            'erp_itemledger.itemPrimaryCode',
-//            'itemmaster.secondaryItemCode',
-//            'erp_itemledger.itemDescription',
-//            'erp_itemledger.unitOfMeasure',
-//            'erp_itemledger.inOutQty',
-//            'erp_itemledger.comments',
-//            'erp_itemledger.transactionDate',
-//            'units.UnitShortCode',
-//            'warehousemaster.wareHouseDescription',
-//            'employees.empName',
-//            'currencymaster.CurrencyName' as 'LocalCurrency',
-//            'erp_itemledger.wacLocal',
-//            'companymaster.CompanyName',
-//            'companymaster.CompanyName',
-//            'companymaster.CompanyName',
-//            'companymaster.CompanyName',
-//            'companymaster.CompanyName',
-//            'companymaster.CompanyName',
-//            'companymaster.CompanyName',
-//            'companymaster.CompanyName')
-//
-//,
-// AS ,
-//,
-//(erp_itemledger.inOutQty*erp_itemledger.wacLocal) as TotalWacLocal,
-//currencymaster_1.CurrencyName AS RepCurrency,
-//erp_itemledger.wacRpt,
-//(erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt
-//
-//LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID = currencymaster_1.currencyID
-//INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem
-//
-//where erp_itemledger.companySystemID=52
 
             $warehouse = DB::table('erp_itemledger')
                 ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
@@ -366,12 +329,34 @@ class ErpItemLedgerAPIController extends AppBaseController
                 ->leftJoin('erp_documentmaster', 'erp_itemledger.documentSystemID', '=', 'erp_documentmaster.documentSystemID')
                 ->join('companymaster', 'erp_itemledger.companySystemID', '=', 'companymaster.companySystemID')
                 ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
-                ->leftJoin('currencymaster', 'erp_itemledger.wacRptCurrencyID', '=', 'currencymaster_1.currencyID')
+                ->leftJoin('currencymaster AS currencymaster_1', 'erp_itemledger.wacRptCurrencyID', '=', 'currencymaster_1.currencyID')
                 ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
-                ->select('erp_itemledger.companySystemID', 'erp_itemledger.wareHouseSystemCode', 'warehousemaster.wareHouseDescription')
+                ->selectRaw('erp_itemledger.companyID,
+                            companymaster.CompanyName,
+                            erp_itemledger.documentID,
+                            erp_documentmaster.documentDescription,
+                            erp_itemledger.documentCode,
+                            erp_itemledger.itemPrimaryCode,
+                            itemmaster.secondaryItemCode,
+                            erp_itemledger.itemDescription,
+                            erp_itemledger.unitOfMeasure,
+                            erp_itemledger.inOutQty,
+                            erp_itemledger.comments,
+                            erp_itemledger.transactionDate,
+                            units.UnitShortCode,
+                            warehousemaster.wareHouseDescription,
+                            employees.empName,
+                            currencymaster.CurrencyName AS LocalCurrency,
+                            erp_itemledger.wacLocal,
+                            (erp_itemledger.inOutQty*erp_itemledger.wacLocal) as TotalWacLocal,
+                            currencymaster_1.CurrencyName as RepCurrency,
+                            erp_itemledger.wacRpt,
+                            (erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt')
                 ->where('erp_itemledger.companySystemID',$request->selectedCompanyId)
                 ->groupBy('erp_itemledger.companySystemID','erp_itemledger.wareHouseSystemCode')
                 ->get();
+
+
     }
 
 }
