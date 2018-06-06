@@ -436,6 +436,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('reportOrderStatus', 'PurchaseOrderStatusAPIController@reportOrderStatus');
     Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions');
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
+    Route::post('getErpLedgerByFilter', 'ErpItemLedgerAPIController@getErpLedgerByFilter');
 
 });
 

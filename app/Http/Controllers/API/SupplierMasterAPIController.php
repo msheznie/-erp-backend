@@ -499,7 +499,7 @@ class SupplierMasterAPIController extends AppBaseController
             ->select('supplierID')
             ->groupBy('supplierID')
             ->pluck('supplierID');
-        $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companyID)->groupBy('supplierCodeSytem')->get();
+        $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companyID)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
         return $this->sendResponse($supplierMaster, 'Supplier Master retrieved successfully');
     }
 }
