@@ -22,6 +22,7 @@
  * -- Date: 18-May 2018 By: Fayas Description: Added new functions named as manualClosePurchaseRequestPreCheck()
  * -- Date: 21-May 2018 By: Fayas Description: Added new functions named as returnPurchaseRequestPreCheck(),cancelPurchaseRequestPreCheck()
  * -- Date: 23-May 2018 By: Fayas Description: Added new functions named as purchaseRequestAudit()
+ * -- Date: 06-June 2018 By: Mubashir Description: Modified getPurchaseRequestByDocumentType() to handle filters from local storage
  */
 namespace App\Http\Controllers\API;
 
@@ -555,6 +556,8 @@ class PurchaseRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','cancelledYN','PRConfirmedYN','approved','month','year'));
+
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -585,33 +588,39 @@ class PurchaseRequestAPIController extends AppBaseController
         }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
-            $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            if($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
         }
 
         if (array_key_exists('cancelledYN', $input)) {
-            if ($input['cancelledYN'] == 0 || $input['cancelledYN'] == -1) {
+            if (($input['cancelledYN'] == 0 || $input['cancelledYN'] == -1) && !is_null($input['cancelledYN'])) {
                 $purchaseRequests->where('cancelledYN', $input['cancelledYN']);
             }
         }
 
         if (array_key_exists('PRConfirmedYN', $input)) {
-            if ($input['PRConfirmedYN'] == 0 || $input['PRConfirmedYN'] == 1) {
+            if (($input['PRConfirmedYN'] == 0 || $input['PRConfirmedYN'] == 1) && !is_null($input['PRConfirmedYN'])) {
                 $purchaseRequests->where('PRConfirmedYN', $input['PRConfirmedYN']);
             }
         }
 
         if (array_key_exists('approved', $input)) {
-            if ($input['approved'] == 0 || $input['approved'] == -1) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
                 $purchaseRequests->where('approved', $input['approved']);
             }
         }
 
         if (array_key_exists('month', $input)) {
-            $purchaseRequests->whereMonth('createdDateTime', '=', $input['month']);
+            if($input['month'] && !is_null($input['month'])) {
+                $purchaseRequests->whereMonth('createdDateTime', '=', $input['month']);
+            }
         }
 
         if (array_key_exists('year', $input)) {
-            $purchaseRequests->whereYear('createdDateTime', '=', $input['year']);
+            if($input['year'] && !is_null($input['year'])) {
+                $purchaseRequests->whereYear('createdDateTime', '=', $input['year']);
+            }
         }
 
         $purchaseRequests = $purchaseRequests->select(
