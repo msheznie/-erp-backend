@@ -334,7 +334,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $isAmendAccess = $input['isAmendAccess'];
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'expectedDeliveryDate', 'totalOrderAmount', 'segment', 'isAmendAccess']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess']);
         $input = $this->convertArrayToValue($input);
 
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $id)->first();
