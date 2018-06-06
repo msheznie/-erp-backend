@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Supplier Master
  * -- REVISION HISTORY
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getSupplierMasterByCompany(),getAssignedCompaniesBySupplier(),
+ * -- Date: 06-June 2018 By: Mubashir Description: Modified getSupplierMasterByCompany() to handle filters from local storage
  */
 
 namespace App\Http\Controllers\API;

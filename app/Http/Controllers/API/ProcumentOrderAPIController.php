@@ -33,6 +33,7 @@
  * -- Date: 24-May 2018 By: Nazir Description: Added new functions named as ProcurementOrderAudit(),
  * -- Date: 25-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysisDrilldownExport(),
  * -- Date: 28-May 2018 By: Nazir Description: Added new functions named as getGRVBasedPODropdowns(),
+ * -- Date: 05-June 2018 By: Mubashir Description: Modified getProcumentOrderByDocumentType() to handle filters from local storage
  */
 
 namespace App\Http\Controllers\API;
@@ -517,9 +518,10 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
                 ->first();
 
+
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
-                    $paymentPercentageAmount = ($detailSum['total'] * $payment['comPercentage']) / 100;
+                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($detailSum['total'] - $input['poDiscountAmount']) + $input['VATAmount']);
                     if ($payment['comAmount'] != $paymentPercentageAmount) {
                         return $this->sendError('Payment terms is not matching with the PO total');
                     }
@@ -803,6 +805,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function getProcumentOrderByDocumentType(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','poCancelledYN','poConfirmedYN','approved','grvRecieved','month','year','invoicedBooked'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -824,45 +827,51 @@ class ProcumentOrderAPIController extends AppBaseController
         }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
-            $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
         }
 
         if (array_key_exists('poCancelledYN', $input)) {
-            if ($input['poCancelledYN'] == 0 || $input['poCancelledYN'] == -1) {
+            if (($input['poCancelledYN'] == 0 || $input['poCancelledYN'] == -1) && !is_null($input['poCancelledYN'])) {
                 $procumentOrders->where('poCancelledYN', $input['poCancelledYN']);
             }
         }
 
         if (array_key_exists('poConfirmedYN', $input)) {
-            if ($input['poConfirmedYN'] == 0 || $input['poConfirmedYN'] == 1) {
+            if (($input['poConfirmedYN'] == 0 || $input['poConfirmedYN'] == 1) && !is_null($input['poConfirmedYN'])) {
                 $procumentOrders->where('poConfirmedYN', $input['poConfirmedYN']);
             }
         }
 
         if (array_key_exists('approved', $input)) {
-            if ($input['approved'] == 0 || $input['approved'] == -1) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
                 $procumentOrders->where('approved', $input['approved']);
             }
         }
 
         if (array_key_exists('grvRecieved', $input)) {
-            if ($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) {
+            if (($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) && !is_null($input['grvRecieved'])) {
                 $procumentOrders->where('grvRecieved', $input['grvRecieved']);
             }
         }
 
         if (array_key_exists('invoicedBooked', $input)) {
-            if ($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) {
+            if (($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) && !is_null($input['invoicedBooked'])) {
                 $procumentOrders->where('invoicedBooked', $input['invoicedBooked']);
             }
         }
 
         if (array_key_exists('month', $input)) {
-            $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
+            if($input['month'] && !is_null($input['month'])) {
+                $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
+            }
         }
 
         if (array_key_exists('year', $input)) {
-            $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+            if($input['year'] && !is_null($input['year'])) {
+                $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+            }
         }
 
         $procumentOrders = $procumentOrders->select(
