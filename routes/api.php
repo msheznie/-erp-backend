@@ -438,6 +438,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('reportOrderStatusPreCheck', 'PurchaseOrderStatusAPIController@reportOrderStatusPreCheck');
     Route::post('exportReportOrderStatus', 'PurchaseOrderStatusAPIController@exportReportOrderStatus');
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
+    Route::post('getErpLedgerByFilter', 'ErpItemLedgerAPIController@getErpLedgerByFilter');
 
 });
 
