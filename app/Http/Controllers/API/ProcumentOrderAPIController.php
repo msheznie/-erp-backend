@@ -517,9 +517,10 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
                 ->first();
 
+
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
-                    $paymentPercentageAmount = ($detailSum['total'] * $payment['comPercentage']) / 100;
+                    $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($detailSum['total'] - $input['poDiscountAmount']) + $input['VATAmount']);
                     if ($payment['comAmount'] != $paymentPercentageAmount) {
                         return $this->sendError('Payment terms is not matching with the PO total');
                     }
