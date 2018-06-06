@@ -670,7 +670,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         }
 
-        //calculate tax amount according to the percantage for tax update
+/*        //calculate tax amount according to the percantage for tax update
 
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
@@ -689,7 +689,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
                     'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
                 ]);
-        }
+        }*/
 
         return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details updated successfully');
     }

@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateSupplierMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierMasterAPIRequest;
 use App\Models\Company;
 use App\Models\CountryMaster;
+use App\Models\ProcumentOrder;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\DocumentApproved;
@@ -100,24 +101,24 @@ class SupplierMasterAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $childCompanies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $childCompanies = [$companyId];
         }
 
         $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
-                                    $query->where('isDefault', -1)
-                                        ->with(['currencyMaster']);
-                                }])
-                                ->whereIn('primaryCompanySystemID',$childCompanies);
+            $query->where('isDefault', -1)
+                ->with(['currencyMaster']);
+        }])
+            ->whereIn('primaryCompanySystemID', $childCompanies);
 
         $search = $request->input('search.value');
-        if($search){
-            $supplierMasters =   $supplierMasters->where(function ($query) use($search) {
-                    $query->where('primarySupplierCode','LIKE',"%{$search}%")
-                           ->orWhere( 'supplierName', 'LIKE', "%{$search}%");
-                });
+        if ($search) {
+            $supplierMasters = $supplierMasters->where(function ($query) use ($search) {
+                $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
         }
 
         return \DataTables::eloquent($supplierMasters)
@@ -159,9 +160,9 @@ class SupplierMasterAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $companyID = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $companyID = [$companyId];
         }
 
@@ -169,7 +170,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $supplierMasters = DB::table('erp_documentapproved')->select('suppliermaster.*','erp_documentapproved.documentApprovedID','rollLevelOrder','currencymaster.CurrencyCode','suppliercategorymaster.categoryDescription','approvalLevelID','documentSystemCode')
+        $supplierMasters = DB::table('erp_documentapproved')->select('suppliermaster.*', 'erp_documentapproved.documentApprovedID', 'rollLevelOrder', 'currencymaster.CurrencyCode', 'suppliercategorymaster.categoryDescription', 'approvalLevelID', 'documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')->
                 on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')->
@@ -178,18 +179,18 @@ class SupplierMasterAPIController extends AppBaseController
                     ->whereIn('employeesdepartments.companySystemID', $companyID)
                     ->where('employeesdepartments.employeeSystemID', $empID);
             })
-            ->join('suppliermaster', function ($query) use ($companyID, $empID,$search) {
+            ->join('suppliermaster', function ($query) use ($companyID, $empID, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'supplierCodeSystem')
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->whereIn('primaryCompanySystemID', $companyID)
                     ->where('suppliermaster.approvedYN', 0)
                     ->where('suppliermaster.supplierConfirmedYN', 1)
-                    ->when($search != "", function ($q) use($search){
-                        $q->where(function ($query) use($search) {
-                            $query->where('primarySupplierCode','LIKE',"%{$search}%")
-                                ->orWhere( 'supplierName', 'LIKE', "%{$search}%");
+                    ->when($search != "", function ($q) use ($search) {
+                        $q->where(function ($query) use ($search) {
+                            $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
+                                ->orWhere('supplierName', 'LIKE', "%{$search}%");
                         });
-                     });
+                    });
             })
             ->leftJoin('suppliercategorymaster', 'suppliercategorymaster.supCategoryMasterID', '=', 'suppliermaster.supCategoryMasterID')
             ->leftJoin('currencymaster', 'suppliermaster.currency', '=', 'currencymaster.currencyID')
@@ -287,8 +288,8 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMasters = $this->supplierMasterRepository->create($input);
 
 
-        $updateSupplierMasters = SupplierMaster::where('supplierCodeSystem',$supplierMasters['supplierCodeSystem'])->first();
-        $updateSupplierMasters->primarySupplierCode = 'S0'.strval($supplierMasters->supplierCodeSystem);
+        $updateSupplierMasters = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first();
+        $updateSupplierMasters->primarySupplierCode = 'S0' . strval($supplierMasters->supplierCodeSystem);
 
         $updateSupplierMasters->save();
 
@@ -310,7 +311,7 @@ class SupplierMasterAPIController extends AppBaseController
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
 
-        if($company){
+        if ($company) {
             $input['primaryCompanyID'] = $company->CompanyID;
         }
 
@@ -341,14 +342,14 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Master not found');
         }
 
-        if($isConfirm && $supplierMaster->supplierConfirmedYN == 0){
+        if ($isConfirm && $supplierMaster->supplierConfirmedYN == 0) {
 
-            $checkDefaultCurrency = SupplierCurrency::where('supplierCodeSystem',$id)
-                                                           ->where('isDefault',-1)
-                                                           ->count();
+            $checkDefaultCurrency = SupplierCurrency::where('supplierCodeSystem', $id)
+                ->where('isDefault', -1)
+                ->count();
 
-            if($checkDefaultCurrency == 0){
-                return $this->sendError("Default currency not found. Setup currency in currency tab",500);
+            if ($checkDefaultCurrency == 0) {
+                return $this->sendError("Default currency not found. Setup currency in currency tab", 500);
             }
 
 
@@ -480,7 +481,25 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function getSuppliersByCompany(Request $request)
     {
-        $supplierMaster = SupplierAssigned::where('companySystemID',$request->selectedCompanyId)->get();
+        $supplierMaster = SupplierAssigned::where('companySystemID', $request->selectedCompanyId)->get();
+        return $this->sendResponse($supplierMaster, 'Supplier Master retrieved successfully');
+    }
+
+    public function getPOSuppliers(Request $request)
+    {
+        $companyId = $request->selectedCompanyId;
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $companyID = \Helper::getGroupCompany($companyId);
+        } else {
+            $companyID = [$companyId];
+        }
+
+        $filterSuppliers = ProcumentOrder::whereIN('companySystemID', $companyID)
+            ->select('supplierID')
+            ->groupBy('supplierID')
+            ->pluck('supplierID');
+        $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companyID)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
         return $this->sendResponse($supplierMaster, 'Supplier Master retrieved successfully');
     }
 }
