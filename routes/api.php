@@ -435,6 +435,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail');
     Route::post('reportOrderStatus', 'PurchaseOrderStatusAPIController@reportOrderStatus');
     Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions');
+    Route::post('reportOrderStatusPreCheck', 'PurchaseOrderStatusAPIController@reportOrderStatusPreCheck');
+    Route::post('exportReportOrderStatus', 'PurchaseOrderStatusAPIController@exportReportOrderStatus');
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
     Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
     Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');

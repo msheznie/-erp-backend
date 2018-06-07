@@ -11,6 +11,7 @@
  *  Date: 30-May 2018 By: Fayas Description: Added new functions named as getAllStatusByPurchaseOrder()
  *  Date: 31-May 2018 By: Fayas Description: Added new functions named as destroyPreCheck()
  *  Date: 05-June 2018 By: Fayas Description: Added new functions named as reportOrderStatus(),purchaseOrderStatusesSendEmail(),reportOrderStatusFilterOptions()
+ *  Date: 06-June 2018 By: Fayas Description: Added new functions named as reportOrderStatusPreCheck(),exportReportOrderStatus()
  */
 namespace App\Http\Controllers\API;
 
@@ -489,13 +490,22 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $purchaseOrders = ProcumentOrder::where('companySystemID', $input['companySystemID'])
-                                          ->where('approved',-1)
-                                          ->with(['supplier','currency','status' => function($q){
-                                               $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
-                                          },'supplier' => function($q){
-                                              $q->with(['country']);
-                                          }]);
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
+            ->where('approved', -1)
+            ->with(['supplier', 'currency', 'status' => function ($q) {
+                $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
+            }, 'supplier' => function ($q) {
+                $q->with(['country']);
+            }]);
 
         if (array_key_exists('dateRange', $input)) {
             $from = ((new Carbon($input['dateRange'][0]))->addDays(1)->format('Y-m-d'));
@@ -513,11 +523,11 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-          /*  $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
-                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
-            });*/
+            /*  $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
+                  $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                      ->orWhere('narration', 'LIKE', "%{$search}%")
+                      ->orWhere('supplierName', 'LIKE', "%{$search}%");
+              });*/
         }
 
         return \DataTables::eloquent($purchaseOrders)
@@ -535,6 +545,45 @@ class PurchaseOrderStatusAPIController extends AppBaseController
     }
 
     /**
+     * reportOrderStatusPreCheck
+     * POST|HEAD /reportOrderStatusPreCheck
+     *
+     * @param  $request
+     *
+     * @return Response
+     */
+    public function reportOrderStatusPreCheck(Request $request)
+    {
+        $input = $request->all();
+
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+
+        if (empty($company)) {
+            return $this->sendError('Please select the company', 500);
+        }
+
+
+        if (array_key_exists('dateRange', $input)) {
+            $from = ((new Carbon($input['dateRange'][0]))->addDays(1)->format('Y-m-d'));
+            $to = ((new Carbon($input['dateRange'][1]))->addDays(1)->format('Y-m-d'));
+        } else {
+            return $this->sendError('Please select date range', 500);
+        }
+        if (array_key_exists('suppliers', $input)) {
+            $suppliers = (array)$input['suppliers'];
+            $suppliers = collect($suppliers)->pluck('supplierCodeSystem');
+
+            if (count($suppliers) == 0) {
+                return $this->sendError('Please select the suppliers', 500);
+            }
+
+        }
+
+        return $this->sendResponse([], 'valid');
+    }
+
+    /**
      * reportOrderStatusFilterOptions
      * GET|HEAD /reportOrderStatusFilterOptions
      *
@@ -542,27 +591,30 @@ class PurchaseOrderStatusAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function reportOrderStatusFilterOptions(Request $request){
+    public function reportOrderStatusFilterOptions(Request $request)
+    {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        }else{
+        } else {
             $subCompanies = [$selectedCompanyId];
         }
 
-        $companies = Company::whereIn("companySystemID",$subCompanies)
+        $companies = Company::whereIn("companySystemID", $subCompanies)
             ->select('companySystemID', 'CompanyID', 'CompanyName')
             ->get();
 
-        $filterSuppliers = ProcumentOrder::where('companySystemID', $selectedCompanyId)
-                                             ->select('supplierID')
-                                             ->groupBy('supplierID')
-                                             ->pluck('supplierID');
+        $filterSuppliers = ProcumentOrder::whereIn('companySystemID', $subCompanies)
+            ->select('supplierID')
+            ->groupBy('supplierID')
+            ->pluck('supplierID');
 
-        $suppliers = SupplierMaster::whereIn('supplierCodeSystem',$filterSuppliers)->select(['supplierCodeSystem','primarySupplierCode','supplierName'])->get();
+        $suppliers = SupplierMaster::whereIn('supplierCodeSystem', $filterSuppliers)
+            ->select(['supplierCodeSystem', 'primarySupplierCode', 'supplierName'])
+            ->get();
         $output = array(
             'companies' => $companies,
             'suppliers' => $suppliers
@@ -570,4 +622,118 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
+
+    /**
+     * exportReportOrderStatus
+     * POST|HEAD /exportReportOrderStatus
+     *
+     * @param  $request
+     *
+     * @return Response
+     */
+    public function exportReportOrderStatus(Request $request)
+    {
+        $input = $request->all();
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $type = $input['type'];
+        $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
+            ->where('approved', -1)
+            ->with(['supplier', 'currency', 'status' => function ($q) {
+                $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
+            }, 'supplier' => function ($q) {
+                $q->with(['country']);
+            }]);
+
+        if (array_key_exists('dateRange', $input)) {
+            $from = ((new Carbon($input['dateRange'][0]))->addDays(1)->format('Y-m-d'));
+            $to = ((new Carbon($input['dateRange'][1]))->addDays(1)->format('Y-m-d'));
+
+            $purchaseOrders = $purchaseOrders->whereBetween('createdDateTime', [$from, $to]);
+        }
+        if (array_key_exists('suppliers', $input)) {
+            $suppliers = (array)$input['suppliers'];
+            $suppliers = collect($suppliers)->pluck('supplierCodeSystem');
+            $purchaseOrders = $purchaseOrders->whereIn('supplierID', $suppliers);
+        }
+
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            /*  $procumentOrders = $procumentOrders->where(function ($query) use ($search) {
+                  $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                      ->orWhere('narration', 'LIKE', "%{$search}%")
+                      ->orWhere('supplierName', 'LIKE', "%{$search}%");
+              });*/
+        }
+
+        $purchaseOrders = $purchaseOrders
+            ->orderBy('purchaseOrderID', 'desc')
+            ->get();
+        $data = array();
+        foreach ($purchaseOrders as $val) {
+
+            $status = "";
+            $countryName = "";
+            $currencyName = "";
+            $comments = "";
+            $temStatus = '';
+
+            if(!empty($val->status)){
+                if(count($val->status)){
+                    $comments  =  $val->status[0]->comments;
+
+                    if(!empty($val->status[0]->category)){
+                        $status = $val->status[0]->category->description;
+                    }
+                }
+            }
+
+            if(!empty($val->supplier)){
+                if(!empty($val->supplier->country)){
+                   $countryName = $val->supplier->country->countryName;
+                }
+            }
+
+            if(!empty($val->currency)){
+                $currencyName = $val->currency->CurrencyName;
+            }
+
+
+            $data[] = array(
+                'Company ID' => $val->companyID,
+                'PO Code' => $val->purchaseOrderCode,
+                'Created Date' => \Helper::dateFormat($val->createdDateTime),
+                'Approved Date' => \Helper::dateFormat($val->approvedDate),
+                'ETA' => \Helper::dateFormat($val->expectedDeliveryDate),
+                'Narration' => $val->narration,
+                'Supplier Code' => $val->supplierPrimaryCode,
+                'Supplier Name' => $val->supplierName,
+                'Supplier Country' => $countryName,
+                'Currency' => $currencyName,
+                'Amount' => $val->poTotalSupplierTransactionCurrency,
+                'Status' => $status,
+                'Comments' => $comments,
+            );
+        }
+        $csv = \Excel::create('order_status', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+        return $this->sendResponse(array(), 'successfully export');
+    }
+
 }

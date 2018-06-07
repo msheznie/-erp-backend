@@ -8,8 +8,8 @@
  * -- Create date : 9 - April 2018
  * -- Description : This file contains the all the repord generation code
  * -- REVISION HISTORY
- * --
- * --
+ * -- Date: 04-June 2018 By: Mubashir Description: Added Grvmaster approved filter from reports
+ * -- Date: 06-June 2018 By: Mubashir Description: Removed Grvmaster approved filter for item analaysis report
  * --
  */
 
@@ -124,7 +124,7 @@ FROM
     erp_grvmaster INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID 
     ) 
 WHERE
-    erp_grvmaster.approved=- 1 and purchaseOrderDetailsID>0 AND erp_grvmaster.companySystemID IN ('.join(',',$companyID).') GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
+    purchaseOrderDetailsID>0 AND erp_grvmaster.companySystemID IN ('.join(',',$companyID).') GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
                             function ($join) use ($companyID) {
                                 $join->on('erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'gdet2.purchaseOrderDetailsID');
                             })->selectRaw('erp_purchaseorderdetails.purchaseOrderMasterID,
@@ -363,7 +363,7 @@ FROM
     erp_grvmaster INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID 
     ) 
 WHERE
-    erp_grvmaster.approved=- 1 and purchaseOrderDetailsID>0 AND erp_grvmaster.companySystemID IN ('.join(',',$companyID).') GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
+    purchaseOrderDetailsID>0 AND erp_grvmaster.companySystemID IN ('.join(',',$companyID).') GROUP BY erp_grvdetails.purchaseOrderMastertID,erp_grvdetails.purchaseOrderDetailsID,erp_grvdetails.itemCode) as gdet2'),
                             function ($join) use ($companyID) {
                                 $join->on('erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'gdet2.purchaseOrderDetailsID');
                             })->selectRaw('erp_purchaseorderdetails.purchaseOrderMasterID,

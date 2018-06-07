@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 15-March 2018 By: Nazir Description: Added new functions named as getAllSegmentMaster()
  * -- Date: 16-March 2018 By: Nazir Description: Added new functions named as getSegmentMasterFormData()
+ * -- Date: 05-June 2018 By: Mubashir Description: Modified getAllSegmentMaster() to handle filters from local storage
  **/
 namespace App\Http\Controllers\API;
 
@@ -192,7 +193,7 @@ class SegmentMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $companyId = $request['companyId'];
+        $companyId = $input['companyId'];
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 

@@ -9,6 +9,7 @@
  * -- Create date : 14 - March 2018
  * -- Description : This file contains the all CRUD for Chart Of Account.
  * -- REVISION HISTORY
+ * -- Date: 06-June 2018 By: Mubashir Description: Modified getChartOfAccount() to handle filters from local storage
  */
 
 namespace App\Http\Controllers\API;
@@ -302,6 +303,7 @@ class ChartOfAccountAPIController extends AppBaseController
     public function getChartOfAccount(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('controlAccountsSystemID','isBank','catogaryBLorPLID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -309,7 +311,7 @@ class ChartOfAccountAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $companyId = $request['companyId'];
+        $companyId = $input['companyId'];
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
@@ -322,22 +324,20 @@ class ChartOfAccountAPIController extends AppBaseController
         $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType'])
                                         ->whereIn('primaryCompanySystemID',$childCompanies);
 
-
-
         if (array_key_exists('controlAccountsSystemID', $input)) {
-            if ($request['controlAccountsSystemID']) {
+            if ($input['controlAccountsSystemID'] && !is_null($input['controlAccountsSystemID'])) {
                 $chartOfAccount->where('controlAccountsSystemID', $input['controlAccountsSystemID']);
             }
         }
 
         if (array_key_exists('isBank', $input)) {
-            if ($request['isBank'] == 0 || $input['isBank'] == 1) {
+            if (($input['isBank'] == 0 || $input['isBank'] == 1) && !is_null($input['isBank'])) {
                 $chartOfAccount->where('isBank', $input['isBank']);
             }
         }
 
         if (array_key_exists('catogaryBLorPLID', $input)) {
-            if ($input['catogaryBLorPLID']) {
+            if ($input['catogaryBLorPLID'] && !is_null($input['catogaryBLorPLID'])) {
                 $chartOfAccount->where('catogaryBLorPLID', $input['catogaryBLorPLID']);
             }
         }

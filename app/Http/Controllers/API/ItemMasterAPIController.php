@@ -12,6 +12,7 @@
  * updateItemMaster(),getAssignedCompaniesByItem()
  * -- Date: 03-April 2018 By: Mubashir Description: Added a new function getAllItemsMasterApproval() to display items to be approved
  * -- Date: 10-April 2018 By: Fayas Description: Added a new function itemMasterBulkCreate().
+ * -- Date: 05-June 2018 By: Mubashir Description: Modified getAllItemsMaster() to handle filters from local storage
  */
 
 
@@ -192,32 +193,31 @@ class ItemMasterAPIController extends AppBaseController
         $itemMasters = ItemMaster::with(['unit', 'financeMainCategory', 'financeSubCategory'])
                                   ->whereIn('primaryCompanySystemID',$childCompanies);
 
-
-
         if (array_key_exists('financeCategoryMaster', $input)) {
-            if ($input['financeCategoryMaster'] > 0 && $input['financeCategoryMaster'] != null) {
+            if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
                 $itemMasters->where('financeCategoryMaster', $input['financeCategoryMaster']);
             }
         }
 
         if (array_key_exists('financeCategorySub', $input)) {
-            if ($input['financeCategorySub'] > 0 && $input['financeCategoryMaster'] != null) {
+            if ($input['financeCategorySub'] > 0 && !is_null($input['financeCategorySub'])) {
                 $itemMasters->where('financeCategorySub', $input['financeCategorySub']);
             }
         }
 
         if (array_key_exists('isActive', $input)) {
-            if (($input['isActive'] == 0 || $input['isActive'] == 1) && $input['isActive'] != null) {
+            if (($input['isActive'] == 0 || $input['isActive'] == 1) && !is_null($input['isActive'])) {
                 $itemMasters->where('isActive', $input['isActive']);
             }
         }
         if (array_key_exists('itemApprovedYN', $input)) {
-            if (($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1) && $input['itemApprovedYN'] != null) {
+            if (($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1) && !is_null($input['itemApprovedYN'])) {
                 $itemMasters->where('itemApprovedYN', $input['itemApprovedYN']);
             }
         }
+
         if (array_key_exists('itemConfirmedYN', $input)) {
-            if (($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1) && $input['itemConfirmedYN'] != null) {
+            if (($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1) && !is_null($input['itemConfirmedYN'])) {
                 $itemMasters->where('itemConfirmedYN', $input['itemConfirmedYN']);
             }
         }
