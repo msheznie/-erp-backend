@@ -423,6 +423,10 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
             ->first();
 
+        if ($input['poDiscountAmount'] > $poMasterSum['masterTotalSum']) {
+            return $this->sendError('Discount Amount should be less than order amount.', 500);
+        }
+
         $poMasterSumDeducted = ($poMasterSum['masterTotalSum'] - $input['poDiscountAmount']) + $input['VATAmount'];
 
         $input['poTotalSupplierTransactionCurrency'] = $poMasterSum['masterTotalSum'];
@@ -805,7 +809,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function getProcumentOrderByDocumentType(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','poCancelledYN','poConfirmedYN','approved','grvRecieved','month','year','invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -863,13 +867,13 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         if (array_key_exists('month', $input)) {
-            if($input['month'] && !is_null($input['month'])) {
+            if ($input['month'] && !is_null($input['month'])) {
                 $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
-            if($input['year'] && !is_null($input['year'])) {
+            if ($input['year'] && !is_null($input['year'])) {
                 $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
             }
         }

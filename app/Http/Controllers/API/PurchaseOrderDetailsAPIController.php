@@ -514,10 +514,20 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             if (empty($prMasterfullyOrdered)) {
                 $updatePRMaster = PurchaseRequest::find($new['purchaseRequestID'])
-                    ->update(['selectedForPO' => -1, 'prClosedYN' => -1, 'supplyChainOnGoing' => -1]);
+                    ->update([
+                        'selectedForPO' => -1,
+                        'prClosedYN' => -1,
+                        'supplyChainOnGoing' => -1,
+                        'selectedForPOByEmpID' => $user->employee['empID']
+                    ]);
             } else {
                 $updatePRMaster = PurchaseRequest::find($new['purchaseRequestID'])
-                    ->update(['selectedForPO' => 0, 'prClosedYN' => 0, 'supplyChainOnGoing' => 0]);
+                    ->update([
+                        'selectedForPO' => 0,
+                        'prClosedYN' => 0,
+                        'supplyChainOnGoing' => 0,
+                        'selectedForPOByEmpID' => $user->employee['empID']
+                    ]);
             }
 
         }
@@ -724,7 +734,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if (!empty($purchaseOrderDetails->purchaseRequestDetailsID) && !empty($purchaseOrderDetails->purchaseRequestID)) {
             $updatePRMaster = PurchaseRequest::find($purchaseOrderDetails->purchaseRequestID)
-                ->update(['selectedForPO' => 0, 'prClosedYN' => 0, 'supplyChainOnGoing' => 0]);
+                ->update([
+                    'selectedForPO' => 0,
+                    'prClosedYN' => 0,
+                    'supplyChainOnGoing' => 0,
+                    'selectedForPOByEmpID' => null
+                ]);
 
             $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
 
@@ -787,7 +802,12 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                 if (!empty($cvDeatil['purchaseRequestDetailsID']) && !empty($cvDeatil['purchaseRequestID'])) {
                     $updatePRMaster = PurchaseRequest::find($cvDeatil['purchaseRequestID'])
-                        ->update(['selectedForPO' => 0, 'prClosedYN' => 0, 'supplyChainOnGoing' => 0]);
+                        ->update([
+                            'selectedForPO' => 0,
+                            'prClosedYN' => 0,
+                            'supplyChainOnGoing' => 0,
+                            'selectedForPOByEmpID' => null
+                        ]);
 
                     $detailExistPRDetail = PurchaseRequestDetails::find($cvDeatil['purchaseRequestDetailsID']);
 
