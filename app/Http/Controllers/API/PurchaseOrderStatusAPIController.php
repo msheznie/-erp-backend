@@ -490,7 +490,16 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $purchaseOrders = ProcumentOrder::where('companySystemID', $input['companySystemID'])
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
             ->where('approved', -1)
             ->with(['supplier', 'currency', 'status' => function ($q) {
                 $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
@@ -625,9 +634,16 @@ class PurchaseOrderStatusAPIController extends AppBaseController
     public function exportReportOrderStatus(Request $request)
     {
         $input = $request->all();
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
         $type = $input['type'];
-        $purchaseOrders = ProcumentOrder::where('companySystemID', $input['companySystemID'])
+        $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
             ->where('approved', -1)
             ->with(['supplier', 'currency', 'status' => function ($q) {
                 $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
@@ -661,7 +677,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $purchaseOrders = $purchaseOrders
             ->orderBy('purchaseOrderID', 'desc')
             ->get();
-
+        $data = array();
         foreach ($purchaseOrders as $val) {
 
             $status = "";
@@ -706,9 +722,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
                 'Status' => $status,
                 'Comments' => $comments,
             );
-
         }
-
         $csv = \Excel::create('order_status', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
@@ -719,7 +733,6 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->download($type);
-
         return $this->sendResponse(array(), 'successfully export');
     }
 
