@@ -16,6 +16,7 @@ use App\Http\Requests\API\CreateErpItemLedgerAPIRequest;
 use App\Http\Requests\API\UpdateErpItemLedgerAPIRequest;
 use App\Models\ErpItemLedger;
 use App\Repositories\ErpItemLedgerRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -320,9 +321,24 @@ class ErpItemLedgerAPIController extends AppBaseController
         return $this->sendResponse($output, 'Supplier Master retrieved successfully');
     }
 
-    public function getErpLedgerByFilter(Request $request){
+    public function generateStockLedgerReport(Request $request){
 
-            $warehouse = DB::table('erp_itemledger')
+        $startDate = new Carbon($request->daterange[0]);
+        $startDate = $startDate->addDays(1);
+        $startDate = $startDate->format('Y-m-d');
+
+        $endDate = new Carbon($request->daterange[1]);
+        $endDate = $endDate->addDays(1);
+        $endDate = $endDate->format('Y-m-d');
+
+        $input = $request->all();
+        if (array_key_exists('Items', $input)) {
+            $items = (array)$input['Items'];
+            $items = collect($items)->pluck('itemSystemCode');
+
+        }
+
+            $stockLedger = DB::table('erp_itemledger')
                 ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
                 ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
                 ->leftJoin('employees', 'erp_itemledger.createdUserSystemID', '=', 'employees.employeeSystemID')
@@ -348,14 +364,39 @@ class ErpItemLedgerAPIController extends AppBaseController
                             employees.empName,
                             currencymaster.CurrencyName AS LocalCurrency,
                             erp_itemledger.wacLocal,
-                            (erp_itemledger.inOutQty*erp_itemledger.wacLocal) as TotalWacLocal,
                             currencymaster_1.CurrencyName as RepCurrency,
-                            erp_itemledger.wacRpt,
-                            (erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt')
-                ->where('erp_itemledger.companySystemID',$request->selectedCompanyId)
+                            erp_itemledger.wacRpt')
+                ->where('erp_itemledger.companySystemID',$request->companySystemID)
+//                ->whereIn('')
+//                ->whereBetween('transactionDate', [$startDate, $endDate])
                 ->groupBy('erp_itemledger.companySystemID','erp_itemledger.wareHouseSystemCode')
                 ->get();
 
+
+        return $this->sendResponse($stockLedger, 'Supplier Master retrieved successfully');
+    }
+
+    /*validate each report*/
+    public function validateStockLedgerReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'SL':
+                $validator = \Validator::make($request->all(), [
+                    'daterange' => 'required',
+                    'Items' => 'required',
+                    'Docs' => 'required',
+                    'Warehouse' => 'required',
+                    'reportType' => 'required',
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422 );
+                }
+                break;
+            default:
+                return $this->sendError('Error Occurred');
+        }
 
     }
 
