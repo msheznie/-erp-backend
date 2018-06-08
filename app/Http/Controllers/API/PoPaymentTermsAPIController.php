@@ -78,6 +78,10 @@ class PoPaymentTermsAPIController extends AppBaseController
             }
         }
 
+        if (isset($input['LCPaymentYNR'])) {
+            $input['LCPaymentYN'] = $input['LCPaymentYNR'];
+        }
+
         $prDetailExist = PurchaseOrderDetails::select(DB::raw('purchaseOrderDetailsID'))
             ->where('purchaseOrderMasterID', $purchaseOrderID)
             ->first();
