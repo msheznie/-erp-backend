@@ -516,6 +516,16 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('PO should have at least one payment term');
             }
 
+            // checking payment term amount value 0
+
+            $checkPoPaymentTermsAmount = PoPaymentTerms::where('poID', $id)
+                ->where('comAmount', '<', 1)
+                ->count();
+
+            if ($checkPoPaymentTermsAmount > 0) {
+                return $this->sendError('You cannot confirm Payment term with 0 amount', 500);
+            }
+
             //po payment terms exist
             $PoPaymentTerms = PoPaymentTerms::where('poID', $input['purchaseOrderID'])
                 ->where('LCPaymentYN', 2)
@@ -567,36 +577,6 @@ class ProcumentOrderAPIController extends AppBaseController
         //$procumentOrder = $this->procumentOrderRepository->update($input, $id);
         $updateDetailDiscount = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
             ->get();
-
-        // calculate total discount
-        if ($input['poDiscountAmount'] > 0) {
-
-            if (!empty($updateDetailDiscount)) {
-
-                foreach ($updateDetailDiscount as $itemDiscont) {
-
-                    $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['poDiscountAmount'] / $input['poTotalSupplierTransactionCurrency']) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
-
-                    $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
-
-                    $currencyConversionLineDefaultDiscount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierDefaultCurrencyID'], $calculateItemDiscount);
-
-                    //$detail['netAmount'] = $calculateItemDiscount * $itemDiscont['noQty'];
-
-                    PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
-                        ->update([
-                            'GRVcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
-                            'GRVcostPerUnitSupDefaultCur' => round($currencyConversionLineDefaultDiscount['documentAmount'], 8),
-                            'GRVcostPerUnitSupTransCur' => round($calculateItemDiscount, 8),
-                            'GRVcostPerUnitComRptCur' => round($currencyConversion['reportingAmount'], 8),
-                            'purchaseRetcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
-                            'purchaseRetcostPerUniSupDefaultCur' => round($currencyConversionLineDefaultDiscount['documentAmount'], 8),
-                            'purchaseRetcostPerUnitTranCur' => round($calculateItemDiscount, 8),
-                            'purchaseRetcostPerUnitRptCur' => round($currencyConversion['reportingAmount'], 8),
-                        ]);
-                }
-            }
-        }
 
 
         // calculate total Tax for item if
@@ -1033,7 +1013,9 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where("companySystemID", $companyId)
             ->get();
 
-        $PoPaymentTermTypes = PoPaymentTermTypes::all();
+        $PoPaymentTermTypes = DB::table("erp_popaymenttermstype")
+            ->select('paymentTermsCategoryID', 'categoryDescription')
+            ->get();
 
         if (!empty($purchaseOrderID)) {
             $checkDetailExist = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
@@ -1087,7 +1069,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'addresstypeShippings' => $addressTypeShippings,
             'addresstypeinvoice' => $addressTypeInvoice,
             'addresstypesold' => $addressTypeSold,
-            'paymentterms' => $PoPaymentTermTypes,
+            'poPaymentTermsDrop' => $PoPaymentTermTypes,
             'detailSum' => $detailSum,
             'grvRecieved' => $grvRecieved,
             'invoiceBooked' => $invoiceBooked
