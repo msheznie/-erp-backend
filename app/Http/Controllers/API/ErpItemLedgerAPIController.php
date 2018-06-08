@@ -331,14 +331,38 @@ class ErpItemLedgerAPIController extends AppBaseController
         $endDate = $endDate->addDays(1);
         $endDate = $endDate->format('Y-m-d');
 
+//        (array_key_exists('dateRange', $input)) {
+//        $from = ((new Carbon($input['dateRange'][0]))->addDays(1)->format('Y-m-d'));
+//        $to = ((new Carbon($input['dateRange'][1]))->addDays(1)->format('Y-m-d'));
+//
+//        $purchaseOrders = $purchaseOrders->whereBetween('createdDateTime', [$from, $to]);
+//        }
         $input = $request->all();
+        $stockLedger = array();
+        $data = array();
+        $items = array();
+        $docs = array();
+        $warehouse = array();
         if (array_key_exists('Items', $input)) {
             $items = (array)$input['Items'];
             $items = collect($items)->pluck('itemSystemCode');
 
         }
+        if (array_key_exists('Docs', $input)) {
+            $docs = (array)$input['Docs'];
+            $docs = collect($docs)->pluck('documentSystemID');
 
-            $stockLedger = DB::table('erp_itemledger')
+        }
+        if (array_key_exists('Warehouse', $input)) {
+            $warehouse = (array)$input['Warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+
+        foreach ($items as $item){
+            $data['openQty'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('inOutQty');
+            $data['openWacRpt'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('wacRpt');
+            $data['data']  = DB::table('erp_itemledger')
                 ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
                 ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
                 ->leftJoin('employees', 'erp_itemledger.createdUserSystemID', '=', 'employees.employeeSystemID')
@@ -364,15 +388,24 @@ class ErpItemLedgerAPIController extends AppBaseController
                             employees.empName,
                             currencymaster.CurrencyName AS LocalCurrency,
                             erp_itemledger.wacLocal,
+                            (erp_itemledger.inOutQty*erp_itemledger.wacLocal) as TotalWacLocal,
                             currencymaster_1.CurrencyName as RepCurrency,
-                            erp_itemledger.wacRpt')
+                            erp_itemledger.wacRpt,
+                            (erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt')
                 ->where('erp_itemledger.companySystemID',$request->companySystemID)
-//                ->whereIn('')
-//                ->whereBetween('transactionDate', [$startDate, $endDate])
+                ->where('itemSystemCode',$item)
+//                ->whereIn('erp_documentmaster.documentSystemID',$docs)
+//                ->whereIn('warehousemaster.wareHouseSystemCode',$warehouse)
+                ->whereBetween('transactionDate', [$startDate, $endDate])
                 ->groupBy('erp_itemledger.companySystemID','erp_itemledger.wareHouseSystemCode')
                 ->get();
+            if(count($data['data']) > 0){
+            array_push($stockLedger,$data);
 
+            }
 
+        }
+//        array_push($stockLedger,$data);
         return $this->sendResponse($stockLedger, 'Supplier Master retrieved successfully');
     }
 
