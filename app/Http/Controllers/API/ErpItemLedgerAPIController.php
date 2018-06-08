@@ -16,6 +16,7 @@ use App\Http\Requests\API\CreateErpItemLedgerAPIRequest;
 use App\Http\Requests\API\UpdateErpItemLedgerAPIRequest;
 use App\Models\ErpItemLedger;
 use App\Repositories\ErpItemLedgerRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -320,9 +321,48 @@ class ErpItemLedgerAPIController extends AppBaseController
         return $this->sendResponse($output, 'Supplier Master retrieved successfully');
     }
 
-    public function getErpLedgerByFilter(Request $request){
+    public function generateStockLedgerReport(Request $request){
 
-            $warehouse = DB::table('erp_itemledger')
+        $startDate = new Carbon($request->daterange[0]);
+        $startDate = $startDate->addDays(1);
+        $startDate = $startDate->format('Y-m-d');
+
+        $endDate = new Carbon($request->daterange[1]);
+        $endDate = $endDate->addDays(1);
+        $endDate = $endDate->format('Y-m-d');
+
+//        (array_key_exists('dateRange', $input)) {
+//        $from = ((new Carbon($input['dateRange'][0]))->addDays(1)->format('Y-m-d'));
+//        $to = ((new Carbon($input['dateRange'][1]))->addDays(1)->format('Y-m-d'));
+//
+//        $purchaseOrders = $purchaseOrders->whereBetween('createdDateTime', [$from, $to]);
+//        }
+        $input = $request->all();
+        $stockLedger = array();
+        $data = array();
+        $items = array();
+        $docs = array();
+        $warehouse = array();
+        if (array_key_exists('Items', $input)) {
+            $items = (array)$input['Items'];
+            $items = collect($items)->pluck('itemSystemCode');
+
+        }
+        if (array_key_exists('Docs', $input)) {
+            $docs = (array)$input['Docs'];
+            $docs = collect($docs)->pluck('documentSystemID');
+
+        }
+        if (array_key_exists('Warehouse', $input)) {
+            $warehouse = (array)$input['Warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+
+        foreach ($items as $item){
+            $data['openQty'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('inOutQty');
+            $data['openWacRpt'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('wacRpt');
+            $data['data']  = DB::table('erp_itemledger')
                 ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
                 ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
                 ->leftJoin('employees', 'erp_itemledger.createdUserSystemID', '=', 'employees.employeeSystemID')
@@ -352,10 +392,44 @@ class ErpItemLedgerAPIController extends AppBaseController
                             currencymaster_1.CurrencyName as RepCurrency,
                             erp_itemledger.wacRpt,
                             (erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt')
-                ->where('erp_itemledger.companySystemID',$request->selectedCompanyId)
+                ->where('erp_itemledger.companySystemID',$request->companySystemID)
+                ->where('itemSystemCode',$item)
+//                ->whereIn('erp_documentmaster.documentSystemID',$docs)
+//                ->whereIn('warehousemaster.wareHouseSystemCode',$warehouse)
+                ->whereBetween('transactionDate', [$startDate, $endDate])
                 ->groupBy('erp_itemledger.companySystemID','erp_itemledger.wareHouseSystemCode')
                 ->get();
+            if(count($data['data']) > 0){
+            array_push($stockLedger,$data);
 
+            }
+
+        }
+//        array_push($stockLedger,$data);
+        return $this->sendResponse($stockLedger, 'Supplier Master retrieved successfully');
+    }
+
+    /*validate each report*/
+    public function validateStockLedgerReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'SL':
+                $validator = \Validator::make($request->all(), [
+                    'daterange' => 'required',
+                    'Items' => 'required',
+                    'Docs' => 'required',
+                    'Warehouse' => 'required',
+                    'reportType' => 'required',
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422 );
+                }
+                break;
+            default:
+                return $this->sendError('Error Occurred');
+        }
 
     }
 
