@@ -360,9 +360,9 @@ class ErpItemLedgerAPIController extends AppBaseController
         }
 
         foreach ($items as $item){
-            $data['openQty'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('inOutQty');
-            $data['openWacRpt'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('wacRpt');
-            $data['data']  = DB::table('erp_itemledger')
+//            $data['openQty'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('inOutQty');
+//            $data['openWacRpt'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('wacRpt');
+            $data  = DB::table('erp_itemledger')
                 ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
                 ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
                 ->leftJoin('employees', 'erp_itemledger.createdUserSystemID', '=', 'employees.employeeSystemID')
@@ -387,25 +387,56 @@ class ErpItemLedgerAPIController extends AppBaseController
                             warehousemaster.wareHouseDescription,
                             employees.empName,
                             currencymaster.CurrencyName AS LocalCurrency,
+                            currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
                             erp_itemledger.wacLocal,
                             (erp_itemledger.inOutQty*erp_itemledger.wacLocal) as TotalWacLocal,
                             currencymaster_1.CurrencyName as RepCurrency,
                             erp_itemledger.wacRpt,
-                            (erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt')
+                            (erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt,
+                            (select SUM(erp_itemledger.inOutQty)
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$startDate.'"  and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openQty,
+                            (select SUM(erp_itemledger.inOutQty)                                        
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$endDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as TotalOpenQty,
+                            (select SUM(erp_itemledger.wacLocal)
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$startDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacLocal,
+                            (select SUM(erp_itemledger.wacRpt)
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$startDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacRpt,
+                            (select (SUM(erp_itemledger.inOutQty)*SUM(erp_itemledger.wacLocal))
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$startDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacLocalTotal,
+                            (select (SUM(erp_itemledger.inOutQty)*SUM(erp_itemledger.wacLocal))
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$endDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacLocalTotalByItem,
+                            (select (SUM(erp_itemledger.inOutQty)*SUM(erp_itemledger.wacRpt))
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$startDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacRptTotal,
+                            (select (SUM(erp_itemledger.inOutQty)*SUM(erp_itemledger.wacRpt))
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$endDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacRptTotalByItem')
                 ->where('erp_itemledger.companySystemID',$request->companySystemID)
-                ->where('itemSystemCode',$item)
+                ->where('erp_itemledger.itemSystemCode',$item)
 //                ->whereIn('erp_documentmaster.documentSystemID',$docs)
 //                ->whereIn('warehousemaster.wareHouseSystemCode',$warehouse)
-                ->whereBetween('transactionDate', [$startDate, $endDate])
+                ->whereBetween('erp_itemledger.transactionDate', [$startDate, $endDate])
                 ->groupBy('erp_itemledger.companySystemID','erp_itemledger.wareHouseSystemCode')
                 ->get();
-            if(count($data['data']) > 0){
-            array_push($stockLedger,$data);
-
+            if(count($data) > 0){
+                array_push($stockLedger,$data);
             }
 
         }
-//        array_push($stockLedger,$data);
         return $this->sendResponse($stockLedger, 'Supplier Master retrieved successfully');
     }
 
