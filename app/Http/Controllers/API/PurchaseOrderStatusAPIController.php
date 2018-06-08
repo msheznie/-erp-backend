@@ -535,7 +535,8 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                        //$query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                        $query->orderBy('approvedDate', 'asc');
                     }
                 }
             })
@@ -675,7 +676,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         }
 
         $purchaseOrders = $purchaseOrders
-            ->orderBy('purchaseOrderID', 'desc')
+            ->orderBy('approvedDate', 'asc')
             ->get();
         $data = array();
         foreach ($purchaseOrders as $val) {
