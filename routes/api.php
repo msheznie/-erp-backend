@@ -363,6 +363,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
 
     Route::post('exportReport', 'ReportAPIController@exportReport');
+    Route::get('getAcountReceivableFilterData', 'ReportAPIController@getAcountReceivableFilterData');
 
     Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
 
@@ -451,3 +452,6 @@ Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRe
 
 Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
 
+
+
+Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
