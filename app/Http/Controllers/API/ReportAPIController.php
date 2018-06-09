@@ -104,7 +104,7 @@ class ReportAPIController extends AppBaseController
                     erp_purchaseordermaster.companySystemID
                      FROM erp_purchaseordermaster 
                      LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID 
-                     LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE approved = -1 AND (approvedDate BETWEEN "'.$startDate.'" AND "'.$endDate.'") AND erp_purchaseordermaster.companySystemID IN ('.join(',',$companyID).') AND erp_purchaseordermaster.supplierID IN ('.join(',',json_decode($suppliers)).')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                     LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE approved = -1 AND poType_N <>5 AND (approvedDate BETWEEN "'.$startDate.'" AND "'.$endDate.'") AND erp_purchaseordermaster.companySystemID IN ('.join(',',$companyID).') AND erp_purchaseordermaster.supplierID IN ('.join(',',json_decode($suppliers)).')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderMasterID', '=', 'podet.purchaseOrderID');
                         })->leftJoin('financeitemcategorymaster', function ($query) {
                             $query->on('itemFinanceCategoryID', '=', 'itemCategoryID');
@@ -343,7 +343,7 @@ WHERE
                     erp_purchaseordermaster.companySystemID
                      FROM erp_purchaseordermaster 
                      LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID 
-                     LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE approved = -1 AND (approvedDate BETWEEN "'.$startDate.'" AND "'.$endDate.'") AND erp_purchaseordermaster.companySystemID IN ('.join(',',$companyID).') AND erp_purchaseordermaster.supplierID IN ('.join(',',json_decode($suppliers)).')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                     LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE approved = -1 AND poType_N <>5 AND (approvedDate BETWEEN "'.$startDate.'" AND "'.$endDate.'") AND erp_purchaseordermaster.companySystemID IN ('.join(',',$companyID).') AND erp_purchaseordermaster.supplierID IN ('.join(',',json_decode($suppliers)).')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderMasterID', '=', 'podet.purchaseOrderID');
                         })->leftJoin('financeitemcategorymaster', function ($query) {
                             $query->on('itemFinanceCategoryID', '=', 'itemCategoryID');

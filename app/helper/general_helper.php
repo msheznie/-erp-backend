@@ -494,7 +494,7 @@ class Helper
      */
     public static function approveDocument($input)
     {
-        $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '');
+        $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '','approveValue' => '','confirmedYN' => '','confirmedEmpSystemID' => '');
         switch ($input["documentSystemID"]) { // check the document id and set relavant parameters
             case 57:
                 $docInforArr["tableName"] = 'itemmaster';
