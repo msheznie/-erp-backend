@@ -440,6 +440,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
     Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
     Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
+    Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
+    Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
 
 });
 
