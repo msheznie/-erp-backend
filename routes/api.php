@@ -441,13 +441,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
     Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
     Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
+    Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
+    Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
+
+    Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView');
+    Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData');
 
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
-
-
 
 
 Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');

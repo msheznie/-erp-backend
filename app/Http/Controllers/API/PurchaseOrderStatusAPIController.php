@@ -501,6 +501,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
 
         $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
             ->where('approved', -1)
+            ->whereIn('grvRecieved',[0,1])
             ->with(['supplier', 'currency', 'status' => function ($q) {
                 $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
             }, 'supplier' => function ($q) {
@@ -535,7 +536,8 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                        //$query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                        $query->orderBy('approvedDate', 'asc');
                     }
                 }
             })
@@ -604,17 +606,17 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         }
 
         $companies = Company::whereIn("companySystemID", $subCompanies)
-            ->select('companySystemID', 'CompanyID', 'CompanyName')
-            ->get();
+                                ->select('companySystemID', 'CompanyID', 'CompanyName')
+                                ->get();
 
         $filterSuppliers = ProcumentOrder::whereIn('companySystemID', $subCompanies)
-            ->select('supplierID')
-            ->groupBy('supplierID')
-            ->pluck('supplierID');
+                                            ->select('supplierID')
+                                            ->groupBy('supplierID')
+                                            ->pluck('supplierID');
 
         $suppliers = SupplierMaster::whereIn('supplierCodeSystem', $filterSuppliers)
-            ->select(['supplierCodeSystem', 'primarySupplierCode', 'supplierName'])
-            ->get();
+                                    ->select(['supplierCodeSystem', 'primarySupplierCode', 'supplierName'])
+                                    ->get();
         $output = array(
             'companies' => $companies,
             'suppliers' => $suppliers
@@ -645,6 +647,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $type = $input['type'];
         $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
             ->where('approved', -1)
+            ->whereIn('grvRecieved',[0,1])
             ->with(['supplier', 'currency', 'status' => function ($q) {
                 $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
             }, 'supplier' => function ($q) {
@@ -675,7 +678,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         }
 
         $purchaseOrders = $purchaseOrders
-            ->orderBy('purchaseOrderID', 'desc')
+            ->orderBy('approvedDate', 'asc')
             ->get();
         $data = array();
         foreach ($purchaseOrders as $val) {
@@ -684,7 +687,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $countryName = "";
             $currencyName = "";
             $comments = "";
-            $temStatus = '';
+            $grvStatus = "";
 
             if(!empty($val->status)){
                 if(count($val->status)){
@@ -706,6 +709,13 @@ class PurchaseOrderStatusAPIController extends AppBaseController
                 $currencyName = $val->currency->CurrencyName;
             }
 
+            if($val->grvRecieved == 0){
+                $grvStatus = "Not Received";
+            }
+            else if($val->grvRecieved == 1){
+                $grvStatus = "Partially Received";
+            }
+
 
             $data[] = array(
                 'Company ID' => $val->companyID,
@@ -719,6 +729,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
                 'Supplier Country' => $countryName,
                 'Currency' => $currencyName,
                 'Amount' => $val->poTotalSupplierTransactionCurrency,
+                'GRV Status' => $grvStatus,
                 'Status' => $status,
                 'Comments' => $comments,
             );

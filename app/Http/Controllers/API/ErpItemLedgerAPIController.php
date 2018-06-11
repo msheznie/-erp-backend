@@ -331,14 +331,38 @@ class ErpItemLedgerAPIController extends AppBaseController
         $endDate = $endDate->addDays(1);
         $endDate = $endDate->format('Y-m-d');
 
+//        (array_key_exists('dateRange', $input)) {
+//        $from = ((new Carbon($input['dateRange'][0]))->addDays(1)->format('Y-m-d'));
+//        $to = ((new Carbon($input['dateRange'][1]))->addDays(1)->format('Y-m-d'));
+//
+//        $purchaseOrders = $purchaseOrders->whereBetween('createdDateTime', [$from, $to]);
+//        }
         $input = $request->all();
+        $stockLedger = array();
+        $data = array();
+        $items = array();
+        $docs = array();
+        $warehouse = array();
         if (array_key_exists('Items', $input)) {
             $items = (array)$input['Items'];
             $items = collect($items)->pluck('itemSystemCode');
 
         }
+        if (array_key_exists('Docs', $input)) {
+            $docs = (array)$input['Docs'];
+            $docs = collect($docs)->pluck('documentSystemID');
 
-            $stockLedger = DB::table('erp_itemledger')
+        }
+        if (array_key_exists('Warehouse', $input)) {
+            $warehouse = (array)$input['Warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+
+        foreach ($items as $item){
+//            $data['openQty'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('inOutQty');
+//            $data['openWacRpt'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('wacRpt');
+            $data  = DB::table('erp_itemledger')
                 ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
                 ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
                 ->leftJoin('employees', 'erp_itemledger.createdUserSystemID', '=', 'employees.employeeSystemID')
@@ -363,16 +387,56 @@ class ErpItemLedgerAPIController extends AppBaseController
                             warehousemaster.wareHouseDescription,
                             employees.empName,
                             currencymaster.CurrencyName AS LocalCurrency,
+                            currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
                             erp_itemledger.wacLocal,
+                            (erp_itemledger.inOutQty*erp_itemledger.wacLocal) as TotalWacLocal,
                             currencymaster_1.CurrencyName as RepCurrency,
-                            erp_itemledger.wacRpt')
+                            erp_itemledger.wacRpt,
+                            (erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt,
+                            (select SUM(erp_itemledger.inOutQty)
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$startDate.'"  and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openQty,
+                            (select SUM(erp_itemledger.inOutQty)                                        
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$endDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as TotalOpenQty,
+                            (select SUM(erp_itemledger.wacLocal)
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$startDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacLocal,
+                            (select SUM(erp_itemledger.wacRpt)
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$startDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacRpt,
+                            (select (SUM(erp_itemledger.inOutQty)*SUM(erp_itemledger.wacLocal))
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$startDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacLocalTotal,
+                            (select (SUM(erp_itemledger.inOutQty)*SUM(erp_itemledger.wacLocal))
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$endDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacLocalTotalByItem,
+                            (select (SUM(erp_itemledger.inOutQty)*SUM(erp_itemledger.wacRpt))
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$startDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacRptTotal,
+                            (select (SUM(erp_itemledger.inOutQty)*SUM(erp_itemledger.wacRpt))
+                            from erp_itemledger
+                            where erp_itemledger.transactionDate <= "'.$endDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
+                            ) as openWacRptTotalByItem')
                 ->where('erp_itemledger.companySystemID',$request->companySystemID)
-//                ->whereIn('')
-//                ->whereBetween('transactionDate', [$startDate, $endDate])
+                ->where('erp_itemledger.itemSystemCode',$item)
+//                ->whereIn('erp_documentmaster.documentSystemID',$docs)
+//                ->whereIn('warehousemaster.wareHouseSystemCode',$warehouse)
+                ->whereBetween('erp_itemledger.transactionDate', [$startDate, $endDate])
                 ->groupBy('erp_itemledger.companySystemID','erp_itemledger.wareHouseSystemCode')
                 ->get();
+            if(count($data) > 0){
+                array_push($stockLedger,$data);
+            }
 
-
+        }
         return $this->sendResponse($stockLedger, 'Supplier Master retrieved successfully');
     }
 
