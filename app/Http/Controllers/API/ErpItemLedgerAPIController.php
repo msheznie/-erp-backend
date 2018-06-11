@@ -331,18 +331,27 @@ class ErpItemLedgerAPIController extends AppBaseController
         $endDate = $endDate->addDays(1);
         $endDate = $endDate->format('Y-m-d');
 
-//        (array_key_exists('dateRange', $input)) {
-//        $from = ((new Carbon($input['dateRange'][0]))->addDays(1)->format('Y-m-d'));
-//        $to = ((new Carbon($input['dateRange'][1]))->addDays(1)->format('Y-m-d'));
-//
-//        $purchaseOrders = $purchaseOrders->whereBetween('createdDateTime', [$from, $to]);
-//        }
+        $input = $request->all();
+        if (array_key_exists('Docs', $input)) {
+            $docs = (array)$input['Docs'];
+            $docs = collect($docs)->pluck('documentSystemID');
+
+        }
+        if (array_key_exists('Warehouse', $input)) {
+            $warehouse = (array)$input['Warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+
         $input = $request->all();
         $stockLedger = array();
         $data = array();
         $items = array();
         $docs = array();
         $warehouse = array();
+        $grandTotalQty = 0;
+        $grandTotalLocalAmount = 0;
+        $grandTotalRepAmount = 0;
         if (array_key_exists('Items', $input)) {
             $items = (array)$input['Items'];
             $items = collect($items)->pluck('itemSystemCode');
@@ -361,7 +370,9 @@ class ErpItemLedgerAPIController extends AppBaseController
 
         foreach ($items as $item){
 //            $data['openQty'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('inOutQty');
-//            $data['openWacRpt'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('wacRpt');
+            $qty = DB::table('erp_itemledger')->selectRaw('SUM(erp_itemledger.inOutQty) as inOutQty')->where('transactionDate','<=',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
+            $locAmount = DB::table('erp_itemledger')->selectRaw('(erp_itemledger.inOutQty*erp_itemledger.wacLocal) as TotalWacLocal')->where('transactionDate','<',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
+            $repAmount = DB::table('erp_itemledger')->selectRaw('(erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt')->where('transactionDate','<',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
             $data  = DB::table('erp_itemledger')
                 ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
                 ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
@@ -380,7 +391,7 @@ class ErpItemLedgerAPIController extends AppBaseController
                             itemmaster.secondaryItemCode,
                             erp_itemledger.itemDescription,
                             erp_itemledger.unitOfMeasure,
-                            erp_itemledger.inOutQty,
+                            erp_itemledger.inOutQty as inOutQty,
                             erp_itemledger.comments,
                             erp_itemledger.transactionDate,
                             units.UnitShortCode,
@@ -427,17 +438,23 @@ class ErpItemLedgerAPIController extends AppBaseController
                             ) as openWacRptTotalByItem')
                 ->where('erp_itemledger.companySystemID',$request->companySystemID)
                 ->where('erp_itemledger.itemSystemCode',$item)
-//                ->whereIn('erp_documentmaster.documentSystemID',$docs)
-//                ->whereIn('warehousemaster.wareHouseSystemCode',$warehouse)
+                ->whereIn('erp_documentmaster.documentSystemID',$docs)
+                ->whereIn('warehousemaster.wareHouseSystemCode',$warehouse)
                 ->whereBetween('erp_itemledger.transactionDate', [$startDate, $endDate])
-                ->groupBy('erp_itemledger.companySystemID','erp_itemledger.wareHouseSystemCode')
                 ->get();
             if(count($data) > 0){
                 array_push($stockLedger,$data);
             }
+            if(!empty($qty) ){
+                $grandTotalQty += $qty[0]->inOutQty;
+            }
 
         }
-        return $this->sendResponse($stockLedger, 'Supplier Master retrieved successfully');
+        $output = array(
+            'grandTotalQty' => $grandTotalQty,
+            'data' => $stockLedger
+        );
+        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
     }
 
     /*validate each report*/
