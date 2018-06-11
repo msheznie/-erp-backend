@@ -172,9 +172,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
         $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
-        $input['ItemcategoryID'] = 0;
+        $input['itemCategoryID'] = 0;
         $input['maxQty'] = 0;
-        $input['minQty '] = 0;
+        $input['minQty'] = 0;
 
         // check policy 18
 
