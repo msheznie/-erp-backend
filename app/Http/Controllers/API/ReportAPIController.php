@@ -323,6 +323,24 @@ WHERE
 
                     $controlAccountsSystemID = $request->controlAccountsSystemID;
 
+
+                    $currency = $request->currencyID;
+                    $currencyQry = '';
+                    $amountQry = '';
+                    $decimalPlaceQry = '';
+                    if($currency == 1){
+                        $currencyQry = "final.documentTransCurrency AS documentCurrency";
+                        $amountQry = "round( final.balanceRpt, 1 ) AS balanceAmount";
+                        $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
+                    }else if($currency == 2){
+                        $currencyQry = "final.documentLocalCurrency AS documentCurrency";
+                        $amountQry = "round( final.balanceLocal, 1 ) AS balanceAmount";
+                        $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
+                    }else{
+                        $currencyQry = "final.documentRptCurrency AS documentCurrency";
+                        $amountQry = "round( final.balanceTrans, 1 ) AS balanceAmount";
+                        $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
+                    }
                     $currencyID = $request->currencyID;
                     $output = \DB::select('SELECT
 	final.documentCode AS DocumentCode,
@@ -331,12 +349,10 @@ WHERE
 	final.clientContractID AS Contract,
 	final.invoiceNumber AS invoiceNumber,
 	final.invoiceDate AS InvoiceDate,
-	round( final.balanceRpt, 1 ) AS balanceRpt, 
-	round( final.balanceLocal, 1 ) AS balanceLocal, 
-	round( final.balanceTrans, 1 ) AS balanceTrans, 
-	final.documentTransCurrency AS documentTransCurrency, 
-	final.documentLocalCurrency AS documentLocalCurrency, 
-	final.documentRptCurrency AS documentRptCurrency 
+	'.$amountQry.',
+	'.$currencyQry.',
+	'.$decimalPlaceQry.',
+	final.customerName AS customerName 
 FROM
 	(
 SELECT
@@ -360,12 +376,15 @@ SELECT
 	mainQuery.documentTransCurrencyID,
 	mainQuery.documentTransCurrency,
 	mainQuery.documentTransAmount,
+	mainQuery.documentTransDecimalPlaces,
 	mainQuery.documentLocalCurrencyID,
 	mainQuery.documentLocalCurrency,
 	mainQuery.documentLocalAmount,
+	mainQuery.documentLocalDecimalPlaces,
 	mainQuery.documentRptCurrencyID,
 	mainQuery.documentRptCurrency,
 	mainQuery.documentRptAmount,
+	mainQuery.documentRptDecimalPlaces,
 IF( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) AS MatchedBRVTransAmount,
 IF( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) AS MatchedBRVLocalAmount,
 IF( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) AS MatchedBRVRptAmount,
@@ -383,7 +402,8 @@ IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatc
 	) AS balanceLocal,
 	(
 	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
-	) AS balanceTrans   
+	) AS balanceTrans,
+	mainQuery.customerName   
 FROM
 	(
 SELECT
@@ -409,19 +429,24 @@ SELECT
 	erp_generalledger.supplierCodeSystem,
 	erp_generalledger.documentTransCurrencyID,
 	currTrans.CurrencyCode as documentTransCurrency,
+	currTrans.DecimalPlaces as documentTransDecimalPlaces,
 	erp_generalledger.documentTransAmount,
 	erp_generalledger.documentLocalCurrencyID,
 	currLocal.CurrencyCode as documentLocalCurrency,
+	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
 	erp_generalledger.documentLocalAmount,
 	erp_generalledger.documentRptCurrencyID,
 	currRpt.CurrencyCode as documentRptCurrency,
+	currRpt.DecimalPlaces as documentRptDecimalPlaces,
 	erp_generalledger.documentRptAmount,
-	erp_generalledger.documentType 
+	erp_generalledger.documentType,
+	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName
 FROM
 	erp_generalledger 
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
 	AND erp_generalledger.documentDate <= "'.$asOfDate.'"
@@ -550,7 +575,13 @@ WHERE
 	) AS final 
 WHERE
 round( final.balanceRpt, 1 ) <> 0;');
-                    return $output;
+                    $outputArr = array();
+                    if($output){
+                        foreach ($output as $val){
+                            $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                        }
+                    }
+                    return array('reportData' => $outputArr,'companyName' => $checkIsGroup->CompanyName);
                 }
                 break;
             default:
