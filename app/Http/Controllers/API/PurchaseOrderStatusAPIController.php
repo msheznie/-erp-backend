@@ -687,7 +687,6 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $countryName = "";
             $currencyName = "";
             $comments = "";
-            $temStatus = '';
             $grvStatus = "";
 
             if(!empty($val->status)){
