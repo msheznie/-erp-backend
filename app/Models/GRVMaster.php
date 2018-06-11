@@ -255,5 +255,35 @@ class GRVMaster extends Model
         
     ];
 
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function segment_by()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function location_by()
+    {
+        return $this->belongsTo('App\Models\Location', 'grvLocation', 'locationID');
+    }
+
+    public function supplier_by()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
+    }
+
+    public function currency_by()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
+    }
+
     
 }
