@@ -1,20 +1,20 @@
 <?php
 /**
  * =============================================
- * -- File Name : CustomerInvoiceAPIController.php
+ * -- File Name : AccountsReceivableLedgerAPIController.php
  * -- Project Name : ERP
- * -- Module Name :  Report
+ * -- Module Name :  Accounts Receivable
  * -- Author : Mubashir
  * -- Create date : 12 - June 2018
- * -- Description : This file contains the all CRUD for Customer Invoice
+ * -- Description : This file contains the all CRUD for Accounts receivable ledger
  * -- REVISION HISTORY
  */
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateCustomerInvoiceAPIRequest;
-use App\Http\Requests\API\UpdateCustomerInvoiceAPIRequest;
-use App\Models\CustomerInvoice;
-use App\Repositories\CustomerInvoiceRepository;
+use App\Http\Requests\API\CreateAccountsReceivableLedgerAPIRequest;
+use App\Http\Requests\API\UpdateAccountsReceivableLedgerAPIRequest;
+use App\Models\AccountsReceivableLedger;
+use App\Repositories\AccountsReceivableLedgerRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -22,18 +22,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class CustomerInvoiceController
+ * Class AccountsReceivableLedgerController
  * @package App\Http\Controllers\API
  */
 
-class CustomerInvoiceAPIController extends AppBaseController
+class AccountsReceivableLedgerAPIController extends AppBaseController
 {
-    /** @var  CustomerInvoiceRepository */
-    private $customerInvoiceRepository;
+    /** @var  AccountsReceivableLedgerRepository */
+    private $accountsReceivableLedgerRepository;
 
-    public function __construct(CustomerInvoiceRepository $customerInvoiceRepo)
+    public function __construct(AccountsReceivableLedgerRepository $accountsReceivableLedgerRepo)
     {
-        $this->customerInvoiceRepository = $customerInvoiceRepo;
+        $this->accountsReceivableLedgerRepository = $accountsReceivableLedgerRepo;
     }
 
     /**
@@ -41,10 +41,10 @@ class CustomerInvoiceAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/customerInvoices",
-     *      summary="Get a listing of the CustomerInvoices.",
-     *      tags={"CustomerInvoice"},
-     *      description="Get all CustomerInvoices",
+     *      path="/accountsReceivableLedgers",
+     *      summary="Get a listing of the AccountsReceivableLedgers.",
+     *      tags={"AccountsReceivableLedger"},
+     *      description="Get all AccountsReceivableLedgers",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -58,7 +58,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/CustomerInvoice")
+     *                  @SWG\Items(ref="#/definitions/AccountsReceivableLedger")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -70,29 +70,29 @@ class CustomerInvoiceAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->customerInvoiceRepository->pushCriteria(new RequestCriteria($request));
-        $this->customerInvoiceRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $customerInvoices = $this->customerInvoiceRepository->all();
+        $this->accountsReceivableLedgerRepository->pushCriteria(new RequestCriteria($request));
+        $this->accountsReceivableLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $accountsReceivableLedgers = $this->accountsReceivableLedgerRepository->all();
 
-        return $this->sendResponse($customerInvoices->toArray(), 'Customer Invoices retrieved successfully');
+        return $this->sendResponse($accountsReceivableLedgers->toArray(), 'Accounts Receivable Ledgers retrieved successfully');
     }
 
     /**
-     * @param CreateCustomerInvoiceAPIRequest $request
+     * @param CreateAccountsReceivableLedgerAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/customerInvoices",
-     *      summary="Store a newly created CustomerInvoice in storage",
-     *      tags={"CustomerInvoice"},
-     *      description="Store CustomerInvoice",
+     *      path="/accountsReceivableLedgers",
+     *      summary="Store a newly created AccountsReceivableLedger in storage",
+     *      tags={"AccountsReceivableLedger"},
+     *      description="Store AccountsReceivableLedger",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="CustomerInvoice that should be stored",
+     *          description="AccountsReceivableLedger that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/CustomerInvoice")
+     *          @SWG\Schema(ref="#/definitions/AccountsReceivableLedger")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -105,7 +105,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/CustomerInvoice"
+     *                  ref="#/definitions/AccountsReceivableLedger"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -115,13 +115,13 @@ class CustomerInvoiceAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateCustomerInvoiceAPIRequest $request)
+    public function store(CreateAccountsReceivableLedgerAPIRequest $request)
     {
         $input = $request->all();
 
-        $customerInvoices = $this->customerInvoiceRepository->create($input);
+        $accountsReceivableLedgers = $this->accountsReceivableLedgerRepository->create($input);
 
-        return $this->sendResponse($customerInvoices->toArray(), 'Customer Invoice saved successfully');
+        return $this->sendResponse($accountsReceivableLedgers->toArray(), 'Accounts Receivable Ledger saved successfully');
     }
 
     /**
@@ -129,14 +129,14 @@ class CustomerInvoiceAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/customerInvoices/{id}",
-     *      summary="Display the specified CustomerInvoice",
-     *      tags={"CustomerInvoice"},
-     *      description="Get CustomerInvoice",
+     *      path="/accountsReceivableLedgers/{id}",
+     *      summary="Display the specified AccountsReceivableLedger",
+     *      tags={"AccountsReceivableLedger"},
+     *      description="Get AccountsReceivableLedger",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of CustomerInvoice",
+     *          description="id of AccountsReceivableLedger",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -152,7 +152,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/CustomerInvoice"
+     *                  ref="#/definitions/AccountsReceivableLedger"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -164,30 +164,30 @@ class CustomerInvoiceAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var CustomerInvoice $customerInvoice */
-        $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
+        /** @var AccountsReceivableLedger $accountsReceivableLedger */
+        $accountsReceivableLedger = $this->accountsReceivableLedgerRepository->findWithoutFail($id);
 
-        if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+        if (empty($accountsReceivableLedger)) {
+            return $this->sendError('Accounts Receivable Ledger not found');
         }
 
-        return $this->sendResponse($customerInvoice->toArray(), 'Customer Invoice retrieved successfully');
+        return $this->sendResponse($accountsReceivableLedger->toArray(), 'Accounts Receivable Ledger retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateCustomerInvoiceAPIRequest $request
+     * @param UpdateAccountsReceivableLedgerAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/customerInvoices/{id}",
-     *      summary="Update the specified CustomerInvoice in storage",
-     *      tags={"CustomerInvoice"},
-     *      description="Update CustomerInvoice",
+     *      path="/accountsReceivableLedgers/{id}",
+     *      summary="Update the specified AccountsReceivableLedger in storage",
+     *      tags={"AccountsReceivableLedger"},
+     *      description="Update AccountsReceivableLedger",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of CustomerInvoice",
+     *          description="id of AccountsReceivableLedger",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -195,9 +195,9 @@ class CustomerInvoiceAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="CustomerInvoice that should be updated",
+     *          description="AccountsReceivableLedger that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/CustomerInvoice")
+     *          @SWG\Schema(ref="#/definitions/AccountsReceivableLedger")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -210,7 +210,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/CustomerInvoice"
+     *                  ref="#/definitions/AccountsReceivableLedger"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -220,20 +220,20 @@ class CustomerInvoiceAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateCustomerInvoiceAPIRequest $request)
+    public function update($id, UpdateAccountsReceivableLedgerAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var CustomerInvoice $customerInvoice */
-        $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
+        /** @var AccountsReceivableLedger $accountsReceivableLedger */
+        $accountsReceivableLedger = $this->accountsReceivableLedgerRepository->findWithoutFail($id);
 
-        if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+        if (empty($accountsReceivableLedger)) {
+            return $this->sendError('Accounts Receivable Ledger not found');
         }
 
-        $customerInvoice = $this->customerInvoiceRepository->update($input, $id);
+        $accountsReceivableLedger = $this->accountsReceivableLedgerRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoice->toArray(), 'CustomerInvoice updated successfully');
+        return $this->sendResponse($accountsReceivableLedger->toArray(), 'AccountsReceivableLedger updated successfully');
     }
 
     /**
@@ -241,14 +241,14 @@ class CustomerInvoiceAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/customerInvoices/{id}",
-     *      summary="Remove the specified CustomerInvoice from storage",
-     *      tags={"CustomerInvoice"},
-     *      description="Delete CustomerInvoice",
+     *      path="/accountsReceivableLedgers/{id}",
+     *      summary="Remove the specified AccountsReceivableLedger from storage",
+     *      tags={"AccountsReceivableLedger"},
+     *      description="Delete AccountsReceivableLedger",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of CustomerInvoice",
+     *          description="id of AccountsReceivableLedger",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -276,15 +276,15 @@ class CustomerInvoiceAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var CustomerInvoice $customerInvoice */
-        $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
+        /** @var AccountsReceivableLedger $accountsReceivableLedger */
+        $accountsReceivableLedger = $this->accountsReceivableLedgerRepository->findWithoutFail($id);
 
-        if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+        if (empty($accountsReceivableLedger)) {
+            return $this->sendError('Accounts Receivable Ledger not found');
         }
 
-        $customerInvoice->delete();
+        $accountsReceivableLedger->delete();
 
-        return $this->sendResponse($id, 'Customer Invoice deleted successfully');
+        return $this->sendResponse($id, 'Accounts Receivable Ledger deleted successfully');
     }
 }

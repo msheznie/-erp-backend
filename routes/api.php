@@ -458,3 +458,5 @@ Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
 
 
 Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
+
+Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
