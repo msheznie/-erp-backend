@@ -363,6 +363,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
 
     Route::post('exportReport', 'ReportAPIController@exportReport');
+    Route::get('getAcountReceivableFilterData', 'ReportAPIController@getAcountReceivableFilterData');
 
     Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
 
@@ -440,6 +441,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
     Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
     Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
+    Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
+    Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
+
+    Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView');
+    Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData');
 
 });
 
@@ -447,7 +453,8 @@ Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumen
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 
 
-
-
 Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
 
+
+
+Route::resource('customer_invoices', 'CustomerInvoiceAPIController');

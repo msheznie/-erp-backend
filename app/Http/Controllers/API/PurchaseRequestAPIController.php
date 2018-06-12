@@ -23,6 +23,7 @@
  * -- Date: 21-May 2018 By: Fayas Description: Added new functions named as returnPurchaseRequestPreCheck(),cancelPurchaseRequestPreCheck()
  * -- Date: 23-May 2018 By: Fayas Description: Added new functions named as purchaseRequestAudit()
  * -- Date: 06-June 2018 By: Mubashir Description: Modified getPurchaseRequestByDocumentType() to handle filters from local storage
+ * -- Date: 11-June 2018 By: Fayas Description: Added new functions named as getReportOpenRequest(),exportReportOpenRequest()
  */
 namespace App\Http\Controllers\API;
 
@@ -1637,4 +1638,221 @@ class PurchaseRequestAPIController extends AppBaseController
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
     }
 
+    /**
+     * Display the specified PurchaseRequest print.
+     * POST|HEAD /getReportOpenRequest
+     *
+     * @param  int $request
+     *
+     * @return Response
+     */
+    public function getReportOpenRequest(Request $request){
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','cancelledYN','PRConfirmedYN','approved','month','year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        $purchaseRequests = PurchaseRequest::whereIn('companySystemID', $subCompanies)
+                                            ->where('approved', -1)
+                                            ->where('manuallyClosed', 0)
+                                            ->where('cancelledYN', 0)
+                                            ->where('selectedForPO', 0)
+                                            ->with(['created_by','priority','location']);
+
+        if (array_key_exists('selectedForPO', $input)) {
+            if($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
+                if($input['selectedForPO'] == 1){
+                    $purchaseRequests = $purchaseRequests->whereDoesntHave('po_details');
+                }elseif ($input['selectedForPO'] == 2){
+                    $purchaseRequests =  $purchaseRequests->whereHas('po_details',function ($q){
+
+                    });
+                }
+            }
+        }
+
+        $purchaseRequests = $purchaseRequests->select(
+            ['erp_purchaserequest.purchaseRequestID',
+                'erp_purchaserequest.purchaseRequestCode',
+                'erp_purchaserequest.createdDateTime',
+                'erp_purchaserequest.createdUserSystemID',
+                'erp_purchaserequest.comments',
+                'erp_purchaserequest.location',
+                'erp_purchaserequest.priority',
+                'erp_purchaserequest.cancelledYN',
+                'erp_purchaserequest.PRConfirmedYN',
+                'erp_purchaserequest.approved',
+                'erp_purchaserequest.timesReferred',
+                'erp_purchaserequest.serviceLineSystemID',
+                'erp_purchaserequest.financeCategory',
+                'erp_purchaserequest.documentSystemID',
+                'erp_purchaserequest.manuallyClosed',
+                'erp_purchaserequest.PRConfirmedDate',
+                'erp_purchaserequest.approvedDate',
+            ]);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseRequests = $purchaseRequests->where(function ($query) use ($search) {
+                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($purchaseRequests)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('purchaseRequestID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+
+    /**
+     * report Open Request Export.
+     * get|HEAD /reportOpenRequestExport
+     *
+     * @param  int $request
+     *
+     * @return Response
+     */
+    public function exportReportOpenRequest(Request $request){
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','cancelledYN','PRConfirmedYN','approved','month','year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        $type = $input['type'];
+        $purchaseRequests = PurchaseRequest::whereIn('companySystemID', $subCompanies)
+                                            ->where('approved', -1)
+                                            ->where('manuallyClosed', 0)
+                                            ->where('cancelledYN', 0)
+                                            ->where('selectedForPO', 0)
+                                            ->with(['created_by','priority_pdf','location_pdf']);
+
+        if (array_key_exists('selectedForPO', $input)) {
+            if($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
+                if($input['selectedForPO'] == 1){
+                    $purchaseRequests = $purchaseRequests->whereDoesntHave('po_details');
+                }elseif ($input['selectedForPO'] == 2){
+                    $purchaseRequests =  $purchaseRequests->whereHas('po_details',function ($q){});
+                }
+            }
+        }
+
+        $purchaseRequests = $purchaseRequests->select(
+            ['erp_purchaserequest.purchaseRequestID',
+                'erp_purchaserequest.purchaseRequestCode',
+                'erp_purchaserequest.createdDateTime',
+                'erp_purchaserequest.createdUserSystemID',
+                'erp_purchaserequest.comments',
+                'erp_purchaserequest.location',
+                'erp_purchaserequest.priority',
+                'erp_purchaserequest.cancelledYN',
+                'erp_purchaserequest.PRConfirmedYN',
+                'erp_purchaserequest.approved',
+                'erp_purchaserequest.timesReferred',
+                'erp_purchaserequest.serviceLineSystemID',
+                'erp_purchaserequest.financeCategory',
+                'erp_purchaserequest.documentSystemID',
+                'erp_purchaserequest.manuallyClosed',
+                'erp_purchaserequest.PRConfirmedDate',
+                'erp_purchaserequest.approvedDate',
+            ])->orderBy('purchaseRequestID','asc');
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseRequests = $purchaseRequests->where(function ($query) use ($search) {
+                $query->where('purchaseRequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $purchaseRequests = $purchaseRequests->get();
+
+        $data = array();
+        foreach ($purchaseRequests as $val) {
+
+            $location = "";
+            $priority = "";
+            $createdBy = "";
+
+            if(!empty($val->location_pdf)){
+                $location = $val->location_pdf['locationName'];
+            }
+
+            if(!empty($val->priority_pdf)){
+                $priority = $val->priority_pdf['priorityDescription'];
+            }
+
+            if(!empty($val->created_by)){
+                $createdBy = $val->created_by->empName;
+            }
+
+            $data[] = array(
+                'PR Number' => $val->purchaseRequestCode,
+                'PR Requested Date' => \Helper::dateFormat($val->createdDateTime),
+                'Narration' => $val->comments,
+                'Location' => $location,
+                'Priority' => $priority,
+                'Created By' => $createdBy,
+                'Confirmed Date' => \Helper::dateFormat($val->PRConfirmedDate),
+                'Approved Date' =>\Helper::dateFormat($val->approvedDate),
+            );
+        }
+
+        $csv = \Excel::create('open_requests', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+        return $this->sendResponse(array(), 'successfully export');
+
+
+    }
 }
