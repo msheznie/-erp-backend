@@ -3080,12 +3080,26 @@ WHERE
             ->where('purchaseOrderID', $input['purchaseOrderID'])
             ->first();
 
+        $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $input['purchaseOrderID'])
+            ->first();
+
+        $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $input['purchaseOrderID'])
+            ->first();
+
         if (empty($procurementOrder)) {
             return $this->sendError('Procurement Order not found');
         }
 
         if ($procurementOrder->poConfirmedYN != 1) {
             return $this->sendError('You cannot amend this order, this is not confirm', 500);
+        }
+
+        if ($detailExistGRV) {
+            return $this->sendError('You cannot amend, GRV is created for this PO');
+        }
+
+        if ($detailExistAPD) {
+            return $this->sendError('You cannot amend Advance Payment is created for this PO');
         }
 
         if ($procurementOrder->poClosedYN == 1) {
@@ -3095,6 +3109,7 @@ WHERE
         if ($procurementOrder->manuallyClosed == 1) {
             return $this->sendError('You cannot amend this order, this order manually closed');
         }
+
 
         if ($procurementOrder->grvRecieved != 0) {
             return $this->sendError('You cannot amend this order. GRV is fully or partially received.', 500);
@@ -3339,6 +3354,26 @@ WHERE
             $purchaseOrderDetail->save();
         }
 
+        //calculate tax amount according to the percantage for tax update
+
+        //getting total sum of PO detail Amount
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            ->where('purchaseOrderMasterID', $purchaseOrder->purchaseOrderID)
+            ->first();
+
+        //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
+        if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
+            $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
+
+            $currencyConversionVatAmount = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculatVatAmount);
+
+            $updatePOMaster = ProcumentOrder::find($purchaseOrder->purchaseOrderID)
+                ->update([
+                    'VATAmount' => $calculatVatAmount,
+                    'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
+                    'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
+                ]);
+        }
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Procurement Order retrieved successfully');
     }
