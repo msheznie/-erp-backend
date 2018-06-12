@@ -53,7 +53,6 @@ class CustomerAssigned extends Model
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey  = 'customerAssignedID';
 
-
     protected $dates = ['deleted_at'];
 
 

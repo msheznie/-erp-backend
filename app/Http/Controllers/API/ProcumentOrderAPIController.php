@@ -1292,6 +1292,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
     public function getProcumentOrderAllAmendments(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID','grvRecieved', 'month', 'year', 'invoicedBooked'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1314,23 +1315,27 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         if (array_key_exists('grvRecieved', $input)) {
-            if ($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) {
+            if (($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) && !is_null($input['grvRecieved']) ) {
                 $procumentOrders->where('grvRecieved', $input['grvRecieved']);
             }
         }
 
         if (array_key_exists('invoicedBooked', $input)) {
-            if ($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) {
+            if (($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) && !is_null($input['invoicedBooked'])) {
                 $procumentOrders->where('invoicedBooked', $input['invoicedBooked']);
             }
         }
 
         if (array_key_exists('month', $input)) {
-            $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
+            if ($input['month'] && !is_null($input['month'])) {
+                $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
+            }
         }
 
         if (array_key_exists('year', $input)) {
-            $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+            if ($input['year'] && !is_null($input['year'])) {
+                $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+            }
         }
 
         $procumentOrders = $procumentOrders->select(

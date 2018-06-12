@@ -40,7 +40,13 @@ class Helper
      */
     public static function getCompanyServiceline($company)
     {
-        $serviceline = Models\SegmentMaster::where('companySystemID', '=', $company)->get();
+        $companiesByGroup="";
+        if(self::checkIsCompanyGroup($company)){
+            $companiesByGroup = self::getGroupCompany($company);
+        }else{
+            $companiesByGroup = (array)$company;
+        }
+        $serviceline = Models\SegmentMaster::whereIN('companySystemID', $companiesByGroup)->get();
         return $serviceline;
     }
 
