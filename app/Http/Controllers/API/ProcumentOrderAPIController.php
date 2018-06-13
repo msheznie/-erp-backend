@@ -1029,9 +1029,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'detailExist' => 0, 'pullPRPolicy' => 0);
 
-        $grvRecieved = array(['id' => '0', 'value' => 'Not Received'], ['id' => '1', 'value' => 'Partial Received'], ['id' => '2', 'value' => 'Fully Received']);
+        $grvRecieved = array(['id' => 0, 'value' => 'Not Received'], ['id' => 1, 'value' => 'Partial Received'], ['id' => 2, 'value' => 'Fully Received']);
 
-        $invoiceBooked = array(['id' => '0', 'value' => 'Not Invoiced'], ['id' => '1', 'value' => 'Partial Invoiced'], ['id' => '2', 'value' => 'Fully Invoiced']);
+        $invoiceBooked = array(['id' => 0, 'value' => 'Not Invoiced'], ['id' => 1, 'value' => 'Partial Invoiced'], ['id' => 2, 'value' => 'Fully Invoiced']);
 
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
@@ -1311,7 +1311,9 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
-            $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
         }
 
         if (array_key_exists('grvRecieved', $input)) {
