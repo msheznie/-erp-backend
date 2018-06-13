@@ -1,20 +1,20 @@
 <?php
 /**
  * =============================================
- * -- File Name : CustomerInvoiceAPIController.php
+ * -- File Name : CompanyFinanceYearAPIController.php
  * -- Project Name : ERP
- * -- Module Name :  Report
- * -- Author : Mubashir
- * -- Create date : 12 - June 2018
- * -- Description : This file contains the all CRUD for Customer Invoice
+ * -- Module Name :  Company Finance Year
+ * -- Author : Mohamed Nazir
+ * -- Create date : 12-June 2018
+ * -- Description : This file contains the all CRUD for Company Finance Year
  * -- REVISION HISTORY
  */
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateCustomerInvoiceAPIRequest;
-use App\Http\Requests\API\UpdateCustomerInvoiceAPIRequest;
-use App\Models\CustomerInvoice;
-use App\Repositories\CustomerInvoiceRepository;
+use App\Http\Requests\API\CreateCompanyFinanceYearAPIRequest;
+use App\Http\Requests\API\UpdateCompanyFinanceYearAPIRequest;
+use App\Models\CompanyFinanceYear;
+use App\Repositories\CompanyFinanceYearRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -22,18 +22,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class CustomerInvoiceController
+ * Class CompanyFinanceYearController
  * @package App\Http\Controllers\API
  */
 
-class CustomerInvoiceAPIController extends AppBaseController
+class CompanyFinanceYearAPIController extends AppBaseController
 {
-    /** @var  CustomerInvoiceRepository */
-    private $customerInvoiceRepository;
+    /** @var  CompanyFinanceYearRepository */
+    private $companyFinanceYearRepository;
 
-    public function __construct(CustomerInvoiceRepository $customerInvoiceRepo)
+    public function __construct(CompanyFinanceYearRepository $companyFinanceYearRepo)
     {
-        $this->customerInvoiceRepository = $customerInvoiceRepo;
+        $this->companyFinanceYearRepository = $companyFinanceYearRepo;
     }
 
     /**
@@ -41,10 +41,10 @@ class CustomerInvoiceAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/customerInvoices",
-     *      summary="Get a listing of the CustomerInvoices.",
-     *      tags={"CustomerInvoice"},
-     *      description="Get all CustomerInvoices",
+     *      path="/companyFinanceYears",
+     *      summary="Get a listing of the CompanyFinanceYears.",
+     *      tags={"CompanyFinanceYear"},
+     *      description="Get all CompanyFinanceYears",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -58,7 +58,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/CustomerInvoice")
+     *                  @SWG\Items(ref="#/definitions/CompanyFinanceYear")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -70,29 +70,29 @@ class CustomerInvoiceAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->customerInvoiceRepository->pushCriteria(new RequestCriteria($request));
-        $this->customerInvoiceRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $customerInvoices = $this->customerInvoiceRepository->all();
+        $this->companyFinanceYearRepository->pushCriteria(new RequestCriteria($request));
+        $this->companyFinanceYearRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $companyFinanceYears = $this->companyFinanceYearRepository->all();
 
-        return $this->sendResponse($customerInvoices->toArray(), 'Customer Invoices retrieved successfully');
+        return $this->sendResponse($companyFinanceYears->toArray(), 'Company Finance Years retrieved successfully');
     }
 
     /**
-     * @param CreateCustomerInvoiceAPIRequest $request
+     * @param CreateCompanyFinanceYearAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/customerInvoices",
-     *      summary="Store a newly created CustomerInvoice in storage",
-     *      tags={"CustomerInvoice"},
-     *      description="Store CustomerInvoice",
+     *      path="/companyFinanceYears",
+     *      summary="Store a newly created CompanyFinanceYear in storage",
+     *      tags={"CompanyFinanceYear"},
+     *      description="Store CompanyFinanceYear",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="CustomerInvoice that should be stored",
+     *          description="CompanyFinanceYear that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/CustomerInvoice")
+     *          @SWG\Schema(ref="#/definitions/CompanyFinanceYear")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -105,7 +105,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/CustomerInvoice"
+     *                  ref="#/definitions/CompanyFinanceYear"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -115,13 +115,13 @@ class CustomerInvoiceAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateCustomerInvoiceAPIRequest $request)
+    public function store(CreateCompanyFinanceYearAPIRequest $request)
     {
         $input = $request->all();
 
-        $customerInvoices = $this->customerInvoiceRepository->create($input);
+        $companyFinanceYears = $this->companyFinanceYearRepository->create($input);
 
-        return $this->sendResponse($customerInvoices->toArray(), 'Customer Invoice saved successfully');
+        return $this->sendResponse($companyFinanceYears->toArray(), 'Company Finance Year saved successfully');
     }
 
     /**
@@ -129,14 +129,14 @@ class CustomerInvoiceAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/customerInvoices/{id}",
-     *      summary="Display the specified CustomerInvoice",
-     *      tags={"CustomerInvoice"},
-     *      description="Get CustomerInvoice",
+     *      path="/companyFinanceYears/{id}",
+     *      summary="Display the specified CompanyFinanceYear",
+     *      tags={"CompanyFinanceYear"},
+     *      description="Get CompanyFinanceYear",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of CustomerInvoice",
+     *          description="id of CompanyFinanceYear",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -152,7 +152,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/CustomerInvoice"
+     *                  ref="#/definitions/CompanyFinanceYear"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -164,30 +164,30 @@ class CustomerInvoiceAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var CustomerInvoice $customerInvoice */
-        $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
+        /** @var CompanyFinanceYear $companyFinanceYear */
+        $companyFinanceYear = $this->companyFinanceYearRepository->findWithoutFail($id);
 
-        if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Company Finance Year not found');
         }
 
-        return $this->sendResponse($customerInvoice->toArray(), 'Customer Invoice retrieved successfully');
+        return $this->sendResponse($companyFinanceYear->toArray(), 'Company Finance Year retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateCustomerInvoiceAPIRequest $request
+     * @param UpdateCompanyFinanceYearAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/customerInvoices/{id}",
-     *      summary="Update the specified CustomerInvoice in storage",
-     *      tags={"CustomerInvoice"},
-     *      description="Update CustomerInvoice",
+     *      path="/companyFinanceYears/{id}",
+     *      summary="Update the specified CompanyFinanceYear in storage",
+     *      tags={"CompanyFinanceYear"},
+     *      description="Update CompanyFinanceYear",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of CustomerInvoice",
+     *          description="id of CompanyFinanceYear",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -195,9 +195,9 @@ class CustomerInvoiceAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="CustomerInvoice that should be updated",
+     *          description="CompanyFinanceYear that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/CustomerInvoice")
+     *          @SWG\Schema(ref="#/definitions/CompanyFinanceYear")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -210,7 +210,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/CustomerInvoice"
+     *                  ref="#/definitions/CompanyFinanceYear"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -220,20 +220,20 @@ class CustomerInvoiceAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateCustomerInvoiceAPIRequest $request)
+    public function update($id, UpdateCompanyFinanceYearAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var CustomerInvoice $customerInvoice */
-        $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
+        /** @var CompanyFinanceYear $companyFinanceYear */
+        $companyFinanceYear = $this->companyFinanceYearRepository->findWithoutFail($id);
 
-        if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Company Finance Year not found');
         }
 
-        $customerInvoice = $this->customerInvoiceRepository->update($input, $id);
+        $companyFinanceYear = $this->companyFinanceYearRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoice->toArray(), 'CustomerInvoice updated successfully');
+        return $this->sendResponse($companyFinanceYear->toArray(), 'CompanyFinanceYear updated successfully');
     }
 
     /**
@@ -241,14 +241,14 @@ class CustomerInvoiceAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/customerInvoices/{id}",
-     *      summary="Remove the specified CustomerInvoice from storage",
-     *      tags={"CustomerInvoice"},
-     *      description="Delete CustomerInvoice",
+     *      path="/companyFinanceYears/{id}",
+     *      summary="Remove the specified CompanyFinanceYear from storage",
+     *      tags={"CompanyFinanceYear"},
+     *      description="Delete CompanyFinanceYear",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of CustomerInvoice",
+     *          description="id of CompanyFinanceYear",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -276,15 +276,15 @@ class CustomerInvoiceAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var CustomerInvoice $customerInvoice */
-        $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
+        /** @var CompanyFinanceYear $companyFinanceYear */
+        $companyFinanceYear = $this->companyFinanceYearRepository->findWithoutFail($id);
 
-        if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Company Finance Year not found');
         }
 
-        $customerInvoice->delete();
+        $companyFinanceYear->delete();
 
-        return $this->sendResponse($id, 'Customer Invoice deleted successfully');
+        return $this->sendResponse($id, 'Company Finance Year deleted successfully');
     }
 }

@@ -1,20 +1,21 @@
 <?php
 /**
  * =============================================
- * -- File Name : CustomerInvoiceAPIController.php
+ * -- File Name : GRVTypesAPIController.php
  * -- Project Name : ERP
- * -- Module Name :  Report
- * -- Author : Mubashir
- * -- Create date : 12 - June 2018
- * -- Description : This file contains the all CRUD for Customer Invoice
+ * -- Module Name :  GRV Types
+ * -- Author : Mohamed Nazir
+ * -- Create date : 12-June 2018
+ * -- Description : This file contains the all CRUD for GRV Types
  * -- REVISION HISTORY
  */
+
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateCustomerInvoiceAPIRequest;
-use App\Http\Requests\API\UpdateCustomerInvoiceAPIRequest;
-use App\Models\CustomerInvoice;
-use App\Repositories\CustomerInvoiceRepository;
+use App\Http\Requests\API\CreateGRVTypesAPIRequest;
+use App\Http\Requests\API\UpdateGRVTypesAPIRequest;
+use App\Models\GRVTypes;
+use App\Repositories\GRVTypesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -22,18 +23,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class CustomerInvoiceController
+ * Class GRVTypesController
  * @package App\Http\Controllers\API
  */
 
-class CustomerInvoiceAPIController extends AppBaseController
+class GRVTypesAPIController extends AppBaseController
 {
-    /** @var  CustomerInvoiceRepository */
-    private $customerInvoiceRepository;
+    /** @var  GRVTypesRepository */
+    private $gRVTypesRepository;
 
-    public function __construct(CustomerInvoiceRepository $customerInvoiceRepo)
+    public function __construct(GRVTypesRepository $gRVTypesRepo)
     {
-        $this->customerInvoiceRepository = $customerInvoiceRepo;
+        $this->gRVTypesRepository = $gRVTypesRepo;
     }
 
     /**
@@ -41,10 +42,10 @@ class CustomerInvoiceAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/customerInvoices",
-     *      summary="Get a listing of the CustomerInvoices.",
-     *      tags={"CustomerInvoice"},
-     *      description="Get all CustomerInvoices",
+     *      path="/gRVTypes",
+     *      summary="Get a listing of the GRVTypes.",
+     *      tags={"GRVTypes"},
+     *      description="Get all GRVTypes",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -58,7 +59,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/CustomerInvoice")
+     *                  @SWG\Items(ref="#/definitions/GRVTypes")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -70,29 +71,29 @@ class CustomerInvoiceAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->customerInvoiceRepository->pushCriteria(new RequestCriteria($request));
-        $this->customerInvoiceRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $customerInvoices = $this->customerInvoiceRepository->all();
+        $this->gRVTypesRepository->pushCriteria(new RequestCriteria($request));
+        $this->gRVTypesRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $gRVTypes = $this->gRVTypesRepository->all();
 
-        return $this->sendResponse($customerInvoices->toArray(), 'Customer Invoices retrieved successfully');
+        return $this->sendResponse($gRVTypes->toArray(), 'G R V Types retrieved successfully');
     }
 
     /**
-     * @param CreateCustomerInvoiceAPIRequest $request
+     * @param CreateGRVTypesAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/customerInvoices",
-     *      summary="Store a newly created CustomerInvoice in storage",
-     *      tags={"CustomerInvoice"},
-     *      description="Store CustomerInvoice",
+     *      path="/gRVTypes",
+     *      summary="Store a newly created GRVTypes in storage",
+     *      tags={"GRVTypes"},
+     *      description="Store GRVTypes",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="CustomerInvoice that should be stored",
+     *          description="GRVTypes that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/CustomerInvoice")
+     *          @SWG\Schema(ref="#/definitions/GRVTypes")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -105,7 +106,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/CustomerInvoice"
+     *                  ref="#/definitions/GRVTypes"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -115,13 +116,13 @@ class CustomerInvoiceAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateCustomerInvoiceAPIRequest $request)
+    public function store(CreateGRVTypesAPIRequest $request)
     {
         $input = $request->all();
 
-        $customerInvoices = $this->customerInvoiceRepository->create($input);
+        $gRVTypes = $this->gRVTypesRepository->create($input);
 
-        return $this->sendResponse($customerInvoices->toArray(), 'Customer Invoice saved successfully');
+        return $this->sendResponse($gRVTypes->toArray(), 'G R V Types saved successfully');
     }
 
     /**
@@ -129,14 +130,14 @@ class CustomerInvoiceAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/customerInvoices/{id}",
-     *      summary="Display the specified CustomerInvoice",
-     *      tags={"CustomerInvoice"},
-     *      description="Get CustomerInvoice",
+     *      path="/gRVTypes/{id}",
+     *      summary="Display the specified GRVTypes",
+     *      tags={"GRVTypes"},
+     *      description="Get GRVTypes",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of CustomerInvoice",
+     *          description="id of GRVTypes",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -152,7 +153,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/CustomerInvoice"
+     *                  ref="#/definitions/GRVTypes"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -164,30 +165,30 @@ class CustomerInvoiceAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var CustomerInvoice $customerInvoice */
-        $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
+        /** @var GRVTypes $gRVTypes */
+        $gRVTypes = $this->gRVTypesRepository->findWithoutFail($id);
 
-        if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+        if (empty($gRVTypes)) {
+            return $this->sendError('G R V Types not found');
         }
 
-        return $this->sendResponse($customerInvoice->toArray(), 'Customer Invoice retrieved successfully');
+        return $this->sendResponse($gRVTypes->toArray(), 'G R V Types retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateCustomerInvoiceAPIRequest $request
+     * @param UpdateGRVTypesAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/customerInvoices/{id}",
-     *      summary="Update the specified CustomerInvoice in storage",
-     *      tags={"CustomerInvoice"},
-     *      description="Update CustomerInvoice",
+     *      path="/gRVTypes/{id}",
+     *      summary="Update the specified GRVTypes in storage",
+     *      tags={"GRVTypes"},
+     *      description="Update GRVTypes",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of CustomerInvoice",
+     *          description="id of GRVTypes",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -195,9 +196,9 @@ class CustomerInvoiceAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="CustomerInvoice that should be updated",
+     *          description="GRVTypes that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/CustomerInvoice")
+     *          @SWG\Schema(ref="#/definitions/GRVTypes")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -210,7 +211,7 @@ class CustomerInvoiceAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/CustomerInvoice"
+     *                  ref="#/definitions/GRVTypes"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -220,20 +221,20 @@ class CustomerInvoiceAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateCustomerInvoiceAPIRequest $request)
+    public function update($id, UpdateGRVTypesAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var CustomerInvoice $customerInvoice */
-        $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
+        /** @var GRVTypes $gRVTypes */
+        $gRVTypes = $this->gRVTypesRepository->findWithoutFail($id);
 
-        if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+        if (empty($gRVTypes)) {
+            return $this->sendError('G R V Types not found');
         }
 
-        $customerInvoice = $this->customerInvoiceRepository->update($input, $id);
+        $gRVTypes = $this->gRVTypesRepository->update($input, $id);
 
-        return $this->sendResponse($customerInvoice->toArray(), 'CustomerInvoice updated successfully');
+        return $this->sendResponse($gRVTypes->toArray(), 'GRVTypes updated successfully');
     }
 
     /**
@@ -241,14 +242,14 @@ class CustomerInvoiceAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/customerInvoices/{id}",
-     *      summary="Remove the specified CustomerInvoice from storage",
-     *      tags={"CustomerInvoice"},
-     *      description="Delete CustomerInvoice",
+     *      path="/gRVTypes/{id}",
+     *      summary="Remove the specified GRVTypes from storage",
+     *      tags={"GRVTypes"},
+     *      description="Delete GRVTypes",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of CustomerInvoice",
+     *          description="id of GRVTypes",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -276,15 +277,15 @@ class CustomerInvoiceAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var CustomerInvoice $customerInvoice */
-        $customerInvoice = $this->customerInvoiceRepository->findWithoutFail($id);
+        /** @var GRVTypes $gRVTypes */
+        $gRVTypes = $this->gRVTypesRepository->findWithoutFail($id);
 
-        if (empty($customerInvoice)) {
-            return $this->sendError('Customer Invoice not found');
+        if (empty($gRVTypes)) {
+            return $this->sendError('G R V Types not found');
         }
 
-        $customerInvoice->delete();
+        $gRVTypes->delete();
 
-        return $this->sendResponse($id, 'Customer Invoice deleted successfully');
+        return $this->sendResponse($id, 'G R V Types deleted successfully');
     }
 }

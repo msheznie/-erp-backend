@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : CustomerInvoice.php
+ * -- Project Name : ERP
+ * -- Module Name : Customer Invoice
+ * -- Author : Mohamed Fayas
+ * -- Create date : 12- June 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -382,6 +391,8 @@ class CustomerInvoice extends Model
     public $fillable = [
         'transactionMode',
         'companyID',
+        'companySystemID',
+        'documentSystemiD',
         'documentID',
         'serialNo',
         'companyFinanceYearID',
@@ -469,6 +480,8 @@ class CustomerInvoice extends Model
         'custInvoiceDirectAutoID' => 'integer',
         'transactionMode' => 'integer',
         'companyID' => 'string',
+        'companySystemID' => 'integer',
+        'documentSystemiD' => 'integer',
         'documentID' => 'string',
         'serialNo' => 'integer',
         'companyFinanceYearID' => 'integer',
