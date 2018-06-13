@@ -333,19 +333,19 @@ WHERE
                     $whereQry = '';
                     if ($currency == 1) {
                         $currencyQry = "final.documentTransCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceRpt, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceTrans, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
-                        $whereQry = "round( final.balanceRpt, 1 )";
+                        $whereQry = "round( final.balanceTrans, 1 )";
                     } else if ($currency == 2) {
                         $currencyQry = "final.documentLocalCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceLocal, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceLocal, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
                         $whereQry = "round( final.balanceLocal, 1 )";
                     } else {
                         $currencyQry = "final.documentRptCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceTrans, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceRpt, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
-                        $whereQry = "round( final.balanceTrans, 1 )";
+                        $whereQry = "round( final.balanceRpt, 1 )";
                     }
                     $currencyID = $request->currencyID;
                     //DB::enableQueryLog();
@@ -581,7 +581,7 @@ WHERE
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
 	) AS final 
 WHERE
-' . $whereQry . ' <> 0;');
+' . $whereQry . ' <> 0 ORDER BY PostedDate ASC;');
                     //dd(DB::getQueryLog());
                     $outputArr = array();
                     $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
@@ -872,19 +872,19 @@ WHERE
                     $whereQry = '';
                     if ($currency == 1) {
                         $currencyQry = "final.documentTransCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceRpt, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceTrans, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
-                        $whereQry = "round( final.balanceRpt, 1 )";
+                        $whereQry = "round( final.balanceTrans, 1 )";
                     } else if ($currency == 2) {
                         $currencyQry = "final.documentLocalCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceLocal, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceLocal, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
                         $whereQry = "round( final.balanceLocal, 1 )";
                     } else {
                         $currencyQry = "final.documentRptCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceTrans, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceRpt, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
-                        $whereQry = "round( final.balanceTrans, 1 )";
+                        $whereQry = "round( final.balanceRpt, 1 )";
                     }
                     $currencyID = $request->currencyID;
                     //DB::enableQueryLog();
@@ -1120,7 +1120,7 @@ WHERE
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
 	) AS final 
 WHERE
-' . $whereQry . ' <> 0;');
+' . $whereQry . ' <> 0 ORDER BY PostedDate DESC;');
                     //dd(DB::getQueryLog());
                     $outputArr = array();
                     $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
