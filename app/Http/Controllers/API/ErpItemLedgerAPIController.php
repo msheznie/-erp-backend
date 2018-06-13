@@ -298,23 +298,33 @@ class ErpItemLedgerAPIController extends AppBaseController
 
     public function getErpLedger(Request $request){
 
-        $item = ErpItemLedger::select('companySystemID','itemSystemCode','itemPrimaryCode','itemDescription')
-            ->where('companySystemID',$request->selectedCompanyId)
-            ->groupBy('companySystemID','itemSystemCode')
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+        $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID','erp_itemledger.itemSystemCode','erp_itemledger.itemPrimaryCode','itemDescription')
+            ->whereIn('erp_itemledger.companySystemID',$subCompanies)
+            ->groupBy('erp_itemledger.itemSystemCode')
+            //->take(50)
             ->get();
 
         $document = DB::table('erp_itemledger')
             ->join('erp_documentmaster', 'erp_itemledger.documentSystemID', '=', 'erp_documentmaster.documentSystemID')
             ->select('erp_itemledger.companySystemID', 'erp_itemledger.documentSystemID', 'erp_documentmaster.documentDescription')
-            ->where('erp_itemledger.companySystemID',$request->selectedCompanyId)
-            ->groupBy('erp_itemledger.companySystemID','erp_itemledger.documentSystemID')
+            ->whereIn('erp_itemledger.companySystemID',$subCompanies)
+            ->groupBy('erp_itemledger.documentSystemID')
             ->get();
 
         $warehouse = DB::table('erp_itemledger')
             ->join('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
             ->select('erp_itemledger.companySystemID', 'erp_itemledger.wareHouseSystemCode', 'warehousemaster.wareHouseDescription')
-            ->where('erp_itemledger.companySystemID',$request->selectedCompanyId)
-            ->groupBy('erp_itemledger.companySystemID','erp_itemledger.wareHouseSystemCode')
+            ->whereIn('erp_itemledger.companySystemID',$subCompanies)
+            ->groupBy('erp_itemledger.wareHouseSystemCode')
             ->get();
 
         $output = array(
@@ -326,6 +336,16 @@ class ErpItemLedgerAPIController extends AppBaseController
     }
 
     public function generateStockLedgerReport(Request $request){
+
+
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
 
         $startDate = new Carbon($request->daterange[0]);
         $startDate = $startDate->addDays(1);
@@ -440,7 +460,7 @@ class ErpItemLedgerAPIController extends AppBaseController
                             from erp_itemledger
                             where erp_itemledger.transactionDate <= "'.$endDate.'" and erp_itemledger.itemSystemCode = "'.$item.'"
                             ) as openWacRptTotalByItem')
-                ->where('erp_itemledger.companySystemID',$request->companySystemID)
+                ->whereIn('erp_itemledger.companySystemID',$subCompanies)
                 ->where('erp_itemledger.itemSystemCode',$item)
                 ->whereIn('erp_documentmaster.documentSystemID',$docs)
                 ->whereIn('warehousemaster.wareHouseSystemCode',$warehouse)

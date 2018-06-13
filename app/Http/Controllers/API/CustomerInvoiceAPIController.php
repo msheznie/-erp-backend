@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : CustomerInvoiceAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Report
+ * -- Author : Mubashir
+ * -- Create date : 12 - June 2018
+ * -- Description : This file contains the all CRUD for Customer Invoice
+ * -- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerInvoiceAPIRequest;

@@ -945,11 +945,6 @@ class PurchaseRequestAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
         }
 
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        if ($company) {
-            $input['companyID'] = $company->CompanyID;
-        }
-
         $code = str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
         $input['purchaseRequestCode'] = $input['companyID'] . '\\' . $input['departmentID'] . '\\' . $input['serviceLineCode'] . '\\' . $input['documentID'] . $code;
 

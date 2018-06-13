@@ -8,6 +8,7 @@
  * -- Create date : 04- May 2018
  * -- Description : This file contains the all CRUD for GRV Details
  * -- REVISION HISTORY
+ * -- Date: 13-June 2018 By: Nazir Description: Added new functions named as getItemsByGRVMaster(),
  */
 namespace App\Http\Controllers\API;
 
@@ -134,5 +135,18 @@ class GRVDetailsAPIController extends AppBaseController
         $gRVDetails->delete();
 
         return $this->sendResponse($id, 'G R V Details deleted successfully');
+    }
+
+    public function getItemsByGRVMaster(Request $request)
+    {
+        $input = $request->all();
+        $grvAutoID = $input['grvAutoID'];
+
+        $items = GRVDetails::where('grvAutoID', $grvAutoID)
+            ->with(['unit' => function ($query) {
+            }])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'GRV details retrieved successfully');
     }
 }
