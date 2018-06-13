@@ -1029,9 +1029,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $conditions = array('checkBudget' => 0, 'allowFinanceCategory' => 0, 'detailExist' => 0, 'pullPRPolicy' => 0);
 
-        $grvRecieved = array(['id' => '0', 'value' => 'Not Received'], ['id' => '1', 'value' => 'Partial Received'], ['id' => '2', 'value' => 'Fully Received']);
+        $grvRecieved = array(['id' => 0, 'value' => 'Not Received'], ['id' => 1, 'value' => 'Partial Received'], ['id' => 2, 'value' => 'Fully Received']);
 
-        $invoiceBooked = array(['id' => '0', 'value' => 'Not Invoiced'], ['id' => '1', 'value' => 'Partial Invoiced'], ['id' => '2', 'value' => 'Fully Invoiced']);
+        $invoiceBooked = array(['id' => 0, 'value' => 'Not Invoiced'], ['id' => 1, 'value' => 'Partial Invoiced'], ['id' => 2, 'value' => 'Fully Invoiced']);
 
         if ($checkBudget) {
             $conditions['checkBudget'] = $checkBudget->isYesNO;
@@ -1292,6 +1292,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
     public function getProcumentOrderAllAmendments(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID','grvRecieved', 'month', 'year', 'invoicedBooked'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1310,27 +1311,33 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
-            $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
         }
 
         if (array_key_exists('grvRecieved', $input)) {
-            if ($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) {
+            if (($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) && !is_null($input['grvRecieved']) ) {
                 $procumentOrders->where('grvRecieved', $input['grvRecieved']);
             }
         }
 
         if (array_key_exists('invoicedBooked', $input)) {
-            if ($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) {
+            if (($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) && !is_null($input['invoicedBooked'])) {
                 $procumentOrders->where('invoicedBooked', $input['invoicedBooked']);
             }
         }
 
         if (array_key_exists('month', $input)) {
-            $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
+            if ($input['month'] && !is_null($input['month'])) {
+                $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
+            }
         }
 
         if (array_key_exists('year', $input)) {
-            $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+            if ($input['year'] && !is_null($input['year'])) {
+                $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+            }
         }
 
         $procumentOrders = $procumentOrders->select(
@@ -3080,12 +3087,26 @@ WHERE
             ->where('purchaseOrderID', $input['purchaseOrderID'])
             ->first();
 
+        $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $input['purchaseOrderID'])
+            ->first();
+
+        $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $input['purchaseOrderID'])
+            ->first();
+
         if (empty($procurementOrder)) {
             return $this->sendError('Procurement Order not found');
         }
 
         if ($procurementOrder->poConfirmedYN != 1) {
             return $this->sendError('You cannot amend this order, this is not confirm', 500);
+        }
+
+        if ($detailExistGRV) {
+            return $this->sendError('You cannot amend, GRV is created for this PO');
+        }
+
+        if ($detailExistAPD) {
+            return $this->sendError('You cannot amend Advance Payment is created for this PO');
         }
 
         if ($procurementOrder->poClosedYN == 1) {
@@ -3095,6 +3116,7 @@ WHERE
         if ($procurementOrder->manuallyClosed == 1) {
             return $this->sendError('You cannot amend this order, this order manually closed');
         }
+
 
         if ($procurementOrder->grvRecieved != 0) {
             return $this->sendError('You cannot amend this order. GRV is fully or partially received.', 500);
@@ -3339,6 +3361,26 @@ WHERE
             $purchaseOrderDetail->save();
         }
 
+        //calculate tax amount according to the percantage for tax update
+
+        //getting total sum of PO detail Amount
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            ->where('purchaseOrderMasterID', $purchaseOrder->purchaseOrderID)
+            ->first();
+
+        //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
+        if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
+            $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
+
+            $currencyConversionVatAmount = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculatVatAmount);
+
+            $updatePOMaster = ProcumentOrder::find($purchaseOrder->purchaseOrderID)
+                ->update([
+                    'VATAmount' => $calculatVatAmount,
+                    'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
+                    'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
+                ]);
+        }
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Procurement Order retrieved successfully');
     }
