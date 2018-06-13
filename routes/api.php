@@ -448,6 +448,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData');
     Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod');
     Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
+    Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
 
 });
 

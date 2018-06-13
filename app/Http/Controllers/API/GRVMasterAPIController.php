@@ -88,9 +88,6 @@ class GRVMasterAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        var_dump($input);
-        exit();
-
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
@@ -132,20 +129,18 @@ class GRVMasterAPIController extends AppBaseController
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
 
-        $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID', $input['companySystemID'])
-            ->where('documentSystemID', $input['documentSystemID'])
-            ->first();
-
-        if ($companyDocumentAttachment) {
-            $input['grvDoRefNo'] = $companyDocumentAttachment->docRefNumber;
-        }
-
         $input['grvSerialNo'] = $lastSerialNumber;
         $input['supplierTransactionER'] = 1;
 
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
+            }
+        }
+
+        if (isset($input['stampDate'])) {
+            if ($input['stampDate']) {
+                $input['stampDate'] = new Carbon($input['stampDate']);
             }
         }
 
@@ -162,13 +157,13 @@ class GRVMasterAPIController extends AppBaseController
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
         if ($documentMaster) {
-            $grvCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $grvCode = ($company->CompanyID . '\\' . date("Y") . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['grvPrimaryCode'] = $grvCode;
         }
 
         $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
 
-        if($companyFinancePeriod){
+        if ($companyFinancePeriod) {
             $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod->dateTo;
         }
@@ -188,6 +183,17 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
+        // adding supplier grv details
+        $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($supplierAssignedDetail) {
+            $input['liabilityAccountSysemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
+            $input['liabilityAccount'] = $supplierAssignedDetail->liabilityAccount;
+            $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+            $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+        }
 
         $gRVMasters = $this->gRVMasterRepository->create($input);
 
