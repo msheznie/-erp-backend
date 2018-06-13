@@ -443,6 +443,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
     Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
     Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
+    Route::resource('g_r_v_types', 'GRVTypesAPIController');
+    Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
+    Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
+    Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
+    Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
+    Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
+    Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
 
     Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView');
     Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData');
@@ -461,24 +468,5 @@ Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumen
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 
 
-Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
 
-
-Route::resource('g_r_v_types', 'GRVTypesAPIController');
-
-
-Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
-
-
-
-
-
-
-Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
-
-Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
-
-Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
-
-Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
 
