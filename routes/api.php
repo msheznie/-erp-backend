@@ -447,6 +447,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView');
     Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData');
 
+    Route::resource('materiel_requests', 'MaterielRequestAPIController');
+    Route::post('getAllRequestByCompany','MaterielRequestAPIController@getAllRequestByCompany');
+    Route::get('getRequestFormData','MaterielRequestAPIController@getRequestFormData');
+
+    Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -458,3 +463,8 @@ Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
 
 
 Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
+
+
+
+
+
