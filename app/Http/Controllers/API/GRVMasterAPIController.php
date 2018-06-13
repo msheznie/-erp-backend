@@ -4,12 +4,12 @@
  * -- File Name : GRVMasterAPIController.php
  * -- Project Name : ERP
  * -- Module Name :  GRV Master
- * -- Author : Mohamed Fayas
- * -- Create date : 04- May 2018
+ * -- Author : Mohamed Nazir
+ * -- Create date : 11-June 2018
  * -- Description : This file contains the all CRUD for GRV Master
  * -- REVISION HISTORY
- * -- Date: 06-June 2018 By: Nazir Description: Added new functions named as getGoodReceiptVoucherMasterView() For load Master View
- * -- Date: 06-June 2018 By: Nazir Description: Added new functions named as getGRVFormData() For load Master View
+ * -- Date: 11-June 2018 By: Nazir Description: Added new functions named as getGoodReceiptVoucherMasterView() For load Master View
+ * -- Date: 11-June 2018 By: Nazir Description: Added new functions named as getGRVFormData() For load Master View
  */
 namespace App\Http\Controllers\API;
 
@@ -24,12 +24,22 @@ use App\Models\Months;
 use App\Models\SupplierAssigned;
 use App\Models\CurrencyMaster;
 use App\Models\Location;
+use App\Models\GRVTypes;
+use App\Models\SupplierMaster;
+use App\Models\Company;
+use App\Models\DocumentMaster;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinancePeriod;
+use App\Models\SupplierCurrency;
 use App\Repositories\GRVMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Repositories\UserRepository;
+use Carbon\Carbon;
 use Response;
 
 /**
@@ -40,10 +50,12 @@ class GRVMasterAPIController extends AppBaseController
 {
     /** @var  GRVMasterRepository */
     private $gRVMasterRepository;
+    private $userRepository;
 
-    public function __construct(GRVMasterRepository $gRVMasterRepo)
+    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo)
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -74,9 +86,112 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $input = $this->convertArrayToValue($input);
+
+        var_dump($input);
+        exit();
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = $user->employee['empID'];
+        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+        $input['documentSystemID'] = '3';
+        $input['documentID'] = 'GRV';
+
+        $lastSerial = GRVMaster::where('companySystemID', $input['companySystemID'])
+            ->orderBy('grvAutoID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 0;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->grvSerialNo) + 1;
+        }
+
+        $grvType = GRVTypes::where('grvTypeID', $input['grvTypeID'])->first();
+        if ($grvType) {
+            $input['grvType'] = $grvType->idERP_GrvTpes;
+        }
+
+        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        if ($segment) {
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+
+        //var_dump($companyCurrencyConversion);
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+            $input['localCurrencyID'] = $company->localCurrencyID;
+            $input['companyReportingCurrencyID'] = $company->reportingCurrency;
+            $input['vatRegisteredYN'] = $company->vatRegisteredYN;
+            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        }
+
+        $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID', $input['companySystemID'])
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->first();
+
+        if ($companyDocumentAttachment) {
+            $input['grvDoRefNo'] = $companyDocumentAttachment->docRefNumber;
+        }
+
+        $input['grvSerialNo'] = $lastSerialNumber;
+        $input['supplierTransactionER'] = 1;
+
+        if (isset($input['grvDate'])) {
+            if ($input['grvDate']) {
+                $input['grvDate'] = new Carbon($input['grvDate']);
+            }
+        }
+
+        $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
+        if ($supplier) {
+            $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
+            $input['supplierName'] = $supplier->supplierName;
+            $input['supplierAddress'] = $supplier->address;
+            $input['supplierTelephone'] = $supplier->telephone;
+            $input['supplierFax'] = $supplier->fax;
+            $input['supplierEmail'] = $supplier->supEmail;
+        }
+
+        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
+        if ($documentMaster) {
+            $grvCode = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['grvPrimaryCode'] = $grvCode;
+        }
+
+        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+
+        if($companyFinancePeriod){
+            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        }
+
+        $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
+            ->where('isDefault', -1)
+            ->first();
+
+        if ($supplierCurrency) {
+
+            $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
+
+            $input['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
+
+            if ($erCurrency) {
+                $input['supplierDefaultER'] = $erCurrency->ExchangeRate;
+            }
+        }
+
+
         $gRVMasters = $this->gRVMasterRepository->create($input);
 
-        return $this->sendResponse($gRVMasters->toArray(), 'G R V Master saved successfully');
+        return $this->sendResponse($gRVMasters->toArray(), 'GRV Master saved successfully');
     }
 
     /**
@@ -294,12 +409,12 @@ class GRVMasterAPIController extends AppBaseController
 
         $locations = Location::all();
 
+        $grvTypes = GRVTypes::all();
+
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
-            ->where('companySystemID', $companyId)
-            ->first();
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
 
         $output = array('segments' => $segments,
@@ -311,6 +426,8 @@ class GRVMasterAPIController extends AppBaseController
             'locations' => $locations,
             'financialYears' => $financialYears,
             'suppliers' => $supplier,
+            'grvTypes' => $grvTypes,
+            'companyFinanceYear' => $companyFinanceYear
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

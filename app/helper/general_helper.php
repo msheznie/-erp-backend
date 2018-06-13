@@ -9,6 +9,8 @@
  * -- Description : This file contains the all the common function
  * -- REVISION HISTORY
  * Date: 08 - May 2018 By: Mubashir Description: Added an already document has record in document approved table check to confirmDocument function
+ * Date: 12 - June 2018 By: Nazir Description: Adden a new function companyFinanceYear() for company finance year drop down
+ * Date: 12 - June 2018 By: Nazir Description: Adden a new function companyFinancePeriod() for company finance period drop down
  */
 
 namespace App\helper;
@@ -500,7 +502,7 @@ class Helper
      */
     public static function approveDocument($input)
     {
-        $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '','approveValue' => '','confirmedYN' => '','confirmedEmpSystemID' => '');
+        $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '', 'approveValue' => '', 'confirmedYN' => '', 'confirmedEmpSystemID' => '');
         switch ($input["documentSystemID"]) { // check the document id and set relavant parameters
             case 57:
                 $docInforArr["tableName"] = 'itemmaster';
@@ -791,4 +793,35 @@ class Helper
     {
         return Response::json(ResponseUtil::makeError($error), $code);
     }
+
+    /**
+     * Get all company company Finance Year
+     * @param $companySystemID - current company id
+     * @return array
+     */
+    public static function companyFinanceYear($companySystemID)
+    {
+        $companyFinanceYear = Models\CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))
+            ->where('companySystemID', '=', $companySystemID)
+            ->where('isActive', -1)
+            ->get();
+        return $companyFinanceYear;
+    }
+
+    /**
+     * Get all company company Finance Year
+     * @param $companySystemID - current company id
+     * @return array
+     */
+    public static function companyFinancePeriod($companySystemID, $companyFinanceYearID, $departmentSystemID)
+    {
+        $companyFinancePeriod = Models\CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
+            ->where('companySystemID', '=', $companySystemID)
+            ->where('companyFinanceYearID', $companyFinanceYearID)
+            ->where('departmentSystemID', $departmentSystemID)
+            ->get();
+        return $companyFinancePeriod;
+    }
+
+
 }
