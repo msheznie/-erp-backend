@@ -446,6 +446,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView');
     Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData');
+    Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse');
+    Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport');
 
 });
 
