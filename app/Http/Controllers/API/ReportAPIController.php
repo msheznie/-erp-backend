@@ -333,19 +333,19 @@ WHERE
                     $whereQry = '';
                     if ($currency == 1) {
                         $currencyQry = "final.documentTransCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceRpt, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceTrans, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
-                        $whereQry = "round( final.balanceRpt, 1 )";
+                        $whereQry = "round( final.balanceTrans, 1 )";
                     } else if ($currency == 2) {
                         $currencyQry = "final.documentLocalCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceLocal, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceLocal, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
                         $whereQry = "round( final.balanceLocal, 1 )";
                     } else {
                         $currencyQry = "final.documentRptCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceTrans, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceRpt, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
-                        $whereQry = "round( final.balanceTrans, 1 )";
+                        $whereQry = "round( final.balanceRpt, 1 )";
                     }
                     $currencyID = $request->currencyID;
                     //DB::enableQueryLog();
@@ -581,7 +581,7 @@ WHERE
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
 	) AS final 
 WHERE
-' . $whereQry . ' <> 0;');
+' . $whereQry . ' <> 0 ORDER BY PostedDate ASC;');
                     //dd(DB::getQueryLog());
                     $outputArr = array();
                     $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
@@ -595,7 +595,7 @@ WHERE
                             $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                         }
                     }
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace)? $decimalPlace[0] : 2);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 }
                 break;
             default:
@@ -872,19 +872,19 @@ WHERE
                     $whereQry = '';
                     if ($currency == 1) {
                         $currencyQry = "final.documentTransCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceRpt, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceTrans, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
-                        $whereQry = "round( final.balanceRpt, 1 )";
+                        $whereQry = "round( final.balanceTrans, 1 )";
                     } else if ($currency == 2) {
                         $currencyQry = "final.documentLocalCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceLocal, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceLocal, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
                         $whereQry = "round( final.balanceLocal, 1 )";
                     } else {
                         $currencyQry = "final.documentRptCurrency AS documentCurrency";
-                        $amountQry = "round( final.balanceTrans, 1 ) AS balanceAmount";
+                        $amountQry = "round( final.balanceRpt, 2 ) AS balanceAmount";
                         $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
-                        $whereQry = "round( final.balanceTrans, 1 )";
+                        $whereQry = "round( final.balanceRpt, 1 )";
                     }
                     $currencyID = $request->currencyID;
                     //DB::enableQueryLog();
@@ -1120,7 +1120,7 @@ WHERE
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
 	) AS final 
 WHERE
-' . $whereQry . ' <> 0;');
+' . $whereQry . ' <> 0 ORDER BY PostedDate DESC;');
                     //dd(DB::getQueryLog());
                     $outputArr = array();
                     $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
@@ -1128,9 +1128,9 @@ WHERE
 
                     $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
                     $decimalPlace = array_unique($decimalPlace);
-                    $decimalPlace = !empty($decimalPlace)? $decimalPlace[0]: 2;
+                    $decimalPlace = !empty($decimalPlace) ? $decimalPlace[0] : 2;
 
-                    if ($output) {
+                    /*if ($output) {
                         foreach ($output as $val) {
                             $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                         }
@@ -1214,6 +1214,24 @@ WHERE
                         $data[$x]['Currency'] = 'Grand Total';
                         $data[$x]['Balance Amount'] = round($grandTotal,$decimalPlace);
                     }
+                }*/
+
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $data[] = array(
+                                'Customer Name' => $val->customerName,
+                                'Document Code' => $val->DocumentCode,
+                                'Posted Date' => $val->PostedDate,
+                                'Narration' => $val->DocumentNarration,
+                                'Contract' => $val->Contract,
+                                'PO Number' => '',
+                                'Invoice Number' => $val->invoiceNumber,
+                                'Invoice Date' => \Helper::dateFormat($val->InvoiceDate),
+                                'Currency' => $val->documentCurrency,
+                                'Balance Amount' => round($val->balanceAmount, $val->balanceDecimalPlaces)
+                            );
+                        }
+                    }
                 }
 
                 $csv = \Excel::create('customer_balance_statement', function ($excel) use ($data) {
@@ -1234,7 +1252,8 @@ WHERE
         }
     }
 
-    public function getAcountReceivableFilterData(Request $request)
+    public
+    function getAcountReceivableFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";

@@ -8,7 +8,7 @@
 -- Create date : 30 - May 2018
 -- Description : This file contains the all CRUD for Item Ledger
 -- REVISION HISTORY
- * * -- Date: 31-May 2018 By: Desh Description: Added new functions named as getErpLedgerByFilter(),
+-- Date: 31-May 2018 By: Desh Description: Added new functions named as getErpLedgerByFilter(),
  */
 namespace App\Http\Controllers\API;
 

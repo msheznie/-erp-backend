@@ -450,6 +450,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
     Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
 
+    Route::resource('materiel_requests', 'MaterielRequestAPIController');
+    Route::post('getAllRequestByCompany','MaterielRequestAPIController@getAllRequestByCompany');
+    Route::get('getRequestFormData','MaterielRequestAPIController@getRequestFormData');
+
+    Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -461,6 +466,14 @@ Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
 
 Route::resource('g_r_v_types', 'GRVTypesAPIController');
 
+
+Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
+
+
+
+
+
+
 Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
 
 Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
@@ -468,3 +481,4 @@ Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
 Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
 
 Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
+
