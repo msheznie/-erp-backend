@@ -54,6 +54,7 @@ class WarehouseMaster extends Model
      *
      * @var array
      */
+
     protected $casts = [
         'wareHouseSystemCode' => 'integer',
         'wareHouseCode' => 'string',

@@ -243,5 +243,15 @@ class MaterielRequestDetails extends Model
         
     ];
 
-    
+    public function uom_default(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+
+    public function uom_issuing(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasureIssued','UnitID');
+    }
+
+    public function item_by(){
+        return $this->belongsTo('App\Models\ItemMaster','itemCode','itemCodeSystem');
+    }
 }

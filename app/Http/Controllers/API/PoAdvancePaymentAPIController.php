@@ -12,6 +12,7 @@
  * -- Date: 05-April 2018 By: Nazir Description: Added new functions named as loadPoPaymentTermsLogistic()
  * -- Date: 29-May 2018 By: Nazir Description: Added new functions named as storePoPaymentTermsLogistic()
  * -- Date: 31-April 2018 By: Nazir Description: Added new functions named as getLogisticPrintDetail()
+ * -- Date: 14-June 2018 By: Nazir Description: Added new functions named as loadPoPaymentTermsLogisticForGRV()
  **/
 namespace App\Http\Controllers\API;
 
@@ -348,6 +349,20 @@ ORDER BY
 
         $items = PoAdvancePayment::where('poAdvPaymentID', $poAdvPaymentID)
             ->with(['company', 'currency', 'supplier_by' => function ($query) {
+            }])->get();
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    public function loadPoPaymentTermsLogisticForGRV(Request $request)
+    {
+        $input = $request->all();
+        $grvAutoID= $input['grvAutoID'];
+
+        $items = PoAdvancePayment::where('grvAutoID', $grvAutoID)
+            ->where('confirmedYN', 1)
+            ->where('approvedYN', -1)
+            ->with(['currency', 'supplier_by' => function ($query) {
             }])->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');

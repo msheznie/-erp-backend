@@ -337,7 +337,6 @@ class ErpItemLedgerAPIController extends AppBaseController
 
     public function generateStockLedgerReport(Request $request){
 
-
         $selectedCompanyId = $request['companySystemID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -389,15 +388,14 @@ class ErpItemLedgerAPIController extends AppBaseController
         if (array_key_exists('Warehouse', $input)) {
             $warehouse = (array)$input['Warehouse'];
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
-
         }
 
-        foreach ($items as $item){
+        //foreach ($items as $item){
 //            $data['openQty'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('inOutQty');
-            $qty = DB::table('erp_itemledger')->selectRaw('SUM(erp_itemledger.inOutQty) as inOutQty')->where('transactionDate','<=',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
+           /* $qty = DB::table('erp_itemledger')->selectRaw('SUM(erp_itemledger.inOutQty) as inOutQty')->where('transactionDate','<=',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
             $locAmount = DB::table('erp_itemledger')->selectRaw('(erp_itemledger.inOutQty*erp_itemledger.wacLocal) as TotalWacLocal')->where('transactionDate','<',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
-            $repAmount = DB::table('erp_itemledger')->selectRaw('(erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt')->where('transactionDate','<',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
-            $data  = DB::table('erp_itemledger')
+            $repAmount = DB::table('erp_itemledger')->selectRaw('(erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt')->where('transactionDate','<',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();*/
+            /*$data  = DB::table('erp_itemledger')
                 ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
                 ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
                 ->leftJoin('employees', 'erp_itemledger.createdUserSystemID', '=', 'employees.employeeSystemID')
@@ -465,20 +463,120 @@ class ErpItemLedgerAPIController extends AppBaseController
                 ->whereIn('erp_documentmaster.documentSystemID',$docs)
                 ->whereIn('warehousemaster.wareHouseSystemCode',$warehouse)
                 ->whereBetween('erp_itemledger.transactionDate', [$startDate, $endDate])
-                ->get();
-            if(count($data) > 0){
+                ->get();*/
+            /*if(count($data) > 0){
                 array_push($stockLedger,$data);
-            }
-            if(!empty($qty) ){
+            }*/
+            /*if(!empty($qty) ){
                 $grandTotalQty += $qty[0]->inOutQty;
-            }
+            }*/
 
+        //}
+//DB::enableQueryLog();
+        $data = DB::select("SELECT * FROM (SELECT
+	erp_itemledger.companyID,
+	companymaster.CompanyName,
+	erp_itemledger.documentID,
+	erp_documentmaster.documentDescription,
+	erp_itemledger.documentCode,
+	erp_itemledger.itemPrimaryCode,
+	itemmaster.secondaryItemCode,
+	erp_itemledger.itemDescription,
+	erp_itemledger.unitOfMeasure,
+	erp_itemledger.inOutQty,
+	erp_itemledger.comments,
+	erp_itemledger.transactionDate,
+	units.UnitShortCode,
+	warehousemaster.wareHouseDescription,
+	employees.empName,
+	currencymaster.CurrencyName AS LocalCurrency,
+	erp_itemledger.wacLocal,
+	( erp_itemledger.inOutQty * erp_itemledger.wacLocal ) AS TotalWacLocal,
+	currencymaster_1.CurrencyName AS RepCurrency,
+	erp_itemledger.wacRpt,
+	( erp_itemledger.inOutQty * erp_itemledger.wacRpt ) AS TotalWacRpt,
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals 
+FROM
+	erp_itemledger
+	LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
+	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
+	LEFT JOIN employees ON erp_itemledger.createdUserSystemID = employees.employeeSystemID
+	LEFT JOIN erp_documentmaster ON erp_itemledger.documentSystemID = erp_documentmaster.documentSystemID
+	INNER JOIN companymaster ON erp_itemledger.companySystemID = companymaster.companySystemID
+	LEFT JOIN currencymaster ON erp_itemledger.wacLocalCurrencyID = currencymaster.currencyID
+	LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID = currencymaster_1.currencyID
+	INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
+WHERE
+	erp_itemledger.companySystemID IN (".join(',',$subCompanies).") AND
+	erp_itemledger.itemSystemCode IN (".join(',',json_decode($items)).") AND
+	erp_itemledger.documentSystemID IN (".join(',',json_decode($docs)).") AND
+	erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).") AND 
+	DATE(erp_itemledger.transactionDate) BETWEEN '".$startDate."' AND '".$endDate."' AND itemmaster.financeCategoryMaster = 1
+	
+	UNION ALL 
+	
+	SELECT
+	erp_itemledger.companyID,
+	companymaster.CompanyName,
+	'' as documentID,
+	'' as documentDescription,
+	'Opening Balance' as documentCode,
+	erp_itemledger.itemPrimaryCode,
+	itemmaster.secondaryItemCode,
+	erp_itemledger.itemDescription,
+	erp_itemledger.unitOfMeasure,
+	SUM(erp_itemledger.inOutQty) as inOutQty,
+	'Opening Balance' as comments,
+	'1970-01-01' as transactionDate,
+	units.UnitShortCode,
+	'' as wareHouseDescription,
+	'' as empName,
+	currencymaster.CurrencyName AS LocalCurrency,
+	SUM(erp_itemledger.wacLocal) as wacLocal,
+	SUM( erp_itemledger.inOutQty) * SUM(erp_itemledger.wacLocal) AS TotalWacLocal,
+	currencymaster_1.CurrencyName AS RepCurrency,
+	SUM(erp_itemledger.wacRpt) as wacRpt,
+	SUM( erp_itemledger.inOutQty) * SUM(erp_itemledger.wacRpt ) AS TotalWacRpt,
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
+	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals
+FROM
+	erp_itemledger
+	LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
+	INNER JOIN companymaster ON erp_itemledger.companySystemID = companymaster.companySystemID
+	LEFT JOIN currencymaster ON erp_itemledger.wacLocalCurrencyID = currencymaster.currencyID
+	LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID = currencymaster_1.currencyID
+	INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
+WHERE
+	erp_itemledger.companySystemID IN (".join(',',$subCompanies).") AND
+	erp_itemledger.itemSystemCode IN (".join(',',json_decode($items)).") AND
+	erp_itemledger.documentSystemID IN (".join(',',json_decode($docs)).") AND
+	erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).") AND 
+	DATE(erp_itemledger.transactionDate) < '".$startDate."'  AND itemmaster.financeCategoryMaster = 1 GROUP BY erp_itemledger.itemSystemCode HAVING inOutQty > 0) a ORDER BY a.transactionDate asc");
+        //dd(DB::getQueryLog());
+        $dataFinal = [];
+
+        foreach ($data as $val) {
+            $dataFinal[$val->itemPrimaryCode][] = $val;
         }
+
+        $TotalWacLocal = collect($data)->pluck('TotalWacLocal')->toArray();
+        $TotalWacLocal = array_sum($TotalWacLocal);
+
+        $TotalWacRpt = collect($data)->pluck('TotalWacRpt')->toArray();
+        $TotalWacRpt = array_sum($TotalWacRpt);
+
+        $grandTotalQty = collect($data)->pluck('inOutQty')->toArray();
+        $grandTotalQty = array_sum($grandTotalQty);
+
         $output = array(
             'grandTotalQty' => $grandTotalQty,
-            'data' => $stockLedger
+            'grandLocalTotal' => $TotalWacLocal,
+            'grandRptTotal' => $TotalWacRpt,
+            'data' => $dataFinal
         );
-        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
+
+        return $this->sendResponse($output, 'Item ledger record retrieved successfully');
     }
 
     /*validate each report*/

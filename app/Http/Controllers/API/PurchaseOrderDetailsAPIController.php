@@ -14,6 +14,7 @@
  * -- Date: 10-April 2018 By: Nazir Description: Added new functions named as procumentOrderDeleteAllDetails(),
  * -- Date: 12-April 2018 By: Nazir Description: Added new functions named as procumentOrderTotalDiscountUD(),
  * -- Date: 13-April 2018 By: Nazir Description: Added new functions named as procumentOrderTotalTaxUD(),
+ * -- Date: 14-June 2018 By: Nazir Description: Added new functions named as getPurchaseOrderDetailForGRV(),
  */
 namespace App\Http\Controllers\API;
 
@@ -933,4 +934,24 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendResponse($purchaseOrderID, 'Total Tax updated successfully');
         }
     }
+
+    public function getPurchaseOrderDetailForGRV(Request $request)
+    {
+        $input = $request->all();
+        $poID = $input['purchaseOrderID'];
+
+        $detail = PurchaseOrderDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty'))
+            ->with(['unit' => function ($query) {
+            }])
+            ->where('purchaseOrderMasterID', $poID)
+            ->where('GRVSelectedYN', 0)
+            ->where('goodsRecievedYN','<>', 2)
+            ->where('manuallyClosed', 0)
+            ->get();
+
+        return $this->sendResponse($detail, 'Purchase Order Details retrieved successfully');
+
+    }
+
+
 }
