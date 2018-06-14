@@ -47,11 +47,24 @@ class ReportAPIController extends AppBaseController
 
                 break;
             case 'CS':
-                $validator = \Validator::make($request->all(), [
-                    'fromDate' => 'required',
-                    'customers' => 'required',
-                    'reportTypeID' => 'required',
-                ]);
+                $reportTypeID='';
+                if(isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+                if($reportTypeID == 'CBS') {
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required',
+                        'customers' => 'required',
+                        'reportTypeID' => 'required',
+                    ]);
+                }else{
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required',
+                        'toDate' => 'required',
+                        'selectedCustomer' => 'required',
+                        'reportTypeID' => 'required',
+                    ]);
+                }
 
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
@@ -596,6 +609,191 @@ WHERE
                         }
                     }
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
+                }else{
+                    $request = $this->convertArrayToSelectedValue($request, array('currencyID','singleCustomer'));
+
+                    $fromDate = new Carbon($request->fromDate);
+                    $fromDate = $fromDate->addDays(1);
+                    $fromDate = $fromDate->format('Y-m-d');
+
+                    $toDate = new Carbon($request->toDate);
+                    $toDate = $toDate->addDays(1);
+                    $toDate = $toDate->format('Y-m-d');
+
+                    $companyID = "";
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    if ($checkIsGroup->isGroup) {
+                        $companyID = \Helper::getGroupCompany($request->companySystemID);
+                    } else {
+                        $companyID = (array)$request->companySystemID;
+                    }
+
+                    $controlAccountsSystemID = $request->controlAccountsSystemID;
+                    $currency = $request->currencyID;
+                    $customer = $request->singleCustomer;
+
+                    $balanceAmountQry = '';
+                    $receiptAmountQry = '';
+                    $decimalPlaceQry = '';
+                    $invoiceAmountQry = '';
+                    if ($currency == 1) {
+                        $balanceAmountQry = "round( ( MainQuery.documentTransAmount - InvoiceFromBRVAndMatching.InvoiceTransAmount ), 2 ) AS balanceAmount";
+                        $receiptAmountQry = "round( ( InvoiceFromBRVAndMatching.InvoiceTransAmount ), 2 ) AS receiptAmount";
+                        $invoiceAmountQry = "round( MainQuery.documentTransAmount, 2 ) AS invoiceAmount";
+                        $decimalPlaceQry = "MainQuery.documentTransDecimalPlaces AS balanceDecimalPlaces";
+                    } else if ($currency == 2) {
+                        $balanceAmountQry = "round( ( MainQuery.documentLocalAmount - InvoiceFromBRVAndMatching.InvoiceLocalAmount ), 2 ) AS balanceAmount";
+                        $receiptAmountQry = "round( ( InvoiceFromBRVAndMatching.InvoiceLocalAmount ), 2 ) AS receiptAmount";
+                        $invoiceAmountQry = "round( MainQuery.documentLocalAmount, 2 ) AS invoiceAmount";
+                        $decimalPlaceQry = "MainQuery.documentLocalDecimalPlaces AS balanceDecimalPlaces";
+                    } else {
+                        $balanceAmountQry = "round( ( MainQuery.documentRptAmount - InvoiceFromBRVAndMatching.InvoiceRptAmount ), 2 ) AS balanceAmount";
+                        $receiptAmountQry = "round( ( InvoiceFromBRVAndMatching.InvoiceRptAmount ), 2 ) AS receiptAmount";
+                        $invoiceAmountQry = "round( MainQuery.documentRptAmount, 2 ) AS invoiceAmount";
+                        $decimalPlaceQry = "MainQuery.documentRptDecimalPlaces AS balanceDecimalPlaces";
+                    }
+
+                    $output = \DB::select('SELECT
+	MainQuery.companyID,
+	MainQuery.documentCode,
+	MainQuery.documentDate AS postedDate,
+	MainQuery.clientContractID,
+	MainQuery.invoiceDate,
+	MainQuery.documentNarration,
+	MainQuery.documentTransAmount AS InvoiceAmountTrans,
+	MainQuery.documentLocalAmount AS InvoiceAmountLocal,
+	MainQuery.documentRptAmount AS InvoiceAmountRpt,
+	InvoiceFromBRVAndMatching.ReceiptCode,
+	InvoiceFromBRVAndMatching.ReceiptDate,
+	'.$balanceAmountQry.',
+	'.$receiptAmountQry.',
+    '.$decimalPlaceQry.'
+FROM
+	(
+SELECT
+	erp_generalledger.companySystemID,
+	erp_generalledger.companyID,
+	erp_generalledger.serviceLineSystemID,
+	erp_generalledger.serviceLineCode,
+	erp_generalledger.documentSystemID,
+	erp_generalledger.documentID,
+	erp_generalledger.documentSystemCode,
+	erp_generalledger.documentCode,
+	erp_generalledger.documentDate,
+	DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ) AS documentDateFilter,
+	erp_generalledger.invoiceNumber,
+	erp_generalledger.invoiceDate,
+	erp_generalledger.chartOfAccountSystemID,
+	erp_generalledger.glCode,
+	erp_generalledger.documentNarration,
+	erp_generalledger.clientContractID,
+	erp_generalledger.supplierCodeSystem,
+	customermaster.CustomerName,
+	erp_generalledger.documentTransCurrencyID,
+	erp_generalledger.documentTransAmount,
+	erp_generalledger.documentLocalCurrencyID,
+	erp_generalledger.documentLocalAmount,
+	erp_generalledger.documentRptCurrencyID,
+	erp_generalledger.documentRptAmount 
+FROM
+	erp_generalledger
+	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
+	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
+	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID 
+WHERE
+	erp_generalledger.documentSystemID = 20 
+	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+	AND DATE(erp_generalledger.documentDate) BETWEEN "'.$fromDate.'"
+	AND "'.$toDate.'"
+	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
+	AND erp_generalledger.supplierCodeSystem = ' . $customer . '
+	) AS MainQuery
+	LEFT JOIN  (
+	SELECT
+		InvoiceFromUNION.companySystemID,
+		InvoiceFromUNION.companyID,
+		max( InvoiceFromUNION.custPaymentReceiveCode ) AS ReceiptCode,
+		max( InvoiceFromUNION.postedDate ) AS ReceiptDate,
+		InvoiceFromUNION.addedDocumentSystemID,
+		InvoiceFromUNION.addedDocumentID,
+		InvoiceFromUNION.bookingInvCodeSystem,
+		InvoiceFromUNION.bookingInvCode,
+		sum( InvoiceFromUNION.receiveAmountTrans ) AS InvoiceTransAmount,
+		sum( InvoiceFromUNION.receiveAmountLocal ) AS InvoiceLocalAmount,
+		sum( InvoiceFromUNION.receiveAmountRpt ) AS InvoiceRptAmount 
+	FROM
+		(
+		SELECT *
+		FROM
+			(
+			SELECT
+				erp_customerreceivepayment.custPaymentReceiveCode,
+				erp_customerreceivepayment.postedDate,
+				erp_custreceivepaymentdet.companySystemID,
+				erp_custreceivepaymentdet.companyID,
+				erp_custreceivepaymentdet.addedDocumentSystemID,
+				erp_custreceivepaymentdet.addedDocumentID,
+				erp_custreceivepaymentdet.bookingInvCodeSystem,
+				erp_custreceivepaymentdet.bookingInvCode,
+				erp_custreceivepaymentdet.receiveAmountTrans,
+				erp_custreceivepaymentdet.receiveAmountLocal,
+				erp_custreceivepaymentdet.receiveAmountRpt 
+			FROM
+				erp_customerreceivepayment
+				INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID 
+				AND erp_custreceivepaymentdet.matchingDocID = 0 
+				AND erp_customerreceivepayment.approved =- 1 
+			WHERE
+				erp_custreceivepaymentdet.bookingInvCode <> "0" 
+				AND erp_custreceivepaymentdet.matchingDocID = 0 
+				AND erp_customerreceivepayment.approved =- 1 
+				AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
+				AND DATE(erp_customerreceivepayment.postedDate) <= "'.$toDate.'"
+			) AS InvoiceFromBRV UNION ALL
+		SELECT *
+		FROM
+			(
+			SELECT
+				erp_matchdocumentmaster.matchingDocCode,
+				erp_matchdocumentmaster.matchingDocdate,
+				erp_custreceivepaymentdet.companySystemID,
+				erp_custreceivepaymentdet.companyID,
+				erp_custreceivepaymentdet.addedDocumentSystemID,
+				erp_custreceivepaymentdet.addedDocumentID,
+				erp_custreceivepaymentdet.bookingInvCodeSystem,
+				erp_custreceivepaymentdet.bookingInvCode,
+				erp_custreceivepaymentdet.receiveAmountTrans,
+				erp_custreceivepaymentdet.receiveAmountLocal,
+				erp_custreceivepaymentdet.receiveAmountRpt 
+			FROM
+				erp_custreceivepaymentdet
+				INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
+				AND erp_custreceivepaymentdet.companySystemID = erp_matchdocumentmaster.companySystemID 
+			WHERE
+				erp_matchdocumentmaster.matchingConfirmedYN = 1 
+				AND erp_custreceivepaymentdet.companySystemID = IN (' . join(',', $companyID) . ')
+				AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "'.$toDate.'"
+			) AS InvoiceFromMatching 
+		) AS InvoiceFromUNION 
+	GROUP BY
+		bookingInvCode 
+	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
+AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem;');
+
+                    $balanceTotal = collect($output)->pluck('balanceAmount')->toArray();
+                    $balanceTotal = array_sum($balanceTotal);
+
+                    $receiptAmount = collect($output)->pluck('receiptAmount')->toArray();
+                    $receiptAmount = array_sum($receiptAmount);
+
+                    $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
+                    $invoiceAmount = array_sum($invoiceAmount);
+
+                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                    $decimalPlace = array_unique($decimalPlace);
+
+                    return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'balanceTotal' => $balanceTotal,'receiptAmount' => $receiptAmount,'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 }
                 break;
             default:
