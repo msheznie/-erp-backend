@@ -468,6 +468,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getRequestFormData','MaterielRequestAPIController@getRequestFormData');
 
     Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
+    Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
+    Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

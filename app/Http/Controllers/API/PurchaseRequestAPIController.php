@@ -146,9 +146,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
 
-        $items = $items
-            ->take(20)
-            ->get();
+        $items = $items->take(20)->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
@@ -1090,7 +1088,7 @@ class PurchaseRequestAPIController extends AppBaseController
             }
 
             $checkQuantity = PurchaseRequestDetails::where('purchaseRequestID', $id)
-                ->where('quantityRequested', '<', 1)
+                ->where('quantityRequested', '<=', 0)
                 ->count();
 
             if ($checkQuantity > 0) {
@@ -1100,14 +1098,6 @@ class PurchaseRequestAPIController extends AppBaseController
 
             $amount = PurchaseRequestDetails::where('purchaseRequestID', $id)
                 ->sum('totalCost');
-
-
-            /*$currencyConversion = \Helper::currencyConversion($item->companySystemID,
-                                                              $item->wacValueLocalCurrencyID,
-                                                               $purchaseRequest->currency,
-                                                              $amount);
-
-            $convertedAmount = $currencyConversion['documentAmount'];*/
 
             $params = array('autoID' => $id,
                 'company' => $purchaseRequest->companySystemID,
@@ -1121,10 +1111,6 @@ class PurchaseRequestAPIController extends AppBaseController
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
-
-            /*$input['PRConfirmedBy'] = $user->employee['empID'];;
-            $input['PRConfirmedBySystemID'] = $user->employee['employeeSystemID'];
-            $input['PRConfirmedDate'] = now();*/
         }
 
         $purchaseRequest = $this->purchaseRequestRepository->update($input, $id);
