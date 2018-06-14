@@ -538,9 +538,8 @@ class ErpItemLedgerAPIController extends AppBaseController
 //            die();
 //        }
 
-        $startDate = new Carbon($request->date);
-        $startDate = $startDate->addDays(1);
-        $startDate = $startDate->format('Y-m-d');
+        $date = new Carbon($request->date);
+        $date = $date->format('Y-m-d');
 
 
         $selectedCompanyId = $request['companySystemID'];
@@ -552,25 +551,42 @@ class ErpItemLedgerAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $data = DB::table('erp_itemledger')
-            ->selectRaw('companySystemID,
-                                companyID,
-                                itemSystemCode,
-                                itemPrimaryCode,
-                                itemDescription,
-                                unitOfMeasure,
-                                sum(inOutQty) as Qty,
-                                wacLocalCurrencyID,
-                                round(sum((wacLocal*inOutQty)),3)/sum(inOutQty) as WACLocal,
-                                round(sum((wacLocal*inOutQty)),3) as WacLocalAmount,
-                                wacRptCurrencyID,
-                                round(sum((wacRpt*inOutQty)),2)/sum(inOutQty) as WACRpt,
-                                round(sum((wacRpt*inOutQty)),2) as WacRptAmount')
-            ->whereIn('companySystemID',$subCompanies)
-            ->groupBy('companySystemID','itemSystemCode')
+
+        $categories = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
+            ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
+            ->leftJoin('currencymaster AS currencymaster_1', 'erp_itemledger.wacRptCurrencyID', '=', 'currencymaster_1.currencyID')
+            ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
+            ->selectRaw('   erp_itemledger.companySystemID,
+                            erp_itemledger.companyID,
+                            erp_itemledger.itemSystemCode,
+                            erp_itemledger.itemPrimaryCode,
+                            erp_itemledger.itemDescription,
+                            erp_itemledger.unitOfMeasure,
+                            sum(erp_itemledger.inOutQty) as Qty,
+                            erp_itemledger.wacLocalCurrencyID,
+                            financeitemcategorysub.categoryDescription,
+                            erp_itemledger.transactionDate,
+                            itemmaster.secondaryItemCode,
+                            units.UnitShortCode,
+                            currencymaster.CurrencyName AS LocalCurrency,
+                            currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                            currencymaster_1.CurrencyName as RepCurrency,
+                            (round(sum(erp_itemledger.wacLocal*erp_itemledger.inOutQty),3) / sum(erp_itemledger.inOutQty)) as WACLocal,
+                            (round(sum(wacLocal*inOutQty),3)) as WacLocalAmount,
+                            erp_itemledger.wacRptCurrencyID,
+                            (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2) / sum(erp_itemledger.inOutQty)) as WACRpt,
+                            (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
+            ->whereIn('erp_itemledger.companySystemID',$subCompanies)
+            ->where('erp_itemledger.wareHouseSystemCode',$request->warehouse)
+            ->whereRaw("DATE(erp_itemledger.transactionDate) = '$date'")
+            ->groupBy('financeitemcategorysub.itemCategorySubID')
             ->get();
 
-        return $this->sendResponse($data, 'Erp Item Ledger retrieved successfully');
+
+
+
+        return $this->sendResponse($categories, 'Erp Item Ledger retrieved successfully');
 
     }
 
