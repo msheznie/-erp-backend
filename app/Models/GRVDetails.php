@@ -254,6 +254,15 @@ class GRVDetails extends Model
         return $this->belongsTo('App\Models\GRVMaster','grvAutoID','grvAutoID');
     }
 
+    public function unit(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
 
-    
+    public function po_master(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+
+
+
+
 }

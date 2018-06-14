@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @package App\Models
  * @version April 11, 2018, 12:12 pm UTC
  *
+ * @property integer grvTypeID
  * @property string grvType
  * @property integer companySystemID
  * @property string companyID
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string serviceLineCode
  * @property string companyAddress
  * @property integer companyFinanceYearID
+ * @property integer companyFinancePeriodID
  * @property string|\Carbon\Carbon FYBiggin
  * @property string|\Carbon\Carbon FYEnd
  * @property integer documentSystemID
@@ -97,12 +99,14 @@ class GRVMaster extends Model
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
+
     protected $primaryKey  = 'grvAutoID';
 
     protected $dates = ['deleted_at'];
 
 
     public $fillable = [
+        'grvTypeID',
         'grvType',
         'companySystemID',
         'companyID',
@@ -110,6 +114,7 @@ class GRVMaster extends Model
         'serviceLineCode',
         'companyAddress',
         'companyFinanceYearID',
+        'companyFinancePeriodID',
         'FYBiggin',
         'FYEnd',
         'documentSystemID',
@@ -167,6 +172,7 @@ class GRVMaster extends Model
         'FromCompanyID',
         'createdUserGroup',
         'createdPcID',
+        'createdUserSystemID',
         'createdUserID',
         'modifiedPc',
         'modifiedUser',
@@ -182,6 +188,7 @@ class GRVMaster extends Model
      */
     protected $casts = [
         'grvAutoID' => 'integer',
+        'grvTypeID' => 'integer',
         'grvType' => 'string',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -189,6 +196,7 @@ class GRVMaster extends Model
         'serviceLineCode' => 'string',
         'companyAddress' => 'string',
         'companyFinanceYearID' => 'integer',
+        'companyFinancePeriodID' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'grvSerialNo' => 'integer',
@@ -240,6 +248,7 @@ class GRVMaster extends Model
         'FromCompanyID' => 'string',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',

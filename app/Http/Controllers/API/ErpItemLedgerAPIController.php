@@ -9,12 +9,16 @@
 -- Description : This file contains the all CRUD for Item Ledger
 -- REVISION HISTORY
  * * -- Date: 31-May 2018 By: Desh Description: Added new functions named as getErpLedgerByFilter(),
+ * * -- Date: 31-May 2018 By: Desh Description: Added new functions named as validateStockLedgerReport(),
+ * * -- Date: 13-Jun 2018 By: Desh Description: Added new functions named as getWarehouse(),
+ * * -- Date: 13-Jun 2018 By: Desh Description: Added new functions named as generateStockValuationReport(),
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateErpItemLedgerAPIRequest;
 use App\Http\Requests\API\UpdateErpItemLedgerAPIRequest;
 use App\Models\ErpItemLedger;
+use App\Models\WarehouseMaster;
 use App\Repositories\ErpItemLedgerRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -596,6 +600,75 @@ WHERE
             default:
                 return $this->sendError('Error Occurred');
         }
+
+    }
+
+    public function getWarehouse(Request $request){
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $warehouse = WarehouseMaster::whereIn("companySystemID", $subCompanies)
+                                    ->select('wareHouseCode','wareHouseSystemCode')
+                                    ->get();
+
+        return $this->sendResponse($warehouse, 'Warehouse retrieved successfully');
+    }
+
+    public function generateStockValuationReport(Request $request){
+
+//        $validator = \Validator::make($request->all(), [
+//            'daterange' => 'required',
+//            'Items' => 'required',
+//            'Docs' => 'required',
+//            'Warehouse' => 'required',
+//            'reportType' => 'required',
+//        ]);
+
+//        if ($validator->fails()) {//echo 'in';exit;
+//            return $this->sendError($validator->messages(), 422 );
+//            die();
+//        }
+
+        $startDate = new Carbon($request->date);
+        $startDate = $startDate->addDays(1);
+        $startDate = $startDate->format('Y-m-d');
+
+
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $data = DB::table('erp_itemledger')
+            ->selectRaw('companySystemID,
+                                companyID,
+                                itemSystemCode,
+                                itemPrimaryCode,
+                                itemDescription,
+                                unitOfMeasure,
+                                sum(inOutQty) as Qty,
+                                wacLocalCurrencyID,
+                                round(sum((wacLocal*inOutQty)),3)/sum(inOutQty) as WACLocal,
+                                round(sum((wacLocal*inOutQty)),3) as WacLocalAmount,
+                                wacRptCurrencyID,
+                                round(sum((wacRpt*inOutQty)),2)/sum(inOutQty) as WACRpt,
+                                round(sum((wacRpt*inOutQty)),2) as WacRptAmount')
+            ->whereIn('companySystemID',$subCompanies)
+            ->groupBy('companySystemID','itemSystemCode')
+            ->get();
+
+        return $this->sendResponse($data, 'Erp Item Ledger retrieved successfully');
 
     }
 
