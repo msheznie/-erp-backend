@@ -34,6 +34,7 @@
  * -- Date: 25-May 2018 By: Nazir Description: Added new functions named as reportSpentAnalysisDrilldownExport(),
  * -- Date: 28-May 2018 By: Nazir Description: Added new functions named as getGRVBasedPODropdowns(),
  * -- Date: 05-June 2018 By: Mubashir Description: Modified getProcumentOrderByDocumentType() to handle filters from local storage
+ * -- Date: 14-june 2018 By: Nazir Description: Added new functions named as purchaseOrderForGRV(),
  */
 
 namespace App\Http\Controllers\API;
@@ -65,6 +66,7 @@ use App\Models\SupplierCurrency;
 use App\Models\GRVDetails;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BudgetConsumedData;
+use App\Models\GRVMaster;
 use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
@@ -1292,7 +1294,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
     public function getProcumentOrderAllAmendments(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID','grvRecieved', 'month', 'year', 'invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1317,7 +1319,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         if (array_key_exists('grvRecieved', $input)) {
-            if (($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) && !is_null($input['grvRecieved']) ) {
+            if (($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) && !is_null($input['grvRecieved'])) {
                 $procumentOrders->where('grvRecieved', $input['grvRecieved']);
             }
         }
@@ -3435,6 +3437,46 @@ ORDER BY
 
         return $this->sendResponse($detail, 'GRV Currencies retrieved successfully');
     }
+
+    public function purchaseOrderForGRV(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyId'];
+        $grvAutoID = $input['grvAutoID'];
+
+        $grvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
+            ->first();
+
+        if (empty($grvMaster)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        //checking segment is active
+        $segments = SegmentMaster::where("serviceLineSystemID", $grvMaster->serviceLineSystemID)
+            ->where('companySystemID', $companyID)
+            ->where('isActive', 1)
+            ->first();
+
+        if (empty($segments)) {
+            return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+        $ProcumentOrder = ProcumentOrder::where('companySystemID', $companyID)
+            ->where('serviceLineSystemID', $grvMaster->serviceLineSystemID)
+            ->where('supplierID', $grvMaster->supplierID)
+            ->where('supplierTransactionCurrencyID', $grvMaster->supplierTransactionCurrencyID)
+            ->where('approved', -1)
+            ->where('poConfirmedYN', 1)
+            ->where('poCancelledYN', 0)
+            ->where('poClosedYN', 0)
+            ->where('grvRecieved','<>', 2)
+            ->where('manuallyClosed', 0)
+            ->orderBy('purchaseOrderID', 'DESC')
+            ->get();
+
+        return $this->sendResponse($ProcumentOrder->toArray(), 'Purchase Order Details retrieved successfully');
+    }
+
 
 
 }

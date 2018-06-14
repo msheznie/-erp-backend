@@ -144,6 +144,7 @@ class GRVDetailsAPIController extends AppBaseController
 
         $items = GRVDetails::where('grvAutoID', $grvAutoID)
             ->with(['unit' => function ($query) {
+            }, 'po_master' => function ($query) {
             }])
             ->get();
 

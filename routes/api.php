@@ -458,6 +458,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod');
     Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
     Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
+    Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV');
+    Route::post('GRVSegmentChkActive', 'GRVMasterAPIController@GRVSegmentChkActive');
+    Route::get('purchaseOrderForGRV', 'ProcumentOrderAPIController@purchaseOrderForGRV');
+    Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV');
 
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::post('getAllRequestByCompany','MaterielRequestAPIController@getAllRequestByCompany');
