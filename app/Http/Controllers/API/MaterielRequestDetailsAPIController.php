@@ -8,12 +8,15 @@
  * -- Create date : 12 - June 2018
  * -- Description : This file contains the all CRUD for Materiel Request Details
  * -- REVISION HISTORY
+ * -- Date: 14-June 2018 By: Fayas Description: Added new functions named as getItemsByMaterielRequest()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMaterielRequestDetailsAPIRequest;
 use App\Http\Requests\API\UpdateMaterielRequestDetailsAPIRequest;
+use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
+use App\Models\UnitConversion;
 use App\Repositories\MaterielRequestDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -222,13 +225,36 @@ class MaterielRequestDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdateMaterielRequestDetailsAPIRequest $request)
     {
-        $input = $request->all();
+        $input = array_except($request->all(), ['uom_default','uom_issuing','item_by']);
+        $input = $this->convertArrayToValue($input);
 
         /** @var MaterielRequestDetails $materielRequestDetails */
         $materielRequestDetails = $this->materielRequestDetailsRepository->findWithoutFail($id);
 
         if (empty($materielRequestDetails)) {
             return $this->sendError('Materiel Request Details not found');
+        }
+
+        $materielRequestDetails = MaterielRequest::where('RequestID',$input['RequestID'])->first();
+        if($materielRequestDetails->approved == -1){
+            return $this->sendError('This Materiel Request fully approved. You can not edit.',500);
+        }
+
+        if($input['unitOfMeasure'] != $input['unitOfMeasureIssued']){
+            $unitConvention = UnitConversion::where('masterUnitID',$input['unitOfMeasure'])
+                                            ->where('subUnitID',$input['unitOfMeasureIssued'])
+                                            ->first();
+
+            if($unitConvention){
+                $convention  = $unitConvention->conversion;
+                if($convention> 0 ){
+                    $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] / $convention;
+                }else{
+                    $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] * $convention;
+                }
+            }
+        }else{
+            $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'];
         }
 
         $materielRequestDetails = $this->materielRequestDetailsRepository->update($input, $id);
@@ -286,5 +312,24 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $materielRequestDetails->delete();
 
         return $this->sendResponse($id, 'Materiel Request Details deleted successfully');
+    }
+
+    /**
+     * Display a listing of the items by Request.
+     * GET|HEAD /getItemsByMaterielRequest
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getItemsByMaterielRequest(Request $request)
+    {
+        $input = $request->all();
+        $rId = $input['RequestID'];
+
+        $items = MaterielRequestDetails::where('RequestID', $rId)
+                                        ->with(['uom_default','uom_issuing','item_by'])
+                                        ->get();
+
+        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }
 }
