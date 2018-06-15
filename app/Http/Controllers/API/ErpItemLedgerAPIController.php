@@ -688,4 +688,8 @@ WHERE
 
     }
 
+    public function exportStockEveluation(Request $request){
+
+    }
+
 }
