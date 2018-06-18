@@ -681,15 +681,78 @@ WHERE
             ->groupBy('financeitemcategorysub.itemCategorySubID')
             ->get();
 
+        $output = array(
+            'categories' => $categories,
+            'date' => $date,
+            'subCompanies' => $subCompanies,
+            'warehouse' => $request->warehouse
+        );
 
 
-
-        return $this->sendResponse($categories, 'Erp Item Ledger retrieved successfully');
+        return $this->sendResponse($output, 'Erp Item Ledger retrieved successfully');
 
     }
 
-    public function exportStockEveluation(Request $request){
+    public function exportStockEvaluation(Request $request){
 
+        $categories = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
+            ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
+            ->leftJoin('currencymaster AS currencymaster_1', 'erp_itemledger.wacRptCurrencyID', '=', 'currencymaster_1.currencyID')
+            ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
+            ->selectRaw('   erp_itemledger.companySystemID,
+                            erp_itemledger.companyID,
+                            erp_itemledger.itemSystemCode,
+                            erp_itemledger.itemPrimaryCode,
+                            erp_itemledger.itemDescription,
+                            erp_itemledger.unitOfMeasure,
+                            sum(erp_itemledger.inOutQty) as Qty,
+                            erp_itemledger.wacLocalCurrencyID,
+                            financeitemcategorysub.categoryDescription,
+                            erp_itemledger.transactionDate,
+                            itemmaster.secondaryItemCode,
+                            units.UnitShortCode,
+                            currencymaster.CurrencyName AS LocalCurrency,
+                            currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                            currencymaster_1.CurrencyName as RepCurrency,
+                            (round(sum(erp_itemledger.wacLocal*erp_itemledger.inOutQty),3) / sum(erp_itemledger.inOutQty)) as WACLocal,
+                            (round(sum(wacLocal*inOutQty),3)) as WacLocalAmount,
+                            erp_itemledger.wacRptCurrencyID,
+                            (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2) / sum(erp_itemledger.inOutQty)) as WACRpt,
+                            (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
+            ->whereIn('erp_itemledger.companySystemID',$request->subCompanies)
+            ->where('erp_itemledger.wareHouseSystemCode',$request->warehouse)
+            ->whereRaw("DATE(erp_itemledger.transactionDate) = '$request->date'")
+            ->groupBy('financeitemcategorysub.itemCategorySubID')
+            ->get();
+
+        foreach ($categories as $val) {
+            $data[] = array(
+                'Category' => $val->categoryDescription,
+                'Item Code' => $val->itemPrimaryCode,
+                'Item Description' => $val->itemDescription,
+                'UOM' => $val->UnitShortCode,
+                'Part Number' => $val->secondaryItemCode,
+                'Qty' => $val->Qty,
+                'WAC Local' => number_format($val->WACLocal,$val->LocalCurrencyDecimals),
+                'Local Amount' => number_format($val->WacLocalAmount,$val->LocalCurrencyDecimals),
+                'WAC Rep' => number_format($val->WACRpt,$val->LocalCurrencyDecimals),
+                'Rep Amount' => number_format($val->WacRptAmount,$val->LocalCurrencyDecimals)
+            );
+        }
+
+        $csv = \Excel::create('po_wise_analysis', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($request->type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 
 }

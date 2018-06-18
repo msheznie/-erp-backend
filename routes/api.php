@@ -470,6 +470,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
     Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
     Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
+    Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
