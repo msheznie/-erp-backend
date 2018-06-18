@@ -31,6 +31,7 @@ use App\Models\DocumentMaster;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\SupplierCurrency;
+use App\Models\WarehouseMaster;
 use App\Repositories\GRVMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -91,6 +92,26 @@ class GRVMasterAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
+        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+
+        if ($companyFinancePeriod) {
+            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        }
+
+        if (isset($input['grvDate'])) {
+            if ($input['grvDate']) {
+                $input['grvDate'] = new Carbon($input['grvDate']);
+            }
+        }
+
+        if (isset($input['stampDate'])) {
+            if ($input['stampDate']) {
+                $input['stampDate'] = new Carbon($input['stampDate']);
+            }
+        }
+
+
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
@@ -132,18 +153,6 @@ class GRVMasterAPIController extends AppBaseController
         $input['grvSerialNo'] = $lastSerialNumber;
         $input['supplierTransactionER'] = 1;
 
-        if (isset($input['grvDate'])) {
-            if ($input['grvDate']) {
-                $input['grvDate'] = new Carbon($input['grvDate']);
-            }
-        }
-
-        if (isset($input['stampDate'])) {
-            if ($input['stampDate']) {
-                $input['stampDate'] = new Carbon($input['stampDate']);
-            }
-        }
-
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
         if ($supplier) {
             $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
@@ -159,13 +168,6 @@ class GRVMasterAPIController extends AppBaseController
         if ($documentMaster) {
             $grvCode = ($company->CompanyID . '\\' . date("Y") . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['grvPrimaryCode'] = $grvCode;
-        }
-
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
         }
 
         $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
@@ -233,16 +235,112 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $userId = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
+
+        $input = array_except($input, ['created_by', 'confirmed_by']);
+        $input = $this->convertArrayToValue($input);
+
+        if (isset($input['grvDate'])) {
+            if ($input['grvDate']) {
+                $input['grvDate'] = new Carbon($input['grvDate']);
+            }
+        }
+
+        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+
+        if ($companyFinancePeriod) {
+            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        }
+
+        if (isset($input['stampDate'])) {
+            if ($input['stampDate']) {
+                $input['stampDate'] = new Carbon($input['stampDate']);
+            }
+        }
+
         /** @var GRVMaster $gRVMaster */
         $gRVMaster = $this->gRVMasterRepository->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
-            return $this->sendError('Good Receipt Voucher Master not found');
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        if ($gRVMaster->grvCancelledYN == -1) {
+            return $this->sendError('Good Receipt Voucher closed. You cannot edit.', 500);
+        }
+
+        $grvType = GRVTypes::where('grvTypeID', $input['grvTypeID'])->first();
+        if ($grvType) {
+            $input['grvType'] = $grvType->idERP_GrvTpes;
+        }
+
+        //checking selected segment is active
+        $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isActive', 1)
+            ->first();
+
+        if (empty($segments)) {
+            return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+        if ($gRVMaster->serviceLineSystemID != $input['serviceLineSystemID']) {
+            $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+            if ($segment) {
+                $input['serviceLineCode'] = $segment->ServiceLineCode;
+            }
+        }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $user->employee['empID'];
+        $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
+
+        // changing supplier related details when supplier changed
+        if ($gRVMaster->supplierID != $input['supplierID']) {
+            $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
+            if ($supplier) {
+                $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
+                $input['supplierName'] = $supplier->supplierName;
+                $input['supplierAddress'] = $supplier->address;
+                $input['supplierTelephone'] = $supplier->telephone;
+                $input['supplierFax'] = $supplier->fax;
+                $input['supplierEmail'] = $supplier->supEmail;
+            }
+
+            $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
+                ->where('isDefault', -1)
+                ->first();
+
+            if ($supplierCurrency) {
+
+                $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
+
+                $input['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
+
+                if ($erCurrency) {
+                    $input['supplierDefaultER'] = $erCurrency->ExchangeRate;
+                }
+            }
+
+            // adding supplier grv details
+            $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->first();
+
+            if ($supplierAssignedDetail) {
+                $input['liabilityAccountSysemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
+                $input['liabilityAccount'] = $supplierAssignedDetail->liabilityAccount;
+                $input['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+                $input['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+            }
+
         }
 
         $gRVMaster = $this->gRVMasterRepository->update($input, $id);
 
-        return $this->sendResponse($gRVMaster->toArray(), 'Good Receipt Voucher master updated successfully');
+        return $this->sendResponse($gRVMaster->toArray(), 'Good Receipt Voucher updated successfully');
     }
 
     /**
@@ -415,6 +513,12 @@ class GRVMasterAPIController extends AppBaseController
 
         $locations = Location::all();
 
+        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
+        if (isset($request['type']) && $request['type'] != 'filter') {
+            $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
+        }
+        $wareHouseLocation = $wareHouseLocation->get();
+
         $grvTypes = GRVTypes::all();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
@@ -430,6 +534,7 @@ class GRVMasterAPIController extends AppBaseController
             'years' => $years,
             'currencies' => $currencies,
             'locations' => $locations,
+            'wareHouseLocation' => $wareHouseLocation,
             'financialYears' => $financialYears,
             'suppliers' => $supplier,
             'grvTypes' => $grvTypes,
@@ -437,5 +542,32 @@ class GRVMasterAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function GRVSegmentChkActive(Request $request)
+    {
+
+        $input = $request->all();
+
+        $grvAutoID = $input['grvAutoID'];
+
+        $grvMaster= GRVMaster::find($grvAutoID);
+
+        if (empty($grvMaster)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        //checking segment is active
+
+        $segments = SegmentMaster::where("serviceLineSystemID", $grvMaster->serviceLineSystemID)
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isActive', 1)
+            ->first();
+
+        if (empty($segments)) {
+            return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+        return $this->sendResponse($grvAutoID, 'sucess');
     }
 }

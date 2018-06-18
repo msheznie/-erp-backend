@@ -8,18 +8,23 @@
  * -- Create date : 12 - June 2018
  * -- Description : This file contains the all CRUD for Materiel Request
  * -- REVISION HISTORY
- * -- Date: 12-June 2018 By: Fayas Description: Added new functions named as getAllRequestByCompany(),getRequestFormData()
+ * -- Date: 12-June 2018 By: Fayas Description: Added new functions named as getAllRequestByCompany(),getRequestFormData(),getItemsOptionForMaterielRequest()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMaterielRequestAPIRequest;
 use App\Http\Requests\API\UpdateMaterielRequestAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentMaster;
+use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\MaterielRequest;
+use App\Models\MaterielRequestDetails;
 use App\Models\Priority;
 use App\Models\SegmentMaster;
+use App\Models\Unit;
+use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\MaterielRequestRepository;
@@ -116,7 +121,7 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
-                                    ->with(['created_by', 'priority_by', 'location_by','segment_by']);
+                                    ->with(['created_by', 'priority_by', 'warehouse_by','segment_by']);
 
 
 
@@ -366,13 +371,53 @@ class MaterielRequestAPIController extends AppBaseController
      */
     public function update($id, UpdateMaterielRequestAPIRequest $request)
     {
+
         $input = $request->all();
+        $input = array_except($input, ['created_by', 'priority_by','warehouse_by', 'segment_by']);
+        $input = $this->convertArrayToValue($input);
 
         /** @var MaterielRequest $materielRequest */
         $materielRequest = $this->materielRequestRepository->findWithoutFail($id);
 
         if (empty($materielRequest)) {
             return $this->sendError('Materiel Request not found');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
+        if ($materielRequest->ConfirmedYN == 0 && $input['ConfirmedYN'] == 1) {
+
+
+            $checkItems = MaterielRequestDetails::where('RequestID', $id)
+                                                ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every request should have at least one item', 500);
+            }
+
+            $checkQuantity = MaterielRequestDetails::where('RequestID', $id)
+                                                    ->where('quantityRequested', '<=', 0)
+                                                    ->count();
+
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+            }
+
+            $params = array('autoID' => $id,
+                'company' => $materielRequest->companySystemID,
+                'document' => $materielRequest->documentSystemID,
+                'segment' => $input['serviceLineSystemID'],
+                'category' => 0,
+                'amount' => 0
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
         }
 
         $materielRequest = $this->materielRequestRepository->update($input, $id);
@@ -477,13 +522,79 @@ class MaterielRequestAPIController extends AppBaseController
 
         $locations = Location::all();
 
+        $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies)
+                                      ->get();
+
+        $units = Unit::all();
+
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'priorities' => $priorities,
             'locations' => $locations,
+            'wareHouses' => $wareHouses,
+            'units' => $units
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    /**
+     * get Items Option For Materiel Request
+     * get /getItemsOptionForMaterielRequest
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getItemsOptionForMaterielRequest(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+        //$purchaseRequestId = $input['purchaseRequestId'];
+
+        /*$policy = 1;
+
+        $financeCategoryId = 0;
+
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                                                    ->where('companySystemID', $companyId)
+                                                    ->first();
+
+        if ($allowFinanceCategory) {
+            $policy = $allowFinanceCategory->isYesNO;
+
+            if ($policy == 0) {
+                $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $purchaseRequestId)->first();
+
+                if ($purchaseRequest) {
+                    $financeCategoryId = $purchaseRequest->financeCategory;
+                }
+            }
+        }*/
+
+        $items = ItemAssigned::where('companySystemID', $companyId);
+
+
+       /* if ($policy == 0 && $financeCategoryId != 0) {
+            $items = $items->where('financeCategoryMaster', $financeCategoryId);
+        }*/
+
+        if (array_key_exists('search', $input)) {
+
+            $search = $input['search'];
+
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        $items = $items->take(20)->get();
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 }

@@ -321,6 +321,10 @@ class MaterielRequest extends Model
         return $this->belongsTo('App\Models\Location','location','locationID');
     }
 
+    public function warehouse_by(){
+        return $this->belongsTo('App\Models\WarehouseMaster','location','wareHouseSystemCode');
+    }
+
     public function segment_by(){
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
@@ -328,6 +332,8 @@ class MaterielRequest extends Model
     public function confirmed_by(){
         return $this->belongsTo('App\Models\Employee','ConfirmedBySystemID','employeeSystemID');
     }
+
+
 
     
 }
