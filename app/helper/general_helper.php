@@ -823,5 +823,18 @@ class Helper
         return $companyFinancePeriod;
     }
 
+    /**
+     * Get company local and reporting currency
+     * @param $companySystemID - current company id
+     * @return array
+     */
+    public static function companyCurrency($companySystemID)
+    {
+        $companyCurrency = Models\Company::with(['localcurrency','reportingcurrency'])
+            ->where('companySystemID', '=', $companySystemID)
+            ->first();
+        return $companyCurrency;
+    }
+
 
 }
