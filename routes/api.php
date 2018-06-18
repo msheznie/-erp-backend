@@ -462,6 +462,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('GRVSegmentChkActive', 'GRVMasterAPIController@GRVSegmentChkActive');
     Route::get('purchaseOrderForGRV', 'ProcumentOrderAPIController@purchaseOrderForGRV');
     Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV');
+    Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO');
 
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::post('getAllRequestByCompany','MaterielRequestAPIController@getAllRequestByCompany');

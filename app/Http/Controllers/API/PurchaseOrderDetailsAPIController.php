@@ -940,7 +940,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input = $request->all();
         $poID = $input['purchaseOrderID'];
 
-        $detail = PurchaseOrderDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty'))
+        $detail = PurchaseOrderDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty,noQty as poQty,unitOfMeasure,purchaseOrderMasterID,purchaseOrderDetailsID,serviceLineCode,itemCode'))
             ->with(['unit' => function ($query) {
             }])
             ->where('purchaseOrderMasterID', $poID)
