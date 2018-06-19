@@ -467,6 +467,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::post('getAllRequestByCompany','MaterielRequestAPIController@getAllRequestByCompany');
     Route::get('getRequestFormData','MaterielRequestAPIController@getRequestFormData');
+    Route::get('materielRequestAudit','MaterielRequestAPIController@materielRequestAudit');
 
     Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
     Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');

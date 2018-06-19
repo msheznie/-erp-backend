@@ -385,11 +385,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             ->sum('noQty');
 
         $quantityOnOrder = $poQty - $grvQty;
-        $quantityInHand = $poQty;
+        $quantityInHand  = $poQty;
 
-        $input['poQuantity'] = $poQty;
+        $input['poQuantity']      = $poQty;
         $input['quantityOnOrder'] = $quantityOnOrder;
-        $input['quantityInHand'] = $quantityInHand;
+        $input['quantityInHand']  = $quantityInHand;
 
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($input);
 
