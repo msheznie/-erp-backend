@@ -10,6 +10,8 @@
  * -- REVISION HISTORY
  * -- Date: 11-June 2018 By: Nazir Description: Added new functions named as getGoodReceiptVoucherMasterView() For load Master View
  * -- Date: 11-June 2018 By: Nazir Description: Added new functions named as getGRVFormData() For load Master View
+ * -- Date: 16-June 2018 By: Nazir Description: Added new functions named as GRVSegmentChkActive() For load Master View
+ * -- Date: 19-June 2018 By: Nazir Description: Added new functions named as goodReceiptVoucherAudit() For load Master View
  */
 namespace App\Http\Controllers\API;
 
@@ -32,6 +34,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\SupplierCurrency;
 use App\Models\WarehouseMaster;
+use App\Models\GRVDetails;
 use App\Repositories\GRVMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -338,6 +341,43 @@ class GRVMasterAPIController extends AppBaseController
 
         }
 
+        if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
+
+            //getting total sum of PO detail Amount
+            $grvMasterSum = GRVDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+                ->where('grvAutoID', $input['grvAutoID'])
+                ->first();
+
+            $grvDetailExist = GRVDetails::select(DB::raw('grvDetailsID'))
+                ->where('grvAutoID', $input['grvAutoID'])
+                ->first();
+
+            if (empty($grvDetailExist)) {
+                return $this->sendError('GRV Document cannot confirm without details');
+            }
+
+            $checkQuantity = GRVDetails::where('grvAutoID', $id)
+                ->where('noQty', '<', 1)
+                ->count();
+
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every Item should have at least one minimum Qty', 500);
+            }
+
+            unset($input['grvConfirmedYN']);
+            unset($input['grvConfirmedByEmpSystemID']);
+            unset($input['grvConfirmedByEmpID']);
+            unset($input['grvConfirmedByName']);
+            unset($input['grvConfirmedDate']);
+
+            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $grvMasterSum);
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"]);
+            }
+
+        }
+
         $gRVMaster = $this->gRVMasterRepository->update($input, $id);
 
         return $this->sendResponse($gRVMaster->toArray(), 'Good Receipt Voucher updated successfully');
@@ -551,7 +591,7 @@ class GRVMasterAPIController extends AppBaseController
 
         $grvAutoID = $input['grvAutoID'];
 
-        $grvMaster= GRVMaster::find($grvAutoID);
+        $grvMaster = GRVMaster::find($grvAutoID);
 
         if (empty($grvMaster)) {
             return $this->sendError('Good Receipt Voucher not found');
@@ -569,5 +609,22 @@ class GRVMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($grvAutoID, 'sucess');
+    }
+
+    public function goodReceiptVoucherAudit(Request $request)
+    {
+        $id = $request->get('id');
+
+        $gRVMaster = $this->gRVMasterRepository->with(['created_by', 'confirmed_by',
+            'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('documentSystemID', 3);
+            }])->findWithoutFail($id);
+
+        if (empty($gRVMaster)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        return $this->sendResponse($gRVMaster->toArray(), 'GRV retrieved successfully');
     }
 }
