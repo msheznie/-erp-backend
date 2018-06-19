@@ -9,13 +9,18 @@
  * -- Description : This file contains the all CRUD for Materiel Request Details
  * -- REVISION HISTORY
  * -- Date: 14-June 2018 By: Fayas Description: Added new functions named as getItemsByMaterielRequest()
+ * -- Date: 19-June 2018 By: Fayas Description: Added new functions named as getItemsOptionForMaterielRequest()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMaterielRequestDetailsAPIRequest;
 use App\Http\Requests\API\UpdateMaterielRequestDetailsAPIRequest;
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\GRVDetails;
+use App\Models\ItemAssigned;
 use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
+use App\Models\PurchaseOrderDetails;
 use App\Models\UnitConversion;
 use App\Repositories\MaterielRequestDetailsRepository;
 use Illuminate\Http\Request;
@@ -120,7 +125,125 @@ class MaterielRequestDetailsAPIController extends AppBaseController
      */
     public function store(CreateMaterielRequestDetailsAPIRequest $request)
     {
-        $input = $request->all();
+
+
+        $input = array_except($request->all(), 'uom_default');
+        $input = $this->convertArrayToValue($input);
+
+        $companySystemID = $input['companySystemID'];
+
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        if (empty($item)) {
+            return $this->sendError('Item not found');
+        }
+
+        $materielRequest = MaterielRequest::where('RequestID', $input['RequestID'])->first();
+
+
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Request Details not found');
+        }
+
+        if($materielRequest->ClosedYN == -1){
+            return $this->sendError('This Materiel Request already closed. You can not add.',500);
+        }
+
+        if($materielRequest->approved == -1){
+            return $this->sendError('This Materiel Request fully approved. You can not add.',500);
+        }
+
+        $input['itemCode'] = $item->itemCodeSystem;
+        $input['itemDescription'] = $item->itemDescription;
+        $input['partNumber'] = $item->secondaryItemCode;
+        $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
+        $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+        $input['estimatedCost'] = 0;
+        $input['quantityRequested'] = 0;
+        $input['qtyIssuedDefaultMeasure'] = 0;
+        $input['ClosedYN'] = 0;
+        $input['selectedForIssue'] = 0;
+        $input['comments'] = null;
+        $input['convertionMeasureVal'] = 1;
+        $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
+        $input['unitOfMeasureIssued'] = $item->itemUnitOfMeasure;
+        $input['maxQty'] = $item->maxQty;
+        $input['allowCreatePR']      = 0;
+        $input['selectedToCreatePR'] = 0;
+
+        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
+            ->where('mainItemCategoryID', $item->financeCategoryMaster)
+            ->where('itemCategorySubID', $item->financeCategorySub)
+            ->first();
+
+        if (empty($financeItemCategorySubAssigned)) {
+            return $this->sendError('Finance Category not found');
+        }
+
+        if ($item->financeCategoryMaster == 1) {
+
+            $alreadyAdded = MaterielRequest::where('RequestID', $input['RequestID'])
+                ->whereHas('details', function ($query) use ($item) {
+                    $query->where('itemCode', $item->itemCodeSystem);
+                })
+                ->first();
+
+            if ($alreadyAdded) {
+                return $this->sendError("Selected item is already added. Please check again", 500);
+            }
+        }
+
+        $input['financeGLcodebBS']  = $financeItemCategorySubAssigned->financeGLcodebBS;
+        $input['financeGLcodePL']   = $financeItemCategorySubAssigned->financeGLcodePL;
+        $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+
+
+        $poQty = PurchaseOrderDetails::with(['order' => function ($query) use ($companySystemID) {
+            $query->where('companySystemID', $companySystemID)
+                ->where('approved', -1)
+                ->where('poCancelledYN', 0)
+                ->groupBy('erp_purchaseordermaster.poCancelledYN',
+                    'erp_purchaseordermaster.approved');
+        }])
+            ->where('itemCode', $input['itemCode'])
+            ->groupBy('erp_purchaseorderdetails.companySystemID',
+                'erp_purchaseorderdetails.itemCode',
+                'erp_purchaseorderdetails.itemPrimaryCode'
+            )
+            ->select(
+                [
+                    'erp_purchaseorderdetails.companySystemID',
+                    'erp_purchaseorderdetails.itemCode',
+                    'erp_purchaseorderdetails.itemPrimaryCode'
+                ]
+            )
+            ->sum('noQty');
+
+        $grvQty = GRVDetails::with(['master' => function ($query) use ($companySystemID) {
+            $query->where('companySystemID', $companySystemID)
+                ->groupBy('erp_grvmaster.companySystemID', 'erp_grvmaster.grvType');
+        }])
+            ->where('itemCode', $input['itemCode'])
+            ->groupBy('erp_grvdetails.itemCode')
+            ->select(
+                [
+                    'erp_grvdetails.companySystemID',
+                    'erp_grvdetails.itemCode'
+                ])
+            ->sum('noQty');
+
+        $quantityOnOrder = $poQty - $grvQty;
+        $quantityInHand  = $poQty;
+
+        $input['quantityOnOrder'] = $quantityOnOrder;
+        $input['quantityInHand']  = $quantityInHand;
+
+        if($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']){
+            return $this->sendError("No stock Qty. Please check again.", 500);
+        }
+
 
         $materielRequestDetails = $this->materielRequestDetailsRepository->create($input);
 
@@ -235,8 +358,8 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             return $this->sendError('Materiel Request Details not found');
         }
 
-        $materielRequestDetails = MaterielRequest::where('RequestID',$input['RequestID'])->first();
-        if($materielRequestDetails->approved == -1){
+        $materielRequest = MaterielRequest::where('RequestID',$input['RequestID'])->first();
+        if($materielRequest->approved == -1){
             return $this->sendError('This Materiel Request fully approved. You can not edit.',500);
         }
 
@@ -247,6 +370,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
             if($unitConvention){
                 $convention  = $unitConvention->conversion;
+                $input['convertionMeasureVal'] = $convention;
                 if($convention> 0 ){
                     $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] / $convention;
                 }else{
@@ -255,6 +379,11 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             }
         }else{
             $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'];
+        }
+
+
+        if((float)$input['qtyIssuedDefaultMeasure'] > $materielRequestDetails->quantityInHand){
+            return $this->sendError("No stock Qty. Please check again.", 500);
         }
 
         $materielRequestDetails = $this->materielRequestDetailsRepository->update($input, $id);
@@ -331,5 +460,38 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                                         ->get();
 
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
+    }
+
+    /**
+     * get Items Option For Materiel Request
+     * get /getItemsOptionForMaterielRequest
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getItemsOptionForMaterielRequest(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+
+        $items = ItemAssigned::where('companySystemID', $companyId)
+                               ->where('financeCategoryMaster',1);
+
+        if (array_key_exists('search', $input)) {
+
+            $search = $input['search'];
+
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 }

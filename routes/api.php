@@ -465,11 +465,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
     Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
     Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
-
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
     Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
-
+    Route::post('getAllRequestByCompany','MaterielRequestAPIController@getAllRequestByCompany');
+    Route::get('getRequestFormData','MaterielRequestAPIController@getRequestFormData');
+    Route::get('materielRequestAudit','MaterielRequestAPIController@materielRequestAudit');
     Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
     Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
     Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
@@ -477,6 +478,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
+Route::get('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 
 
