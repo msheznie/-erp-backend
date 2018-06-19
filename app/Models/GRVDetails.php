@@ -91,10 +91,10 @@ class GRVDetails extends Model
     //use SoftDeletes;
 
     public $table = 'erp_grvdetails';
-    
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'grvDetailsID';
+    protected $primaryKey = 'grvDetailsID';
 
     protected $dates = ['deleted_at'];
 
@@ -247,13 +247,23 @@ class GRVDetails extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    public function grv_master(){
-        return $this->belongsTo('App\Models\GRVMaster','grvAutoID','grvAutoID');
+    public function grv_master()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo('App\Models\Unit', 'unitOfMeasure', 'UnitID');
+    }
+
+    public function po_master()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderMastertID', 'purchaseOrderID');
     }
 
 
-    
 }

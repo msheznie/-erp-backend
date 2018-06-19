@@ -9,12 +9,16 @@
 -- Description : This file contains the all CRUD for Item Ledger
 -- REVISION HISTORY
  * * -- Date: 31-May 2018 By: Desh Description: Added new functions named as getErpLedgerByFilter(),
+ * * -- Date: 31-May 2018 By: Desh Description: Added new functions named as validateStockLedgerReport(),
+ * * -- Date: 13-Jun 2018 By: Desh Description: Added new functions named as getWarehouse(),
+ * * -- Date: 13-Jun 2018 By: Desh Description: Added new functions named as generateStockValuationReport(),
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateErpItemLedgerAPIRequest;
 use App\Http\Requests\API\UpdateErpItemLedgerAPIRequest;
 use App\Models\ErpItemLedger;
+use App\Models\WarehouseMaster;
 use App\Repositories\ErpItemLedgerRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -333,7 +337,6 @@ class ErpItemLedgerAPIController extends AppBaseController
 
     public function generateStockLedgerReport(Request $request){
 
-
         $selectedCompanyId = $request['companySystemID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -385,15 +388,14 @@ class ErpItemLedgerAPIController extends AppBaseController
         if (array_key_exists('Warehouse', $input)) {
             $warehouse = (array)$input['Warehouse'];
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
-
         }
 
-        foreach ($items as $item){
+        //foreach ($items as $item){
 //            $data['openQty'] = ErpItemLedger::where('transactionDate','<',$startDate)->where('itemSystemCode',$item)->sum('inOutQty');
-            $qty = DB::table('erp_itemledger')->selectRaw('SUM(erp_itemledger.inOutQty) as inOutQty')->where('transactionDate','<=',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
+           /* $qty = DB::table('erp_itemledger')->selectRaw('SUM(erp_itemledger.inOutQty) as inOutQty')->where('transactionDate','<=',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
             $locAmount = DB::table('erp_itemledger')->selectRaw('(erp_itemledger.inOutQty*erp_itemledger.wacLocal) as TotalWacLocal')->where('transactionDate','<',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
-            $repAmount = DB::table('erp_itemledger')->selectRaw('(erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt')->where('transactionDate','<',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();
-            $data  = DB::table('erp_itemledger')
+            $repAmount = DB::table('erp_itemledger')->selectRaw('(erp_itemledger.inOutQty*erp_itemledger.wacRpt) as TotalWacRpt')->where('transactionDate','<',$endDate)->where('itemSystemCode',$item)->where('erp_itemledger.companySystemID',$request->companySystemID)->get();*/
+            /*$data  = DB::table('erp_itemledger')
                 ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
                 ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
                 ->leftJoin('employees', 'erp_itemledger.createdUserSystemID', '=', 'employees.employeeSystemID')
@@ -461,20 +463,120 @@ class ErpItemLedgerAPIController extends AppBaseController
                 ->whereIn('erp_documentmaster.documentSystemID',$docs)
                 ->whereIn('warehousemaster.wareHouseSystemCode',$warehouse)
                 ->whereBetween('erp_itemledger.transactionDate', [$startDate, $endDate])
-                ->get();
-            if(count($data) > 0){
+                ->get();*/
+            /*if(count($data) > 0){
                 array_push($stockLedger,$data);
-            }
-            if(!empty($qty) ){
+            }*/
+            /*if(!empty($qty) ){
                 $grandTotalQty += $qty[0]->inOutQty;
-            }
+            }*/
 
+        //}
+//DB::enableQueryLog();
+        $data = DB::select("SELECT * FROM (SELECT
+	erp_itemledger.companyID,
+	companymaster.CompanyName,
+	erp_itemledger.documentID,
+	erp_documentmaster.documentDescription,
+	erp_itemledger.documentCode,
+	erp_itemledger.itemPrimaryCode,
+	itemmaster.secondaryItemCode,
+	erp_itemledger.itemDescription,
+	erp_itemledger.unitOfMeasure,
+	erp_itemledger.inOutQty,
+	erp_itemledger.comments,
+	erp_itemledger.transactionDate,
+	units.UnitShortCode,
+	warehousemaster.wareHouseDescription,
+	employees.empName,
+	currencymaster.CurrencyName AS LocalCurrency,
+	erp_itemledger.wacLocal,
+	( erp_itemledger.inOutQty * erp_itemledger.wacLocal ) AS TotalWacLocal,
+	currencymaster_1.CurrencyName AS RepCurrency,
+	erp_itemledger.wacRpt,
+	( erp_itemledger.inOutQty * erp_itemledger.wacRpt ) AS TotalWacRpt,
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals 
+FROM
+	erp_itemledger
+	LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
+	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
+	LEFT JOIN employees ON erp_itemledger.createdUserSystemID = employees.employeeSystemID
+	LEFT JOIN erp_documentmaster ON erp_itemledger.documentSystemID = erp_documentmaster.documentSystemID
+	INNER JOIN companymaster ON erp_itemledger.companySystemID = companymaster.companySystemID
+	LEFT JOIN currencymaster ON erp_itemledger.wacLocalCurrencyID = currencymaster.currencyID
+	LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID = currencymaster_1.currencyID
+	INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
+WHERE
+	erp_itemledger.companySystemID IN (".join(',',$subCompanies).") AND
+	erp_itemledger.itemSystemCode IN (".join(',',json_decode($items)).") AND
+	erp_itemledger.documentSystemID IN (".join(',',json_decode($docs)).") AND
+	erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).") AND 
+	DATE(erp_itemledger.transactionDate) BETWEEN '".$startDate."' AND '".$endDate."' AND itemmaster.financeCategoryMaster = 1
+	
+	UNION ALL 
+	
+	SELECT
+	erp_itemledger.companyID,
+	companymaster.CompanyName,
+	'' as documentID,
+	'' as documentDescription,
+	'Opening Balance' as documentCode,
+	erp_itemledger.itemPrimaryCode,
+	itemmaster.secondaryItemCode,
+	erp_itemledger.itemDescription,
+	erp_itemledger.unitOfMeasure,
+	SUM(erp_itemledger.inOutQty) as inOutQty,
+	'Opening Balance' as comments,
+	'1970-01-01' as transactionDate,
+	units.UnitShortCode,
+	'' as wareHouseDescription,
+	'' as empName,
+	currencymaster.CurrencyName AS LocalCurrency,
+	SUM(erp_itemledger.wacLocal) as wacLocal,
+	SUM( erp_itemledger.inOutQty) * SUM(erp_itemledger.wacLocal) AS TotalWacLocal,
+	currencymaster_1.CurrencyName AS RepCurrency,
+	SUM(erp_itemledger.wacRpt) as wacRpt,
+	SUM( erp_itemledger.inOutQty) * SUM(erp_itemledger.wacRpt ) AS TotalWacRpt,
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
+	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals
+FROM
+	erp_itemledger
+	LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
+	INNER JOIN companymaster ON erp_itemledger.companySystemID = companymaster.companySystemID
+	LEFT JOIN currencymaster ON erp_itemledger.wacLocalCurrencyID = currencymaster.currencyID
+	LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID = currencymaster_1.currencyID
+	INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
+WHERE
+	erp_itemledger.companySystemID IN (".join(',',$subCompanies).") AND
+	erp_itemledger.itemSystemCode IN (".join(',',json_decode($items)).") AND
+	erp_itemledger.documentSystemID IN (".join(',',json_decode($docs)).") AND
+	erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).") AND 
+	DATE(erp_itemledger.transactionDate) < '".$startDate."'  AND itemmaster.financeCategoryMaster = 1 GROUP BY erp_itemledger.itemSystemCode HAVING inOutQty > 0) a ORDER BY a.transactionDate asc");
+        //dd(DB::getQueryLog());
+        $dataFinal = [];
+
+        foreach ($data as $val) {
+            $dataFinal[$val->itemPrimaryCode][] = $val;
         }
+
+        $TotalWacLocal = collect($data)->pluck('TotalWacLocal')->toArray();
+        $TotalWacLocal = array_sum($TotalWacLocal);
+
+        $TotalWacRpt = collect($data)->pluck('TotalWacRpt')->toArray();
+        $TotalWacRpt = array_sum($TotalWacRpt);
+
+        $grandTotalQty = collect($data)->pluck('inOutQty')->toArray();
+        $grandTotalQty = array_sum($grandTotalQty);
+
         $output = array(
             'grandTotalQty' => $grandTotalQty,
-            'data' => $stockLedger
+            'grandLocalTotal' => $TotalWacLocal,
+            'grandRptTotal' => $TotalWacRpt,
+            'data' => $dataFinal
         );
-        return $this->sendResponse($output, 'Supplier Master retrieved successfully');
+
+        return $this->sendResponse($output, 'Item ledger record retrieved successfully');
     }
 
     /*validate each report*/
@@ -499,6 +601,158 @@ class ErpItemLedgerAPIController extends AppBaseController
                 return $this->sendError('Error Occurred');
         }
 
+    }
+
+    public function getWarehouse(Request $request){
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $warehouse = WarehouseMaster::whereIn("companySystemID", $subCompanies)
+                                    ->select('wareHouseCode','wareHouseSystemCode')
+                                    ->get();
+
+        return $this->sendResponse($warehouse, 'Warehouse retrieved successfully');
+    }
+
+    public function generateStockValuationReport(Request $request){
+
+//        $validator = \Validator::make($request->all(), [
+//            'daterange' => 'required',
+//            'Items' => 'required',
+//            'Docs' => 'required',
+//            'Warehouse' => 'required',
+//            'reportType' => 'required',
+//        ]);
+
+//        if ($validator->fails()) {//echo 'in';exit;
+//            return $this->sendError($validator->messages(), 422 );
+//            die();
+//        }
+
+        $date = new Carbon($request->date);
+        $date = $date->format('Y-m-d');
+
+
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        $categories = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
+            ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
+            ->leftJoin('currencymaster AS currencymaster_1', 'erp_itemledger.wacRptCurrencyID', '=', 'currencymaster_1.currencyID')
+            ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
+            ->selectRaw('   erp_itemledger.companySystemID,
+                            erp_itemledger.companyID,
+                            erp_itemledger.itemSystemCode,
+                            erp_itemledger.itemPrimaryCode,
+                            erp_itemledger.itemDescription,
+                            erp_itemledger.unitOfMeasure,
+                            sum(erp_itemledger.inOutQty) as Qty,
+                            erp_itemledger.wacLocalCurrencyID,
+                            financeitemcategorysub.categoryDescription,
+                            erp_itemledger.transactionDate,
+                            itemmaster.secondaryItemCode,
+                            units.UnitShortCode,
+                            currencymaster.CurrencyName AS LocalCurrency,
+                            currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                            currencymaster_1.CurrencyName as RepCurrency,
+                            (round(sum(erp_itemledger.wacLocal*erp_itemledger.inOutQty),3) / sum(erp_itemledger.inOutQty)) as WACLocal,
+                            (round(sum(wacLocal*inOutQty),3)) as WacLocalAmount,
+                            erp_itemledger.wacRptCurrencyID,
+                            (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2) / sum(erp_itemledger.inOutQty)) as WACRpt,
+                            (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
+            ->whereIn('erp_itemledger.companySystemID',$subCompanies)
+            ->where('erp_itemledger.wareHouseSystemCode',$request->warehouse)
+            ->whereRaw("DATE(erp_itemledger.transactionDate) = '$date'")
+            ->groupBy('financeitemcategorysub.itemCategorySubID')
+            ->get();
+
+        $output = array(
+            'categories' => $categories,
+            'date' => $date,
+            'subCompanies' => $subCompanies,
+            'warehouse' => $request->warehouse
+        );
+
+
+        return $this->sendResponse($output, 'Erp Item Ledger retrieved successfully');
+
+    }
+
+    public function exportStockEvaluation(Request $request){
+
+        $categories = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
+            ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
+            ->leftJoin('currencymaster AS currencymaster_1', 'erp_itemledger.wacRptCurrencyID', '=', 'currencymaster_1.currencyID')
+            ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
+            ->selectRaw('   erp_itemledger.companySystemID,
+                            erp_itemledger.companyID,
+                            erp_itemledger.itemSystemCode,
+                            erp_itemledger.itemPrimaryCode,
+                            erp_itemledger.itemDescription,
+                            erp_itemledger.unitOfMeasure,
+                            sum(erp_itemledger.inOutQty) as Qty,
+                            erp_itemledger.wacLocalCurrencyID,
+                            financeitemcategorysub.categoryDescription,
+                            erp_itemledger.transactionDate,
+                            itemmaster.secondaryItemCode,
+                            units.UnitShortCode,
+                            currencymaster.CurrencyName AS LocalCurrency,
+                            currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                            currencymaster_1.CurrencyName as RepCurrency,
+                            (round(sum(erp_itemledger.wacLocal*erp_itemledger.inOutQty),3) / sum(erp_itemledger.inOutQty)) as WACLocal,
+                            (round(sum(wacLocal*inOutQty),3)) as WacLocalAmount,
+                            erp_itemledger.wacRptCurrencyID,
+                            (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2) / sum(erp_itemledger.inOutQty)) as WACRpt,
+                            (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
+            ->whereIn('erp_itemledger.companySystemID',$request->subCompanies)
+            ->where('erp_itemledger.wareHouseSystemCode',$request->warehouse)
+            ->whereRaw("DATE(erp_itemledger.transactionDate) = '$request->date'")
+            ->groupBy('financeitemcategorysub.itemCategorySubID')
+            ->get();
+
+        foreach ($categories as $val) {
+            $data[] = array(
+                'Category' => $val->categoryDescription,
+                'Item Code' => $val->itemPrimaryCode,
+                'Item Description' => $val->itemDescription,
+                'UOM' => $val->UnitShortCode,
+                'Part Number' => $val->secondaryItemCode,
+                'Qty' => $val->Qty,
+                'WAC Local' => number_format($val->WACLocal,$val->LocalCurrencyDecimals),
+                'Local Amount' => number_format($val->WacLocalAmount,$val->LocalCurrencyDecimals),
+                'WAC Rep' => number_format($val->WACRpt,$val->LocalCurrencyDecimals),
+                'Rep Amount' => number_format($val->WacRptAmount,$val->LocalCurrencyDecimals)
+            );
+        }
+
+        $csv = \Excel::create('po_wise_analysis', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($request->type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 
 }

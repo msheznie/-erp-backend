@@ -443,27 +443,41 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
     Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
     Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
+    Route::resource('g_r_v_types', 'GRVTypesAPIController');
+    Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
+    Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
+    Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
+    Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
+    Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
+    Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
 
     Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView');
     Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData');
+    Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse');
+    Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport');
     Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod');
     Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
+    Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
+    Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV');
+    Route::post('GRVSegmentChkActive', 'GRVMasterAPIController@GRVSegmentChkActive');
+    Route::get('purchaseOrderForGRV', 'ProcumentOrderAPIController@purchaseOrderForGRV');
+    Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV');
+    Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO');
 
+    Route::resource('materiel_requests', 'MaterielRequestAPIController');
+    Route::post('getAllRequestByCompany','MaterielRequestAPIController@getAllRequestByCompany');
+    Route::get('getRequestFormData','MaterielRequestAPIController@getRequestFormData');
+
+    Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
+    Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
+    Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
+    Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
+Route::get('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 
 
-Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
 
 
-Route::resource('g_r_v_types', 'GRVTypesAPIController');
-
-Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
-
-Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
-
-Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
-
-Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
