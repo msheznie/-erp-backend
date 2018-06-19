@@ -239,6 +239,7 @@ class MaterielRequest extends Model
         'RequestedDate',
         'ConfirmedYN',
         'ConfirmedBySystemID',
+        'confirmedEmpName',
         'ConfirmedBy',
         'ConfirmedDate',
         'isActive',
@@ -285,6 +286,7 @@ class MaterielRequest extends Model
         'ConfirmedYN' => 'integer',
         'ConfirmedBySystemID' => 'integer',
         'ConfirmedBy' => 'string',
+        'confirmedEmpName' => 'string',
         'isActive' => 'integer',
         'quantityOnOrder' => 'float',
         'quantityInHand' => 'float',
@@ -333,7 +335,17 @@ class MaterielRequest extends Model
         return $this->belongsTo('App\Models\Employee','ConfirmedBySystemID','employeeSystemID');
     }
 
+    public function modified_by(){
+        return $this->belongsTo('App\Models\Employee','modifiedUserSystemID','employeeSystemID');
+    }
 
+    public function details(){
+        return $this->hasMany('App\Models\MaterielRequestDetails','RequestID','RequestID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','RequestID');
+    }
 
     
 }

@@ -8,7 +8,8 @@
  * -- Create date : 12 - June 2018
  * -- Description : This file contains the all CRUD for Materiel Request
  * -- REVISION HISTORY
- * -- Date: 12-June 2018 By: Fayas Description: Added new functions named as getAllRequestByCompany(),getRequestFormData(),getItemsOptionForMaterielRequest()
+ * -- Date: 12-June 2018 By: Fayas Description: Added new functions named as getAllRequestByCompany(),getRequestFormData()
+ * -- Date: 19-June 2018 By: Fayas Description: Added new functions named as materielRequestAudit()
  */
 namespace App\Http\Controllers\API;
 
@@ -373,7 +374,9 @@ class MaterielRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'priority_by','warehouse_by', 'segment_by']);
+        $input = array_except($input, ['created_by', 'priority_by','warehouse_by', 'segment_by','confirmedEmpName',
+                                       'ConfirmedBy','ConfirmedDate','confirmed_by','ConfirmedBySystemID']);
+
         $input = $this->convertArrayToValue($input);
 
         /** @var MaterielRequest $materielRequest */
@@ -540,61 +543,33 @@ class MaterielRequestAPIController extends AppBaseController
     }
 
     /**
-     * get Items Option For Materiel Request
-     * get /getItemsOptionForMaterielRequest
+     * Display the specified Materiel Request Audit.
+     * GET|HEAD /materielRequestAudit
      *
-     * @param Request $request
+     * @param  int $id
      *
      * @return Response
      */
-
-    public function getItemsOptionForMaterielRequest(Request $request)
+    public function materielRequestAudit(Request $request)
     {
-        $input = $request->all();
+        $id = $request->get('id');
 
-        $companyId = $input['companyId'];
-        //$purchaseRequestId = $input['purchaseRequestId'];
+        $materielRequest = $this->materielRequestRepository
+            ->with(['created_by','confirmed_by','modified_by','approved_by' => function ($query) {
+                $query->with('employee')
+                      ->where('documentSystemID',9);
+            }])
+           /* ->with(['cancelled_by','manually_closed_by','approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('documentSystemID',9);
+            }])*/
+            ->findWithoutFail($id);
 
-        /*$policy = 1;
-
-        $financeCategoryId = 0;
-
-        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                                                    ->where('companySystemID', $companyId)
-                                                    ->first();
-
-        if ($allowFinanceCategory) {
-            $policy = $allowFinanceCategory->isYesNO;
-
-            if ($policy == 0) {
-                $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $purchaseRequestId)->first();
-
-                if ($purchaseRequest) {
-                    $financeCategoryId = $purchaseRequest->financeCategory;
-                }
-            }
-        }*/
-
-        $items = ItemAssigned::where('companySystemID', $companyId);
-
-
-       /* if ($policy == 0 && $financeCategoryId != 0) {
-            $items = $items->where('financeCategoryMaster', $financeCategoryId);
-        }*/
-
-        if (array_key_exists('search', $input)) {
-
-            $search = $input['search'];
-
-            $items = $items->where(function ($query) use ($search) {
-                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
-            });
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Request not found');
         }
 
-
-        $items = $items->take(20)->get();
-
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($materielRequest->toArray(), 'Materiel Request retrieved successfully');
     }
+
 }
