@@ -280,7 +280,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
     Route::resource('g_r_v_masters', 'GRVMasterAPIController');
-    Route::resource('g_r_v_details', 'GRVDetailsAPIController');
 
     Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
     Route::post('storePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@storePoPaymentTermsLogistic');
@@ -463,12 +462,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('purchaseOrderForGRV', 'ProcumentOrderAPIController@purchaseOrderForGRV');
     Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV');
     Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO');
-
+    Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
+    Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
+    Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
+    Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
+    Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
     Route::post('getAllRequestByCompany','MaterielRequestAPIController@getAllRequestByCompany');
     Route::get('getRequestFormData','MaterielRequestAPIController@getRequestFormData');
     Route::get('materielRequestAudit','MaterielRequestAPIController@materielRequestAudit');
-
     Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
     Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
     Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');

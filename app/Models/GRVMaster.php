@@ -269,9 +269,24 @@ class GRVMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
 
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'grvConfirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'grvCancelledBySystemID', 'employeeSystemID');
+    }
+
     public function segment_by()
     {
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
 
     public function location_by()
