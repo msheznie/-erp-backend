@@ -1097,7 +1097,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
             $amount = PurchaseRequestDetails::where('purchaseRequestID', $id)
-                ->sum('totalCost');
+                                                ->sum('totalCost');
 
             $params = array('autoID' => $id,
                 'company' => $purchaseRequest->companySystemID,

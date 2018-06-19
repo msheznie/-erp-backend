@@ -176,9 +176,21 @@ class Helper
                     $docInforArr["modelName"] = 'ChartOfAccount';
                     $docInforArr["primarykey"] = 'chartOfAccountSystemID';
                     break;
+                case 9:
+                    $docInforArr["documentCodeColumnName"] = 'RequestCode';
+                    $docInforArr["confirmColumnName"]      = 'ConfirmedYN';
+                    $docInforArr["confirmedBy"]            = 'confirmedEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'ConfirmedBy';
+                    $docInforArr["confirmedBySystemID"] = 'ConfirmedBySystemID';
+                    $docInforArr["confirmedDate"] = 'ConfirmedDate';
+                    $docInforArr["tableName"] = 'erp_request';
+                    $docInforArr["modelName"] = 'MaterielRequest';
+                    $docInforArr["primarykey"] = 'RequestID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
+
 
             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
             $masterRec = $namespacedModel::find($params["autoID"]);
@@ -193,6 +205,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         //confirm the document
                         $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now()]);
+
                         //get the policy
                         $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
                         if ($policy) {

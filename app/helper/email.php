@@ -19,6 +19,7 @@ use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\ItemMaster;
+use App\Models\MaterielRequest;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use App\Models\SupplierMaster;
@@ -124,6 +125,13 @@ class email
                     if (!empty($chartOfAccount)) {
                         $data['docApprovedYN'] = $chartOfAccount->isApproved;
                         $data['docCode']       = $chartOfAccount->AccountCode;
+                    }
+                    break;
+                case 9:
+                    $materielRequest = MaterielRequest::where('RequestID', $data['docSystemCode'])->first();
+                    if (!empty($materielRequest)) {
+                        $data['docApprovedYN'] = $materielRequest->approved;
+                        $data['docCode']       = $materielRequest->RequestCode;
                     }
                     break;
                 default:
