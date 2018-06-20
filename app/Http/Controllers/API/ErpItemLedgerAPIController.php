@@ -788,4 +788,9 @@ WHERE
         return $this->sendResponse(array(), 'successfully export');
     }
 
+    public function generateStockTakingReport(Request $request){
+
+
+    }
+
 }
