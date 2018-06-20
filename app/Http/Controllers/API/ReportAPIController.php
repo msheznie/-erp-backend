@@ -379,7 +379,7 @@ WHERE
                         }
                     }
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d-m-Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode);
                 }
                 break;
             default:
@@ -794,17 +794,20 @@ WHERE
         switch ($reportID) {
             case 'CS':
                 if ($request->reportTypeID == 'CSA') {
-                    //dd(DB::getQueryLog());
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $customerName = CustomerMaster::find($request->singleCustomer);
 
-                    /*$fromDate = new Carbon($request->fromDate);
+                    /*$fromDate = new Carbon("2016-03-25T12:00:00Z");
                     $fromDate = $fromDate->addDays(1);
-                    $request->fromDate = $fromDate->format('Y-m-d');*/
+                    $request->fromDate = $fromDate->format('Y-m-d');
 
-                    $request->fromDate = strtotime($request->fromDate);
-                    $request->toDate = strtotime($request->toDate);
+                    $toDate = new Carbon("2018-03-25T12:00:00Z");
+                    $toDate = $toDate->addDays(1);
+                    $request->toDate = $toDate->format('Y-m-d');*/
+
+                    $request->fromDate = date('Y-m-d',strtotime($request->fromDate));
+                    $request->toDate =  date('Y-m-d',strtotime($request->toDate));
 
                     $output = $this->getCustomerStatementAccountQRY($request);
 
@@ -838,7 +841,7 @@ WHERE
                         }
                     }
 
-                    $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d-m-Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode);
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate),'toDate' => \Helper::dateFormat($request->toDate),'currencyID' => $request->currencyID);
 
                     $html = view('print.customer_statement_of_account_pdf', $dataArr);
 
@@ -913,21 +916,21 @@ WHERE
         $invoiceAmountQry = '';
         $currencyQry = '';
         if ($currency == 1) {
-            $balanceAmountQry = "round((IFNULL(MainQuery.documentTransAmount,0) - IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount,0)),2) AS balanceAmount";
-            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount, 0 ),2) AS receiptAmount";
-            $invoiceAmountQry = "round(IFNULL(MainQuery.documentTransAmount, 0 ),2) AS invoiceAmount";
+            $balanceAmountQry = "round(IFNULL(MainQuery.documentTransAmount,0),MainQuery.documentTransDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount,0),MainQuery.documentTransDecimalPlaces) AS balanceAmount";
+            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount, 0 ),MainQuery.documentTransDecimalPlaces) AS receiptAmount";
+            $invoiceAmountQry = "round(IFNULL(MainQuery.documentTransAmount, 0 ),MainQuery.documentTransDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentTransDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentTransCurrency AS documentCurrency";
         } else if ($currency == 2) {
-            $balanceAmountQry = "round((IFNULL(MainQuery.documentLocalAmount,0) - IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount,0)),2) AS balanceAmount";
-            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount, 0 ),2) AS receiptAmount";
-            $invoiceAmountQry = "round(IFNULL(MainQuery.documentLocalAmount, 0 ),2) AS invoiceAmount";
+            $balanceAmountQry = "round(IFNULL(MainQuery.documentLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount,0),MainQuery.documentLocalDecimalPlaces) AS balanceAmount";
+            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount, 0 ),MainQuery.documentLocalDecimalPlaces) AS receiptAmount";
+            $invoiceAmountQry = "round(IFNULL(MainQuery.documentLocalAmount, 0 ),MainQuery.documentLocalDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentLocalCurrency AS documentCurrency";
         } else {
-            $balanceAmountQry = "round((IFNULL(MainQuery.documentRptAmount,0) - IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount,0)),2) AS balanceAmount";
-            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount, 0 ),2) AS receiptAmount";
-            $invoiceAmountQry = "round(IFNULL(MainQuery.documentRptAmount, 0 ),2) AS invoiceAmount";
+            $balanceAmountQry = "round(IFNULL(MainQuery.documentRptAmount,0),MainQuery.documentRptDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount,0),MainQuery.documentRptDecimalPlaces) AS balanceAmount";
+            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount, 0 ),MainQuery.documentRptDecimalPlaces) AS receiptAmount";
+            $invoiceAmountQry = "round(IFNULL(MainQuery.documentRptAmount, 0 ),MainQuery.documentRptDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentTransCurrency AS documentCurrency";
         }
@@ -1097,19 +1100,19 @@ GROUP BY
         $whereQry = '';
         if ($currency == 1) {
             $currencyQry = "final.documentTransCurrency AS documentCurrency";
-            $amountQry = "round( final.balanceTrans, 2 ) AS balanceAmount";
+            $amountQry = "round( final.balanceTrans, final.documentTransDecimalPlaces ) AS balanceAmount";
             $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( final.balanceTrans, 1 )";
+            $whereQry = "round( final.balanceTrans, final.documentTransDecimalPlaces )";
         } else if ($currency == 2) {
             $currencyQry = "final.documentLocalCurrency AS documentCurrency";
-            $amountQry = "round( final.balanceLocal, 2 ) AS balanceAmount";
+            $amountQry = "round( final.balanceLocal, final.documentLocalDecimalPlaces ) AS balanceAmount";
             $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( final.balanceLocal, 1 )";
+            $whereQry = "round( final.balanceLocal, final.documentLocalDecimalPlaces )";
         } else {
             $currencyQry = "final.documentRptCurrency AS documentCurrency";
-            $amountQry = "round( final.balanceRpt, 2 ) AS balanceAmount";
+            $amountQry = "round( final.balanceRpt, final.documentRptDecimalPlaces ) AS balanceAmount";
             $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( final.balanceRpt, 1 )";
+            $whereQry = "round( final.balanceRpt, final.documentRptDecimalPlaces )";
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
