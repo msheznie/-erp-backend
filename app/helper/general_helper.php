@@ -187,6 +187,17 @@ class Helper
                     $docInforArr["modelName"] = 'MaterielRequest';
                     $docInforArr["primarykey"] = 'RequestID';
                     break;
+                case 3:
+                    $docInforArr["documentCodeColumnName"] = 'grvPrimaryCode';
+                    $docInforArr["confirmColumnName"]      = 'grvConfirmedYN';
+                    $docInforArr["confirmedBy"]            = 'grvConfirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'grvConfirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'grvConfirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'grvConfirmedDate';
+                    $docInforArr["tableName"] = 'erp_grvmaster';
+                    $docInforArr["modelName"] = 'GRVMaster';
+                    $docInforArr["primarykey"] = 'grvAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -592,6 +603,18 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "PRConfirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "PRConfirmedBySystemID";
+                break;
+            case 3:
+                $docInforArr["tableName"] = 'erp_grvmaster';
+                $docInforArr["modelName"] = 'GRVMaster';
+                $docInforArr["primarykey"] = 'grvAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "grvConfirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "grvConfirmedByEmpSystemID";
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];

@@ -309,7 +309,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved','wareHouseFrom','month','year'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -329,9 +329,6 @@ class ItemIssueMasterAPIController extends AppBaseController
         $itemIssueMaster = ItemIssueMaster::whereIn('companySystemID', $subCompanies)
                                       ->with(['created_by', 'warehouse_by','segment_by','customer_by']);
 
-       /* dataTablesParameters.wareHouseFrom = this.filters.wareHouseFrom;
-        dataTablesParameters.month = this.filters.month;
-        dataTablesParameters.year = this.filters.year;*/
 
         if (array_key_exists('confirmedYN', $input)) {
             if(($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1)  && !is_null($input['confirmedYN'])) {
@@ -359,13 +356,13 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $itemIssueMaster->whereMonth('createdDateTime', '=', $input['month']);
+                $itemIssueMaster->whereMonth('issueDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $itemIssueMaster->whereYear('createdDateTime', '=', $input['year']);
+                $itemIssueMaster->whereYear('issueDate', '=', $input['year']);
             }
         }
 
