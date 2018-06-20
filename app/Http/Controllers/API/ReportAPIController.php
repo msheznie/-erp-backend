@@ -914,20 +914,20 @@ WHERE
         $currencyQry = '';
         if ($currency == 1) {
             $balanceAmountQry = "round((IFNULL(MainQuery.documentTransAmount,0) - IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount,0)),2) AS balanceAmount";
-            $receiptAmountQry = "IFNULL(round( ( InvoiceFromBRVAndMatching.InvoiceTransAmount ), 2 ),0) AS receiptAmount";
-            $invoiceAmountQry = "IFNULL(round( MainQuery.documentTransAmount, 2 ),0) AS invoiceAmount";
+            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount, 0 ),2) AS receiptAmount";
+            $invoiceAmountQry = "round(IFNULL(MainQuery.documentTransAmount, 0 ),2) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentTransDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentTransCurrency AS documentCurrency";
         } else if ($currency == 2) {
             $balanceAmountQry = "round((IFNULL(MainQuery.documentLocalAmount,0) - IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount,0)),2) AS balanceAmount";
-            $receiptAmountQry = "IFNULL(round( ( InvoiceFromBRVAndMatching.InvoiceLocalAmount ), 2 ),0) AS receiptAmount";
-            $invoiceAmountQry = "IFNULL(round( MainQuery.documentLocalAmount, 2 ),0) AS invoiceAmount";
+            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount, 0 ),2) AS receiptAmount";
+            $invoiceAmountQry = "round(IFNULL(MainQuery.documentLocalAmount, 0 ),2) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentLocalCurrency AS documentCurrency";
         } else {
             $balanceAmountQry = "round((IFNULL(MainQuery.documentRptAmount,0) - IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount,0)),2) AS balanceAmount";
-            $receiptAmountQry = "IFNULL(round( ( InvoiceFromBRVAndMatching.InvoiceRptAmount ), 2 ),0) AS receiptAmount";
-            $invoiceAmountQry = "IFNULL(round( MainQuery.documentRptAmount, 2 ),0) AS invoiceAmount";
+            $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount, 0 ),2) AS receiptAmount";
+            $invoiceAmountQry = "round(IFNULL(MainQuery.documentRptAmount, 0 ),2) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentTransCurrency AS documentCurrency";
         }
@@ -941,7 +941,7 @@ WHERE
 	MainQuery.documentNarration,
 	InvoiceFromBRVAndMatching.ReceiptCode,
 	InvoiceFromBRVAndMatching.ReceiptDate,
-	' . $balanceAmountQry . ',
+' . $balanceAmountQry . ',
 	' . $receiptAmountQry . ',
 	' . $invoiceAmountQry . ',
 	' . $currencyQry . ',
@@ -973,13 +973,13 @@ SELECT
 	erp_generalledger.documentLocalAmount,
 	erp_generalledger.documentRptCurrencyID,
 	erp_generalledger.documentRptAmount,
-	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
-    currRpt.DecimalPlaces as documentRptDecimalPlaces,
-    currTrans.DecimalPlaces as documentTransDecimalPlaces,
-    currRpt.CurrencyCode as documentRptCurrency,
-    currLocal.CurrencyCode as documentLocalCurrency,
-    currTrans.CurrencyCode as documentTransCurrency,
-    CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName 
+	currLocal.DecimalPlaces AS documentLocalDecimalPlaces,
+	currRpt.DecimalPlaces AS documentRptDecimalPlaces,
+	currTrans.DecimalPlaces AS documentTransDecimalPlaces,
+	currRpt.CurrencyCode AS documentRptCurrency,
+	currLocal.CurrencyCode AS documentLocalCurrency,
+	currTrans.CurrencyCode AS documentTransCurrency,
+	CONCAT( customermaster.CutomerCode, " - ", customermaster.CustomerName ) AS customerName 
 FROM
 	erp_generalledger
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
@@ -994,77 +994,79 @@ WHERE
 	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
 	AND erp_generalledger.supplierCodeSystem = ' . $customer . '
 	) AS MainQuery
-	LEFT JOIN  (
-	SELECT
-		InvoiceFromUNION.companySystemID,
-		InvoiceFromUNION.companyID,
-		max( InvoiceFromUNION.custPaymentReceiveCode ) AS ReceiptCode,
-		max( InvoiceFromUNION.postedDate ) AS ReceiptDate,
-		InvoiceFromUNION.addedDocumentSystemID,
-		InvoiceFromUNION.addedDocumentID,
-		InvoiceFromUNION.bookingInvCodeSystem,
-		InvoiceFromUNION.bookingInvCode,
-		sum( InvoiceFromUNION.receiveAmountTrans ) AS InvoiceTransAmount,
-		sum( InvoiceFromUNION.receiveAmountLocal ) AS InvoiceLocalAmount,
-		sum( InvoiceFromUNION.receiveAmountRpt ) AS InvoiceRptAmount 
-	FROM
-		(
-		SELECT *
-		FROM
-			(
-			SELECT
-				erp_customerreceivepayment.custPaymentReceiveCode,
-				erp_customerreceivepayment.postedDate,
-				erp_custreceivepaymentdet.companySystemID,
-				erp_custreceivepaymentdet.companyID,
-				erp_custreceivepaymentdet.addedDocumentSystemID,
-				erp_custreceivepaymentdet.addedDocumentID,
-				erp_custreceivepaymentdet.bookingInvCodeSystem,
-				erp_custreceivepaymentdet.bookingInvCode,
-				erp_custreceivepaymentdet.receiveAmountTrans,
-				erp_custreceivepaymentdet.receiveAmountLocal,
-				erp_custreceivepaymentdet.receiveAmountRpt 
-			FROM
-				erp_customerreceivepayment
-				INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID 
-				AND erp_custreceivepaymentdet.matchingDocID = 0 
-				AND erp_customerreceivepayment.approved =- 1 
-			WHERE
-				erp_custreceivepaymentdet.bookingInvCode <> "0" 
-				AND erp_custreceivepaymentdet.matchingDocID = 0 
-				AND erp_customerreceivepayment.approved =- 1 
-				AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
-				AND DATE(erp_customerreceivepayment.postedDate) <= "' . $toDate . '"
-			) AS InvoiceFromBRV UNION ALL
-		SELECT *
-		FROM
-			(
-			SELECT
-				erp_matchdocumentmaster.matchingDocCode,
-				erp_matchdocumentmaster.matchingDocdate,
-				erp_custreceivepaymentdet.companySystemID,
-				erp_custreceivepaymentdet.companyID,
-				erp_custreceivepaymentdet.addedDocumentSystemID,
-				erp_custreceivepaymentdet.addedDocumentID,
-				erp_custreceivepaymentdet.bookingInvCodeSystem,
-				erp_custreceivepaymentdet.bookingInvCode,
-				erp_custreceivepaymentdet.receiveAmountTrans,
-				erp_custreceivepaymentdet.receiveAmountLocal,
-				erp_custreceivepaymentdet.receiveAmountRpt 
-			FROM
-				erp_custreceivepaymentdet
-				INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
-				AND erp_custreceivepaymentdet.companySystemID = erp_matchdocumentmaster.companySystemID 
-			WHERE
-				erp_matchdocumentmaster.matchingConfirmedYN = 1 
-				AND erp_custreceivepaymentdet.companySystemID  IN (' . join(',', $companyID) . ')
-				AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $toDate . '"
-			) AS InvoiceFromMatching 
-		) AS InvoiceFromUNION 
-	GROUP BY
-		bookingInvCode 
+	LEFT JOIN (
+SELECT
+	InvoiceFromUNION.companySystemID,
+	InvoiceFromUNION.companyID,
+	max( InvoiceFromUNION.custPaymentReceiveCode ) AS ReceiptCode,
+	max( InvoiceFromUNION.postedDate ) AS ReceiptDate,
+	InvoiceFromUNION.addedDocumentSystemID,
+	InvoiceFromUNION.addedDocumentID,
+	InvoiceFromUNION.bookingInvCodeSystem,
+	InvoiceFromUNION.bookingInvCode,
+	sum( InvoiceFromUNION.receiveAmountTrans ) AS InvoiceTransAmount,
+	sum( InvoiceFromUNION.receiveAmountLocal ) AS InvoiceLocalAmount,
+	sum( InvoiceFromUNION.receiveAmountRpt ) AS InvoiceRptAmount 
+FROM
+	(
+SELECT
+	* 
+FROM
+	(
+SELECT
+	erp_customerreceivepayment.custPaymentReceiveCode,
+	erp_customerreceivepayment.postedDate,
+	erp_custreceivepaymentdet.companySystemID,
+	erp_custreceivepaymentdet.companyID,
+	erp_custreceivepaymentdet.addedDocumentSystemID,
+	erp_custreceivepaymentdet.addedDocumentID,
+	erp_custreceivepaymentdet.bookingInvCodeSystem,
+	erp_custreceivepaymentdet.bookingInvCode,
+	erp_custreceivepaymentdet.receiveAmountTrans,
+	erp_custreceivepaymentdet.receiveAmountLocal,
+	erp_custreceivepaymentdet.receiveAmountRpt 
+FROM
+	erp_customerreceivepayment
+	INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID 
+	AND erp_custreceivepaymentdet.matchingDocID = 0 
+	AND erp_customerreceivepayment.approved =- 1 
+WHERE
+	erp_custreceivepaymentdet.bookingInvCode <> "0" 
+	AND erp_custreceivepaymentdet.matchingDocID = 0 
+	AND erp_customerreceivepayment.approved =- 1 
+	AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
+				/*AND DATE(erp_customerreceivepayment.postedDate) <= "' . $toDate . '"*/
+	) AS InvoiceFromBRV UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+	erp_matchdocumentmaster.matchingDocCode,
+	erp_matchdocumentmaster.matchingDocdate,
+	erp_custreceivepaymentdet.companySystemID,
+	erp_custreceivepaymentdet.companyID,
+	erp_custreceivepaymentdet.addedDocumentSystemID,
+	erp_custreceivepaymentdet.addedDocumentID,
+	erp_custreceivepaymentdet.bookingInvCodeSystem,
+	erp_custreceivepaymentdet.bookingInvCode,
+	erp_custreceivepaymentdet.receiveAmountTrans,
+	erp_custreceivepaymentdet.receiveAmountLocal,
+	erp_custreceivepaymentdet.receiveAmountRpt 
+FROM
+	erp_custreceivepaymentdet
+	INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
+	AND erp_custreceivepaymentdet.companySystemID = erp_matchdocumentmaster.companySystemID 
+WHERE
+	erp_matchdocumentmaster.matchingConfirmedYN = 1 
+	AND erp_custreceivepaymentdet.companySystemID  IN (' . join(',', $companyID) . ')
+				/*AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $toDate . '"*/
+	) AS InvoiceFromMatching 
+	) AS InvoiceFromUNION 
+GROUP BY
+	bookingInvCode 
 	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
-AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem ORDER BY postedDate asc;');
+	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem ORDER BY postedDate ASC;');
         //dd(DB::getQueryLog());
         return $output;
     }
@@ -1218,7 +1220,7 @@ FROM
 	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
-	AND erp_generalledger.documentDate <= "' . $asOfDate . '"
+	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
 	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
@@ -1238,7 +1240,7 @@ WHERE
 		AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
 	WHERE
 		erp_matchdocumentmaster.matchingConfirmedYN = 1 
-		AND erp_matchdocumentmaster.matchingDocdate <= "' . $asOfDate . '" 
+		AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '" 
 		AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
 		AND erp_matchdocumentmaster.BPVsupplierID IN (' . join(',', $customerSystemID) . ')
 	GROUP BY
@@ -1264,7 +1266,7 @@ WHERE
 		AND erp_custreceivepaymentdet.matchingDocID = 0 
 		AND erp_customerreceivepayment.approved =- 1 
 		AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
-		AND erp_customerreceivepayment.postedDate <= "' . $asOfDate . '"
+		AND DATE(erp_customerreceivepayment.postedDate) <= "' . $asOfDate . '"
 		AND erp_customerreceivepayment.customerID IN (' . join(',', $customerSystemID) . ')
 	GROUP BY
 		custReceivePaymentAutoID 
@@ -1308,7 +1310,7 @@ WHERE
 				AND erp_custreceivepaymentdet.matchingDocID = 0 
 				AND erp_customerreceivepayment.approved =- 1 
 				AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
-				AND erp_customerreceivepayment.postedDate <= "' . $asOfDate . '" 
+				AND DATE(erp_customerreceivepayment.postedDate) <= "' . $asOfDate . '" 
 				AND erp_customerreceivepayment.customerID IN (' . join(',', $customerSystemID) . ')
 			) AS InvoiceFromBRV UNION ALL
 		SELECT
@@ -1333,7 +1335,7 @@ WHERE
 			WHERE
 				erp_matchdocumentmaster.matchingConfirmedYN = 1 
 				AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
-				AND erp_matchdocumentmaster.matchingDocdate <= "' . $asOfDate . '" 
+				AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '" 
 				AND erp_matchdocumentmaster.BPVsupplierID IN (' . join(',', $customerSystemID) . ')
 			) AS InvoiceFromMatching 
 		) AS InvoiceFromUNION 
