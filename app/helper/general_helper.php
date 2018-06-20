@@ -796,7 +796,12 @@ class Helper
      */
     public static function dateFormat($date)
     {
-        return date("d/m/Y", strtotime($date));
+        if($date){
+            return date("d/m/Y", strtotime($date));
+        }else{
+            return '';
+        }
+
     }
 
     public static function checkIsCompanyGroup($companyID)
