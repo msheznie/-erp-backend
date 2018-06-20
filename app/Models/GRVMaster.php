@@ -151,6 +151,7 @@ class GRVMaster extends Model
         'grvConfirmedYN',
         'grvConfirmedByEmpID',
         'grvConfirmedByName',
+        'grvConfirmedByEmpSystemID',
         'grvConfirmedDate',
         'grvCancelledYN',
         'grvCancelledBy',
@@ -176,6 +177,7 @@ class GRVMaster extends Model
         'createdUserID',
         'modifiedPc',
         'modifiedUser',
+        'modifiedUserSystemID',
         'createdDateTime',
         'timeStamp',
         'stampDate'
@@ -230,6 +232,7 @@ class GRVMaster extends Model
         'grvConfirmedYN' => 'integer',
         'grvConfirmedByEmpID' => 'string',
         'grvConfirmedByName' => 'string',
+        'grvConfirmedByEmpSystemID' => 'integer',
         'grvCancelledYN' => 'integer',
         'grvCancelledBy' => 'string',
         'grvCancelledByName' => 'string',
@@ -252,6 +255,7 @@ class GRVMaster extends Model
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
+        'modifiedUserSystemID' => 'integer',
         'stampDate' => 'string',
     ];
 
@@ -291,7 +295,7 @@ class GRVMaster extends Model
 
     public function location_by()
     {
-        return $this->belongsTo('App\Models\Location', 'grvLocation', 'locationID');
+        return $this->belongsTo('App\Models\WarehouseMaster', 'grvLocation', 'wareHouseSystemCode');
     }
 
     public function supplier_by()

@@ -271,21 +271,24 @@ class GRVDetailsAPIController extends AppBaseController
             ->where('companySystemID', $GRVMaster->companySystemID)
             ->first();
 
-        $sizeofDetail = sizeof($input['detailTable']);
+        $size = array_column($input['detailTable'], 'isChecked');
+
+        $frontDetailcount = count(array_filter($size));
+
+        $POMaster = ProcumentOrder::find($input['purchaseOrderMastertID']);
+
+        if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
+
+            $poDetailTotal = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderMastertID'])
+                ->count();
+
+            if ($poDetailTotal != $frontDetailcount) {
+                return $this->sendError('PO all detail items should be pulled for this grv');
+            }
+
+        }
 
         foreach ($input['detailTable'] as $new) {
-
-            $POMaster = ProcumentOrder::find($new['purchaseOrderMasterID']);
-
-            if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
-
-                $poDetailTotal = DB::select('SELECT COUNT(*) as tot FROM erp_purchaseorderdetails WHERE purchaseOrderMasterID = ' . $new['purchaseOrderMasterID'] . '');
-
-                if ($poDetailTotal['tot'] != $sizeofDetail) {
-                    return $this->sendError('PO all detail items should be pulled');
-                }
-
-            }
 
             if ($allowMultiplePO->isYesNO == 0) {
                 $grvDetailExistSameItem = GRVDetails::select(DB::raw('purchaseOrderMastertID'))
@@ -294,12 +297,21 @@ class GRVDetailsAPIController extends AppBaseController
 
                 if (!empty($grvDetailExistSameItem)) {
                     if ($grvDetailExistSameItem['purchaseOrderMastertID'] != $new['purchaseOrderMasterID']) {
-                        return $this->sendError('You cannot add multiple PO');
+                        return $this->sendError('You cannot add multiple PO details');
                     }
                 }
             }
 
             if ($new['isChecked'] && $new['noQty'] > 0) {
+
+
+                if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
+
+                    if ($new['noQty'] != $new['poQty']) {
+                        return $this->sendError('PO detail items all qty should be pull');
+                    }
+
+                }
 
                 //checking if item is inventory item cannot be added more than one
                 if ($POMaster->financeCategory == 1) {
@@ -406,6 +418,8 @@ class GRVDetailsAPIController extends AppBaseController
                     $updatePR = ProcumentOrder::find($new['purchaseOrderMasterID'])
                         ->update(['grvRecieved' => 1]);
                 }
+            }else{
+
             }
 
         }
