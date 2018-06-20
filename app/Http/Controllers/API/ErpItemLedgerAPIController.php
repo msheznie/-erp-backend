@@ -533,11 +533,11 @@ WHERE
 	'' as wareHouseDescription,
 	'' as empName,
 	currencymaster.CurrencyName AS LocalCurrency,
-	((SUM(erp_itemledger.wacLocal) * SUM(erp_itemledger.inOutQty)) / SUM(erp_itemledger.inOutQty)) as wacLocal,
-	SUM( erp_itemledger.inOutQty) * SUM(erp_itemledger.wacLocal) AS TotalWacLocal,
+	SUM(erp_itemledger.wacLocal * erp_itemledger.inOutQty) / SUM(erp_itemledger.inOutQty) as wacLocal,
+	SUM( erp_itemledger.inOutQty * erp_itemledger.wacLocal) AS TotalWacLocal,
 	currencymaster_1.CurrencyName AS RepCurrency,
-	((SUM(erp_itemledger.wacRpt) * SUM(erp_itemledger.inOutQty)) / SUM(erp_itemledger.inOutQty)) as wacRpt,
-	SUM( erp_itemledger.inOutQty) * SUM(erp_itemledger.wacRpt ) AS TotalWacRpt,
+	SUM(erp_itemledger.wacRpt * erp_itemledger.inOutQty) / SUM(erp_itemledger.inOutQty) as wacRpt,
+	SUM( erp_itemledger.inOutQty * erp_itemledger.wacRpt ) AS TotalWacRpt,
 	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
 	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals
 FROM
