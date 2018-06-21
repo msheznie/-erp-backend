@@ -14,6 +14,10 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateItemIssueMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemIssueMasterAPIRequest;
+use App\Models\Company;
+use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
+use App\Models\DocumentMaster;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemIssueType;
 use App\Models\Months;
@@ -22,6 +26,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ItemIssueMasterRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -126,6 +131,87 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function store(CreateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
+
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['createdPCid'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
+
+        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+
+        if ($companyFinancePeriod) {
+            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        }
+
+        if (isset($input['issueDate'])) {
+            if ($input['issueDate']) {
+                $input['issueDate'] = new Carbon($input['issueDate']);
+            }
+        }
+
+        $documentDate= $input['issueDate'];
+        $monthBegin = $input['FYBiggin'];
+        $monthEnd = $input['FYEnd'];
+        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd))
+        {
+        }
+        else
+        {
+            return $this->sendError('Issue Date not between Financial period !',500);
+        }
+
+        $input['documentSystemID'] = 8;
+        $input['documentID'] = 'MI';
+
+        $lastSerial = ItemIssueMaster::where('companySystemID', $input['companySystemID'])
+                                ->orderBy('itemIssueAutoID', 'desc')
+                                ->first();
+
+        $lastSerialNumber = 0;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
+
+        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        if ($segment) {
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['wareHouseFrom'])->first();
+        if ($warehouse) {
+            $input['wareHouseFromCode'] = $warehouse->wareHouseCode;
+            $input['wareHouseFromDes'] = $warehouse->wareHouseDescription;
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $input['serialNo'] = $lastSerialNumber;
+
+        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
+        $companyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
+                                                ->where('companySystemID', $input['companySystemID'])
+                                                ->first();
+        if($companyFinanceYear){
+            $startYear = $companyFinanceYear['bigginingDate'];
+            $finYearExp = explode('-',$startYear);
+            $finYear = $finYearExp[0];
+        }else{
+            $finYear = date("Y");
+        }
+
+        if ($documentMaster) {
+            $itemIssueCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['itemIssueCode'] = $itemIssueCode;
+        }
 
         $itemIssueMasters = $this->itemIssueMasterRepository->create($input);
 
@@ -442,24 +528,13 @@ class ItemIssueMasterAPIController extends AppBaseController
                             ->orderby('year', 'desc')
                             ->get();
 
-        /*$supplier = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
-            ->where('companySystemID', $companyId)
-            ->where('isActive', 1)
-            ->where('isAssigned', -1)
-            ->get();*/
-
-        /*$currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
-            ->get();
-
-        $locations = Location::all();*/
-
         $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $types = ItemIssueType::all();
+        $types = ItemIssueType::take(2)->get();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
@@ -467,13 +542,12 @@ class ItemIssueMasterAPIController extends AppBaseController
         $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
 
-        $output = array('segments' => $segments,
+        $output = array(
+            'segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
-            /*'currencies' => $currencies,
-            'locations' => $locations,*/
             'wareHouseLocation' => $wareHouseLocation,
             'financialYears' => $financialYears,
             'types' => $types,
