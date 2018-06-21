@@ -410,19 +410,24 @@ WHERE
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerAgingDetailQRY($request);
 
-                    /*$outputArr = array();
-                    $grandTotal = collect($output)->pluck('balanceAmount')->toArray();
-                    $grandTotal = array_sum($grandTotal);
+                    $outputArr = array();
+                    $grandTotalArr = array();
+                    if($output['aging']){
+                        foreach ($output['aging'] as $val){
+                            $total = collect($output)->pluck($val)->toArray();
+                            $grandTotalArr[$val] = array_sum($total);
+                        }
+                    }
 
                     $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
                     $decimalPlace = array_unique($decimalPlace);
 
-                    if ($output) {
-                        foreach ($output as $val) {
+                    if ($output['data']) {
+                        foreach ($output['data'] as $val) {
                             $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                         }
                     }
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);*/
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2,'agingRange' => (object)$output['aging']);
                 } else {
                     //customer statement of account
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -925,7 +930,7 @@ WHERE
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate),'toDate' => \Helper::dateFormat($request->toDate),'currencyID' => $request->currencyID);
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
 
                     $html = view('print.customer_statement_of_account_pdf', $dataArr);
 
@@ -1158,7 +1163,8 @@ GROUP BY
         return $output;
     }
 
-    function getCustomerBalanceStatementQRY($request){
+    function getCustomerBalanceStatementQRY($request)
+    {
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
@@ -1437,8 +1443,8 @@ WHERE
         return $output;
     }
 
-    function getCustomerAgingDetailQRY($request){
-
+    function getCustomerAgingDetailQRY($request)
+    {
         $asOfDate = new Carbon($request->fromDate);
         $asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
@@ -1458,28 +1464,40 @@ WHERE
 
         $currency = $request->currencyID;
 
-
-        $aging = array();
-        $interval =  $request->interval;
-        $through =  $request->through;
         $z = 1;
-        for ($i = $interval; $i < $through; $z++) { /*calculate aging range*/
-            if ($z == 1) {
-                $aging[] = $z . "-" . $interval;
+        $aging = array();
+        $interval = $request->interval;
+        $through = $request->through;
+        $agingRange = range(1, $through, $interval);
+        $rangeAmount = $interval;
+        $agingAgeCount = count($agingRange);
+        foreach ($agingRange as $val) {
+            if ($z == $agingAgeCount) {
+                $aging[] = $val . "-" . $through;
             } else {
-                if (($i + $interval) > $through) {
-                    $aging[] = ($i + 1) . "-" . ($through);
-                    $i += $interval;
-                } else {
-                    $aging[] = ($i + 1) . "-" . ($i + $interval);
-                    $i += $interval;
-                }
+                $aging[] = $val . "-" . $rangeAmount;
+                $rangeAmount += $interval;
+            }
+            $z++;
+        }
 
+        $aging[] = "> " . ($through);
+        $agingField = '';
+        if (!empty($aging)) { /*calculate aging range in query*/
+            $count = count($aging);
+            $c = 1;
+            foreach ($aging as $val) {
+                if ($count == $c) {
+                    $agingField .= "if(grandFinal.age > " . $through . ",grandFinal.balanceAmount,0) as `" . $val . "`,";
+                } else {
+                    $list = explode("-", $val);
+                    $agingField .= "if(grandFinal.age >= " . $list[0] . " AND grandFinal.age <= " . $list[1] . ",grandFinal.balanceAmount,0) as `" . $val . "`,";
+                }
+                $c++;
             }
         }
-        $aging[] = "> " . ($through);
+        $agingField .= "if(grandFinal.age <= 0,grandFinal.balanceAmount,0) as `current`";
 
-        return $aging;
 
         $currencyQry = '';
         $amountQry = '';
@@ -1503,7 +1521,7 @@ WHERE
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
-        $output = \DB::select('SELECT
+        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,'.$agingField.',documentCurrency,balanceDecimalPlaces,customerName FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -1513,7 +1531,8 @@ WHERE
 	' . $amountQry . ',
 	' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
-	final.customerName AS customerName 
+	final.customerName AS customerName,
+	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age 
 FROM
 	(
 SELECT
@@ -1735,9 +1754,9 @@ WHERE
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
 	) AS final 
 WHERE
-' . $whereQry . ' <> 0 ORDER BY PostedDate ASC;');
+' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal');
         //dd(DB::getQueryLog());
-        return $output;
+        return ['data'=>$output,'aging'=>$aging];
     }
 
 }
