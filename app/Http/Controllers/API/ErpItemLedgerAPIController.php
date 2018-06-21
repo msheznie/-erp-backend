@@ -491,10 +491,10 @@ class ErpItemLedgerAPIController extends AppBaseController
 	employees.empName,
 	currencymaster.CurrencyName AS LocalCurrency,
 	erp_itemledger.wacLocal,
-	round( erp_itemledger.inOutQty * erp_itemledger.wacLocal ),currencymaster.DecimalPlaces) AS TotalWacLocal,
+	round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, currencymaster.DecimalPlaces) AS TotalWacLocal,
 	currencymaster_1.CurrencyName AS RepCurrency,
 	erp_itemledger.wacRpt,
-	round( erp_itemledger.inOutQty * erp_itemledger.wacRpt ),currencymaster_1.DecimalPlaces) AS TotalWacRpt,
+	round( erp_itemledger.inOutQty * erp_itemledger.wacRpt ,currencymaster_1.DecimalPlaces) AS TotalWacRpt,
 	currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
 	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals 
 FROM
@@ -533,11 +533,11 @@ WHERE
 	'' as wareHouseDescription,
 	'' as empName,
 	currencymaster.CurrencyName AS LocalCurrency,
-	SUM(IFNULL(erp_itemledger.wacLocal,0) * erp_itemledger.inOutQty) / SUM(erp_itemledger.inOutQty) as wacLocal,
-	SUM( erp_itemledger.inOutQty * IFNULL(erp_itemledger.wacLocal,0) AS TotalWacLocal,
+	SUM((IFNULL(erp_itemledger.wacLocal,0) * erp_itemledger.inOutQty)) / SUM(erp_itemledger.inOutQty) as wacLocal,
+	SUM( erp_itemledger.inOutQty * IFNULL(erp_itemledger.wacLocal,0)) AS TotalWacLocal,
 	currencymaster_1.CurrencyName AS RepCurrency,
-	SUM(IFNULL(erp_itemledger.wacRpt,0) * erp_itemledger.inOutQty) / SUM(erp_itemledger.inOutQty) as wacRpt,
-	SUM( erp_itemledger.inOutQty * IFNULL(erp_itemledger.wacRpt,0) ) AS TotalWacRpt,
+	SUM((IFNULL(erp_itemledger.wacRpt,0) * erp_itemledger.inOutQty)) / SUM(erp_itemledger.inOutQty) as wacRpt,
+	SUM( erp_itemledger.inOutQty * IFNULL(erp_itemledger.wacRpt,0)) AS TotalWacRpt,
 	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
 	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals
 FROM

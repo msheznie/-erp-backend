@@ -484,12 +484,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
 
     Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
+    Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany');
     Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
     Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
-Route::get('getReportPDF', 'ReportAPIController@pdfExportReport');
+Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 
 
