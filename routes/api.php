@@ -484,6 +484,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
 
     Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
+    Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
