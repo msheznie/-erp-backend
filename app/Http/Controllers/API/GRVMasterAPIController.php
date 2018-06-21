@@ -19,6 +19,8 @@ use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
 use App\Models\GRVMaster;
 use App\Models\CompanyPolicyMaster;
+use App\Models\PoAdvancePayment;
+use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -115,15 +117,12 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
-        $documentDate= $input['grvDate'];
+        $documentDate = $input['grvDate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
 
-        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd))
-        {
-        }
-        else
-        {
+        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd)) {
+        } else {
             return $this->sendError('GRV Date not between Financial period !');
         }
 
@@ -184,11 +183,11 @@ class GRVMasterAPIController extends AppBaseController
             ->where('companySystemID', $input['companySystemID'])
             ->first();
 
-        if($companyfinanceyear){
+        if ($companyfinanceyear) {
             $startYear = $companyfinanceyear['bigginingDate'];
-            $finYearExp = explode('-',$startYear);
+            $finYearExp = explode('-', $startYear);
             $finYear = $finYearExp[0];
-        }else{
+        } else {
             $finYear = date("Y");
         }
         if ($documentMaster) {
@@ -286,15 +285,12 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
-        $documentDate= $input['grvDate'];
+        $documentDate = $input['grvDate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
 
-        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd))
-        {
-        }
-        else
-        {
+        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd)) {
+        } else {
             return $this->sendError('GRV Date not between Financial period !');
         }
 
@@ -401,7 +397,7 @@ class GRVMasterAPIController extends AppBaseController
                 ->first();
 
             if (empty($grvDetailExist)) {
-                return $this->sendError('GRV Document cannot confirm without details');
+                return $this->sendError('GRV document cannot confirm without details');
             }
 
             $checkQuantity = GRVDetails::where('grvAutoID', $id)
@@ -409,9 +405,34 @@ class GRVMasterAPIController extends AppBaseController
                 ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty', 500);
+                return $this->sendError('Every item should have at least one minimum Qty', 500);
             }
 
+            // checking logistic details  exist and updating grv id in erp_purchaseorderadvpayment  table
+            $fetchingGRVDetails = GRVDetails::select(DB::raw('purchaseOrderMastertID'))
+                ->where('grvAutoID', $input['grvAutoID'])
+                ->get();
+
+            if ($fetchingGRVDetails) {
+                foreach ($fetchingGRVDetails as $der) {
+                    $poMaster = ProcumentOrder::find($der['purchaseOrderMastertID']);
+                    $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])
+                        ->get();
+                    if ($poMaster->logisticsAvailable == -1) {
+                        if (count($poAdvancePaymentdetail) > 0) {
+                            foreach ($poAdvancePaymentdetail as $advance) {
+                                if ($advance['grvAutoID'] == 0) {
+                                    $updatePoAdvancePaymentdetail = PoAdvancePayment::find($advance->poAdvPaymentID);
+                                    $updatePoAdvancePaymentdetail->grvAutoID = $input['grvAutoID'];
+                                    $updatePoAdvancePaymentdetail->save();
+                                }
+                            }
+                        } else {
+                            return $this->sendError('GRV cannot confirm without PO ' . $poMaster->purchaseOrderCode . ' logistic details');
+                        }
+                    }
+                }
+            }
             unset($input['grvConfirmedYN']);
             unset($input['grvConfirmedByEmpSystemID']);
             unset($input['grvConfirmedByEmpID']);

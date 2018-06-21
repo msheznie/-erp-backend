@@ -258,6 +258,10 @@ class PoAdvancePaymentAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
+        if($purchaseOrder->grvRecieved == 2){
+            return $this->sendError('PO is fully received, you cannot add logistic detail');
+        }
+
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['detail']['supplierID'])->first();
 
         if (empty($supplier)) {

@@ -126,7 +126,7 @@ class GRVDetailsAPIController extends AppBaseController
             return $this->sendError('GRV details not found');
         }
 
-        $grvMaster= GRVMaster::find($input['grvAutoID']);
+        $grvMaster = GRVMaster::find($input['grvAutoID']);
 
         if (empty($grvMaster)) {
             return $this->sendError('GRV not found');
@@ -288,6 +288,18 @@ class GRVDetailsAPIController extends AppBaseController
 
         }
 
+        // pre check for all items qty pulled
+        foreach ($input['detailTable'] as $newCheck) {
+
+            if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
+
+                if ($newCheck['noQty'] != $newCheck['poQty']) {
+                    return $this->sendError('PO all detail items qty should be pull');
+                }
+
+            }
+        }
+
         foreach ($input['detailTable'] as $new) {
 
             if ($allowMultiplePO->isYesNO == 0) {
@@ -418,7 +430,7 @@ class GRVDetailsAPIController extends AppBaseController
                     $updatePR = ProcumentOrder::find($new['purchaseOrderMasterID'])
                         ->update(['grvRecieved' => 1]);
                 }
-            }else{
+            } else {
 
             }
 
