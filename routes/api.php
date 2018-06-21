@@ -478,7 +478,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
-Route::get('getReportPDF', 'ReportAPIController@pdfExportReport');
+Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 
 
