@@ -475,12 +475,20 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
     Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
     Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation');
+    Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport');
+
+    Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
+
+    Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
+    Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany');
+    Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
+
+    Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
-
 
 
 

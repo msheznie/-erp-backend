@@ -602,6 +602,25 @@ WHERE
         }
 
     }
+    public function validateStockValuationReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'SL':
+                $validator = \Validator::make($request->all(), [
+                    'date' => 'required',
+                    'warehouse' => 'required'
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422 );
+                }
+                break;
+            default:
+                return $this->sendError('Error Occurred!');
+        }
+
+    }
 
     public function getWarehouse(Request $request){
 
@@ -615,7 +634,7 @@ WHERE
         }
 
         $warehouse = WarehouseMaster::whereIn("companySystemID", $subCompanies)
-                                    ->select('wareHouseCode','wareHouseSystemCode')
+                                    ->select('wareHouseCode','wareHouseSystemCode','wareHouseDescription')
                                     ->get();
 
         return $this->sendResponse($warehouse, 'Warehouse retrieved successfully');
@@ -648,7 +667,12 @@ WHERE
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+        $input = $request->all();
+        if (array_key_exists('warehouse', $input)) {
+            $warehouse = (array)$input['warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
 
+        }
 
         $categories = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
@@ -669,6 +693,7 @@ WHERE
                             units.UnitShortCode,
                             currencymaster.CurrencyName AS LocalCurrency,
                             currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                            currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,
                             currencymaster_1.CurrencyName as RepCurrency,
                             (round(sum(erp_itemledger.wacLocal*erp_itemledger.inOutQty),3) / sum(erp_itemledger.inOutQty)) as WACLocal,
                             (round(sum(wacLocal*inOutQty),3)) as WacLocalAmount,
@@ -676,7 +701,7 @@ WHERE
                             (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2) / sum(erp_itemledger.inOutQty)) as WACRpt,
                             (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
             ->whereIn('erp_itemledger.companySystemID',$subCompanies)
-            ->where('erp_itemledger.wareHouseSystemCode',$request->warehouse)
+            ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
             ->whereRaw("DATE(erp_itemledger.transactionDate) = '$date'")
             ->groupBy('financeitemcategorysub.itemCategorySubID')
             ->get();
@@ -695,6 +720,13 @@ WHERE
 
     public function exportStockEvaluation(Request $request){
 
+        $input = $request->all();
+        if (array_key_exists('warehouse', $input)) {
+            $warehouse = (array)$input['warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+
         $categories = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
             ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
@@ -714,6 +746,7 @@ WHERE
                             units.UnitShortCode,
                             currencymaster.CurrencyName AS LocalCurrency,
                             currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                            currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,
                             currencymaster_1.CurrencyName as RepCurrency,
                             (round(sum(erp_itemledger.wacLocal*erp_itemledger.inOutQty),3) / sum(erp_itemledger.inOutQty)) as WACLocal,
                             (round(sum(wacLocal*inOutQty),3)) as WacLocalAmount,
@@ -721,7 +754,7 @@ WHERE
                             (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2) / sum(erp_itemledger.inOutQty)) as WACRpt,
                             (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
             ->whereIn('erp_itemledger.companySystemID',$request->subCompanies)
-            ->where('erp_itemledger.wareHouseSystemCode',$request->warehouse)
+            ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
             ->whereRaw("DATE(erp_itemledger.transactionDate) = '$request->date'")
             ->groupBy('financeitemcategorysub.itemCategorySubID')
             ->get();
@@ -753,6 +786,11 @@ WHERE
         })->download($request->type);
 
         return $this->sendResponse(array(), 'successfully export');
+    }
+
+    public function generateStockTakingReport(Request $request){
+
+
     }
 
 }
