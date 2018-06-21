@@ -491,10 +491,10 @@ class ErpItemLedgerAPIController extends AppBaseController
 	employees.empName,
 	currencymaster.CurrencyName AS LocalCurrency,
 	erp_itemledger.wacLocal,
-	( erp_itemledger.inOutQty * erp_itemledger.wacLocal ) AS TotalWacLocal,
+	round( erp_itemledger.inOutQty * erp_itemledger.wacLocal ),currencymaster.DecimalPlaces) AS TotalWacLocal,
 	currencymaster_1.CurrencyName AS RepCurrency,
 	erp_itemledger.wacRpt,
-	( erp_itemledger.inOutQty * erp_itemledger.wacRpt ) AS TotalWacRpt,
+	round( erp_itemledger.inOutQty * erp_itemledger.wacRpt ),currencymaster_1.DecimalPlaces) AS TotalWacRpt,
 	currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
 	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals 
 FROM
@@ -533,11 +533,11 @@ WHERE
 	'' as wareHouseDescription,
 	'' as empName,
 	currencymaster.CurrencyName AS LocalCurrency,
-	SUM(erp_itemledger.wacLocal * erp_itemledger.inOutQty) / SUM(erp_itemledger.inOutQty) as wacLocal,
-	SUM( erp_itemledger.inOutQty * erp_itemledger.wacLocal) AS TotalWacLocal,
+	SUM(IFNULL(erp_itemledger.wacLocal,0) * erp_itemledger.inOutQty) / SUM(erp_itemledger.inOutQty) as wacLocal,
+	SUM( erp_itemledger.inOutQty * IFNULL(erp_itemledger.wacLocal,0) AS TotalWacLocal,
 	currencymaster_1.CurrencyName AS RepCurrency,
-	SUM(erp_itemledger.wacRpt * erp_itemledger.inOutQty) / SUM(erp_itemledger.inOutQty) as wacRpt,
-	SUM( erp_itemledger.inOutQty * erp_itemledger.wacRpt ) AS TotalWacRpt,
+	SUM(IFNULL(erp_itemledger.wacRpt,0) * erp_itemledger.inOutQty) / SUM(erp_itemledger.inOutQty) as wacRpt,
+	SUM( erp_itemledger.inOutQty * IFNULL(erp_itemledger.wacRpt,0) ) AS TotalWacRpt,
 	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
 	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals
 FROM
@@ -602,6 +602,25 @@ WHERE
         }
 
     }
+    public function validateStockValuationReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'SL':
+                $validator = \Validator::make($request->all(), [
+                    'date' => 'required',
+                    'warehouse' => 'required'
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422 );
+                }
+                break;
+            default:
+                return $this->sendError('Error Occurred!');
+        }
+
+    }
 
     public function getWarehouse(Request $request){
 
@@ -615,7 +634,7 @@ WHERE
         }
 
         $warehouse = WarehouseMaster::whereIn("companySystemID", $subCompanies)
-                                    ->select('wareHouseCode','wareHouseSystemCode')
+                                    ->select('wareHouseCode','wareHouseSystemCode','wareHouseDescription')
                                     ->get();
 
         return $this->sendResponse($warehouse, 'Warehouse retrieved successfully');
@@ -648,7 +667,12 @@ WHERE
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+        $input = $request->all();
+        if (array_key_exists('warehouse', $input)) {
+            $warehouse = (array)$input['warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
 
+        }
 
         $categories = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
@@ -669,6 +693,7 @@ WHERE
                             units.UnitShortCode,
                             currencymaster.CurrencyName AS LocalCurrency,
                             currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                            currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,
                             currencymaster_1.CurrencyName as RepCurrency,
                             (round(sum(erp_itemledger.wacLocal*erp_itemledger.inOutQty),3) / sum(erp_itemledger.inOutQty)) as WACLocal,
                             (round(sum(wacLocal*inOutQty),3)) as WacLocalAmount,
@@ -676,8 +701,8 @@ WHERE
                             (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2) / sum(erp_itemledger.inOutQty)) as WACRpt,
                             (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
             ->whereIn('erp_itemledger.companySystemID',$subCompanies)
-            ->where('erp_itemledger.wareHouseSystemCode',$request->warehouse)
-            ->whereRaw("DATE(erp_itemledger.transactionDate) = '$date'")
+            ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
+            ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$date'")
             ->groupBy('financeitemcategorysub.itemCategorySubID')
             ->get();
 
@@ -695,6 +720,13 @@ WHERE
 
     public function exportStockEvaluation(Request $request){
 
+        $input = $request->all();
+        if (array_key_exists('warehouse', $input)) {
+            $warehouse = (array)$input['warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+
         $categories = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
             ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
@@ -714,6 +746,7 @@ WHERE
                             units.UnitShortCode,
                             currencymaster.CurrencyName AS LocalCurrency,
                             currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                            currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,
                             currencymaster_1.CurrencyName as RepCurrency,
                             (round(sum(erp_itemledger.wacLocal*erp_itemledger.inOutQty),3) / sum(erp_itemledger.inOutQty)) as WACLocal,
                             (round(sum(wacLocal*inOutQty),3)) as WacLocalAmount,
@@ -721,8 +754,8 @@ WHERE
                             (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2) / sum(erp_itemledger.inOutQty)) as WACRpt,
                             (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
             ->whereIn('erp_itemledger.companySystemID',$request->subCompanies)
-            ->where('erp_itemledger.wareHouseSystemCode',$request->warehouse)
-            ->whereRaw("DATE(erp_itemledger.transactionDate) = '$request->date'")
+            ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
+            ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$request->date'")
             ->groupBy('financeitemcategorysub.itemCategorySubID')
             ->get();
 
@@ -753,6 +786,85 @@ WHERE
         })->download($request->type);
 
         return $this->sendResponse(array(), 'successfully export');
+    }
+
+    public function generateStockTakingReport(Request $request){
+
+        $data = DB::select("SELECT
+	finalStockTaking.companySystemID,
+	finalStockTaking.companyID,
+	finalStockTaking.wareHouseSystemCode,
+	finalStockTaking.wareHouseDescription,
+	finalStockTaking.itemSystemCode,
+	finalStockTaking.itemPrimaryCode,
+	finalStockTaking.itemDescription,
+	finalStockTaking.partNumber,
+	finalStockTaking.unitOfMeasure,
+	round(sum(stockQty),8) as StockQty,
+	round((sum(AmountLocal)/sum(stockQty)),8) as AvgCostLocal,
+	round((sum(AmountRpt)/sum(stockQty)),8) as AvgCostRpt,
+	round((sum(AmountLocal)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostLocal,
+	round((sum(AmountRpt)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostRpt,
+	finalStockTaking.BinLocation
+FROM
+(
+SELECT
+	erp_itemledger.companySystemID,
+	erp_itemledger.companyID,
+	erp_itemledger.wareHouseSystemCode,
+	warehousemaster.wareHouseDescription,
+	erp_itemledger.itemSystemCode,
+	itemmaster.primaryCode AS itemPrimaryCode,
+	itemmaster.itemDescription,
+	itemmaster.secondaryItemCode AS partNumber,
+	erp_itemledger.unitOfMeasure,
+	inOutQty AS stockQty,
+	wacRpt * inOutQty AS AmountRpt,
+	wacLocal * inOutQty AS AmountLocal,
+	StockTaking_BinLocation.binLocationDes AS BinLocation 
+FROM
+	erp_itemledger
+	LEFT JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
+	AND itemmaster.financeCategoryMaster = 1
+	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
+	LEFT JOIN (
+SELECT
+	warehouseitems.companySystemID,
+	warehouseitems.companyID,
+	warehouseitems.warehouseSystemCode,
+	warehouseitems.itemSystemCode,
+	warehouseitems.binNumber,
+	warehousebinlocationmaster.binLocationDes 
+FROM
+	warehouseitems
+	INNER JOIN warehousebinlocationmaster ON warehouseitems.binNumber = warehousebinlocationmaster.binLocationID 
+	AND warehouseitems.warehouseSystemCode = warehousebinlocationmaster.wareHouseSystemCode 
+	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID 
+WHERE
+	warehouseitems.companySystemID = 31 
+	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID 
+	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode 
+	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode 
+WHERE
+	erp_itemledger.fromDamagedTransactionYN = 0 
+	AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '30/06/2018', '%d/%m/%Y' ) 
+	AND erp_itemledger.companySystemID = 31 
+	AND itemmaster.financeCategoryMaster = 1 
+	AND erp_itemledger.itemSystemCode = 40847 
+ORDER BY
+	erp_itemledger.itemSystemCode ASC) AS finalStockTaking
+	GROUP BY companySystemID,wareHouseSystemCode,itemSystemCode");
+
+//        $output = array(
+//            'categories' => $categories,
+//            'date' => $date,
+//            'subCompanies' => $subCompanies,
+//            'warehouse' => $request->warehouse
+//        );
+
+
+        return $this->sendResponse($data, 'Erp Stock Taking retrieved successfully');
+
     }
 
 }
