@@ -414,7 +414,7 @@ WHERE
                     $grandTotalArr = array();
                     if($output['aging']){
                         foreach ($output['aging'] as $val){
-                            $total = collect($output)->pluck($val)->toArray();
+                            $total = collect($output['data'])->pluck($val)->toArray();
                             $grandTotalArr[$val] = array_sum($total);
                         }
                     }
@@ -427,7 +427,7 @@ WHERE
                             $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                         }
                     }
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2,'agingRange' => (object)$output['aging']);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2,'agingRange' => $output['aging']);
                 } else {
                     //customer statement of account
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -1021,7 +1021,7 @@ WHERE
             $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount, 0 ),MainQuery.documentRptDecimalPlaces) AS receiptAmount";
             $invoiceAmountQry = "round(IFNULL(MainQuery.documentRptAmount, 0 ),MainQuery.documentRptDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentRptDecimalPlaces AS balanceDecimalPlaces";
-            $currencyQry = "MainQuery.documentTransCurrency AS documentCurrency";
+            $currencyQry = "MainQuery.documentRptCurrency AS documentCurrency";
         }
         //DB::enableQueryLog();
         $output = \DB::select('SELECT

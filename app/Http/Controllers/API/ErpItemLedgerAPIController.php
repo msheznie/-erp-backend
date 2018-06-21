@@ -533,10 +533,10 @@ WHERE
 	'' as wareHouseDescription,
 	'' as empName,
 	currencymaster.CurrencyName AS LocalCurrency,
-	SUM((IFNULL(erp_itemledger.wacLocal,0) * erp_itemledger.inOutQty) / erp_itemledger.inOutQty) as wacLocal,
+	SUM((IFNULL(erp_itemledger.wacLocal,0) * erp_itemledger.inOutQty)) / SUM(erp_itemledger.inOutQty) as wacLocal,
 	SUM( erp_itemledger.inOutQty * IFNULL(erp_itemledger.wacLocal,0)) AS TotalWacLocal,
 	currencymaster_1.CurrencyName AS RepCurrency,
-	SUM((IFNULL(erp_itemledger.wacRpt,0) * erp_itemledger.inOutQty) / erp_itemledger.inOutQty) as wacRpt,
+	SUM((IFNULL(erp_itemledger.wacRpt,0) * erp_itemledger.inOutQty)) / SUM(erp_itemledger.inOutQty) as wacRpt,
 	SUM( erp_itemledger.inOutQty * IFNULL(erp_itemledger.wacRpt,0)) AS TotalWacRpt,
 	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
 	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals
@@ -703,7 +703,7 @@ WHERE
             ->whereIn('erp_itemledger.companySystemID',$subCompanies)
             ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
             ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$date'")
-            ->groupBy('financeitemcategorysub.itemCategorySubID')
+            ->groupBy('financeitemcategorysub.itemSystemCode')
             ->get();
 
         $output = array(
