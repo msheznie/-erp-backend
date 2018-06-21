@@ -35,6 +35,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\SupplierCurrency;
 use App\Models\WarehouseMaster;
 use App\Models\GRVDetails;
+use App\Models\CompanyFinanceYear;
 use App\Repositories\GRVMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -114,6 +115,17 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
+        $documentDate= $input['grvDate'];
+        $monthBegin = $input['FYBiggin'];
+        $monthEnd = $input['FYEnd'];
+
+        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd))
+        {
+        }
+        else
+        {
+            return $this->sendError('GRV Date not between Financial period !');
+        }
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
@@ -168,8 +180,19 @@ class GRVMasterAPIController extends AppBaseController
 
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
+        $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if($companyfinanceyear){
+            $startYear = $companyfinanceyear['bigginingDate'];
+            $finYearExp = explode('-',$startYear);
+            $finYear = $finYearExp[0];
+        }else{
+            $finYear = date("Y");
+        }
         if ($documentMaster) {
-            $grvCode = ($company->CompanyID . '\\' . date("Y") . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $grvCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['grvPrimaryCode'] = $grvCode;
         }
 
@@ -216,7 +239,7 @@ class GRVMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var GRVMaster $gRVMaster */
-        $gRVMaster = $this->gRVMasterRepository->findWithoutFail($id);
+        $gRVMaster = $this->gRVMasterRepository->with(['created_by', 'confirmed_by', 'segment_by', 'location_by'])->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
             return $this->sendError('Good Receipt Voucher not found');
@@ -241,7 +264,7 @@ class GRVMasterAPIController extends AppBaseController
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
-        $input = array_except($input, ['created_by', 'confirmed_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by']);
         $input = $this->convertArrayToValue($input);
 
         if (isset($input['grvDate'])) {
@@ -261,6 +284,18 @@ class GRVMasterAPIController extends AppBaseController
             if ($input['stampDate']) {
                 $input['stampDate'] = new Carbon($input['stampDate']);
             }
+        }
+
+        $documentDate= $input['grvDate'];
+        $monthBegin = $input['FYBiggin'];
+        $monthEnd = $input['FYEnd'];
+
+        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd))
+        {
+        }
+        else
+        {
+            return $this->sendError('GRV Date not between Financial period !');
         }
 
         /** @var GRVMaster $gRVMaster */
@@ -289,16 +324,10 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('Selected segment is not active. Please select an active segment');
         }
 
-        if ($gRVMaster->serviceLineSystemID != $input['serviceLineSystemID']) {
-            $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
-            if ($segment) {
-                $input['serviceLineCode'] = $segment->ServiceLineCode;
-            }
+        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        if ($segment) {
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
-
-        $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = $user->employee['empID'];
-        $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
         // changing supplier related details when supplier changed
         if ($gRVMaster->supplierID != $input['supplierID']) {
@@ -341,6 +370,25 @@ class GRVMasterAPIController extends AppBaseController
 
         }
 
+        //getting total sum of grv detail amount
+        $grvMasterSum = GRVDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            ->where('grvAutoID', $input['grvAutoID'])
+            ->first();
+
+        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $grvMasterSum['masterTotalSum']);
+
+        $input['grvTotalComRptCurrency'] = round($currencyConversionMaster['reportingAmount'], 8);
+        $input['grvTotalLocalCurrency'] = round($currencyConversionMaster['localAmount'], 8);
+        $input['grvTotalSupplierTransactionCurrency'] = $grvMasterSum['masterTotalSum'];
+        $input['localCurrencyER'] = round($currencyConversionMaster['trasToRptER'], 8);
+        $input['companyReportingER'] = round($currencyConversionMaster['trasToLocER'], 8);
+
+        // calculating total Supplier Default currency
+
+        $currencyConversionSupplier = \Helper::currencyConversion($input["companySystemID"], $input["supplierDefaultCurrencyID"], $input['supplierTransactionCurrencyID'], $grvMasterSum['masterTotalSum']);
+
+        $input['grvTotalSupplierDefaultCurrency'] = round($currencyConversionSupplier['documentAmount'], 8);
+
         if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
 
             //getting total sum of PO detail Amount
@@ -370,7 +418,7 @@ class GRVMasterAPIController extends AppBaseController
             unset($input['grvConfirmedByName']);
             unset($input['grvConfirmedDate']);
 
-            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $grvMasterSum);
+            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
@@ -378,9 +426,13 @@ class GRVMasterAPIController extends AppBaseController
 
         }
 
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $user->employee['empID'];
+        $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
+
         $gRVMaster = $this->gRVMasterRepository->update($input, $id);
 
-        return $this->sendResponse($gRVMaster->toArray(), 'Good Receipt Voucher updated successfully');
+        return $this->sendResponse($gRVMaster->toArray(), 'GRV updated successfully');
     }
 
     /**
@@ -408,7 +460,7 @@ class GRVMasterAPIController extends AppBaseController
     public function getGoodReceiptVoucherMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -427,6 +479,12 @@ class GRVMasterAPIController extends AppBaseController
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $grvMaster->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('grvLocation', $input)) {
+            if ($input['grvLocation'] && !is_null($input['grvLocation'])) {
+                $grvMaster->where('grvLocation', $input['grvLocation']);
             }
         }
 
@@ -450,13 +508,13 @@ class GRVMasterAPIController extends AppBaseController
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $grvMaster->whereMonth('createdDateTime', '=', $input['month']);
+                $grvMaster->whereMonth('grvDate+', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $grvMaster->whereYear('createdDateTime', '=', $input['year']);
+                $grvMaster->whereYear('grvDate', '=', $input['year']);
             }
         }
 
@@ -479,7 +537,8 @@ class GRVMasterAPIController extends AppBaseController
                 'erp_grvmaster.grvCancelledYN',
                 'erp_grvmaster.timesReferred',
                 'erp_grvmaster.grvConfirmedYN',
-                'erp_grvmaster.approved'
+                'erp_grvmaster.approved',
+                'erp_grvmaster.grvLocation'
             ]);
 
         $search = $request->input('search.value');
@@ -564,7 +623,12 @@ class GRVMasterAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
+        $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
+        if (isset($request['type']) && $request['type'] == 'add') {
+            $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
+        }
+        $companyFinanceYear = $companyFinanceYear->get();
 
 
         $output = array('segments' => $segments,

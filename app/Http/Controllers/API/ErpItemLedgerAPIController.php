@@ -702,7 +702,7 @@ WHERE
                             (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
             ->whereIn('erp_itemledger.companySystemID',$subCompanies)
             ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
-            ->whereRaw("DATE(erp_itemledger.transactionDate) = '$date'")
+            ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$date'")
             ->groupBy('financeitemcategorysub.itemCategorySubID')
             ->get();
 
@@ -755,7 +755,7 @@ WHERE
                             (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
             ->whereIn('erp_itemledger.companySystemID',$request->subCompanies)
             ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
-            ->whereRaw("DATE(erp_itemledger.transactionDate) = '$request->date'")
+            ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$request->date'")
             ->groupBy('financeitemcategorysub.itemCategorySubID')
             ->get();
 
@@ -786,6 +786,85 @@ WHERE
         })->download($request->type);
 
         return $this->sendResponse(array(), 'successfully export');
+    }
+
+    public function generateStockTakingReport(Request $request){
+
+        $data = DB::select("SELECT
+	finalStockTaking.companySystemID,
+	finalStockTaking.companyID,
+	finalStockTaking.wareHouseSystemCode,
+	finalStockTaking.wareHouseDescription,
+	finalStockTaking.itemSystemCode,
+	finalStockTaking.itemPrimaryCode,
+	finalStockTaking.itemDescription,
+	finalStockTaking.partNumber,
+	finalStockTaking.unitOfMeasure,
+	round(sum(stockQty),8) as StockQty,
+	round((sum(AmountLocal)/sum(stockQty)),8) as AvgCostLocal,
+	round((sum(AmountRpt)/sum(stockQty)),8) as AvgCostRpt,
+	round((sum(AmountLocal)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostLocal,
+	round((sum(AmountRpt)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostRpt,
+	finalStockTaking.BinLocation
+FROM
+(
+SELECT
+	erp_itemledger.companySystemID,
+	erp_itemledger.companyID,
+	erp_itemledger.wareHouseSystemCode,
+	warehousemaster.wareHouseDescription,
+	erp_itemledger.itemSystemCode,
+	itemmaster.primaryCode AS itemPrimaryCode,
+	itemmaster.itemDescription,
+	itemmaster.secondaryItemCode AS partNumber,
+	erp_itemledger.unitOfMeasure,
+	inOutQty AS stockQty,
+	wacRpt * inOutQty AS AmountRpt,
+	wacLocal * inOutQty AS AmountLocal,
+	StockTaking_BinLocation.binLocationDes AS BinLocation 
+FROM
+	erp_itemledger
+	LEFT JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
+	AND itemmaster.financeCategoryMaster = 1
+	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
+	LEFT JOIN (
+SELECT
+	warehouseitems.companySystemID,
+	warehouseitems.companyID,
+	warehouseitems.warehouseSystemCode,
+	warehouseitems.itemSystemCode,
+	warehouseitems.binNumber,
+	warehousebinlocationmaster.binLocationDes 
+FROM
+	warehouseitems
+	INNER JOIN warehousebinlocationmaster ON warehouseitems.binNumber = warehousebinlocationmaster.binLocationID 
+	AND warehouseitems.warehouseSystemCode = warehousebinlocationmaster.wareHouseSystemCode 
+	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID 
+WHERE
+	warehouseitems.companySystemID = 31 
+	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID 
+	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode 
+	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode 
+WHERE
+	erp_itemledger.fromDamagedTransactionYN = 0 
+	AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '30/06/2018', '%d/%m/%Y' ) 
+	AND erp_itemledger.companySystemID = 31 
+	AND itemmaster.financeCategoryMaster = 1 
+	AND erp_itemledger.itemSystemCode = 40847 
+ORDER BY
+	erp_itemledger.itemSystemCode ASC) AS finalStockTaking
+	GROUP BY companySystemID,wareHouseSystemCode,itemSystemCode");
+
+//        $output = array(
+//            'categories' => $categories,
+//            'date' => $date,
+//            'subCompanies' => $subCompanies,
+//            'warehouse' => $request->warehouse
+//        );
+
+
+        return $this->sendResponse($data, 'Erp Stock Taking retrieved successfully');
+
     }
 
 }
