@@ -470,10 +470,6 @@ class CustomerMasterAPIController extends AppBaseController
             $companies = [$companyId];
         }
 
-        if (array_key_exists('search', $input)) {
-            $search = $input['search'];
-        }
-
         $customers = CustomerAssigned::whereIn('companySystemID',$companies)
                                             ->select(['customerCodeSystem','CustomerName','CutomerCode'])
                                             ->when(request('search', false), function ($q, $search) {
