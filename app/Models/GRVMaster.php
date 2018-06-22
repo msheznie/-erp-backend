@@ -310,7 +310,7 @@ class GRVMaster extends Model
 
     public function approved_by()
     {
-        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'grvAutoID');
     }
 
     

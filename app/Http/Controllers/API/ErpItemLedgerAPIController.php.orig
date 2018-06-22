@@ -750,7 +750,11 @@ WHERE
             ->whereIn('erp_itemledger.companySystemID',$subCompanies)
             ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
             ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$date'")
+<<<<<<< HEAD
             ->groupBy('itemSystemCode')
+=======
+            ->groupBy('financeitemcategorysub.itemSystemCode')
+>>>>>>> 074205cedb724cabd61ab590b7f86c139b9582d7
             ->get();
 
         $finalArray = array();
