@@ -674,7 +674,7 @@ WHERE
 
         }
 
-        $categories = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+        $items  = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
             ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
             ->leftJoin('currencymaster AS currencymaster_1', 'erp_itemledger.wacRptCurrencyID', '=', 'currencymaster_1.currencyID')
@@ -703,13 +703,31 @@ WHERE
             ->whereIn('erp_itemledger.companySystemID',$subCompanies)
             ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
             ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$date'")
-            ->groupBy('financeitemcategorysub.itemSystemCode')
+            ->groupBy('itemSystemCode')
             ->get();
 
+        $finalArray = array();
+        if (!empty($items)) {
+            foreach ($items as $element) {
+                $finalArray[$element['categoryDescription']][] = $element;
+            }
+        }
+
+        $GrandWacLocal = collect($items)->pluck('WacLocalAmount')->toArray();
+        $GrandWacLocal = array_sum($GrandWacLocal);
+
+        $GrandWacRpt = collect($items)->pluck('WacRptAmount')->toArray();
+        $GrandWacRpt = array_sum($GrandWacRpt);
+
+//        $TotalWacRpt = collect($data)->pluck('TotalWacRpt')->toArray();
+//        $TotalWacRpt = array_sum($TotalWacRpt);
+
         $output = array(
-            'categories' => $categories,
+            'categories' => $finalArray,
             'date' => $date,
             'subCompanies' => $subCompanies,
+            'grandWacLocal' => $GrandWacLocal,
+            'grandWacRpt' => $GrandWacRpt,
             'warehouse' => $request->warehouse
         );
 
@@ -756,7 +774,7 @@ WHERE
             ->whereIn('erp_itemledger.companySystemID',$request->subCompanies)
             ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
             ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$request->date'")
-            ->groupBy('financeitemcategorysub.itemCategorySubID')
+            ->groupBy('itemSystemCode')
             ->get();
 
         foreach ($categories as $val) {
@@ -790,7 +808,131 @@ WHERE
 
     public function generateStockTakingReport(Request $request){
 
+        $date = new Carbon($request->date);
+        $date = $date->format('d/m/Y');
+
+
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $input = $request->all();
+        if (array_key_exists('warehouse', $input)) {
+            $warehouse = (array)$input['warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+
         $data = DB::select("SELECT
+	finalStockTaking.companySystemID,
+	finalStockTaking.companyID,
+	finalStockTaking.wareHouseSystemCode,
+	finalStockTaking.wareHouseDescription,
+	finalStockTaking.itemSystemCode,
+	finalStockTaking.itemPrimaryCode,
+	finalStockTaking.itemDescription,
+	finalStockTaking.partNumber,
+	finalStockTaking.unitOfMeasure,
+	finalStockTaking.UnitShortCode,
+	round(sum(stockQty),8) as StockQty,
+	round((sum(AmountLocal)/sum(stockQty)),8) as AvgCostLocal,
+	round((sum(AmountRpt)/sum(stockQty)),8) as AvgCostRpt,
+	round((sum(AmountLocal)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostLocal,
+	round((sum(AmountRpt)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostRpt,
+	finalStockTaking.BinLocation
+FROM
+(
+SELECT
+	erp_itemledger.companySystemID,
+	erp_itemledger.companyID,
+	erp_itemledger.wareHouseSystemCode,
+	warehousemaster.wareHouseDescription,
+	erp_itemledger.itemSystemCode,
+	itemmaster.primaryCode AS itemPrimaryCode,
+	itemmaster.itemDescription,
+	itemmaster.secondaryItemCode AS partNumber,
+	erp_itemledger.unitOfMeasure,
+	units.UnitShortCode,
+	inOutQty AS stockQty,
+	wacRpt * inOutQty AS AmountRpt,
+	wacLocal * inOutQty AS AmountLocal,
+	StockTaking_BinLocation.binLocationDes AS BinLocation 
+FROM
+	erp_itemledger
+	LEFT JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
+	AND itemmaster.financeCategoryMaster = 1
+	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
+	LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
+	LEFT JOIN (
+SELECT
+	warehouseitems.companySystemID,
+	warehouseitems.companyID,
+	warehouseitems.warehouseSystemCode,
+	warehouseitems.itemSystemCode,
+	warehouseitems.binNumber,
+	warehousebinlocationmaster.binLocationDes 
+FROM
+	warehouseitems
+	INNER JOIN warehousebinlocationmaster ON warehouseitems.binNumber = warehousebinlocationmaster.binLocationID 
+	AND warehouseitems.warehouseSystemCode = warehousebinlocationmaster.wareHouseSystemCode 
+	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID 
+WHERE
+	warehouseitems.companySystemID = '' 
+	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID 
+	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode 
+	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode 
+WHERE
+	erp_itemledger.fromDamagedTransactionYN = 0 
+	AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE(  '$date', '%d/%m/%Y' ) 
+	AND erp_itemledger.companySystemID IN (".join(',',$subCompanies).")
+	AND erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).")
+	AND itemmaster.financeCategoryMaster = 1  
+ORDER BY
+	erp_itemledger.itemSystemCode ASC) AS finalStockTaking
+	GROUP BY companySystemID,wareHouseSystemCode,itemSystemCode");
+
+        $dataRec = \DataTables::of($data)->make(true);
+
+//        $output = array(
+//            'categories' => $categories,
+//            'date' => $date,
+//            'subCompanies' => $subCompanies,
+//            'warehouse' => $request->warehouse
+//        );
+
+
+//        return $this->sendResponse($dataRec, 'Erp Stock Taking retrieved successfully');
+
+        return $dataRec;
+
+    }
+
+    public function exportStockTaking(Request $request){
+
+        $date = new Carbon($request->date);
+        $date = $date->format('d/m/Y');
+
+
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+        $input = $request->all();
+        if (array_key_exists('warehouse', $input)) {
+            $warehouse = (array)$input['warehouse'];
+            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+
+        }
+
+        $stockTaking = DB::select("SELECT
 	finalStockTaking.companySystemID,
 	finalStockTaking.companyID,
 	finalStockTaking.wareHouseSystemCode,
@@ -841,30 +983,45 @@ FROM
 	AND warehouseitems.warehouseSystemCode = warehousebinlocationmaster.wareHouseSystemCode 
 	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID 
 WHERE
-	warehouseitems.companySystemID = 31 
+	warehouseitems.companySystemID = '' 
 	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID 
 	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode 
 	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode 
 WHERE
 	erp_itemledger.fromDamagedTransactionYN = 0 
-	AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '30/06/2018', '%d/%m/%Y' ) 
-	AND erp_itemledger.companySystemID = 31 
-	AND itemmaster.financeCategoryMaster = 1 
-	AND erp_itemledger.itemSystemCode = 40847 
+	AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE(  '$date', '%d/%m/%Y' ) 
+	AND erp_itemledger.companySystemID IN (".join(',',$subCompanies).")
+	AND erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).")
+	AND itemmaster.financeCategoryMaster = 1  
 ORDER BY
 	erp_itemledger.itemSystemCode ASC) AS finalStockTaking
 	GROUP BY companySystemID,wareHouseSystemCode,itemSystemCode");
 
-//        $output = array(
-//            'categories' => $categories,
-//            'date' => $date,
-//            'subCompanies' => $subCompanies,
-//            'warehouse' => $request->warehouse
-//        );
+        foreach ($stockTaking as $val) {
+            $data[] = array(
+                'Warehouse' => $val->wareHouseDescription,
+                'Item Code' => $val->itemPrimaryCode,
+                'Item Description' => $val->itemDescription,
+                'UOM' => $val->unitOfMeasure,
+                'Part Number' => $val->partNumber,
+                'Stock Qty' => $val->StockQty,
+                'Physical Qty' =>$val->BinLocation,
+                'Bin Location' => $val->BinLocation
+            );
+        }
 
+        $csv = \Excel::create('po_wise_analysis', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($request->type);
 
-        return $this->sendResponse($data, 'Erp Stock Taking retrieved successfully');
-
+        return $this->sendResponse(array(), 'successfully export');
     }
 
 }

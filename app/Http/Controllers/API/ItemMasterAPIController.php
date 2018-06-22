@@ -318,7 +318,6 @@ class ItemMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
-        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
     }
 
     /**
