@@ -674,53 +674,6 @@ WHERE
 
         }
 
-//        $categ = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
-//            ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
-//            ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
-//            ->leftJoin('currencymaster AS currencymaster_1', 'erp_itemledger.wacRptCurrencyID', '=', 'currencymaster_1.currencyID')
-//            ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
-//            ->selectRaw('DISTINCT(financeitemcategorysub.categoryDescription)')
-//            ->whereIn('erp_itemledger.companySystemID',$subCompanies)
-//            ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
-//            ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$date'")
-//            ->groupBy('erp_itemledger.itemSystemCode')
-//            ->get();
-//
-//        foreach ($categ as $cat){
-//            $categories [] = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
-//                ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
-//                ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
-//                ->leftJoin('currencymaster AS currencymaster_1', 'erp_itemledger.wacRptCurrencyID', '=', 'currencymaster_1.currencyID')
-//                ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
-//                ->selectRaw('erp_itemledger.companySystemID,
-//                            erp_itemledger.companyID,
-//                            erp_itemledger.itemSystemCode,
-//                            erp_itemledger.itemPrimaryCode,
-//                            erp_itemledger.itemDescription,
-//                            erp_itemledger.unitOfMeasure,
-//                            sum(erp_itemledger.inOutQty) as Qty,
-//                            erp_itemledger.wacLocalCurrencyID,
-//                            financeitemcategorysub.categoryDescription,
-//                            erp_itemledger.transactionDate,
-//                            itemmaster.secondaryItemCode,
-//                            units.UnitShortCode,
-//                            currencymaster.CurrencyName AS LocalCurrency,
-//                            currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
-//                            currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,
-//                            currencymaster_1.CurrencyName as RepCurrency,
-//                            (round(sum(erp_itemledger.wacLocal*erp_itemledger.inOutQty),3) / sum(erp_itemledger.inOutQty)) as WACLocal,
-//                            (round(sum(wacLocal*inOutQty),3)) as WacLocalAmount,
-//                            erp_itemledger.wacRptCurrencyID,
-//                            (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2) / sum(erp_itemledger.inOutQty)) as WACRpt,
-//                            (round(sum(erp_itemledger.wacRpt*erp_itemledger.inOutQty),2)) as WacRptAmount')
-//                ->whereIn('erp_itemledger.companySystemID',$subCompanies)
-//                ->where('financeitemcategorysub.categoryDescription',$cat)
-//                ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
-//                ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$date'")
-//                ->groupBy('erp_itemledger.itemSystemCode')
-//                ->get();
-//        }
-
         $items  = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
             ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
@@ -757,70 +710,24 @@ WHERE
         if (!empty($items)) {
             foreach ($items as $element) {
                 $finalArray[$element['categoryDescription']][] = $element;
-
             }
         }
 
-        /*return $finalArray;
+        $GrandWacLocal = collect($items)->pluck('WacLocalAmount')->toArray();
+        $GrandWacLocal = array_sum($GrandWacLocal);
 
-        $categoriesArray = array();
+        $GrandWacRpt = collect($items)->pluck('WacRptAmount')->toArray();
+        $GrandWacRpt = array_sum($GrandWacRpt);
 
-        $count = 0;
-
-        foreach ($items as $item){
-
-            $categoryExist = false;
-
-            foreach ($categoriesArray as $category){
-
-                if($item->categoryDescription == $category['name']){
-                    array_push($category['data'],$item);
-
-                    return $categoriesArray;
-                    $categoryExist = true;
-                    break;
-                }
-            }
-
-            if(!$categoryExist){
-                $temArray = array('name' => $item->categoryDescription,'data' => array());
-                array_push($temArray['data'],$item);
-                array_push($categoriesArray,$temArray);
-            }
-
-            $count ++;
-
-            if($count == 2){
-                return $categoriesArray;
-            }
-        }*/
-
-
-
-//        $categories = DB::select('select companySystemID,
-//companyID,
-//itemSystemCode,
-//itemPrimaryCode,
-//itemDescription,
-//unitOfMeasure,
-//sum(inOutQty) as Qty,
-//wacLocalCurrencyID,
-//round(sum((wacLocal*inOutQty)),3)/sum(inOutQty) as WACLocal,
-//round(sum((wacLocal*inOutQty)),3) as WacLocalAmount,
-//wacRptCurrencyID,
-//round(sum((wacRpt*inOutQty)),2)/sum(inOutQty) as WACRpt,
-//round(sum((wacRpt*inOutQty)),2) as WacRptAmount
-//
-//from erp_itemledger
-//
-//where companySystemID='.$subCompanies.'
-//
-//group by companySystemID,itemSystemCode');
+//        $TotalWacRpt = collect($data)->pluck('TotalWacRpt')->toArray();
+//        $TotalWacRpt = array_sum($TotalWacRpt);
 
         $output = array(
             'categories' => $finalArray,
             'date' => $date,
             'subCompanies' => $subCompanies,
+            'grandWacLocal' => $GrandWacLocal,
+            'grandWacRpt' => $GrandWacRpt,
             'warehouse' => $request->warehouse
         );
 
@@ -867,7 +774,7 @@ WHERE
             ->whereIn('erp_itemledger.companySystemID',$request->subCompanies)
             ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
             ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$request->date'")
-            ->groupBy('financeitemcategorysub.itemCategorySubID')
+            ->groupBy('itemSystemCode')
             ->get();
 
         foreach ($categories as $val) {
