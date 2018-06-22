@@ -121,7 +121,7 @@ class GRVMasterAPIController extends AppBaseController
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
 
-        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd)) {
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('GRV Date not between Financial period !');
         }
@@ -289,7 +289,7 @@ class GRVMasterAPIController extends AppBaseController
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
 
-        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd)) {
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('GRV Date not between Financial period !');
         }
