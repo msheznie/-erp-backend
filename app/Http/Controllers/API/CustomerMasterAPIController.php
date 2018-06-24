@@ -9,7 +9,8 @@
 -- Description : This file contains the all CRUD for Customer Master
 -- REVISION HISTORY
 -- Date: 19-March 2018 By: Fayas Description: Added new functions named as getAllCustomers()
--- Date: 20-March 2018 By: Fayas Description: Added new functions named as getCustomerFormData(),getAssignedCompaniesByCustomer
+-- Date: 20-March 2018 By: Fayas Description: Added new functions named as getCustomerFormData(),getAssignedCompaniesByCustomer()
+-- Date: 21-June 2018 By: Fayas Description: Added new functions named as getSearchCustomerByCompany()
 
  */
 namespace App\Http\Controllers\API;
@@ -446,6 +447,43 @@ class CustomerMasterAPIController extends AppBaseController
         }else{
             return $this->sendResponse(array(),$reject["message"]);
         }
-
     }
+
+    /**
+     *  Search Customer By Company
+     * GET /getSearchCustomerByCompany
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getSearchCustomerByCompany(Request $request)
+    {
+
+        $companyId = $request->companyId;
+        $input = $request->all();
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $companies = \Helper::getGroupCompany($companyId);
+        }else{
+            $companies = [$companyId];
+        }
+
+        $customers = CustomerAssigned::whereIn('companySystemID',$companies)
+                                            ->select(['customerCodeSystem','CustomerName','CutomerCode'])
+                                            ->when(request('search', false), function ($q, $search) {
+                                                return $q->where(function ($query) use($search) {
+                                                   return $query->where('CutomerCode','LIKE',"%{$search}%")
+                                                                    ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
+                                                                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+                                                });
+                                            })
+                                            //->take(20)
+                                            ->get();
+
+
+        return $this->sendResponse($customers->toArray(), 'Customer Master deleted successfully');
+    }
+
 }

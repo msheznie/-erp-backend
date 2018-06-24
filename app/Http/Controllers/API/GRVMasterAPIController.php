@@ -19,6 +19,8 @@ use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
 use App\Models\GRVMaster;
 use App\Models\CompanyPolicyMaster;
+use App\Models\PoAdvancePayment;
+use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -115,15 +117,12 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
-        $documentDate= $input['grvDate'];
+        $documentDate = $input['grvDate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
 
-        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd))
-        {
-        }
-        else
-        {
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
             return $this->sendError('GRV Date not between Financial period !');
         }
 
@@ -184,11 +183,11 @@ class GRVMasterAPIController extends AppBaseController
             ->where('companySystemID', $input['companySystemID'])
             ->first();
 
-        if($companyfinanceyear){
+        if ($companyfinanceyear) {
             $startYear = $companyfinanceyear['bigginingDate'];
-            $finYearExp = explode('-',$startYear);
+            $finYearExp = explode('-', $startYear);
             $finYear = $finYearExp[0];
-        }else{
+        } else {
             $finYear = date("Y");
         }
         if ($documentMaster) {
@@ -286,15 +285,12 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
-        $documentDate= $input['grvDate'];
+        $documentDate = $input['grvDate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
 
-        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd))
-        {
-        }
-        else
-        {
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
             return $this->sendError('GRV Date not between Financial period !');
         }
 
@@ -370,24 +366,21 @@ class GRVMasterAPIController extends AppBaseController
 
         }
 
-        //getting total sum of grv detail amount
-        $grvMasterSum = GRVDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+        //getting transaction amount
+        $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
             ->where('grvAutoID', $input['grvAutoID'])
             ->first();
 
-        $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $grvMasterSum['masterTotalSum']);
+        //getting logistic amount
+        $grvTotalLogisticAmount = PoAdvancePayment::select(DB::raw('COALESCE(SUM(reqAmountInPOTransCur),0) as transactionTotalSum, COALESCE(SUM(reqAmountInPORptCur),0) as reportingTotalSum, COALESCE(SUM(reqAmountInPOLocalCur),0) as localTotalSum'))
+            ->where('grvAutoID', $input['grvAutoID'])
+            ->first();
 
-        $input['grvTotalComRptCurrency'] = round($currencyConversionMaster['reportingAmount'], 8);
-        $input['grvTotalLocalCurrency'] = round($currencyConversionMaster['localAmount'], 8);
-        $input['grvTotalSupplierTransactionCurrency'] = $grvMasterSum['masterTotalSum'];
-        $input['localCurrencyER'] = round($currencyConversionMaster['trasToRptER'], 8);
-        $input['companyReportingER'] = round($currencyConversionMaster['trasToLocER'], 8);
+        $input['grvTotalSupplierTransactionCurrency'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'];
+        $input['grvTotalComRptCurrency'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'];
+        $input['grvTotalLocalCurrency'] = $grvTotalSupplierTransactionCurrency['localTotalSum'];
+        $input['grvTotalSupplierDefaultCurrency'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'];
 
-        // calculating total Supplier Default currency
-
-        $currencyConversionSupplier = \Helper::currencyConversion($input["companySystemID"], $input["supplierDefaultCurrencyID"], $input['supplierTransactionCurrencyID'], $grvMasterSum['masterTotalSum']);
-
-        $input['grvTotalSupplierDefaultCurrency'] = round($currencyConversionSupplier['documentAmount'], 8);
 
         if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
 
@@ -401,7 +394,7 @@ class GRVMasterAPIController extends AppBaseController
                 ->first();
 
             if (empty($grvDetailExist)) {
-                return $this->sendError('GRV Document cannot confirm without details');
+                return $this->sendError('GRV document cannot confirm without details');
             }
 
             $checkQuantity = GRVDetails::where('grvAutoID', $id)
@@ -409,7 +402,75 @@ class GRVMasterAPIController extends AppBaseController
                 ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty', 500);
+                return $this->sendError('Every item should have at least one minimum Qty', 500);
+            }
+
+            // checking logistic details  exist and updating grv id in erp_purchaseorderadvpayment  table
+            $fetchingGRVDetails = GRVDetails::select(DB::raw('purchaseOrderMastertID'))
+                ->where('grvAutoID', $input['grvAutoID'])
+                ->get();
+
+            if ($fetchingGRVDetails) {
+                foreach ($fetchingGRVDetails as $der) {
+                    $poMaster = ProcumentOrder::find($der['purchaseOrderMastertID']);
+                    $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])
+                        ->get();
+                    if ($poMaster->logisticsAvailable == -1) {
+                        if (count($poAdvancePaymentdetail) > 0) {
+                            foreach ($poAdvancePaymentdetail as $advance) {
+                                if ($advance['grvAutoID'] == 0) {
+                                    $updatePoAdvancePaymentdetail = PoAdvancePayment::find($advance->poAdvPaymentID);
+                                    $updatePoAdvancePaymentdetail->grvAutoID = $input['grvAutoID'];
+                                    $updatePoAdvancePaymentdetail->save();
+                                }
+                            }
+                        } else {
+                            return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . 'has logistics. You can confirm the GRV only after logistics details are updated.');
+                        }
+                    }
+                }
+            }
+
+            //getting transaction amount
+            $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
+                ->where('grvAutoID', $input['grvAutoID'])
+                ->first();
+
+            //getting logistic amount
+            $grvTotalLogisticAmount = PoAdvancePayment::select(DB::raw('COALESCE(SUM(reqAmountInPOTransCur),0) as transactionTotalSum, COALESCE(SUM(reqAmountInPORptCur),0) as reportingTotalSum, COALESCE(SUM(reqAmountInPOLocalCur),0) as localTotalSum'))
+                ->where('grvAutoID', $input['grvAutoID'])
+                ->first();
+
+            $input['grvTotalSupplierTransactionCurrency'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'];
+            $input['grvTotalComRptCurrency'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'];
+            $input['grvTotalLocalCurrency'] = $grvTotalSupplierTransactionCurrency['localTotalSum'];
+            $input['grvTotalSupplierDefaultCurrency'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'];
+
+            //updating logistic details in grv details table
+
+            $fetchAllGrvDetails = GRVDetails::where('grvAutoID', $input['grvAutoID'])
+                ->get();
+
+            if ($fetchAllGrvDetails) {
+                foreach ($fetchAllGrvDetails as $row) {
+                    $updateGRVDetail_log_detail = GRVDetails::find($row['grvDetailsID']);
+
+                    $logisticsCharges_TransCur = ((($row['noQty'] * $row['GRVcostPerUnitSupTransCur']) / ($input['grvTotalSupplierTransactionCurrency'])) * $grvTotalLogisticAmount['transactionTotalSum']) / $row['noQty'];
+
+                    $logisticsCharges_LocalCur = ((($row['noQty'] * $row['GRVcostPerUnitLocalCur']) / ($input['grvTotalLocalCurrency'])) * $grvTotalLogisticAmount['localTotalSum']) / $row['noQty'];
+
+                    $logisticsChargest_RptCur = ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
+
+                    $updateGRVDetail_log_detail->logisticsCharges_TransCur = $logisticsCharges_TransCur;
+                    $updateGRVDetail_log_detail->logisticsCharges_LocalCur = $logisticsCharges_LocalCur;
+                    $updateGRVDetail_log_detail->logisticsChargest_RptCur = $logisticsChargest_RptCur;
+
+                    $updateGRVDetail_log_detail->landingCost_TransCur = $logisticsCharges_TransCur + $row['GRVcostPerUnitSupTransCur'];
+                    $updateGRVDetail_log_detail->landingCost_LocalCur = $logisticsCharges_LocalCur + $row['GRVcostPerUnitLocalCur'];
+                    $updateGRVDetail_log_detail->landingCost_RptCur = $logisticsChargest_RptCur + $row['GRVcostPerUnitComRptCur'];
+
+                    $updateGRVDetail_log_detail->save();
+                }
             }
 
             unset($input['grvConfirmedYN']);

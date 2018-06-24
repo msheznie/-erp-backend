@@ -8,6 +8,7 @@
 -- Create date : 20 - June 2018
 -- Description : This file contains the all CRUD for Item Issue Details
 -- REVISION HISTORY
+-- Date: 22-June 2018 By: Fayas Description: Added new functions named as getItemsByMaterielIssue()
  */
 namespace App\Http\Controllers\API;
 
@@ -286,5 +287,24 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $itemIssueDetails->delete();
 
         return $this->sendResponse($id, 'Item Issue Details deleted successfully');
+    }
+
+    /**
+     * Display a listing of the items by Materiel Issue.
+     * GET|HEAD /getItemsByMaterielIssue
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getItemsByMaterielIssue(Request $request)
+    {
+        $input = $request->all();
+        $rId = $input['itemIssueAutoID'];
+
+        $items = ItemIssueDetails::where('itemIssueAutoID', $rId)
+                                ->with(['uom_default','uom_issuing'])
+                                ->get();
+
+        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }
 }

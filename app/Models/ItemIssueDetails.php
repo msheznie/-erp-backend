@@ -466,5 +466,12 @@ class ItemIssueDetails extends Model
         
     ];
 
+    public function uom_default(){
+        return $this->belongsTo('App\Models\Unit','itemUnitOfMeasure','UnitID');
+    }
+
+    public function uom_issuing(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasureIssued','UnitID');
+    }
     
 }
