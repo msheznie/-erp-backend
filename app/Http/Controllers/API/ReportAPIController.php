@@ -136,6 +136,12 @@ class ReportAPIController extends AppBaseController
                 $suppliers = (array)$request->suppliers;
                 $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
+                if(isset($request->selectedSupplier)){
+                    if(!empty($request->selectedSupplier)){
+                        $suppliers = collect($request->selectedSupplier);
+                    }
+                }
+
                 if ($request->reportType == 1) { //PO Analysis Item Detail Report
                     $output = DB::table('erp_purchaseorderdetails')
                         ->join(DB::raw('(SELECT locationName,
@@ -186,7 +192,7 @@ WHERE
                         erp_purchaseorderdetails.purchaseOrderDetailsID,
                         gdet2.lastOfgrvDate,
                     erp_purchaseorderdetails.unitOfMeasure,
-                    IF((erp_purchaseorderdetails.noQty-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Recieved","Partially Recieved")) as receivedStatus,
+                    IF((erp_purchaseorderdetails.noQty-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
                     IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
@@ -206,10 +212,33 @@ WHERE
                     podet.*')
                         ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID);
 
-                    $search = $request->input('search.value');
+                    /*$search = $request->input('search.value');
                     if ($search) {
-                        $output = $output->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
-                            ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%");
+                        $search = str_replace("\\", "\\\\", $search);
+                        $output = $output->where(function ($query) use ($search) {
+                            $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
+                                ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%")
+                                ->orWhere('supplierName', 'LIKE', "%{$search}%")
+                                ->orWhere('purchaseOrderCode', 'LIKE', "%{$search}%");
+                        });
+                    }*/
+
+                    if(isset($request->searchText)){
+                        if(!empty($request->searchText)){
+                            $search = str_replace("\\", "\\\\", $request->searchText);
+                            $output = $output->where(function ($query) use ($search) {
+                                $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
+                                    ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%")
+                                    ->orWhere('supplierName', 'LIKE', "%{$search}%")
+                                    ->orWhere('purchaseOrderCode', 'LIKE', "%{$search}%");
+                            });
+                        }
+                    }
+
+                    if(isset($request->grvStatus)){
+                        if(!empty($request->grvStatus)){
+                            $output = $output->having('receivedStatus', $request->grvStatus);
+                        }
                     }
 
                     $output->orderBy('podet.approvedDate', 'ASC');
@@ -508,6 +537,12 @@ WHERE
                 $suppliers = (array)$request->suppliers;
                 $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
+                if(isset($request->selectedSupplier)){
+                    if(!empty($request->selectedSupplier)){
+                        $suppliers = collect($request->selectedSupplier);
+                    }
+                }
+
                 if ($request->reportType == 1) {
                     $output = DB::table('erp_purchaseorderdetails')
                         ->join(DB::raw('(SELECT locationName,
@@ -558,7 +593,7 @@ WHERE
                         erp_purchaseorderdetails.purchaseOrderDetailsID,
                         gdet2.lastOfgrvDate,
                     erp_purchaseorderdetails.unitOfMeasure,
-                    IF((erp_purchaseorderdetails.noQty-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Recieved","Partially Recieved")) as receivedStatus,
+                    IF((erp_purchaseorderdetails.noQty-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
                     IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
@@ -575,8 +610,27 @@ WHERE
                     catSub.*,
                     units.UnitShortCode AS unitShortCode,
                     podet.*')
-                        ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID)->orderBy('podet.approvedDate', 'ASC')->get();
+                        ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID)->orderBy('podet.approvedDate', 'ASC');
 
+                    if(isset($request->grvStatus)){
+                        if(!empty($request->grvStatus)){
+                            $output = $output->having('receivedStatus', $request->grvStatus);
+                        }
+                    }
+
+                    if(isset($request->searchText)){
+                        if(!empty($request->searchText)){
+                            $search = str_replace("\\", "\\\\", $request->searchText);
+                            $output = $output->where(function ($query) use ($search) {
+                                $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
+                                    ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%")
+                                    ->orWhere('supplierName', 'LIKE', "%{$search}%")
+                                    ->orWhere('purchaseOrderCode', 'LIKE', "%{$search}%");
+                            });
+                        }
+                    }
+
+                    $output = $output->get();
                     foreach ($output as $val) {
                         $data[] = array(
                             'CompanyID' => $val->companyID,

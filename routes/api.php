@@ -33,6 +33,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
     Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
     Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
+    Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
 
     Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
 
