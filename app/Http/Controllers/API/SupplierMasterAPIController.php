@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getSupplierMasterByCompany(),getAssignedCompaniesBySupplier(),
  * -- Date: 06-June 2018 By: Mubashir Description: Modified getSupplierMasterByCompany() to handle filters from local storage
+ * -- Date: 25-June 2018 By: Mubashir Description: Added new functions named as getSearchSupplierByCompany()
  */
 
 namespace App\Http\Controllers\API;
@@ -502,5 +503,42 @@ class SupplierMasterAPIController extends AppBaseController
             ->pluck('supplierID');
         $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companyID)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
         return $this->sendResponse($supplierMaster, 'Supplier Master retrieved successfully');
+    }
+
+
+    /**
+     *  Search Supplier By Company
+     * GET /getSearchSupplierByCompany
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getSearchSupplierByCompany(Request $request)
+    {
+
+        $companyId = $request->companyId;
+        $input = $request->all();
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $companies = \Helper::getGroupCompany($companyId);
+        }else{
+            $companies = [$companyId];
+        }
+
+        $suppliers = SupplierAssigned::whereIn('companySystemID',$companies)
+            ->select(['supplierCodeSytem','supplierName','primarySupplierCode'])
+            ->when(request('search', false), function ($q, $search) {
+                return $q->where(function ($query) use($search) {
+                    return $query->where('primarySupplierCode','LIKE',"%{$search}%")
+                        ->orWhere('supplierName', 'LIKE', "%{$search}%");
+                });
+            })
+            ->take(20)
+            ->get();
+
+
+        return $this->sendResponse($suppliers->toArray(), 'Supplier Master deleted successfully');
     }
 }
