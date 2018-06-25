@@ -80,7 +80,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
     public function getItemMasterPurchaseHistory(Request $request)
     {
-
         $purchaseOrderDetails = DB::table('erp_purchaseorderdetails')
             ->leftJoin('units', 'erp_purchaseorderdetails.unitOfMeasure', '=', 'units.UnitID')
             ->leftJoin('currencymaster', 'erp_purchaseorderdetails.supplierItemCurrencyID', '=', 'currencymaster.currencyID')

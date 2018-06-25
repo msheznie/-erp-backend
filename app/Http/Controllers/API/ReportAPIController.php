@@ -189,6 +189,7 @@ WHERE
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
                     erp_purchaseorderdetails.itemFinanceCategorySubID,
+                    erp_purchaseorderdetails.itemCode,
                     erp_purchaseorderdetails.itemPrimaryCode,
                     erp_purchaseorderdetails.itemDescription,
                     erp_purchaseorderdetails.supplierPartNumber,
