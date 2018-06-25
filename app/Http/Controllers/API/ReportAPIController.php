@@ -191,6 +191,7 @@ WHERE
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
                     erp_purchaseorderdetails.itemFinanceCategorySubID,
+                    erp_purchaseorderdetails.itemCode,
                     erp_purchaseorderdetails.itemPrimaryCode,
                     erp_purchaseorderdetails.itemDescription,
                     erp_purchaseorderdetails.supplierPartNumber,
@@ -889,11 +890,11 @@ WHERE
                             $data[$x]['Invoice Date'] = \Helper::dateFormat($val->InvoiceDate);
                             $data[$x]['Currency'] = $val->documentCurrency;
                             foreach ($output['aging'] as $val2) {
-                                $lineTotal+=  $val[$val2];
+                                $lineTotal+=  $val->$val2;
                             }
                             $data[$x]['Balance Amount'] = $lineTotal;
                             foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val[$val2];
+                                $data[$x][$val2] = $val->$val2;
                             }
                             $x++;
                         }
@@ -908,14 +909,14 @@ WHERE
                         foreach ($output['data'] as $val) {
                             $lineTotal = 0;
                             $data[$x]['Cust. Code'] = $val->DocumentCode;
-                            $data[$x]['Customer Name'] = \Helper::dateFormat($val->PostedDate);
+                            $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Currency'] = $val->documentCurrency;
                             foreach ($output['aging'] as $val2) {
-                                $lineTotal+=  $val[$val2];
+                                $lineTotal+=  $val->$val2;
                             }
                             $data[$x]['Amount'] = $lineTotal;
                             foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val[$val2];
+                                $data[$x][$val2] = $val->$val2;
                             }
                             $x++;
                         }
