@@ -1,5 +1,14 @@
 <?php
-
+/**
+=============================================
+-- File Name : Unit.php
+-- Project Name : ERP
+-- Module Name :  System Admin
+-- Author : Pasan Madhuranga
+-- Create date : 22 - March 2018
+-- Description : This file is used to interact with database table and it contains relationships to the tables.
+-- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -58,5 +67,10 @@ class UnitConversion extends Model
     public function unit()
     {
         return $this->belongsTo('App\Models\Unit', 'masterUnitID', 'UnitID');
+    }
+
+    public function sub_unit()
+    {
+        return $this->belongsTo('App\Models\Unit','subUnitID','UnitID');
     }
 }

@@ -65,20 +65,18 @@ class ItemAssignedAPIController extends AppBaseController
         $input = $request->all();
 
         unset($input['company']);
+        unset($input['final_approved_by']);
 
-        foreach ($input as $key => $value) {
-            if (is_array($input[$key])) {
-                if (count($input[$key]) > 0) {
-                    $input[$key] = $input[$key][0];
-                } else {
-                    $input[$key] = 0;
-                }
-            }
-        }
+        $input = $this->convertArrayToValue($input);
 
         if (array_key_exists("idItemAssigned", $input)) {
             $itemAssigneds = ItemAssigned::where('idItemAssigned', $input['idItemAssigned'])->first();
             $itemAssigneds->isActive = $input['isActive'];
+
+            if($input['isAssigned'] == 1 || $input['isAssigned'] == true){
+                $input['isAssigned'] = -1;
+            }
+
             $itemAssigneds->isAssigned = $input['isAssigned'];
             $itemAssigneds->save();
         } else {
@@ -87,6 +85,7 @@ class ItemAssignedAPIController extends AppBaseController
             $input['wacValueLocalCurrencyID'] = $company->localCurrencyID;
             $input['companyID'] = $company->CompanyID;
             $input['isActive'] = 1;
+            $input['isAssigned'] = -1;
             $input['itemPrimaryCode'] = $input['primaryCode'];
             $input['itemUnitOfMeasure'] = $input['unit'];
             $itemAssigneds = $this->itemAssignedRepository->create($input);

@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ProcumentOrder.php
+ * -- Project Name : ERP
+ * -- Module Name :  Procument Order
+ * -- Author : Nazir
+ * -- Create date : 18 - April 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -157,6 +167,7 @@ class ProcumentOrder extends Model
         'serviceLine',
         'companyAddress',
         'documentID',
+        'documentSystemID',
         'purchaseOrderCode',
         'serialNumber',
         'supplierID',
@@ -191,6 +202,7 @@ class ProcumentOrder extends Model
         'supplierTransactionER',
         'poConfirmedYN',
         'poConfirmedByEmpID',
+        'poConfirmedByEmpSystemID',
         'poConfirmedByName',
         'poConfirmedDate',
         'poCancelledYN',
@@ -224,6 +236,8 @@ class ProcumentOrder extends Model
         'priority',
         'approved',
         'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
         'addOnPercent',
         'addOnDefaultPercent',
         'GRVTrackingID',
@@ -266,6 +280,12 @@ class ProcumentOrder extends Model
         'partiallyGRVAllowed',
         'logisticsAvailable',
         'vatRegisteredYN',
+        'manuallyClosed',
+        'manuallyClosedByEmpSystemID',
+        'manuallyClosedByEmpID',
+        'manuallyClosedByEmpName',
+        'manuallyClosedDate',
+        'manuallyClosedComment',
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
@@ -292,6 +312,7 @@ class ProcumentOrder extends Model
         'serviceLine' => 'string',
         'companyAddress' => 'string',
         'documentID' => 'string',
+        'documentSystemID' => 'integer',
         'purchaseOrderCode' => 'string',
         'serialNumber' => 'integer',
         'supplierID' => 'integer',
@@ -324,6 +345,7 @@ class ProcumentOrder extends Model
         'supplierTransactionCurrencyID' => 'integer',
         'supplierTransactionER' => 'float',
         'poConfirmedYN' => 'integer',
+        'poConfirmedByEmpSystemID' => 'integer',
         'poConfirmedByEmpID' => 'string',
         'poConfirmedByName' => 'string',
         'poCancelledYN' => 'integer',
@@ -355,6 +377,8 @@ class ProcumentOrder extends Model
         'soldTocontactPersonEmail' => 'string',
         'priority' => 'integer',
         'approved' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
         'addOnPercent' => 'float',
         'addOnDefaultPercent' => 'float',
         'GRVTrackingID' => 'integer',
@@ -390,6 +414,11 @@ class ProcumentOrder extends Model
         'partiallyGRVAllowed' => 'integer',
         'logisticsAvailable' => 'integer',
         'vatRegisteredYN' => 'integer',
+        'manuallyClosed' => 'integer',
+        'manuallyClosedByEmpSystemID' => 'integer',
+        'manuallyClosedByEmpID' => 'string',
+        'manuallyClosedByEmpName' => 'string',
+        'manuallyClosedComment' => 'string',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserSystemID' => 'integer',
@@ -413,8 +442,29 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
 
-    public function confirmed_by(){
-        return $this->belongsTo('App\Models\Employee','poConfirmedByEmpSystemID','employeeSystemID');
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'poConfirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'poCancelledBySystemID', 'employeeSystemID');
+    }
+
+    public function manually_closed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'manuallyClosedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function sent_supplier_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'sentToSupplierByEmpSystemID', 'employeeSystemID');
     }
 
     public function location()
@@ -444,9 +494,38 @@ class ProcumentOrder extends Model
 
     public function detail()
     {
-        return $this->belongsTo('App\Models\PurchaseOrderDetails', 'purchaseOrderID', 'purchaseOrderMasterID');
+        return $this->hasMany('App\Models\PurchaseOrderDetails', 'purchaseOrderMasterID', 'purchaseOrderID');
     }
 
+    public function approved()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
+    }
+
+    public function suppliercontact()
+    {
+        return $this->belongsTo('App\Models\SupplierContactDetails', 'supplierID', 'supplierID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function transactioncurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
+    }
+
+    public function companydocumentattachment()
+    {
+        return $this->hasMany('App\Models\CompanyDocumentAttachment', 'documentSystemID', 'documentSystemID');
+    }
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -455,4 +534,15 @@ class ProcumentOrder extends Model
     {
         return $this->hasMany(\App\Models\ErpPurchaseorderdetail::class);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     **/
+    public function status()
+    {
+        return $this->hasMany('\App\Models\PurchaseOrderStatus','purchaseOrderID','purchaseOrderID');
+    }
+
+
+
 }

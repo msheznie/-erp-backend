@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : Purchase Request Details.php
+ * -- Project Name : ERP
+ * -- Module Name : Purchase Request Details
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -101,7 +110,13 @@ class PurchaseRequestDetails extends Model
         'prClosedYN',
         'fullyOrdered',
         'poTrackingID',
-        'timeStamp'
+        'timeStamp',
+        'manuallyClosed',
+        'manuallyClosedByEmpSystemID',
+        'manuallyClosedByEmpID',
+        'manuallyClosedByEmpName',
+        'manuallyClosedDate',
+        'manuallyClosedComment'
     ];
 
     /**
@@ -147,7 +162,13 @@ class PurchaseRequestDetails extends Model
         'selectedForPO' => 'integer',
         'prClosedYN' => 'integer',
         'fullyOrdered' => 'integer',
-        'poTrackingID' => 'integer'
+        'poTrackingID' => 'integer',
+        'manuallyClosed' => 'integer',
+        'manuallyClosedByEmpSystemID' => 'integer',
+        'manuallyClosedByEmpID' => 'string',
+        'manuallyClosedByEmpName' => 'string',
+        'manuallyClosedDate' => 'string',
+        'manuallyClosedComment' => 'string'
     ];
 
     /**
@@ -161,5 +182,17 @@ class PurchaseRequestDetails extends Model
 
     public function uom(){
         return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+
+    public function podetail(){
+        return $this->hasMany('App\Models\PurchaseOrderDetails','purchaseRequestDetailsID','purchaseRequestDetailsID');
+    }
+
+    public function purchase_request(){
+        return $this->belongsTo('App\Models\PurchaseRequest','purchaseRequestID','purchaseRequestID');
+    }
+
+    public function purchase_order_process_detail(){
+        return $this->belongsTo('App\Models\PurchaseOrderProcessDetails','purchaseRequestID','purchaseRequestID');
     }
 }

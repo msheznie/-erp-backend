@@ -164,20 +164,13 @@ class CompanyNavigationMenusAPIController extends AppBaseController
     public function getGroupCompany(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
-        $companiesByGroup = Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
-        $groupCompany = [];
-        if($companiesByGroup){
-            foreach ($companiesByGroup as $val){
-                if($val['child']){
-                    foreach ($val['child'] as $val1){
-                        $groupCompany[] = array('companySystemID' => $val1["companySystemID"],'CompanyID' => $val1["CompanyID"],'CompanyName' => $val1["CompanyName"]);
-                    }
-                }else{
-                    $groupCompany[] = array('companySystemID' => $val["companySystemID"],'CompanyID' => $val["CompanyID"],'CompanyName' => $val["CompanyName"]);
-                }
-
-            }
+        $companiesByGroup = "";
+        if(\Helper::checkIsCompanyGroup($selectedCompanyId)){
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $companiesByGroup = (array)$selectedCompanyId;
         }
+        $groupCompany = Company::whereIN('companySystemID',$companiesByGroup)->get();
         return $this->sendResponse($groupCompany, 'Record retrieved successfully');
     }
 

@@ -9,6 +9,7 @@
  * -- Create date : 14 - March 2018
  * -- Description : This file contains the all CRUD for Chart Of Account.
  * -- REVISION HISTORY
+ * -- Date: 06-June 2018 By: Mubashir Description: Modified getChartOfAccount() to handle filters from local storage
  */
 
 namespace App\Http\Controllers\API;
@@ -78,12 +79,13 @@ class ChartOfAccountAPIController extends AppBaseController
     {
 
         $input = $request->all();
+        $input = array_except($input, ['final_approved_by']);
 
         /** Validation massage : Common for Add & Update */
         $accountCode = isset($input['AccountCode']) ? $input['AccountCode'] : '';
 
         $messages = array(
-            'AccountCode.unique' => 'The Account ' . $accountCode . ' code has already been taken'
+            'AccountCode.unique' => 'Account code' . $accountCode . ' already exists'
         );
 
 
@@ -209,7 +211,17 @@ class ChartOfAccountAPIController extends AppBaseController
 
     public function getNotAssignedCompaniesByChartOfAccount(Request $request){
         $chartOfAccountSystemID = $request->get('chartOfAccountSystemID');
-        $companies = Company::where('isGroup', 0)
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        $companies = Company::whereIn("companySystemID",$subCompanies)
             ->whereDoesntHave('chartOfAccountAssigned',function ($query) use ($chartOfAccountSystemID) {
                 $query->where('chartOfAccountSystemID', '=', $chartOfAccountSystemID);
             })
@@ -232,7 +244,7 @@ class ChartOfAccountAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ChartOfAccount $chartOfAccount */
-        $chartOfAccount = $this->chartOfAccountRepository->findWithoutFail($id);
+        $chartOfAccount = $this->chartOfAccountRepository->with(['finalApprovedBy'])->findWithoutFail($id);
 
         if (empty($chartOfAccount)) {
             return $this->sendError('Chart Of Account not found');
@@ -291,6 +303,7 @@ class ChartOfAccountAPIController extends AppBaseController
     public function getChartOfAccount(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('controlAccountsSystemID','isBank','catogaryBLorPLID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -298,28 +311,45 @@ class ChartOfAccountAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        //$companyId = $request['companyId'];
+        $companyId = $input['companyId'];
 
-        $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType']);
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
+        $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType'])
+                                        ->whereIn('primaryCompanySystemID',$childCompanies);
 
         if (array_key_exists('controlAccountsSystemID', $input)) {
-            if ($request['controlAccountsSystemID']) {
+            if ($input['controlAccountsSystemID'] && !is_null($input['controlAccountsSystemID'])) {
                 $chartOfAccount->where('controlAccountsSystemID', $input['controlAccountsSystemID']);
             }
         }
 
         if (array_key_exists('isBank', $input)) {
-            if ($request['isBank'] == 0 || $input['isBank'] == 1) {
+            if (($input['isBank'] == 0 || $input['isBank'] == 1) && !is_null($input['isBank'])) {
                 $chartOfAccount->where('isBank', $input['isBank']);
             }
         }
 
         if (array_key_exists('catogaryBLorPLID', $input)) {
-            if ($input['catogaryBLorPLID']) {
+            if ($input['catogaryBLorPLID'] && !is_null($input['catogaryBLorPLID'])) {
                 $chartOfAccount->where('catogaryBLorPLID', $input['catogaryBLorPLID']);
             }
         }
         $chartOfAccount->select('chartofaccounts.*');
+
+        $search = $request->input('search.value');
+        if($search){
+            $chartOfAccount =   $chartOfAccount->where(function ($query) use($search) {
+                $query->where('AccountCode','LIKE',"%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
 
         return \DataTables::eloquent($chartOfAccount)
             ->order(function ($query) use ($input) {
@@ -345,22 +375,38 @@ class ChartOfAccountAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $companyID = $request->selectedCompanyID;
-        $companyID = \Helper::getGroupCompany($companyID);
+        $companyId = $request->selectedCompanyID;
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $companyID = \Helper::getGroupCompany($companyId);
+        }else{
+            $companyID = [$companyId];
+        }
         $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
 
         $chartOfAccount = DB::table('erp_documentapproved')->select('chartofaccounts.*','controlaccounts.description as controlaccountdescription','accountstype.description as accountstypedescription','erp_documentapproved.documentApprovedID','rollLevelOrder','approvalLevelID','documentSystemCode')->join('employeesdepartments',function ($query) use ($companyID,$empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
-                ->where('employeesdepartments.documentSystemID',59)->whereIn('employeesdepartments.companySystemID',$companyID)
+                ->where('employeesdepartments.documentSystemID',59)
+                ->whereIn('employeesdepartments.companySystemID',$companyID)
                 ->where('employeesdepartments.employeeSystemID',$empID);
-        })->join('chartofaccounts',function ($query) use ($companyID,$empID) {
+        })->join('chartofaccounts',function ($query) use ($companyID,$empID,$search) {
             $query->on('chartOfAccountSystemID','=','erp_documentapproved.documentSystemCode')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->whereIn('primaryCompanySystemID',$companyID)
                 ->where('isApproved', 0)
-                ->where('chartofaccounts.confirmedYN', 1);
+                ->where('chartofaccounts.confirmedYN', 1)
+                ->when($search != "", function ($q) use($search){
+                    $q->where(function ($query) use($search) {
+                        $query->where('AccountCode','LIKE',"%{$search}%")
+                            ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+                    });
+                });
         })
             ->leftJoin('controlaccounts','controlaccounts.controlAccountsSystemID','=','chartofaccounts.controlAccountsSystemID')
             ->leftJoin('accountstype','catogaryBLorPLID','=','accountsType')
@@ -405,14 +451,20 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $selectedCompanyId = $request['selectedCompanyId'];
 
-        $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
-
-        /** all Companies by Group company  Drop Down */
-        $companiesByGroup = Company::where("masterComapanyID", $masterCompany->CompanyID)
-            ->where("isGroup", 0)->get();
-
         /** all Company  Drop Down */
-        $allCompanies = Company::where("isGroup", 0)->get();
+
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        /**  Companies by group  Drop Down */
+        $allCompanies = Company::whereIn("companySystemID",$subCompanies)->get();
 
         $output = array('controlAccounts' => $controlAccounts,
             'accountsType' => $accountsType,

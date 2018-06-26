@@ -51,6 +51,7 @@ class ApprovalLevelRepository extends BaseRepository
 
     public function getGroupApprovalLevelDatatable($input)
     {
+        $search = $input['search']['value'];
         $sort = "";
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -58,15 +59,15 @@ class ApprovalLevelRepository extends BaseRepository
             $sort = 'desc';
         }
          $approvalLevel = $this->model
-            ->with(['company' => function($query) {
+            ->with(['company' => function($query) use ($search) {
                 $query->select('companySystemID','CompanyName','CompanyID');
-            },'department' => function($query) {
+            },'department' => function($query) use ($search) {
                 $query->select('departmentSystemID','DepartmentDescription');
-            },'document' => function($query) {
+            },'document' => function($query) use ($search) {
                 $query->select('documentSystemID','documentDescription');
-            },'serviceline' => function($query) {
+            },'serviceline' => function($query) use ($search) {
                 $query->select('serviceLineSystemID','ServiceLineDes');
-            },'category' => function($query) {
+            },'category' => function($query) use ($search) {
                 $query->select('itemCategoryID','categoryDescription');
             }])->select('erp_approvallevel.*')->orderBy('approvalLevelID', 'desc');
 
@@ -75,9 +76,10 @@ class ApprovalLevelRepository extends BaseRepository
                 $approvalLevel->where('erp_approvallevel.companySystemID',$input['selectedCompanyID']);
             }
         }else{
-            $companiesByGroup = Company::where("masterCompanySystemIDReorting", $input['globalCompanyId'])
-                ->where("isGroup", 0)->pluck("companySystemID");
-            $approvalLevel->whereIn('erp_approvallevel.companySystemID',$companiesByGroup);
+            if(!\Helper::checkIsCompanyGroup($input['globalCompanyId'])){
+                $companiesByGroup = $input['globalCompanyId'];
+                $approvalLevel->where('erp_approvallevel.companySystemID',$companiesByGroup);
+            }
         }
 
         if(array_key_exists ('documentSystemID' , $input)){
@@ -86,6 +88,9 @@ class ApprovalLevelRepository extends BaseRepository
             }
         }
 
+        if ($search) {
+            $approvalLevel = $approvalLevel->where('levelDescription', 'LIKE', "%{$search}%");
+        }
 
         //return datatables($approvalLevel)->toJson();
         return \DataTables::eloquent($approvalLevel)

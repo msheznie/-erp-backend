@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : CustomerMaster.php
+ * -- Project Name : ERP
+ * -- Module Name : Customer Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -97,6 +106,8 @@ class CustomerMaster extends Model
         'approvedYN',
         'approvedDate',
         'approvedComment',
+        'approvedEmpSystemID',
+        'approvedEmpID',
         'confirmedYN',
         'confirmedEmpSystemID',
         'confirmedEmpID',
@@ -147,6 +158,8 @@ class CustomerMaster extends Model
         'RollLevForApp_curr' => 'integer',
         'approvedYN' => 'integer',
         'approvedComment' => 'string',
+        'approvedEmpSystemID' => 'integer',
+        'approvedEmpID' => 'string',
         'confirmedYN' => 'integer',
         'confirmedEmpSystemID' => 'integer',
         'confirmedEmpID' => 'string',
@@ -169,5 +182,10 @@ class CustomerMaster extends Model
 
     public function country(){
         return $this->belongsTo('App\Models\CountryMaster','customerCountry','countryID');
+    }
+
+    public function finalApprovedBy()
+    {
+        return $this->belongsTo('App\Models\Employee','approvedEmpSystemID','employeeSystemID');
     }
 }

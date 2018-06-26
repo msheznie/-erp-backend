@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ItemMaster.php
+ * -- Project Name : ERP
+ * -- Module Name :  Item Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -89,6 +98,7 @@ class ItemMaster extends Model
         'itemConfirmedByEMPID',
         'itemConfirmedByEMPName',
         'itemConfirmedDate',
+        'itemApprovedBySystemID',
         'itemApprovedBy',
         'itemApprovedYN',
         'itemApprovedDate',
@@ -135,6 +145,7 @@ class ItemMaster extends Model
         'itemConfirmedByEMPSystemID'  => 'integer',
         'itemConfirmedByEMPID' => 'string',
         'itemConfirmedByEMPName' => 'string',
+        'itemApprovedBySystemID' => 'integer',
         'itemApprovedBy' => 'string',
         'itemApprovedYN' => 'integer',
         'itemApprovedComment' => 'string',
@@ -168,5 +179,10 @@ class ItemMaster extends Model
 
     public function documentapproved(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemCodeSystem');
+    }
+
+    public function finalApprovedBy()
+    {
+        return $this->belongsTo('App\Models\Employee','itemApprovedBySystemID','employeeSystemID');
     }
 }

@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : Company.php
+ * -- Project Name : ERP
+ * -- Module Name : Company
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -255,6 +264,7 @@ class Company extends Model
     public function employees(){
         return $this->belongsToMany('App\Models\Employee', 'employeesdepartments','CompanyID','companyId');
     }
+
     public function subCategory(){
         return $this->hasMany('App\Models\FinanceItemCategorySub', 'financeitemcategorysubassigned', 'companySystemID','companySystemID');
     }
@@ -274,8 +284,6 @@ class Company extends Model
         return $this->hasMany(Company::class,'masterCompanySystemIDReorting','companySystemID');
     }
 
-
-
     public function bank(){
         return $this->belongsToMany('App\Models\BankMaster', 'erp_bankassigned','CompanyID','companyID');
     }
@@ -283,6 +291,16 @@ class Company extends Model
     public function chartOfAccountAssigned()
     {
         return $this->hasMany('App\Models\ChartOfAccountsAssigned', 'companySystemID','companySystemID');
+    }
+
+    public function localcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID','currencyID');
+    }
+
+    public function reportingcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'reportingCurrency','currencyID');
     }
 
 }

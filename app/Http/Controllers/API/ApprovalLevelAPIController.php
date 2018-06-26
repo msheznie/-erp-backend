@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : ApprovalLevelAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Approval Setup
+ * -- Author : Mubashir
+ * -- Create date : 23 - April 2018
+ * -- Description : This file contains the all CRUD for Approval Level
+ * -- REVISION HISTORY
+ * --
+ */
 
 namespace App\Http\Controllers\API;
 
@@ -188,20 +199,14 @@ class ApprovalLevelAPIController extends AppBaseController
     public function getGroupFilterData(Request $request){
         /** all Company  Drop Down */
         $selectedCompanyId = $request['selectedCompanyId'];
-        $companiesByGroup = Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
-        $groupCompany = [];
-        if($companiesByGroup){
-            foreach ($companiesByGroup as $val){
-                if($val['child']){
-                    foreach ($val['child'] as $val1){
-                        $groupCompany[] = array('companySystemID' => $val1["companySystemID"],'CompanyID' => $val1["CompanyID"],'CompanyName' => $val1["CompanyName"]);
-                    }
-                }else{
-                    $groupCompany[] = array('companySystemID' => $val["companySystemID"],'CompanyID' => $val["CompanyID"],'CompanyName' => $val["CompanyName"]);
-                }
-
-            }
+        $companiesByGroup="";
+        if(\Helper::checkIsCompanyGroup($selectedCompanyId)){
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $companiesByGroup = (array)$selectedCompanyId;
         }
+
+        $groupCompany = Company::whereIN("companySystemID", $companiesByGroup)->get();
 
         /** all document Drop Down */
         $document = \Helper::getAllDocuments();
@@ -266,9 +271,4 @@ class ApprovalLevelAPIController extends AppBaseController
 
     }
 
-    public function confirmDocTest(){
-        //$param = array('autoID' => 81,'company' => 7,'document' => 2,'segment' => 11,'category' => null,'amount' => 1000);
-        //return $test = \Helper::confirmDocument($param);
-        return \Helper::currencyConversion(7,2,1,1000);
-    }
 }

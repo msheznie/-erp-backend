@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : CompanyPolicyMaster.php
+ * -- Project Name : ERP
+ * -- Module Name :  Approval
+ * -- Author : Mubashir
+ * -- Create date : 14 - March 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -79,6 +89,14 @@ class CompanyPolicyMaster extends Model
     public static $rules = [
         
     ];
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company', 'companySystemID','companySystemID');
+    }
+
+    public function policyCategory(){
+        return $this->belongsTo('App\Models\CompanyPolicyCategory', 'companyPolicyCategoryID','companyPolicyCategoryID');
+    }
 
     
 }

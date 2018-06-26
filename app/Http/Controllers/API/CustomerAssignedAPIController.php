@@ -75,34 +75,22 @@ class CustomerAssignedAPIController extends AppBaseController
         $empName = $user->employee['empName'];
 
         if( array_key_exists ('customerAssignedID' , $input )){
-
-            $inputData = $request->all();
+            if($input['isAssigned'] == 1 || $input['isAssigned'] == true){
+                $input['isAssigned'] = -1;
+            }
             $data = [
-                'isAssigned'    => $inputData['isAssigned'],
-                'isActive'      => $inputData['isActive'],
-                'vatEligible'   => $inputData['vatEligible'],
-                'vatNumber'     => $inputData['vatNumber'],
-                'vatPercentage' => $inputData['vatPercentage']
+                'isAssigned'    => $input['isAssigned'],
+                'isActive'      => $input['isActive'],
+                'vatEligible'   => $input['vatEligible'],
+                'vatNumber'     => $input['vatNumber'],
+                'vatPercentage' => $input['vatPercentage']
             ];
 
-            $customerAssigneds = $this->customerAssignedRepository->update($data, $inputData['customerAssignedID']);
-
-//            $customerAssigneds = CustomerAssigned::where('customerAssignedID', $input['customerAssignedID'])->first();
-//
-//            if (empty($customerAssigneds)) {
-//                return $this->sendError('customer assign not found');
-//            }
-//            $customerAssigneds->isAssigned = $input['isAssigned'];
-//            $customerAssigneds->isActive = $input['isActive'];
-//            $customerAssigneds->vatEligible = $input['vatEligible'];
-//            $customerAssigneds->vatNumber = $input['vatNumber'];
-//            $customerAssigneds->vatPercentage = $input['vatPercentage'];
-//
-//            $customerAssigneds->save();
+            $customerAssigneds = $this->customerAssignedRepository->update($data, $input['customerAssignedID']);
         }else{
 
             $input = $this->convertArrayToValue($input);
-
+            $input['isAssigned'] = -1;
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
             if($company){
                 $input['companyID'] = $company->CompanyID;
@@ -126,13 +114,22 @@ class CustomerAssignedAPIController extends AppBaseController
     {
 
         $customerId = $request->get('customerId');
-        $companies = Company::where('isGroup', 0)
+
+        $selectedCompanyId = $request->get('selectedCompanyId');
+
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $companies = Company::whereIn('companySystemID', $subCompanies)
             ->whereDoesntHave('customerAssigned',function ($query) use ($customerId) {
                 $query->where('customerCodeSystem', '=', $customerId);
             })
-            ->get(['companySystemID',
-                'CompanyID',
-                'CompanyName']);
+            ->get(['companySystemID','CompanyID','CompanyName']);
 
         return $this->sendResponse($companies->toArray(), 'Companies retrieved successfully');
     }

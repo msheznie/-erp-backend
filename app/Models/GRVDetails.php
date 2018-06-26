@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : GRVDetails.php
+ * -- Project Name : ERP
+ * -- Module Name :  GRV Details
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -8,9 +17,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Class GRVDetails
  * @package App\Models
- * @version April 2, 2018, 3:53 am UTC
+ * @version April 11, 2018, 12:13 pm UTC
  *
  * @property integer grvAutoID
+ * @property integer companySystemID
  * @property string companyID
  * @property string serviceLineCode
  * @property integer purchaseOrderMastertID
@@ -67,6 +77,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float VATAmount
  * @property float VATAmountLocal
  * @property float VATAmountRpt
+ * @property integer logisticsAvailable
  * @property string createdUserGroup
  * @property string createdPcID
  * @property string createdUserID
@@ -80,16 +91,17 @@ class GRVDetails extends Model
     //use SoftDeletes;
 
     public $table = 'erp_grvdetails';
-    
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'grvDetailsID';
+    protected $primaryKey = 'grvDetailsID';
 
     protected $dates = ['deleted_at'];
 
 
     public $fillable = [
         'grvAutoID',
+        'companySystemID',
         'companyID',
         'serviceLineCode',
         'purchaseOrderMastertID',
@@ -146,6 +158,7 @@ class GRVDetails extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
+        'logisticsAvailable',
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
@@ -163,6 +176,7 @@ class GRVDetails extends Model
     protected $casts = [
         'grvDetailsID' => 'integer',
         'grvAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineCode' => 'string',
         'purchaseOrderMastertID' => 'integer',
@@ -219,6 +233,7 @@ class GRVDetails extends Model
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
+        'logisticsAvailable' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserID' => 'string',
@@ -232,11 +247,23 @@ class GRVDetails extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    public function master(){
-        return $this->belongsTo('App\Models\GRVMaster','grvAutoID','grvAutoID');
+    public function grv_master()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
     }
-    
+
+    public function unit()
+    {
+        return $this->belongsTo('App\Models\Unit', 'unitOfMeasure', 'UnitID');
+    }
+
+    public function po_master()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderMastertID', 'purchaseOrderID');
+    }
+
+
 }

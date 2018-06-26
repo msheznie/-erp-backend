@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : User Group.php
+ * -- Project Name : ERP
+ * -- Module Name : User Group
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -59,4 +68,14 @@ class UserGroup extends Model
     public function company(){
         return $this->belongsTo('App\Models\Company','companyID','companySystemID');
     }
+
+    public function navigationusergroup(){
+        return $this->hasMany('App\Models\NavigationUserGroupSetup','userGroupID','userGroupID');
+    }
+
+    public function usergroupemployee(){
+        return $this->hasMany('App\Models\EmployeeNavigation','userGroupID','userGroupID');
+    }
+
+
 }

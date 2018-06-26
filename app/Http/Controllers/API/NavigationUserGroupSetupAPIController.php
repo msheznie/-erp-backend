@@ -79,15 +79,15 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
         $userGroup = DB::table('srp_erp_employeenavigation')
                          ->where('employeeSystemID',$empId)
                          ->where('companyID',$request['companyId'])
-                         ->get();
+                         ->first();
 
-        if(count($userGroup) > 0){
-            $request['userGroupId'] = $userGroup[0]->userGroupID;
+        if($userGroup){
+            $request['userGroupId'] = $userGroup->userGroupID;
             //$this->navigationUserGroupSetupRepository->pushCriteria(new RequestCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new LimitOffsetCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new FilterParentMenuCriteria($request));
             return $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository
-                ->paginate(20);
+                ->paginate(50);
         }else{
             return $this->sendResponse([],'not found any menu');
         }

@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PurchaseOrderDetails.php
+ * -- Project Name : ERP
+ * -- Module Name :  Purchase Order Details
+ * -- Author : Nazir
+ * -- Create date : 18 - April 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -125,7 +135,9 @@ class PurchaseOrderDetails extends Model
         'unitOfMeasure',
         'itemClientReferenceNumberMasterID',
         'clientReferenceNumber',
+        'requestedQty',
         'noQty',
+        'balanceQty',
         'noOfDays',
         'unitCost',
         'discountPercentage',
@@ -210,7 +222,9 @@ class PurchaseOrderDetails extends Model
         'unitOfMeasure' => 'integer',
         'itemClientReferenceNumberMasterID' => 'integer',
         'clientReferenceNumber' => 'string',
+        'requestedQty' => 'float',
         'noQty' => 'float',
+        'balanceQty' => 'float',
         'noOfDays' => 'integer',
         'unitCost' => 'float',
         'discountPercentage' => 'float',
@@ -280,6 +294,26 @@ class PurchaseOrderDetails extends Model
 
     public function unit(){
         return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+
+    public function reporting_currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster','companyReportingCurrencyID','currencyID');
+    }
+
+    public function grv_details(){
+        return $this->hasMany('App\Models\GRVDetails', 'purchaseOrderDetailsID', 'purchaseOrderDetailsID');
+    }
+
+    public function financecategory(){
+        return $this->belongsTo('App\Models\FinanceItemCategoryMaster','itemFinanceCategoryID','itemCategoryID');
+    }
+
+    public function financecategorysub(){
+        return $this->belongsTo('App\Models\FinanceItemCategorySub','itemFinanceCategorySubID','itemCategorySubID');
+    }
+
+    public function requestDetail(){
+        return $this->belongsTo('App\Models\PurchaseRequestDetails','purchaseRequestDetailsID','purchaseRequestDetailsID');
     }
 
 }

@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ChartOfAccount.php
+ * -- Project Name : ERP
+ * -- Module Name : Chart Of Account
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -145,6 +154,11 @@ class ChartOfAccount extends Model
     {
         /** one Account Type can related to many chart of accounts */
         return $this->belongsTo('App\Models\AccountsType', 'catogaryBLorPLID', 'accountsType');
+    }
+
+    public function finalApprovedBy()
+    {
+        return $this->belongsTo('App\Models\Employee','approvedBySystemID','employeeSystemID');
     }
 
 

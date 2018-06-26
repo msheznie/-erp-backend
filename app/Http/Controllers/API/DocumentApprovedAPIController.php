@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : DocumentApprovedAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Approval
+ * -- Author : Mubashir
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Document approved.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDocumentApprovedAPIRequest;

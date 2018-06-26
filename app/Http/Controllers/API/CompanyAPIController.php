@@ -75,14 +75,19 @@ class CompanyAPIController extends AppBaseController
 
         $selectedCompanyId = $request['selectedCompanyId'];
 
-        $masterCompany = Company::where("companySystemID",$selectedCompanyId)->first();
-
         /** all Company  Drop Down */
         $allCompanies = Company::where("isGroup",0)->get();
 
-        /**  Companies by group  Drop Down */
-        $companies = Company::where("masterComapanyID",$masterCompany->CompanyID)
-                              ->where("isGroup",0)->get();
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            /**  Companies by group  Drop Down */
+            $companies = Company::whereIn("companySystemID",$subCompanies)->get();
+        }else{
+            $companies = Company::where("companySystemID",$selectedCompanyId)->get();
+        }
+
 
         /**Chart of Account Drop Down */
         $liabilityAccount = ChartOfAccount::where('controllAccountYN', '=', 1)
@@ -95,12 +100,12 @@ class CompanyAPIController extends AppBaseController
             ->get();
 
         /** Supplier category  */
-        $supplierCategory = SupplierCategoryMaster:: orderBy('categoryDescription', 'asc')
+        $supplierCategory = SupplierCategoryMaster::orderBy('categoryDescription', 'asc')
             ->get();
 
         /** Currency Master */
-        $currencyMaster = CurrencyMaster:: orderBy('CurrencyName', 'asc')
-            ->get();
+        $currencyMaster = CurrencyMaster::orderBy('CurrencyName', 'asc')
+                                          ->get();
 
         /** Supplier Importance */
         $supplierNature = SupplierNature::all();

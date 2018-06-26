@@ -8,7 +8,7 @@ use InfyOm\Generator\Common\BaseRepository;
 /**
  * Class GRVDetailsRepository
  * @package App\Repositories
- * @version April 2, 2018, 3:53 am UTC
+ * @version April 11, 2018, 12:13 pm UTC
  *
  * @method GRVDetails findWithoutFail($id, $columns = ['*'])
  * @method GRVDetails find($id, $columns = ['*'])
@@ -21,6 +21,7 @@ class GRVDetailsRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'grvAutoID',
+        'companySystemID',
         'companyID',
         'serviceLineCode',
         'purchaseOrderMastertID',
@@ -77,6 +78,7 @@ class GRVDetailsRepository extends BaseRepository
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
+        'logisticsAvailable',
         'createdUserGroup',
         'createdPcID',
         'createdUserID',

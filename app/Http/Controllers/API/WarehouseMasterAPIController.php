@@ -12,6 +12,7 @@
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as getCompanyById()
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as getAllWarehouseMaster()
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as updateWarehouseMaster()
+-- Date: 10 - April 2018 By: Mubashir Description: Changed warehouse not found error message
  */
 namespace App\Http\Controllers\API;
 
@@ -166,9 +167,18 @@ class WarehouseMasterAPIController extends AppBaseController
      */
     public function getWarehouseMasterFormData(Request $request)
     {
-        /** all Company  Drop Down */
-        $allCompanies = Company::select('companySystemID', 'CompanyID', 'CompanyName')->where("isGroup",0)->get();
 
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+        $allCompanies = Company::whereIn("companySystemID",$subCompanies)
+            ->select('companySystemID', 'CompanyID', 'CompanyName')
+            ->get();
         /** all Locations Drop Down */
         $erpLocations = ErpLocation::select('locationID', 'locationName')->get();
 
@@ -212,8 +222,28 @@ class WarehouseMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
         $warehouseMasters = WarehouseMaster::with(['location', 'company'])
+            ->whereIn('companySystemID',$childCompanies)
             ->select('warehousemaster.*');
+
+        $search = $request->input('search.value');
+        if($search){
+            $warehouseMasters =   $warehouseMasters->where(function ($query) use($search) {
+                $query->where('wareHouseCode','LIKE',"%{$search}%")
+                    ->orWhere( 'wareHouseDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
 
         return \DataTables::eloquent($warehouseMasters)
             ->order(function ($query) use ($input) {
@@ -253,7 +283,7 @@ class WarehouseMasterAPIController extends AppBaseController
             $input['wareHouseLocation'] = $input['wareHouseLocation'][0];
 
         $messages = array(
-            'wareHouseCode.unique'   => 'The Warehouse Code has already been taken'
+            'wareHouseCode.unique'   => 'Warehouse code already exists'
         );
 
         $validator = \Validator::make($input, [

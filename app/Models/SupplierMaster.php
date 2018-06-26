@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : SupplierMaster.php
+ * -- Project Name : ERP
+ * -- Module Name :  Supplier Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -105,6 +114,7 @@ class SupplierMaster extends Model
         'approvedYN',
         'approvedDate',
         'approvedComment',
+        'approvedEmpSystemID',
         'isActive',
         'isSupplierForiegn',
         'supplierConfirmedYN',
@@ -169,6 +179,7 @@ class SupplierMaster extends Model
         'approvedby' => 'string',
         'approvedYN' => 'integer',
         'approvedComment' => 'string',
+        'approvedEmpSystemID' => 'integer',
         'isActive' => 'integer',
         'isSupplierForiegn' => 'integer',
         'supplierConfirmedYN' => 'integer',
@@ -218,6 +229,18 @@ class SupplierMaster extends Model
 
     public function subCategories(){
         return $this->belongsToMany('App\Models\SupplierCategorySub', 'suppliersubcategoryassign','supSubCategoryID','supplierID');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function finalApprovedBy()
+    {
+        return $this->belongsTo('App\Models\Employee','approvedEmpSystemID','employeeSystemID');
+    }
+    public function country()
+    {
+        return $this->belongsTo('App\Models\CountryMaster','countryID','countryID');
     }
 
 }

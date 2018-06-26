@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : GRVMaster.php
+ * -- Project Name : ERP
+ * -- Module Name :  GRV Master
+ * -- Author : Mohamed Nazir
+ * -- Create date : 11 - June 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -8,8 +17,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * Class GRVMaster
  * @package App\Models
- * @version April 2, 2018, 3:51 am UTC
+ * @version April 11, 2018, 12:12 pm UTC
  *
+ * @property integer grvTypeID
  * @property string grvType
  * @property integer companySystemID
  * @property string companyID
@@ -17,6 +27,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string serviceLineCode
  * @property string companyAddress
  * @property integer companyFinanceYearID
+ * @property integer companyFinancePeriodID
  * @property string|\Carbon\Carbon FYBiggin
  * @property string|\Carbon\Carbon FYEnd
  * @property integer documentSystemID
@@ -88,13 +99,14 @@ class GRVMaster extends Model
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'grvAutoID';
 
+    protected $primaryKey  = 'grvAutoID';
 
     protected $dates = ['deleted_at'];
 
 
     public $fillable = [
+        'grvTypeID',
         'grvType',
         'companySystemID',
         'companyID',
@@ -102,6 +114,7 @@ class GRVMaster extends Model
         'serviceLineCode',
         'companyAddress',
         'companyFinanceYearID',
+        'companyFinancePeriodID',
         'FYBiggin',
         'FYEnd',
         'documentSystemID',
@@ -138,6 +151,7 @@ class GRVMaster extends Model
         'grvConfirmedYN',
         'grvConfirmedByEmpID',
         'grvConfirmedByName',
+        'grvConfirmedByEmpSystemID',
         'grvConfirmedDate',
         'grvCancelledYN',
         'grvCancelledBy',
@@ -159,11 +173,14 @@ class GRVMaster extends Model
         'FromCompanyID',
         'createdUserGroup',
         'createdPcID',
+        'createdUserSystemID',
         'createdUserID',
         'modifiedPc',
         'modifiedUser',
+        'modifiedUserSystemID',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'stampDate'
     ];
 
     /**
@@ -173,6 +190,7 @@ class GRVMaster extends Model
      */
     protected $casts = [
         'grvAutoID' => 'integer',
+        'grvTypeID' => 'integer',
         'grvType' => 'string',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -180,6 +198,7 @@ class GRVMaster extends Model
         'serviceLineCode' => 'string',
         'companyAddress' => 'string',
         'companyFinanceYearID' => 'integer',
+        'companyFinancePeriodID' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'grvSerialNo' => 'integer',
@@ -213,6 +232,7 @@ class GRVMaster extends Model
         'grvConfirmedYN' => 'integer',
         'grvConfirmedByEmpID' => 'string',
         'grvConfirmedByName' => 'string',
+        'grvConfirmedByEmpSystemID' => 'integer',
         'grvCancelledYN' => 'integer',
         'grvCancelledBy' => 'string',
         'grvCancelledByName' => 'string',
@@ -231,9 +251,12 @@ class GRVMaster extends Model
         'FromCompanyID' => 'string',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'stampDate' => 'string',
     ];
 
     /**
@@ -244,6 +267,51 @@ class GRVMaster extends Model
     public static $rules = [
         
     ];
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'grvConfirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'grvCancelledBySystemID', 'employeeSystemID');
+    }
+
+    public function segment_by()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function location_by()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster', 'grvLocation', 'wareHouseSystemCode');
+    }
+
+    public function supplier_by()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
+    }
+
+    public function currency_by()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'grvAutoID');
+    }
 
     
 }

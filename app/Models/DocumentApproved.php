@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : DocumentApproved.php
+ * -- Project Name : ERP
+ * -- Module Name :  Approval
+ * -- Author : Mubashir
+ * -- Create date : 14 - March 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -156,5 +166,22 @@ class DocumentApproved extends Model
         return $this->HasOne('App\Models\ChartOfAccount','chartOfAccountSystemID','documentSystemCode');
     }
 
+    public function employee(){
+        return $this->HasOne('App\Models\Employee','employeeSystemID','employeeSystemID');
+    }
+
+    public function approved_by(){
+        return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
+    }
+
+
+    public function employee_department_approve(){
+        return $this->belongsTo('App\Models\EmployeesDepartment','approvalGroupID','employeeGroupID')
+                                                    ->where('documentSystemID',$this->documentSystemID)
+                                                    ->where('companySystemID',$this->companySystemID);
+
+        //->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+        //->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+    }
 
 }

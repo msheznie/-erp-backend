@@ -14,6 +14,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUserAPIRequest;
 use App\Http\Requests\API\UpdateUserAPIRequest;
+use App\Models\EmployeeNavigation;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
@@ -77,7 +78,7 @@ class UserAPIController extends AppBaseController
             if (empty($user)) {
                 return $this->sendError('User not found');
             }
-            return $this->sendResponse($user->toArray(), 'User retrieved successfully');
+            return $this->sendResponse([], 'User retrieved successfully');
 
         } catch (\Exception $exception) {
             return $this->sendError('User not found');
@@ -105,7 +106,23 @@ class UserAPIController extends AppBaseController
 
             $empId = $user->employee['empID'];
 
-            $companies = DB::table('employeesdepartments')
+            $employeeSystemID = $user->employee['employeeSystemID'];
+
+            $companies = EmployeeNavigation::where('employeeSystemID',$employeeSystemID)
+                                                  ->with(['company'])
+                                                  ->get();
+
+            $setCompanies = array();
+
+            foreach ($companies as $com){
+                if(!empty($com->company)){
+                    $label = $com->company->CompanyID." - ".$com->company->CompanyName;
+                    $temp = array('value' => $com->company->companySystemID,'label' => $label);
+                    array_push($setCompanies,$temp);
+                }
+            }
+
+           /* $companies = DB::table('employeesdepartments')
                 //->select(DB::raw('employeesdepartments.companyId as value, ANY_VALUE(companymaster.CompanyName) as label'))
                 ->select(DB::raw('ANY_VALUE(companymaster.companySystemID) as value, CONCAT(employeesdepartments.companyId , " - ", ANY_VALUE(companymaster.CompanyName)) as label'))
                 ->join('companymaster', 'employeesdepartments.companyId', '=', 'companymaster.CompanyID')
@@ -113,16 +130,16 @@ class UserAPIController extends AppBaseController
                 ->where('employeesdepartments.dischargedYN', 0)
                 ->whereNotNull('employeesdepartments.companyId')
                 ->groupBy('employeesdepartments.companyId')
-                ->get();
+                ->get();*/
 
 
-            $data = array('companies' => $companies,'default_company' =>  $user->employee['empCompanyID']);
+            $data = array('companies' => $setCompanies,'default_company' =>  $user->employee['empCompanySystemID']);
 
 
             return $data;
 
         } catch (\Exception $ex) {
-            return $ex;
+            return $ex->getMessage();
         }
 
         return $this->sendResponse($user->toArray(), 'User compnies retrieved successfully');

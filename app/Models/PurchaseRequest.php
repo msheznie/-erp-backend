@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PurchaseRequest.php
+ * -- Project Name : ERP
+ * -- Module Name : Purchase Request
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -131,6 +140,7 @@ class PurchaseRequest extends Model
         'supplierCountryID',
         'financeCategory',
         'PRConfirmedYN',
+        'PRConfirmedByEmpName',
         'PRConfirmedBy',
         'PRConfirmedBySystemID',
         'PRConfirmedDate',
@@ -179,7 +189,13 @@ class PurchaseRequest extends Model
         'modifiedUser',
         'createdDateTime',
         'timeStamp',
-        'modifiedUserSystemID'
+        'modifiedUserSystemID',
+        'manuallyClosed',
+        'manuallyClosedByEmpSystemID',
+        'manuallyClosedByEmpID',
+        'manuallyClosedByEmpName',
+        'manuallyClosedDate',
+        'manuallyClosedComment'
     ];
 
     /**
@@ -218,6 +234,7 @@ class PurchaseRequest extends Model
         'financeCategory' => 'integer',
         'PRConfirmedYN' => 'integer',
         'PRConfirmedBy' => 'string',
+        'PRConfirmedByEmpName' => 'string',
         'PRConfirmedBySystemID' => 'integer',
         'isActive' => 'integer',
         'approved' => 'integer',
@@ -255,7 +272,13 @@ class PurchaseRequest extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'manuallyClosed' => 'integer',
+        'manuallyClosedByEmpSystemID' => 'integer',
+        'manuallyClosedByEmpID' => 'string',
+        'manuallyClosedByEmpName' => 'string',
+        'manuallyClosedDate' => 'string',
+        'manuallyClosedComment' => 'string'
     ];
 
     /**
@@ -273,6 +296,18 @@ class PurchaseRequest extends Model
         return $this->belongsTo('App\Models\Employee','createdUserSystemID','employeeSystemID');
     }
 
+    public function cancelled_by(){
+        return $this->belongsTo('App\Models\Employee','cancelledByEmpSystemID','employeeSystemID');
+    }
+
+    public function manually_closed_by(){
+        return $this->belongsTo('App\Models\Employee','manuallyClosedByEmpSystemID','employeeSystemID');
+    }
+
+    public function modified_by(){
+        return $this->belongsTo('App\Models\Employee','modifiedUserSystemID','employeeSystemID');
+    }
+
     public function confirmed_by(){
         return $this->belongsTo('App\Models\Employee','PRConfirmedBySystemID','employeeSystemID');
     }
@@ -280,12 +315,15 @@ class PurchaseRequest extends Model
     public function priority(){
         return $this->belongsTo('App\Models\Priority','priority','priorityID');
     }
-
-
+    public function priority_pdf(){
+        return $this->belongsTo('App\Models\Priority','priority','priorityID');
+    }
     public function location(){
         return $this->belongsTo('App\Models\Location','location','locationID');
     }
-
+    public function location_pdf(){
+        return $this->belongsTo('App\Models\Location','location','locationID');
+    }
     public function segment(){
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
@@ -297,5 +335,19 @@ class PurchaseRequest extends Model
     public function details(){
         return $this->hasMany('App\Models\PurchaseRequestDetails','purchaseRequestID','purchaseRequestID');
     }
-    
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','purchaseRequestID');
+    }
+
+    public function po_details(){
+        return $this->hasMany('App\Models\PurchaseOrderDetails','purchaseRequestID','purchaseRequestID');
+    }
+
+
+
 }

@@ -1,5 +1,17 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : SegmentMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name : Segment Master
+ * -- Author : Mohamed Nazir
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Segment Master
+ * -- REVISION HISTORY
+ * -- Date: 15-March 2018 By: Nazir Description: Added new functions named as getAllSegmentMaster()
+ * -- Date: 16-March 2018 By: Nazir Description: Added new functions named as getSegmentMasterFormData()
+ * -- Date: 05-June 2018 By: Mubashir Description: Modified getAllSegmentMaster() to handle filters from local storage
+ **/
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSegmentMasterAPIRequest;
@@ -173,6 +185,7 @@ class SegmentMasterAPIController extends AppBaseController
     public function getAllSegmentMaster(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('companyId'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -180,7 +193,27 @@ class SegmentMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $segmentMasters = SegmentMaster::with(['company']);
+        $companyId = $input['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
+        $segmentMasters = SegmentMaster::whereIn('companySystemID',$childCompanies)
+                                ->with(['company']);
+
+        $search = $request->input('search.value');
+        if($search){
+
+            $segmentMasters =   $segmentMasters->where(function ($query) use($search) {
+                $query->where('ServiceLineCode','LIKE',"%{$search}%")
+                    ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+            });
+        }
 
         return \DataTables::eloquent($segmentMasters)
             ->order(function ($query) use ($input) {
@@ -199,8 +232,19 @@ class SegmentMasterAPIController extends AppBaseController
 
     public function getSegmentMasterFormData(Request $request)
     {
-        /** all Company  Drop Down */
-        $allCompanies = Company::select('companySystemID', 'CompanyID', 'CompanyName')->where("isGroup",0)->get();
+
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        }else{
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $allCompanies = Company::whereIn("companySystemID",$subCompanies)
+            ->select('companySystemID', 'CompanyID', 'CompanyName')
+            ->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -258,9 +302,7 @@ class SegmentMasterAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $empId;
 
-        $data =array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID']);
-
-
+        $data = array_except($input, ['serviceLineSystemID', 'timestamp', 'createdUserGroup', 'createdPcID', 'createdUserID']);
 
         $segmentMaster = $this->segmentMasterRepository->update($data, $input['serviceLineSystemID']);
 

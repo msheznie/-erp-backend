@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ControlAccountAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Control Account
+ * -- Author : Mohamed Fayas
+ * -- Create date : 04- May 2018
+ * -- Description : This file contains the all CRUD for Control Account
+ * -- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateControlAccountAPIRequest;

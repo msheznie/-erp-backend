@@ -1,15 +1,15 @@
 <?php
 /**
-=============================================
--- File Name : CurrencyMasterAPIController.php
--- Project Name : ERP
--- Module Name :  Currency Master
--- Author : Mohamed Fayas
--- Create date : 14 - March 2018
--- Description : This file contains the all CRUD for Currency Master
--- REVISION HISTORY
--- Date: 14-March 2018 By: Fayas Description: Added new functions named as getAllCurrencies(),getCurrenciesBySupplier(),
-   addCurrencyToSupplier(),updateCurrencyToSupplier()
+ * =============================================
+ * -- File Name : CurrencyMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Currency Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Currency Master
+ * -- REVISION HISTORY
+ * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getAllCurrencies(),getCurrenciesBySupplier(),
+ * addCurrencyToSupplier(),updateCurrencyToSupplier()
  */
 namespace App\Http\Controllers\API;
 
@@ -34,13 +34,13 @@ use App\Repositories\UserRepository;
  * Class CurrencyMasterController
  * @package App\Http\Controllers\API
  */
-
 class CurrencyMasterAPIController extends AppBaseController
 {
     /** @var  CurrencyMasterRepository */
     private $currencyMasterRepository;
     private $userRepository;
-    public function __construct(CurrencyMasterRepository $currencyMasterRepo,UserRepository $userRepo)
+
+    public function __construct(CurrencyMasterRepository $currencyMasterRepo, UserRepository $userRepo)
     {
         $this->currencyMasterRepository = $currencyMasterRepo;
         $this->userRepository = $userRepo;
@@ -70,7 +70,8 @@ class CurrencyMasterAPIController extends AppBaseController
      * @return Response
      */
 
-    public function getAllCurrencies(Request $request){
+    public function getAllCurrencies(Request $request)
+    {
 
         $this->currencyMasterRepository->pushCriteria(new RequestCriteria($request));
         $this->currencyMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
@@ -86,19 +87,24 @@ class CurrencyMasterAPIController extends AppBaseController
      * @param Request $request
      * @return Response
      */
-    public function getCurrenciesBySupplier(Request $request){
+    public function getCurrenciesBySupplier(Request $request)
+    {
 
         $supplierId = $request['supplierId'];
-        $supplier = SupplierMaster::where('supplierCodeSystem','=',$supplierId)->first();
+        $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)->first();
 
-        if($supplier){
+        if ($supplier) {
             //$supplierCurrencies = SupplierCurrency::where('supplierCodeSystem','=',$supplierId)->get();
             $supplierCurrencies = DB::table('suppliercurrency')
-                ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
-                ->where('supplierCodeSystem','=',$supplierId)
-                ->orderBy('supplierCurrencyID', 'DESC')
-                ->get();
-        }else{
+                                    ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
+                                    ->where('supplierCodeSystem', '=', $supplierId);
+            if (isset($request['isAssigned'])) {
+                $supplierCurrencies =  $supplierCurrencies->where('isAssigned', '=', $request['isAssigned']);
+            }
+
+            $supplierCurrencies = $supplierCurrencies->orderBy('supplierCurrencyID', 'DESC')->get();
+
+        } else {
             $supplierCurrencies = [];
         }
 
@@ -114,7 +120,8 @@ class CurrencyMasterAPIController extends AppBaseController
      * @return Response
      */
 
-    public function addCurrencyToSupplier (Request $request){
+    public function addCurrencyToSupplier(Request $request)
+    {
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
@@ -124,16 +131,16 @@ class CurrencyMasterAPIController extends AppBaseController
         $supplierCurrency = new SupplierCurrency();
         $supplierCurrency->supplierCodeSystem = $request['supplierId'];
         $supplierCurrency->currencyID = $request['currencyId'];
-        $supplierCurrency->isAssigned = 1;
-        $supplierCurrency->isDefault  = 0;
+        $supplierCurrency->isAssigned = -1;
+        $supplierCurrency->isDefault = 0;
         $supplierCurrency->save();
 
-        $supplier = SupplierMaster::where('supplierCodeSystem',$request['supplierId'])->first();
+        $supplier = SupplierMaster::where('supplierCodeSystem', $request['supplierId'])->first();
 
 
-         $companyDefaultBankMemos = BankMemoSupplierMaster::where('companySystemID',$supplier->primaryCompanySystemID)->get();
+        $companyDefaultBankMemos = BankMemoSupplierMaster::where('companySystemID', $supplier->primaryCompanySystemID)->get();
 
-        foreach ($companyDefaultBankMemos as $value){
+        foreach ($companyDefaultBankMemos as $value) {
             $temBankMemo = new BankMemoSupplier();
             $temBankMemo->memoHeader = $value['memoHeader'];
             $temBankMemo->memoDetail = $value['memoDetail'];
@@ -155,26 +162,31 @@ class CurrencyMasterAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function updateCurrencyToSupplier (Request $request){
+    public function updateCurrencyToSupplier(Request $request)
+    {
 
-        $supplierCurrency = SupplierCurrency::where('supplierCurrencyID',$request['supplierCurrencyID'])->first();
+        $supplierCurrency = SupplierCurrency::where('supplierCurrencyID', $request['supplierCurrencyID'])->first();
 
-        if($supplierCurrency){
-            if($request['isDefault'] == true){
-                $supplierCurrencies = SupplierCurrency::where('supplierCodeSystem',$request['supplierCodeSystem'])->get();
-                foreach ($supplierCurrencies as $sc){
-                    $tem_sc = SupplierCurrency::where('supplierCurrencyID',$sc['supplierCurrencyID'])->first();
-                    $tem_sc->isDefault  = 0;
+        if ($supplierCurrency) {
+            if ($request['isDefault'] == true) {
+                $supplierCurrencies = SupplierCurrency::where('supplierCodeSystem', $request['supplierCodeSystem'])->get();
+                foreach ($supplierCurrencies as $sc) {
+                    $tem_sc = SupplierCurrency::where('supplierCurrencyID', $sc['supplierCurrencyID'])->first();
+                    $tem_sc->isDefault = 0;
                     $tem_sc->save();
                 }
             }
 
-            if($request['isDefault'] == true || $request['isDefault'] == 1){
+            if ($request['isDefault'] == true || $request['isDefault'] == 1) {
                 $request['isDefault'] = -1;
             }
 
-            $supplierCurrency->isDefault  = $request['isDefault'];
-            $supplierCurrency->isAssigned  = $request['isAssigned'];
+            if ($request['isAssigned'] == true || $request['isAssigned'] == 1) {
+                $request['isAssigned'] = -1;
+            }
+
+            $supplierCurrency->isDefault = $request['isDefault'];
+            $supplierCurrency->isAssigned = $request['isAssigned'];
             $supplierCurrency->save();
         }
         return $this->sendResponse($supplierCurrency, 'Supplier Currencies updated successfully');

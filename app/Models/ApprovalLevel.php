@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ApprovalLevel.php
+ * -- Project Name : ERP
+ * -- Module Name :  Aprroval Setup
+ * -- Author : Mubashir
+ * -- Create date : 23 - April 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
