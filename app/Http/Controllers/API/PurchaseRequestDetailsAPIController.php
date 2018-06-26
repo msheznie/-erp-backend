@@ -223,7 +223,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                  'erp_purchaserequestdetails.prClosedYN',
                                  'erp_purchaserequestdetails.fullyOrdered'
                               ]);*/
-                })
+                    })
                     ->where('approved', 0)
                     ->where('cancelledYN', 0)
                     ->first();

@@ -484,6 +484,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
     Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany');
     Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue');
+    Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue');
 
     Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
     Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany');
@@ -494,6 +495,14 @@ Route::group(['middleware' => 'auth:api'], function () {
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
+
+
+Route::get('getBcryptPassword/{password}', function ($password) {
+    echo '$2a$04$Lfx40scFs/n1Yjv4gl1w7.MezCWB9zQ8lPpKMVwIYV/VHcpYTXZI6<br>';
+    echo bcrypt($password);
+});
+
+
 
 
 

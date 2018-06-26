@@ -21,6 +21,7 @@ use App\Models\ItemAssigned;
 use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
 use App\Models\PurchaseOrderDetails;
+use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Repositories\MaterielRequestDetailsRepository;
 use Illuminate\Http\Request;
@@ -133,8 +134,8 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
 
         $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
-            ->where('companySystemID', $companySystemID)
-            ->first();
+                            ->where('companySystemID', $companySystemID)
+                            ->first();
 
         if (empty($item)) {
             return $this->sendError('Item not found');
@@ -169,7 +170,12 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $input['convertionMeasureVal'] = 1;
         $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
         $input['unitOfMeasureIssued'] = $item->itemUnitOfMeasure;
-        $input['maxQty'] = $item->maxQty;
+        if($item->maximunQty){
+            $input['maxQty'] = $item->maximunQty;
+        }else{
+            $input['maxQty'] = 0;
+        }
+
         $input['allowCreatePR']      = 0;
         $input['selectedToCreatePR'] = 0;
 
@@ -368,6 +374,10 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                                             ->where('subUnitID',$input['unitOfMeasureIssued'])
                                             ->first();
 
+            if (empty($unitConvention)) {
+                return $this->sendError('Unit Convention not found', 500);
+            }
+
             if($unitConvention){
                 $convention  = $unitConvention->conversion;
                 $input['convertionMeasureVal'] = $convention;
@@ -458,6 +468,19 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $items = MaterielRequestDetails::where('RequestID', $rId)
                                         ->with(['uom_default','uom_issuing','item_by'])
                                         ->get();
+
+        foreach ($items as $item){
+
+            $issueUnit = Unit::where('UnitID',$item['unitOfMeasure'])->with(['unitConversion.sub_unit'])->first();
+
+            $issueUnits = array();
+            foreach ($issueUnit->unitConversion as $unit){
+                $temArray = array('value' => $unit->sub_unit->UnitID, 'label' => $unit->sub_unit->UnitShortCode);
+                array_push($issueUnits,$temArray);
+            }
+
+            $item->issueUnits = $issueUnits;
+        }
 
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }

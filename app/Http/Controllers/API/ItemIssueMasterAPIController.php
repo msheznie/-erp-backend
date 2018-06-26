@@ -19,12 +19,15 @@ use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentMaster;
+use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemIssueType;
 use App\Models\MaterielRequest;
+use App\Models\MaterielRequestDetails;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\Unit;
+use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -167,8 +170,8 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input['documentID'] = 'MI';
 
         $lastSerial = ItemIssueMaster::where('companySystemID', $input['companySystemID'])
-            ->orderBy('itemIssueAutoID', 'desc')
-            ->first();
+                                    ->orderBy('itemIssueAutoID', 'desc')
+                                    ->first();
 
         $lastSerialNumber = 0;
         if ($lastSerial) {
@@ -352,7 +355,14 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                     $materielRequest = MaterielRequest::where('RequestID', $input['reqDocID'])->with(['created_by'])->first();
 
-                    if (!empty($request)) {
+                    if (!empty($materielRequest)) {
+
+                       if($input['reqDocID'] != $itemIssueMaster->reqDocID){
+                            if($materielRequest->selectedForIssue == -1){
+                                return $this->sendError('This Request already selected. Please check again!', 500);
+                            }
+                       }
+
                         $input['reqByID'] = $materielRequest->createdUserID;
                         $input['reqDate'] = $materielRequest->RequestedDate;
                         $input['reqComment'] = $materielRequest->comments;
@@ -370,6 +380,50 @@ class ItemIssueMasterAPIController extends AppBaseController
             $input['reqComment'] = null;
             $input['reqByName'] = null;
         }
+
+
+        if ($itemIssueMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+
+            $checkItems = ItemIssueDetails::where('itemIssueAutoID', $id)
+                                                ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every issue should have at least one item', 500);
+            }
+
+            $checkQuantity = ItemIssueDetails::where('itemIssueAutoID', $id)
+                                    ->where(function ($q){
+                                        $q->where('qtyIssued', '<=', 0)
+                                           ->orWhereNull('qtyIssued');
+                                    })
+                                    ->count();
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+            }
+
+
+            $amount = ItemIssueDetails::where('itemIssueAutoID', $id)
+                                        ->sum('issueCostRptTotal');
+
+            $params = array('autoID' => $id,
+                'company' => $itemIssueMaster->companySystemID,
+                'document' => $itemIssueMaster->documentSystemID,
+                'segment' => $input['serviceLineSystemID'],
+                'category' => 0,
+                'amount' => $amount
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
 
         $itemIssueMaster = $this->itemIssueMasterRepository->update($input, $id);
