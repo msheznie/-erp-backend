@@ -35,6 +35,7 @@
  * -- Date: 28-May 2018 By: Nazir Description: Added new functions named as getGRVBasedPODropdowns(),
  * -- Date: 05-June 2018 By: Mubashir Description: Modified getProcumentOrderByDocumentType() to handle filters from local storage
  * -- Date: 14-june 2018 By: Nazir Description: Added new functions named as purchaseOrderForGRV(),
+ * -- Date: 25-june 2018 By: Nazir Description: Added new functions named as getPurchasePaymentStatusHistory(),
  */
 
 namespace App\Http\Controllers\API;
@@ -3469,7 +3470,7 @@ ORDER BY
             ->where('poConfirmedYN', 1)
             ->where('poCancelledYN', 0)
             ->where('poClosedYN', 0)
-            ->where('grvRecieved','<>', 2)
+            ->where('grvRecieved', '<>', 2)
             ->where('manuallyClosed', 0)
             ->orderBy('purchaseOrderID', 'DESC')
             ->get();
@@ -3477,6 +3478,92 @@ ORDER BY
         return $this->sendResponse($ProcumentOrder->toArray(), 'Purchase Order Details retrieved successfully');
     }
 
+    public function getPurchasePaymentStatusHistory(Request $request)
+    {
+        $input = $request->all();
+
+        $companySystemID = $input['companySystemID'];
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $detail = DB::select('SELECT
+	*
+FROM
+	(
+		SELECT
+			erp_paysupplierinvoicedetail.PayMasterAutoId AS PayMasterAutoId,
+			erp_paysupplierinvoicemaster.documentID,
+			erp_paysupplierinvoicedetail.companyID,
+			"Invoice Payment" AS paymentType,
+			erp_paysupplierinvoicemaster.BPVcode,
+			erp_paysupplierinvoicemaster.BPVdate,
+			erp_paysupplierinvoicedetail.supplierInvoiceNo,
+			erp_paysupplierinvoicedetail.supplierInvoiceDate,
+			erp_bookinvsuppdet.purchaseOrderID,
+			erp_bookinvsuppdet.totTransactionAmount AS TransAmount,
+			erp_bookinvsuppdet.totLocalAmount AS LocalAmount,
+			erp_bookinvsuppdet.totRptAmount AS RptAmount,
+			erp_paysupplierinvoicemaster.trsClearedDate,
+			erp_paysupplierinvoicemaster.bankClearedDate,
+			erp_paysupplierinvoicemaster.approvedDate,
+			erp_paysupplierinvoicemaster.invoiceType,
+			erp_paysupplierinvoicemaster.confirmedYN,
+			erp_paysupplierinvoicemaster.approved,
+			cm1.CurrencyCode AS transactionCurrency,
+			cm2.CurrencyCode AS localCurrency,
+			cm3.CurrencyCode AS reportingCurrency,
+			cm1.DecimalPlaces AS transactionDeci,
+			cm2.DecimalPlaces AS localDeci,
+			cm3.DecimalPlaces AS reportingDec
+		FROM
+			erp_paysupplierinvoicedetail
+		INNER JOIN erp_bookinvsuppdet ON erp_paysupplierinvoicedetail.bookingInvSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+		INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+		INNER JOIN currencymaster cm1 ON cm1.currencyID = erp_bookinvsuppdet.supplierTransactionCurrencyID
+		INNER JOIN currencymaster cm2 ON cm2.currencyID = erp_bookinvsuppdet.localCurrencyID
+		INNER JOIN currencymaster cm3 ON cm3.currencyID = erp_bookinvsuppdet.companyReportingCurrencyID
+		WHERE
+			erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
+		AND erp_bookinvsuppdet.purchaseOrderID = ' . $purchaseOrderID . '
+		AND erp_paysupplierinvoicemaster.invoiceType = 2
+		UNION ALL
+			SELECT
+				erp_paysupplierinvoicemaster.PayMasterAutoId AS PayMasterAutoId,
+				erp_paysupplierinvoicemaster.documentID,
+				erp_paysupplierinvoicemaster.companyID,
+				"Advance Payment" AS paymentType,
+				erp_paysupplierinvoicemaster.BPVcode,
+				erp_paysupplierinvoicemaster.BPVdate,
+				"-" AS supplierInvoiceNo,
+				"-" AS supplierInvoiceDate,
+				erp_advancepaymentdetails.purchaseOrderID,
+				erp_advancepaymentdetails.supplierTransAmount AS TransAmount,
+				erp_advancepaymentdetails.localAmount AS LocalAmount,
+				erp_advancepaymentdetails.comRptAmount AS RptAmount,
+				erp_paysupplierinvoicemaster.trsClearedDate,
+				erp_paysupplierinvoicemaster.bankClearedDate,
+				erp_paysupplierinvoicemaster.approvedDate,
+				erp_paysupplierinvoicemaster.invoiceType,
+				erp_paysupplierinvoicemaster.confirmedYN,
+				erp_paysupplierinvoicemaster.approved,
+				cm1.CurrencyCode AS transactionCurrency,
+			    cm2.CurrencyCode AS localCurrency,
+			    cm3.CurrencyCode AS reportingCurrency,
+			    cm1.DecimalPlaces AS transactionDeci,
+				cm2.DecimalPlaces AS localDeci,
+				cm3.DecimalPlaces AS reportingDec
+			FROM
+				erp_paysupplierinvoicemaster
+			INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
+			INNER JOIN currencymaster cm1 ON cm1.currencyID = erp_advancepaymentdetails.supplierTransCurrencyID
+			INNER JOIN currencymaster cm2 ON cm2.currencyID = erp_advancepaymentdetails.localCurrencyID
+			INNER JOIN currencymaster cm3 ON cm3.currencyID = erp_advancepaymentdetails.comRptCurrencyID
+			WHERE
+				erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
+			AND erp_advancepaymentdetails.purchaseOrderID = ' . $purchaseOrderID . '
+	) AS POPaymentDetails');
+
+        return $this->sendResponse($detail, 'payment status retrieved successfully');
+    }
 
 
 }
