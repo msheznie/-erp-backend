@@ -347,11 +347,11 @@ class ErpItemLedgerAPIController extends AppBaseController
         }
 
         $startDate = new Carbon($request->daterange[0]);
-        $startDate = $startDate->addDays(1);
+        //$startDate = $startDate->addDays(1);
         $startDate = $startDate->format('Y-m-d');
 
         $endDate = new Carbon($request->daterange[1]);
-        $endDate = $endDate->addDays(1);
+        //$endDate = $endDate->addDays(1);
         $endDate = $endDate->format('Y-m-d');
 
         $input = $request->all();
@@ -673,7 +673,7 @@ WHERE
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
 
         }
-
+        //DB::enableQueryLog();
         $items  = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
             ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
@@ -705,7 +705,7 @@ WHERE
             ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$date'")
             ->groupBy('itemSystemCode')
             ->get();
-
+        //dd(DB::getQueryLog());
         $finalArray = array();
         if (!empty($items)) {
             foreach ($items as $element) {
@@ -846,11 +846,13 @@ WHERE
 	finalStockTaking.unitOfMeasure,
 	finalStockTaking.UnitShortCode,
 	round(sum(stockQty),8) as StockQty,
-	round((sum(AmountLocal)/sum(stockQty)),8) as AvgCostLocal,
-	round((sum(AmountRpt)/sum(stockQty)),8) as AvgCostRpt,
-	round((sum(AmountLocal)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostLocal,
-	round((sum(AmountRpt)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostRpt,
-	finalStockTaking.BinLocation
+	IFNULL(round((sum(AmountLocal)/sum(stockQty)),8),0) as AvgCostLocal,
+	IFNULL(round((sum(AmountRpt)/sum(stockQty)),8),0) as AvgCostRpt,
+	IFNULL(round((sum(AmountLocal)/sum(stockQty)),8),0) * round(sum(stockQty),8) as TotalCostLocal,
+	IFNULL(round((sum(AmountRpt)/sum(stockQty)),8),0) * round(sum(stockQty),8) as TotalCostRpt,
+	finalStockTaking.BinLocation,
+	LocalCurrencyDecimals,
+	RptCurrencyDecimals
 FROM
 (
 SELECT
@@ -868,11 +870,16 @@ SELECT
 	inOutQty AS stockQty,
 	wacRpt * inOutQty AS AmountRpt,
 	wacLocal * inOutQty AS AmountLocal,
-	StockTaking_BinLocation.binLocationDes AS BinLocation 
+	StockTaking_BinLocation.binLocationDes AS BinLocation,
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
+	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals
+	 
 FROM
 	erp_itemledger
 	LEFT JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
 	AND itemmaster.financeCategoryMaster = 1
+	LEFT JOIN currencymaster ON erp_itemledger.wacLocalCurrencyID = currencymaster.currencyID
+	LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID = currencymaster_1.currencyID
 	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
 	LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
 	LEFT JOIN (
@@ -889,7 +896,8 @@ FROM
 	AND warehouseitems.warehouseSystemCode = warehousebinlocationmaster.wareHouseSystemCode 
 	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID 
 WHERE
-	warehouseitems.companySystemID = '' 
+	warehouseitems.companySystemID IN (".join(',',$subCompanies).") AND
+	warehouseitems.warehouseSystemCode IN (".join(',',json_decode($warehouse)).")
 	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID 
 	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode 
 	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode 
@@ -962,11 +970,13 @@ ORDER BY
 	finalStockTaking.unitOfMeasure,
 	finalStockTaking.UnitShortCode,
 	round(sum(stockQty),8) as StockQty,
-	round((sum(AmountLocal)/sum(stockQty)),8) as AvgCostLocal,
-	round((sum(AmountRpt)/sum(stockQty)),8) as AvgCostRpt,
-	round((sum(AmountLocal)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostLocal,
-	round((sum(AmountRpt)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostRpt,
-	finalStockTaking.BinLocation
+	IFNULL(round((sum(AmountLocal)/sum(stockQty)),8),0) as AvgCostLocal,
+	IFNULL(round((sum(AmountRpt)/sum(stockQty)),8),0) as AvgCostRpt,
+	IFNULL(round((sum(AmountLocal)/sum(stockQty)),8),0) * round(sum(stockQty),8) as TotalCostLocal,
+	IFNULL(round((sum(AmountRpt)/sum(stockQty)),8),0) * round(sum(stockQty),8) as TotalCostRpt,
+	finalStockTaking.BinLocation,
+	LocalCurrencyDecimals, 
+	RptCurrencyDecimals
 FROM
 (
 SELECT
@@ -983,11 +993,15 @@ SELECT
 	inOutQty AS stockQty,
 	wacRpt * inOutQty AS AmountRpt,
 	wacLocal * inOutQty AS AmountLocal,
-	StockTaking_BinLocation.binLocationDes AS BinLocation 
+	StockTaking_BinLocation.binLocationDes AS BinLocation,
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
+	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals 
 FROM
 	erp_itemledger
 	LEFT JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
 	AND itemmaster.financeCategoryMaster = 1
+	LEFT JOIN currencymaster ON erp_itemledger.wacLocalCurrencyID = currencymaster.currencyID
+	LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID = currencymaster_1.currencyID
 	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
 	LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
 	LEFT JOIN (
@@ -1004,7 +1018,8 @@ FROM
 	AND warehouseitems.warehouseSystemCode = warehousebinlocationmaster.wareHouseSystemCode 
 	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID 
 WHERE
-	warehouseitems.companySystemID = '' 
+	warehouseitems.companySystemID IN (".join(',',$subCompanies).") AND
+	warehouseitems.warehouseSystemCode IN (".join(',',json_decode($warehouse)).")
 	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID 
 	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode 
 	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode 
@@ -1026,7 +1041,11 @@ ORDER BY
                 'UOM' => $val->UnitShortCode,
                 'Part Number' => $val->partNumber,
                 'Stock Qty' => $val->StockQty,
-                'Physical Qty' =>$val->BinLocation,
+                'Avg Cost Rpt' => round($val->AvgCostRpt,$val->RptCurrencyDecimals),
+                'Avg Cost Local' => round($val->AvgCostLocal,$val->LocalCurrencyDecimals),
+                'Total Cost Rpt' => round($val->TotalCostRpt,$val->RptCurrencyDecimals),
+                'Total Cost Local' => round($val->TotalCostLocal,$val->LocalCurrencyDecimals),
+                'Physical Qty' =>'',
                 'Bin Location' => $val->BinLocation
             );
         }
