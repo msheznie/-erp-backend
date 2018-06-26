@@ -117,11 +117,11 @@ class ReportAPIController extends AppBaseController
                 }
 
                 $startDate = new Carbon($request->daterange[0]);
-                $startDate = $startDate->addDays(1);
+                //$startDate = $startDate->addDays(1);
                 $startDate = $startDate->format('Y-m-d');
 
                 $endDate = new Carbon($request->daterange[1]);
-                $endDate = $endDate->addDays(1);
+                //$endDate = $endDate->addDays(1);
                 $endDate = $endDate->format('Y-m-d');
 
 
@@ -518,11 +518,11 @@ WHERE
 
 
                 $startDate = new Carbon($request->daterange[0]);
-                $startDate = $startDate->addDays(1);
+                //$startDate = $startDate->addDays(1);
                 $startDate = $startDate->format('Y-m-d');
 
                 $endDate = new Carbon($request->daterange[1]);
-                $endDate = $endDate->addDays(1);
+                //$endDate = $endDate->addDays(1);
                 $endDate = $endDate->format('Y-m-d');
 
                 $companyID = "";
@@ -1098,11 +1098,11 @@ WHERE
     function getCustomerStatementAccountQRY($request)
     {
         $fromDate = new Carbon($request->fromDate);
-        $fromDate = $fromDate->addDays(1);
+        //$fromDate = $fromDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        $toDate = $toDate->addDays(1);
+        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -1287,7 +1287,7 @@ GROUP BY
     function getCustomerBalanceStatementQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        $asOfDate = $asOfDate->addDays(1);
+        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -1571,7 +1571,7 @@ WHERE
     function getCustomerAgingDetailQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        $asOfDate = $asOfDate->addDays(1);
+        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -1888,7 +1888,7 @@ WHERE
     function getCustomerAgingSummaryQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        $asOfDate = $asOfDate->addDays(1);
+        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";

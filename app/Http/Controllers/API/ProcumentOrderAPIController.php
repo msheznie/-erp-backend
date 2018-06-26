@@ -36,6 +36,7 @@
  * -- Date: 05-June 2018 By: Mubashir Description: Modified getProcumentOrderByDocumentType() to handle filters from local storage
  * -- Date: 14-june 2018 By: Nazir Description: Added new functions named as purchaseOrderForGRV(),
  * -- Date: 25-june 2018 By: Nazir Description: Added new functions named as getPurchasePaymentStatusHistory(),
+ * -- Date: 26-june 2018 By: Nazir Description: Added new functions named as getProcurementOrderReferBack(),
  */
 
 namespace App\Http\Controllers\API;
@@ -43,6 +44,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
 use App\Models\Employee;
+use App\Models\EmployeesDepartment;
 use App\Models\Months;
 use App\Models\Company;
 use App\Models\SupplierMaster;
@@ -938,7 +940,6 @@ class ProcumentOrderAPIController extends AppBaseController
 
     public function getProcumentOrderFormData(Request $request)
     {
-
         $companyId = $request['companyId'];
 
         $purchaseOrderID = $request['purchaseOrderID'];
@@ -1574,6 +1575,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+            ->where('companySystemID', $purchaseOrder->companySystemID)
             ->where('documentSystemID', $input['documentSystemID'])
             ->delete();
 
@@ -3563,6 +3565,105 @@ FROM
 	) AS POPaymentDetails');
 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
+    }
+
+    public function getProcurementOrderReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+        $emails = array();
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        if ($purchaseOrder->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this PO its already partially approved');
+        }
+
+        if ($purchaseOrder->approved == -1) {
+            return $this->sendError('You cannot reopen this PO its already fully approved');
+        }
+
+        if ($purchaseOrder->poConfirmedYN == 0) {
+            return $this->sendError('You cannot reopen this PO, its not confirmed');
+        }
+
+        // updating fields
+
+        $purchaseOrder->poConfirmedYN = 0;
+        $purchaseOrder->poConfirmedByEmpSystemID = null;
+        $purchaseOrder->poConfirmedByEmpID = null;
+        $purchaseOrder->poConfirmedByName = null;
+        $purchaseOrder->poConfirmedDate = null;
+        $purchaseOrder->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemCode', $purchaseOrder->purchaseOrderID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $purchaseOrder->companySystemID)
+                    ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+            ->where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemID',  $purchaseOrder->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($purchaseOrder->toArray(), 'payment status retrieved successfully');
     }
 
 
