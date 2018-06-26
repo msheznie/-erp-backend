@@ -198,6 +198,17 @@ class Helper
                     $docInforArr["modelName"] = 'GRVMaster';
                     $docInforArr["primarykey"] = 'grvAutoID';
                     break;
+                case 8:
+                    $docInforArr["documentCodeColumnName"] = 'itemIssueCode';
+                    $docInforArr["confirmColumnName"]      = 'confirmedYN';
+                    $docInforArr["confirmedBy"]            = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_itemissuemaster';
+                    $docInforArr["modelName"] = 'ItemIssueMaster';
+                    $docInforArr["primarykey"] = 'itemIssueAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }

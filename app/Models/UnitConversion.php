@@ -68,4 +68,9 @@ class UnitConversion extends Model
     {
         return $this->belongsTo('App\Models\Unit', 'masterUnitID', 'UnitID');
     }
+
+    public function sub_unit()
+    {
+        return $this->belongsTo('App\Models\Unit','subUnitID','UnitID');
+    }
 }

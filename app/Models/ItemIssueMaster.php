@@ -452,7 +452,14 @@ class ItemIssueMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
 
-    public function warehouse_by(){
+    public function warehouse_by()
+    {
         return $this->belongsTo('App\Models\WarehouseMaster','wareHouseFrom','wareHouseSystemCode');
     }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\ItemIssueDetails','itemIssueAutoID','itemIssueAutoID');
+    }
+
 }
