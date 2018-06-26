@@ -117,11 +117,11 @@ class ReportAPIController extends AppBaseController
                 }
 
                 $startDate = new Carbon($request->daterange[0]);
-                $startDate = $startDate->addDays(1);
+                //$startDate = $startDate->addDays(1);
                 $startDate = $startDate->format('Y-m-d');
 
                 $endDate = new Carbon($request->daterange[1]);
-                $endDate = $endDate->addDays(1);
+                //$endDate = $endDate->addDays(1);
                 $endDate = $endDate->format('Y-m-d');
 
 
@@ -135,6 +135,12 @@ class ReportAPIController extends AppBaseController
 
                 $suppliers = (array)$request->suppliers;
                 $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
+
+                if(isset($request->selectedSupplier)){
+                    if(!empty($request->selectedSupplier)){
+                        $suppliers = collect($request->selectedSupplier);
+                    }
+                }
 
                 if ($request->reportType == 1) { //PO Analysis Item Detail Report
                     $output = DB::table('erp_purchaseorderdetails')
@@ -186,11 +192,12 @@ WHERE
                         erp_purchaseorderdetails.purchaseOrderDetailsID,
                         gdet2.lastOfgrvDate,
                     erp_purchaseorderdetails.unitOfMeasure,
-                    IF((erp_purchaseorderdetails.noQty-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Recieved","Partially Recieved")) as receivedStatus,
+                    IF((erp_purchaseorderdetails.noQty-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
                     IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
                     erp_purchaseorderdetails.itemFinanceCategorySubID,
+                    erp_purchaseorderdetails.itemCode,
                     erp_purchaseorderdetails.itemPrimaryCode,
                     erp_purchaseorderdetails.itemDescription,
                     erp_purchaseorderdetails.supplierPartNumber,
@@ -205,10 +212,33 @@ WHERE
                     podet.*')
                         ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID);
 
-                    $search = $request->input('search.value');
+                    /*$search = $request->input('search.value');
                     if ($search) {
-                        $output = $output->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
-                            ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%");
+                        $search = str_replace("\\", "\\\\", $search);
+                        $output = $output->where(function ($query) use ($search) {
+                            $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
+                                ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%")
+                                ->orWhere('supplierName', 'LIKE', "%{$search}%")
+                                ->orWhere('purchaseOrderCode', 'LIKE', "%{$search}%");
+                        });
+                    }*/
+
+                    if(isset($request->searchText)){
+                        if(!empty($request->searchText)){
+                            $search = str_replace("\\", "\\\\", $request->searchText);
+                            $output = $output->where(function ($query) use ($search) {
+                                $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
+                                    ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%")
+                                    ->orWhere('supplierName', 'LIKE', "%{$search}%")
+                                    ->orWhere('purchaseOrderCode', 'LIKE', "%{$search}%");
+                            });
+                        }
+                    }
+
+                    if(isset($request->grvStatus)){
+                        if(!empty($request->grvStatus)){
+                            $output = $output->having('receivedStatus', $request->grvStatus);
+                        }
                     }
 
                     $output->orderBy('podet.approvedDate', 'ASC');
@@ -488,11 +518,11 @@ WHERE
 
 
                 $startDate = new Carbon($request->daterange[0]);
-                $startDate = $startDate->addDays(1);
+                //$startDate = $startDate->addDays(1);
                 $startDate = $startDate->format('Y-m-d');
 
                 $endDate = new Carbon($request->daterange[1]);
-                $endDate = $endDate->addDays(1);
+                //$endDate = $endDate->addDays(1);
                 $endDate = $endDate->format('Y-m-d');
 
                 $companyID = "";
@@ -506,6 +536,12 @@ WHERE
 
                 $suppliers = (array)$request->suppliers;
                 $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
+
+                if(isset($request->selectedSupplier)){
+                    if(!empty($request->selectedSupplier)){
+                        $suppliers = collect($request->selectedSupplier);
+                    }
+                }
 
                 if ($request->reportType == 1) {
                     $output = DB::table('erp_purchaseorderdetails')
@@ -557,7 +593,7 @@ WHERE
                         erp_purchaseorderdetails.purchaseOrderDetailsID,
                         gdet2.lastOfgrvDate,
                     erp_purchaseorderdetails.unitOfMeasure,
-                    IF((erp_purchaseorderdetails.noQty-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Recieved","Partially Recieved")) as receivedStatus,
+                    IF((erp_purchaseorderdetails.noQty-gdet.noQty) = 0,"Fully Received",if(ISNULL(gdet.noQty) OR gdet.noQty=0 ,"Not Received","Partially Received")) as receivedStatus,
                     IFNULL((erp_purchaseorderdetails.noQty-gdet.noQty),0) as qtyToReceive,
                     IFNULL(gdet.noQty,0) as qtyReceived,
                     erp_purchaseorderdetails.itemFinanceCategoryID,
@@ -574,8 +610,27 @@ WHERE
                     catSub.*,
                     units.UnitShortCode AS unitShortCode,
                     podet.*')
-                        ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID)->orderBy('podet.approvedDate', 'ASC')->get();
+                        ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID)->orderBy('podet.approvedDate', 'ASC');
 
+                    if(isset($request->grvStatus)){
+                        if(!empty($request->grvStatus)){
+                            $output = $output->having('receivedStatus', $request->grvStatus);
+                        }
+                    }
+
+                    if(isset($request->searchText)){
+                        if(!empty($request->searchText)){
+                            $search = str_replace("\\", "\\\\", $request->searchText);
+                            $output = $output->where(function ($query) use ($search) {
+                                $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
+                                    ->orWhere('erp_purchaseorderdetails.itemDescription', 'LIKE', "%{$search}%")
+                                    ->orWhere('supplierName', 'LIKE', "%{$search}%")
+                                    ->orWhere('purchaseOrderCode', 'LIKE', "%{$search}%");
+                            });
+                        }
+                    }
+
+                    $output = $output->get();
                     foreach ($output as $val) {
                         $data[] = array(
                             'CompanyID' => $val->companyID,
@@ -889,11 +944,11 @@ WHERE
                             $data[$x]['Invoice Date'] = \Helper::dateFormat($val->InvoiceDate);
                             $data[$x]['Currency'] = $val->documentCurrency;
                             foreach ($output['aging'] as $val2) {
-                                $lineTotal+=  $val[$val2];
+                                $lineTotal+=  $val->$val2;
                             }
                             $data[$x]['Balance Amount'] = $lineTotal;
                             foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val[$val2];
+                                $data[$x][$val2] = $val->$val2;
                             }
                             $x++;
                         }
@@ -908,14 +963,14 @@ WHERE
                         foreach ($output['data'] as $val) {
                             $lineTotal = 0;
                             $data[$x]['Cust. Code'] = $val->DocumentCode;
-                            $data[$x]['Customer Name'] = \Helper::dateFormat($val->PostedDate);
+                            $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Currency'] = $val->documentCurrency;
                             foreach ($output['aging'] as $val2) {
-                                $lineTotal+=  $val[$val2];
+                                $lineTotal+=  $val->$val2;
                             }
                             $data[$x]['Amount'] = $lineTotal;
                             foreach ($output['aging'] as $val2) {
-                                $data[$x][$val2] = $val[$val2];
+                                $data[$x][$val2] = $val->$val2;
                             }
                             $x++;
                         }
@@ -1043,11 +1098,11 @@ WHERE
     function getCustomerStatementAccountQRY($request)
     {
         $fromDate = new Carbon($request->fromDate);
-        $fromDate = $fromDate->addDays(1);
+        //$fromDate = $fromDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        $toDate = $toDate->addDays(1);
+        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -1232,7 +1287,7 @@ GROUP BY
     function getCustomerBalanceStatementQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        $asOfDate = $asOfDate->addDays(1);
+        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -1516,7 +1571,7 @@ WHERE
     function getCustomerAgingDetailQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        $asOfDate = $asOfDate->addDays(1);
+        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";
@@ -1833,7 +1888,7 @@ WHERE
     function getCustomerAgingSummaryQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
-        $asOfDate = $asOfDate->addDays(1);
+        //$asOfDate = $asOfDate->addDays(1);
         $asOfDate = $asOfDate->format('Y-m-d');
 
         $companyID = "";

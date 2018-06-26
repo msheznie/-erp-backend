@@ -35,6 +35,8 @@
  * -- Date: 28-May 2018 By: Nazir Description: Added new functions named as getGRVBasedPODropdowns(),
  * -- Date: 05-June 2018 By: Mubashir Description: Modified getProcumentOrderByDocumentType() to handle filters from local storage
  * -- Date: 14-june 2018 By: Nazir Description: Added new functions named as purchaseOrderForGRV(),
+ * -- Date: 25-june 2018 By: Nazir Description: Added new functions named as getPurchasePaymentStatusHistory(),
+ * -- Date: 26-june 2018 By: Nazir Description: Added new functions named as getProcurementOrderReferBack(),
  */
 
 namespace App\Http\Controllers\API;
@@ -42,6 +44,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
 use App\Models\Employee;
+use App\Models\EmployeesDepartment;
 use App\Models\Months;
 use App\Models\Company;
 use App\Models\SupplierMaster;
@@ -937,7 +940,6 @@ class ProcumentOrderAPIController extends AppBaseController
 
     public function getProcumentOrderFormData(Request $request)
     {
-
         $companyId = $request['companyId'];
 
         $purchaseOrderID = $request['purchaseOrderID'];
@@ -1573,6 +1575,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+            ->where('companySystemID', $purchaseOrder->companySystemID)
             ->where('documentSystemID', $input['documentSystemID'])
             ->delete();
 
@@ -3469,7 +3472,7 @@ ORDER BY
             ->where('poConfirmedYN', 1)
             ->where('poCancelledYN', 0)
             ->where('poClosedYN', 0)
-            ->where('grvRecieved','<>', 2)
+            ->where('grvRecieved', '<>', 2)
             ->where('manuallyClosed', 0)
             ->orderBy('purchaseOrderID', 'DESC')
             ->get();
@@ -3477,6 +3480,191 @@ ORDER BY
         return $this->sendResponse($ProcumentOrder->toArray(), 'Purchase Order Details retrieved successfully');
     }
 
+    public function getPurchasePaymentStatusHistory(Request $request)
+    {
+        $input = $request->all();
+
+        $companySystemID = $input['companySystemID'];
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $detail = DB::select('SELECT
+	*
+FROM
+	(
+		SELECT
+			erp_paysupplierinvoicedetail.PayMasterAutoId AS PayMasterAutoId,
+			erp_paysupplierinvoicemaster.documentID,
+			erp_paysupplierinvoicedetail.companyID,
+			"Invoice Payment" AS paymentType,
+			erp_paysupplierinvoicemaster.BPVcode,
+			erp_paysupplierinvoicemaster.BPVdate,
+			erp_paysupplierinvoicedetail.supplierInvoiceNo,
+			erp_paysupplierinvoicedetail.supplierInvoiceDate,
+			erp_bookinvsuppdet.purchaseOrderID,
+			erp_bookinvsuppdet.totTransactionAmount AS TransAmount,
+			erp_bookinvsuppdet.totLocalAmount AS LocalAmount,
+			erp_bookinvsuppdet.totRptAmount AS RptAmount,
+			erp_paysupplierinvoicemaster.trsClearedDate,
+			erp_paysupplierinvoicemaster.bankClearedDate,
+			erp_paysupplierinvoicemaster.approvedDate,
+			erp_paysupplierinvoicemaster.invoiceType,
+			erp_paysupplierinvoicemaster.confirmedYN,
+			erp_paysupplierinvoicemaster.approved,
+			cm1.CurrencyCode AS transactionCurrency,
+			cm2.CurrencyCode AS localCurrency,
+			cm3.CurrencyCode AS reportingCurrency,
+			cm1.DecimalPlaces AS transactionDeci,
+			cm2.DecimalPlaces AS localDeci,
+			cm3.DecimalPlaces AS reportingDec
+		FROM
+			erp_paysupplierinvoicedetail
+		INNER JOIN erp_bookinvsuppdet ON erp_paysupplierinvoicedetail.bookingInvSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID
+		INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+		INNER JOIN currencymaster cm1 ON cm1.currencyID = erp_bookinvsuppdet.supplierTransactionCurrencyID
+		INNER JOIN currencymaster cm2 ON cm2.currencyID = erp_bookinvsuppdet.localCurrencyID
+		INNER JOIN currencymaster cm3 ON cm3.currencyID = erp_bookinvsuppdet.companyReportingCurrencyID
+		WHERE
+			erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
+		AND erp_bookinvsuppdet.purchaseOrderID = ' . $purchaseOrderID . '
+		AND erp_paysupplierinvoicemaster.invoiceType = 2
+		UNION ALL
+			SELECT
+				erp_paysupplierinvoicemaster.PayMasterAutoId AS PayMasterAutoId,
+				erp_paysupplierinvoicemaster.documentID,
+				erp_paysupplierinvoicemaster.companyID,
+				"Advance Payment" AS paymentType,
+				erp_paysupplierinvoicemaster.BPVcode,
+				erp_paysupplierinvoicemaster.BPVdate,
+				"-" AS supplierInvoiceNo,
+				"-" AS supplierInvoiceDate,
+				erp_advancepaymentdetails.purchaseOrderID,
+				erp_advancepaymentdetails.supplierTransAmount AS TransAmount,
+				erp_advancepaymentdetails.localAmount AS LocalAmount,
+				erp_advancepaymentdetails.comRptAmount AS RptAmount,
+				erp_paysupplierinvoicemaster.trsClearedDate,
+				erp_paysupplierinvoicemaster.bankClearedDate,
+				erp_paysupplierinvoicemaster.approvedDate,
+				erp_paysupplierinvoicemaster.invoiceType,
+				erp_paysupplierinvoicemaster.confirmedYN,
+				erp_paysupplierinvoicemaster.approved,
+				cm1.CurrencyCode AS transactionCurrency,
+			    cm2.CurrencyCode AS localCurrency,
+			    cm3.CurrencyCode AS reportingCurrency,
+			    cm1.DecimalPlaces AS transactionDeci,
+				cm2.DecimalPlaces AS localDeci,
+				cm3.DecimalPlaces AS reportingDec
+			FROM
+				erp_paysupplierinvoicemaster
+			INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
+			INNER JOIN currencymaster cm1 ON cm1.currencyID = erp_advancepaymentdetails.supplierTransCurrencyID
+			INNER JOIN currencymaster cm2 ON cm2.currencyID = erp_advancepaymentdetails.localCurrencyID
+			INNER JOIN currencymaster cm3 ON cm3.currencyID = erp_advancepaymentdetails.comRptCurrencyID
+			WHERE
+				erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
+			AND erp_advancepaymentdetails.purchaseOrderID = ' . $purchaseOrderID . '
+	) AS POPaymentDetails');
+
+        return $this->sendResponse($detail, 'payment status retrieved successfully');
+    }
+
+    public function getProcurementOrderReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+        $emails = array();
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        if ($purchaseOrder->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this PO its already partially approved');
+        }
+
+        if ($purchaseOrder->approved == -1) {
+            return $this->sendError('You cannot reopen this PO its already fully approved');
+        }
+
+        if ($purchaseOrder->poConfirmedYN == 0) {
+            return $this->sendError('You cannot reopen this PO, its not confirmed');
+        }
+
+        // updating fields
+
+        $purchaseOrder->poConfirmedYN = 0;
+        $purchaseOrder->poConfirmedByEmpSystemID = null;
+        $purchaseOrder->poConfirmedByEmpID = null;
+        $purchaseOrder->poConfirmedByName = null;
+        $purchaseOrder->poConfirmedDate = null;
+        $purchaseOrder->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $purchaseOrder->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseOrder->purchaseOrderCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseOrder->purchaseOrderCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemCode', $purchaseOrder->purchaseOrderID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $purchaseOrder->companySystemID)
+                    ->where('documentSystemID', $purchaseOrder->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+            ->where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemID',  $purchaseOrder->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($purchaseOrder->toArray(), 'payment status retrieved successfully');
+    }
 
 
 }

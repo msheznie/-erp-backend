@@ -80,7 +80,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
     public function getItemMasterPurchaseHistory(Request $request)
     {
-
         $purchaseOrderDetails = DB::table('erp_purchaseorderdetails')
             ->leftJoin('units', 'erp_purchaseorderdetails.unitOfMeasure', '=', 'units.UnitID')
             ->leftJoin('currencymaster', 'erp_purchaseorderdetails.supplierItemCurrencyID', '=', 'currencymaster.currencyID')
@@ -89,6 +88,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->leftJoin('erp_location', 'erp_purchaseordermaster.poLocation', '=', 'erp_location.locationID')
             ->where('erp_purchaseordermaster.approved', -1)
             ->where('erp_purchaseorderdetails.itemCode', $request['itemCodeSystem'])
+            ->orderBy('erp_purchaseordermaster.approvedDate', 'DESC')
             ->select('erp_purchaseorderdetails.purchaseOrderMasterID',
                 'erp_purchaseorderdetails.companyID',
                 'companymaster.CompanyName',

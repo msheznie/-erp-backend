@@ -347,11 +347,11 @@ class ErpItemLedgerAPIController extends AppBaseController
         }
 
         $startDate = new Carbon($request->daterange[0]);
-        $startDate = $startDate->addDays(1);
+        //$startDate = $startDate->addDays(1);
         $startDate = $startDate->format('Y-m-d');
 
         $endDate = new Carbon($request->daterange[1]);
-        $endDate = $endDate->addDays(1);
+        //$endDate = $endDate->addDays(1);
         $endDate = $endDate->format('Y-m-d');
 
         $input = $request->all();
@@ -673,7 +673,7 @@ WHERE
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
 
         }
-
+        //DB::enableQueryLog();
         $items  = ErpItemLedger::join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->join('financeitemcategorysub', 'itemmaster.financeCategorySub', '=', 'financeitemcategorysub.itemCategorySubID')
             ->leftJoin('currencymaster', 'erp_itemledger.wacLocalCurrencyID', '=', 'currencymaster.currencyID')
@@ -705,7 +705,7 @@ WHERE
             ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$date'")
             ->groupBy('itemSystemCode')
             ->get();
-
+        //dd(DB::getQueryLog());
         $finalArray = array();
         if (!empty($items)) {
             foreach ($items as $element) {
@@ -775,6 +775,7 @@ WHERE
             ->whereIn('erp_itemledger.wareHouseSystemCode',$warehouse)
             ->whereRaw("DATE(erp_itemledger.transactionDate) <= '$request->date'")
             ->groupBy('itemSystemCode')
+            ->orderBy('categoryDescription')
             ->get();
 
         foreach ($categories as $val) {
@@ -792,7 +793,7 @@ WHERE
             );
         }
 
-        $csv = \Excel::create('po_wise_analysis', function ($excel) use ($data) {
+        $csv = \Excel::create('Stock_valuation_report', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
@@ -811,6 +812,12 @@ WHERE
         $date = new Carbon($request->date);
         $date = $date->format('d/m/Y');
 
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
 
         $selectedCompanyId = $request['companySystemID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -820,7 +827,7 @@ WHERE
         } else {
             $subCompanies = [$selectedCompanyId];
         }
-        $input = $request->all();
+//        $input = $request->all();
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
@@ -839,14 +846,17 @@ WHERE
 	finalStockTaking.unitOfMeasure,
 	finalStockTaking.UnitShortCode,
 	round(sum(stockQty),8) as StockQty,
-	round((sum(AmountLocal)/sum(stockQty)),8) as AvgCostLocal,
-	round((sum(AmountRpt)/sum(stockQty)),8) as AvgCostRpt,
-	round((sum(AmountLocal)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostLocal,
-	round((sum(AmountRpt)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostRpt,
-	finalStockTaking.BinLocation
+	IFNULL(round((sum(AmountLocal)/sum(stockQty)),8),0) as AvgCostLocal,
+	IFNULL(round((sum(AmountRpt)/sum(stockQty)),8),0) as AvgCostRpt,
+	IFNULL(round((sum(AmountLocal)/sum(stockQty)),8),0) * round(sum(stockQty),8) as TotalCostLocal,
+	IFNULL(round((sum(AmountRpt)/sum(stockQty)),8),0) * round(sum(stockQty),8) as TotalCostRpt,
+	finalStockTaking.BinLocation,
+	LocalCurrencyDecimals,
+	RptCurrencyDecimals
 FROM
 (
 SELECT
+	erp_itemledger.itemLedgerAutoID,
 	erp_itemledger.companySystemID,
 	erp_itemledger.companyID,
 	erp_itemledger.wareHouseSystemCode,
@@ -860,11 +870,16 @@ SELECT
 	inOutQty AS stockQty,
 	wacRpt * inOutQty AS AmountRpt,
 	wacLocal * inOutQty AS AmountLocal,
-	StockTaking_BinLocation.binLocationDes AS BinLocation 
+	StockTaking_BinLocation.binLocationDes AS BinLocation,
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
+	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals
+	 
 FROM
 	erp_itemledger
 	LEFT JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
 	AND itemmaster.financeCategoryMaster = 1
+	LEFT JOIN currencymaster ON erp_itemledger.wacLocalCurrencyID = currencymaster.currencyID
+	LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID = currencymaster_1.currencyID
 	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
 	LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
 	LEFT JOIN (
@@ -881,7 +896,8 @@ FROM
 	AND warehouseitems.warehouseSystemCode = warehousebinlocationmaster.wareHouseSystemCode 
 	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID 
 WHERE
-	warehouseitems.companySystemID = '' 
+	warehouseitems.companySystemID IN (".join(',',$subCompanies).") AND
+	warehouseitems.warehouseSystemCode IN (".join(',',json_decode($warehouse)).")
 	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID 
 	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode 
 	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode 
@@ -895,7 +911,17 @@ ORDER BY
 	erp_itemledger.itemSystemCode ASC) AS finalStockTaking
 	GROUP BY companySystemID,wareHouseSystemCode,itemSystemCode");
 
-        $dataRec = \DataTables::of($data)->make(true);
+        $dataRec = \DataTables::of($data)
+//            ->order(function ($query) use ($input) {
+//                if (request()->has('order')) {
+//                    if ($input['order'][0]['column'] == 0) {
+//                        $query->orderBy('itemLedgerAutoID', $input['order'][0]['dir']);
+//                    }
+//                }
+//            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
 
 //        $output = array(
 //            'categories' => $categories,
@@ -942,12 +968,15 @@ ORDER BY
 	finalStockTaking.itemDescription,
 	finalStockTaking.partNumber,
 	finalStockTaking.unitOfMeasure,
+	finalStockTaking.UnitShortCode,
 	round(sum(stockQty),8) as StockQty,
-	round((sum(AmountLocal)/sum(stockQty)),8) as AvgCostLocal,
-	round((sum(AmountRpt)/sum(stockQty)),8) as AvgCostRpt,
-	round((sum(AmountLocal)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostLocal,
-	round((sum(AmountRpt)/sum(stockQty)),8) * round(sum(stockQty),8) as TotalCostRpt,
-	finalStockTaking.BinLocation
+	IFNULL(round((sum(AmountLocal)/sum(stockQty)),8),0) as AvgCostLocal,
+	IFNULL(round((sum(AmountRpt)/sum(stockQty)),8),0) as AvgCostRpt,
+	IFNULL(round((sum(AmountLocal)/sum(stockQty)),8),0) * round(sum(stockQty),8) as TotalCostLocal,
+	IFNULL(round((sum(AmountRpt)/sum(stockQty)),8),0) * round(sum(stockQty),8) as TotalCostRpt,
+	finalStockTaking.BinLocation,
+	LocalCurrencyDecimals, 
+	RptCurrencyDecimals
 FROM
 (
 SELECT
@@ -960,15 +989,21 @@ SELECT
 	itemmaster.itemDescription,
 	itemmaster.secondaryItemCode AS partNumber,
 	erp_itemledger.unitOfMeasure,
+	units.UnitShortCode,
 	inOutQty AS stockQty,
 	wacRpt * inOutQty AS AmountRpt,
 	wacLocal * inOutQty AS AmountLocal,
-	StockTaking_BinLocation.binLocationDes AS BinLocation 
+	StockTaking_BinLocation.binLocationDes AS BinLocation,
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals, 
+	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals 
 FROM
 	erp_itemledger
 	LEFT JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
 	AND itemmaster.financeCategoryMaster = 1
+	LEFT JOIN currencymaster ON erp_itemledger.wacLocalCurrencyID = currencymaster.currencyID
+	LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID = currencymaster_1.currencyID
 	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
+	LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
 	LEFT JOIN (
 SELECT
 	warehouseitems.companySystemID,
@@ -983,7 +1018,8 @@ FROM
 	AND warehouseitems.warehouseSystemCode = warehousebinlocationmaster.wareHouseSystemCode 
 	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID 
 WHERE
-	warehouseitems.companySystemID = '' 
+	warehouseitems.companySystemID IN (".join(',',$subCompanies).") AND
+	warehouseitems.warehouseSystemCode IN (".join(',',json_decode($warehouse)).")
 	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID 
 	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode 
 	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode 
@@ -1002,15 +1038,19 @@ ORDER BY
                 'Warehouse' => $val->wareHouseDescription,
                 'Item Code' => $val->itemPrimaryCode,
                 'Item Description' => $val->itemDescription,
-                'UOM' => $val->unitOfMeasure,
+                'UOM' => $val->UnitShortCode,
                 'Part Number' => $val->partNumber,
                 'Stock Qty' => $val->StockQty,
-                'Physical Qty' =>$val->BinLocation,
+                'Avg Cost Rpt' => round($val->AvgCostRpt,$val->RptCurrencyDecimals),
+                'Avg Cost Local' => round($val->AvgCostLocal,$val->LocalCurrencyDecimals),
+                'Total Cost Rpt' => round($val->TotalCostRpt,$val->RptCurrencyDecimals),
+                'Total Cost Local' => round($val->TotalCostLocal,$val->LocalCurrencyDecimals),
+                'Physical Qty' =>'',
                 'Bin Location' => $val->BinLocation
             );
         }
 
-        $csv = \Excel::create('po_wise_analysis', function ($excel) use ($data) {
+        $csv = \Excel::create('Stock_taking_report', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
