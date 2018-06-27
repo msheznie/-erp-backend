@@ -80,11 +80,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         if ($exists = Storage::disk('public')->exists($documentAttachments->path)) {
-            $tempContent = Storage::disk('public')->get($documentAttachments->path);
-            $content = utf8_encode($tempContent);
-            $array = array('content' => $content, 'name' => $documentAttachments->myFileName);
-            return response()->json($array, 200, ['Content-type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
-
+            return Storage::disk('public')->download($documentAttachments->path,$documentAttachments->myFileName);
         } else {
             return $this->sendError('Attachments not found', 500);
         }
@@ -101,8 +97,26 @@ class DocumentAttachmentsAPIController extends AppBaseController
     public function store(CreateDocumentAttachmentsAPIRequest $request)
     {
 
-
         $input = $request->all();
+        $extension = $input['fileType'];
+
+        $blockExtensions = ['ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
+            'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
+            'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
+            'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
+             'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
+              'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
+              'xbap', 'xnk','php'];
+
+        if (in_array($extension, $blockExtensions))
+        {
+            return $this->sendError('This type of file not allow to upload.',500);
+        }
+
+
+        if ($input['size'] > 20971520) {
+            return $this->sendError("Maximum allowed file size is 20 MB. Please upload lesser than 20 MB.");
+        }
 
         if (isset($input['docExpirtyDate'])) {
             if ($input['docExpirtyDate']) {
@@ -134,8 +148,6 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $file = $request->request->get('file');
         $decodeFile = base64_decode($file);
-
-        $extension = $input['fileType'];
 
         $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
@@ -221,7 +233,15 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError('Document Attachments not found');
         }
 
-        $documentAttachments->delete();
+        $path = $documentAttachments->path;
+
+        if ($exists = Storage::disk('public')->exists($path)) {
+            $documentAttachments->delete();
+
+            Storage::disk('public')->delete($path);
+        } else {
+            return $this->sendError('Attachments not found', 500);
+        }
 
         return $this->sendResponse($id, 'Document Attachments deleted successfully');
     }
