@@ -938,18 +938,31 @@ WHERE
                         $x = 0;
                         foreach ($output['data'] as $val) {
                             $lineTotal = 0;
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Document Code'] = $val->DocumentCode;
-                            $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
+                            $data[$x]['Document Date'] = \Helper::dateFormat($val->PostedDate);
+                            $data[$x]['GL Code'] = $val->glCode;
+                            $data[$x]['Customer Code'] = $val->CutomerCode;
+                            $data[$x]['Customer Name'] = $val->customerName2;
+                            $data[$x]['Contract ID'] = $val->Contract;
+                            $data[$x]['PO Number'] = $val->PONumber;
                             $data[$x]['Invoice Number'] = $val->invoiceNumber;
                             $data[$x]['Invoice Date'] = \Helper::dateFormat($val->InvoiceDate);
+                            $data[$x]['Invoice Due Date'] = \Helper::dateFormat($val->invoiceDueDate);
+                            $data[$x]['Document Narration'] = $val->DocumentNarration;
                             $data[$x]['Currency'] = $val->documentCurrency;
+                            $data[$x]['Invoice Amount'] = $val->invoiceAmount;
                             foreach ($output['aging'] as $val2) {
                                 $lineTotal+=  $val->$val2;
                             }
-                            $data[$x]['Balance Amount'] = $lineTotal;
+                            $data[$x]['Outstanding'] = $lineTotal;
+                            $data[$x]['Age Days'] = $val->age;
                             foreach ($output['aging'] as $val2) {
                                 $data[$x][$val2] = $val->$val2;
                             }
+                            $data[$x]['Subsequent Collection Amount'] = $val->subsequentAmount;
+                            $data[$x]['Current Outstanding'] = $val->subsequentBalanceAmount;
+                            $data[$x]['Receipt Matching/BRVNo'] = $val->brvInv;
                             $x++;
                         }
                     }
@@ -1568,6 +1581,7 @@ WHERE
         return $output;
     }
 
+    // Customer Aging detail report
     function getCustomerAgingDetailQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
@@ -1628,25 +1642,37 @@ WHERE
         $amountQry = '';
         $decimalPlaceQry = '';
         $whereQry = '';
+        $subsequentBalanceQry = '';
+        $subsequentQry = '';
+        $invoiceQry = '';
         if ($currency == 1) {
             $currencyQry = "final.documentTransCurrency AS documentCurrency";
             $amountQry = "round( final.balanceTrans, final.documentTransDecimalPlaces ) AS balanceAmount";
             $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( final.balanceTrans, final.documentTransDecimalPlaces )";
+            $subsequentBalanceQry = "round( final.balanceSubsequentCollectionTrans, final.documentTransDecimalPlaces ) as subsequentBalanceAmount";
+            $subsequentQry = "round( final.SubsequentCollectionTransAmount, final.documentTransDecimalPlaces ) AS subsequentAmount";
+            $invoiceQry = "round( final.documentTransAmount, final.documentTransDecimalPlaces ) AS invoiceAmount";
         } else if ($currency == 2) {
             $currencyQry = "final.documentLocalCurrency AS documentCurrency";
             $amountQry = "round( final.balanceLocal, final.documentLocalDecimalPlaces ) AS balanceAmount";
             $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( final.balanceLocal, final.documentLocalDecimalPlaces )";
+            $subsequentBalanceQry = "round( final.balanceSubsequentCollectionLocal, final.documentLocalDecimalPlaces ) as subsequentBalanceAmount";
+            $subsequentQry = "round( final.SubsequentCollectionLocalAmount, final.documentLocalDecimalPlaces ) AS subsequentAmount";
+            $invoiceQry = "round( final.documentLocalAmount, final.documentLocalDecimalPlaces ) AS invoiceAmount";
         } else {
             $currencyQry = "final.documentRptCurrency AS documentCurrency";
             $amountQry = "round( final.balanceRpt, final.documentRptDecimalPlaces ) AS balanceAmount";
             $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( final.balanceRpt, final.documentRptDecimalPlaces )";
+            $subsequentBalanceQry = "round( final.balanceSubsequentCollectionRpt, final.documentRptDecimalPlaces ) as subsequentBalanceAmount";
+            $subsequentQry = "round( final.SubsequentCollectionRptAmount, final.documentRptDecimalPlaces ) AS subsequentAmount";
+            $invoiceQry = "round( final.documentLocalAmount, final.documentRptDecimalPlaces ) AS invoiceAmount";
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
-        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,'.$agingField.',documentCurrency,balanceDecimalPlaces,customerName FROM (SELECT
+        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,'.$agingField.',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -1654,10 +1680,20 @@ WHERE
 	final.invoiceNumber AS invoiceNumber,
 	final.invoiceDate AS InvoiceDate,
 	' . $amountQry . ',
+	' . $subsequentQry . ',
+	' . $subsequentBalanceQry . ',
 	' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
+	' . $invoiceQry . ',
 	final.customerName AS customerName,
-	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age 
+	final.customerName2 AS customerName2,
+	final.CutomerCode AS CutomerCode,
+	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age,
+	final.glCode, 
+	final.PONumber, 
+	final.invoiceDueDate, 
+	final.brvInv, 
+	final.companyID 
 FROM
 	(
 SELECT
@@ -1708,7 +1744,26 @@ IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatc
 	(
 	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
 	) AS balanceTrans,
-	mainQuery.customerName   
+	
+	(
+	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0)) 
+	) AS balanceSubsequentCollectionRpt,
+	(
+	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0)) 
+	) AS balanceSubsequentCollectionLocal,
+	(
+	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0)) 
+	) AS balanceSubsequentCollectionTrans,
+	
+	mainQuery.customerName,   
+	mainQuery.customerName2,   
+	mainQuery.CutomerCode,   
+	mainQuery.PONumber,   
+	mainQuery.invoiceDueDate,
+	IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0) as SubsequentCollectionRptAmount,
+	IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0) as SubsequentCollectionLocalAmount,
+	IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0) as SubsequentCollectionTransAmount,
+	CONCAT(IFNULL(matchedBRV.BPVcode,""),IFNULL(InvoiceFromBRVAndMatching.bookingInvCode,"")) as brvInv
 FROM
 	(
 SELECT
@@ -1745,13 +1800,18 @@ SELECT
 	currRpt.DecimalPlaces as documentRptDecimalPlaces,
 	erp_generalledger.documentRptAmount,
 	erp_generalledger.documentType,
-	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName
+	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName,
+	customermaster.CustomerName as customerName2,
+	customermaster.CutomerCode,
+	erp_custinvoicedirect.PONumber,
+	erp_custinvoicedirect.invoiceDueDate
 FROM
 	erp_generalledger 
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
 	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
@@ -1877,6 +1937,34 @@ WHERE
 		bookingInvCode 
 	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
+	LEFT JOIN (
+	SELECT
+		erp_custreceivepaymentdet.companySystemID,
+		erp_custreceivepaymentdet.companyID,
+		max( erp_custreceivepaymentdet.custReceivePaymentAutoID ) AS ReceiptSystemID,
+		max( IF ( erp_custreceivepaymentdet.matchingDocID = 0 OR erp_custreceivepaymentdet.matchingDocID IS NULL, erp_customerreceivepayment.custPaymentReceiveCode, erp_matchdocumentmaster.matchingDocCode ) ) AS docCode,
+		erp_custreceivepaymentdet.addedDocumentSystemID,
+		erp_custreceivepaymentdet.addedDocumentID,
+		erp_custreceivepaymentdet.bookingInvCodeSystem,
+		sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS SubsequentCollectionTransAmount,
+		sum( erp_custreceivepaymentdet.receiveAmountLocal ) AS SubsequentCollectionLocalAmount,
+		sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS SubsequentCollectionRptAmount 
+	FROM
+		erp_custreceivepaymentdet
+		LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
+		LEFT JOIN erp_matchdocumentmaster ON erp_custreceivepaymentdet.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID 
+	WHERE
+		erp_custreceivepaymentdet.bookingInvCodeSystem > 0 
+		AND DATE(
+				( IF ( erp_custreceivepaymentdet.matchingDocID = 0 OR erp_custreceivepaymentdet.matchingDocID IS NULL, erp_customerreceivepayment.postedDate, erp_matchdocumentmaster.matchingDocdate ) )
+			)
+		 > "' . $asOfDate . '" 
+		AND ( IF ( erp_custreceivepaymentdet.matchingDocID = 0 OR erp_custreceivepaymentdet.matchingDocID IS NULL, erp_customerreceivepayment.approved, erp_matchdocumentmaster.matchingConfirmedYN ) ) <> 0 
+	GROUP BY
+		addedDocumentSystemID,
+		bookingInvCodeSystem 
+	) AS Subsequentcollection ON Subsequentcollection.addedDocumentSystemID = mainQuery.documentSystemID 
+	AND mainQuery.documentSystemCode = Subsequentcollection.bookingInvCodeSystem 
 	) AS final 
 WHERE
 ' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal');
