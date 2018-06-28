@@ -19,6 +19,7 @@ use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\GRVMaster;
+use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\MaterielRequest;
 use App\Models\ProcumentOrder;
@@ -140,6 +141,13 @@ class email
                     if (!empty($grvMaster)) {
                         $data['docApprovedYN'] = $grvMaster->approved;
                         $data['docCode']       = $grvMaster->grvPrimaryCode;
+                    }
+                    break;
+                case 8:
+                    $materielIssue = ItemIssueMaster::where('itemIssueAutoID', $data['docSystemCode'])->first();
+                    if (!empty($materielIssue)) {
+                        $data['docApprovedYN'] = $materielIssue->approved;
+                        $data['docCode']       = $materielIssue->itemIssueCode;
                     }
                     break;
                 default:

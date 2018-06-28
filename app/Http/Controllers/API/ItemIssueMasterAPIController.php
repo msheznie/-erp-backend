@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 20-June 2018 By: Fayas Description: Added new functions named as getAllMaterielIssuesByCompany(),getMaterielIssueFormData()
  * -- Date: 22-June 2018 By: Fayas Description: Added new functions named as getAllMaterielRequestNotSelectedForIssueByCompany()
+ * -- Date: 27-June 2018 By: Fayas Description: Added new functions named as getMaterielIssueAudit()
  */
 namespace App\Http\Controllers\API;
 
@@ -261,7 +262,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ItemIssueMaster $itemIssueMaster */
-        $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
+        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by','created_by'])->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
             return $this->sendError('Item Issue Master not found');
@@ -319,6 +320,9 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function update($id, UpdateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['created_by','confirmedByName',
+            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID']);
+
         $input = $this->convertArrayToValue($input);
 
         /** @var ItemIssueMaster $itemIssueMaster */
@@ -705,5 +709,32 @@ class ItemIssueMasterAPIController extends AppBaseController
         $materielRequests = $materielRequests->get();
         return $this->sendResponse($materielRequests->toArray(), 'Materiel Issue updated successfully');
     }
+
+    /**
+     * Display the specified Materiel Issue Audit.
+     * GET|HEAD /getMaterielIssueAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getMaterielIssueAudit(Request $request)
+    {
+        $id = $request->get('id');
+
+         $materielRequest = $this->itemIssueMasterRepository
+            ->with(['created_by','confirmed_by','modified_by','approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('documentSystemID',8);
+            }])
+            ->findWithoutFail($id);
+
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Issue not found');
+        }
+
+        return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
+    }
+
 
 }

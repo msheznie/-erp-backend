@@ -462,4 +462,8 @@ class ItemIssueMaster extends Model
         return $this->hasMany('App\Models\ItemIssueDetails','itemIssueAutoID','itemIssueAutoID');
     }
 
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemIssueAutoID');
+    }
+
 }
