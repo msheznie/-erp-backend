@@ -627,6 +627,30 @@ class Helper
                 $docInforArr["confirmedYN"] = "grvConfirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "grvConfirmedByEmpSystemID";
                 break;
+            case 8:
+                $docInforArr["tableName"] = 'erp_itemissuemaster';
+                $docInforArr["modelName"] = 'ItemIssueMaster';
+                $docInforArr["primarykey"] = 'itemIssueAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 9:
+                $docInforArr["tableName"] = 'erp_request';
+                $docInforArr["modelName"] = 'MaterielRequest';
+                $docInforArr["primarykey"] = 'RequestID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "ConfirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "ConfirmedBySystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }

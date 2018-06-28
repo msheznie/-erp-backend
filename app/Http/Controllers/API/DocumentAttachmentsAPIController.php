@@ -86,6 +86,47 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
     }
 
+    function downloadFileFrom(Request $request) {
+
+        $input = $request->all();
+
+        $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['id']);
+
+        if (empty($documentAttachments)) {
+            return $this->sendError('Document Attachments not found');
+        }
+
+        $fileName = "Desktop/upload/".$documentAttachments->path;
+
+
+        /*$filename = 'temp-image.jpg';
+        $tempImage = tempnam(sys_get_temp_dir(), $filename);
+        copy('https://my-cdn.com/files/image.jpg', $tempImage);
+
+        return response()->download($tempImage, $filename);*/
+        $pathToFile = public_path('http://192.168.1.100/purchase_request_32829.pdf');
+
+
+        return Response::download($pathToFile);
+
+        //return redirect( . 'test.pdf');
+
+        /*$ftp = Storage::createFtpDriver([
+            'host'     => '192.168.1.100',
+            'username' => 'administrator',
+            'password' => 'asd@123',
+            'port'     => '8080', // your ftp port
+            'timeout'  => '30', // timeout setting
+        ]);
+
+        $filecontent = $ftp->get($fileName); // read file content
+        // download file.
+        return Response::make($filecontent, '200', array(
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="'.basename($fileName).'"'
+        ));*/
+    }
+
     /**
      * Store a newly created DocumentAttachments in storage.
      * POST /documentAttachments

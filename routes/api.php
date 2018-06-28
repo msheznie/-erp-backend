@@ -485,6 +485,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
     Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany');
+    Route::post('getMaterielIssueApprovedByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovedByUser');
+    Route::post('getMaterielIssueApprovalByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovalByUser');
     Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
     Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany');
     Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit');
@@ -500,6 +502,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
+Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
 
 Route::get('getBcryptPassword/{password}', function ($password) {

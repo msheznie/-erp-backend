@@ -356,7 +356,9 @@ class ItemIssueMaster extends Model
         'is_closed',
         'timestamp',
         'customerSystemID',
-        'approvedDate'
+        'approvedDate',
+        'RollLevForApp_curr',
+        'approvedByUserSystemID'
     ];
 
     /**
@@ -415,7 +417,9 @@ class ItemIssueMaster extends Model
         'modifiedPc' => 'string',
         'contRefNo' => 'string',
         'is_closed' => 'integer',
-        'customerSystemID' => 'integer'
+        'customerSystemID' => 'integer',
+        'RollLevForApp_curr' => 'integer',
+        'approvedByUserSystemID' => 'integer',
     ];
 
     /**
