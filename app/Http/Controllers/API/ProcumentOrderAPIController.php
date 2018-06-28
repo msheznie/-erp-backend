@@ -502,7 +502,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->first();
 
             if (empty($poDetailExist)) {
-                return $this->sendError('PO Document cannot confirm without details');
+                return $this->sendError('Order cannot be confirmed without any details');
             }
 
             $checkQuantity = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)
@@ -3663,7 +3663,7 @@ FROM
             ->where('documentSystemID',  $purchaseOrder->documentSystemID)
             ->delete();
 
-        return $this->sendResponse($purchaseOrder->toArray(), 'payment status retrieved successfully');
+        return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order reopened successfully');
     }
 
 
