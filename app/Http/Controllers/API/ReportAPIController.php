@@ -524,6 +524,12 @@ WHERE
                 break;
             case 'CC': //Customer Collection
                 $reportTypeID = $request->reportTypeID;
+
+                $fromDate = new Carbon($request->fromDate);
+                $fromDate = $fromDate->format('d/m/Y');
+
+                $toDate = new Carbon($request->toDate);
+                $toDate = $toDate->format('d/m/Y');
                 if ($reportTypeID == 'CCR') { //Customer collection report
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -539,7 +545,7 @@ WHERE
                             $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
                         }
                     }
-                    return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces);
+                    return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'fromDate' => $fromDate, 'toDate' => $toDate);
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
@@ -1148,8 +1154,7 @@ WHERE
         }
     }
 
-    public
-    function getAcountReceivableFilterData(Request $request)
+    public function getAcountReceivableFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
@@ -2390,7 +2395,6 @@ WHERE
 
         $currency = $request->currencyID;
 
-        //DB::enableQueryLog();
         $output = \DB::select('SELECT
 	collectionDetail.companyID,
 	collectionDetail.CutomerCode,
@@ -2476,24 +2480,16 @@ WHERE
 		erp_generalledger.documentSystemID = 21
 		OR erp_generalledger.documentSystemID = 19
 	)
-AND (
-	STR_TO_DATE(
-		DATE_FORMAT(
-			erp_generalledger.documentDate,
-			"%d/%m/%Y"
-		),
-		"%d/%m/%Y"
-	) BETWEEN STR_TO_DATE("' . $fromDate . '", "%d/%m/%Y")
-	AND STR_TO_DATE("' . $toDate . '", "%d/%m/%Y")
-) AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+ AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 AND erp_generalledger.documentRptAmount > 0
 	) AS collectionDetail
 GROUP BY
 	collectionDetail.companyID,
 	collectionDetail.CutomerCode;');
-        //dd(DB::getQueryLog());
+
         return $output;
+
     }
 
 }
