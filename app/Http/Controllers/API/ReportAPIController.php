@@ -16,6 +16,7 @@
  * -- Date: 19-june 2018 By: Mubashir Description: Added new functions named as getCustomerBalanceStatementQRY(),
  * -- Date: 20-june 2018 By: Mubashir Description: Added new functions named as getCustomerAgingDetailQRY(),
  * -- Date: 22-june 2018 By: Mubashir Description: Added new functions named as getCustomerAgingSummaryQRY(),
+ * -- Date: 29-june 2018 By: Nazir Description: Added new functions named as getCustomerCollectionQRY(),
  */
 
 namespace App\Http\Controllers\API;
@@ -96,6 +97,26 @@ class ReportAPIController extends AppBaseController
                 }
 
                 break;
+            case 'CC':
+                $reportTypeID = '';
+                if (isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+                if ($reportTypeID == 'CCR' || $reportTypeID == 'CMR') {
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required',
+                        'toDate' => 'required',
+                        'customers' => 'required',
+                        'reportTypeID' => 'required',
+                        'currencyID' => 'required'
+                    ]);
+                }
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+
+                break;
             default:
                 return $this->sendError('Error Occurred');
         }
@@ -136,8 +157,8 @@ class ReportAPIController extends AppBaseController
                 $suppliers = (array)$request->suppliers;
                 $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
-                if(isset($request->selectedSupplier)){
-                    if(!empty($request->selectedSupplier)){
+                if (isset($request->selectedSupplier)) {
+                    if (!empty($request->selectedSupplier)) {
                         $suppliers = collect($request->selectedSupplier);
                     }
                 }
@@ -223,8 +244,8 @@ WHERE
                         });
                     }*/
 
-                    if(isset($request->searchText)){
-                        if(!empty($request->searchText)){
+                    if (isset($request->searchText)) {
+                        if (!empty($request->searchText)) {
                             $search = str_replace("\\", "\\\\", $request->searchText);
                             $output = $output->where(function ($query) use ($search) {
                                 $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
@@ -235,8 +256,8 @@ WHERE
                         }
                     }
 
-                    if(isset($request->grvStatus)){
-                        if(!empty($request->grvStatus)){
+                    if (isset($request->grvStatus)) {
+                        if (!empty($request->grvStatus)) {
                             $output = $output->having('receivedStatus', $request->grvStatus);
                         }
                     }
@@ -444,8 +465,8 @@ WHERE
 
                     $outputArr = array();
                     $grandTotalArr = array();
-                    if($output['aging']){
-                        foreach ($output['aging'] as $val){
+                    if ($output['aging']) {
+                        foreach ($output['aging'] as $val) {
                             $total = collect($output['data'])->pluck($val)->toArray();
                             $grandTotalArr[$val] = array_sum($total);
                         }
@@ -459,15 +480,15 @@ WHERE
 
                     $decimalPlaces = 2;
                     $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                    if($companyCurrency){
-                        if($request->currencyID == 2) {
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
-                        }else if($request->currencyID == 3){
+                        } else if ($request->currencyID == 3) {
                             $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
                         }
                     }
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces,'agingRange' => $output['aging']);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging']);
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
@@ -475,8 +496,8 @@ WHERE
 
                     $outputArr = array();
                     $grandTotalArr = array();
-                    if($output['aging']){
-                        foreach ($output['aging'] as $val){
+                    if ($output['aging']) {
+                        foreach ($output['aging'] as $val) {
                             $total = collect($output['data'])->pluck($val)->toArray();
                             $grandTotalArr[$val] = array_sum($total);
                         }
@@ -490,15 +511,66 @@ WHERE
 
                     $decimalPlaces = 2;
                     $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                    if($companyCurrency){
-                        if($request->currencyID == 2) {
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
-                        }else if($request->currencyID == 3){
+                        } else if ($request->currencyID == 3) {
                             $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
                         }
                     }
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces,'agingRange' => $output['aging']);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging']);
+                }
+                break;
+            case 'CC': //Customer Collection
+                $reportTypeID = $request->reportTypeID;
+                if ($reportTypeID == 'CCR') { //Customer collection report
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerCollectionQRY($request);
+
+                    $decimalPlaces = 2;
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
+                            $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                        } else if ($request->currencyID == 3) {
+                            $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                        }
+                    }
+                    return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces);
+                } else {
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerAgingSummaryQRY($request);
+
+                    $outputArr = array();
+                    $grandTotalArr = array();
+                    if ($output['aging']) {
+                        foreach ($output['aging'] as $val) {
+                            $total = collect($output['data'])->pluck($val)->toArray();
+                            $grandTotalArr[$val] = array_sum($total);
+                        }
+                    }
+
+                    if ($output['data']) {
+                        foreach ($output['data'] as $val) {
+                            $outputArr[$val->documentCurrency][] = $val;
+                        }
+                    }
+
+                    $decimalPlaces = 2;
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
+                            $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                        } else if ($request->currencyID == 3) {
+                            $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                        }
+                    }
+
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging']);
                 }
                 break;
             default:
@@ -537,8 +609,8 @@ WHERE
                 $suppliers = (array)$request->suppliers;
                 $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
-                if(isset($request->selectedSupplier)){
-                    if(!empty($request->selectedSupplier)){
+                if (isset($request->selectedSupplier)) {
+                    if (!empty($request->selectedSupplier)) {
                         $suppliers = collect($request->selectedSupplier);
                     }
                 }
@@ -612,14 +684,14 @@ WHERE
                     podet.*')
                         ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID)->orderBy('podet.approvedDate', 'ASC');
 
-                    if(isset($request->grvStatus)){
-                        if(!empty($request->grvStatus)){
+                    if (isset($request->grvStatus)) {
+                        if (!empty($request->grvStatus)) {
                             $output = $output->having('receivedStatus', $request->grvStatus);
                         }
                     }
 
-                    if(isset($request->searchText)){
-                        if(!empty($request->searchText)){
+                    if (isset($request->searchText)) {
+                        if (!empty($request->searchText)) {
                             $search = str_replace("\\", "\\\\", $request->searchText);
                             $output = $output->where(function ($query) use ($search) {
                                 $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
@@ -953,7 +1025,7 @@ WHERE
                             $data[$x]['Currency'] = $val->documentCurrency;
                             $data[$x]['Invoice Amount'] = $val->invoiceAmount;
                             foreach ($output['aging'] as $val2) {
-                                $lineTotal+=  $val->$val2;
+                                $lineTotal += $val->$val2;
                             }
                             $data[$x]['Outstanding'] = $lineTotal;
                             $data[$x]['Age Days'] = $val->age;
@@ -979,7 +1051,7 @@ WHERE
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Currency'] = $val->documentCurrency;
                             foreach ($output['aging'] as $val2) {
-                                $lineTotal+=  $val->$val2;
+                                $lineTotal += $val->$val2;
                             }
                             $data[$x]['Amount'] = $lineTotal;
                             foreach ($output['aging'] as $val2) {
@@ -1672,7 +1744,7 @@ WHERE
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
-        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,'.$agingField.',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount FROM (SELECT
+        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -1969,7 +2041,7 @@ WHERE
 WHERE
 ' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal');
         //dd(DB::getQueryLog());
-        return ['data'=>$output,'aging'=>$aging];
+        return ['data' => $output, 'aging' => $aging];
     }
 
 
@@ -2051,7 +2123,7 @@ WHERE
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
-        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,'.$agingField.',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem FROM (SELECT
+        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -2290,7 +2362,138 @@ WHERE
 WHERE
 ' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal GROUP BY customerCodeSystem ');
         //dd(DB::getQueryLog());
-        return ['data'=>$output,'aging'=>$aging];
+        return ['data' => $output, 'aging' => $aging];
+    }
+
+    // Customer Aging detail report
+    function getCustomerCollectionQRY($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        //$fromDate = $fromDate->addDays(1);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        //$toDate = $toDate->addDays(1);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $customers = (array)$request->customers;
+
+        $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
+
+        $currency = $request->currencyID;
+
+        //DB::enableQueryLog();
+        $output = \DB::select('SELECT
+	collectionDetail.companyID,
+	collectionDetail.CutomerCode,
+	collectionDetail.CustomerName,
+	SUM(
+		collectionDetail.BRVTransAmount
+	) AS BRVTransAmount,
+	SUM(
+		collectionDetail.BRVLocalAmount
+	) AS BRVLocalAmount,
+	SUM(
+		collectionDetail.BRVRptAmount
+	) AS BRVRptAmount,
+	SUM(
+		collectionDetail.CNTransAmount
+	) AS CNTransAmount,
+	SUM(
+		collectionDetail.CNLocalAmount
+	) AS CNLocalAmount,
+	SUM(
+		collectionDetail.CNRptAmount
+	) AS CNRptAmount
+FROM
+	(
+		SELECT
+			erp_generalledger.companyID,
+			erp_generalledger.documentID,
+			erp_generalledger.serviceLineCode,
+			erp_generalledger.documentSystemCode,
+			erp_generalledger.documentCode,
+			erp_generalledger.documentDate,
+			MONTH (
+				erp_generalledger.documentDate
+			) AS DocMONTH,
+			YEAR (
+				erp_generalledger.documentDate
+			) AS DocYEAR,
+			erp_generalledger.supplierCodeSystem,
+			customermaster.CutomerCode,
+			customermaster.customerShortCode,
+			customermaster.CustomerName,
+
+		IF (
+			erp_generalledger.documentSystemID = "21",
+			ROUND(documentTransAmount, 0),
+			0
+		) BRVTransAmount,
+
+	IF (
+		erp_generalledger.documentSystemID = "21",
+		ROUND(documentLocalAmount, 0),
+		0
+	) BRVLocalAmount,
+
+IF (
+	erp_generalledger.documentSystemID = "21",
+	ROUND(documentRptAmount, 0),
+	0
+) BRVRptAmount,
+
+IF (
+	erp_generalledger.documentSystemID = "19",
+	ROUND(documentTransAmount, 0),
+	0
+) CNTransAmount,
+
+IF (
+	erp_generalledger.documentSystemID = "19",
+	ROUND(documentLocalAmount, 0),
+	0
+) CNLocalAmount,
+
+IF (
+	erp_generalledger.documentSystemID = "19",
+	ROUND(documentRptAmount, 0),
+	0
+) CNRptAmount
+FROM
+	erp_generalledger
+INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+WHERE
+	(
+		erp_generalledger.documentSystemID = 21
+		OR erp_generalledger.documentSystemID = 19
+	)
+AND (
+	STR_TO_DATE(
+		DATE_FORMAT(
+			erp_generalledger.documentDate,
+			"%d/%m/%Y"
+		),
+		"%d/%m/%Y"
+	) BETWEEN STR_TO_DATE("' . $fromDate . '", "%d/%m/%Y")
+	AND STR_TO_DATE("' . $toDate . '", "%d/%m/%Y")
+) AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+AND erp_generalledger.documentRptAmount > 0
+	) AS collectionDetail
+GROUP BY
+	collectionDetail.companyID,
+	collectionDetail.CutomerCode;');
+        //dd(DB::getQueryLog());
+        return $output;
     }
 
 }
