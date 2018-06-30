@@ -16,6 +16,8 @@
  * -- Date: 19-june 2018 By: Mubashir Description: Added new functions named as getCustomerBalanceStatementQRY(),
  * -- Date: 20-june 2018 By: Mubashir Description: Added new functions named as getCustomerAgingDetailQRY(),
  * -- Date: 22-june 2018 By: Mubashir Description: Added new functions named as getCustomerAgingSummaryQRY(),
+ * -- Date: 29-june 2018 By: Nazir Description: Added new functions named as getCustomerCollectionQRY(),
+ * -- Date: 29-june 2018 By: Mubashir Description: Added new functions named as getCustomerLedgerTemplate1QRY(),
  */
 
 namespace App\Http\Controllers\API;
@@ -96,6 +98,53 @@ class ReportAPIController extends AppBaseController
                 }
 
                 break;
+            case 'CC':
+                $reportTypeID = '';
+                if (isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+                if ($reportTypeID == 'CCR' || $reportTypeID == 'CMR') {
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required',
+                        'toDate' => 'required',
+                        'customers' => 'required',
+                        'reportTypeID' => 'required',
+                        'currencyID' => 'required'
+                    ]);
+                }
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+
+                break;
+            case 'CL':
+                $reportTypeID = '';
+                if (isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+                if ($reportTypeID == 'CLT1') {
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required',
+                        'customers' => 'required',
+                        'reportTypeID' => 'required',
+                        'controlAccountsSystemID' => 'required',
+                    ]);
+                }else if($reportTypeID == 'CLT2'){
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required',
+                        'toDate' => 'required',
+                        'customers' => 'required',
+                        'reportTypeID' => 'required',
+                        'controlAccountsSystemID' => 'required'
+                    ]);
+                }
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+
+                break;
             default:
                 return $this->sendError('Error Occurred');
         }
@@ -136,8 +185,8 @@ class ReportAPIController extends AppBaseController
                 $suppliers = (array)$request->suppliers;
                 $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
-                if(isset($request->selectedSupplier)){
-                    if(!empty($request->selectedSupplier)){
+                if (isset($request->selectedSupplier)) {
+                    if (!empty($request->selectedSupplier)) {
                         $suppliers = collect($request->selectedSupplier);
                     }
                 }
@@ -223,8 +272,8 @@ WHERE
                         });
                     }*/
 
-                    if(isset($request->searchText)){
-                        if(!empty($request->searchText)){
+                    if (isset($request->searchText)) {
+                        if (!empty($request->searchText)) {
                             $search = str_replace("\\", "\\\\", $request->searchText);
                             $output = $output->where(function ($query) use ($search) {
                                 $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
@@ -235,8 +284,8 @@ WHERE
                         }
                     }
 
-                    if(isset($request->grvStatus)){
-                        if(!empty($request->grvStatus)){
+                    if (isset($request->grvStatus)) {
+                        if (!empty($request->grvStatus)) {
                             $output = $output->having('receivedStatus', $request->grvStatus);
                         }
                     }
@@ -444,8 +493,8 @@ WHERE
 
                     $outputArr = array();
                     $grandTotalArr = array();
-                    if($output['aging']){
-                        foreach ($output['aging'] as $val){
+                    if ($output['aging']) {
+                        foreach ($output['aging'] as $val) {
                             $total = collect($output['data'])->pluck($val)->toArray();
                             $grandTotalArr[$val] = array_sum($total);
                         }
@@ -459,15 +508,15 @@ WHERE
 
                     $decimalPlaces = 2;
                     $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                    if($companyCurrency){
-                        if($request->currencyID == 2) {
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
-                        }else if($request->currencyID == 3){
+                        } else if ($request->currencyID == 3) {
                             $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
                         }
                     }
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces,'agingRange' => $output['aging']);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging']);
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
@@ -475,8 +524,8 @@ WHERE
 
                     $outputArr = array();
                     $grandTotalArr = array();
-                    if($output['aging']){
-                        foreach ($output['aging'] as $val){
+                    if ($output['aging']) {
+                        foreach ($output['aging'] as $val) {
                             $total = collect($output['data'])->pluck($val)->toArray();
                             $grandTotalArr[$val] = array_sum($total);
                         }
@@ -490,15 +539,103 @@ WHERE
 
                     $decimalPlaces = 2;
                     $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                    if($companyCurrency){
-                        if($request->currencyID == 2) {
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
-                        }else if($request->currencyID == 3){
+                        } else if ($request->currencyID == 3) {
                             $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
                         }
                     }
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces,'agingRange' => $output['aging']);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging']);
+                }
+                break;
+            case 'CC': //Customer Collection
+                $reportTypeID = $request->reportTypeID;
+
+                $fromDate = new Carbon($request->fromDate);
+                $fromDate = $fromDate->format('d/m/Y');
+
+                $toDate = new Carbon($request->toDate);
+                $toDate = $toDate->format('d/m/Y');
+                if ($reportTypeID == 'CCR') { //Customer collection report
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerCollectionQRY($request);
+
+                    $decimalPlaces = 2;
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
+                            $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                        } else if ($request->currencyID == 3) {
+                            $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                        }
+                    }
+                    return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'fromDate' => $fromDate, 'toDate' => $toDate);
+                } else {
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerAgingSummaryQRY($request);
+
+                    $outputArr = array();
+                    $grandTotalArr = array();
+                    if ($output['aging']) {
+                        foreach ($output['aging'] as $val) {
+                            $total = collect($output['data'])->pluck($val)->toArray();
+                            $grandTotalArr[$val] = array_sum($total);
+                        }
+                    }
+
+                    if ($output['data']) {
+                        foreach ($output['data'] as $val) {
+                            $outputArr[$val->documentCurrency][] = $val;
+                        }
+                    }
+
+                    $decimalPlaces = 2;
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    if ($companyCurrency) {
+                        if ($request->currencyID == 2) {
+                            $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                        } else if ($request->currencyID == 3) {
+                            $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                        }
+                    }
+
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging']);
+                }
+                break;
+            case 'CL': //Customer Ledger
+                $reportTypeID = $request->reportTypeID;
+                if ($reportTypeID == 'CLT1') { //customer ledger template 1
+
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $output = $this->getCustomerLedgerTemplate1QRY($request);
+
+                    $outputArr = array();
+                    $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
+                    $invoiceAmount = array_sum($invoiceAmount);
+
+                    $paidAmount = collect($output)->pluck('paidAmount')->toArray();
+                    $paidAmount = array_sum($paidAmount);
+
+                    $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+                    $balanceAmount = array_sum($balanceAmount);
+
+                    $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                    $decimalPlace = array_unique($decimalPlace);
+
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                        }
+                    }
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount,  'invoiceAmount' => $invoiceAmount);
+                } else {
+
                 }
                 break;
             default:
@@ -537,8 +674,8 @@ WHERE
                 $suppliers = (array)$request->suppliers;
                 $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
 
-                if(isset($request->selectedSupplier)){
-                    if(!empty($request->selectedSupplier)){
+                if (isset($request->selectedSupplier)) {
+                    if (!empty($request->selectedSupplier)) {
                         $suppliers = collect($request->selectedSupplier);
                     }
                 }
@@ -612,14 +749,14 @@ WHERE
                     podet.*')
                         ->whereIN('erp_purchaseorderdetails.companySystemID', $companyID)->orderBy('podet.approvedDate', 'ASC');
 
-                    if(isset($request->grvStatus)){
-                        if(!empty($request->grvStatus)){
+                    if (isset($request->grvStatus)) {
+                        if (!empty($request->grvStatus)) {
                             $output = $output->having('receivedStatus', $request->grvStatus);
                         }
                     }
 
-                    if(isset($request->searchText)){
-                        if(!empty($request->searchText)){
+                    if (isset($request->searchText)) {
+                        if (!empty($request->searchText)) {
                             $search = str_replace("\\", "\\\\", $request->searchText);
                             $output = $output->where(function ($query) use ($search) {
                                 $query->where('erp_purchaseorderdetails.itemPrimaryCode', 'LIKE', "%{$search}%")
@@ -938,18 +1075,31 @@ WHERE
                         $x = 0;
                         foreach ($output['data'] as $val) {
                             $lineTotal = 0;
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Document Code'] = $val->DocumentCode;
-                            $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
+                            $data[$x]['Document Date'] = \Helper::dateFormat($val->PostedDate);
+                            $data[$x]['GL Code'] = $val->glCode;
+                            $data[$x]['Customer Code'] = $val->CutomerCode;
+                            $data[$x]['Customer Name'] = $val->customerName2;
+                            $data[$x]['Contract ID'] = $val->Contract;
+                            $data[$x]['PO Number'] = $val->PONumber;
                             $data[$x]['Invoice Number'] = $val->invoiceNumber;
                             $data[$x]['Invoice Date'] = \Helper::dateFormat($val->InvoiceDate);
+                            $data[$x]['Invoice Due Date'] = \Helper::dateFormat($val->invoiceDueDate);
+                            $data[$x]['Document Narration'] = $val->DocumentNarration;
                             $data[$x]['Currency'] = $val->documentCurrency;
+                            $data[$x]['Invoice Amount'] = $val->invoiceAmount;
                             foreach ($output['aging'] as $val2) {
-                                $lineTotal+=  $val->$val2;
+                                $lineTotal += $val->$val2;
                             }
-                            $data[$x]['Balance Amount'] = $lineTotal;
+                            $data[$x]['Outstanding'] = $lineTotal;
+                            $data[$x]['Age Days'] = $val->age;
                             foreach ($output['aging'] as $val2) {
                                 $data[$x][$val2] = $val->$val2;
                             }
+                            $data[$x]['Subsequent Collection Amount'] = $val->subsequentAmount;
+                            $data[$x]['Current Outstanding'] = $val->subsequentBalanceAmount;
+                            $data[$x]['Receipt Matching/BRVNo'] = $val->brvInv;
                             $x++;
                         }
                     }
@@ -966,7 +1116,7 @@ WHERE
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Currency'] = $val->documentCurrency;
                             foreach ($output['aging'] as $val2) {
-                                $lineTotal+=  $val->$val2;
+                                $lineTotal += $val->$val2;
                             }
                             $data[$x]['Amount'] = $lineTotal;
                             foreach ($output['aging'] as $val2) {
@@ -1063,8 +1213,7 @@ WHERE
         }
     }
 
-    public
-    function getAcountReceivableFilterData(Request $request)
+    public function getAcountReceivableFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
@@ -1568,6 +1717,7 @@ WHERE
         return $output;
     }
 
+    // Customer Aging detail report
     function getCustomerAgingDetailQRY($request)
     {
         $asOfDate = new Carbon($request->fromDate);
@@ -1628,25 +1778,37 @@ WHERE
         $amountQry = '';
         $decimalPlaceQry = '';
         $whereQry = '';
+        $subsequentBalanceQry = '';
+        $subsequentQry = '';
+        $invoiceQry = '';
         if ($currency == 1) {
             $currencyQry = "final.documentTransCurrency AS documentCurrency";
             $amountQry = "round( final.balanceTrans, final.documentTransDecimalPlaces ) AS balanceAmount";
             $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( final.balanceTrans, final.documentTransDecimalPlaces )";
+            $subsequentBalanceQry = "round( final.balanceSubsequentCollectionTrans, final.documentTransDecimalPlaces ) as subsequentBalanceAmount";
+            $subsequentQry = "round( final.SubsequentCollectionTransAmount, final.documentTransDecimalPlaces ) AS subsequentAmount";
+            $invoiceQry = "round( final.documentTransAmount, final.documentTransDecimalPlaces ) AS invoiceAmount";
         } else if ($currency == 2) {
             $currencyQry = "final.documentLocalCurrency AS documentCurrency";
             $amountQry = "round( final.balanceLocal, final.documentLocalDecimalPlaces ) AS balanceAmount";
             $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( final.balanceLocal, final.documentLocalDecimalPlaces )";
+            $subsequentBalanceQry = "round( final.balanceSubsequentCollectionLocal, final.documentLocalDecimalPlaces ) as subsequentBalanceAmount";
+            $subsequentQry = "round( final.SubsequentCollectionLocalAmount, final.documentLocalDecimalPlaces ) AS subsequentAmount";
+            $invoiceQry = "round( final.documentLocalAmount, final.documentLocalDecimalPlaces ) AS invoiceAmount";
         } else {
             $currencyQry = "final.documentRptCurrency AS documentCurrency";
             $amountQry = "round( final.balanceRpt, final.documentRptDecimalPlaces ) AS balanceAmount";
             $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( final.balanceRpt, final.documentRptDecimalPlaces )";
+            $subsequentBalanceQry = "round( final.balanceSubsequentCollectionRpt, final.documentRptDecimalPlaces ) as subsequentBalanceAmount";
+            $subsequentQry = "round( final.SubsequentCollectionRptAmount, final.documentRptDecimalPlaces ) AS subsequentAmount";
+            $invoiceQry = "round( final.documentLocalAmount, final.documentRptDecimalPlaces ) AS invoiceAmount";
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
-        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,'.$agingField.',documentCurrency,balanceDecimalPlaces,customerName FROM (SELECT
+        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -1654,10 +1816,20 @@ WHERE
 	final.invoiceNumber AS invoiceNumber,
 	final.invoiceDate AS InvoiceDate,
 	' . $amountQry . ',
+	' . $subsequentQry . ',
+	' . $subsequentBalanceQry . ',
 	' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
+	' . $invoiceQry . ',
 	final.customerName AS customerName,
-	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age 
+	final.customerName2 AS customerName2,
+	final.CutomerCode AS CutomerCode,
+	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age,
+	final.glCode, 
+	final.PONumber, 
+	final.invoiceDueDate, 
+	final.brvInv, 
+	final.companyID 
 FROM
 	(
 SELECT
@@ -1708,7 +1880,26 @@ IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatc
 	(
 	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
 	) AS balanceTrans,
-	mainQuery.customerName   
+	
+	(
+	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0)) 
+	) AS balanceSubsequentCollectionRpt,
+	(
+	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0)) 
+	) AS balanceSubsequentCollectionLocal,
+	(
+	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0)) 
+	) AS balanceSubsequentCollectionTrans,
+	
+	mainQuery.customerName,   
+	mainQuery.customerName2,   
+	mainQuery.CutomerCode,   
+	mainQuery.PONumber,   
+	mainQuery.invoiceDueDate,
+	IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0) as SubsequentCollectionRptAmount,
+	IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0) as SubsequentCollectionLocalAmount,
+	IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0) as SubsequentCollectionTransAmount,
+	CONCAT(IFNULL(matchedBRV.BPVcode,""),IFNULL(InvoiceFromBRVAndMatching.bookingInvCode,"")) as brvInv
 FROM
 	(
 SELECT
@@ -1745,13 +1936,18 @@ SELECT
 	currRpt.DecimalPlaces as documentRptDecimalPlaces,
 	erp_generalledger.documentRptAmount,
 	erp_generalledger.documentType,
-	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName
+	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName,
+	customermaster.CustomerName as customerName2,
+	customermaster.CutomerCode,
+	erp_custinvoicedirect.PONumber,
+	erp_custinvoicedirect.invoiceDueDate
 FROM
 	erp_generalledger 
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
 	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
@@ -1877,11 +2073,39 @@ WHERE
 		bookingInvCode 
 	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
+	LEFT JOIN (
+	SELECT
+		erp_custreceivepaymentdet.companySystemID,
+		erp_custreceivepaymentdet.companyID,
+		max( erp_custreceivepaymentdet.custReceivePaymentAutoID ) AS ReceiptSystemID,
+		max( IF ( erp_custreceivepaymentdet.matchingDocID = 0 OR erp_custreceivepaymentdet.matchingDocID IS NULL, erp_customerreceivepayment.custPaymentReceiveCode, erp_matchdocumentmaster.matchingDocCode ) ) AS docCode,
+		erp_custreceivepaymentdet.addedDocumentSystemID,
+		erp_custreceivepaymentdet.addedDocumentID,
+		erp_custreceivepaymentdet.bookingInvCodeSystem,
+		sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS SubsequentCollectionTransAmount,
+		sum( erp_custreceivepaymentdet.receiveAmountLocal ) AS SubsequentCollectionLocalAmount,
+		sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS SubsequentCollectionRptAmount 
+	FROM
+		erp_custreceivepaymentdet
+		LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
+		LEFT JOIN erp_matchdocumentmaster ON erp_custreceivepaymentdet.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID 
+	WHERE
+		erp_custreceivepaymentdet.bookingInvCodeSystem > 0 
+		AND DATE(
+				( IF ( erp_custreceivepaymentdet.matchingDocID = 0 OR erp_custreceivepaymentdet.matchingDocID IS NULL, erp_customerreceivepayment.postedDate, erp_matchdocumentmaster.matchingDocdate ) )
+			)
+		 > "' . $asOfDate . '" 
+		AND ( IF ( erp_custreceivepaymentdet.matchingDocID = 0 OR erp_custreceivepaymentdet.matchingDocID IS NULL, erp_customerreceivepayment.approved, erp_matchdocumentmaster.matchingConfirmedYN ) ) <> 0 
+	GROUP BY
+		addedDocumentSystemID,
+		bookingInvCodeSystem 
+	) AS Subsequentcollection ON Subsequentcollection.addedDocumentSystemID = mainQuery.documentSystemID 
+	AND mainQuery.documentSystemCode = Subsequentcollection.bookingInvCodeSystem 
 	) AS final 
 WHERE
 ' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal');
         //dd(DB::getQueryLog());
-        return ['data'=>$output,'aging'=>$aging];
+        return ['data' => $output, 'aging' => $aging];
     }
 
 
@@ -1963,7 +2187,7 @@ WHERE
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
-        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,'.$agingField.',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem FROM (SELECT
+        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -2202,7 +2426,423 @@ WHERE
 WHERE
 ' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal GROUP BY customerCodeSystem ');
         //dd(DB::getQueryLog());
-        return ['data'=>$output,'aging'=>$aging];
+        return ['data' => $output, 'aging' => $aging];
     }
+
+    // Customer Aging detail report
+    function getCustomerCollectionQRY($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        //$fromDate = $fromDate->addDays(1);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        //$toDate = $toDate->addDays(1);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $customers = (array)$request->customers;
+
+        $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
+
+        $currency = $request->currencyID;
+
+        $output = \DB::select('SELECT
+	collectionDetail.companyID,
+	collectionDetail.CutomerCode,
+	collectionDetail.CustomerName,
+	SUM(
+		collectionDetail.BRVTransAmount
+	) AS BRVTransAmount,
+	SUM(
+		collectionDetail.BRVLocalAmount
+	) AS BRVLocalAmount,
+	SUM(
+		collectionDetail.BRVRptAmount
+	) AS BRVRptAmount,
+	SUM(
+		collectionDetail.CNTransAmount
+	) AS CNTransAmount,
+	SUM(
+		collectionDetail.CNLocalAmount
+	) AS CNLocalAmount,
+	SUM(
+		collectionDetail.CNRptAmount
+	) AS CNRptAmount
+FROM
+	(
+		SELECT
+			erp_generalledger.companyID,
+			erp_generalledger.documentID,
+			erp_generalledger.serviceLineCode,
+			erp_generalledger.documentSystemCode,
+			erp_generalledger.documentCode,
+			erp_generalledger.documentDate,
+			MONTH (
+				erp_generalledger.documentDate
+			) AS DocMONTH,
+			YEAR (
+				erp_generalledger.documentDate
+			) AS DocYEAR,
+			erp_generalledger.supplierCodeSystem,
+			customermaster.CutomerCode,
+			customermaster.customerShortCode,
+			customermaster.CustomerName,
+
+		IF (
+			erp_generalledger.documentSystemID = "21",
+			ROUND(documentTransAmount, 0),
+			0
+		) BRVTransAmount,
+
+	IF (
+		erp_generalledger.documentSystemID = "21",
+		ROUND(documentLocalAmount, 0),
+		0
+	) BRVLocalAmount,
+
+IF (
+	erp_generalledger.documentSystemID = "21",
+	ROUND(documentRptAmount, 0),
+	0
+) BRVRptAmount,
+
+IF (
+	erp_generalledger.documentSystemID = "19",
+	ROUND(documentTransAmount, 0),
+	0
+) CNTransAmount,
+
+IF (
+	erp_generalledger.documentSystemID = "19",
+	ROUND(documentLocalAmount, 0),
+	0
+) CNLocalAmount,
+
+IF (
+	erp_generalledger.documentSystemID = "19",
+	ROUND(documentRptAmount, 0),
+	0
+) CNRptAmount
+FROM
+	erp_generalledger
+INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+WHERE
+	(
+		erp_generalledger.documentSystemID = 21
+		OR erp_generalledger.documentSystemID = 19
+	)
+ AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+AND erp_generalledger.documentRptAmount > 0
+	) AS collectionDetail
+GROUP BY
+	collectionDetail.companyID,
+	collectionDetail.CutomerCode;');
+
+        return $output;
+
+    }
+
+
+    function getCustomerLedgerTemplate1QRY($request)
+    {
+        $asOfDate = new Carbon($request->fromDate);
+        //$asOfDate = $asOfDate->addDays(1);
+        $asOfDate = $asOfDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $customers = (array)$request->customers;
+        $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
+
+        $controlAccountsSystemID = $request->controlAccountsSystemID;
+
+        $currency = $request->currencyID;
+        $currencyQry = '';
+        $invoiceAmountQry = '';
+        $paidAmountQry = '';
+        $balanceAmountQry = '';
+        $decimalPlaceQry = '';
+        if ($currency == 1) {
+            $currencyQry = "final.documentTransCurrency AS documentCurrency";
+            $invoiceAmountQry = "round( final.documentTransAmount, final.documentTransDecimalPlaces ) AS invoiceAmount";
+            $paidAmountQry = "round( final.paidTransAmount, final.documentTransDecimalPlaces ) AS paidAmount";
+            $balanceAmountQry = "round( final.balanceTrans, final.documentTransDecimalPlaces ) AS balanceAmount";
+            $decimalPlaceQry = "final.documentTransDecimalPlaces AS balanceDecimalPlaces";
+        } else if ($currency == 2) {
+            $currencyQry = "final.documentLocalCurrency AS documentCurrency";
+            $invoiceAmountQry = "round( final.documentLocalAmount, final.documentLocalDecimalPlaces ) AS invoiceAmount";
+            $paidAmountQry = "round( final.paidLocalAmount, final.documentLocalDecimalPlaces ) AS paidAmount";
+            $balanceAmountQry = "round( final.balanceLocal, final.documentLocalDecimalPlaces ) AS balanceAmount";
+            $decimalPlaceQry = "final.documentLocalDecimalPlaces AS balanceDecimalPlaces";
+        } else {
+            $currencyQry = "final.documentRptCurrency AS documentCurrency";
+            $invoiceAmountQry = "round( final.documentRptAmount, final.documentRptDecimalPlaces ) AS invoiceAmount";
+            $paidAmountQry = "round( final.paidRptAmount, final.documentRptDecimalPlaces ) AS paidAmount";
+            $balanceAmountQry = "round( final.balanceRpt, final.documentRptDecimalPlaces ) AS balanceAmount";
+            $decimalPlaceQry = "final.documentRptDecimalPlaces AS balanceDecimalPlaces";
+        }
+        $currencyID = $request->currencyID;
+        //DB::enableQueryLog();
+        $output = \DB::select('SELECT
+	final.documentCode AS DocumentCode,
+	final.documentDate AS PostedDate,
+	final.documentNarration AS DocumentNarration,
+	final.clientContractID AS Contract,
+	final.invoiceNumber AS invoiceNumber,
+	final.invoiceDate AS InvoiceDate,
+	' . $invoiceAmountQry . ',
+	' . $paidAmountQry . ',
+	' . $balanceAmountQry . ',
+	' . $currencyQry . ',
+	' . $decimalPlaceQry . ',
+	final.customerName AS customerName, 
+	final.PONumber,
+	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as ageDays
+FROM
+	(
+SELECT
+	mainQuery.companySystemID,
+	mainQuery.companyID,
+	mainQuery.serviceLineSystemID,
+	mainQuery.serviceLineCode,
+	mainQuery.documentSystemID,
+	mainQuery.documentID,
+	mainQuery.documentSystemCode,
+	mainQuery.documentCode,
+	mainQuery.documentDate,
+	mainQuery.documentDateFilter,
+	mainQuery.invoiceNumber,
+	mainQuery.invoiceDate,
+	mainQuery.chartOfAccountSystemID,
+	mainQuery.glCode,
+	mainQuery.documentNarration,
+	mainQuery.clientContractID,
+	mainQuery.supplierCodeSystem,
+	mainQuery.documentTransCurrencyID,
+	mainQuery.documentTransCurrency,
+	mainQuery.documentTransAmount,
+	mainQuery.documentTransDecimalPlaces,
+	mainQuery.documentLocalCurrencyID,
+	mainQuery.documentLocalCurrency,
+	mainQuery.documentLocalAmount,
+	mainQuery.documentLocalDecimalPlaces,
+	mainQuery.documentRptCurrencyID,
+	mainQuery.documentRptCurrency,
+	mainQuery.documentRptAmount,
+	mainQuery.documentRptDecimalPlaces,
+IF( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) AS MatchedBRVTransAmount,
+IF( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) AS MatchedBRVLocalAmount,
+IF( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) AS MatchedBRVRptAmount,
+IF( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) AS BRVTransAmount,
+IF( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) AS BRVLocalAmount,
+IF( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) AS BRVRptAmount,
+IF( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) AS InvoiceTransAmount,
+IF( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) AS InvoiceLocalAmount,
+IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) AS InvoiceRptAmount,
+	(
+	mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
+	) AS balanceRpt,
+	(
+	mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
+	) AS balanceLocal,
+	(
+	mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
+	) AS balanceTrans,
+	(( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ))) as paidRptAmount,
+	(( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )) as paidLocalAmount,
+	(( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )) as paidTransAmount,
+	mainQuery.customerName,   
+	mainQuery.PONumber 
+FROM
+	(
+SELECT
+	erp_generalledger.companySystemID,
+	erp_generalledger.companyID,
+	erp_generalledger.serviceLineSystemID,
+	erp_generalledger.serviceLineCode,
+	erp_generalledger.documentSystemID,
+	erp_generalledger.documentID,
+	erp_generalledger.documentSystemCode,
+	erp_generalledger.documentCode,
+	erp_generalledger.documentDate,
+	DATE_FORMAT( documentDate, "%d/%m/%Y" ) AS documentDateFilter,
+	erp_generalledger.documentYear,
+	erp_generalledger.documentMonth,
+	erp_generalledger.chequeNumber,
+	erp_generalledger.invoiceNumber,
+	erp_generalledger.invoiceDate,
+	erp_generalledger.chartOfAccountSystemID,
+	erp_generalledger.glCode,
+	erp_generalledger.documentNarration,
+	erp_generalledger.clientContractID,
+	erp_generalledger.supplierCodeSystem,
+	erp_generalledger.documentTransCurrencyID,
+	currTrans.CurrencyCode as documentTransCurrency,
+	currTrans.DecimalPlaces as documentTransDecimalPlaces,
+	erp_generalledger.documentTransAmount,
+	erp_generalledger.documentLocalCurrencyID,
+	currLocal.CurrencyCode as documentLocalCurrency,
+	currLocal.DecimalPlaces as documentLocalDecimalPlaces,
+	erp_generalledger.documentLocalAmount,
+	erp_generalledger.documentRptCurrencyID,
+	currRpt.CurrencyCode as documentRptCurrency,
+	currRpt.DecimalPlaces as documentRptDecimalPlaces,
+	erp_generalledger.documentRptAmount,
+	erp_generalledger.documentType,
+	erp_custinvoicedirect.PONumber,
+	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName
+FROM
+	erp_generalledger 
+	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
+	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
+	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
+WHERE
+	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
+	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
+	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ' )
+	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+	) AS mainQuery
+	LEFT JOIN (
+	SELECT
+		erp_matchdocumentmaster.companySystemID,
+		erp_matchdocumentmaster.documentSystemID,
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.BPVcode,
+		sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS MatchedBRVTransAmount,
+		sum( erp_custreceivepaymentdet.receiveAmountLocal ) AS MatchedBRVLocalAmount,
+		sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS MatchedBRVRptAmount 
+	FROM
+		erp_matchdocumentmaster
+		INNER JOIN erp_custreceivepaymentdet ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID 
+		AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
+	WHERE
+		erp_matchdocumentmaster.matchingConfirmedYN = 1 
+		AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '" 
+		AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
+		AND erp_matchdocumentmaster.BPVsupplierID IN (' . join(',', $customerSystemID) . ')
+	GROUP BY
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.BPVcode 
+	) AS matchedBRV ON mainQuery.documentSystemID = matchedBRV.documentSystemID 
+	AND mainQuery.companySystemID = matchedBRV.companySystemID 
+	AND matchedBRV.PayMasterAutoId = mainQuery.documentSystemCode
+	LEFT JOIN (
+	SELECT
+		erp_customerreceivepayment.custReceivePaymentAutoID,
+		erp_customerreceivepayment.companySystemID,
+		erp_customerreceivepayment.documentSystemID,
+		erp_customerreceivepayment.custPaymentReceiveCode,
+		sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS BRVTransAmount,
+		sum( erp_custreceivepaymentdet.receiveAmountLocal ) AS BRVLocalAmount,
+		sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS BRVRptAmount 
+	FROM
+		erp_customerreceivepayment
+		INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID 
+	WHERE
+		erp_custreceivepaymentdet.bookingInvCode <> "0" 
+		AND erp_custreceivepaymentdet.matchingDocID = 0 
+		AND erp_customerreceivepayment.approved =- 1 
+		AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
+		AND DATE(erp_customerreceivepayment.postedDate) <= "' . $asOfDate . '"
+		AND erp_customerreceivepayment.customerID IN (' . join(',', $customerSystemID) . ')
+	GROUP BY
+		custReceivePaymentAutoID 
+	) AS InvoicedBRV ON mainQuery.documentSystemID = InvoicedBRV.documentSystemID 
+	AND mainQuery.documentSystemCode = InvoicedBRV.custReceivePaymentAutoID
+	LEFT JOIN (
+	SELECT
+		companySystemID,
+		companyID,
+		addedDocumentSystemID,
+		addedDocumentID,
+		bookingInvCodeSystem,
+		bookingInvCode,
+		sum( receiveAmountTrans ) AS InvoiceTransAmount,
+		sum( receiveAmountLocal ) AS InvoiceLocalAmount,
+		sum( receiveAmountRpt ) AS InvoiceRptAmount 
+	FROM
+		(
+		SELECT
+			* 
+		FROM
+			(
+			SELECT
+				erp_customerreceivepayment.custPaymentReceiveCode,
+				erp_custreceivepaymentdet.companySystemID,
+				erp_custreceivepaymentdet.companyID,
+				erp_custreceivepaymentdet.addedDocumentSystemID,
+				erp_custreceivepaymentdet.addedDocumentID,
+				erp_custreceivepaymentdet.bookingInvCodeSystem,
+				erp_custreceivepaymentdet.bookingInvCode,
+				erp_custreceivepaymentdet.receiveAmountTrans,
+				erp_custreceivepaymentdet.receiveAmountLocal,
+				erp_custreceivepaymentdet.receiveAmountRpt 
+			FROM
+				erp_customerreceivepayment
+				INNER JOIN erp_custreceivepaymentdet ON erp_customerreceivepayment.custReceivePaymentAutoID = erp_custreceivepaymentdet.custReceivePaymentAutoID 
+				AND erp_custreceivepaymentdet.matchingDocID = 0 
+				AND erp_customerreceivepayment.approved =- 1 
+			WHERE
+				erp_custreceivepaymentdet.bookingInvCode <> "0" 
+				AND erp_custreceivepaymentdet.matchingDocID = 0 
+				AND erp_customerreceivepayment.approved =- 1 
+				AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
+				AND DATE(erp_customerreceivepayment.postedDate) <= "' . $asOfDate . '" 
+				AND erp_customerreceivepayment.customerID IN (' . join(',', $customerSystemID) . ')
+			) AS InvoiceFromBRV UNION ALL
+		SELECT
+			* 
+		FROM
+			(
+			SELECT
+				erp_matchdocumentmaster.matchingDocCode,
+				erp_custreceivepaymentdet.companySystemID,
+				erp_custreceivepaymentdet.companyID,
+				erp_custreceivepaymentdet.addedDocumentSystemID,
+				erp_custreceivepaymentdet.addedDocumentID,
+				erp_custreceivepaymentdet.bookingInvCodeSystem,
+				erp_custreceivepaymentdet.bookingInvCode,
+				erp_custreceivepaymentdet.receiveAmountTrans,
+				erp_custreceivepaymentdet.receiveAmountLocal,
+				erp_custreceivepaymentdet.receiveAmountRpt 
+			FROM
+				erp_custreceivepaymentdet
+				INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
+				AND erp_custreceivepaymentdet.companySystemID = erp_matchdocumentmaster.companySystemID 
+			WHERE
+				erp_matchdocumentmaster.matchingConfirmedYN = 1 
+				AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
+				AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '" 
+				AND erp_matchdocumentmaster.BPVsupplierID IN (' . join(',', $customerSystemID) . ')
+			) AS InvoiceFromMatching 
+		) AS InvoiceFromUNION 
+	GROUP BY
+		bookingInvCode 
+	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = mainQuery.documentSystemID 
+	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
+	) AS final 
+ ORDER BY PostedDate ASC;');
+        //dd(DB::getQueryLog());
+        return $output;
+    }
+
 
 }

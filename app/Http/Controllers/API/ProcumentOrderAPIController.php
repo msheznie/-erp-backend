@@ -1209,7 +1209,9 @@ class ProcumentOrderAPIController extends AppBaseController
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
             'approvalLevelID',
-            'documentSystemCode'
+            'documentSystemCode',
+            'employees.empName As created_user',
+            'serviceline.ServiceLineDes as serviceLineDescription'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -1228,10 +1230,23 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->where('erp_purchaseordermaster.poConfirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', 0)
             ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->join('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [2, 5, 52])
             ->where('erp_documentapproved.companySystemID', $companyID);
 
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $poMasters = $poMasters->where(function ($query) use ($search) {
+                $query->where('purchaseOrderCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
+        }
+        
         return \DataTables::of($poMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -2533,7 +2548,9 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
             'approvalLevelID',
-            'documentSystemCode'
+            'documentSystemCode',
+            'employees.empName As created_user',
+            'serviceline.ServiceLineDes as serviceLineDescription'
         )->join('erp_purchaseordermaster', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'purchaseOrderID')
                 ->where('erp_purchaseordermaster.companySystemID', $companyID)
@@ -2541,6 +2558,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                 ->where('erp_purchaseordermaster.poConfirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', -1)
             ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->join('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->whereIn('erp_documentapproved.documentSystemID', [2, 5, 52])
             ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
 
@@ -3660,7 +3679,7 @@ FROM
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
             ->where('companySystemID', $purchaseOrder->companySystemID)
-            ->where('documentSystemID',  $purchaseOrder->documentSystemID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
             ->delete();
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order reopened successfully');

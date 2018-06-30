@@ -257,7 +257,10 @@ class MaterielRequest extends Model
         'approved',
         'ClosedYN',
         'issueTrackID',
-        'timeStamp'
+        'timeStamp',
+        'RollLevForApp_curr',
+        'approvedByUserSystemID',
+        'approvedDate'
     ];
 
     /**
@@ -300,7 +303,10 @@ class MaterielRequest extends Model
         'selectedForIssue' => 'integer',
         'approved' => 'integer',
         'ClosedYN' => 'integer',
-        'issueTrackID' => 'integer'
+        'issueTrackID' => 'integer',
+        'RollLevForApp_curr' => 'integer',
+        'approvedByUserSystemID' => 'integer',
+        'approvedDate' => 'string',
     ];
 
     /**

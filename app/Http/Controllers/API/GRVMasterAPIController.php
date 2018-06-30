@@ -12,6 +12,10 @@
  * -- Date: 11-June 2018 By: Nazir Description: Added new functions named as getGRVFormData() For load Master View
  * -- Date: 16-June 2018 By: Nazir Description: Added new functions named as GRVSegmentChkActive() For load Master View
  * -- Date: 19-June 2018 By: Nazir Description: Added new functions named as goodReceiptVoucherAudit() For load Master View
+ * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as getGRVMasterApproval() For load Approval Master View
+ * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as getApprovedGRVForCurrentUser() For load Master View
+ * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as approveGoodReceiptVoucher() For Approve GRV Master
+ * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as rejectGoodReceiptVoucher() For Reject GRV Master
  */
 namespace App\Http\Controllers\API;
 
@@ -752,4 +756,189 @@ class GRVMasterAPIController extends AppBaseController
 
         return $this->sendResponse($gRVMaster->toArray(), 'GRV retrieved successfully');
     }
+
+    public function getGRVMasterApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
+            ->where('documentSystemID', 3)
+            ->first();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_grvmaster.grvAutoID',
+            'erp_grvmaster.grvPrimaryCode',
+            'erp_grvmaster.documentSystemID',
+            'erp_grvmaster.grvDoRefNo',
+            'erp_grvmaster.grvDate',
+            'erp_grvmaster.supplierPrimaryCode',
+            'erp_grvmaster.supplierName',
+            'erp_grvmaster.grvNarration',
+            'erp_grvmaster.serviceLineCode',
+            'erp_grvmaster.createdDateTime',
+            'erp_grvmaster.grvConfirmedDate',
+            'erp_grvmaster.grvTotalSupplierTransactionCurrency',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user',
+            'serviceline.ServiceLineDes as serviceLineDescription',
+            'warehousemaster.wareHouseDescription as wareHouseSet'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->where('employeesdepartments.documentSystemID', 3)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_grvmaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'grvAutoID')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_grvmaster.companySystemID', $companyID)
+                ->where('erp_grvmaster.approved', 0)
+                ->where('erp_grvmaster.grvConfirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->join('serviceline', 'erp_grvmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->join('warehousemaster', 'erp_grvmaster.grvLocation', 'warehousemaster.wareHouseSystemCode')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 3)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('grvPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('grvNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function getApprovedGRVForCurrentUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_grvmaster.grvAutoID',
+            'erp_grvmaster.grvPrimaryCode',
+            'erp_grvmaster.documentSystemID',
+            'erp_grvmaster.grvDoRefNo',
+            'erp_grvmaster.grvDate',
+            'erp_grvmaster.supplierPrimaryCode',
+            'erp_grvmaster.supplierName',
+            'erp_grvmaster.grvNarration',
+            'erp_grvmaster.serviceLineCode',
+            'erp_grvmaster.createdDateTime',
+            'erp_grvmaster.grvConfirmedDate',
+            'erp_grvmaster.grvTotalSupplierTransactionCurrency',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user',
+            'serviceline.ServiceLineDes as serviceLineDescription',
+            'warehousemaster.wareHouseDescription as wareHouseSet'
+        )->join('erp_grvmaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'grvAutoID')
+                ->where('erp_grvmaster.companySystemID', $companyID)
+                ->where('erp_grvmaster.approved', -1)
+                ->where('erp_grvmaster.grvConfirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->join('serviceline', 'erp_grvmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->join('warehousemaster', 'erp_grvmaster.grvLocation', 'warehousemaster.wareHouseSystemCode')
+            ->where('erp_documentapproved.documentSystemID', 3)
+            ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('grvPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('grvNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveGoodReceiptVoucher(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectGoodReceiptVoucher(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+
+    }
+
 }
