@@ -516,7 +516,10 @@ WHERE
                         }
                     }
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging']);
+                    $invoiceAmountTotal = collect($output['data'])->pluck('invoiceAmount')->toArray();
+                    $invoiceAmountTotal = array_sum($invoiceAmountTotal);
+
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'],'invoiceAmountTotal' => $invoiceAmountTotal);
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
