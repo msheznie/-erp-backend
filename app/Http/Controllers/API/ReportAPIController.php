@@ -532,7 +532,10 @@ WHERE
                         }
                     }
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging']);
+                    $invoiceAmountTotal = collect($output['data'])->pluck('invoiceAmount')->toArray();
+                    $invoiceAmountTotal = array_sum($invoiceAmountTotal);
+
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'],'invoiceAmountTotal' => $invoiceAmountTotal);
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
@@ -1881,7 +1884,7 @@ WHERE
         $aging = array();
         $interval = $request->interval;
         $through = $request->through;
-        $agingRange = range(1, $through, $interval);
+        $agingRange = range(0, $through, $interval);
         $rangeAmount = $interval;
         $agingAgeCount = count($agingRange);
         foreach ($agingRange as $val) {
@@ -1942,7 +1945,7 @@ WHERE
             $whereQry = "round( final.balanceRpt, final.documentRptDecimalPlaces )";
             $subsequentBalanceQry = "round( final.balanceSubsequentCollectionRpt, final.documentRptDecimalPlaces ) as subsequentBalanceAmount";
             $subsequentQry = "round( final.SubsequentCollectionRptAmount, final.documentRptDecimalPlaces ) AS subsequentAmount";
-            $invoiceQry = "round( final.documentLocalAmount, final.documentRptDecimalPlaces ) AS invoiceAmount";
+            $invoiceQry = "round( final.documentRptAmount, final.documentRptDecimalPlaces ) AS invoiceAmount";
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
@@ -2272,7 +2275,7 @@ WHERE
         $aging = array();
         $interval = $request->interval;
         $through = $request->through;
-        $agingRange = range(1, $through, $interval);
+        $agingRange = range(0, $through, $interval);
         $rangeAmount = $interval;
         $agingAgeCount = count($agingRange);
         foreach ($agingRange as $val) {
