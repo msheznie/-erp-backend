@@ -1738,7 +1738,7 @@ WHERE
         $aging = array();
         $interval = $request->interval;
         $through = $request->through;
-        $agingRange = range(1, $through, $interval);
+        $agingRange = range(0, $through, $interval);
         $rangeAmount = $interval;
         $agingAgeCount = count($agingRange);
         foreach ($agingRange as $val) {
@@ -1799,7 +1799,7 @@ WHERE
             $whereQry = "round( final.balanceRpt, final.documentRptDecimalPlaces )";
             $subsequentBalanceQry = "round( final.balanceSubsequentCollectionRpt, final.documentRptDecimalPlaces ) as subsequentBalanceAmount";
             $subsequentQry = "round( final.SubsequentCollectionRptAmount, final.documentRptDecimalPlaces ) AS subsequentAmount";
-            $invoiceQry = "round( final.documentLocalAmount, final.documentRptDecimalPlaces ) AS invoiceAmount";
+            $invoiceQry = "round( final.documentRptAmount, final.documentRptDecimalPlaces ) AS invoiceAmount";
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
@@ -2129,7 +2129,7 @@ WHERE
         $aging = array();
         $interval = $request->interval;
         $through = $request->through;
-        $agingRange = range(1, $through, $interval);
+        $agingRange = range(0, $through, $interval);
         $rangeAmount = $interval;
         $agingAgeCount = count($agingRange);
         foreach ($agingRange as $val) {
