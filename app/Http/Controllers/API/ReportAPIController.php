@@ -3644,13 +3644,10 @@ GROUP BY
 
         $currency = $request->currencyID;
 
-        if ($currency == 1) {
-            $currencyBRVAmount = " collectionDetail.BRVTransAmount AS BRVDocumentAmount";
-            $currencyCNAmount = " collectionDetail.CNTransAmount AS CNDocumentAmount";
-        } else if ($currency == 2) {
+        if ($currency == 2) {
             $currencyBRVAmount = " collectionDetail.BRVLocalAmount AS BRVDocumentAmount";
             $currencyCNAmount = " collectionDetail.CNLocalAmount AS CNDocumentAmount";
-        } else {
+        } else if ($currency == 3) {
             $currencyBRVAmount = " collectionDetail.BRVRptAmount AS BRVDocumentAmount";
             $currencyCNAmount = " collectionDetail.CNRptAmount AS CNDocumentAmount";
         }
@@ -3664,7 +3661,6 @@ GROUP BY
 	collectionDetail.documentCode,
 	collectionDetail.documentDate,
 	collectionDetail.documentNarration,
-	' . $currencyBRVAmount . ',
 	' . $currencyCNAmount . '
 FROM
 	(
@@ -3687,31 +3683,6 @@ FROM
 			customermaster.CutomerCode,
 			customermaster.customerShortCode,
 			customermaster.CustomerName,
-
-		IF (
-			erp_generalledger.documentSystemID = "21",
-			ROUND(documentTransAmount, 0),
-			0
-		) BRVTransAmount,
-
-	IF (
-		erp_generalledger.documentSystemID = "21",
-		ROUND(documentLocalAmount, 0),
-		0
-	) BRVLocalAmount,
-
-IF (
-	erp_generalledger.documentSystemID = "21",
-	ROUND(documentRptAmount, 0),
-	0
-) BRVRptAmount,
-
-IF (
-	erp_generalledger.documentSystemID = "19",
-	ROUND(documentTransAmount, 0),
-	0
-) CNTransAmount,
-
 IF (
 	erp_generalledger.documentSystemID = "19",
 	ROUND(documentLocalAmount, 0),
@@ -3727,11 +3698,7 @@ FROM
 	erp_generalledger
 INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
-WHERE
-	(
-		erp_generalledger.documentSystemID = 21
-		OR erp_generalledger.documentSystemID = 19
-	)
+WHERE erp_generalledger.documentSystemID = 19
  AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentDate ASC
@@ -3767,15 +3734,10 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
 
         $currency = $request->currencyID;
 
-        if ($currency == 1) {
-            $currencyBRVAmount = " collectionDetail.BRVTransAmount AS BRVDocumentAmount";
-            $currencyCNAmount = " collectionDetail.CNTransAmount AS CNDocumentAmount";
-        } else if ($currency == 2) {
+        if ($currency == 2) {
             $currencyBRVAmount = " collectionDetail.BRVLocalAmount AS BRVDocumentAmount";
-            $currencyCNAmount = " collectionDetail.CNLocalAmount AS CNDocumentAmount";
-        } else {
+        } else if ($currency == 3) {
             $currencyBRVAmount = " collectionDetail.BRVRptAmount AS BRVDocumentAmount";
-            $currencyCNAmount = " collectionDetail.CNRptAmount AS CNDocumentAmount";
         }
 
         $output = \DB::select('SELECT
@@ -3790,8 +3752,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
 	collectionDetail.bankName,
 	collectionDetail.AccountNo,
 	collectionDetail.CurrencyCode AS bankCurrencyCode,
-	' . $currencyBRVAmount . ',
-	' . $currencyCNAmount . '
+	' . $currencyBRVAmount . '
 FROM
 	(
 		SELECT
@@ -3816,12 +3777,6 @@ FROM
 			erp_bankmaster.bankName,
 			erp_bankaccount.AccountNo,
 			currencymaster.CurrencyCode,
-		IF (
-			erp_generalledger.documentSystemID = "21",
-			ROUND(documentTransAmount, 0),
-			0
-		) BRVTransAmount,
-
 	IF (
 		erp_generalledger.documentSystemID = "21",
 		ROUND(documentLocalAmount, 0),
@@ -3832,39 +3787,16 @@ IF (
 	erp_generalledger.documentSystemID = "21",
 	ROUND(documentRptAmount, 0),
 	0
-) BRVRptAmount,
-
-IF (
-	erp_generalledger.documentSystemID = "19",
-	ROUND(documentTransAmount, 0),
-	0
-) CNTransAmount,
-
-IF (
-	erp_generalledger.documentSystemID = "19",
-	ROUND(documentLocalAmount, 0),
-	0
-) CNLocalAmount,
-
-IF (
-	erp_generalledger.documentSystemID = "19",
-	ROUND(documentRptAmount, 0),
-	0
-) CNRptAmount
+) BRVRptAmount
 FROM
 	erp_generalledger
 INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
-LEFT JOIN erp_customerreceivepayment ON erp_generalledger.documentSystemCode = erp_customerreceivepayment.custReceivePaymentAutoID
-LEFT JOIN erp_bankmaster ON erp_customerreceivepayment.bankID = erp_bankmaster.bankmasterAutoID
-LEFT JOIN erp_bankaccount ON erp_customerreceivepayment.bankAccount = erp_bankaccount.bankAccountAutoID
-LEFT JOIN currencymaster ON erp_bankaccount.accountCurrencyID = currencymaster.currencyID
-WHERE
-	(
-		erp_generalledger.documentSystemID = 21
-		OR erp_generalledger.documentSystemID = 19
-	)
- AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+INNER JOIN erp_customerreceivepayment ON erp_generalledger.documentSystemCode = erp_customerreceivepayment.custReceivePaymentAutoID AND erp_generalledger.companySystemID = erp_customerreceivepayment.companySystemID AND erp_generalledger.documentSystemID = erp_customerreceivepayment.documentSystemID
+INNER JOIN erp_bankmaster ON erp_customerreceivepayment.bankID = erp_bankmaster.bankmasterAutoID
+INNER JOIN erp_bankaccount ON erp_customerreceivepayment.bankAccount = erp_bankaccount.bankAccountAutoID
+INNER JOIN currencymaster ON erp_bankaccount.accountCurrencyID = currencymaster.currencyID
+WHERE erp_generalledger.documentSystemID = 21 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentDate ASC
 	) AS collectionDetail');
