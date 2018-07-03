@@ -944,7 +944,7 @@ WHERE
                 $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
                 $invoiceAmount = array_sum($invoiceAmount);
 
-                $paidAmount = collect($output)->pluck('paidAmount')->toArray();
+                $paidAmount = collect($output)->pluck('receiptAmount')->toArray();
                 $paidAmount = array_sum($paidAmount);
 
                 $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
@@ -1916,6 +1916,8 @@ WHERE
         $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
 
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
+
+        $departments[] = array("serviceLineSystemID" => 24, "ServiceLineCode" => 'X', "serviceLineMasterCode" => 'X', "ServiceLineDes" => 'X');
 
         $filterCustomers = AccountsReceivableLedger::whereIN('companySystemID', $companiesByGroup)
             ->select('customerID')

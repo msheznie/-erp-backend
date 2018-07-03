@@ -496,11 +496,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovedGRVForCurrentUser', 'GRVMasterAPIController@getApprovedGRVForCurrentUser');
     Route::post('approveGoodReceiptVoucher', 'GRVMasterAPIController@approveGoodReceiptVoucher');
     Route::post('rejectGoodReceiptVoucher', 'GRVMasterAPIController@rejectGoodReceiptVoucher');
-
+    Route::resource('general_ledgers', 'GeneralLedgerAPIController');
     Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
     Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany');
     Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
     Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
+
+    Route::get('getAccountsPayableFilterData', 'AccountsPayableReportAPIController@getAccountsPayableFilterData');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -514,10 +516,4 @@ Route::get('getBcryptPassword/{password}', function ($password) {
     echo bcrypt($password);
 });
 
-
-
-
-
-
-
-Route::resource('general_ledgers', 'GeneralLedgerAPIController');
+Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
