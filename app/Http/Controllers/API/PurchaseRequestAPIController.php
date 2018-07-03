@@ -1653,6 +1653,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                             ->where('manuallyClosed', 0)
                                             ->where('cancelledYN', 0)
                                             ->where('selectedForPO', 0)
+                                            ->where('prClosedYN',0)
                                             ->with(['created_by','priority','location']);
 
         if (array_key_exists('selectedForPO', $input)) {
