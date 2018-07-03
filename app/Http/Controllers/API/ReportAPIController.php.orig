@@ -833,6 +833,7 @@ WHERE
                         'rptAmountTotal' => $rptAmountTotal);
                 }
                 break;
+
             case 'CR': //Customer Balance Summery
                 $reportTypeID = $request->reportTypeID;
 
@@ -882,8 +883,9 @@ WHERE
                         'companyName' => $checkIsGroup->CompanyName,
                         'decimalPlace' => $decimalPlace,
                         'total' => $total,
+<<<<<<< HEAD
                         'currency' => $requestCurrency->CurrencyCode
-                    );
+                      );
                 }else{
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -933,6 +935,9 @@ WHERE
                         'rptAmountTotal' => $rptAmountTotal
                     );
 
+=======
+                    );
+>>>>>>> 57cd3df72ac1f461a313e22addd88529f13ec2a4
                 }
                 break;
             case 'CSR': //Customer Sales Register
@@ -4283,8 +4288,12 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
     }
 
 
-  // Revenue By Customer
+<<<<<<< HEAD
+    // Revenue By Customer
     function getRevenueByCustomer($request)
+=======
+    function getCustomerSalesRegisterQRY($request)
+>>>>>>> 57cd3df72ac1f461a313e22addd88529f13ec2a4
     {
         $fromDate = new Carbon($request->fromDate);
         //$fromDate = $fromDate->addDays(1);
@@ -4302,6 +4311,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
             $companyID = (array)$request->companySystemID;
         }
 
+<<<<<<< HEAD
         $customers = (array)$request->customers;
 
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
@@ -4412,24 +4422,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
         return $output;
     }
 
-    function getCustomerSalesRegisterQRY($request)
-    {
-        $fromDate = new Carbon($request->fromDate);
-        //$fromDate = $fromDate->addDays(1);
-        $fromDate = $fromDate->format('Y-m-d');
-
-        $toDate = new Carbon($request->toDate);
-        //$toDate = $toDate->addDays(1);
-        $toDate = $toDate->format('Y-m-d');
-
-        $companyID = "";
-        $checkIsGroup = Company::find($request->companySystemID);
-        if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
-        } else {
-            $companyID = (array)$request->companySystemID;
-        }
-
+=======
         $controlAccountsSystemID = $request->controlAccountsSystemID;
         $currency = $request->currencyID;
 
@@ -4615,4 +4608,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
         //dd(DB::getQueryLog());
         return $output;
     }
+
+
+>>>>>>> 57cd3df72ac1f461a313e22addd88529f13ec2a4
 }
