@@ -1687,6 +1687,8 @@ WHERE
 
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
 
+        $departments[] = array("serviceLineSystemID" => 24, "ServiceLineCode" => 'X', "serviceLineMasterCode" => 'X', "ServiceLineDes" => 'X');
+
         $filterCustomers = AccountsReceivableLedger::whereIN('companySystemID', $companiesByGroup)
             ->select('customerID')
             ->groupBy('customerID')
