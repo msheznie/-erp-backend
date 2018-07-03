@@ -20,6 +20,8 @@
  * -- Date: 29-june 2018 By: Mubashir Description: Added new functions named as getCustomerLedgerTemplate1QRY(),
  * -- Date: 02-July 2018 By: Nazir Description: Added new functions named as getCustomerCollectionMonthlyQRY(),
  * -- Date: 02-july 2018 By: Mubashir Description: Added new functions named as getCustomerLedgerTemplate2QRY(),
+ * -- Date: 03-july 2018 By: Nazir Description: Added new functions named as getCustomerCollectionCNExcelQRY(),
+ * -- Date: 03-july 2018 By: Nazir Description: Added new functions named as getCustomerCollectionBRVExcelQRY(),
  */
 
 namespace App\Http\Controllers\API;
@@ -554,7 +556,7 @@ WHERE
                     $invoiceAmountTotal = collect($output['data'])->pluck('invoiceAmount')->toArray();
                     $invoiceAmountTotal = array_sum($invoiceAmountTotal);
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'],'invoiceAmountTotal' => $invoiceAmountTotal);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'invoiceAmountTotal' => $invoiceAmountTotal);
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
@@ -712,7 +714,7 @@ WHERE
                             $outputArr[$val->customerName][$val->documentCurrency][] = $val;
                         }
                     }
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount,  'invoiceAmount' => $invoiceAmount);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount);
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
@@ -730,7 +732,7 @@ WHERE
                             $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
                         }
                     }
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName,'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount);
                 }
                 break;
             case 'CBSUM': //Customer Balance Summery
@@ -757,17 +759,17 @@ WHERE
                     $localCurrencyId = 2;
                     $rptCurrencyId = 2;
 
-                    if(!empty($decimalPlaceL) ){
+                    if (!empty($decimalPlaceL)) {
                         $localCurrencyId = $decimalPlaceL[0];
                     }
 
-                    if(!empty($decimalPlaceR) ){
+                    if (!empty($decimalPlaceR)) {
                         $rptCurrencyId = $decimalPlaceR[0];
                     }
 
 
-                    $localCurrency = CurrencyMaster::where('currencyID',$localCurrencyId )->first();
-                    $rptCurrency = CurrencyMaster::where('currencyID',$rptCurrencyId )->first();
+                    $localCurrency = CurrencyMaster::where('currencyID', $localCurrencyId)->first();
+                    $rptCurrency = CurrencyMaster::where('currencyID', $rptCurrencyId)->first();
 
 
                     return array('reportData' => $output,
@@ -1313,9 +1315,9 @@ WHERE
                         $x = 0;
                         foreach ($output as $val) {
                             $data[$x]['Document Code'] = $val->DocumentCode;
-                            if($val->PostedDate == '1970-01-01'){
+                            if ($val->PostedDate == '1970-01-01') {
                                 $data[$x]['Posted Date'] = '';
-                            }else{
+                            } else {
                                 $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
                             }
                             $data[$x]['Invoice Number'] = $val->invoiceNumber;
@@ -1364,17 +1366,17 @@ WHERE
                     $localCurrencyId = 2;
                     $rptCurrencyId = 2;
 
-                    if(!empty($decimalPlaceL) ){
+                    if (!empty($decimalPlaceL)) {
                         $localCurrencyId = $decimalPlaceL[0];
                     }
 
-                    if(!empty($decimalPlaceR) ){
+                    if (!empty($decimalPlaceR)) {
                         $rptCurrencyId = $decimalPlaceR[0];
                     }
 
 
-                    $localCurrency = CurrencyMaster::where('currencyID',$localCurrencyId )->first();
-                    $rptCurrency = CurrencyMaster::where('currencyID',$rptCurrencyId )->first();
+                    $localCurrency = CurrencyMaster::where('currencyID', $localCurrencyId)->first();
+                    $rptCurrency = CurrencyMaster::where('currencyID', $rptCurrencyId)->first();
 
                     $currencyID = $request->currencyID;
                     $type = $request->type;
@@ -1385,23 +1387,23 @@ WHERE
                             $data[$x]['Cust. Code'] = $val->CutomerCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
 
-                            $decimalPlace =  2;
-                            if($currencyID == '2'){
+                            $decimalPlace = 2;
+                            if ($currencyID == '2') {
                                 $decimalPlace = !empty($localCurrency) ? $localCurrency->DecimalPlaces : 2;
                                 $data[$x]['Currency'] = $val->documentLocalCurrency;
                                 $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
-                            }else if($currencyID == '3'){
+                            } else if ($currencyID == '3') {
                                 $decimalPlace = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
                                 $data[$x]['Currency'] = $val->documentRptCurrency;
                                 $data[$x]['Amount'] = round($val->RptAmount, $decimalPlace);
-                            }else{
+                            } else {
                                 $data[$x]['Currency'] = $val->documentLocalCurrency;
                                 $data[$x]['Amount'] = $val->localAmount;
                                 $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
                             }
                             $x++;
                         }
-                    }else{
+                    } else {
                         $data = array();
                     }
 
@@ -1453,7 +1455,7 @@ WHERE
                                 $data[$x]['Bank Currency'] = $val->bankCurrencyCode;
                                 $data[$x]['Document Narration'] = $val->documentNarration;
                                 $data[$x]['Currency Code'] = $selectedCurrency;
-                                $data[$x]['BRV Document Amount'] = $val->CNDocumentAmount;
+                                $data[$x]['BRV Document Amount'] = $val->BRVDocumentAmount;
                                 $x++;
                             }
                         }
@@ -2133,12 +2135,12 @@ WHERE
         $agingAgeCount = count($agingRange);
         foreach ($agingRange as $val) {
             if ($z == $agingAgeCount) {
-                $aging[] = $val+1 . "-" . $through;
+                $aging[] = $val + 1 . "-" . $through;
             } else {
-                if($z == 1){
+                if ($z == 1) {
                     $aging[] = $val . "-" . $rangeAmount;
                 } else {
-                    $aging[] = $val+1 . "-" . $rangeAmount;
+                    $aging[] = $val + 1 . "-" . $rangeAmount;
                 }
                 $rangeAmount += $interval;
             }
@@ -2528,12 +2530,12 @@ WHERE
         $agingAgeCount = count($agingRange);
         foreach ($agingRange as $val) {
             if ($z == $agingAgeCount) {
-                $aging[] = $val+1 . "-" . $through;
+                $aging[] = $val + 1 . "-" . $through;
             } else {
-                if($z == 1){
+                if ($z == 1) {
                     $aging[] = $val . "-" . $rangeAmount;
                 } else {
-                    $aging[] = $val+1 . "-" . $rangeAmount;
+                    $aging[] = $val + 1 . "-" . $rangeAmount;
                 }
                 $rangeAmount += $interval;
             }
@@ -3284,7 +3286,7 @@ WHERE
 	CustomerBalanceSummary_Detail.CustomerName,
 	CustomerBalanceSummary_Detail.documentLocalCurrencyID,
 	CustomerBalanceSummary_Detail.concatCustomerName,
-	 '. $currencyQry . ',
+	 ' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
 	' . $invoiceAmountQry . '
 FROM
@@ -3327,7 +3329,7 @@ FROM
 WHERE
 	(erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
 	AND DATE( erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
-	AND ( erp_generalledger.chartOfAccountSystemID = '.$controlAccountsSystemID.')
+	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	UNION ALL 
@@ -3369,7 +3371,7 @@ FROM
 WHERE
 	(erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
 	AND DATE( erp_generalledger.documentDate) < "' . $fromDate . '"
-	AND ( erp_generalledger.chartOfAccountSystemID = '.$controlAccountsSystemID.')
+	AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
 	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
 	GROUP BY erp_generalledger.supplierCodeSystem) AS CustomerBalanceSummary_Detail ORDER BY CustomerBalanceSummary_Detail.CustomerName,CustomerBalanceSummary_Detail.documentDate ASC');
@@ -3434,7 +3436,7 @@ WHERE
                     LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
                 WHERE
                     (erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
-                    AND ( erp_generalledger.chartOfAccountSystemID = '.$controlAccountsSystemID.')
+                    AND ( erp_generalledger.chartOfAccountSystemID = ' . $controlAccountsSystemID . ')
       
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 		            AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
@@ -3732,7 +3734,7 @@ WHERE
 	)
  AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
-AND erp_generalledger.documentRptAmount > 0
+AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentDate ASC
 	) AS collectionDetail');
 
         return $output;
@@ -3864,7 +3866,7 @@ WHERE
 	)
  AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
-AND erp_generalledger.documentRptAmount > 0
+AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentDate ASC
 	) AS collectionDetail');
 
         return $output;
