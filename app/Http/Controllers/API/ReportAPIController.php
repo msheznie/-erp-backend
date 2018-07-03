@@ -884,7 +884,7 @@ WHERE
                 $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
                 $invoiceAmount = array_sum($invoiceAmount);
 
-                $paidAmount = collect($output)->pluck('paidAmount')->toArray();
+                $paidAmount = collect($output)->pluck('receiptAmount')->toArray();
                 $paidAmount = array_sum($paidAmount);
 
                 $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
