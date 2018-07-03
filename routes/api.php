@@ -518,3 +518,6 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 
 
 
+
+
+Route::resource('general_ledgers', 'GeneralLedgerAPIController');
