@@ -9,6 +9,7 @@
  * -- Create date : 3 - July 2018
  * -- Description : This file contains the all the report generation code
  * -- REVISION HISTORY
+ * -- Date: 04-july 2018 By: Fayas Description: Added new functions named as getPaymentSuppliersByYear()
  */
 
 namespace App\Http\Controllers\API;
@@ -16,6 +17,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsPayableLedger;
 use App\Models\ChartOfAccount;
+use App\Models\CurrencyMaster;
 use App\Models\GeneralLedger;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
@@ -81,6 +83,18 @@ class AccountsPayableReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'APPSY':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'suppliers' => 'required',
+                    'year' => 'required',
+                    'currencyID' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -115,6 +129,106 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 }
                 return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount);
+                break;
+            case 'APPSY':
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getPaymentSuppliersByYear($request);
+
+                $currency = $request->currencyID;
+                $currencyId = 2;
+
+                if($currency == 2){
+                    $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                    $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                }else{
+                    $decimalPlaceCollect = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                    $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                }
+
+                if(!empty($decimalPlaceUnique) ){
+                    $currencyId = $decimalPlaceUnique[0];
+                }
+
+
+                $requestCurrency = CurrencyMaster::where('currencyID',$currencyId )->first();
+
+                $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
+
+                $total = array();
+
+                $total['Jan'] = array_sum(collect($output)->pluck('Jan')->toArray());
+                $total['Feb'] = array_sum(collect($output)->pluck('Feb')->toArray());
+                $total['March'] = array_sum(collect($output)->pluck('March')->toArray());
+                $total['April'] = array_sum(collect($output)->pluck('April')->toArray());
+                $total['May'] = array_sum(collect($output)->pluck('May')->toArray());
+                $total['June'] = array_sum(collect($output)->pluck('June')->toArray());
+                $total['July'] = array_sum(collect($output)->pluck('July')->toArray());
+                $total['Aug'] = array_sum(collect($output)->pluck('Aug')->toArray());
+                $total['Sept'] = array_sum(collect($output)->pluck('Sept')->toArray());
+                $total['Oct'] = array_sum(collect($output)->pluck('Oct')->toArray());
+                $total['Nov'] = array_sum(collect($output)->pluck('Nov')->toArray());
+                $total['Dece'] = array_sum(collect($output)->pluck('Dece')->toArray());
+                $total['Total'] = array_sum(collect($output)->pluck('Total')->toArray());
+
+                return array('reportData' => $output,
+                    'companyName' => $checkIsGroup->CompanyName,
+                    'total' => $total,
+                    'decimalPlace' => $decimalPlace,
+                    'currency' => $requestCurrency->CurrencyCode
+                );
+                break;
+            default:
+                return $this->sendError('No report ID found');
+        }
+    }
+
+    public function exportReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'APPSY':
+                $reportTypeID = $request->reportTypeID;
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                $output = $this->getPaymentSuppliersByYear($request);
+                $decimalPlace = 0;
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Supplier Name'] = $val->supplierName;
+                        $data[$x]['Jan'] =  round($val->Jan, $decimalPlace);
+                        $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
+                        $data[$x]['March'] = round($val->March, $decimalPlace);
+                        $data[$x]['April'] = round($val->April, $decimalPlace);
+                        $data[$x]['May'] = round($val->May, $decimalPlace);
+                        $data[$x]['Jun'] = round($val->June, $decimalPlace);
+                        $data[$x]['July'] = round($val->July, $decimalPlace);
+                        $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
+                        $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
+                        $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
+                        $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
+                        $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
+                        $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                        $x++;
+                    }
+                }else{
+                    $data = array();
+                }
+                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -310,4 +424,131 @@ GROUP BY
         //dd(DB::getQueryLog());
         return $output;
     }
+
+
+    function getPaymentSuppliersByYear($request)
+    {
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $currency  = $request->currencyID;
+        $suppliers = $request->suppliers;
+        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+        $year      = $request->year;
+
+        $currencyClm = "documentRptAmount";
+        if($currency == 2){
+            $currencyClm = "documentLocalAmount";
+        }else if($currency == 3){
+            $currencyClm = "documentRptAmount";
+        }
+
+        //DB::enableQueryLog();
+        $output = \DB::select('SELECT
+                                paymentsBySupplierSummary.companySystemID,
+                                paymentsBySupplierSummary.companyID,
+                                paymentsBySupplierSummary.supplierCodeSystem,
+                                paymentsBySupplierSummary.supplierCode,
+                                paymentsBySupplierSummary.supplierName,
+                                paymentsBySupplierSummary.DocYEAR,
+                                paymentsBySupplierSummary.documentLocalCurrencyID,
+                                paymentsBySupplierSummary.documentRptCurrencyID,
+                                sum(Jan) as Jan,
+                                sum(Feb) as Feb,
+                                sum(March) as March,
+                                sum(April) as April,
+                                sum(May) as May,
+                                sum(June) as June,
+                                sum(July) as July,
+                                sum(Aug) as Aug,
+                                sum(Sept) as Sept,
+                                sum(Oct) as Oct,
+                                sum(Nov) as Nov,
+                                sum(Dece) as Dece,
+                                sum(Total) as Total
+                            FROM
+                            (
+                            SELECT
+                                MAINQUERY.companyID,
+                                MAINQUERY.companySystemID,
+                                MAINQUERY.supplierCodeSystem,
+                                MAINQUERY.supplierCode,
+                                MAINQUERY.supplierName,
+                                MAINQUERY.DocYEAR,
+                                MAINQUERY.documentLocalCurrencyID,
+                                MAINQUERY.documentRptCurrencyID,
+                            IF
+                                ( MAINQUERY.DocMONTH = 1, '.$currencyClm.', 0 ) AS Jan,
+                            IF
+                                ( MAINQUERY.DocMONTH = 2, '.$currencyClm.', 0 ) AS Feb,
+                            IF
+                                ( MAINQUERY.DocMONTH = 3, '.$currencyClm.', 0 ) AS March,
+                            IF
+                                ( MAINQUERY.DocMONTH = 4, '.$currencyClm.', 0 ) AS April,
+                            IF
+                                ( MAINQUERY.DocMONTH = 5, '.$currencyClm.', 0 ) AS May,
+                            IF
+                                ( MAINQUERY.DocMONTH = 6, '.$currencyClm.', 0 ) AS June,
+                            IF
+                                ( MAINQUERY.DocMONTH = 7, '.$currencyClm.', 0 ) AS July,
+                            IF
+                                ( MAINQUERY.DocMONTH = 8, '.$currencyClm.', 0 ) AS Aug,
+                            IF
+                                ( MAINQUERY.DocMONTH = 9, '.$currencyClm.', 0 ) AS Sept,
+                            IF
+                                ( MAINQUERY.DocMONTH = 10, '.$currencyClm.', 0 ) AS Oct,
+                            IF
+                                ( MAINQUERY.DocMONTH = 11, '.$currencyClm.', 0 ) AS Nov,
+                            IF
+                                ( MAINQUERY.DocMONTH = 12, '.$currencyClm.', 0 ) AS Dece,
+                                 '.$currencyClm.' as Total
+                            FROM
+                                (
+                            SELECT
+                                erp_generalledger.companySystemID,
+                                erp_generalledger.companyID,
+                                erp_generalledger.documentSystemID,
+                                erp_generalledger.documentID,
+                                erp_generalledger.documentSystemCode,
+                                erp_generalledger.documentCode,
+                                erp_generalledger.supplierCodeSystem,
+                                suppliermaster.primarySupplierCode AS supplierCode,
+                                suppliermaster.supplierName,
+                                erp_generalledger.documentDate,
+                                MONTH ( erp_generalledger.documentDate ) AS DocMONTH,
+                                YEAR ( erp_generalledger.documentDate ) AS DocYEAR,
+                                erp_generalledger.documentTransCurrencyID,
+                                erp_generalledger.documentTransAmount,
+                                erp_generalledger.documentLocalCurrencyID,
+                                erp_generalledger.documentLocalAmount,
+                                erp_generalledger.documentRptCurrencyID,
+                                erp_generalledger.documentRptAmount,
+                                erp_generalledger.documentType,
+                                If(erp_generalledger.documentType=2,"Invoive Payment",If(erp_generalledger.documentType=3,"Direct Payment",If(erp_generalledger.documentType=5,"Advance Payment",""))) as PaymentType
+                            FROM
+                                erp_generalledger
+                                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                 WHERE erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                            AND
+                                erp_generalledger.documentSystemID = 4
+                                AND erp_generalledger.supplierCodeSystem > 0 
+                                AND companySystemID IN (' . join(',', $companyID) . ') 
+                                AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
+                                AND erp_generalledger.documentTransAmount > 0 
+                            ) AS MAINQUERY
+                            ) AS paymentsBySupplierSummary
+                                GROUP BY
+                                paymentsBySupplierSummary.companySystemID,
+                                paymentsBySupplierSummary.supplierCodeSystem;');
+
+        return $output;
+
+    }
+
 }

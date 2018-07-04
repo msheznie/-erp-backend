@@ -3316,7 +3316,7 @@ WHERE
                     ( revenueDetailData.DocMONTH = 11, '.$currencyClm.', 0 ) AS Nov,
                 IF
                     ( revenueDetailData.DocMONTH = 12, '.$currencyClm.', 0 ) AS Dece,
-                    MyRptAmount as Total
+                    '.$currencyClm.' as Total
                 FROM
                     (
                 SELECT
