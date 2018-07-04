@@ -506,8 +506,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
 
     Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
-    Route::get('getAccountsPayableFilterData', 'AccountsPayableReportAPIController@getAccountsPayableFilterData');
-    Route::post('validateAccountsPayableReport', 'AccountsPayableReportAPIController@validateAccountsPayableReport');
+    Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
+    Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport');
+    Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
