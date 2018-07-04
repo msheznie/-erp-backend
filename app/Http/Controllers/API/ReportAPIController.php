@@ -1796,13 +1796,13 @@ WHERE
                             $data[$x]['Posting Year'] = $val->PostingYear;
                             $data[$x]['Narration'] = $val->documentNarration;
 
-                            $decimalPlace = 2;
+                            $decimalPlace = 0;
                             if ($currencyID == '2') {
-                                $decimalPlace = !empty($localCurrency) ? $localCurrency->DecimalPlaces : 2;
+                                $decimalPlace = 0; //!empty($localCurrency) ? $localCurrency->DecimalPlaces : 2;
                                 $data[$x]['Currency'] = $val->documentLocalCurrency;
                                 $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
                             } else if ($currencyID == '3') {
-                                $decimalPlace = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
+                                $decimalPlace = 0; //!empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
                                 $data[$x]['Currency'] = $val->documentRptCurrency;
                                 $data[$x]['Amount'] = round($val->RptAmount, $decimalPlace);
                             } else {
@@ -3754,7 +3754,8 @@ WHERE
 		            AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
 		            AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . '))
                     AS CustomerBalanceSummary_Detail
-                    GROUP BY CustomerBalanceSummary_Detail.companySystemID,CustomerBalanceSummary_Detail.supplierCodeSystem;');
+                    GROUP BY CustomerBalanceSummary_Detail.companySystemID,CustomerBalanceSummary_Detail.supplierCodeSystem 
+                    ORDER BY CustomerBalanceSummary_Detail.documentDate ASC;');
 
         //dd(DB::getQueryLog());
         return $output;
@@ -3920,7 +3921,8 @@ WHERE
                     ) AS revenueDataSummary
                     GROUP BY
                     revenueDataSummary.companySystemID,
-                    revenueDataSummary.mySupplierCode');
+                    revenueDataSummary.mySupplierCode
+                    ORDER BY Total DESC');
 
 
          // DB::getQueryLog();
