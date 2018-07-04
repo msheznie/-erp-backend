@@ -3265,6 +3265,13 @@ WHERE
             $currencyClm = "MyRptAmount";
         }
 
+        $isAllCustomerSelected = $request->isAllCustomerSelected;
+
+        $nullCustomer = '';
+        if($isAllCustomerSelected == 1){
+            $nullCustomer = 'OR revenueDetailData.mySupplierCode IS NULL  OR revenueDetailData.mySupplierCode = ""';
+        }
+
         //DB::enableQueryLog();
         $output = \DB::select('SELECT
                     revenueDataSummary.companyID,
@@ -3321,7 +3328,7 @@ WHERE
                     ( revenueDetailData.DocMONTH = 11, '.$currencyClm.', 0 ) AS Nov,
                 IF
                     ( revenueDetailData.DocMONTH = 12, '.$currencyClm.', 0 ) AS Dece,
-                    MyRptAmount as Total
+                    '.$currencyClm.' as Total
                 FROM
                     (
                 SELECT
@@ -3393,7 +3400,8 @@ WHERE
 		          
                     ) AS revenueDetailData
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
-                    WHERE revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
+                    WHERE (revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
+                     '.$nullCustomer.')
                     ) AS revenueDataSummary
                     GROUP BY
                     revenueDataSummary.companySystemID,
@@ -3789,6 +3797,13 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
 
         $currency = $request->currencyID;
 
+        $isAllCustomerSelected = $request->isAllCustomerSelected;
+
+        $nullCustomer = '';
+        if($isAllCustomerSelected == 1){
+            $nullCustomer = 'OR revenueCustomerDetail.mySupplierCode IS NULL  OR revenueCustomerDetail.mySupplierCode = ""';
+        }
+
         $output = \DB::select('SELECT
                                 revenueCustomerDetail.companySystemID,
                                 revenueCustomerDetail.companyID,
@@ -3889,7 +3904,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                                 AND "' . $toDate . '"
                                 ) AS revenueCustomerDetail
                                 LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
-                                WHERE revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')');
+                                WHERE (revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')'.$nullCustomer.')');
 
         return $output;
     }
