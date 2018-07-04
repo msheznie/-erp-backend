@@ -263,6 +263,43 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 return $this->sendResponse(array(), 'successfully export');
                 break;
+            case 'APSS':
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $output = $this->getSupplierStatementQRY($request);
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Supplier Code'] = $val->SupplierCode;
+                        $data[$x]['Supplier Name'] = $val->suppliername;
+                        $data[$x]['Document ID'] = $val->documentID;
+                        $data[$x]['Document Code'] = $val->documentCode;
+                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Narration'] = $val->documentNarration;
+                        $data[$x]['Invoice Number'] = $val->invoiceNumber;
+                        $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
+                        $data[$x]['Currency'] = $val->documentCurrency;
+                        $data[$x]['Age Days'] = $val->ageDays;
+                        $data[$x]['Doc Amount'] = $val->invoiceAmount;
+                        $data[$x]['Balance Amount'] = $val->balanceAmount;
+
+                        $x++;
+                    }
+                }else{
+                    $data = array();
+                }
+                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
