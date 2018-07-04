@@ -318,9 +318,12 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('generateReport', 'ReportAPIController@generateReport');
     Route::post('validateReport', 'ReportAPIController@validateReport');
+    Route::post('exportReport', 'ReportAPIController@exportReport');
 
     Route::post('generateARReport', 'AccountsReceivableReportAPIController@generateReport');
     Route::post('validateARReport', 'AccountsReceivableReportAPIController@validateReport');
+    Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
+    Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
 
     Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
     Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
@@ -367,10 +370,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('g_r_v_details', 'GRVDetailsAPIController');
 
     Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
-
-    Route::post('exportReport', 'ReportAPIController@exportReport');
-    Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
-    Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
 
     Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
 
@@ -507,8 +506,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
 
     Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
-    Route::get('getAccountsPayableFilterData', 'AccountsPayableReportAPIController@getAccountsPayableFilterData');
-    Route::post('validateAccountsPayableReport', 'AccountsPayableReportAPIController@validateAccountsPayableReport');
+    Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
+    Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport');
+    Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -519,6 +519,5 @@ Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFro
 
 
 Route::get('getBcryptPassword/{password}', function ($password) {
-    echo '$2a$04$Lfx40scFs/n1Yjv4gl1w7.MezCWB9zQ8lPpKMVwIYV/VHcpYTXZI6<br>';
     echo bcrypt($password);
 });
