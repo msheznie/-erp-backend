@@ -165,9 +165,18 @@ class PurchaseRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $companyId = $input['companyId'];
 
-        $segments = SegmentMaster::where("companySystemID", $companyId);
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $segments = SegmentMaster::whereIn("companySystemID", $childCompanies);
 
         if (array_key_exists('isFilter', $input)) {
             if ($input['isFilter'] != 1) {
@@ -1665,6 +1674,12 @@ class PurchaseRequestAPIController extends AppBaseController
 
                     });
                 }
+            }
+        }
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseRequests =  $purchaseRequests->where('serviceLineSystemID',$input['serviceLineSystemID']);
             }
         }
 

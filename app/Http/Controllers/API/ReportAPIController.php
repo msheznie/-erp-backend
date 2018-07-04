@@ -130,11 +130,15 @@ class ReportAPIController extends AppBaseController
                         'year' => 'required'
                     ]);
 
+                    if ($validator->fails()) {//echo 'in';exit;
+                        return $this->sendError($validator->messages(), 422);
+                    }
+
                     $fromDate = new Carbon($request->fromDate);
                     $fromDate = $fromDate->format('d/m/Y');
                     $year = explode("/", $fromDate);
                     if ($year['2'] != $request->year) {
-                        return $this->sendError('As of date is not in selected year');
+                        return $this->sendError('Selected as of date is not within the selected year');
                     }
                 }
 
@@ -1796,13 +1800,13 @@ WHERE
                             $data[$x]['Posting Year'] = $val->PostingYear;
                             $data[$x]['Narration'] = $val->documentNarration;
 
-                            $decimalPlace = 2;
+                            $decimalPlace = 0;
                             if ($currencyID == '2') {
-                                $decimalPlace = !empty($localCurrency) ? $localCurrency->DecimalPlaces : 2;
+                                $decimalPlace = 0; //!empty($localCurrency) ? $localCurrency->DecimalPlaces : 2;
                                 $data[$x]['Currency'] = $val->documentLocalCurrency;
                                 $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
                             } else if ($currencyID == '3') {
-                                $decimalPlace = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
+                                $decimalPlace = 0; //!empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
                                 $data[$x]['Currency'] = $val->documentRptCurrency;
                                 $data[$x]['Amount'] = round($val->RptAmount, $decimalPlace);
                             } else {
@@ -3754,7 +3758,8 @@ WHERE
 		            AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
 		            AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . '))
                     AS CustomerBalanceSummary_Detail
-                    GROUP BY CustomerBalanceSummary_Detail.companySystemID,CustomerBalanceSummary_Detail.supplierCodeSystem;');
+                    GROUP BY CustomerBalanceSummary_Detail.companySystemID,CustomerBalanceSummary_Detail.supplierCodeSystem 
+                    ORDER BY CustomerBalanceSummary_Detail.documentDate ASC;');
 
         //dd(DB::getQueryLog());
         return $output;
@@ -3913,13 +3918,15 @@ WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-		            AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+		          
                     ) AS revenueDetailData
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
+                    WHERE revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
                     ) AS revenueDataSummary
                     GROUP BY
                     revenueDataSummary.companySystemID,
-                    revenueDataSummary.mySupplierCode');
+                    revenueDataSummary.mySupplierCode
+                    ORDER BY Total DESC');
 
 
          // DB::getQueryLog();
@@ -4286,7 +4293,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
 
 
   // Revenue By Customer
-    function getRevenueByCustomer($request)
+                            function getRevenueByCustomer($request)
     {
         $fromDate = new Carbon($request->fromDate);
         //$fromDate = $fromDate->addDays(1);
@@ -4386,9 +4393,9 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                                 INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
                                 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                                 LEFT JOIN contractmaster ON erp_generalledger.companyID = contractmaster.CompanyID 
+                                AND erp_generalledger.clientContractID = contractmaster.ContractNumber
                                 LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
                                 LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
-                                AND erp_generalledger.clientContractID = contractmaster.ContractNumber
                                 INNER JOIN (
                             SELECT
                                 erp_templatesdetails.templatesDetailsAutoID,
@@ -4405,11 +4412,12 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                                 erp_templatesdetails.templatesMasterAutoID = 15 AND erp_templatesdetails.controlAccountID = "PLI"
                                 ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                                 WHERE erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+                            
                                 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" 
                                 AND "' . $toDate . '"
                                 ) AS revenueCustomerDetail
-                                LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem');
+                                LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
+                                WHERE revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')');
 
         return $output;
     }
