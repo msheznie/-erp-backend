@@ -319,6 +319,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('generateReport', 'ReportAPIController@generateReport');
     Route::post('validateReport', 'ReportAPIController@validateReport');
 
+    Route::post('generateARReport', 'AccountsReceivableReportAPIController@generateReport');
+    Route::post('validateARReport', 'AccountsReceivableReportAPIController@validateReport');
+
     Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
     Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
     Route::get('getGoodReceivedNoteDetailsForPO', 'ProcumentOrderAPIController@getGoodReceivedNoteDetailsForPO');
@@ -366,7 +369,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
 
     Route::post('exportReport', 'ReportAPIController@exportReport');
-    Route::get('getAcountReceivableFilterData', 'ReportAPIController@getAcountReceivableFilterData');
+    Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
+    Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
 
     Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
 
@@ -510,6 +514,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
+Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
