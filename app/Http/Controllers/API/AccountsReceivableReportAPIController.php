@@ -489,7 +489,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     if ($output) {
                         foreach ($output as $val) {
-                            $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                            $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
                         }
                     }
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount);
@@ -680,7 +680,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 if ($output) {
                     foreach ($output as $val) {
-                        $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                        $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
                     }
                 }
                 return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount);
@@ -938,6 +938,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+                            $data[$x]['Customer Code'] = $val->CutomerCode;
+                            $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Document Code'] = $val->DocumentCode;
                             $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
                             $data[$x]['Invoice Number'] = $val->invoiceNumber;
@@ -960,6 +962,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+                            $data[$x]['Customer Code'] = $val->CutomerCode;
+                            $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Document Code'] = $val->DocumentCode;
                             if ($val->PostedDate == '1970-01-01') {
                                 $data[$x]['Posted Date'] = '';
@@ -1074,6 +1078,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
+                        $data[$x]['Customer Code'] = $val->CutomerCode;
+                        $data[$x]['Customer Name'] = $val->CustomerName;
                         $data[$x]['Document Code'] = $val->documentCode;
                         $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
                         $data[$x]['Service Line'] = $val->serviceLineCode;
@@ -2776,7 +2782,9 @@ GROUP BY
 	' . $balanceAmountQry . ',
 	' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
-	final.customerName AS customerName, 
+	final.concatCustomerName, 
+	final.CutomerCode,
+	final.CustomerName,  
 	final.PONumber,
 	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as ageDays
 FROM
@@ -2832,7 +2840,9 @@ IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatc
 	(( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ))) as paidRptAmount,
 	(( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )) as paidLocalAmount,
 	(( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )) as paidTransAmount,
-	mainQuery.customerName,   
+	mainQuery.concatCustomerName, 
+	mainQuery.CutomerCode,
+	mainQuery.CustomerName,  
 	mainQuery.PONumber 
 FROM
 	(
@@ -2871,7 +2881,9 @@ SELECT
 	erp_generalledger.documentRptAmount,
 	erp_generalledger.documentType,
 	erp_custinvoicedirect.PONumber,
-	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName
+	customermaster.CutomerCode,
+	customermaster.CustomerName,
+	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as concatCustomerName
 FROM
 	erp_generalledger 
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
@@ -3945,7 +3957,9 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 ' . $invoiceAmountQry . ',
                 ' . $currencyQry . ',
                 ' . $decimalPlaceQry . ',
-                MainQuery.customerName,
+                MainQuery.CutomerCode,
+                MainQuery.concatCustomerName,
+                MainQuery.CustomerName,
                 MainQuery.PONumber,
                 MainQuery.serviceLineCode,
                 MainQuery.rigNo,
@@ -3993,7 +4007,9 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 erp_custinvoicedirect.serviceStartDate,
                 erp_custinvoicedirect.serviceEndDate,
                 erp_custinvoicedirect.wanNO,
-                CONCAT( customermaster.CutomerCode, " - ", customermaster.CustomerName ) AS customerName 
+                customermaster.CutomerCode,
+                customermaster.CustomerName,
+                CONCAT( customermaster.CutomerCode, " - ", customermaster.CustomerName ) AS concatCustomerName 
             FROM
                 erp_generalledger
                 INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
