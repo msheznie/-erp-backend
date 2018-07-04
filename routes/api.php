@@ -509,6 +509,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
     Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport');
     Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport');
+    Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
