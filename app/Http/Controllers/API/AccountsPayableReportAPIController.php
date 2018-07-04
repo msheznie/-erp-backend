@@ -16,7 +16,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsPayableLedger;
 use App\Models\ChartOfAccount;
-use App\Models\CustomerMaster;
 use App\Models\GeneralLedger;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
@@ -62,5 +61,27 @@ class AccountsPayableReportAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function validateAccountsPayableReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'APSL':
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required',
+                    'suppliers' => 'required',
+                    'controlAccountsSystemID' => 'required',
+                    'currencyID' => 'required'
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+
+                break;
+            default:
+                return $this->sendError('No report ID found');
+        }
     }
 }
