@@ -502,7 +502,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
     Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
 
+    Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
     Route::get('getAccountsPayableFilterData', 'AccountsPayableReportAPIController@getAccountsPayableFilterData');
+    Route::post('validateAccountsPayableReport', 'AccountsPayableReportAPIController@validateAccountsPayableReport');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -515,5 +517,3 @@ Route::get('getBcryptPassword/{password}', function ($password) {
     echo '$2a$04$Lfx40scFs/n1Yjv4gl1w7.MezCWB9zQ8lPpKMVwIYV/VHcpYTXZI6<br>';
     echo bcrypt($password);
 });
-
-Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');

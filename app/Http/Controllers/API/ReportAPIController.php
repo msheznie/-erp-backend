@@ -130,11 +130,15 @@ class ReportAPIController extends AppBaseController
                         'year' => 'required'
                     ]);
 
+                    if ($validator->fails()) {//echo 'in';exit;
+                        return $this->sendError($validator->messages(), 422);
+                    }
+
                     $fromDate = new Carbon($request->fromDate);
                     $fromDate = $fromDate->format('d/m/Y');
                     $year = explode("/", $fromDate);
                     if ($year['2'] != $request->year) {
-                        return $this->sendError('As of date is not in selected year');
+                        return $this->sendError('Selected as of date is not within the selected year');
                     }
                 }
 
