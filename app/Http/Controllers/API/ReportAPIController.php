@@ -948,7 +948,7 @@ WHERE
                 $invoiceAmount = collect($output)->pluck('invoiceAmount')->toArray();
                 $invoiceAmount = array_sum($invoiceAmount);
 
-                $paidAmount = collect($output)->pluck('paidAmount')->toArray();
+                $paidAmount = collect($output)->pluck('receiptAmount')->toArray();
                 $paidAmount = array_sum($paidAmount);
 
                 $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
@@ -3917,9 +3917,10 @@ WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-		            AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+		          
                     ) AS revenueDetailData
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
+                    WHERE revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
                     ) AS revenueDataSummary
                     GROUP BY
                     revenueDataSummary.companySystemID,
@@ -4290,7 +4291,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
 
 
   // Revenue By Customer
-    function getRevenueByCustomer($request)
+                            function getRevenueByCustomer($request)
     {
         $fromDate = new Carbon($request->fromDate);
         //$fromDate = $fromDate->addDays(1);
@@ -4390,9 +4391,9 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                                 INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
                                 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                                 LEFT JOIN contractmaster ON erp_generalledger.companyID = contractmaster.CompanyID 
+                                AND erp_generalledger.clientContractID = contractmaster.ContractNumber
                                 LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
                                 LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
-                                AND erp_generalledger.clientContractID = contractmaster.ContractNumber
                                 INNER JOIN (
                             SELECT
                                 erp_templatesdetails.templatesDetailsAutoID,
@@ -4409,11 +4410,12 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                                 erp_templatesdetails.templatesMasterAutoID = 15 AND erp_templatesdetails.controlAccountID = "PLI"
                                 ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                                 WHERE erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+                            
                                 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" 
                                 AND "' . $toDate . '"
                                 ) AS revenueCustomerDetail
-                                LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem');
+                                LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
+                                WHERE revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')');
 
         return $output;
     }
