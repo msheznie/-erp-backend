@@ -4081,7 +4081,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 AND erp_custreceivepaymentdet.matchingDocID = 0 
                 AND erp_customerreceivepayment.approved =- 1 
                 AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
-                            /*AND DATE(erp_customerreceivepayment.postedDate) <= "' . $toDate . '"*/
+                            AND DATE(erp_customerreceivepayment.postedDate) <= "' . $toDate . '"
                 ) AS InvoiceFromBRV UNION ALL
             SELECT
                 * 
@@ -4106,7 +4106,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
             WHERE
                 erp_matchdocumentmaster.matchingConfirmedYN = 1 
                 AND erp_custreceivepaymentdet.companySystemID  IN (' . join(',', $companyID) . ')
-                            /*AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $toDate . '"*/
+                            AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $toDate . '"
                 ) AS InvoiceFromMatching 
                 ) AS InvoiceFromUNION 
             GROUP BY
