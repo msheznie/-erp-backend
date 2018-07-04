@@ -3369,9 +3369,9 @@ WHERE
                     erp_generalledger.documentLocalCurrencyID,
                     erp_generalledger.documentRptCurrencyID,
                     erp_generalledger.documentLocalAmount,
-                    erp_generalledger.documentLocalAmount *- 1 AS MyLocalAmount,
+                    round((erp_generalledger.documentLocalAmount *- 1),0) AS MyLocalAmount,
                     erp_generalledger.documentRptAmount,
-                    erp_generalledger.documentRptAmount *- 1 AS MyRptAmount 
+                    round((erp_generalledger.documentRptAmount *- 1),0) AS MyRptAmount 
                 FROM
                     erp_generalledger
                     INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
