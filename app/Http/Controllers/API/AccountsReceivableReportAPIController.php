@@ -489,7 +489,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     if ($output) {
                         foreach ($output as $val) {
-                            $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                            $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
                         }
                     }
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount);
@@ -680,11 +680,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 if ($output) {
                     foreach ($output as $val) {
-                        $outputArr[$val->customerName][$val->documentCurrency][] = $val;
+                        $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
                     }
                 }
                 return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount);
-
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -938,6 +938,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+                            $data[$x]['Customer Code'] = $val->CutomerCode;
+                            $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Document Code'] = $val->DocumentCode;
                             $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
                             $data[$x]['Invoice Number'] = $val->invoiceNumber;
@@ -960,6 +962,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+                            $data[$x]['Customer Code'] = $val->CutomerCode;
+                            $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Document Code'] = $val->DocumentCode;
                             if ($val->PostedDate == '1970-01-01') {
                                 $data[$x]['Posted Date'] = '';
@@ -1074,6 +1078,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
+                        $data[$x]['Customer Code'] = $val->CutomerCode;
+                        $data[$x]['Customer Name'] = $val->CustomerName;
                         $data[$x]['Document Code'] = $val->documentCode;
                         $data[$x]['Posted Date'] = \Helper::dateFormat($val->PostedDate);
                         $data[$x]['Service Line'] = $val->serviceLineCode;
@@ -2776,7 +2782,9 @@ GROUP BY
 	' . $balanceAmountQry . ',
 	' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
-	final.customerName AS customerName, 
+	final.concatCustomerName, 
+	final.CutomerCode,
+	final.CustomerName,  
 	final.PONumber,
 	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as ageDays
 FROM
@@ -2832,7 +2840,9 @@ IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatc
 	(( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ))) as paidRptAmount,
 	(( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )) as paidLocalAmount,
 	(( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )) as paidTransAmount,
-	mainQuery.customerName,   
+	mainQuery.concatCustomerName, 
+	mainQuery.CutomerCode,
+	mainQuery.CustomerName,  
 	mainQuery.PONumber 
 FROM
 	(
@@ -2871,7 +2881,9 @@ SELECT
 	erp_generalledger.documentRptAmount,
 	erp_generalledger.documentType,
 	erp_custinvoicedirect.PONumber,
-	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as customerName
+	customermaster.CutomerCode,
+	customermaster.CustomerName,
+	CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as concatCustomerName
 FROM
 	erp_generalledger 
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
@@ -3253,6 +3265,13 @@ WHERE
             $currencyClm = "MyRptAmount";
         }
 
+        $isAllCustomerSelected = $request->isAllCustomerSelected;
+
+        $nullCustomer = '';
+        if($isAllCustomerSelected == 1){
+            $nullCustomer = 'OR revenueDetailData.mySupplierCode IS NULL  OR revenueDetailData.mySupplierCode = ""';
+        }
+
         //DB::enableQueryLog();
         $output = \DB::select('SELECT
                     revenueDataSummary.companyID,
@@ -3309,7 +3328,7 @@ WHERE
                     ( revenueDetailData.DocMONTH = 11, '.$currencyClm.', 0 ) AS Nov,
                 IF
                     ( revenueDetailData.DocMONTH = 12, '.$currencyClm.', 0 ) AS Dece,
-                    MyRptAmount as Total
+                    '.$currencyClm.' as Total
                 FROM
                     (
                 SELECT
@@ -3350,9 +3369,9 @@ WHERE
                     erp_generalledger.documentLocalCurrencyID,
                     erp_generalledger.documentRptCurrencyID,
                     erp_generalledger.documentLocalAmount,
-                    erp_generalledger.documentLocalAmount *- 1 AS MyLocalAmount,
+                    round((erp_generalledger.documentLocalAmount *- 1),0) AS MyLocalAmount,
                     erp_generalledger.documentRptAmount,
-                    erp_generalledger.documentRptAmount *- 1 AS MyRptAmount 
+                    round((erp_generalledger.documentRptAmount *- 1),0) AS MyRptAmount 
                 FROM
                     erp_generalledger
                     INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
@@ -3381,7 +3400,8 @@ WHERE
 		          
                     ) AS revenueDetailData
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
-                    WHERE revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
+                    WHERE (revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
+                     '.$nullCustomer.')
                     ) AS revenueDataSummary
                     GROUP BY
                     revenueDataSummary.companySystemID,
@@ -3777,6 +3797,13 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
 
         $currency = $request->currencyID;
 
+        $isAllCustomerSelected = $request->isAllCustomerSelected;
+
+        $nullCustomer = '';
+        if($isAllCustomerSelected == 1){
+            $nullCustomer = 'OR revenueCustomerDetail.mySupplierCode IS NULL  OR revenueCustomerDetail.mySupplierCode = ""';
+        }
+
         $output = \DB::select('SELECT
                                 revenueCustomerDetail.companySystemID,
                                 revenueCustomerDetail.companyID,
@@ -3877,7 +3904,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                                 AND "' . $toDate . '"
                                 ) AS revenueCustomerDetail
                                 LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
-                                WHERE revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')');
+                                WHERE (revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')'.$nullCustomer.')');
 
         return $output;
     }
@@ -3945,7 +3972,9 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 ' . $invoiceAmountQry . ',
                 ' . $currencyQry . ',
                 ' . $decimalPlaceQry . ',
-                MainQuery.customerName,
+                MainQuery.CutomerCode,
+                MainQuery.concatCustomerName,
+                MainQuery.CustomerName,
                 MainQuery.PONumber,
                 MainQuery.serviceLineCode,
                 MainQuery.rigNo,
@@ -3993,7 +4022,9 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 erp_custinvoicedirect.serviceStartDate,
                 erp_custinvoicedirect.serviceEndDate,
                 erp_custinvoicedirect.wanNO,
-                CONCAT( customermaster.CutomerCode, " - ", customermaster.CustomerName ) AS customerName 
+                customermaster.CutomerCode,
+                customermaster.CustomerName,
+                CONCAT( customermaster.CutomerCode, " - ", customermaster.CustomerName ) AS concatCustomerName 
             FROM
                 erp_generalledger
                 INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
@@ -4050,7 +4081,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 AND erp_custreceivepaymentdet.matchingDocID = 0 
                 AND erp_customerreceivepayment.approved =- 1 
                 AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
-                            /*AND DATE(erp_customerreceivepayment.postedDate) <= "' . $toDate . '"*/
+                            AND DATE(erp_customerreceivepayment.postedDate) <= "' . $toDate . '"
                 ) AS InvoiceFromBRV UNION ALL
             SELECT
                 * 
@@ -4075,7 +4106,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
             WHERE
                 erp_matchdocumentmaster.matchingConfirmedYN = 1 
                 AND erp_custreceivepaymentdet.companySystemID  IN (' . join(',', $companyID) . ')
-                            /*AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $toDate . '"*/
+                            AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $toDate . '"
                 ) AS InvoiceFromMatching 
                 ) AS InvoiceFromUNION 
             GROUP BY

@@ -9,6 +9,7 @@
  * -- Create date : 3 - July 2018
  * -- Description : This file contains the all the report generation code
  * -- REVISION HISTORY
+ * -- Date: 04-july 2018 By: Fayas Description: Added new functions named as getPaymentSuppliersByYear()
  */
 
 namespace App\Http\Controllers\API;
@@ -16,6 +17,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsPayableLedger;
 use App\Models\ChartOfAccount;
+use App\Models\CurrencyMaster;
 use App\Models\GeneralLedger;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
@@ -82,6 +84,31 @@ class AccountsPayableReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'APSS':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'suppliers' => 'required',
+                    'controlAccountsSystemID' => 'required',
+                    'currencyID' => 'required'
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+            case 'APPSY':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'suppliers' => 'required',
+                    'year' => 'required',
+                    'currencyID' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -116,6 +143,163 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 }
                 return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount);
+                break;
+            case 'APSS': //Supplier Statement Report
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getSupplierStatementQRY($request);
+
+                $outputArr = array();
+
+                $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
+                $balanceAmount = array_sum($balanceAmount);
+
+                $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                $decimalPlace = array_unique($decimalPlace);
+
+                if ($output) {
+                    foreach ($output as $val) {
+                        $outputArr[$val->concatSupplierName][$val->documentCurrency][] = $val;
+                    }
+                }
+                return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
+                break;
+            case 'APPSY':
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getPaymentSuppliersByYear($request);
+
+                $currency = $request->currencyID;
+                $currencyId = 2;
+
+                if($currency == 2){
+                    $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                    $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                }else{
+                    $decimalPlaceCollect = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                    $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                }
+
+                if(!empty($decimalPlaceUnique) ){
+                    $currencyId = $decimalPlaceUnique[0];
+                }
+
+
+                $requestCurrency = CurrencyMaster::where('currencyID',$currencyId )->first();
+
+                $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
+
+                $total = array();
+
+                $total['Jan'] = array_sum(collect($output)->pluck('Jan')->toArray());
+                $total['Feb'] = array_sum(collect($output)->pluck('Feb')->toArray());
+                $total['March'] = array_sum(collect($output)->pluck('March')->toArray());
+                $total['April'] = array_sum(collect($output)->pluck('April')->toArray());
+                $total['May'] = array_sum(collect($output)->pluck('May')->toArray());
+                $total['June'] = array_sum(collect($output)->pluck('June')->toArray());
+                $total['July'] = array_sum(collect($output)->pluck('July')->toArray());
+                $total['Aug'] = array_sum(collect($output)->pluck('Aug')->toArray());
+                $total['Sept'] = array_sum(collect($output)->pluck('Sept')->toArray());
+                $total['Oct'] = array_sum(collect($output)->pluck('Oct')->toArray());
+                $total['Nov'] = array_sum(collect($output)->pluck('Nov')->toArray());
+                $total['Dece'] = array_sum(collect($output)->pluck('Dece')->toArray());
+                $total['Total'] = array_sum(collect($output)->pluck('Total')->toArray());
+
+                return array('reportData' => $output,
+                    'companyName' => $checkIsGroup->CompanyName,
+                    'total' => $total,
+                    'decimalPlace' => $decimalPlace,
+                    'currency' => $requestCurrency->CurrencyCode
+                );
+                break;
+            default:
+                return $this->sendError('No report ID found');
+        }
+    }
+
+    public function exportReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'APPSY':
+                $reportTypeID = $request->reportTypeID;
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                $output = $this->getPaymentSuppliersByYear($request);
+                $decimalPlace = 0;
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Supplier Name'] = $val->supplierName;
+                        $data[$x]['Jan'] =  round($val->Jan, $decimalPlace);
+                        $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
+                        $data[$x]['March'] = round($val->March, $decimalPlace);
+                        $data[$x]['April'] = round($val->April, $decimalPlace);
+                        $data[$x]['May'] = round($val->May, $decimalPlace);
+                        $data[$x]['Jun'] = round($val->June, $decimalPlace);
+                        $data[$x]['July'] = round($val->July, $decimalPlace);
+                        $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
+                        $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
+                        $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
+                        $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
+                        $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
+                        $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                        $x++;
+                    }
+                }else{
+                    $data = array();
+                }
+                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
+            case 'APSS':
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $output = $this->getSupplierStatementQRY($request);
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Supplier Code'] = $val->SupplierCode;
+                        $data[$x]['Supplier Name'] = $val->suppliername;
+                        $data[$x]['Document ID'] = $val->documentID;
+                        $data[$x]['Document Code'] = $val->documentCode;
+                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Narration'] = $val->documentNarration;
+                        $data[$x]['Invoice Number'] = $val->invoiceNumber;
+                        $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
+                        $data[$x]['Currency'] = $val->documentCurrency;
+                        $data[$x]['Age Days'] = $val->ageDays;
+                        $data[$x]['Doc Amount'] = $val->invoiceAmount;
+                        $data[$x]['Balance Amount'] = $val->balanceAmount;
+
+                        $x++;
+                    }
+                }else{
+                    $data = array();
+                }
+                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -309,4 +493,406 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
         //dd(DB::getQueryLog());
         return $output;
     }
+
+    function getSupplierStatementQRY($request)
+    {
+        $asOfDate = new Carbon($request->fromDate);
+        //$asOfDate = $asOfDate->addDays(1);
+        $asOfDate = $asOfDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $suppliers = (array)$request->suppliers;
+        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+
+        $controlAccountsSystemID = $request->controlAccountsSystemID;
+
+        $currency = $request->currencyID;
+        $currencyQry = '';
+        $invoiceAmountQry = '';
+        $balanceAmountQry = '';
+        $decimalPlaceQry = '';
+        $whereQry = '';
+        if ($currency == 1) {
+            $currencyQry = "finalAgingDetail.transCurrencyCode AS documentCurrency";
+            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountTrans, finalAgingDetail.documentTransDecimalPlaces ),0) AS invoiceAmount";
+            $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces ),0) AS balanceAmount";
+            $decimalPlaceQry = "finalAgingDetail.documentTransDecimalPlaces AS balanceDecimalPlaces";
+            $whereQry = "round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces )";
+        } else if ($currency == 2) {
+            $currencyQry = "finalAgingDetail.localCurrencyCode AS documentCurrency";
+            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentLocalAmount, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
+            $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
+            $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
+            $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces )";
+        } else {
+            $currencyQry = "finalAgingDetail.rptCurrencyCode AS documentCurrency";
+            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmount";
+            $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS balanceAmount";
+            $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
+            $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
+        }
+        $currencyID = $request->currencyID;
+        //DB::enableQueryLog();
+        $output = \DB::select('SELECT
+	finalAgingDetail.companySystemID,
+	finalAgingDetail.companyID,
+	finalAgingDetail.documentSystemID,
+	finalAgingDetail.documentID,
+	finalAgingDetail.documentCode,
+	finalAgingDetail.documentDate,
+	finalAgingDetail.documentNarration,
+	finalAgingDetail.supplierCodeSystem,
+	finalAgingDetail.SupplierCode,
+	finalAgingDetail.suppliername,
+	finalAgingDetail.invoiceNumber,
+	finalAgingDetail.invoiceDate,
+	CURDATE() as runDate,
+    DATEDIFF("' . $asOfDate . '",DATE(finalAgingDetail.documentDate)) as ageDays,
+	' . $invoiceAmountQry . ',
+	' . $balanceAmountQry . ',
+	' . $currencyQry . ',
+	' . $decimalPlaceQry . ',
+	CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName
+FROM
+(
+SELECT
+	MAINQUERY.companySystemID,
+	MAINQUERY.companyID,
+	MAINQUERY.documentSystemID,
+	MAINQUERY.documentID,
+	MAINQUERY.documentCode,
+	MAINQUERY.documentDate,
+	MAINQUERY.documentNarration,
+	MAINQUERY.supplierCodeSystem,
+	suppliermaster.primarySupplierCode AS SupplierCode,
+	suppliermaster.suppliername,
+	MAINQUERY.invoiceNumber,
+	MAINQUERY.invoiceDate,
+	transCurrencyDet.CurrencyCode as transCurrencyCode,
+	transCurrencyDet.DecimalPlaces as documentTransDecimalPlaces,
+	MAINQUERY.docTransAmount AS documentAmountTrans,
+	localCurrencyDet.CurrencyCode as localCurrencyCode,
+	localCurrencyDet.DecimalPlaces as documentLocalDecimalPlaces,
+	MAINQUERY.docLocalAmount AS documentAmountLocal,
+	rptCurrencyDet.CurrencyCode as rptCurrencyCode,
+	rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
+	MAINQUERY.docRptAmount AS documentAmountRpt,
+
+	(MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1 AS PaidAmountTrans,
+
+	(MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal) * -1 AS PaidAmountLocal,
+
+	(MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS PaidAmountRpt,
+
+	MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans  as balanceAmountTrans,
+
+	MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
+
+	MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt
+FROM
+	(
+SELECT
+	erp_generalledger.companySystemID,
+	erp_generalledger.companyID,
+	erp_generalledger.serviceLineSystemID,
+	erp_generalledger.serviceLineCode,
+	erp_generalledger.documentSystemID,
+	erp_generalledger.documentID,
+	erp_generalledger.documentSystemCode,
+	erp_generalledger.documentCode,
+	erp_generalledger.documentDate,
+	erp_generalledger.chartOfAccountSystemID,
+	erp_generalledger.glCode,
+	erp_generalledger.glAccountType,
+	erp_generalledger.documentNarration,
+	erp_generalledger.clientContractID,
+	erp_generalledger.invoiceNumber,
+	erp_generalledger.invoiceDate,
+	erp_generalledger.supplierCodeSystem,
+	erp_generalledger.documentTransCurrencyID,
+	erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+	erp_generalledger.documentLocalCurrencyID,
+	erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+	erp_generalledger.documentRptCurrencyID,
+	erp_generalledger.documentRptAmount * - 1 AS docRptAmount,
+IF
+	( paymentVoucherAmount.PaidPaymentVoucherTransAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherTransAmount ) AS PaidPaymentVoucherTransAmount,
+IF
+	( paymentVoucherAmount.PaidPaymentVoucherLocalAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherLocalAmount ) AS PaidPaymentVoucherLocalAmount,
+IF
+	( paymentVoucherAmount.PaidPaymentVoucherRptAmount IS NULL, 0, paymentVoucherAmount.PaidPaymentVoucherRptAmount ) AS PaidPaymentVoucherRptAmount,
+IF
+	( InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountTrans IS NULL, 0, InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountTrans ) AS InvoiceMatchedINMatchingAmountTrans,
+IF
+	( InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountLocal IS NULL, 0, InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountLocal ) AS InvoiceMatchedINMatchingAmountLocal,
+IF
+	( InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountRpt IS NULL, 0, InvoiceMatchedINMatching.InvoiceMatchedINMatchingAmountRpt ) AS InvoiceMatchedINMatchingAmountRpt,
+IF
+	( InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountTrans IS NULL, 0, InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountTrans ) AS InvoiceMatchedForpaymentAmountTrans,
+IF
+	( InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountLocal IS NULL, 0, InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountLocal ) AS InvoiceMatchedForpaymentAmountLocal,
+IF
+	( InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountRpt IS NULL, 0, InvoiceMatchedForpayment.InvoiceMatchedForpaymentAmountRpt ) AS InvoiceMatchedForpaymentAmountRpt,
+IF
+	( debitNoteMatched.debitNoteMatchedAmountTrans IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountTrans ) AS debitNoteMatchedAmountTrans,
+IF
+	( debitNoteMatched.debitNoteMatchedAmountLocal IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountLocal ) AS debitNoteMatchedAmountLocal,
+IF
+	( debitNoteMatched.debitNoteMatchedAmountRpt IS NULL, 0, debitNoteMatched.debitNoteMatchedAmountRpt ) AS debitNoteMatchedAmountRpt
+FROM
+	erp_generalledger
+	LEFT JOIN (-- payment voucher matched with invoice or debit note
+SELECT
+	erp_paysupplierinvoicedetail.companySystemID,
+	erp_paysupplierinvoicedetail.companyID,
+	erp_paysupplierinvoicemaster.documentSystemID,
+	erp_paysupplierinvoicemaster.documentID,
+	erp_paysupplierinvoicemaster.PayMasterAutoId,
+	erp_paysupplierinvoicemaster.BPVcode,
+	sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS PaidPaymentVoucherTransAmount,
+	sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS PaidPaymentVoucherLocalAmount,
+	sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS PaidPaymentVoucherRptAmount
+FROM
+	erp_paysupplierinvoicedetail
+	INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+WHERE
+	erp_paysupplierinvoicedetail.matchingDocID = 0
+	AND erp_paysupplierinvoicemaster.approved = -1
+	AND erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+	AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
+GROUP BY
+	companySystemID,
+	documentSystemID,
+	PayMasterAutoId
+	) AS paymentVoucherAmount ON paymentVoucherAmount.companySystemID = erp_generalledger.companySystemID
+	AND paymentVoucherAmount.documentSystemID = erp_generalledger.documentSystemID
+	AND paymentVoucherAmount.PayMasterAutoId = erp_generalledger.documentSystemCode
+	LEFT JOIN (-- invoice matched in a matching document
+SELECT
+	erp_paysupplierinvoicedetail.companySystemID,
+	erp_paysupplierinvoicedetail.companyID,
+	erp_paysupplierinvoicedetail.addedDocumentSystemID,
+	erp_paysupplierinvoicedetail.addedDocumentID,
+	erp_paysupplierinvoicedetail.bookingInvSystemCode,
+	erp_paysupplierinvoicedetail.bookingInvDocCode,
+	sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedINMatchingAmountTrans,
+	sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedINMatchingAmountLocal,
+	sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedINMatchingAmountRpt
+FROM
+	erp_paysupplierinvoicedetail
+	INNER JOIN erp_matchdocumentmaster ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
+WHERE
+	erp_paysupplierinvoicedetail.matchingDocID > 0
+	AND erp_matchdocumentmaster.matchingConfirmedYN = 1
+	AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+	AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
+GROUP BY
+	companySystemID,
+	addedDocumentSystemID,
+	bookingInvSystemCode
+	) AS InvoiceMatchedINMatching ON InvoiceMatchedINMatching.companySystemID = erp_generalledger.companySystemID
+	AND InvoiceMatchedINMatching.addedDocumentSystemID = erp_generalledger.documentSystemID
+	AND InvoiceMatchedINMatching.bookingInvSystemCode = erp_generalledger.documentSystemCode
+	LEFT JOIN (-- invoice matched in a payment voucher document
+SELECT
+	erp_paysupplierinvoicedetail.companySystemID,
+	erp_paysupplierinvoicedetail.companyID,
+	erp_paysupplierinvoicedetail.addedDocumentSystemID,
+	erp_paysupplierinvoicedetail.addedDocumentID,
+	erp_paysupplierinvoicedetail.bookingInvSystemCode,
+	erp_paysupplierinvoicedetail.bookingInvDocCode,
+	sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS InvoiceMatchedForpaymentAmountTrans,
+	sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS InvoiceMatchedForpaymentAmountLocal,
+	sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS InvoiceMatchedForpaymentAmountRpt
+FROM
+	erp_paysupplierinvoicedetail
+	INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+WHERE
+	erp_paysupplierinvoicedetail.matchingDocID = 0
+	AND erp_paysupplierinvoicemaster.approved = -1
+	AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+	AND DATE(erp_paysupplierinvoicemaster.postedDate) <= "' . $asOfDate . '"
+GROUP BY
+	companySystemID,
+	addedDocumentSystemID,
+	bookingInvSystemCode
+	) AS InvoiceMatchedForpayment ON InvoiceMatchedForpayment.companySystemID = erp_generalledger.companySystemID
+	AND InvoiceMatchedForpayment.addedDocumentSystemID = erp_generalledger.documentSystemID
+	AND InvoiceMatchedForpayment.bookingInvSystemCode = erp_generalledger.documentSystemCode
+	LEFT JOIN (-- matched debit note
+SELECT
+	erp_matchdocumentmaster.companySystemID,
+	erp_matchdocumentmaster.companyID,
+	erp_matchdocumentmaster.documentSystemID,
+	erp_matchdocumentmaster.documentID,
+	erp_matchdocumentmaster.PayMasterAutoId,
+	erp_matchdocumentmaster.BPVcode,
+	sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ) AS debitNoteMatchedAmountTrans,
+	sum( erp_paysupplierinvoicedetail.paymentLocalAmount ) AS debitNoteMatchedAmountLocal,
+	sum( erp_paysupplierinvoicedetail.paymentComRptAmount ) AS debitNoteMatchedAmountRpt
+FROM
+	erp_matchdocumentmaster
+	INNER JOIN erp_paysupplierinvoicedetail ON erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_paysupplierinvoicedetail.matchingDocID
+WHERE
+	erp_paysupplierinvoicedetail.matchingDocID > 0
+	AND erp_matchdocumentmaster.matchingConfirmedYN = 1
+	AND erp_paysupplierinvoicedetail.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_paysupplierinvoicedetail.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+	AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $asOfDate . '"
+GROUP BY
+	companySystemID,
+	documentSystemID,
+	PayMasterAutoId
+	) AS debitNoteMatched ON debitNoteMatched.companySystemID = erp_generalledger.companySystemID
+	AND debitNoteMatched.documentSystemID = erp_generalledger.documentSystemID
+	AND debitNoteMatched.PayMasterAutoId = erp_generalledger.documentSystemCode
+WHERE
+	DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
+	AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+	) AS MAINQUERY
+LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
+LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
+LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
+LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC;');
+        //dd(DB::getQueryLog());
+        return $output;
+    }
+
+    function getPaymentSuppliersByYear($request)
+    {
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $currency  = $request->currencyID;
+        $suppliers = $request->suppliers;
+        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+        $year      = $request->year;
+
+        $currencyClm = "documentRptAmount";
+        if($currency == 2){
+            $currencyClm = "documentLocalAmount";
+        }else if($currency == 3){
+            $currencyClm = "documentRptAmount";
+        }
+
+        //DB::enableQueryLog();
+        $output = \DB::select('SELECT
+                                paymentsBySupplierSummary.companySystemID,
+                                paymentsBySupplierSummary.companyID,
+                                paymentsBySupplierSummary.supplierCodeSystem,
+                                paymentsBySupplierSummary.supplierCode,
+                                paymentsBySupplierSummary.supplierName,
+                                paymentsBySupplierSummary.DocYEAR,
+                                paymentsBySupplierSummary.documentLocalCurrencyID,
+                                paymentsBySupplierSummary.documentRptCurrencyID,
+                                sum(Jan) as Jan,
+                                sum(Feb) as Feb,
+                                sum(March) as March,
+                                sum(April) as April,
+                                sum(May) as May,
+                                sum(June) as June,
+                                sum(July) as July,
+                                sum(Aug) as Aug,
+                                sum(Sept) as Sept,
+                                sum(Oct) as Oct,
+                                sum(Nov) as Nov,
+                                sum(Dece) as Dece,
+                                sum(Total) as Total
+                            FROM
+                            (
+                            SELECT
+                                MAINQUERY.companyID,
+                                MAINQUERY.companySystemID,
+                                MAINQUERY.supplierCodeSystem,
+                                MAINQUERY.supplierCode,
+                                MAINQUERY.supplierName,
+                                MAINQUERY.DocYEAR,
+                                MAINQUERY.documentLocalCurrencyID,
+                                MAINQUERY.documentRptCurrencyID,
+                            IF
+                                ( MAINQUERY.DocMONTH = 1, '.$currencyClm.', 0 ) AS Jan,
+                            IF
+                                ( MAINQUERY.DocMONTH = 2, '.$currencyClm.', 0 ) AS Feb,
+                            IF
+                                ( MAINQUERY.DocMONTH = 3, '.$currencyClm.', 0 ) AS March,
+                            IF
+                                ( MAINQUERY.DocMONTH = 4, '.$currencyClm.', 0 ) AS April,
+                            IF
+                                ( MAINQUERY.DocMONTH = 5, '.$currencyClm.', 0 ) AS May,
+                            IF
+                                ( MAINQUERY.DocMONTH = 6, '.$currencyClm.', 0 ) AS June,
+                            IF
+                                ( MAINQUERY.DocMONTH = 7, '.$currencyClm.', 0 ) AS July,
+                            IF
+                                ( MAINQUERY.DocMONTH = 8, '.$currencyClm.', 0 ) AS Aug,
+                            IF
+                                ( MAINQUERY.DocMONTH = 9, '.$currencyClm.', 0 ) AS Sept,
+                            IF
+                                ( MAINQUERY.DocMONTH = 10, '.$currencyClm.', 0 ) AS Oct,
+                            IF
+                                ( MAINQUERY.DocMONTH = 11, '.$currencyClm.', 0 ) AS Nov,
+                            IF
+                                ( MAINQUERY.DocMONTH = 12, '.$currencyClm.', 0 ) AS Dece,
+                                 '.$currencyClm.' as Total
+                            FROM
+                                (
+                            SELECT
+                                erp_generalledger.companySystemID,
+                                erp_generalledger.companyID,
+                                erp_generalledger.documentSystemID,
+                                erp_generalledger.documentID,
+                                erp_generalledger.documentSystemCode,
+                                erp_generalledger.documentCode,
+                                erp_generalledger.supplierCodeSystem,
+                                suppliermaster.primarySupplierCode AS supplierCode,
+                                suppliermaster.supplierName,
+                                erp_generalledger.documentDate,
+                                MONTH ( erp_generalledger.documentDate ) AS DocMONTH,
+                                YEAR ( erp_generalledger.documentDate ) AS DocYEAR,
+                                erp_generalledger.documentTransCurrencyID,
+                                erp_generalledger.documentTransAmount,
+                                erp_generalledger.documentLocalCurrencyID,
+                                erp_generalledger.documentLocalAmount,
+                                erp_generalledger.documentRptCurrencyID,
+                                erp_generalledger.documentRptAmount,
+                                erp_generalledger.documentType,
+                                If(erp_generalledger.documentType=2,"Invoive Payment",If(erp_generalledger.documentType=3,"Direct Payment",If(erp_generalledger.documentType=5,"Advance Payment",""))) as PaymentType
+                            FROM
+                                erp_generalledger
+                                LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                                 WHERE erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                            AND
+                                erp_generalledger.documentSystemID = 4
+                                AND erp_generalledger.supplierCodeSystem > 0 
+                                AND companySystemID IN (' . join(',', $companyID) . ') 
+                                AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
+                                AND erp_generalledger.documentTransAmount > 0 
+                            ) AS MAINQUERY
+                            ) AS paymentsBySupplierSummary
+                                GROUP BY
+                                paymentsBySupplierSummary.companySystemID,
+                                paymentsBySupplierSummary.supplierCodeSystem;');
+
+        return $output;
+
+    }
+
 }
