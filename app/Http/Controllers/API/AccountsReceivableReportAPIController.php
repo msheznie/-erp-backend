@@ -684,7 +684,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
                 return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount);
-
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
