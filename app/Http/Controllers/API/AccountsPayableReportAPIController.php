@@ -301,6 +301,39 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 return $this->sendResponse(array(), 'successfully export');
                 break;
+            case 'APSL':
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $output = $this->getSupplierLedgerQRY($request);
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Document Code'] = $val->documentCode;
+                        $data[$x]['Posted Date'] = $val->documentDate != '1970-01-01' ? \Helper::dateFormat($val->documentDate): null ;
+                        $data[$x]['Supplier Code'] = $val->SupplierCode;
+                        $data[$x]['Supplier Name'] = $val->suppliername;
+                        $data[$x]['Invoice Number'] = $val->invoiceNumber;
+                        $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
+                        $data[$x]['Document Narration'] = $val->documentNarration;
+                        $data[$x]['Currency'] = $val->documentCurrency;
+                        $data[$x]['Document Amount'] = $val->invoiceAmount;
+                        $x++;
+                    }
+                }else{
+                    $data = array();
+                }
+                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -488,7 +521,7 @@ WHERE
 LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
 LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
 LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID GROUP BY MAINQUERY.supplierCodeSystem ) as finalAgingDetail ORDER BY documentDate';
+LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID GROUP BY MAINQUERY.supplierCodeSystem ) as finalAgingDetail ORDER BY documentDate,suppliername';
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;
