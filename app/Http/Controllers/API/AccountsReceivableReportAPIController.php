@@ -1034,6 +1034,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Cust. Code'] = $val->CutomerCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
 
@@ -1251,7 +1254,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Customer Code'] = $val->CutomerCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
@@ -3189,6 +3192,7 @@ WHERE
         $output = \DB::select('SELECT
                     CustomerBalanceSummary_Detail.companySystemID,
                     CustomerBalanceSummary_Detail.companyID,
+                    CustomerBalanceSummary_Detail.CompanyName,
                     CustomerBalanceSummary_Detail.supplierCodeSystem,
                     CustomerBalanceSummary_Detail.CutomerCode,
                     CustomerBalanceSummary_Detail.CustomerName,
@@ -3216,9 +3220,11 @@ WHERE
                     erp_generalledger.documentRptCurrencyID,
                     erp_generalledger.documentRptAmount,
                     currLocal.CurrencyCode as documentLocalCurrency,
-                    currRpt.CurrencyCode as documentRptCurrency
+                    currRpt.CurrencyCode as documentRptCurrency,
+                    companymaster.CompanyName
                 FROM
                     erp_generalledger
+                    INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                     INNER JOIN customermaster ON customermaster.customerCodeSystem=erp_generalledger.supplierCodeSystem
                     LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
                     LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
