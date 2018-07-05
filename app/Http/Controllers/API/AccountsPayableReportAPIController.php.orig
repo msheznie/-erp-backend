@@ -282,6 +282,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $decimalPlace = 0;
                 $data = array();
                 if ($output) {
+<<<<<<< HEAD
                     $reportSD      = $request->reportSD;
                     $currency      = $request->currencyID;
                     $reportTypeID      = $request->reportTypeID;
@@ -327,8 +328,30 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
                                 $data[$x]['Total'] = round($val->Total, $decimalPlace);
                                 $x++;
+=======
+                    $reportSD = $request->reportSD;
+                    $currency = $request->currencyID;
+                    if ($reportSD == 'detail') {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
+                            $data[$x]['Payment Type'] = $val->PaymentType;
+                            $data[$x]['Payment Document Number'] = $val->documentCode;
+                            $data[$x]['Supplier Code'] = $val->supplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+
+                            if ($currency == 2) {
+                                $data[$x]['Currency'] = $val->documentLocalCurrency;
+                                $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
+                            } else if ($currency == 3) {
+                                $data[$x]['Currency'] = $val->documentRptCurrency;
+                                $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
+>>>>>>> d7b1407cdce66f4b4fdc9642a15580a4ba211e85
                             }
                         }
+<<<<<<< HEAD
                     }else if($reportTypeID == 'APDPY'){
 
                         if ($reportSD == 'detail') {
@@ -376,6 +399,33 @@ class AccountsPayableReportAPIController extends AppBaseController
                         }
                     }
 
+=======
+                    } else {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
+                            $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
+                            $data[$x]['March'] = round($val->March, $decimalPlace);
+                            $data[$x]['April'] = round($val->April, $decimalPlace);
+                            $data[$x]['May'] = round($val->May, $decimalPlace);
+                            $data[$x]['Jun'] = round($val->June, $decimalPlace);
+                            $data[$x]['July'] = round($val->July, $decimalPlace);
+                            $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
+                            $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
+                            $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
+                            $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
+                            $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
+                            $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                            $x++;
+                        }
+                    }
+
+                } else {
+                    $data = array();
+>>>>>>> d7b1407cdce66f4b4fdc9642a15580a4ba211e85
                 }
                 $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
@@ -971,7 +1021,7 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
         return $output;
     }
 
-     function getPaymentSuppliersByYear($request)
+    function getPaymentSuppliersByYear($request)
     {
 
         $companyID = "";
@@ -982,24 +1032,30 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
             $companyID = (array)$request->companySystemID;
         }
 
-        $currency  = $request->currencyID;
+        $currency = $request->currencyID;
         $suppliers = $request->suppliers;
         $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
-        $year      = $request->year;
+        $year = $request->year;
 
         $currencyClm = "documentRptAmount";
-        if($currency == 2){
+        if ($currency == 2) {
             $currencyClm = "documentLocalAmount";
-        }else if($currency == 3){
+        } else if ($currency == 3) {
             $currencyClm = "documentRptAmount";
         }
 
+<<<<<<< HEAD
         $reportSD      = $request->reportSD;
         $reportTypeID      = $request->reportTypeID;
 
 
         if($reportTypeID == 'APPSY'){
         if($reportSD == 'detail'){
+=======
+        $reportSD = $request->reportSD;
+
+        if ($reportSD == 'detail') {
+>>>>>>> d7b1407cdce66f4b4fdc9642a15580a4ba211e85
             //DB::enableQueryLog();
             $output = \DB::select('SELECT
                                     paymentsBySupplierSummary.companySystemID,
@@ -1070,9 +1126,9 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
                                 ) AS MAINQUERY
                                 ) AS paymentsBySupplierSummary
                                 ORDER BY paymentsBySupplierSummary.documentRptAmount DESC');
-        }else{
-        //DB::enableQueryLog();
-        $output = \DB::select('SELECT
+        } else {
+            //DB::enableQueryLog();
+            $output = \DB::select('SELECT
                                 paymentsBySupplierSummary.companySystemID,
                                 paymentsBySupplierSummary.companyID,
                                 paymentsBySupplierSummary.supplierCodeSystem,
@@ -1108,30 +1164,30 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
                                 MAINQUERY.documentRptCurrencyID,
                                 MAINQUERY.CompanyName,
                             IF
-                                ( MAINQUERY.DocMONTH = 1, '.$currencyClm.', 0 ) AS Jan,
+                                ( MAINQUERY.DocMONTH = 1, ' . $currencyClm . ', 0 ) AS Jan,
                             IF
-                                ( MAINQUERY.DocMONTH = 2, '.$currencyClm.', 0 ) AS Feb,
+                                ( MAINQUERY.DocMONTH = 2, ' . $currencyClm . ', 0 ) AS Feb,
                             IF
-                                ( MAINQUERY.DocMONTH = 3, '.$currencyClm.', 0 ) AS March,
+                                ( MAINQUERY.DocMONTH = 3, ' . $currencyClm . ', 0 ) AS March,
                             IF
-                                ( MAINQUERY.DocMONTH = 4, '.$currencyClm.', 0 ) AS April,
+                                ( MAINQUERY.DocMONTH = 4, ' . $currencyClm . ', 0 ) AS April,
                             IF
-                                ( MAINQUERY.DocMONTH = 5, '.$currencyClm.', 0 ) AS May,
+                                ( MAINQUERY.DocMONTH = 5, ' . $currencyClm . ', 0 ) AS May,
                             IF
-                                ( MAINQUERY.DocMONTH = 6, '.$currencyClm.', 0 ) AS June,
+                                ( MAINQUERY.DocMONTH = 6, ' . $currencyClm . ', 0 ) AS June,
                             IF
-                                ( MAINQUERY.DocMONTH = 7, '.$currencyClm.', 0 ) AS July,
+                                ( MAINQUERY.DocMONTH = 7, ' . $currencyClm . ', 0 ) AS July,
                             IF
-                                ( MAINQUERY.DocMONTH = 8, '.$currencyClm.', 0 ) AS Aug,
+                                ( MAINQUERY.DocMONTH = 8, ' . $currencyClm . ', 0 ) AS Aug,
                             IF
-                                ( MAINQUERY.DocMONTH = 9, '.$currencyClm.', 0 ) AS Sept,
+                                ( MAINQUERY.DocMONTH = 9, ' . $currencyClm . ', 0 ) AS Sept,
                             IF
-                                ( MAINQUERY.DocMONTH = 10, '.$currencyClm.', 0 ) AS Oct,
+                                ( MAINQUERY.DocMONTH = 10, ' . $currencyClm . ', 0 ) AS Oct,
                             IF
-                                ( MAINQUERY.DocMONTH = 11, '.$currencyClm.', 0 ) AS Nov,
+                                ( MAINQUERY.DocMONTH = 11, ' . $currencyClm . ', 0 ) AS Nov,
                             IF
-                                ( MAINQUERY.DocMONTH = 12, '.$currencyClm.', 0 ) AS Dece,
-                                 '.$currencyClm.' as Total
+                                ( MAINQUERY.DocMONTH = 12, ' . $currencyClm . ', 0 ) AS Dece,
+                                 ' . $currencyClm . ' as Total
                             FROM
                                 (
                             SELECT

@@ -620,7 +620,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $total['Dece'] = array_sum(collect($output)->pluck('Dece')->toArray());
                     $total['Total'] = array_sum(collect($output)->pluck('Total')->toArray());
 
-                    return array('reportData' => $output,
+
+                    $outputArr = array();
+                    foreach ($output as $val) {
+                        $outputArr[$val->CompanyName][] = $val;
+                    }
+
+                    return array('reportData' => $outputArr,
                         'companyName' => $checkIsGroup->CompanyName,
                         'decimalPlace' => $decimalPlace,
                         'total' => $total,
@@ -3346,6 +3352,7 @@ WHERE
                     revenueDataSummary.companyID,
                     revenueDataSummary.CutomerCode,
                     revenueDataSummary.CustomerName,
+                    revenueDataSummary.CompanyName,
                     revenueDataSummary.DocYEAR,
                     documentLocalCurrencyID,
                     documentRptCurrencyID,
@@ -3369,6 +3376,7 @@ WHERE
                     revenueDetailData.documentRptCurrencyID,
                     revenueDetailData.companySystemID,
                     revenueDetailData.companyID,
+                    revenueDetailData.CompanyName,
                     revenueDetailData.mySupplierCode,
                     customermaster.CutomerCode,
                     customermaster.CustomerName,
