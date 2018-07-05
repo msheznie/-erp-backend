@@ -1185,6 +1185,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyCode;
+                            $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Jan'] = $val->Jan;
                             $data[$x]['Feb'] = $val->Feb;
@@ -3447,8 +3449,11 @@ WHERE
         }
 
         $output = \DB::select('SELECT
-	collectionMonthWise.companyID CutomerCode,
+		collectionMonthWise.companyID as companyCode,
+	collectionMonthWise.CompanyName as CompanyName,
 	CustomerName,
+	collectionMonthWise.companyID,
+    collectionMonthWise.CompanyName,
 	DocYEAR,
 	sum(Jan) AS Jan,
 	sum(Feb) AS Feb,
@@ -3469,6 +3474,7 @@ FROM
 			collectionDetail.CutomerCode,
 			collectionDetail.CustomerName,
 			collectionDetail.DocYEAR,
+			collectionDetail.CompanyName,
 
 		IF (
 			collectionDetail.DocMONTH = 1,
@@ -3550,6 +3556,7 @@ FROM
 			erp_generalledger.documentSystemCode,
 			erp_generalledger.documentCode,
 			erp_generalledger.documentDate,
+			companymaster.CompanyName,
 			MONTH (
 				erp_generalledger.documentDate
 			) AS DocMONTH,
@@ -3564,6 +3571,7 @@ FROM
 FROM
 	erp_generalledger
 INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 WHERE
 	erp_generalledger.documentSystemID = 21
 AND DATE(erp_generalledger.documentDate) <= "' . $fromDate . '"

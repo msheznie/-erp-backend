@@ -308,6 +308,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
+                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x]['Document Code'] = $val->documentCode;
                         $data[$x]['Posted Date'] = $val->documentDate != '1970-01-01' ? \Helper::dateFormat($val->documentDate): null ;
                         $data[$x]['Supplier Code'] = $val->SupplierCode;
@@ -385,6 +387,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $query = 'SELECT
 	finalAgingDetail.companySystemID,
 	finalAgingDetail.companyID,
+	finalAgingDetail.CompanyName,
 	finalAgingDetail.documentSystemID,
 	finalAgingDetail.documentID,
 	finalAgingDetail.documentCode,
@@ -404,6 +407,7 @@ FROM
 SELECT
 	MAINQUERY.companySystemID,
 	MAINQUERY.companyID,
+	companymaster.CompanyName,
 	MAINQUERY.documentSystemID,
 	MAINQUERY.documentID,
 	MAINQUERY.documentCode,
@@ -461,10 +465,12 @@ LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.suppli
 LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
 LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
 LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID
+LEFT JOIN companymaster ON companymaster.companySystemID = MAINQUERY.companySystemID
 UNION ALL
 SELECT
 	MAINQUERY.companySystemID,
 	MAINQUERY.companyID,
+	companymaster.CompanyName,
 	MAINQUERY.documentSystemID,
 	MAINQUERY.documentID,
 	"" as documentCode,
@@ -521,7 +527,9 @@ WHERE
 LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
 LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
 LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID GROUP BY MAINQUERY.supplierCodeSystem ) as finalAgingDetail ORDER BY documentDate,suppliername';
+LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID
+ LEFT JOIN companymaster ON companymaster.companySystemID = MAINQUERY.companySystemID
+ GROUP BY MAINQUERY.supplierCodeSystem ) as finalAgingDetail ORDER BY documentDate,suppliername';
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;
