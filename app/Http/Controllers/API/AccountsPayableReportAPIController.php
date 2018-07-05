@@ -10,6 +10,8 @@
  * -- Description : This file contains the all the report generation code
  * -- REVISION HISTORY
  * -- Date: 04-july 2018 By: Fayas Description: Added new functions named as getPaymentSuppliersByYear()
+ * -- Date: 04-july 2018 By: Nazir Description: Added new functions named as getSupplierLedgerQRY()
+ * -- Date: 05-july 2018 By: Nazir Description: Added new functions named as getSupplierBalanceSummeryQRY()
  */
 
 namespace App\Http\Controllers\API;
@@ -109,6 +111,19 @@ class AccountsPayableReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'APSBS':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'currencyID' => 'required',
+                    'controlAccountsSystemID' => 'required',
+                    'suppliers' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -172,20 +187,20 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $currency = $request->currencyID;
                 $currencyId = 2;
 
-                if($currency == 2){
+                if ($currency == 2) {
                     $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
                     $decimalPlaceUnique = array_unique($decimalPlaceCollect);
-                }else{
+                } else {
                     $decimalPlaceCollect = collect($output)->pluck('documentRptCurrencyID')->toArray();
                     $decimalPlaceUnique = array_unique($decimalPlaceCollect);
                 }
 
-                if(!empty($decimalPlaceUnique) ){
+                if (!empty($decimalPlaceUnique)) {
                     $currencyId = $decimalPlaceUnique[0];
                 }
 
 
-                $requestCurrency = CurrencyMaster::where('currencyID',$currencyId )->first();
+                $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
 
                 $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
 
@@ -212,6 +227,19 @@ class AccountsPayableReportAPIController extends AppBaseController
                     'currency' => $requestCurrency->CurrencyCode
                 );
                 break;
+            case 'APSBS': //Supplier Balance Summary Report
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getSupplierBalanceSummeryQRY($request);
+
+                $documentAmount = collect($output)->pluck('documentAmount')->toArray();
+                $documentAmount = array_sum($documentAmount);
+
+                $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
+                $decimalPlace = array_unique($decimalPlace);
+
+                return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $documentAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -231,9 +259,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $output = $this->getPaymentSuppliersByYear($request);
                 $decimalPlace = 0;
                 if ($output) {
-                    $reportSD      = $request->reportSD;
-                    $currency      = $request->currencyID;
-                    if($reportSD == 'detail'){
+                    $reportSD = $request->reportSD;
+                    $currency = $request->currencyID;
+                    if ($reportSD == 'detail') {
                         $x = 0;
                         foreach ($output as $val) {
                             $data[$x]['Company ID'] = $val->companyID;
@@ -244,16 +272,16 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
 
-                            if($currency == 2){
+                            if ($currency == 2) {
                                 $data[$x]['Currency'] = $val->documentLocalCurrency;
                                 $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
-                            }else if($currency == 3){
+                            } else if ($currency == 3) {
                                 $data[$x]['Currency'] = $val->documentRptCurrency;
                                 $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
                             }
                             $x++;
                         }
-                    }else{
+                    } else {
                         $x = 0;
                         foreach ($output as $val) {
                             $data[$x]['Company ID'] = $val->companyID;
@@ -276,7 +304,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         }
                     }
 
-                }else{
+                } else {
                     $data = array();
                 }
                 $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
@@ -315,7 +343,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                         $x++;
                     }
-                }else{
+                } else {
                     $data = array();
                 }
                 $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
@@ -340,7 +368,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data[$x]['Company ID'] = $val->companyID;
                         $data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Posted Date'] = $val->documentDate != '1970-01-01' ? \Helper::dateFormat($val->documentDate): null ;
+                        $data[$x]['Posted Date'] = $val->documentDate != '1970-01-01' ? \Helper::dateFormat($val->documentDate) : null;
                         $data[$x]['Supplier Code'] = $val->SupplierCode;
                         $data[$x]['Supplier Name'] = $val->suppliername;
                         $data[$x]['Invoice Number'] = $val->invoiceNumber;
@@ -350,7 +378,37 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data[$x]['Document Amount'] = $val->invoiceAmount;
                         $x++;
                     }
-                }else{
+                } else {
+                    $data = array();
+                }
+                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
+            case 'APSBS':
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $output = $this->getSupplierBalanceSummeryQRY($request);
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x]['Company Name'] = $val->CompanyName;
+                        $data[$x]['Supplier Code'] = $val->SupplierCode;
+                        $data[$x]['Supplier Name'] = $val->supplierName;
+                        $data[$x]['Currency'] = $val->documentCurrency;
+                        $data[$x]['Amount'] = $val->documentAmount;
+                        $x++;
+                    }
+                } else {
                     $data = array();
                 }
                 $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
@@ -854,21 +912,21 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
             $companyID = (array)$request->companySystemID;
         }
 
-        $currency  = $request->currencyID;
+        $currency = $request->currencyID;
         $suppliers = $request->suppliers;
         $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
-        $year      = $request->year;
+        $year = $request->year;
 
         $currencyClm = "documentRptAmount";
-        if($currency == 2){
+        if ($currency == 2) {
             $currencyClm = "documentLocalAmount";
-        }else if($currency == 3){
+        } else if ($currency == 3) {
             $currencyClm = "documentRptAmount";
         }
 
-        $reportSD      = $request->reportSD;
+        $reportSD = $request->reportSD;
 
-        if($reportSD == 'detail'){
+        if ($reportSD == 'detail') {
             //DB::enableQueryLog();
             $output = \DB::select('SELECT
                                     paymentsBySupplierSummary.companySystemID,
@@ -939,9 +997,9 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
                                 ) AS MAINQUERY
                                 ) AS paymentsBySupplierSummary
                                 ORDER BY paymentsBySupplierSummary.documentRptAmount DESC');
-        }else{
-        //DB::enableQueryLog();
-        $output = \DB::select('SELECT
+        } else {
+            //DB::enableQueryLog();
+            $output = \DB::select('SELECT
                                 paymentsBySupplierSummary.companySystemID,
                                 paymentsBySupplierSummary.companyID,
                                 paymentsBySupplierSummary.supplierCodeSystem,
@@ -977,30 +1035,30 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
                                 MAINQUERY.documentRptCurrencyID,
                                 MAINQUERY.CompanyName,
                             IF
-                                ( MAINQUERY.DocMONTH = 1, '.$currencyClm.', 0 ) AS Jan,
+                                ( MAINQUERY.DocMONTH = 1, ' . $currencyClm . ', 0 ) AS Jan,
                             IF
-                                ( MAINQUERY.DocMONTH = 2, '.$currencyClm.', 0 ) AS Feb,
+                                ( MAINQUERY.DocMONTH = 2, ' . $currencyClm . ', 0 ) AS Feb,
                             IF
-                                ( MAINQUERY.DocMONTH = 3, '.$currencyClm.', 0 ) AS March,
+                                ( MAINQUERY.DocMONTH = 3, ' . $currencyClm . ', 0 ) AS March,
                             IF
-                                ( MAINQUERY.DocMONTH = 4, '.$currencyClm.', 0 ) AS April,
+                                ( MAINQUERY.DocMONTH = 4, ' . $currencyClm . ', 0 ) AS April,
                             IF
-                                ( MAINQUERY.DocMONTH = 5, '.$currencyClm.', 0 ) AS May,
+                                ( MAINQUERY.DocMONTH = 5, ' . $currencyClm . ', 0 ) AS May,
                             IF
-                                ( MAINQUERY.DocMONTH = 6, '.$currencyClm.', 0 ) AS June,
+                                ( MAINQUERY.DocMONTH = 6, ' . $currencyClm . ', 0 ) AS June,
                             IF
-                                ( MAINQUERY.DocMONTH = 7, '.$currencyClm.', 0 ) AS July,
+                                ( MAINQUERY.DocMONTH = 7, ' . $currencyClm . ', 0 ) AS July,
                             IF
-                                ( MAINQUERY.DocMONTH = 8, '.$currencyClm.', 0 ) AS Aug,
+                                ( MAINQUERY.DocMONTH = 8, ' . $currencyClm . ', 0 ) AS Aug,
                             IF
-                                ( MAINQUERY.DocMONTH = 9, '.$currencyClm.', 0 ) AS Sept,
+                                ( MAINQUERY.DocMONTH = 9, ' . $currencyClm . ', 0 ) AS Sept,
                             IF
-                                ( MAINQUERY.DocMONTH = 10, '.$currencyClm.', 0 ) AS Oct,
+                                ( MAINQUERY.DocMONTH = 10, ' . $currencyClm . ', 0 ) AS Oct,
                             IF
-                                ( MAINQUERY.DocMONTH = 11, '.$currencyClm.', 0 ) AS Nov,
+                                ( MAINQUERY.DocMONTH = 11, ' . $currencyClm . ', 0 ) AS Nov,
                             IF
-                                ( MAINQUERY.DocMONTH = 12, '.$currencyClm.', 0 ) AS Dece,
-                                 '.$currencyClm.' as Total
+                                ( MAINQUERY.DocMONTH = 12, ' . $currencyClm . ', 0 ) AS Dece,
+                                 ' . $currencyClm . ' as Total
                             FROM
                                 (
                             SELECT
@@ -1047,5 +1105,70 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
         return $output;
 
     }
+
+    function getSupplierBalanceSummeryQRY($request)
+    {
+        $asOfDate = new Carbon($request->fromDate);
+        //$fromDate = $asOfDate->addDays(1);
+        $asOfDate = $asOfDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $suppliers = (array)$request->suppliers;
+        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+
+        $controlAccountsSystemID = $request->controlAccountsSystemID;
+
+        $currency = $request->currencyID;
+        $currencyQry = '';
+        $invoiceAmountQry = '';
+        $decimalPlaceQry = '';
+        if ($currency == 2) {
+            $currencyQry = "localCurrencyDet.CurrencyCode AS documentCurrency";
+            $invoiceAmountQry = "IFNULL(round( sum(erp_generalledger.documentLocalAmount), localCurrencyDet.DecimalPlaces ),0) AS documentAmount";
+            $decimalPlaceQry = "localCurrencyDet.DecimalPlaces AS balanceDecimalPlaces";
+        } else {
+            $currencyQry = "rptCurrencyDet.CurrencyCode AS documentCurrency";
+            $invoiceAmountQry = "IFNULL(round( sum(erp_generalledger.documentRptAmount), rptCurrencyDet.DecimalPlaces ),0) AS documentAmount";
+            $decimalPlaceQry = "rptCurrencyDet.DecimalPlaces AS balanceDecimalPlaces";
+        }
+
+        $query = 'SELECT
+	erp_generalledger.companySystemID,
+	erp_generalledger.companyID,
+	companymaster.CompanyName,
+	erp_generalledger.supplierCodeSystem,
+	suppliermaster.primarySupplierCode AS SupplierCode,
+	suppliermaster.supplierName,
+	erp_generalledger.documentLocalCurrencyID,
+	' . $invoiceAmountQry . ',
+	' . $currencyQry . ',
+	' . $decimalPlaceQry . '
+FROM
+	erp_generalledger
+LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+LEFT JOIN currencymaster AS localCurrencyDet ON localCurrencyDet.currencyID = erp_generalledger.documentLocalCurrencyID
+LEFT JOIN currencymaster AS rptCurrencyDet ON rptCurrencyDet.currencyID = erp_generalledger.documentRptCurrencyID
+LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+WHERE
+	DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
+AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+GROUP BY
+	erp_generalledger.companySystemID,
+	erp_generalledger.supplierCodeSystem;';
+
+        $output = \DB::select($query);
+        //dd(DB::getQueryLog());
+        return $output;
+    }
+
 
 }
