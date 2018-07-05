@@ -390,6 +390,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerCollectionQRY($request);
 
+                    $outputArr = array();
+
                     $bankPaymentTotal = collect($output)->pluck('BRVDocumentAmount')->toArray();
                     $bankPaymentTotal = array_sum($bankPaymentTotal);
 
@@ -407,7 +409,14 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $selectedCurrency = $companyCurrency->reportingcurrency->CurrencyCode;
                         }
                     }
-                    return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'fromDate' => $fromDate, 'toDate' => $toDate, 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal);
+
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->CompanyName][$val->companyID][] = $val;
+                        }
+                    }
+
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'fromDate' => $fromDate, 'toDate' => $toDate, 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal);
                 } else {
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -425,6 +434,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $selectedCurrency = $companyCurrency->reportingcurrency->CurrencyCode;
                         }
                     }
+
+                    $outputArr = array();
 
                     $janTotal = collect($output)->pluck('Jan')->toArray();
                     $janTotal = array_sum($janTotal);
@@ -462,7 +473,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $decTotal = collect($output)->pluck('Dece')->toArray();
                     $decTotal = array_sum($decTotal);
 
-                    return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'fromDate' => $fromDate, 'toDate' => $toDate, 'selectedCurrency' => $selectedCurrency, 'selectedYear' => $request->year, 'janTotal' => $janTotal, 'febTotal' => $febTotal, 'marTotal' => $marTotal, 'aprTotal' => $aprTotal, 'mayTotal' => $mayTotal, 'juneTotal' => $juneTotal, 'julyTotal' => $julyTotal, 'augTotal' => $augTotal, 'sepTotal' => $sepTotal, 'octTotal' => $octTotal, 'novTotal' => $novTotal, 'decTotal' => $decTotal);
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->CompanyName][$val->companyID][] = $val;
+                        }
+                    }
+
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'fromDate' => $fromDate, 'toDate' => $toDate, 'selectedCurrency' => $selectedCurrency, 'selectedYear' => $request->year, 'janTotal' => $janTotal, 'febTotal' => $febTotal, 'marTotal' => $marTotal, 'aprTotal' => $aprTotal, 'mayTotal' => $mayTotal, 'juneTotal' => $juneTotal, 'julyTotal' => $julyTotal, 'augTotal' => $augTotal, 'sepTotal' => $sepTotal, 'octTotal' => $octTotal, 'novTotal' => $novTotal, 'decTotal' => $decTotal);
 
                 }
                 break;
@@ -603,7 +620,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $total['Dece'] = array_sum(collect($output)->pluck('Dece')->toArray());
                     $total['Total'] = array_sum(collect($output)->pluck('Total')->toArray());
 
-                    return array('reportData' => $output,
+
+                    $outputArr = array();
+                    foreach ($output as $val) {
+                        $outputArr[$val->CompanyName][] = $val;
+                    }
+
+                    return array('reportData' => $outputArr,
                         'companyName' => $checkIsGroup->CompanyName,
                         'decimalPlace' => $decimalPlace,
                         'total' => $total,
@@ -2682,6 +2705,7 @@ WHERE
 
         $output = \DB::select('SELECT
 	collectionDetail.companyID,
+	collectionDetail.CompanyName,
 	collectionDetail.CutomerCode,
 	collectionDetail.CustomerName,
 	' . $currencyBRVAmount . ',
@@ -2705,6 +2729,7 @@ FROM
 			customermaster.CutomerCode,
 			customermaster.customerShortCode,
 			customermaster.CustomerName,
+			companymaster.CompanyName,
 
 		IF (
 			erp_generalledger.documentSystemID = "21",
@@ -2744,6 +2769,7 @@ IF (
 FROM
 	erp_generalledger
 INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 WHERE
 	(
 		erp_generalledger.documentSystemID = 21
@@ -3327,6 +3353,7 @@ WHERE
                     revenueDataSummary.companyID,
                     revenueDataSummary.CutomerCode,
                     revenueDataSummary.CustomerName,
+                    revenueDataSummary.CompanyName,
                     revenueDataSummary.DocYEAR,
                     documentLocalCurrencyID,
                     documentRptCurrencyID,
@@ -3350,6 +3377,7 @@ WHERE
                     revenueDetailData.documentRptCurrencyID,
                     revenueDetailData.companySystemID,
                     revenueDetailData.companyID,
+                    revenueDetailData.CompanyName,
                     revenueDetailData.mySupplierCode,
                     customermaster.CutomerCode,
                     customermaster.CustomerName,
