@@ -98,12 +98,29 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }
                 break;
             case 'APPSY':
-                $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'suppliers' => 'required',
-                    'year' => 'required',
-                    'currencyID' => 'required'
-                ]);
+
+                $reportTypeID = '';
+                if (isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+
+                if ($reportTypeID == 'APPSY') {
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'suppliers' => 'required',
+                        'year' => 'required',
+                        'currencyID' => 'required'
+                    ]);
+
+                }else if($reportTypeID == 'APDPY'){
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'year' => 'required',
+                        'currencyID' => 'required'
+                    ]);
+                }else{
+                    return $this->sendError('No report type found');
+                }
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
@@ -169,6 +186,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getPaymentSuppliersByYear($request);
 
+                $outputArr = array();
+                foreach ($output as $val) {
+                    $outputArr[$val->CompanyName][] = $val;
+                }
+
                 $currency = $request->currencyID;
                 $currencyId = 2;
 
@@ -205,7 +227,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $total['Dece'] = array_sum(collect($output)->pluck('Dece')->toArray());
                 $total['Total'] = array_sum(collect($output)->pluck('Total')->toArray());
 
-                return array('reportData' => $output,
+                return array('reportData' => $outputArr,
                     'companyName' => $checkIsGroup->CompanyName,
                     'total' => $total,
                     'decimalPlace' => $decimalPlace,
@@ -230,54 +252,102 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 $output = $this->getPaymentSuppliersByYear($request);
                 $decimalPlace = 0;
+                $data = array();
                 if ($output) {
                     $reportSD      = $request->reportSD;
                     $currency      = $request->currencyID;
-                    if($reportSD == 'detail'){
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Payment Type'] = $val->PaymentType;
-                            $data[$x]['Payment Document Number'] = $val->documentCode;
-                            $data[$x]['Supplier Code'] = $val->supplierCode;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
+                    $reportTypeID      = $request->reportTypeID;
 
-                            if($currency == 2){
-                                $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
-                            }else if($currency == 3){
-                                $data[$x]['Currency'] = $val->documentRptCurrency;
-                                $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
+                    if($reportTypeID == 'APPSY') {
+                        if ($reportSD == 'detail') {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
+                                $data[$x]['Payment Type'] = $val->PaymentType;
+                                $data[$x]['Payment Document Number'] = $val->documentCode;
+                                $data[$x]['Supplier Code'] = $val->supplierCode;
+                                $data[$x]['Supplier Name'] = $val->supplierName;
+
+                                if ($currency == 2) {
+                                    $data[$x]['Currency'] = $val->documentLocalCurrency;
+                                    $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
+                                } else if ($currency == 3) {
+                                    $data[$x]['Currency'] = $val->documentRptCurrency;
+                                    $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
+                                }
+                                $x++;
                             }
-                            $x++;
+                        } else {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['Supplier Name'] = $val->supplierName;
+                                $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
+                                $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
+                                $data[$x]['March'] = round($val->March, $decimalPlace);
+                                $data[$x]['April'] = round($val->April, $decimalPlace);
+                                $data[$x]['May'] = round($val->May, $decimalPlace);
+                                $data[$x]['Jun'] = round($val->June, $decimalPlace);
+                                $data[$x]['July'] = round($val->July, $decimalPlace);
+                                $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
+                                $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
+                                $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
+                                $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
+                                $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
+                                $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                                $x++;
+                            }
                         }
-                    }else{
-                        $x = 0;
-                        foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
-                            $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
-                            $data[$x]['March'] = round($val->March, $decimalPlace);
-                            $data[$x]['April'] = round($val->April, $decimalPlace);
-                            $data[$x]['May'] = round($val->May, $decimalPlace);
-                            $data[$x]['Jun'] = round($val->June, $decimalPlace);
-                            $data[$x]['July'] = round($val->July, $decimalPlace);
-                            $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
-                            $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
-                            $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
-                            $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
-                            $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
-                            $data[$x]['Total'] = round($val->Total, $decimalPlace);
-                            $x++;
+                    }else if($reportTypeID == 'APDPY'){
+
+                        if ($reportSD == 'detail') {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
+                                //$data[$x]['Payment Type'] = $val->PaymentType;
+                                $data[$x]['Payment Document Number'] = $val->documentCode;
+                                $data[$x]['GL Code'] = $val->glCode;
+                                $data[$x]['Account Description'] = $val->AccountDescription;
+
+                                if ($currency == 2) {
+                                    $data[$x]['Currency'] = $val->documentLocalCurrency;
+                                    $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
+                                } else if ($currency == 3) {
+                                    $data[$x]['Currency'] = $val->documentRptCurrency;
+                                    $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
+                                }
+                                $x++;
+                            }
+                        } else {
+                            $x = 0;
+                            foreach ($output as $val) {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['GL Code'] = $val->glCode;
+                                $data[$x]['Account Description'] = $val->AccountDescription;
+                                $data[$x]['Jan'] = round($val->Jan, $decimalPlace);
+                                $data[$x]['Feb'] = round($val->Feb, $decimalPlace);
+                                $data[$x]['March'] = round($val->March, $decimalPlace);
+                                $data[$x]['April'] = round($val->April, $decimalPlace);
+                                $data[$x]['May'] = round($val->May, $decimalPlace);
+                                $data[$x]['Jun'] = round($val->June, $decimalPlace);
+                                $data[$x]['July'] = round($val->July, $decimalPlace);
+                                $data[$x]['Aug'] = round($val->Aug, $decimalPlace);
+                                $data[$x]['Sept'] = round($val->Sept, $decimalPlace);
+                                $data[$x]['Oct'] = round($val->Oct, $decimalPlace);
+                                $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
+                                $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
+                                $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                                $x++;
+                            }
                         }
                     }
 
-                }else{
-                    $data = array();
                 }
                 $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
@@ -867,7 +937,10 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
         }
 
         $reportSD      = $request->reportSD;
+        $reportTypeID      = $request->reportTypeID;
 
+
+        if($reportTypeID == 'APPSY'){
         if($reportSD == 'detail'){
             //DB::enableQueryLog();
             $output = \DB::select('SELECT
@@ -1042,6 +1115,186 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
                                 paymentsBySupplierSummary.supplierCodeSystem
                                 ORDER BY Total DESC;');
 
+          }
+        }else if($reportTypeID == 'APDPY'){
+
+            if($reportSD == 'detail'){
+
+                $output = \DB::select('SELECT
+                                        directPaymentsSummary.companySystemID,
+                                        directPaymentsSummary.companyID,
+                                        directPaymentsSummary.chartOfAccountSystemID,
+                                        directPaymentsSummary.glCode,
+                                        directPaymentsSummary.glAccountType,
+                                        directPaymentsSummary.AccountDescription,
+                                        directPaymentsSummary.DocYEAR,
+                                        directPaymentsSummary.documentLocalCurrencyID,
+                                        directPaymentsSummary.documentRptCurrencyID,
+                                        directPaymentsSummary.CompanyName,
+                                        directPaymentsSummary.documentLocalAmount as documentLocalAmount,
+                                        directPaymentsSummary.documentRptAmount as documentRptAmount,
+                                        directPaymentsSummary.localCurrencyCode as documentLocalCurrency,
+                                        directPaymentsSummary.rptCurrencyCode as documentRptCurrency,
+                                        directPaymentsSummary.documentCode,
+                                        directPaymentsSummary.documentDate
+                                    FROM
+                                        (
+                                    SELECT
+                                        MAINQUERY.companyID,
+                                        MAINQUERY.companySystemID,
+                                        MAINQUERY.chartOfAccountSystemID,
+                                        MAINQUERY.glCode,
+                                        MAINQUERY.glAccountType,
+                                        MAINQUERY.AccountDescription,
+                                        MAINQUERY.DocYEAR,
+                                        MAINQUERY.documentLocalCurrencyID,
+                                        MAINQUERY.documentRptCurrencyID,
+                                        MAINQUERY.documentLocalAmount,
+                                        MAINQUERY.documentRptAmount,
+                                        MAINQUERY.CompanyName,
+                                        MAINQUERY.localCurrencyCode,
+                                        MAINQUERY.rptCurrencyCode,
+                                        MAINQUERY.documentCode,
+                                        MAINQUERY.documentDate
+                                    FROM
+                                        (
+                                    SELECT
+                                        erp_generalledger.companySystemID,
+                                        erp_generalledger.companyID,
+                                        erp_generalledger.documentCode,
+                                        erp_generalledger.chartOfAccountSystemID,
+                                        erp_generalledger.glCode,
+                                        chartofaccounts.AccountDescription,
+                                        erp_generalledger.glAccountType,
+                                        MONTH ( erp_generalledger.documentDate ) AS DocMONTH,
+                                        YEAR ( erp_generalledger.documentDate ) AS DocYEAR,
+                                        localCurrency.CurrencyCode AS localCurrencyCode,
+                                        erp_generalledger.documentLocalCurrencyID,
+                                        round(erp_generalledger.documentLocalAmount,0) as documentLocalAmount,
+                                        rptCurrency.CurrencyCode AS rptCurrencyCode,
+                                        erp_generalledger.documentRptCurrencyID,
+                                        round(erp_generalledger.documentRptAmount,0) as documentRptAmount,
+                                        companymaster.CompanyName,
+                                        erp_generalledger.documentDate
+                                    FROM
+                                        erp_generalledger
+                                        INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+                                        LEFT JOIN currencymaster AS localCurrency ON erp_generalledger.documentLocalCurrencyID = localCurrency.currencyID
+                                        LEFT JOIN currencymaster AS rptCurrency ON erp_generalledger.documentRptCurrencyID = rptCurrency.currencyID 
+                                    WHERE
+                                        erp_generalledger.documentSystemID = 4 -- hard code as 4
+                                        AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')  
+                                        AND (erp_generalledger.supplierCodeSystem IS NULL 
+                                        OR erp_generalledger.supplierCodeSystem = 0) -- hard code filers
+                                        AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '" 
+                                        AND erp_generalledger.documentTransAmount > 0 -- hard code this filter
+                                        
+                                        ) AS MAINQUERY 
+                                        ) AS directPaymentsSummary;');
+
+            }else{
+                $output = \DB::select('SELECT
+                                        directPaymentsSummary.companySystemID,
+                                        directPaymentsSummary.companyID,
+                                        directPaymentsSummary.chartOfAccountSystemID,
+                                        directPaymentsSummary.glCode,
+                                        directPaymentsSummary.glAccountType,
+                                        directPaymentsSummary.AccountDescription,
+                                        directPaymentsSummary.DocYEAR,
+                                        directPaymentsSummary.documentLocalCurrencyID,
+                                        directPaymentsSummary.documentRptCurrencyID,
+                                        directPaymentsSummary.CompanyName,
+                                        sum( Jan ) AS Jan,
+                                        sum( Feb ) AS Feb,
+                                        sum( March ) AS March,
+                                        sum( April ) AS April,
+                                        sum( May ) AS May,
+                                        sum( June ) AS June,
+                                        sum( July ) AS July,
+                                        sum( Aug ) AS Aug,
+                                        sum( Sept ) AS Sept,
+                                        sum( Oct ) AS Oct,
+                                        sum( Nov ) AS Nov,
+                                        sum( Dece ) AS Dece ,
+                                        sum(Total) as Total
+                                    FROM
+                                        (
+                                    SELECT
+                                        MAINQUERY.companyID,
+                                        MAINQUERY.companySystemID,
+                                        MAINQUERY.chartOfAccountSystemID,
+                                        MAINQUERY.glCode,
+                                        MAINQUERY.glAccountType,
+                                        MAINQUERY.AccountDescription,
+                                        MAINQUERY.DocYEAR,
+                                        MAINQUERY.documentLocalCurrencyID,
+                                        MAINQUERY.documentRptCurrencyID,
+                                        MAINQUERY.CompanyName,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 1, documentRptAmount, 0 ) AS Jan,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 2, documentRptAmount, 0 ) AS Feb,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 3, documentRptAmount, 0 ) AS March,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 4, documentRptAmount, 0 ) AS April,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 5, documentRptAmount, 0 ) AS May,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 6, documentRptAmount, 0 ) AS June,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 7, documentRptAmount, 0 ) AS July,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 8, documentRptAmount, 0 ) AS Aug,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 9, documentRptAmount, 0 ) AS Sept,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 10, documentRptAmount, 0 ) AS Oct,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 11, documentRptAmount, 0 ) AS Nov,
+                                    IF
+                                        ( MAINQUERY.DocMONTH = 12, documentRptAmount, 0 ) AS Dece ,
+                                        '.$currencyClm.' as Total
+                                    FROM
+                                        (
+                                    SELECT
+                                        erp_generalledger.companySystemID,
+                                        erp_generalledger.companyID,
+                                        erp_generalledger.documentCode,
+                                        erp_generalledger.chartOfAccountSystemID,
+                                        erp_generalledger.glCode,
+                                        chartofaccounts.AccountDescription,
+                                        erp_generalledger.glAccountType,
+                                        MONTH ( erp_generalledger.documentDate ) AS DocMONTH,
+                                        YEAR ( erp_generalledger.documentDate ) AS DocYEAR,
+                                        localCurrency.CurrencyCode AS localCurrencyCode,
+                                        erp_generalledger.documentLocalCurrencyID,
+                                        round(erp_generalledger.documentLocalAmount,0) as documentLocalAmount,
+                                        rptCurrency.CurrencyCode AS rptCurrencyCode,
+                                        erp_generalledger.documentRptCurrencyID,
+                                        round(erp_generalledger.documentRptAmount,0) as documentRptAmount,
+                                        companymaster.CompanyName
+                                    FROM
+                                        erp_generalledger
+                                        INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+                                        LEFT JOIN currencymaster AS localCurrency ON erp_generalledger.documentLocalCurrencyID = localCurrency.currencyID
+                                        LEFT JOIN currencymaster AS rptCurrency ON erp_generalledger.documentRptCurrencyID = rptCurrency.currencyID 
+                                    WHERE
+                                        erp_generalledger.documentSystemID = 4 -- hard code as 4
+                                        AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')  
+                                        AND (erp_generalledger.supplierCodeSystem IS NULL 
+                                        OR erp_generalledger.supplierCodeSystem = 0) -- hard code filers
+                                        AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '" 
+                                        AND erp_generalledger.documentTransAmount > 0 -- hard code this filter
+                                        
+                                        ) AS MAINQUERY 
+                                        ) AS directPaymentsSummary 
+                                    GROUP BY
+                                        directPaymentsSummary.companySystemID,
+                                    directPaymentsSummary.chartOfAccountSystemID;');
+              }
         }
 
         return $output;
