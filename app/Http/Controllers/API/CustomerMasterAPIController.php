@@ -97,7 +97,7 @@ class CustomerMasterAPIController extends AppBaseController
         }
         $customerMasters = CustomerMaster::with(['country'])
              //with(['categoryMaster', 'employee', 'supplierCurrency'])
-             ->whereIn('primaryCompanySystemID',$childCompanies)
+             //->whereIn('primaryCompanySystemID',$childCompanies)
              ->select('customermaster.*');
 
         $search = $request->input('search.value');
