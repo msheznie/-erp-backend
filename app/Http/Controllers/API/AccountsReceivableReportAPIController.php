@@ -801,6 +801,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         foreach ($output as $val) {
                             $data[] = array(
+                                'Company ID' => $val->companyID,
+                                'Company Name' => $val->CompanyName,
                                 'Customer Name' => $val->customerName,
                                 'Document Code' => $val->DocumentCode,
                                 'Posted Date' => $val->PostedDate,
@@ -822,6 +824,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $x = 0;
                         foreach ($output as $val) {
                             $x++;
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Customer Name'] = $val->customerName;
                             $data[$x]['Document Code'] = $val->documentCode;
                             $data[$x]['Posted Date'] = $val->postedDate;
@@ -864,6 +868,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         foreach ($output['data'] as $val) {
                             $lineTotal = 0;
                             $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Document Code'] = $val->DocumentCode;
                             $data[$x]['Document Date'] = \Helper::dateFormat($val->PostedDate);
                             $data[$x]['GL Code'] = $val->glCode;
@@ -900,6 +905,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $x = 0;
                         foreach ($output['data'] as $val) {
                             $lineTotal = 0;
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Cust. Code'] = $val->DocumentCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Currency'] = $val->documentCurrency;
@@ -938,6 +945,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Customer Code'] = $val->CutomerCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Document Code'] = $val->DocumentCode;
@@ -962,6 +971,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Customer Code'] = $val->CutomerCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Document Code'] = $val->DocumentCode;
@@ -1034,6 +1045,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Cust. Code'] = $val->CutomerCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
 
@@ -1078,6 +1092,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
+                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x]['Customer Code'] = $val->CutomerCode;
                         $data[$x]['Customer Name'] = $val->CustomerName;
                         $data[$x]['Document Code'] = $val->documentCode;
@@ -1185,6 +1201,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyCode;
+                            $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Jan'] = $val->Jan;
                             $data[$x]['Feb'] = $val->Feb;
@@ -1251,7 +1269,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-
+                            $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
                             $data[$x]['Customer Code'] = $val->CutomerCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
@@ -1463,6 +1481,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
         //DB::enableQueryLog();
         $output = \DB::select('SELECT
 	MainQuery.companyID,
+	MainQuery.CompanyName,
 	MainQuery.documentCode,
 	MainQuery.documentDate AS postedDate,
 	MainQuery.clientContractID,
@@ -1482,6 +1501,7 @@ FROM
 SELECT
 	erp_generalledger.companySystemID,
 	erp_generalledger.companyID,
+	companymaster.CompanyName,
 	erp_generalledger.serviceLineSystemID,
 	erp_generalledger.serviceLineCode,
 	erp_generalledger.documentSystemID,
@@ -1514,6 +1534,7 @@ SELECT
 FROM
 	erp_generalledger
 	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
@@ -1657,12 +1678,15 @@ GROUP BY
 	' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
 	final.customerName AS customerName, 
-	final.PONumber
+	final.PONumber,
+	final.companyID,
+	final.CompanyName
 FROM
 	(
 SELECT
 	mainQuery.companySystemID,
 	mainQuery.companyID,
+	mainQuery.CompanyName,
 	mainQuery.serviceLineSystemID,
 	mainQuery.serviceLineCode,
 	mainQuery.documentSystemID,
@@ -1715,6 +1739,7 @@ FROM
 SELECT
 	erp_generalledger.companySystemID,
 	erp_generalledger.companyID,
+	companymaster.CompanyName,
 	erp_generalledger.serviceLineSystemID,
 	erp_generalledger.serviceLineCode,
 	erp_generalledger.documentSystemID,
@@ -1754,6 +1779,7 @@ FROM
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
 	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
@@ -1983,7 +2009,7 @@ WHERE
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
         $output = \DB::select('SELECT 
-        DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount FROM (SELECT
+        DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,customerName,age,glCode,customerName2,CutomerCode,PONumber,invoiceDueDate,subsequentBalanceAmount,brvInv,subsequentAmount,companyID,invoiceAmount,companyID,CompanyName FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -2004,12 +2030,14 @@ WHERE
 	final.PONumber, 
 	final.invoiceDueDate, 
 	final.brvInv, 
-	final.companyID 
+	final.companyID, 
+	final.CompanyName 
 FROM
 	(
 SELECT
 	mainQuery.companySystemID,
 	mainQuery.companyID,
+	mainQuery.CompanyName,
 	mainQuery.serviceLineSystemID,
 	mainQuery.serviceLineCode,
 	mainQuery.documentSystemID,
@@ -2080,6 +2108,7 @@ FROM
 SELECT
 	erp_generalledger.companySystemID,
 	erp_generalledger.companyID,
+	companymaster.CompanyName,
 	erp_generalledger.serviceLineSystemID,
 	erp_generalledger.serviceLineCode,
 	erp_generalledger.documentSystemID,
@@ -2122,6 +2151,7 @@ FROM
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
 	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
@@ -2366,7 +2396,7 @@ WHERE
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
-        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem FROM (SELECT
+        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem,companyID,CompanyName FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -2379,12 +2409,15 @@ WHERE
 	final.CustomerName,
 	final.CutomerCode as CustomerCode,
 	final.supplierCodeSystem AS customerCodeSystem,
-	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age 
+	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age,
+	final.companyID, 
+	final.CompanyName 
 FROM
 	(
 SELECT
 	mainQuery.companySystemID,
 	mainQuery.companyID,
+	mainQuery.CompanyName,
 	mainQuery.serviceLineSystemID,
 	mainQuery.serviceLineCode,
 	mainQuery.documentSystemID,
@@ -2437,6 +2470,7 @@ FROM
 SELECT
 	erp_generalledger.companySystemID,
 	erp_generalledger.companyID,
+	companymaster.CompanyName,
 	erp_generalledger.serviceLineSystemID,
 	erp_generalledger.serviceLineCode,
 	erp_generalledger.documentSystemID,
@@ -2476,6 +2510,7 @@ FROM
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
 	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
 	AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
@@ -2786,12 +2821,15 @@ GROUP BY
 	final.CutomerCode,
 	final.CustomerName,  
 	final.PONumber,
-	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as ageDays
+	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as ageDays,
+	final.companyID,
+	final.CompanyName
 FROM
 	(
 SELECT
 	mainQuery.companySystemID,
 	mainQuery.companyID,
+	mainQuery.CompanyName,
 	mainQuery.serviceLineSystemID,
 	mainQuery.serviceLineCode,
 	mainQuery.documentSystemID,
@@ -2849,6 +2887,7 @@ FROM
 SELECT
 	erp_generalledger.companySystemID,
 	erp_generalledger.companyID,
+	companymaster.CompanyName,
 	erp_generalledger.serviceLineSystemID,
 	erp_generalledger.serviceLineCode,
 	erp_generalledger.documentSystemID,
@@ -2890,6 +2929,7 @@ FROM
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
 	LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 	LEFT JOIN erp_custinvoicedirect ON erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
 WHERE
 	( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" ) 
@@ -3074,6 +3114,8 @@ WHERE
 	CustomerBalanceSummary_Detail.CustomerName,
 	CustomerBalanceSummary_Detail.documentLocalCurrencyID,
 	CustomerBalanceSummary_Detail.concatCustomerName,
+	CustomerBalanceSummary_Detail.companyID,
+	CustomerBalanceSummary_Detail.CompanyName,
 	 ' . $currencyQry . ',
 	' . $decimalPlaceQry . ',
 	' . $invoiceAmountQry . '
@@ -3082,6 +3124,7 @@ FROM
 SELECT
 	erp_generalledger.companySystemID,
 	erp_generalledger.companyID,
+	companymaster.CompanyName,
 	erp_generalledger.documentID,
 	erp_generalledger.documentSystemCode,
 	erp_generalledger.documentCode,
@@ -3111,6 +3154,7 @@ SELECT
 FROM
 	erp_generalledger
 	INNER JOIN customermaster ON customermaster.customerCodeSystem=erp_generalledger.supplierCodeSystem
+	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
@@ -3124,6 +3168,7 @@ WHERE
 	SELECT
 	erp_generalledger.companySystemID,
 	erp_generalledger.companyID,
+	companymaster.CompanyName,
 	erp_generalledger.documentID,
 	erp_generalledger.documentSystemCode,
 	"Opening Balance" as documentCode,
@@ -3153,6 +3198,7 @@ WHERE
 FROM
 	erp_generalledger
 	INNER JOIN customermaster ON customermaster.customerCodeSystem=erp_generalledger.supplierCodeSystem
+	LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 	LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
 	LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 	LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
@@ -3189,6 +3235,7 @@ WHERE
         $output = \DB::select('SELECT
                     CustomerBalanceSummary_Detail.companySystemID,
                     CustomerBalanceSummary_Detail.companyID,
+                    CustomerBalanceSummary_Detail.CompanyName,
                     CustomerBalanceSummary_Detail.supplierCodeSystem,
                     CustomerBalanceSummary_Detail.CutomerCode,
                     CustomerBalanceSummary_Detail.CustomerName,
@@ -3216,9 +3263,11 @@ WHERE
                     erp_generalledger.documentRptCurrencyID,
                     erp_generalledger.documentRptAmount,
                     currLocal.CurrencyCode as documentLocalCurrency,
-                    currRpt.CurrencyCode as documentRptCurrency
+                    currRpt.CurrencyCode as documentRptCurrency,
+                    companymaster.CompanyName
                 FROM
                     erp_generalledger
+                    INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                     INNER JOIN customermaster ON customermaster.customerCodeSystem=erp_generalledger.supplierCodeSystem
                     LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
                     LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
@@ -3447,8 +3496,11 @@ WHERE
         }
 
         $output = \DB::select('SELECT
-	collectionMonthWise.companyID CutomerCode,
+		collectionMonthWise.companyID as companyCode,
+	collectionMonthWise.CompanyName as CompanyName,
 	CustomerName,
+	collectionMonthWise.companyID,
+    collectionMonthWise.CompanyName,
 	DocYEAR,
 	sum(Jan) AS Jan,
 	sum(Feb) AS Feb,
@@ -3469,6 +3521,7 @@ FROM
 			collectionDetail.CutomerCode,
 			collectionDetail.CustomerName,
 			collectionDetail.DocYEAR,
+			collectionDetail.CompanyName,
 
 		IF (
 			collectionDetail.DocMONTH = 1,
@@ -3550,6 +3603,7 @@ FROM
 			erp_generalledger.documentSystemCode,
 			erp_generalledger.documentCode,
 			erp_generalledger.documentDate,
+			companymaster.CompanyName,
 			MONTH (
 				erp_generalledger.documentDate
 			) AS DocMONTH,
@@ -3564,6 +3618,7 @@ FROM
 FROM
 	erp_generalledger
 INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 WHERE
 	erp_generalledger.documentSystemID = 21
 AND DATE(erp_generalledger.documentDate) <= "' . $fromDate . '"
@@ -3960,6 +4015,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
         //DB::enableQueryLog();
         $output = \DB::select('SELECT
                 MainQuery.companyID,
+                MainQuery.CompanyName,
                 MainQuery.documentCode,
                 MainQuery.documentDate AS PostedDate,
                 MainQuery.clientContractID,
@@ -3989,6 +4045,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
             SELECT
                 erp_generalledger.companySystemID,
                 erp_generalledger.companyID,
+                companymaster.CompanyName,
                 erp_generalledger.serviceLineSystemID,
                 erp_generalledger.serviceLineCode,
                 erp_generalledger.documentSystemID,
@@ -4028,6 +4085,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
             FROM
                 erp_generalledger
                 INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+                LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                 LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
                 LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
                 LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
@@ -4081,7 +4139,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 AND erp_custreceivepaymentdet.matchingDocID = 0 
                 AND erp_customerreceivepayment.approved =- 1 
                 AND erp_custreceivepaymentdet.companySystemID IN (' . join(',', $companyID) . ')
-                            /*AND DATE(erp_customerreceivepayment.postedDate) <= "' . $toDate . '"*/
+                            AND DATE(erp_customerreceivepayment.postedDate) <= "' . $toDate . '"
                 ) AS InvoiceFromBRV UNION ALL
             SELECT
                 * 
@@ -4106,7 +4164,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
             WHERE
                 erp_matchdocumentmaster.matchingConfirmedYN = 1 
                 AND erp_custreceivepaymentdet.companySystemID  IN (' . join(',', $companyID) . ')
-                            /*AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $toDate . '"*/
+                            AND DATE(erp_matchdocumentmaster.matchingDocdate) <= "' . $toDate . '"
                 ) AS InvoiceFromMatching 
                 ) AS InvoiceFromUNION 
             GROUP BY
