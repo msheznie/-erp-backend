@@ -298,6 +298,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
+                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x]['Supplier Code'] = $val->SupplierCode;
                         $data[$x]['Supplier Name'] = $val->suppliername;
                         $data[$x]['Document ID'] = $val->documentID;
@@ -603,6 +605,7 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
         $output = \DB::select('SELECT
 	finalAgingDetail.companySystemID,
 	finalAgingDetail.companyID,
+	finalAgingDetail.CompanyName,
 	finalAgingDetail.documentSystemID,
 	finalAgingDetail.documentID,
 	finalAgingDetail.documentCode,
@@ -625,6 +628,7 @@ FROM
 SELECT
 	MAINQUERY.companySystemID,
 	MAINQUERY.companyID,
+	companymaster.CompanyName,
 	MAINQUERY.documentSystemID,
 	MAINQUERY.documentID,
 	MAINQUERY.documentCode,
@@ -823,6 +827,7 @@ WHERE
 	AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
 	) AS MAINQUERY
 LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
+LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
 LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
 LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
 LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC;');
