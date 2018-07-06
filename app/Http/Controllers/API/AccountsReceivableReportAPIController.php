@@ -351,7 +351,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     if ($output['data']) {
                         foreach ($output['data'] as $val) {
-                            $outputArr[$val->documentCurrency][] = $val;
+                            $outputArr[$val->concatCompanyName][$val->documentCurrency][] = $val;
                         }
                     }
 
@@ -961,7 +961,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             case 'CL': //Customer Ledger
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
-                if ($reportTypeID == 'CLT1') { //customer aging detail
+                if ($reportTypeID == 'CLT1') { //customer ledger template 1
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerLedgerTemplate1QRY($request);
 
@@ -989,7 +989,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getCustomerLedgerTemplate2QRY($request);
+                    $output = $this->getCustomerLedgerTemplate2QRY($request); //customer ledger template 2
 
                     if ($output) {
                         $x = 0;
@@ -2419,7 +2419,7 @@ WHERE
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
-        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem,companyID,CompanyName FROM (SELECT
+        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem,companyID,CompanyName,concatCompanyName FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -2434,7 +2434,8 @@ WHERE
 	final.supplierCodeSystem AS customerCodeSystem,
 	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age,
 	final.companyID, 
-	final.CompanyName 
+	final.CompanyName,
+	CONCAT(final.companyID," - " ,final.CompanyName) as concatCompanyName
 FROM
 	(
 SELECT
@@ -2661,7 +2662,7 @@ WHERE
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
 	) AS final 
 WHERE
-' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal GROUP BY customerCodeSystem ORDER BY CustomerName');
+' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal GROUP BY customerCodeSystem,companyID ORDER BY CustomerName');
         //dd(DB::getQueryLog());
         return ['data' => $output, 'aging' => $aging];
     }
