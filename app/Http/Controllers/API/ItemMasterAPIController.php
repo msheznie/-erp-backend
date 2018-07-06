@@ -190,8 +190,8 @@ class ItemMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $itemMasters = ItemMaster::with(['unit', 'financeMainCategory', 'financeSubCategory'])
-                                  ->whereIn('primaryCompanySystemID',$childCompanies);
+        $itemMasters = ItemMaster::with(['unit', 'financeMainCategory', 'financeSubCategory']);
+                                  //->whereIn('primaryCompanySystemID',$childCompanies);
 
         if (array_key_exists('financeCategoryMaster', $input)) {
             if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {

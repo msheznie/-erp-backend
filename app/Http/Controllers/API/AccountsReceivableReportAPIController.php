@@ -351,7 +351,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     if ($output['data']) {
                         foreach ($output['data'] as $val) {
-                            $outputArr[$val->documentCurrency][] = $val;
+                            $outputArr[$val->concatCompanyName][$val->documentCurrency][] = $val;
                         }
                     }
 
@@ -390,6 +390,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerCollectionQRY($request);
 
+                    $outputArr = array();
+
                     $bankPaymentTotal = collect($output)->pluck('BRVDocumentAmount')->toArray();
                     $bankPaymentTotal = array_sum($bankPaymentTotal);
 
@@ -407,7 +409,14 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $selectedCurrency = $companyCurrency->reportingcurrency->CurrencyCode;
                         }
                     }
-                    return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'fromDate' => $fromDate, 'toDate' => $toDate, 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal);
+
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->CompanyName][$val->companyID][] = $val;
+                        }
+                    }
+
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'fromDate' => $fromDate, 'toDate' => $toDate, 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal);
                 } else {
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -425,6 +434,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $selectedCurrency = $companyCurrency->reportingcurrency->CurrencyCode;
                         }
                     }
+
+                    $outputArr = array();
 
                     $janTotal = collect($output)->pluck('Jan')->toArray();
                     $janTotal = array_sum($janTotal);
@@ -462,7 +473,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $decTotal = collect($output)->pluck('Dece')->toArray();
                     $decTotal = array_sum($decTotal);
 
-                    return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'fromDate' => $fromDate, 'toDate' => $toDate, 'selectedCurrency' => $selectedCurrency, 'selectedYear' => $request->year, 'janTotal' => $janTotal, 'febTotal' => $febTotal, 'marTotal' => $marTotal, 'aprTotal' => $aprTotal, 'mayTotal' => $mayTotal, 'juneTotal' => $juneTotal, 'julyTotal' => $julyTotal, 'augTotal' => $augTotal, 'sepTotal' => $sepTotal, 'octTotal' => $octTotal, 'novTotal' => $novTotal, 'decTotal' => $decTotal);
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->CompanyName][$val->companyID][] = $val;
+                        }
+                    }
+
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => $decimalPlaces, 'fromDate' => $fromDate, 'toDate' => $toDate, 'selectedCurrency' => $selectedCurrency, 'selectedYear' => $request->year, 'janTotal' => $janTotal, 'febTotal' => $febTotal, 'marTotal' => $marTotal, 'aprTotal' => $aprTotal, 'mayTotal' => $mayTotal, 'juneTotal' => $juneTotal, 'julyTotal' => $julyTotal, 'augTotal' => $augTotal, 'sepTotal' => $sepTotal, 'octTotal' => $octTotal, 'novTotal' => $novTotal, 'decTotal' => $decTotal);
 
                 }
                 break;
@@ -603,7 +620,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $total['Dece'] = array_sum(collect($output)->pluck('Dece')->toArray());
                     $total['Total'] = array_sum(collect($output)->pluck('Total')->toArray());
 
-                    return array('reportData' => $output,
+
+                    $outputArr = array();
+                    foreach ($output as $val) {
+                        $outputArr[$val->CompanyName][] = $val;
+                    }
+
+                    return array('reportData' => $outputArr,
                         'companyName' => $checkIsGroup->CompanyName,
                         'decimalPlace' => $decimalPlace,
                         'total' => $total,
@@ -938,7 +961,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             case 'CL': //Customer Ledger
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
-                if ($reportTypeID == 'CLT1') { //customer aging detail
+                if ($reportTypeID == 'CLT1') { //customer ledger template 1
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerLedgerTemplate1QRY($request);
 
@@ -966,7 +989,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                    $output = $this->getCustomerLedgerTemplate2QRY($request);
+                    $output = $this->getCustomerLedgerTemplate2QRY($request); //customer ledger template 2
 
                     if ($output) {
                         $x = 0;
@@ -2396,7 +2419,7 @@ WHERE
         }
         $currencyID = $request->currencyID;
         //DB::enableQueryLog();
-        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem,companyID,CompanyName FROM (SELECT
+        $output = \DB::select('SELECT DocumentCode,PostedDate,DocumentNarration,Contract,invoiceNumber,InvoiceDate,' . $agingField . ',documentCurrency,balanceDecimalPlaces,CustomerName,CustomerCode,customerCodeSystem,companyID,CompanyName,concatCompanyName FROM (SELECT
 	final.documentCode AS DocumentCode,
 	final.documentDate AS PostedDate,
 	final.documentNarration AS DocumentNarration,
@@ -2411,7 +2434,8 @@ WHERE
 	final.supplierCodeSystem AS customerCodeSystem,
 	DATEDIFF("' . $asOfDate . '",DATE(final.documentDate)) as age,
 	final.companyID, 
-	final.CompanyName 
+	final.CompanyName,
+	CONCAT(final.companyID," - " ,final.CompanyName) as concatCompanyName
 FROM
 	(
 SELECT
@@ -2638,7 +2662,7 @@ WHERE
 	AND mainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem 
 	) AS final 
 WHERE
-' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal GROUP BY customerCodeSystem ORDER BY CustomerName');
+' . $whereQry . ' <> 0 ORDER BY PostedDate ASC) as grandFinal GROUP BY customerCodeSystem,companyID ORDER BY CustomerName');
         //dd(DB::getQueryLog());
         return ['data' => $output, 'aging' => $aging];
     }
@@ -2681,6 +2705,7 @@ WHERE
 
         $output = \DB::select('SELECT
 	collectionDetail.companyID,
+	collectionDetail.CompanyName,
 	collectionDetail.CutomerCode,
 	collectionDetail.CustomerName,
 	' . $currencyBRVAmount . ',
@@ -2704,6 +2729,7 @@ FROM
 			customermaster.CutomerCode,
 			customermaster.customerShortCode,
 			customermaster.CustomerName,
+			companymaster.CompanyName,
 
 		IF (
 			erp_generalledger.documentSystemID = "21",
@@ -2743,6 +2769,7 @@ IF (
 FROM
 	erp_generalledger
 INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
 WHERE
 	(
 		erp_generalledger.documentSystemID = 21
@@ -3326,6 +3353,7 @@ WHERE
                     revenueDataSummary.companyID,
                     revenueDataSummary.CutomerCode,
                     revenueDataSummary.CustomerName,
+                    revenueDataSummary.CompanyName,
                     revenueDataSummary.DocYEAR,
                     documentLocalCurrencyID,
                     documentRptCurrencyID,
@@ -3349,6 +3377,7 @@ WHERE
                     revenueDetailData.documentRptCurrencyID,
                     revenueDetailData.companySystemID,
                     revenueDetailData.companyID,
+                    revenueDetailData.CompanyName,
                     revenueDetailData.mySupplierCode,
                     customermaster.CutomerCode,
                     customermaster.CustomerName,

@@ -112,8 +112,8 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
             $query->where('isDefault', -1)
                 ->with(['currencyMaster']);
-        }])
-            ->whereIn('primaryCompanySystemID', $childCompanies);
+        }]);
+            //->whereIn('primaryCompanySystemID', $childCompanies);
 
         $search = $request->input('search.value');
         if ($search) {

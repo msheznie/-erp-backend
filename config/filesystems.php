@@ -64,6 +64,21 @@ return [
             'url' => env('AWS_URL'),
         ],
 
+        'ftp' => [
+            'driver'   => 'ftp',
+            'host'     => 'gears.gulfenergy-int.com',
+            'username' => 'gearsadmin@gulfenergy-int.com',
+            'password' => 'Gea-1234',
+            'port'     => 21,
+
+            // Optional FTP Settings...
+            // 'port'     => 21,
+            // 'root'     => '',
+            // 'passive'  => true,
+            // 'ssl'      => true,
+            // 'timeout'  => 30,
+        ],
+
     ],
 
 ];
