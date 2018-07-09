@@ -940,11 +940,11 @@ SELECT
 	erp_generalledger.invoiceDate,
 	erp_generalledger.supplierCodeSystem,
 	erp_generalledger.documentTransCurrencyID,
-	erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+	erp_generalledger.documentTransAmount AS docTransAmount,
 	erp_generalledger.documentLocalCurrencyID,
-	erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+	erp_generalledger.documentLocalAmount AS docLocalAmount,
 	erp_generalledger.documentRptCurrencyID,
-	erp_generalledger.documentRptAmount * - 1 AS docRptAmount
+	erp_generalledger.documentRptAmount AS docRptAmount
 FROM
 	erp_generalledger
 WHERE
@@ -1003,11 +1003,11 @@ SELECT
 	erp_generalledger.invoiceDate,
 	erp_generalledger.supplierCodeSystem,
 	erp_generalledger.documentTransCurrencyID,
-	erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+	erp_generalledger.documentTransAmount AS docTransAmount,
 	erp_generalledger.documentLocalCurrencyID,
-	erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+	erp_generalledger.documentLocalAmount AS docLocalAmount,
 	erp_generalledger.documentRptCurrencyID,
-	erp_generalledger.documentRptAmount * - 1 AS docRptAmount
+	erp_generalledger.documentRptAmount AS docRptAmount
 FROM
 	erp_generalledger
 WHERE
