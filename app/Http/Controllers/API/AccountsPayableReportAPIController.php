@@ -940,11 +940,11 @@ SELECT
 	erp_generalledger.invoiceDate,
 	erp_generalledger.supplierCodeSystem,
 	erp_generalledger.documentTransCurrencyID,
-	erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+	erp_generalledger.documentTransAmount AS docTransAmount,
 	erp_generalledger.documentLocalCurrencyID,
-	erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+	erp_generalledger.documentLocalAmount AS docLocalAmount,
 	erp_generalledger.documentRptCurrencyID,
-	erp_generalledger.documentRptAmount * - 1 AS docRptAmount
+	erp_generalledger.documentRptAmount AS docRptAmount
 FROM
 	erp_generalledger
 WHERE
@@ -1003,11 +1003,11 @@ SELECT
 	erp_generalledger.invoiceDate,
 	erp_generalledger.supplierCodeSystem,
 	erp_generalledger.documentTransCurrencyID,
-	erp_generalledger.documentTransAmount * - 1 AS docTransAmount,
+	erp_generalledger.documentTransAmount AS docTransAmount,
 	erp_generalledger.documentLocalCurrencyID,
-	erp_generalledger.documentLocalAmount * - 1 AS docLocalAmount,
+	erp_generalledger.documentLocalAmount AS docLocalAmount,
 	erp_generalledger.documentRptCurrencyID,
-	erp_generalledger.documentRptAmount * - 1 AS docRptAmount
+	erp_generalledger.documentRptAmount AS docRptAmount
 FROM
 	erp_generalledger
 WHERE
@@ -1574,11 +1574,13 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
                                         erp_generalledger
                                         INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                                         LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+                                        AND chartofaccounts.relatedPartyYN = 0
                                         LEFT JOIN currencymaster AS localCurrency ON erp_generalledger.documentLocalCurrencyID = localCurrency.currencyID
                                         LEFT JOIN currencymaster AS rptCurrency ON erp_generalledger.documentRptCurrencyID = rptCurrency.currencyID 
                                     WHERE
                                         erp_generalledger.documentSystemID = 4 -- hard code as 4
                                         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')  
+                                        AND chartofaccounts.relatedPartyYN = 0
                                         AND (erp_generalledger.supplierCodeSystem IS NULL 
                                         OR erp_generalledger.supplierCodeSystem = 0) -- hard code filers
                                         AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '" 
@@ -1679,6 +1681,7 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
                                     WHERE
                                         erp_generalledger.documentSystemID = 4 -- hard code as 4
                                         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')  
+                                        AND chartofaccounts.relatedPartyYN = 0
                                         AND (erp_generalledger.supplierCodeSystem IS NULL 
                                         OR erp_generalledger.supplierCodeSystem = 0) -- hard code filers
                                         AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '" 
@@ -1887,6 +1890,7 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
                                     WHERE
                                         erp_generalledger.documentSystemID = 4 -- hard code as 4
                                         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                        AND chartofaccounts.relatedPartyYN = 0
                                         AND (erp_generalledger.supplierCodeSystem IS NULL 
                                         OR erp_generalledger.supplierCodeSystem = 0) -- hard code filers
                                         AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '" 
