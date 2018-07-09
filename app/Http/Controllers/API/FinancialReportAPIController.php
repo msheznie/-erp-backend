@@ -42,7 +42,7 @@ class FinancialReportAPIController extends AppBaseController
         if (isset($request['type']) && $request['type'] == 'add') {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
         }
-        $companyFinanceYear = $companyFinanceYear->get();
+        $companyFinanceYear = $companyFinanceYear->orderBy('bigginingDate','DESC')->get();
 
         $output = array(
             'companyFinanceYear' => $companyFinanceYear
