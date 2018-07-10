@@ -169,7 +169,7 @@ class FinancialReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-
+                $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getTrialBalance($request);
                 $currencyIdLocal = 1;
                 $currencyIdRpt = 2;
@@ -209,8 +209,12 @@ class FinancialReportAPIController extends AppBaseController
                         $data[$x]['Account Code'] = $val->glCode;
                         $data[$x]['Account Description'] = $val->AccountDescription;
                         $data[$x]['Type'] = $val->glAccountType;
-                        $data[$x]['Debit (Local Currency - '.$currencyLocal.')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
-                        $data[$x]['Credit (Local Currency - '.$currencyLocal.')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
+
+                        if($checkIsGroup->isGroup == 0){
+                            $data[$x]['Debit (Local Currency - '.$currencyLocal.')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
+                            $data[$x]['Credit (Local Currency - '.$currencyLocal.')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
+                        }
+
                         $data[$x]['Debit (Reporting Currency - '.$currencyRpt.')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
                         $data[$x]['Credit (Reporting Currency - '.$currencyRpt.')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
                         $x++;
