@@ -63,8 +63,29 @@ class FinancialReportAPIController extends AppBaseController
                     'companyFinanceYearID' => 'required'
                 ]);
 
+                 $companyFinanceYearID = $request->companyFinanceYearID;
+
+                 $companyFinanceYear = CompanyFinanceYear::where("companyFinanceYearID",$companyFinanceYearID)->first();
 
 
+                if (empty($companyFinanceYear)) {
+                    return $this->sendError('Finance Year Not Found');
+                }
+
+                $bigginingDate = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
+                $endingDate    = (new Carbon($companyFinanceYear->endingDate))->format('Y-m-d');
+
+                $fromDate =  (new Carbon($request->fromDate))->format('Y-m-d');
+                $toDate   =  (new   Carbon($request->toDate))->format('Y-m-d');
+
+
+                if (!($fromDate >= $bigginingDate) || !($fromDate <= $endingDate)) {
+                    return $this->sendError('From Date not between Financial year !', 500);
+                } else if(!($toDate >= $bigginingDate) || !($toDate <= $endingDate)){
+                    return $this->sendError('To Date not between Financial year !', 500);
+                }else if($fromDate > $toDate){
+                    return $this->sendError('The To date must be greater than the From date !', 500);
+                }
 
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
@@ -122,6 +143,7 @@ class FinancialReportAPIController extends AppBaseController
                 $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('documentRptAmountCredit')->toArray());
                 return array('reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
+                    'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
                     'decimalPlaceLocal' => $decimalPlaceLocal,
                     'decimalPlaceRpt' => $decimalPlaceRpt,
