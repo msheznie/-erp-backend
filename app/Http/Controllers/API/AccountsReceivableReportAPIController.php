@@ -998,7 +998,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $lineTotal = 0;
                             $data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Company Name'] = $val->CompanyName;
-                            $data[$x]['Cust. Code'] = $val->DocumentCode;
+                            $data[$x]['Cust. Code'] = $val->CutomerCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Currency'] = $val->documentCurrency;
                             foreach ($output['aging'] as $val2) {

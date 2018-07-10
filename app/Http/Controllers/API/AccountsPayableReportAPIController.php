@@ -322,7 +322,6 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     $unAllocatedAmount = collect($output['data'])->pluck('unAllocatedAmount')->toArray();
                     $unAllocatedAmount = array_sum($unAllocatedAmount);
-                    $lineGrandTotal += $unAllocatedAmount;
 
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal);
                 }
@@ -360,7 +359,6 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     $unAllocatedAmount = collect($output['data'])->pluck('unAllocatedAmount')->toArray();
                     $unAllocatedAmount = array_sum($unAllocatedAmount);
-                    $lineGrandTotal += $unAllocatedAmount;
 
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal);
                 }
@@ -775,7 +773,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x][$val2] = $val->$val2;
                                 $lineTotal += $val->$val2;
                             }
-                            $lineTotal += $val->unAllocatedAmount;
                             $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
                             $data[$x]['Total'] = $lineTotal;
                             $x++;
@@ -802,7 +799,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x][$val2] = $val->$val2;
                                 $lineTotal += $val->$val2;
                             }
-                            $lineTotal += $val->unAllocatedAmount;
                             $data[$x]['Advance/UnAllocated Amount'] = $val->unAllocatedAmount;
                             $data[$x]['Total'] = $lineTotal;
                             $x++;
@@ -2154,7 +2150,7 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountTrans<0,finalAgingDetail.balanceAmountTrans,0) as unAllocatedAmount";
         } else if ($currency == 2) {
             $currencyQry = "finalAgingDetail.localCurrencyCode AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentLocalAmount, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces )";
@@ -2477,7 +2473,7 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountTrans<0,finalAgingDetail.balanceAmountTrans,0) as unAllocatedAmount";
         } else if ($currency == 2) {
             $currencyQry = "finalAgingDetail.localCurrencyCode AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentLocalAmount, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces )";
@@ -2800,7 +2796,7 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
             $whereQry = "round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces )";
         } else if ($currency == 2) {
             $currencyQry = "finalAgingDetail.localCurrencyCode AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentLocalAmount, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces )";
@@ -3118,7 +3114,7 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
             $whereQry = "round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces )";
         } else if ($currency == 2) {
             $currencyQry = "finalAgingDetail.localCurrencyCode AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentLocalAmount, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces )";
