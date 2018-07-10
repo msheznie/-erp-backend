@@ -769,12 +769,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $total['Total'] = array_sum(collect($output)->pluck('Total')->toArray());
 
 
-                $outputArr = array();
-                foreach ($output as $val) {
-                    $outputArr[$val->CompanyName][] = $val;
-                }
-
-                return array('reportData' => $outputArr,
+                return array('reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
                     'decimalPlace' => $decimalPlace,
                     'total' => $total,
