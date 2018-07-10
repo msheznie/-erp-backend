@@ -120,7 +120,7 @@ class FinancialReportAPIController extends AppBaseController
                 $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('documentLocalAmountCredit')->toArray());
                 $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('documentRptAmountDebit')->toArray());
                 $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('documentRptAmountCredit')->toArray());
-                return array('reportData' => $outputArr,
+                return array('reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
                     'total' => $total,
                     'decimalPlaceLocal' => $decimalPlaceLocal,
@@ -180,8 +180,10 @@ class FinancialReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
+                        if($request->reportSD == 'company_wise'){
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
+                        }
                         $data[$x]['Account Code'] = $val->glCode;
                         $data[$x]['Account Description'] = $val->AccountDescription;
                         $data[$x]['Type'] = $val->glAccountType;
@@ -231,6 +233,15 @@ class FinancialReportAPIController extends AppBaseController
 
         //DB::enableQueryLog();
 
+        $isCompanyWise =  '';
+        $isCompanyWiseGL =  '';
+        $isCompanyWiseGLGroupBy = '';
+
+        if($request->reportSD == 'company_wise'){
+            $isCompanyWise = 'companySystemID,';
+            $isCompanyWiseGL = 'erp_generalledger.companySystemID,';
+        }
+
         $query = 'SELECT
                         companySystemID,
                         companyID,
@@ -274,11 +285,9 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.glAccountType = "BS" 
                         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '" -- filter by from date
-                        
                     GROUP BY
-                        erp_generalledger.companySystemID,
-                        glCode,
-                        glAccountType 
+                        '.$isCompanyWiseGL.'
+                        glCode
                         ) AS ERP_qry_TBBS_BF_sum -- ERP_qry_TBBS_BF_sum
                     UNION ALL
                     SELECT
@@ -307,7 +316,7 @@ class FinancialReportAPIController extends AppBaseController
                         WHERE
                             erp_generalledger.glAccountType = "BS" 
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                            AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '" 
+                            AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                         ) AS ERP_qry_TBBS_BF -- filter by from date ERP_qry_TBBS_BF;
                     UNION ALL
                     SELECT
@@ -369,9 +378,10 @@ class FinancialReportAPIController extends AppBaseController
                         ) AS ERP_qry_TBPL 
                         ) AS FINAL 
                     GROUP BY
-                        companySystemID,
-                        chartOfAccountSystemID
+                        '.$isCompanyWise.'chartOfAccountSystemID
                         order by glCode';
+
+
 
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
