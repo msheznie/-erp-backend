@@ -120,7 +120,14 @@ class AccountsPayableReportAPIController extends AppBaseController
                         'year' => 'required',
                         'currencyID' => 'required'
                     ]);
-                }else{
+                }else if($reportTypeID == 'APLWS'){
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'toDate' => 'required',
+                        'currencyID' => 'required'
+                    ]);
+                } else{
                     return $this->sendError('No report type found');
                 }
 
@@ -215,54 +222,68 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getPaymentSuppliersByYear($request);
-
+                $reportTypeID      = $request->reportTypeID;
                 $outputArr = array();
                 foreach ($output as $val) {
                     $outputArr[$val->CompanyName][] = $val;
                 }
+                if($reportTypeID == 'APLWS'){
 
-                $currency = $request->currencyID;
-                $currencyId = 2;
+                    $total['payAmountSuppTrans'] = array_sum(collect($output)->pluck('payAmountSuppTrans')->toArray());
+                    $total['payAmountCompLocal'] = array_sum(collect($output)->pluck('payAmountSuppTrans')->toArray());
+                    $total['payAmountCompRpt'] = array_sum(collect($output)->pluck('payAmountSuppTrans')->toArray());
 
-                if ($currency == 2) {
-                    $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-                    $decimalPlaceUnique = array_unique($decimalPlaceCollect);
-                } else {
-                    $decimalPlaceCollect = collect($output)->pluck('documentRptCurrencyID')->toArray();
-                    $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                    return array('reportData' => $outputArr,
+                        'companyName' => $checkIsGroup->CompanyName,
+                        //'total' => $total,
+                        //'decimalPlace' => $decimalPlace,
+                       // 'currency' => $requestCurrency->CurrencyCode
+                    );
+
+                }else{
+                    $currency = $request->currencyID;
+                    $currencyId = 2;
+
+                    if ($currency == 2) {
+                        $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                        $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                    } else {
+                        $decimalPlaceCollect = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                        $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+                    }
+
+                    if (!empty($decimalPlaceUnique)) {
+                        $currencyId = $decimalPlaceUnique[0];
+                    }
+
+
+                    $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
+
+                    $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
+
+                    $total = array();
+
+                    $total['Jan'] = array_sum(collect($output)->pluck('Jan')->toArray());
+                    $total['Feb'] = array_sum(collect($output)->pluck('Feb')->toArray());
+                    $total['March'] = array_sum(collect($output)->pluck('March')->toArray());
+                    $total['April'] = array_sum(collect($output)->pluck('April')->toArray());
+                    $total['May'] = array_sum(collect($output)->pluck('May')->toArray());
+                    $total['June'] = array_sum(collect($output)->pluck('June')->toArray());
+                    $total['July'] = array_sum(collect($output)->pluck('July')->toArray());
+                    $total['Aug'] = array_sum(collect($output)->pluck('Aug')->toArray());
+                    $total['Sept'] = array_sum(collect($output)->pluck('Sept')->toArray());
+                    $total['Oct'] = array_sum(collect($output)->pluck('Oct')->toArray());
+                    $total['Nov'] = array_sum(collect($output)->pluck('Nov')->toArray());
+                    $total['Dece'] = array_sum(collect($output)->pluck('Dece')->toArray());
+                    $total['Total'] = array_sum(collect($output)->pluck('Total')->toArray());
+
+                    return array('reportData' => $outputArr,
+                        'companyName' => $checkIsGroup->CompanyName,
+                        'total' => $total,
+                        'decimalPlace' => $decimalPlace,
+                        'currency' => $requestCurrency->CurrencyCode
+                    );
                 }
-
-                if (!empty($decimalPlaceUnique)) {
-                    $currencyId = $decimalPlaceUnique[0];
-                }
-
-
-                $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
-
-                $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
-
-                $total = array();
-
-                $total['Jan'] = array_sum(collect($output)->pluck('Jan')->toArray());
-                $total['Feb'] = array_sum(collect($output)->pluck('Feb')->toArray());
-                $total['March'] = array_sum(collect($output)->pluck('March')->toArray());
-                $total['April'] = array_sum(collect($output)->pluck('April')->toArray());
-                $total['May'] = array_sum(collect($output)->pluck('May')->toArray());
-                $total['June'] = array_sum(collect($output)->pluck('June')->toArray());
-                $total['July'] = array_sum(collect($output)->pluck('July')->toArray());
-                $total['Aug'] = array_sum(collect($output)->pluck('Aug')->toArray());
-                $total['Sept'] = array_sum(collect($output)->pluck('Sept')->toArray());
-                $total['Oct'] = array_sum(collect($output)->pluck('Oct')->toArray());
-                $total['Nov'] = array_sum(collect($output)->pluck('Nov')->toArray());
-                $total['Dece'] = array_sum(collect($output)->pluck('Dece')->toArray());
-                $total['Total'] = array_sum(collect($output)->pluck('Total')->toArray());
-
-                return array('reportData' => $outputArr,
-                    'companyName' => $checkIsGroup->CompanyName,
-                    'total' => $total,
-                    'decimalPlace' => $decimalPlace,
-                    'currency' => $requestCurrency->CurrencyCode
-                );
                 break;
             case 'APSA': //Supplier Aging
                 $reportTypeID = $request->reportTypeID;
@@ -542,25 +563,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }else if($reportTypeID == 'APAPY'){
 
                         if ($reportSD == 'detail') {
-                          /*  $x = 0;
-                            foreach ($output as $val) {
-                                $data[$x]['Company ID'] = $val->companyID;
-                                $data[$x]['Company Name'] = $val->CompanyName;
-                                $data[$x]['Posted Date'] = \Helper::dateFormat($val->documentDate);
-                                //$data[$x]['Payment Type'] = $val->PaymentType;
-                                $data[$x]['Payment Document Number'] = $val->documentCode;
-                                $data[$x]['GL Code'] = $val->glCode;
-                                $data[$x]['Account Description'] = $val->AccountDescription;
-
-                                if ($currency == 2) {
-                                    $data[$x]['Currency'] = $val->documentLocalCurrency;
-                                    $data[$x]['Amount'] = round($val->documentLocalAmount, $decimalPlace);
-                                } else if ($currency == 3) {
-                                    $data[$x]['Currency'] = $val->documentRptCurrency;
-                                    $data[$x]['Amount'] = round($val->documentRptAmount, $decimalPlace);
-                                }
-                                $x++;
-                            }*/
                         } else {
                             $x = 0;
                             foreach ($output as $val) {
@@ -581,6 +583,52 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x]['Nov'] = round($val->Nov, $decimalPlace);
                                 $data[$x]['Dec'] = round($val->Dece, $decimalPlace);
                                 $data[$x]['Total'] = round($val->Total, $decimalPlace);
+                                $x++;
+                            }
+                        }
+                    }else if($reportTypeID == 'APLWS'){
+
+                        if ($reportSD == 'detail') {
+                        } else {
+                            $x = 0;
+                            foreach ($output as $val) {
+
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                                $data[$x]['BPVcode'] = $val->BPVcode;
+                                $data[$x]['Doc.Date'] = \Helper::dateFormat($val->BPVdate);
+                                $data[$x]['Doc.Confirmed Date'] = \Helper::dateFormat($val->confirmedDate);
+                                $data[$x]['Payee Name'] = $val->PayeeName;
+                                $data[$x]['Credit Period'] = $val->creditPeriod;
+                                $data[$x]['Cheque No'] = $val->BPVchequeNo;
+                                $data[$x]['Cheque Date'] = \Helper::dateFormat($val->ChequeDate);
+                                $data[$x]['Cheque Printed By'] = $val->chequePrintedByEmpName;
+                                $data[$x]['Cheque Printed Date'] = \Helper::dateFormat($val->chequePrintedDate);
+
+                                if ($currency == 1) {
+                                    $data[$x]['Currency'] = $val->documentTransCurrency;
+                                    $data[$x]['Amount'] = round($val->payAmountSuppTrans, $val->documentTransDecimalPlaces);
+                                }
+                                else if ($currency == 2) {
+                                    $data[$x]['Currency'] = $val->documentLocalCurrency;
+                                    $data[$x]['Amount'] = round($val->payAmountCompLocal, $val->documentLocalDecimalPlaces);
+                                } else if ($currency == 3) {
+                                    $data[$x]['Currency'] = $val->documentRptCurrency;
+                                    $data[$x]['Amount'] = round($val->payAmountCompRpt, $val->documentRptDecimalPlaces);
+                                }
+
+                                $status  = "";
+
+                                if($val->approved == -1){
+                                    $status= "Fully Approved";
+                                }else if((($val->chequeSentToTreasury) == -1)){
+                                    $status= "Payment Sent to Treasury";
+                                } else if(($val->chequeSentToTreasury == 0) && ($val->chequePaymentYN == 0))
+                                {
+                                    $status= "Payment Not Printed and Not Sent to Treasury";
+                                }
+
+                                $data[$x]['Approval Status'] = $status;
                                 $x++;
                             }
                         }
@@ -867,7 +915,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $decimalPlaceQry = "finalAgingDetail.documentTransDecimalPlaces AS balanceDecimalPlaces";
         } else if ($currency == 2) {
             $currencyQry = "finalAgingDetail.localCurrencyCode AS documentCurrency";
-            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentLocalAmount, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
+            $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
         } else {
             $currencyQry = "finalAgingDetail.rptCurrencyCode AS documentCurrency";
@@ -1319,10 +1367,19 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
 
         $currency  = $request->currencyID;
 
+        if(isset($request->suppliers)) {
+            $suppliers = $request->suppliers;
+            $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+        }else{
+            $supplierSystemID = [];
+        }
 
-        $suppliers = $request->suppliers;
-        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
-        $year      = $request->year;
+
+        if(isset($request->year)){
+            $year      = $request->year;
+        }else{
+            $year      = 0;
+        }
 
         $currencyClm = "documentRptAmount";
         if($currency == 2){
@@ -1906,7 +1963,52 @@ LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUER
 
             $output =  \DB::select($finalQry);
 
-        }else{
+        }else if( $reportTypeID == 'APLWS'){
+            $fromDate = new Carbon($request->fromDate);
+            $fromDate = $fromDate->format('Y-m-d');
+
+            $toDate = new Carbon($request->toDate);
+            $toDate = $toDate->format('Y-m-d');
+
+            $qry = 'SELECT
+                    erp_paysupplierinvoicemaster.PayMasterAutoId,
+                    currTrans.CurrencyCode as documentTransCurrency,
+                    currTrans.DecimalPlaces as documentTransDecimalPlaces,
+                    currLocal.CurrencyCode as documentLocalCurrency,
+                    currLocal.DecimalPlaces as documentLocalDecimalPlaces,
+                    currRpt.CurrencyCode as documentRptCurrency,
+                    currRpt.DecimalPlaces as documentRptDecimalPlaces,
+                    erp_paysupplierinvoicemaster.companySystemID,
+                    erp_paysupplierinvoicemaster.companyID,
+                    companymaster.CompanyName,
+                    erp_paysupplierinvoicemaster.BPVcode,
+                    erp_paysupplierinvoicemaster.BPVdate,
+                    erp_paysupplierinvoicemaster.confirmedDate,
+                    If(suppliermaster.primarySupplierCode Is Null,erp_paysupplierinvoicemaster.directPaymentPayee,suppliermaster.supplierName) as PayeeName,
+                    suppliermaster.creditPeriod,
+                    erp_paysupplierinvoicemaster.BPVchequeNo,
+                    If(BPVchequeDate Is Null,Null,BPVchequeDate) as ChequeDate,
+                    erp_paysupplierinvoicemaster.chequePrintedByEmpName,
+                    If(chequePrintedDateTime Is Null,Null,chequePrintedDateTime) as chequePrintedDate,
+                    payAmountSuppTrans,
+                    payAmountCompLocal,
+                    payAmountCompRpt,
+                    chequeSentToTreasury,
+                    chequePaymentYN,
+                    If(chequePaymentYN=-1,"Yes","No") as chequePayment,
+                    approved,
+                    If(erp_paysupplierinvoicemaster.approved=-1,"Fully Approved",If(approved=0 And erp_paysupplierinvoicemaster.RollLevForApp_curr=1,"1st Level Approval Pending",If(erp_paysupplierinvoicemaster.approved=0 And erp_paysupplierinvoicemaster.RollLevForApp_curr=2,"2nd Level Approval Pending",""))) as ApprovalStatus
+                FROM
+                    erp_paysupplierinvoicemaster
+                    LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem=erp_paysupplierinvoicemaster.BPVsupplierID
+                    INNER JOIN companymaster ON erp_paysupplierinvoicemaster.companySystemID = companymaster.companySystemID
+                    LEFT JOIN currencymaster currTrans ON erp_paysupplierinvoicemaster.supplierTransCurrencyID = currTrans.currencyID
+                    LEFT JOIN currencymaster currLocal ON erp_paysupplierinvoicemaster.localCurrencyID = currLocal.currencyID
+                    LEFT JOIN currencymaster currRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currRpt.currencyID
+                    		WHERE 	erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
+                    		AND  erp_paysupplierinvoicemaster.BPVdate BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+            $output =  \DB::select($qry);
+        } else{
             $output = array();
         }
 
