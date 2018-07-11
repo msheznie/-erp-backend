@@ -63,8 +63,29 @@ class FinancialReportAPIController extends AppBaseController
                     'companyFinanceYearID' => 'required'
                 ]);
 
+                 $companyFinanceYearID = $request->companyFinanceYearID;
+
+                 $companyFinanceYear = CompanyFinanceYear::where("companyFinanceYearID",$companyFinanceYearID)->first();
 
 
+                if (empty($companyFinanceYear)) {
+                    return $this->sendError('Finance Year Not Found');
+                }
+
+                $bigginingDate = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
+                $endingDate    = (new Carbon($companyFinanceYear->endingDate))->format('Y-m-d');
+
+                $fromDate =  (new Carbon($request->fromDate))->format('Y-m-d');
+                $toDate   =  (new   Carbon($request->toDate))->format('Y-m-d');
+
+
+                if (!($fromDate >= $bigginingDate) || !($fromDate <= $endingDate)) {
+                    return $this->sendError('From Date not between Financial year !', 500);
+                } else if(!($toDate >= $bigginingDate) || !($toDate <= $endingDate)){
+                    return $this->sendError('To Date not between Financial year !', 500);
+                }else if($fromDate > $toDate){
+                    return $this->sendError('The To date must be greater than the From date !', 500);
+                }
 
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
@@ -120,8 +141,9 @@ class FinancialReportAPIController extends AppBaseController
                 $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('documentLocalAmountCredit')->toArray());
                 $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('documentRptAmountDebit')->toArray());
                 $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('documentRptAmountCredit')->toArray());
-                return array('reportData' => $outputArr,
+                return array('reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
+                    'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
                     'decimalPlaceLocal' => $decimalPlaceLocal,
                     'decimalPlaceRpt' => $decimalPlaceRpt,
@@ -147,7 +169,7 @@ class FinancialReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-
+                $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getTrialBalance($request);
                 $currencyIdLocal = 1;
                 $currencyIdRpt = 2;
@@ -180,13 +202,19 @@ class FinancialReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
+                        if($request->reportSD == 'company_wise'){
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
+                        }
                         $data[$x]['Account Code'] = $val->glCode;
                         $data[$x]['Account Description'] = $val->AccountDescription;
                         $data[$x]['Type'] = $val->glAccountType;
-                        $data[$x]['Debit (Local Currency - '.$currencyLocal.')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
-                        $data[$x]['Credit (Local Currency - '.$currencyLocal.')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
+
+                        if($checkIsGroup->isGroup == 0){
+                            $data[$x]['Debit (Local Currency - '.$currencyLocal.')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
+                            $data[$x]['Credit (Local Currency - '.$currencyLocal.')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
+                        }
+
                         $data[$x]['Debit (Reporting Currency - '.$currencyRpt.')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
                         $data[$x]['Credit (Reporting Currency - '.$currencyRpt.')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
                         $x++;
@@ -231,6 +259,15 @@ class FinancialReportAPIController extends AppBaseController
 
         //DB::enableQueryLog();
 
+        $isCompanyWise =  '';
+        $isCompanyWiseGL =  '';
+        $isCompanyWiseGLGroupBy = '';
+
+        if($request->reportSD == 'company_wise'){
+            $isCompanyWise = 'companySystemID,';
+            $isCompanyWiseGL = 'erp_generalledger.companySystemID,';
+        }
+
         $query = 'SELECT
                         companySystemID,
                         companyID,
@@ -274,11 +311,9 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.glAccountType = "BS" 
                         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '" -- filter by from date
-                        
                     GROUP BY
-                        erp_generalledger.companySystemID,
-                        glCode,
-                        glAccountType 
+                        '.$isCompanyWiseGL.'
+                        glCode
                         ) AS ERP_qry_TBBS_BF_sum -- ERP_qry_TBBS_BF_sum
                     UNION ALL
                     SELECT
@@ -307,7 +342,7 @@ class FinancialReportAPIController extends AppBaseController
                         WHERE
                             erp_generalledger.glAccountType = "BS" 
                             AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                            AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '" 
+                            AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                         ) AS ERP_qry_TBBS_BF -- filter by from date ERP_qry_TBBS_BF;
                     UNION ALL
                     SELECT
@@ -369,9 +404,10 @@ class FinancialReportAPIController extends AppBaseController
                         ) AS ERP_qry_TBPL 
                         ) AS FINAL 
                     GROUP BY
-                        companySystemID,
-                        chartOfAccountSystemID
+                        '.$isCompanyWise.'chartOfAccountSystemID
                         order by glCode';
+
+
 
         $output = \DB::select($query);
         //dd(DB::getQueryLog());

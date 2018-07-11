@@ -248,7 +248,7 @@ WHERE
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween('approvedDate', array($startDate, $endDate));
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate));
 
                     $search = $request->input('search.value');
                     $search = str_replace("\\", "\\\\", $search);
@@ -257,6 +257,214 @@ WHERE
                             ->orWhere('erp_purchaseordermaster.supplierPrimaryCode', 'LIKE', "%{$search}%")->orWhere('erp_purchaseordermaster.supplierName', 'LIKE', "%{$search}%");
                     }
                     $output->orderBy('approvedDate', 'ASC');
+                    $outputSUM = $output->get();
+                    //dd(DB::getQueryLog());
+
+
+                    $POCapex = collect($outputSUM)->pluck('POCapex')->toArray();
+                    $POCapex = array_sum($POCapex);
+
+                    $POOpex = collect($outputSUM)->pluck('POOpex')->toArray();
+                    $POOpex = array_sum($POOpex);
+
+                    $TotalPOVal = collect($outputSUM)->pluck('TotalPOVal')->toArray();
+                    $TotalPOVal = array_sum($TotalPOVal);
+
+                    $TotalGRVValue = collect($outputSUM)->pluck('TotalGRVValue')->toArray();
+                    $TotalGRVValue = array_sum($TotalGRVValue);
+
+                    $GRVCapex = collect($outputSUM)->pluck('GRVCapex')->toArray();
+                    $GRVCapex = array_sum($GRVCapex);
+
+                    $GRVOpex = collect($outputSUM)->pluck('GRVOpex')->toArray();
+                    $GRVOpex = array_sum($GRVOpex);
+
+                    $capexBalance = collect($outputSUM)->pluck('capexBalance')->toArray();
+                    $capexBalance = array_sum($capexBalance);
+
+                    $opexBalance = collect($outputSUM)->pluck('opexBalance')->toArray();
+                    $opexBalance = array_sum($opexBalance);
+
+
+                    $dataRec = \DataTables::of($output)
+                        ->order(function ($query) use ($input) {
+                            if (request()->has('order')) {
+                                if ($input['order'][0]['column'] == 0) {
+                                    $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                                }
+                            }
+                        })
+                        ->addIndexColumn()
+                        ->with('orderCondition', $sort)
+                        ->with('totalAmount', [
+                            'POCapex' => $POCapex,
+                            'POOpex' => $POOpex,
+                            'TotalGRVValue' => $TotalGRVValue,
+                            'GRVCapex' => $GRVCapex,
+                            'GRVOpex' => $GRVOpex,
+                            'capexBalance' => $capexBalance,
+                            'opexBalance' => $opexBalance,
+                            'TotalPOVal' => $TotalPOVal,
+                        ])
+                        ->make(true);
+
+                    return $dataRec;
+                }
+                else if ($request->reportType == 3) { //PO Wise Analysis Company wise Report
+                    $output = DB::table('erp_purchaseordermaster')
+                        ->selectRaw('
+                            companymaster.CompanyID,                      
+                            companymaster.CompanyName,                      
+                            SUM(IFNULL(podet.TotalPOVal,0)) as TotalPOVal,
+                            SUM(IFNULL(podet.POQty,0)) as POQty, 
+                            SUM(IFNULL(podet.POCapex,0)) as POCapex,
+                            SUM(IFNULL(podet.POOpex,0)) as POOpex,
+                            SUM(IFNULL(grvdet.GRVQty,0)) as GRVQty,
+                            SUM(IFNULL(grvdet.TotalGRVValue,0)) as TotalGRVValue,
+                            SUM(IFNULL(grvdet.GRVCapex,0)) as GRVCapex,
+                            SUM(IFNULL(grvdet.GRVOpex,0)) as GRVOpex,
+                            SUM(IFNULL(podet.POCapex,0)-IFNULL(grvdet.GRVCapex,0)) as capexBalance,
+                            SUM(IFNULL(podet.POOpex,0)-IFNULL(grvdet.GRVOpex,0)) as opexBalance'
+                        )
+                        ->join(DB::raw('(SELECT 
+                        erp_purchaseorderdetails.companySystemID,
+                    erp_purchaseorderdetails.purchaseOrderMasterID,
+                    SUM( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS TotalPOVal,
+                    SUM( erp_purchaseorderdetails.noQty ) AS POQty,
+                    IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
+	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
+	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID != 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POOpex
+                     FROM erp_purchaseorderdetails WHERE companySystemID IN (' . join(',', $companyID) . ') GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                            $query->on('purchaseOrderID', '=', 'podet.purchaseOrderMasterID');
+                        })
+                        ->leftJoin(DB::raw('(SELECT 
+                    SUM( erp_grvdetails.noQty ) GRVQty,
+	                SUM( noQty * GRVcostPerUnitComRptCur ) AS TotalGRVValue,
+	                SUM( IF ( itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 )) AS GRVCapex,
+	                SUM( IF ( itemFinanceCategoryID != 3,( noQty * GRVcostPerUnitComRptCur ),0 )) AS GRVOpex,
+	                erp_grvdetails.purchaseOrderMastertID,
+	                approved,
+	                erp_grvdetails.companySystemID
+                     FROM erp_grvdetails 
+                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN (' . join(',', $companyID) . ') AND erp_grvmaster.approved = -1
+                     GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
+                            $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
+                        })
+                        ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
+                        ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate))->groupBy('erp_purchaseordermaster.companySystemID');
+
+                    $search = $request->input('search.value');
+                    $search = str_replace("\\", "\\\\", $search);
+                    if ($search) {
+                        $output = $output->where('companymaster.CompanyName', 'LIKE', "%{$search}%");
+                    }
+                    $output->orderBy('companymaster.CompanyName', 'ASC');
+                    $outputSUM = $output->get();
+                    //dd(DB::getQueryLog());
+
+
+                    $POCapex = collect($outputSUM)->pluck('POCapex')->toArray();
+                    $POCapex = array_sum($POCapex);
+
+                    $POOpex = collect($outputSUM)->pluck('POOpex')->toArray();
+                    $POOpex = array_sum($POOpex);
+
+                    $TotalPOVal = collect($outputSUM)->pluck('TotalPOVal')->toArray();
+                    $TotalPOVal = array_sum($TotalPOVal);
+
+                    $TotalGRVValue = collect($outputSUM)->pluck('TotalGRVValue')->toArray();
+                    $TotalGRVValue = array_sum($TotalGRVValue);
+
+                    $GRVCapex = collect($outputSUM)->pluck('GRVCapex')->toArray();
+                    $GRVCapex = array_sum($GRVCapex);
+
+                    $GRVOpex = collect($outputSUM)->pluck('GRVOpex')->toArray();
+                    $GRVOpex = array_sum($GRVOpex);
+
+                    $capexBalance = collect($outputSUM)->pluck('capexBalance')->toArray();
+                    $capexBalance = array_sum($capexBalance);
+
+                    $opexBalance = collect($outputSUM)->pluck('opexBalance')->toArray();
+                    $opexBalance = array_sum($opexBalance);
+
+
+                    $dataRec = \DataTables::of($output)
+                        ->order(function ($query) use ($input) {
+                            if (request()->has('order')) {
+                                if ($input['order'][0]['column'] == 0) {
+                                    $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                                }
+                            }
+                        })
+                        ->addIndexColumn()
+                        ->with('orderCondition', $sort)
+                        ->with('totalAmount', [
+                            'POCapex' => $POCapex,
+                            'POOpex' => $POOpex,
+                            'TotalGRVValue' => $TotalGRVValue,
+                            'GRVCapex' => $GRVCapex,
+                            'GRVOpex' => $GRVOpex,
+                            'capexBalance' => $capexBalance,
+                            'opexBalance' => $opexBalance,
+                            'TotalPOVal' => $TotalPOVal,
+                        ])
+                        ->make(true);
+
+                    return $dataRec;
+                }
+                else if ($request->reportType == 4) { //PO Wise Analysis Supplier wise Report
+                    $output = DB::table('erp_purchaseordermaster')
+                        ->selectRaw('
+                            companymaster.CompanyID,                      
+                            companymaster.CompanyName, 
+                            supplierPrimaryCode as supplierID,
+                            supplierName,                     
+                            SUM(IFNULL(podet.TotalPOVal,0)) as TotalPOVal,
+                            SUM(IFNULL(podet.POQty,0)) as POQty, 
+                            SUM(IFNULL(podet.POCapex,0)) as POCapex,
+                            SUM(IFNULL(podet.POOpex,0)) as POOpex,
+                            SUM(IFNULL(grvdet.GRVQty,0)) as GRVQty,
+                            SUM(IFNULL(grvdet.TotalGRVValue,0)) as TotalGRVValue,
+                            SUM(IFNULL(grvdet.GRVCapex,0)) as GRVCapex,
+                            SUM(IFNULL(grvdet.GRVOpex,0)) as GRVOpex,
+                            SUM(IFNULL(podet.POCapex,0)-IFNULL(grvdet.GRVCapex,0)) as capexBalance,
+                            SUM(IFNULL(podet.POOpex,0)-IFNULL(grvdet.GRVOpex,0)) as opexBalance'
+                        )
+                        ->join(DB::raw('(SELECT 
+                        erp_purchaseorderdetails.companySystemID,
+                    erp_purchaseorderdetails.purchaseOrderMasterID,
+                    SUM( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS TotalPOVal,
+                    SUM( erp_purchaseorderdetails.noQty ) AS POQty,
+                    IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
+	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
+	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID != 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POOpex
+                     FROM erp_purchaseorderdetails WHERE companySystemID IN (' . join(',', $companyID) . ') GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                            $query->on('purchaseOrderID', '=', 'podet.purchaseOrderMasterID');
+                        })
+                        ->leftJoin(DB::raw('(SELECT 
+                    SUM( erp_grvdetails.noQty ) GRVQty,
+	                SUM( noQty * GRVcostPerUnitComRptCur ) AS TotalGRVValue,
+	                SUM( IF ( itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 )) AS GRVCapex,
+	                SUM( IF ( itemFinanceCategoryID != 3,( noQty * GRVcostPerUnitComRptCur ),0 )) AS GRVOpex,
+	                erp_grvdetails.purchaseOrderMastertID,
+	                approved,
+	                erp_grvdetails.companySystemID
+                     FROM erp_grvdetails 
+                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN (' . join(',', $companyID) . ') AND erp_grvmaster.approved = -1
+                     GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
+                            $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
+                        })
+                        ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
+                        ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate))->groupBy('supplierID');
+
+                    $search = $request->input('search.value');
+                    $search = str_replace("\\", "\\\\", $search);
+                    if ($search) {
+                        $output = $output->where('supplierName', 'LIKE', "%{$search}%");
+                    }
+                    $output->orderBy('supplierName', 'ASC');
                     $outputSUM = $output->get();
                     //dd(DB::getQueryLog());
 
@@ -541,7 +749,7 @@ WHERE
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween('approvedDate', array($startDate, $endDate))->orderBy('approvedDate', 'ASC')->get();
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate))->orderBy('approvedDate', 'ASC')->get();
 
                     foreach ($output as $val) {
                         $data[] = array(
@@ -566,6 +774,151 @@ WHERE
                     }
 
                     $csv = \Excel::create('po_wise_analysis', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
+                    return $this->sendResponse(array(), 'successfully export');
+                }
+                else if ($request->reportType == 3) {
+                    $output = DB::table('erp_purchaseordermaster')
+                        ->selectRaw('
+                            companymaster.CompanyID,                      
+                            companymaster.CompanyName,                      
+                            SUM(IFNULL(podet.TotalPOVal,0)) as TotalPOVal,
+                            SUM(IFNULL(podet.POQty,0)) as POQty, 
+                            SUM(IFNULL(podet.POCapex,0)) as POCapex,
+                            SUM(IFNULL(podet.POOpex,0)) as POOpex,
+                            SUM(IFNULL(grvdet.GRVQty,0)) as GRVQty,
+                            SUM(IFNULL(grvdet.TotalGRVValue,0)) as TotalGRVValue,
+                            SUM(IFNULL(grvdet.GRVCapex,0)) as GRVCapex,
+                            SUM(IFNULL(grvdet.GRVOpex,0)) as GRVOpex,
+                            SUM(IFNULL(podet.POCapex,0)-IFNULL(grvdet.GRVCapex,0)) as capexBalance,
+                            SUM(IFNULL(podet.POOpex,0)-IFNULL(grvdet.GRVOpex,0)) as opexBalance'
+                        )
+                        ->join(DB::raw('(SELECT 
+                        erp_purchaseorderdetails.companySystemID,
+                    erp_purchaseorderdetails.purchaseOrderMasterID,
+                    SUM( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS TotalPOVal,
+                    SUM( erp_purchaseorderdetails.noQty ) AS POQty,
+                    IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
+	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
+	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID != 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POOpex
+                     FROM erp_purchaseorderdetails WHERE companySystemID IN (' . join(',', $companyID) . ') GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                            $query->on('purchaseOrderID', '=', 'podet.purchaseOrderMasterID');
+                        })
+                        ->leftJoin(DB::raw('(SELECT 
+                    SUM( erp_grvdetails.noQty ) GRVQty,
+	                SUM( noQty * GRVcostPerUnitComRptCur ) AS TotalGRVValue,
+	                SUM( IF ( itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 )) AS GRVCapex,
+	                SUM( IF ( itemFinanceCategoryID != 3,( noQty * GRVcostPerUnitComRptCur ),0 )) AS GRVOpex,
+	                erp_grvdetails.purchaseOrderMastertID,
+	                approved,
+	                erp_grvdetails.companySystemID
+                     FROM erp_grvdetails 
+                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN (' . join(',', $companyID) . ') AND erp_grvmaster.approved = -1
+                     GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
+                            $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
+                        })
+                        ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
+                        ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate))->groupBy('erp_purchaseordermaster.companySystemID')->orderBy('CompanyName', 'ASC')->get();
+
+                    foreach ($output as $val) {
+                        $data[] = array(
+                            'CompanyID' => $val->CompanyID,
+                            'Company Name' => $val->CompanyName,
+                            'PO Capex Amount' => $val->POCapex,
+                            'PO Opex Amount' => $val->POOpex,
+                            'Total PO Amount' => $val->TotalPOVal,
+                            'GRV Capex Amount' => $val->GRVCapex,
+                            'GRV Opex Amount' => $val->GRVOpex,
+                            'Total GRV Amount' => $val->TotalGRVValue,
+                            'Capex Balance' => $val->capexBalance,
+                            'Opex Balance' => $val->opexBalance
+                        );
+                    }
+
+                    $csv = \Excel::create('po_wise_analysis_company', function ($excel) use ($data) {
+                        $excel->sheet('sheet name', function ($sheet) use ($data) {
+                            $sheet->fromArray($data, null, 'A1', true);
+                            //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                            $sheet->setAutoSize(true);
+                            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                        });
+                        $lastrow = $excel->getActiveSheet()->getHighestRow();
+                        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                    })->download($type);
+
+                    return $this->sendResponse(array(), 'successfully export');
+                }else if ($request->reportType == 4) {
+                    $output = DB::table('erp_purchaseordermaster')
+                        ->selectRaw('
+                            companymaster.CompanyID,                      
+                            companymaster.CompanyName, 
+                            supplierPrimaryCode as supplierID,
+                            supplierName,                     
+                            SUM(IFNULL(podet.TotalPOVal,0)) as TotalPOVal,
+                            SUM(IFNULL(podet.POQty,0)) as POQty, 
+                            SUM(IFNULL(podet.POCapex,0)) as POCapex,
+                            SUM(IFNULL(podet.POOpex,0)) as POOpex,
+                            SUM(IFNULL(grvdet.GRVQty,0)) as GRVQty,
+                            SUM(IFNULL(grvdet.TotalGRVValue,0)) as TotalGRVValue,
+                            SUM(IFNULL(grvdet.GRVCapex,0)) as GRVCapex,
+                            SUM(IFNULL(grvdet.GRVOpex,0)) as GRVOpex,
+                            SUM(IFNULL(podet.POCapex,0)-IFNULL(grvdet.GRVCapex,0)) as capexBalance,
+                            SUM(IFNULL(podet.POOpex,0)-IFNULL(grvdet.GRVOpex,0)) as opexBalance'
+                        )
+                        ->join(DB::raw('(SELECT 
+                        erp_purchaseorderdetails.companySystemID,
+                    erp_purchaseorderdetails.purchaseOrderMasterID,
+                    SUM( erp_purchaseorderdetails.noQty * erp_purchaseorderdetails.GRVcostPerUnitComRptCur ) AS TotalPOVal,
+                    SUM( erp_purchaseorderdetails.noQty ) AS POQty,
+                    IF( erp_purchaseorderdetails.itemFinanceCategoryID = 3, "Capex", "Others" ) AS Type,
+	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POCapex,
+	                SUM( IF ( erp_purchaseorderdetails.itemFinanceCategoryID != 3, ( noQty * GRVcostPerUnitComRptCur ), 0 ) ) AS POOpex
+                     FROM erp_purchaseorderdetails WHERE companySystemID IN (' . join(',', $companyID) . ') GROUP BY purchaseOrderMasterID) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
+                            $query->on('purchaseOrderID', '=', 'podet.purchaseOrderMasterID');
+                        })
+                        ->leftJoin(DB::raw('(SELECT 
+                    SUM( erp_grvdetails.noQty ) GRVQty,
+	                SUM( noQty * GRVcostPerUnitComRptCur ) AS TotalGRVValue,
+	                SUM( IF ( itemFinanceCategoryID = 3, ( noQty * GRVcostPerUnitComRptCur ), 0 )) AS GRVCapex,
+	                SUM( IF ( itemFinanceCategoryID != 3,( noQty * GRVcostPerUnitComRptCur ),0 )) AS GRVOpex,
+	                erp_grvdetails.purchaseOrderMastertID,
+	                approved,
+	                erp_grvdetails.companySystemID
+                     FROM erp_grvdetails 
+                     INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN (' . join(',', $companyID) . ') AND erp_grvmaster.approved = -1
+                     GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
+                            $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
+                        })
+                        ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
+                        ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate))->groupBy('supplierID')->orderBy('supplierName', 'ASC')->get();
+
+                    foreach ($output as $val) {
+                        $data[] = array(
+                            'SupplierID' => $val->supplierID,
+                            'Supplier Name' => $val->supplierName,
+                            'PO Capex Amount' => $val->POCapex,
+                            'PO Opex Amount' => $val->POOpex,
+                            'Total PO Amount' => $val->TotalPOVal,
+                            'GRV Capex Amount' => $val->GRVCapex,
+                            'GRV Opex Amount' => $val->GRVOpex,
+                            'Total GRV Amount' => $val->TotalGRVValue,
+                            'Capex Balance' => $val->capexBalance,
+                            'Opex Balance' => $val->opexBalance
+                        );
+                    }
+
+                    $csv = \Excel::create('po_wise_analysis_supplier', function ($excel) use ($data) {
                         $excel->sheet('sheet name', function ($sheet) use ($data) {
                             $sheet->fromArray($data, null, 'A1', true);
                             //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
