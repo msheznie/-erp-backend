@@ -981,13 +981,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             foreach ($output['aging'] as $val2) {
                                 $data[$x][$val2] = $val->$val2;
                             }
-                            $data[$x]['Subsequent Collection Amount'] = $val->subsequentAmount;
                             $data[$x]['Current Outstanding'] = $val->subsequentBalanceAmount;
+                            $data[$x]['Subsequent Collection Amount'] = $val->subsequentAmount;
                             $data[$x]['Receipt Matching/BRVNo'] = $val->brvInv;
                             $x++;
                         }
                     }
-
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerAgingSummaryQRY($request);

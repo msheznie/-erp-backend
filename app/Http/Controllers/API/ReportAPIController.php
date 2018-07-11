@@ -248,7 +248,7 @@ WHERE
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween('approvedDate', array($startDate, $endDate));
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate));
 
                     $search = $request->input('search.value');
                     $search = str_replace("\\", "\\\\", $search);
