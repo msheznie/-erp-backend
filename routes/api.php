@@ -529,3 +529,11 @@ Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFro
 Route::get('getBcryptPassword/{password}', function ($password) {
     echo bcrypt($password);
 });
+
+Route::get('runQueue', function () {
+    $master  = \App\Models\GRVMaster::where('approved',-1)->first();
+    /*$master  = \App\Models\GRVMaster::with(['details'])->find(1);
+    return $master->details;*/
+    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
+});
+

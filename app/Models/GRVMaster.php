@@ -313,5 +313,10 @@ class GRVMaster extends Model
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'grvAutoID');
     }
 
+    public function details()
+    {
+        return $this->hasMany('App\Models\GRVDetails', 'grvAutoID', 'grvAutoID');
+    }
+
     
 }
