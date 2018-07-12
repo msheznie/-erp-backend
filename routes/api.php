@@ -325,6 +325,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
     Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
 
+
+    Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
+    Route::post('validateAMReport', 'AssetManagementReportAPIController@validateReport');
+    Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
+    Route::get('getAssetManagementFilterData', 'AssetManagementReportAPIController@getFilterData');
+
     Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
     Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
     Route::get('getGoodReceivedNoteDetailsForPO', 'ProcumentOrderAPIController@getGoodReceivedNoteDetailsForPO');
@@ -529,3 +535,17 @@ Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFro
 Route::get('getBcryptPassword/{password}', function ($password) {
     echo bcrypt($password);
 });
+
+
+Route::get('runQueue', function () {
+    $master  = \App\Models\GRVMaster::where('approved',-1)->first();
+    /*$master  = \App\Models\GRVMaster::with(['details'])->find(1);
+    return $master->details;*/
+    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
+});
+
+
+Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
+
+Route::resource('years', 'YearAPIController');
+

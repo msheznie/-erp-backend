@@ -386,7 +386,7 @@ class Helper
         } catch (\Exception $e) {
             DB::rollback();
             //dd($e);
-            return ['success' => false, 'message' => $e . 'Error Ocurred'];
+            return ['success' => false, 'message' => $e . 'Error Occurred'];
         }
     }
 

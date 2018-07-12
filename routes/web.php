@@ -9,3 +9,7 @@ Route::resource('itemIssueTypes', 'ItemIssueTypeController');
 Route::resource('generalLedgers', 'GeneralLedgerController');
 
 Route::resource('accountsPayableLedgers', 'AccountsPayableLedgerController');
+
+Route::resource('assetFinanceCategories', 'AssetFinanceCategoryController');
+
+Route::resource('years', 'YearController');
