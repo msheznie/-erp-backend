@@ -11,8 +11,13 @@
  * -- REVISION HISTORY
  * -- Date: 04-july 2018 By: Fayas Description: Added new functions named as getPaymentSuppliersByYear()
  * -- Date: 04-july 2018 By: Nazir Description: Added new functions named as getSupplierLedgerQRY()
+ * -- Date: 04-july 2018 By: Mubashir Description: Added new functions named as getSupplierStatementQRY()
  * -- Date: 05-july 2018 By: Nazir Description: Added new functions named as getSupplierBalanceSummeryQRY()
  * -- Date: 11-july 2018 By: Fayas Description: Added new functions named as getTopSupplierQRY()
+ * -- Date: 05-july 2018 By: Mubashir Description: Added new functions named as getSupplierAgingDetailQRY()
+ * -- Date: 05-july 2018 By: Mubashir Description: Added new functions named as getSupplierAgingSummaryQRY()
+ * -- Date: 06-july 2018 By: Mubashir Description: Added new functions named as getSupplierAgingDetailAdvanceQRY()
+ * -- Date: 06-july 2018 By: Mubashir Description: Added new functions named as getSupplierAgingSummaryAdvanceQRY()
  */
 
 namespace App\Http\Controllers\API;
