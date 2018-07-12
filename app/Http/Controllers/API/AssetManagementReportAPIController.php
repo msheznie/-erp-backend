@@ -226,7 +226,7 @@ WHERE erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_fa_asset_master.approved = -1
 GROUP BY
 	erp_fa_asset_master.companySystemID,
-	erp_fa_asset_master.faID ORDER BY erp_fa_asset_master.companyID';
+	erp_fa_asset_master.faID ORDER BY erp_fa_asset_master.companyID ASC';
         //echo $query;
         //exit();
         $output = \DB::select($query);
