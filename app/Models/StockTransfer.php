@@ -1,0 +1,287 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : StockTransfer.php
+ * -- Project Name : ERP
+ * -- Module Name :  Stock Transfer
+ * -- Author : Mohamed Nazir
+ * -- Create date : 13 - July 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="StockTransfer",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="stockTransferAutoID",
+ *          description="stockTransferAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="serviceLineCode",
+ *          description="serviceLineCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyFinanceYearID",
+ *          description="companyFinanceYearID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentID",
+ *          description="documentID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="serialNo",
+ *          description="serialNo",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="stockTransferCode",
+ *          description="stockTransferCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="refNo",
+ *          description="refNo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="comment",
+ *          description="comment",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyFrom",
+ *          description="companyFrom",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyTo",
+ *          description="companyTo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="locationTo",
+ *          description="locationTo",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="locationFrom",
+ *          description="locationFrom",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedYN",
+ *          description="confirmedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByEmpID",
+ *          description="confirmedByEmpID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByName",
+ *          description="confirmedByName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approved",
+ *          description="approved",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="fullyReceived",
+ *          description="fullyReceived",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="interCompanyTransferYN",
+ *          description="interCompanyTransferYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="RollLevForApp_curr",
+ *          description="RollLevForApp_curr",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserGroup",
+ *          description="createdUserGroup",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdPCID",
+ *          description="createdPCID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUser",
+ *          description="modifiedUser",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPc",
+ *          description="modifiedPc",
+ *          type="string"
+ *      )
+ * )
+ */
+class StockTransfer extends Model
+{
+
+    public $table = 'erp_stocktransfer';
+
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timeStamp';
+
+    protected $primaryKey  = 'stockTransferAutoID';
+
+    public $fillable = [
+        'companyID',
+        'serviceLineCode',
+        'companyFinanceYearID',
+        'FYBiggin',
+        'FYEnd',
+        'documentID',
+        'serialNo',
+        'stockTransferCode',
+        'refNo',
+        'tranferDate',
+        'comment',
+        'companyFrom',
+        'companyTo',
+        'locationTo',
+        'locationFrom',
+        'confirmedYN',
+        'confirmedByEmpID',
+        'confirmedByName',
+        'confirmedDate',
+        'approved',
+        'postedDate',
+        'fullyReceived',
+        'timesReferred',
+        'interCompanyTransferYN',
+        'RollLevForApp_curr',
+        'createdDateTime',
+        'createdUserGroup',
+        'createdPCID',
+        'createdUserID',
+        'modifiedUser',
+        'modifiedPc',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'stockTransferAutoID' => 'integer',
+        'companyID' => 'string',
+        'serviceLineCode' => 'string',
+        'companyFinanceYearID' => 'integer',
+        'documentID' => 'string',
+        'serialNo' => 'integer',
+        'stockTransferCode' => 'string',
+        'refNo' => 'string',
+        'comment' => 'string',
+        'companyFrom' => 'string',
+        'companyTo' => 'string',
+        'locationTo' => 'integer',
+        'locationFrom' => 'integer',
+        'confirmedYN' => 'integer',
+        'confirmedByEmpID' => 'string',
+        'confirmedByName' => 'string',
+        'approved' => 'integer',
+        'fullyReceived' => 'integer',
+        'timesReferred' => 'integer',
+        'interCompanyTransferYN' => 'integer',
+        'RollLevForApp_curr' => 'integer',
+        'createdUserGroup' => 'string',
+        'createdPCID' => 'string',
+        'createdUserID' => 'string',
+        'modifiedUser' => 'string',
+        'modifiedPc' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function segment_by()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function location_to_by()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster', 'locationTo', 'wareHouseSystemCode');
+    }
+
+    public function location_from_by()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster', 'locationFrom', 'wareHouseSystemCode');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'stockTransferAutoID');
+    }
+
+    
+}
