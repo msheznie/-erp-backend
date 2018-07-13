@@ -325,7 +325,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
     Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
 
-
     Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
     Route::post('validateAMReport', 'AssetManagementReportAPIController@validateReport');
     Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
