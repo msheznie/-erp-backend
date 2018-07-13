@@ -13,3 +13,5 @@ Route::resource('accountsPayableLedgers', 'AccountsPayableLedgerController');
 Route::resource('assetFinanceCategories', 'AssetFinanceCategoryController');
 
 Route::resource('years', 'YearController');
+
+Route::resource('stockTransfers', 'StockTransferController');

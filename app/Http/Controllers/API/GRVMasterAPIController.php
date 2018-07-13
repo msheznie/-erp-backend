@@ -82,7 +82,7 @@ class GRVMasterAPIController extends AppBaseController
         $this->gRVMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $gRVMasters = $this->gRVMasterRepository->all();
 
-        return $this->sendResponse($gRVMasters->toArray(), 'G R V Masters retrieved successfully');
+        return $this->sendResponse($gRVMasters->toArray(), 'GRV Masters retrieved successfully');
     }
 
     /**
