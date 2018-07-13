@@ -203,6 +203,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('warehouse/masters', 'WarehouseMasterAPIController');
     Route::get('getWarehouseMasterFormData', 'WarehouseMasterAPIController@getWarehouseMasterFormData');
     Route::post('getAllWarehouseMaster', 'WarehouseMasterAPIController@getAllWarehouseMaster');
+    Route::get('getAllWHForSelectedCompany', 'WarehouseMasterAPIController@getAllWarehouseForSelectedCompany');
     Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster');
 
     /** Warehouse master Created by Fayas  */
@@ -324,7 +325,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('validateARReport', 'AccountsReceivableReportAPIController@validateReport');
     Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
     Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
-
 
     Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
     Route::post('validateAMReport', 'AssetManagementReportAPIController@validateReport');
@@ -481,8 +481,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
     Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
-    Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
-    Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
+    Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser');
+    Route::post('getApprovedMaterielRequestsByUser', 'MaterielRequestAPIController@getApprovedMaterielRequestsByUser');
     Route::get('materielRequestAudit', 'MaterielRequestAPIController@materielRequestAudit');
     Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
     Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
@@ -522,6 +522,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
     Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
 
+    Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView');
+    Route::get('getStockTransferFormData', 'StockTransferAPIController@getStockTransferFormData');
+
 
 });
 
@@ -536,6 +539,19 @@ Route::get('getBcryptPassword/{password}', function ($password) {
     echo bcrypt($password);
 });
 
+
+Route::get('runQueue', function () {
+    $master  = \App\Models\GRVMaster::where('approved',-1)->first();
+    /*$master  = \App\Models\GRVMaster::with(['details'])->find(1);
+    return $master->details;*/
+    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
+});
+
+
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
 
 Route::resource('years', 'YearAPIController');
+
+
+
+Route::resource('stock_transfers', 'StockTransferAPIController');

@@ -13,6 +13,7 @@
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as getAllWarehouseMaster()
 -- Date: 21 - March 2018 By: Pasan Description: Added a new function named as updateWarehouseMaster()
 -- Date: 10 - April 2018 By: Mubashir Description: Changed warehouse not found error message
+-- Date: 13 - July 2018 By: Nazir Description:  Added a new function named as getAllWarehouseForSelectedCompany()
  */
 namespace App\Http\Controllers\API;
 
@@ -298,5 +299,16 @@ class WarehouseMasterAPIController extends AppBaseController
         $warehouseMaster = $this->warehouseMasterRepository->update($data, $input['wareHouseSystemCode']);
 
         return $this->sendResponse($warehouseMaster->toArray(), 'Warehouse master updated successfully');
+    }
+
+    public function getAllWarehouseForSelectedCompany(Request $request)
+    {
+        $companyId = $request['selectedCompany'];
+
+        $warehouseMasters = WarehouseMaster::where('companySystemID',$companyId)
+            ->where('isActive', 1)
+            ->get();
+
+        return $this->sendResponse($warehouseMasters->toArray(), 'Record retrieved successfully');
     }
 }
