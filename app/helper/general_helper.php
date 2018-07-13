@@ -912,5 +912,17 @@ class Helper
         return $companyCurrency;
     }
 
+    /**
+     * Get all Companies drop
+     * @param $companySystemID - current company id
+     * @return array
+     */
+    public static function allCompanies()
+    {
+        $allCompanies = Models\Company::where('isGroup', 0)->where('isActive', 1)
+            ->get();
+        return $allCompanies;
+    }
+
 
 }

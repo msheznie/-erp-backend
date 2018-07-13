@@ -433,13 +433,17 @@ class StockTransferAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
+        $companies = \Helper::allCompanies();
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
-            'wareHouseLocation' => $wareHouseLocation
+            'wareHouseLocation' => $wareHouseLocation,
+            'financialYears' => $financialYears,
+            'companyFinanceYear' => $companyFinanceYear,
+            'companies' => $companies
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

@@ -203,6 +203,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('warehouse/masters', 'WarehouseMasterAPIController');
     Route::get('getWarehouseMasterFormData', 'WarehouseMasterAPIController@getWarehouseMasterFormData');
     Route::post('getAllWarehouseMaster', 'WarehouseMasterAPIController@getAllWarehouseMaster');
+    Route::get('getAllWHForSelectedCompany', 'WarehouseMasterAPIController@getAllWarehouseForSelectedCompany');
     Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster');
 
     /** Warehouse master Created by Fayas  */
