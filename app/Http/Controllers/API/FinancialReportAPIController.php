@@ -206,57 +206,86 @@ class FinancialReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
-                $output = $this->getTrialBalance($request);
-                $currencyIdLocal = 1;
-                $currencyIdRpt = 2;
-
-                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
-
-                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
-                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
-
-
-                if (!empty($decimalPlaceUniqueLocal)) {
-                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
-                }
-
-                if (!empty($decimalPlaceUniqueRpt)) {
-                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
-                }
-
-                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
-                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
-
-                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
-                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
-
-                $currencyLocal = $requestCurrencyLocal->CurrencyCode;
-                $currencyRpt = $requestCurrencyRpt->CurrencyCode;
-
                 $data = array();
-                if ($output) {
-                    $x = 0;
-                    foreach ($output as $val) {
-                        if ($request->reportSD == 'company_wise') {
-                            $data[$x]['Company ID'] = $val->companyID;
-                            $data[$x]['Company Name'] = $val->CompanyName;
-                        }
-                        $data[$x]['Account Code'] = $val->glCode;
-                        $data[$x]['Account Description'] = $val->AccountDescription;
-                        $data[$x]['Type'] = $val->glAccountType;
+                if($request->reportSD == 'company_wise_summary'){
+                    $companyID = "";
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    if ($checkIsGroup->isGroup) {
+                        $companyID = \Helper::getGroupCompany($request->companySystemID);
+                    } else {
+                        $companyID = (array)$request->companySystemID;
+                    }
 
-                        if ($checkIsGroup->isGroup == 0) {
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
-                        }
+                    $subCompanies = Company::whereIn('companySystemID',$companyID)->get(['companySystemID','CompanyID','CompanyName']);
 
-                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
-                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
-                        $x++;
+                    $output = $this->getTrialBalanceCompany_Wise($request,$subCompanies);
+
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Account Code'] = $val->glCode;
+                            $data[$x]['Account Description'] = $val->AccountDescription;
+                            $data[$x]['Type'] = $val->glAccountType;
+                            foreach ($subCompanies as $company){
+                                $comCode = $company['CompanyID'];
+                                $data[$x][$comCode] = round($val->$comCode,2);
+                            }
+                            $x++;
+                        }
+                    }
+
+                }else{
+                    $output = $this->getTrialBalance($request);
+
+                    $currencyIdLocal = 1;
+                    $currencyIdRpt = 2;
+
+                    $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                    $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+
+                    $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                    $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
+
+
+                    if (!empty($decimalPlaceUniqueLocal)) {
+                        $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+                    }
+
+                    if (!empty($decimalPlaceUniqueRpt)) {
+                        $currencyIdRpt = $decimalPlaceUniqueRpt[0];
+                    }
+
+                    $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
+                    $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
+
+                    $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
+                    $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
+                    $currencyLocal = $requestCurrencyLocal->CurrencyCode;
+                    $currencyRpt = $requestCurrencyRpt->CurrencyCode;
+
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            if ($request->reportSD == 'company_wise') {
+                                $data[$x]['Company ID'] = $val->companyID;
+                                $data[$x]['Company Name'] = $val->CompanyName;
+                            }
+                            $data[$x]['Account Code'] = $val->glCode;
+                            $data[$x]['Account Description'] = $val->AccountDescription;
+                            $data[$x]['Type'] = $val->glAccountType;
+
+                            if ($checkIsGroup->isGroup == 0) {
+                                $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
+                                $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
+                            }
+
+                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
+                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
+                            $x++;
+                        }
                     }
                 }
 
@@ -536,27 +565,194 @@ class FinancialReportAPIController extends AppBaseController
             $companyID = (array)$request->companySystemID;
         }
 
-        $query = 'SELECT
-                    erp_generalledger.companyID,
-                    companymaster.CompanyName,
-                    erp_generalledger.documentLocalCurrencyID,
-                    erp_generalledger.documentRptCurrencyID,
-                    erp_generalledger.documentID,
-                    erp_generalledger.documentSystemCode,
-                    erp_generalledger.documentCode,
-                    erp_generalledger.documentDate,
-                    erp_generalledger.glCode,
-                    If ( documentLocalAmount> 0,documentLocalAmount, 0 ) as localDebit,
-                    If ( documentLocalAmount> 0,0, documentLocalAmount*-1 ) as localCredit,
-                    If ( documentRptAmount> 0,documentRptAmount, 0 ) as rptDebit,
-                    If ( documentRptAmount> 0,0, documentRptAmount*-1 ) as rptCredit
-                FROM
-                    erp_generalledger 
-                INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
-                WHERE
-                    DATE(erp_generalledger.documentDate) <= "'. $toDate .'"	
-                    AND erp_generalledger.chartOfAccountSystemID  = '.$chartOfAccountID.'
-                    AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ');';
+        $query = 'SELECT erp_generalledger.companyID,
+                                    companymaster.CompanyName,
+                                    erp_generalledger.documentLocalCurrencyID,
+                                    erp_generalledger.documentRptCurrencyID,
+                                    erp_generalledger.documentID,
+                                    erp_generalledger.documentSystemCode,
+                                    erp_generalledger.documentCode,
+                                    erp_generalledger.documentDate,
+                                    erp_generalledger.glCode,
+                                    If ( documentLocalAmount> 0,documentLocalAmount, 0 ) as localDebit,
+                                    If ( documentLocalAmount> 0,0, documentLocalAmount*-1 ) as localCredit,
+                                    If ( documentRptAmount> 0,documentRptAmount, 0 ) as rptDebit,
+                                    If ( documentRptAmount> 0,0, documentRptAmount*-1 ) as rptCredit
+                                FROM
+                                    erp_generalledger 
+                                INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                                WHERE
+                                    DATE(erp_generalledger.documentDate) <= "'. $toDate .'"	
+                                    AND erp_generalledger.chartOfAccountSystemID  = '.$chartOfAccountID.'
+                                    AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ');';
+
+                        $output = \DB::select($query);
+                        //dd(DB::getQueryLog());
+                        return $output;
+
+                    }
+
+                    public function getTrialBalanceCompany_Wise($request,$subCompanies)
+                    {
+                        $fromDate = new Carbon($request->fromDate);
+                        $fromDate = $fromDate->format('Y-m-d');
+
+                        $toDate = new Carbon($request->toDate);
+                        $toDate = $toDate->format('Y-m-d');
+
+                        $companyID = "";
+                        $checkIsGroup = Company::find($request->companySystemID);
+                        if ($checkIsGroup->isGroup) {
+                            $companyID = \Helper::getGroupCompany($request->companySystemID);
+                        } else {
+                            $companyID = (array)$request->companySystemID;
+                        }
+
+                        $sumQry = "";
+                        $groupIfQry = "";
+
+                        foreach ($subCompanies as $company){
+                            $sumQry = $sumQry.' SUM(`'.$company['CompanyID'].'`) AS `'.$company['CompanyID'].'`,';
+                            $groupIfQry = $groupIfQry.' IF ( companySystemID = '.$company['companySystemID'].', documentRptAmount, 0 ) AS `'.$company['CompanyID'].'`,';
+                        }
+
+                        $query = 'SELECT 
+                                    chartOfAccountSystemID,
+                                        glCode,
+                                        AccountDescription,
+                                        glAccountType,
+                                        '.$sumQry.'
+                                        documentRptCurrencyID
+                                        FROM
+                                    (SELECT
+                                        chartOfAccountSystemID,
+                                        glCode,
+                                        AccountDescription,
+                                        glAccountType,
+                                        '.$groupIfQry.'
+                                        documentRptCurrencyID
+                                    FROM
+                                        (
+                                    SELECT
+                                        * 
+                                    FROM
+                                        (
+                                    SELECT
+                                        erp_generalledger.companySystemID,
+                                        erp_generalledger.companyID,
+                                        companymaster.CompanyName,
+                                        "" AS documentDate,
+                                        0 AS chartOfAccountSystemID,
+                                        "-" AS glCode,
+                                        "BS" AS glAccountType,
+                                        "Retained Earning" AS AccountDescription,
+                                        erp_generalledger.documentLocalCurrencyID,
+                                        erp_generalledger.documentLocalCurrencyER,
+                                        sum( erp_generalledger.documentLocalAmount *- 1 ) AS documentLocalAmount,
+                                        erp_generalledger.documentRptCurrencyID,
+                                        erp_generalledger.documentRptCurrencyER,
+                                        sum( erp_generalledger.documentRptAmount * - 1 ) documentRptAmount 
+                                    FROM
+                                        erp_generalledger
+                                        LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+                                        INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                                    WHERE
+                                        erp_generalledger.glAccountType = "BS" 
+                                        AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"  
+                                        
+                                    GROUP BY
+                                        glCode,
+                                        glAccountType 
+                                        ) AS ERP_qry_TBBS_BF_sum
+                                    UNION ALL
+                                    SELECT
+                                        * 
+                                    FROM
+                                        (
+                                        SELECT
+                                            erp_generalledger.companySystemID,
+                                            erp_generalledger.companyID,
+                                            companymaster.CompanyName,
+                                            erp_generalledger.documentDate AS documentDate,
+                                            erp_generalledger.chartOfAccountSystemID,
+                                            erp_generalledger.glCode AS glCode,
+                                            erp_generalledger.glAccountType AS glAccountType,
+                                            chartofaccounts.AccountDescription AS AccountDescription,
+                                            erp_generalledger.documentLocalCurrencyID,
+                                            erp_generalledger.documentLocalCurrencyER,
+                                            erp_generalledger.documentLocalAmount AS documentLocalAmount,
+                                            erp_generalledger.documentRptCurrencyID,
+                                            erp_generalledger.documentRptCurrencyER,
+                                            erp_generalledger.documentRptAmount documentRptAmount 
+                                        FROM
+                                            erp_generalledger
+                                            LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+                                            INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                                        WHERE
+                                            erp_generalledger.glAccountType = "BS" 
+                                            AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                            AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '" 
+                                        ) AS ERP_qry_TBBS_BF 
+                                    UNION ALL
+                                    SELECT
+                                        * 
+                                    FROM
+                                        (
+                                        SELECT
+                                            erp_generalledger.companySystemID,
+                                            erp_generalledger.companyID,
+                                            companymaster.CompanyName,
+                                            erp_generalledger.documentDate AS documentDate,
+                                            erp_generalledger.chartOfAccountSystemID,
+                                            erp_generalledger.glCode AS glCode,
+                                            erp_generalledger.glAccountType AS glAccountType,
+                                            chartofaccounts.AccountDescription AS AccountDescription,
+                                            erp_generalledger.documentLocalCurrencyID,
+                                            erp_generalledger.documentLocalCurrencyER,
+                                            erp_generalledger.documentLocalAmount AS documentLocalAmount,
+                                            erp_generalledger.documentRptCurrencyID,
+                                            erp_generalledger.documentRptCurrencyER,
+                                            erp_generalledger.documentRptAmount documentRptAmount 
+                                        FROM
+                                            erp_generalledger
+                                            LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+                                            INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                                        WHERE
+                                            chartofaccounts.catogaryBLorPL = "BS" 
+                                            AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                            AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                                        ) AS ERP_qry_TBBS 
+                                    UNION ALL
+                                    SELECT
+                                        * 
+                                    FROM
+                                        (
+                                        SELECT
+                                            erp_generalledger.companySystemID,
+                                            erp_generalledger.companyID,
+                                            companymaster.CompanyName,
+                                            erp_generalledger.documentDate AS documentDate,
+                                            erp_generalledger.chartOfAccountSystemID,
+                                            erp_generalledger.glCode AS glCode,
+                                            erp_generalledger.glAccountType AS glAccountType,
+                                            chartofaccounts.AccountDescription AS AccountDescription,
+                                            erp_generalledger.documentLocalCurrencyID,
+                                            erp_generalledger.documentLocalCurrencyER,
+                                            erp_generalledger.documentLocalAmount AS documentLocalAmount,
+                                            erp_generalledger.documentRptCurrencyID,
+                                            erp_generalledger.documentRptCurrencyER,
+                                            erp_generalledger.documentRptAmount documentRptAmount 
+                                        FROM
+                                            erp_generalledger
+                                            LEFT JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+                                            INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID 
+                                        WHERE
+                                            chartofaccounts.catogaryBLorPL = "PL" 
+                                            AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                                            AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                                        ) AS ERP_qry_TBPL 
+                                        ) AS FINAL ) AS FINALFINL GROUP BY chartOfAccountSystemID ORDER BY glCode ;';
 
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
