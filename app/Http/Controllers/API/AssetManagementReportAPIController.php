@@ -9,15 +9,17 @@
  * -- Description : This file contains the all the report generation code
  * -- REVISION HISTORY
  * -- Date: 12-july 2018 By: Mubashir Description: Added new functions named as getFilterData(),validateReport(),generateReport(),exportReport()
+ * -- Date: 12-july 2018 By: Nazir Description: Added new functions named as getAssetAdditionsQRY()
+ * -- Date: 12-july 2018 By: Fayas Description: Added new functions named as getAssetDisposal()
  */
 namespace App\Http\Controllers\API;
 
 use App\Models\AssetFinanceCategory;
-use App\Models\Company;
 use App\Models\Months;
 use App\Models\Year;
-use Carbon\Carbon;
+use App\Models\Company;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use App\Http\Controllers\AppBaseController;
 
 class AssetManagementReportAPIController extends AppBaseController
@@ -62,19 +64,23 @@ class AssetManagementReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'AMAA':
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'reportTypeID' => 'required',
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             case 'AMAD':
                 $validator = \Validator::make($request->all(), [
                     'reportTypeID' => 'required',
                     'fromDate' => 'required',
-                    'toDate' => 'required'
+                    'toDate' => 'required|date|after_or_equal:fromDate'
                 ]);
-
-                $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
-                $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
-
-                if ($fromDate > $toDate) {
-                    return $this->sendError('The To date must be greater than the From date !', 500);
-                }
 
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
@@ -93,7 +99,28 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMAR': //Asset Register
 
                 break;
-            case 'AMAD': //Asset Register
+            case 'AMAA': //Asset Additions
+
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getAssetAdditionsQRY($request);
+
+                $outputArr = array();
+                $assetCostLocal = collect($output)->pluck('AssetCostLocal')->toArray();
+                $assetCostLocal = array_sum($assetCostLocal);
+
+                $assetCostRpt = collect($output)->pluck('AssetCostRpt')->toArray();
+                $assetCostRpt = array_sum($assetCostRpt);
+
+                if ($output) {
+                    foreach ($output as $val) {
+                        $outputArr[$val->CompanyName][$val->companyID][] = $val;
+                    }
+                }
+
+                return array('reportData' => $outputArr, 'assetCostLocal' => $assetCostLocal, 'assetCostRpt' => $assetCostRpt);
+
+                break;
+            case 'AMAD': //Asset Disposal
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getAssetDisposal($request);
@@ -138,6 +165,44 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMAR': //Asset Register
 
                 break;
+            case 'AMAA': //Asset Additions
+                $type = $request->type;
+                $output = $this->getAssetAdditionsQRY($request);
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x]['Company Name'] = $val->CompanyName;
+                        $data[$x]['Asset Category'] = $val->AssetCategory;
+                        $data[$x]['Asset Type'] = $val->AssetType;
+                        $data[$x]['Asset Code'] = $val->AssetCODE;
+                        $data[$x]['Serial Number'] = $val->SerialNumber;
+                        $data[$x]['Asset Description'] = $val->AssetDescription;
+                        $data[$x]['DEP percentage'] = $val->DEPpercentage;
+                        $data[$x]['Date Acquired'] = \Helper::dateFormat($val->DateAquired);
+                        $data[$x]['GRV Code'] = $val->GRVCODE;
+                        $data[$x]['PO Code'] = $val->POCODE;
+                        $data[$x]['Service Line'] = $val->ServiceLineDes;
+                        $data[$x]['Supplier'] = $val->Supplier;
+                        $data[$x]['Asset Cost Local'] = $val->AssetCostLocal;
+                        $data[$x]['Asset Cost Rpt'] = $val->AssetCostRpt;
+                        $x++;
+                    }
+                } else {
+                    $data = array();
+                }
+                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
             case 'AMAD': //Asset Disposal
 
                 $type = $request->type;
@@ -145,8 +210,8 @@ class AssetManagementReportAPIController extends AppBaseController
                 $currency = \Helper::companyCurrency($request->companySystemID);
                 $output = $this->getAssetDisposal($request);
 
-                 $decimalPlaceLocal = $currency->reportingcurrency->DecimalPlaces;
-                 $decimalPlaceRpt = $currency->reportingcurrency->DecimalPlaces;
+                $decimalPlaceLocal = $currency->reportingcurrency->DecimalPlaces;
+                $decimalPlaceRpt = $currency->reportingcurrency->DecimalPlaces;
                 $data = array();
                 $x = 0;
                 foreach ($output as $val) {
@@ -185,10 +250,73 @@ class AssetManagementReportAPIController extends AppBaseController
                 return $this->sendResponse(array(), 'successfully export');
 
                 break;
-
             default:
                 return $this->sendError('No report ID found');
         }
+    }
+
+    // Asset Additions Query
+    function getAssetAdditionsQRY($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $query = 'SELECT
+                    erp_fa_asset_master.companySystemID,
+                    erp_fa_asset_master.companyID,
+                    companymaster.CompanyName,
+                    erp_fa_asset_master.faID,
+                    erp_fa_financecategory.financeCatDescription AS AssetCategory,
+                    erp_fa_assettype.typeDes AS AssetType,
+                    erp_fa_asset_master.faCode AS AssetCODE,
+                    erp_fa_asset_master.faUnitSerialNo AS SerialNumber,
+                    erp_fa_asset_master.assetDescription AS AssetDescription,
+                    ROUND(erp_fa_asset_master.DEPpercentage, 0) AS DEPpercentage,
+                    serviceline.ServiceLineDes AS ServiceLineDes,
+                    erp_fa_asset_master.dateAQ AS DateAquired,
+                    erp_fa_asset_master.docOrigin AS GRVCODE,
+                    erp_purchaseordermaster.purchaseOrderCode AS POCODE,
+                    erp_fa_asset_master.serviceLineCode AS ServiceLine,
+                    erp_fa_asset_master.MANUFACTURE AS Supplier,
+                    erp_fa_assetcost.localAmount AS AssetCostLocal,
+                    erp_fa_assetcost.rptAmount AS AssetCostRpt,
+                    locCur.CurrencyCode as localCurrency,
+                    locCur.DecimalPlaces as localCurrencyDeci,
+                    repCur.CurrencyCode as reportCurrency,
+                    repCur.DecimalPlaces as reportCurrencyDeci
+                FROM
+                    erp_fa_asset_master
+                LEFT JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
+                LEFT JOIN erp_fa_assetcost ON erp_fa_asset_master.faID = erp_fa_assetcost.faID
+                LEFT JOIN erp_fa_financecategory ON erp_fa_asset_master.AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
+                LEFT JOIN erp_grvmaster ON erp_fa_asset_master.docOriginSystemCode = erp_grvmaster.grvAutoID
+                LEFT JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+                LEFT JOIN erp_purchaseordermaster ON erp_grvdetails.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
+                LEFT JOIN companymaster ON companymaster.companySystemID = erp_fa_asset_master.companySystemID
+                LEFT JOIN serviceline ON erp_fa_asset_master.serviceLineSystemID = serviceline.serviceLineSystemID
+                LEFT JOIN currencymaster as locCur ON locCur.currencyID = companymaster.localCurrencyID
+                LEFT JOIN currencymaster as repCur ON repCur.currencyID = companymaster.reportingCurrency
+                WHERE erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
+                    AND DATE(erp_fa_asset_master.dateAQ) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                AND erp_fa_asset_master.approved = -1
+                GROUP BY
+                    erp_fa_asset_master.companySystemID,
+                    erp_fa_asset_master.faID ORDER BY erp_fa_asset_master.companyID ASC';
+        //echo $query;
+        //exit();
+        $output = \DB::select($query);
+        return $output;
     }
 
     function getAssetDisposal($request)
@@ -242,5 +370,4 @@ class AssetManagementReportAPIController extends AppBaseController
 
         return $output;
     }
-
 }
