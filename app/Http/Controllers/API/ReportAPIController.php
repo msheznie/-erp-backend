@@ -464,7 +464,7 @@ WHERE
                     if ($search) {
                         $output = $output->where('supplierName', 'LIKE', "%{$search}%");
                     }
-                    $output->orderBy('supplierName', 'ASC');
+                    $output->orderBy('supplierPrimaryCode', 'ASC');
                     $outputSUM = $output->get();
                     //dd(DB::getQueryLog());
 
@@ -901,7 +901,7 @@ WHERE
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
-                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate))->groupBy('supplierID')->orderBy('supplierName', 'ASC')->get();
+                        ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate))->groupBy('supplierID')->orderBy('supplierPrimaryCode', 'ASC')->get();
 
                     foreach ($output as $val) {
                         $data[] = array(

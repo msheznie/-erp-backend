@@ -386,7 +386,7 @@ class Helper
         } catch (\Exception $e) {
             DB::rollback();
             //dd($e);
-            return ['success' => false, 'message' => $e . 'Error Ocurred'];
+            return ['success' => false, 'message' => $e . 'Error Occurred'];
         }
     }
 
@@ -910,6 +910,18 @@ class Helper
             ->where('companySystemID', '=', $companySystemID)
             ->first();
         return $companyCurrency;
+    }
+
+    /**
+     * Get all Companies drop
+     * @param $companySystemID - current company id
+     * @return array
+     */
+    public static function allCompanies()
+    {
+        $allCompanies = Models\Company::where('isGroup', 0)->where('isActive', 1)
+            ->get();
+        return $allCompanies;
     }
 
 
