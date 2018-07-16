@@ -3137,7 +3137,7 @@ WHERE
 		custReceivePaymentAutoID 
 	) AS InvoicedBRV ON mainQuery.documentSystemID = InvoicedBRV.documentSystemID 
 	AND mainQuery.documentSystemCode = InvoicedBRV.custReceivePaymentAutoID
-	LEFT JOIN (
+	LEFT JOIN  (
 	SELECT
 		companySystemID,
 		companyID,
