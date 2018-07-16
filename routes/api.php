@@ -525,6 +525,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView');
     Route::get('getStockTransferFormData', 'StockTransferAPIController@getStockTransferFormData');
 
+    Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
+    Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
+    Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany');
+    Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
+    Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
+    Route::get('getMaterielReturnFormData', 'ItemReturnMasterAPIController@getMaterielReturnFormData');
+
 
 });
 
@@ -555,3 +562,4 @@ Route::resource('years', 'YearAPIController');
 
 
 Route::resource('stock_transfers', 'StockTransferAPIController');
+
