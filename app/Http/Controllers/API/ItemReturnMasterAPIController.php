@@ -1,0 +1,896 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : ItemReturnMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Item Return Details
+ * -- Author : Mohamed Fayas
+ * -- Create date : 16 - July 2018
+ * -- Description : This file contains the all CRUD for Document Attachments
+ * -- REVISION HISTORY
+ * -- Date: 16 - July 2018 By: Fayas Description: Added new functions named as getAllMaterielReturnByCompany(),getMaterielReturnFormData()
+ * -- Date: 17 - July 2018 By: Fayas Description: Added new functions named as getMaterielReturnAudit(),getMaterielReturnApprovalByUser(),getMaterielReturnApprovedByUser()
+ *
+ */
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateItemReturnMasterAPIRequest;
+use App\Http\Requests\API\UpdateItemReturnMasterAPIRequest;
+use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
+use App\Models\DocumentMaster;
+use App\Models\ItemIssueMaster;
+use App\Models\ItemReturnDetails;
+use App\Models\ItemReturnMaster;
+use App\Models\Months;
+use App\Models\SegmentMaster;
+use App\Models\Unit;
+use App\Models\WarehouseMaster;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
+use App\Repositories\ItemReturnMasterRepository;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class ItemReturnMasterController
+ * @package App\Http\Controllers\API
+ */
+
+class ItemReturnMasterAPIController extends AppBaseController
+{
+    /** @var  ItemReturnMasterRepository */
+    private $itemReturnMasterRepository;
+
+    public function __construct(ItemReturnMasterRepository $itemReturnMasterRepo)
+    {
+        $this->itemReturnMasterRepository = $itemReturnMasterRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/itemReturnMasters",
+     *      summary="Get a listing of the ItemReturnMasters.",
+     *      tags={"ItemReturnMaster"},
+     *      description="Get all ItemReturnMasters",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/ItemReturnMaster")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->itemReturnMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->itemReturnMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $itemReturnMasters = $this->itemReturnMasterRepository->all();
+
+        return $this->sendResponse($itemReturnMasters->toArray(), 'Item Return Masters retrieved successfully');
+    }
+
+
+    /**
+     * @param CreateItemReturnMasterAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/itemReturnMasters",
+     *      summary="Store a newly created ItemReturnMaster in storage",
+     *      tags={"ItemReturnMaster"},
+     *      description="Store ItemReturnMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ItemReturnMaster that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ItemReturnMaster")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ItemReturnMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateItemReturnMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['createdPCid'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
+
+        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+
+        if ($companyFinancePeriod) {
+            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        }
+
+        if (isset($input['ReturnDate'])) {
+            if ($input['ReturnDate']) {
+                $input['ReturnDate'] = new Carbon($input['ReturnDate']);
+            }
+        }
+
+        $documentDate = $input['ReturnDate'];
+        $monthBegin = $input['FYBiggin'];
+        $monthEnd = $input['FYEnd'];
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Return Date not between Financial period !', 500);
+        }
+
+        $input['documentSystemID'] = 12;
+        $input['documentID'] = 'SR';
+
+        $lastSerial = ItemReturnMaster::where('companySystemID', $input['companySystemID'])
+            ->orderBy('itemReturnAutoID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 0;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
+
+        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        if ($segment) {
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $input['serialNo'] = $lastSerialNumber;
+        $input['RollLevForApp_curr'] = 1;
+
+        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
+        $companyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+        if ($companyFinanceYear) {
+            $startYear = $companyFinanceYear['bigginingDate'];
+            $finYearExp = explode('-', $startYear);
+            $finYear = $finYearExp[0];
+        } else {
+            $finYear = date("Y");
+        }
+
+        if ($documentMaster) {
+            $itemReturnCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['itemReturnCode'] = $itemReturnCode;
+        }
+
+        $itemReturnMasters = $this->itemReturnMasterRepository->create($input);
+
+        return $this->sendResponse($itemReturnMasters->toArray(), 'Item Return Master saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/itemReturnMasters/{id}",
+     *      summary="Display the specified ItemReturnMaster",
+     *      tags={"ItemReturnMaster"},
+     *      description="Get ItemReturnMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ItemReturnMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ItemReturnMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var ItemReturnMaster $itemReturnMaster */
+        $itemReturnMaster = $this->itemReturnMasterRepository->with(['confirmed_by','created_by'])->findWithoutFail($id);
+
+        if (empty($itemReturnMaster)) {
+            return $this->sendError('Item Return Master not found');
+        }
+
+        return $this->sendResponse($itemReturnMaster->toArray(), 'Item Return Master retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateItemReturnMasterAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/itemReturnMasters/{id}",
+     *      summary="Update the specified ItemReturnMaster in storage",
+     *      tags={"ItemReturnMaster"},
+     *      description="Update ItemReturnMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ItemReturnMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ItemReturnMaster that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ItemReturnMaster")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ItemReturnMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateItemReturnMasterAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = array_except($input, ['created_by','confirmedByName',
+            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID']);
+
+        $input = $this->convertArrayToValue($input);
+
+        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+
+        if ($companyFinancePeriod) {
+            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        }
+
+        if (isset($input['ReturnDate'])) {
+            if ($input['ReturnDate']) {
+                $input['ReturnDate'] = new Carbon($input['ReturnDate']);
+            }
+        }
+
+        $documentDate = $input['ReturnDate'];
+        $monthBegin = $input['FYBiggin'];
+        $monthEnd = $input['FYEnd'];
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Return Date not between Financial period !', 500);
+        }
+
+        /** @var ItemReturnMaster $itemReturnMaster */
+        $itemReturnMaster = $this->itemReturnMasterRepository->findWithoutFail($id);
+
+        if (empty($itemReturnMaster)) {
+            return $this->sendError('Item Return Master not found');
+        }
+
+        if ($itemReturnMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $checkItems = ItemReturnDetails::where('itemReturnAutoID', $id)
+                                            ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every return should have at least one item', 500);
+            }
+
+            $checkQuantity = ItemReturnDetails::where('itemReturnAutoID', $id)
+                ->where(function ($q){
+                    $q->where('qtyIssued', '<=', 0)
+                        ->orWhereNull('qtyIssued');
+                })
+                ->count();
+
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+            }
+
+
+            $itemReturnDetails = ItemReturnDetails::where('itemReturnAutoID',$input['itemReturnAutoID'])->get();
+
+            foreach ($itemReturnDetails as $detail){
+                if ($detail['qtyIssuedDefaultMeasure'] > $detail['qtyFromIssue']) {
+                    return $this->sendError("Return quantity should not be greater than issues quantity. Please check again.", 500);
+                }
+
+                $itemIssuesCount =  ItemIssueMaster::where('itemIssueAutoID',$detail['issueCodeSystem'])
+                                                    ->where('companySystemID',$input['companySystemID'])
+                                                    ->where('approved',-1)
+                                                    ->whereHas('details',function ($q) use($detail){
+                                                        $q->where('itemCodeSystem',$detail['itemCodeSystem']);
+                                                    })
+                                                    ->count();
+
+                if($itemIssuesCount == 0){
+                    return $this->sendError('Selected item is not issued. Please check again', 500);
+                }
+
+            }
+
+
+            $amount = 0 ;
+            /*ItemReturnDetails::where('itemReturnAutoID', $id)
+                                        ->sum('issueCostRptTotal');*/
+
+            $input['RollLevForApp_curr'] = 1;
+            $params = array('autoID' => $id,
+                            'company'  => $itemReturnMaster->companySystemID,
+                            'document' => $itemReturnMaster->documentSystemID,
+                            'segment'  => $input['serviceLineSystemID'],
+                            'category' => 0,
+                            'amount'   => $amount
+                            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
+        $itemReturnMaster = $this->itemReturnMasterRepository->update($input, $id);
+
+        return $this->sendResponse($itemReturnMaster->toArray(), 'ItemReturnMaster updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/itemReturnMasters/{id}",
+     *      summary="Remove the specified ItemReturnMaster from storage",
+     *      tags={"ItemReturnMaster"},
+     *      description="Delete ItemReturnMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ItemReturnMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var ItemReturnMaster $itemReturnMaster */
+        $itemReturnMaster = $this->itemReturnMasterRepository->findWithoutFail($id);
+
+        if (empty($itemReturnMaster)) {
+            return $this->sendError('Item Return Master not found');
+        }
+
+        $itemReturnMaster->delete();
+
+        return $this->sendResponse($id, 'Item Return Master deleted successfully');
+    }
+
+    /**
+     * get All Materiel Issues By Company
+     * POST /getAllMaterielIssuesByCompany
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getAllMaterielReturnByCompany(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $itemReturnMaster = ItemReturnMaster::whereIn('companySystemID', $subCompanies)
+                                            ->with(['created_by', 'warehouse_by', 'segment_by', 'customer_by']);
+
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $itemReturnMaster->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $itemReturnMaster->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemReturnMaster->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('wareHouseLocation', $input)) {
+            if ($input['wareHouseLocation'] && !is_null($input['wareHouseLocation'])) {
+                $itemReturnMaster->where('wareHouseLocation', $input['wareHouseLocation']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemReturnMaster->whereMonth('ReturnDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemReturnMaster->whereYear('ReturnDate', '=', $input['year']);
+            }
+        }
+
+
+        $itemReturnMaster = $itemReturnMaster->select(
+               ['itemReturnAutoID',
+                'itemReturnCode',
+                'comment',
+                'ReturnDate',
+                'confirmedYN',
+                'approved',
+                'serviceLineSystemID',
+                'documentSystemID',
+                'confirmedByEmpSystemID',
+                'createdUserSystemID',
+                'confirmedDate',
+                'approvedDate',
+                'createdDateTime',
+                'ReturnRefNo',
+                'wareHouseLocation'
+            ]);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemReturnMaster = $itemReturnMaster->where(function ($query) use ($search) {
+                $query->where('itemReturnCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($itemReturnMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemReturnAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    /**
+     * get Materiel Return Form Data
+     * Get /getMaterielIssueFormData
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function getMaterielReturnFormData(Request $request)
+    {
+        $companyId = $request['companyId'];
+
+        $segments = SegmentMaster::where("companySystemID", $companyId);
+        if (isset($request['type']) && $request['type'] != 'filter') {
+            $segments = $segments->where('isActive', 1);
+        }
+        $segments = $segments->get();
+
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $month = Months::all();
+
+        $years = ItemReturnMaster::select(DB::raw("YEAR(createdDateTime) as year"))
+                                ->whereNotNull('createdDateTime')
+                                ->groupby('year')
+                                ->orderby('year', 'desc')
+                                ->get();
+
+        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
+        if (isset($request['type']) && $request['type'] != 'filter') {
+            $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
+        }
+        $wareHouseLocation = $wareHouseLocation->get();
+
+        $types = array(array('value' => 1, "label" => "Issue Return"),
+                       array('value' => 2, "label" => "Damaged/Repaired Return"));
+
+        $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
+            array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
+
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+
+        $contracts = "";
+
+        $units = Unit::all();
+
+        $output = array(
+            'segments' => $segments,
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'month' => $month,
+            'years' => $years,
+            'wareHouseLocation' => $wareHouseLocation,
+            'financialYears' => $financialYears,
+            'types' => $types,
+            'companyFinanceYear' => $companyFinanceYear,
+            'contracts' => $contracts,
+            'units' => $units
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    /**
+     * Display the specified Materiel Return Audit.
+     * GET|HEAD /getMaterielReturnAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getMaterielReturnAudit(Request $request)
+    {
+        $id = $request->get('id');
+
+        $materielReturn = $this->itemReturnMasterRepository
+                                ->with(['created_by','confirmed_by','modified_by','approved_by' => function ($query) {
+                                    $query->with('employee')
+                                        ->where('documentSystemID',12);
+                                }])
+                                ->findWithoutFail($id);
+
+        if (empty($materielReturn)) {
+            return $this->sendError('Materiel Return not found');
+        }
+
+        return $this->sendResponse($materielReturn->toArray(), 'Materiel Return retrieved successfully');
+    }
+
+    /**
+     * get Materiel Return Approval By User
+     * POST /getMaterielReturnApprovalByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getMaterielReturnApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $itemReturnMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_itemreturnmaster.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As MRServiceLineDes',
+                'warehousemaster.wareHouseDescription As MRWareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+                    ->where('documentSystemID', 1)
+                    ->first();
+
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
+
+                $query->whereIn('employeesdepartments.documentSystemID', [12])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_itemreturnmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'itemReturnAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_itemreturnmaster.companySystemID', $companyId)
+                    ->where('erp_itemreturnmaster.approved', 0)
+                    ->where('erp_itemreturnmaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'erp_itemreturnmaster.wareHouseLocation', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_itemreturnmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [12])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemReturnMaster->where('erp_itemreturnmaster.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('wareHouseLocation', $input)) {
+            if ($input['wareHouseLocation'] && !is_null($input['wareHouseLocation'])) {
+                $itemReturnMaster->where('erp_itemreturnmaster.wareHouseLocation', $input['wareHouseLocation']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemReturnMaster->whereMonth('erp_itemreturnmaster.ReturnDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemReturnMaster->whereYear('erp_itemreturnmaster.ReturnDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemReturnMaster = $itemReturnMaster->where(function ($query) use ($search) {
+                $query->where('itemReturnCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($itemReturnMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemReturnAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+
+    /**
+     * get Materiel Return Approved By User
+     * POST /getMaterielReturnApprovedByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getMaterielReturnApprovedByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $itemReturnMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_itemreturnmaster.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As MRServiceLineDes',
+                'warehousemaster.wareHouseDescription As MRWareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_itemreturnmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'itemReturnAutoID')
+                    ->where('erp_itemreturnmaster.companySystemID', $companyId)
+                    ->where('erp_itemreturnmaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'erp_itemreturnmaster.wareHouseLocation', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_itemreturnmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [12])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemReturnMaster->where('erp_itemreturnmaster.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('wareHouseLocation', $input)) {
+            if ($input['wareHouseFrom'] && !is_null($input['wareHouseLocation'])) {
+                $itemReturnMaster->where('erp_itemreturnmaster.wareHouseLocation', $input['wareHouseLocation']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemReturnMaster->whereMonth('erp_itemreturnmaster.ReturnDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemReturnMaster->whereYear('erp_itemreturnmaster.ReturnDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemReturnMaster = $itemReturnMaster->where(function ($query) use ($search) {
+                $query->where('itemReturnCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($itemReturnMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemReturnAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+}

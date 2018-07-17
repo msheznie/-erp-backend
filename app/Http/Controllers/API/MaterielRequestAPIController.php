@@ -10,12 +10,14 @@
  * -- REVISION HISTORY
  * -- Date: 12-June 2018 By: Fayas Description: Added new functions named as getAllRequestByCompany(),getRequestFormData()
  * -- Date: 19-June 2018 By: Fayas Description: Added new functions named as materielRequestAudit()
+ * -- Date: 13-July 2018 By: Fayas Description: Added new functions named as getAllNotApprovedRequestByUser(),getApprovedMaterielRequestsByUser()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMaterielRequestAPIRequest;
 use App\Http\Requests\API\UpdateMaterielRequestAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
@@ -31,6 +33,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\MaterielRequestRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -184,6 +187,163 @@ class MaterielRequestAPIController extends AppBaseController
     }
 
     /**
+     * get All Not Approved Request By User
+     * POST /getAllNotApprovedRequestByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getAllNotApprovedRequestByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $companyId = $request['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $materielRequests = DB::table('erp_documentapproved')
+            ->select(
+                'erp_request.*',
+                'serviceline.ServiceLineDes As MRServiceLineDes',
+                'warehousemaster.wareHouseDescription As MRWareHouseDescription',
+                'erp_priority.priorityDescription As MRPriorityDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                    ->whereIn('employeesdepartments.documentSystemID', [9])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_request', function ($query) use ($companyId) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'RequestID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_request.companySystemID', $companyId)
+                    ->where('erp_request.approved', 0)
+                    ->where('erp_request.ConfirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_request.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('erp_priority', 'erp_request.priority', 'erp_priority.priorityID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [9])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $materielRequests = $materielRequests->where(function ($query) use ($search) {
+                $query->where('RequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($materielRequests)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('RequestID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    /**
+     * get Approved Materiel Requests By User
+     * POST /getMaterielIssueApprovedByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getApprovedMaterielRequestsByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $materielRequests = DB::table('erp_documentapproved')
+            ->select(
+                'erp_request.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As MRServiceLineDes',
+                'warehousemaster.wareHouseDescription As MRWareHouseDescription',
+                'erp_priority.priorityDescription As MRPriorityDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_request', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'RequestID')
+                    ->where('erp_request.companySystemID', $companyId)
+                    ->where('erp_request.approved', -1)
+                    ->where('erp_request.ConfirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_request.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('erp_priority', 'erp_request.priority', 'erp_priority.priorityID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [9])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $materielRequests = $materielRequests->where(function ($query) use ($search) {
+                $query->where('RequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($materielRequests)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('RequestID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    /**
      * @param CreateMaterielRequestAPIRequest $request
      * @return Response
      *
@@ -237,6 +397,7 @@ class MaterielRequestAPIController extends AppBaseController
         $input['departmentSystemID'] = 10;
         $input['documentSystemID'] =  9;
         $input['ConfirmedYN'] =  0;
+        $input['RollLevForApp_curr'] = 1;
 
         $lastSerial = MaterielRequest::where('companySystemID', $input['companySystemID'])
                                         ->where('documentSystemID', $input['documentSystemID'])

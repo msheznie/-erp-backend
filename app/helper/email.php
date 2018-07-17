@@ -21,6 +21,7 @@ use App\Models\Employee;
 use App\Models\GRVMaster;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
+use App\Models\ItemReturnMaster;
 use App\Models\MaterielRequest;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
@@ -155,7 +156,14 @@ class email
                     $stockTransfer = StockTransfer::where('stockTransferAutoID', $data['docSystemCode'])->first();
                     if (!empty($stockTransfer)) {
                         $data['docApprovedYN'] = $stockTransfer->approved;
-                        $data['docCode']       = $stockTransfer->stockTransferCode;
+                        $data['docCode'] = $stockTransfer->stockTransferCode;
+                    }
+                    break;
+                case 12:
+                    $materielReturn = ItemReturnMaster::where('itemReturnAutoID', $data['docSystemCode'])->first();
+                    if (!empty($materielReturn)) {
+                        $data['docApprovedYN'] = $materielReturn->approved;
+                        $data['docCode']       = $materielReturn->itemReturnCode;
                     }
                     break;
                 default:

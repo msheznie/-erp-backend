@@ -481,8 +481,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
     Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
-    Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
-    Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
+    Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser');
+    Route::post('getApprovedMaterielRequestsByUser', 'MaterielRequestAPIController@getApprovedMaterielRequestsByUser');
     Route::get('materielRequestAudit', 'MaterielRequestAPIController@materielRequestAudit');
     Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
     Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
@@ -533,6 +533,18 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser');
     Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer');
     Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
+    Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
+    Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
+    Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany');
+    Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
+    Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
+    Route::get('getMaterielReturnFormData', 'ItemReturnMasterAPIController@getMaterielReturnFormData');
+    Route::get('getItemsByMaterielReturn', 'ItemReturnDetailsAPIController@getItemsByMaterielReturn');
+    Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn');
+    Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
+    Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
+    Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
+
 
 });
 
@@ -549,18 +561,11 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 
 
 Route::get('runQueue', function () {
-    $master = \App\Models\GRVMaster::where('approved', -1)->first();
-    /*$master  = \App\Models\GRVMaster::with(['details'])->find(1);
-    return $master->details;*/
+    $master  = ['documentSystemID' => 12,'autoID' => 35];
     $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
 });
 
-
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
-
 Route::resource('years', 'YearAPIController');
-
-
-
 
 
