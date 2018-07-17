@@ -552,7 +552,7 @@ class ProcumentOrderAPIController extends AppBaseController
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
                     $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($detailSum['total'] - $input['poDiscountAmount']) + $input['VATAmount']);
-                    if ($payment['comAmount'] != $paymentPercentageAmount) {
+                    if ($payment['comAmount'] != round($paymentPercentageAmount, 8)) {
                         return $this->sendError('Payment terms is not matching with the PO total');
                     }
                 }
@@ -1785,8 +1785,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         if ($input['documentId'] == 1) {
-
-            $supplierReportGRVBase = DB::select('SELECT
+            $doc1_query = 'SELECT
         GRVDet.*,
 	PODet.purchaseOrderMasterID,
 	PODet.companyID,
@@ -1873,9 +1872,12 @@ LEFT JOIN (
 WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
-AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(GRVDet.grvDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID');
+AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(GRVDet.grvDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID';
+            echo $doc1_query;
+            exit();
+            $supplierReportGRVBase = DB::select($doc1_query);
         } else if ($input['documentId'] == 2) {
-            $supplierReportGRVBase = DB::select('SELECT
+            $doc2_query = 'SELECT
          InvoiceDet.*,
 	PODet.purchaseOrderMasterID,
 	PODet.companyID,
@@ -1960,7 +1962,8 @@ LEFT JOIN (
 WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
-AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID');
+AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID';
+            $supplierReportGRVBase = DB::select($doc2_query);
         }
         $alltotal = array();
         $i = 0;
