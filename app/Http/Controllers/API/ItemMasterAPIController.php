@@ -13,6 +13,7 @@
  * -- Date: 03-April 2018 By: Mubashir Description: Added a new function getAllItemsMasterApproval() to display items to be approved
  * -- Date: 10-April 2018 By: Fayas Description: Added a new function itemMasterBulkCreate().
  * -- Date: 05-June 2018 By: Mubashir Description: Modified getAllItemsMaster() to handle filters from local storage
+ * -- Date: 17-July 2018 By: Fayas Description: Added new functions named as getItemMasterAudit()
  */
 
 
@@ -596,5 +597,31 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendResponse(array(), $reject["message"]);
         }
 
+    }
+
+    /**
+     * Display the specified Item Master Audit.
+     * GET|HEAD /getItemMasterAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getItemMasterAudit(Request $request)
+    {
+        $id = $request->get('id');
+
+        $materielRequest = $this->itemMasterRepository
+            ->with(['created_by','confirmed_by','modified_by','approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('documentSystemID',57);
+            }])
+            ->findWithoutFail($id);
+
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Issue not found');
+        }
+
+        return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
     }
 }
