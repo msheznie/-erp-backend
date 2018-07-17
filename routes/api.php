@@ -552,9 +552,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 
 
 Route::get('runQueue', function () {
-    $master  = \App\Models\GRVMaster::where('approved',-1)->first();
-    /*$master  = \App\Models\GRVMaster::with(['details'])->find(1);
-    return $master->details;*/
+    $master  = ['documentSystemID' => 12,'autoID' => 35];
     $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
 });
 
