@@ -3484,6 +3484,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         AND erp_purchaseordermaster.poCancelledYN = 0 
                         AND poType_N <> 5 
                         AND YEAR ( erp_purchaseordermaster.approvedDate ) = '.$year.' 
+                        AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
                     GROUP BY
                         '.$companyWise.'
                         erp_purchaseordermaster.supplierID 	Order BY Amount DESC;';

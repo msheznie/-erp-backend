@@ -642,7 +642,6 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->join('erp_itemissuemaster', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'itemIssueAutoID')
                     ->where('erp_itemissuemaster.companySystemID', $companyId)
-                    ->where('erp_itemissuemaster.approved', -1)
                     ->where('erp_itemissuemaster.confirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', -1)

@@ -134,7 +134,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 break;
             case 'AMAD': //Asset Disposal
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getAssetDisposal($request);
 
@@ -168,7 +168,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMADR': //Asset Depreciation Register
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'ADRM') { //Asset Depreciation Register Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationRegisterMonthlyQRY($request);
 
@@ -192,7 +192,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output['data'], 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $output['month']);
                 } else if ($reportTypeID == 'ADDM') { //Asset Depreciation Detail Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationDetailMonthlyQRY($request);
 
@@ -234,7 +234,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
 
                 } else if ($reportTypeID == 'ADDS') { //Asset Depreciation Detail Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationDetailSummaryQRY($request);
 
@@ -268,7 +268,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
                 } else if ($reportTypeID == 'ADCS') { //Asset Depreciation Category Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationCategorySummaryQRY($request);
 
@@ -302,7 +302,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
                 } else if ($reportTypeID == 'ADCSM') { //Asset Depreciation Category Summary Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationCategorySummaryMonthlyQRY($request);
 
@@ -399,7 +399,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMAD': //Asset Disposal
 
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
                 $currency = \Helper::companyCurrency($request->companySystemID);
                 $output = $this->getAssetDisposal($request);
 
@@ -446,7 +446,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMADR': //Asset Depreciation Register
                 $data = [];
                 $reportTypeID = $request->reportTypeID;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
                 if ($reportTypeID == 'ADRM') { //Asset Depreciation Register Monthly
                     $output = $this->assetDepreciationRegisterMonthlyQRY($request);
                     if ($output['data']) {
@@ -808,24 +808,24 @@ erp_fa_asset_master.faID';
         $currentYearDep = "";
         if ($currency == 2) {
             $currentMonthDep = "sum( ( IF ( assetDepreciation.runningMonthDepreciationLocal IS NULL, 0, assetDepreciation.runningMonthDepreciationLocal ) ) ) AS currentMonthDepreciation";
-            $cost = "round( erp_fa_asset_master.COSTUNIT, 3 ) AS cost";
-            $accumilatedAmount = "IF
+            $cost = "SUM(round( erp_fa_asset_master.COSTUNIT, 3 )) AS cost";
+            $accumilatedAmount = "SUM(IF
 	( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) -
 IF
-	( disposal.disposalAmountLocal IS NULL, 0, disposal.disposalAmountLocal ) AS accumulatedDepreciation";
-            $netBookValue = "round( erp_fa_asset_master.COSTUNIT, 3 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) ) AS netBookValue";
-            $currentYearDep = "IF
-	( DepreciationTotalCurPrevYear.currentYearDepAmountLocal IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountLocal ) AS currentYearDepAmount";
+	( disposal.disposalAmountLocal IS NULL, 0, disposal.disposalAmountLocal )) AS accumulatedDepreciation";
+            $netBookValue = "SUM(round( erp_fa_asset_master.COSTUNIT, 3 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) )) AS netBookValue";
+            $currentYearDep = "SUM(IF
+	( DepreciationTotalCurPrevYear.currentYearDepAmountLocal IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountLocal )) AS currentYearDepAmount";
         } else {
             $currentMonthDep = "sum( ( IF ( assetDepreciation.runningMonthDepreciationRpt IS NULL, 0, assetDepreciation.runningMonthDepreciationRpt ) ) ) AS currentMonthDepreciation";
-            $cost = "round( erp_fa_asset_master.costUnitRpt, 2 ) AS cost";
-            $accumilatedAmount = "IF
+            $cost = "SUM(round( erp_fa_asset_master.costUnitRpt, 2 )) AS cost";
+            $accumilatedAmount = "SUM(IF
 	( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) -
 IF
-	( disposal.disposalAmountRpt IS NULL, 0, disposal.disposalAmountRpt ) AS accumulatedDepreciation";
-            $netBookValue = "round( erp_fa_asset_master.costUnitRpt, 2 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) ) AS netBookValue";
-            $currentYearDep = "IF
-	( DepreciationTotalCurPrevYear.currentYearDepAmountRpt IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountRpt ) AS currentYearDepAmount";
+	( disposal.disposalAmountRpt IS NULL, 0, disposal.disposalAmountRpt )) AS accumulatedDepreciation";
+            $netBookValue = "SUM(round( erp_fa_asset_master.costUnitRpt, 2 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) )) AS netBookValue";
+            $currentYearDep = "SUM(IF
+	( DepreciationTotalCurPrevYear.currentYearDepAmountRpt IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountRpt )) AS currentYearDepAmount";
         }
 
         $sql = 'SELECT
@@ -859,14 +859,16 @@ SELECT
 	erp_fa_assetdepreciationperiods.costUnitRpt AS CostAmountRpt,
 	erp_fa_assetdepreciationperiods.depAmountLocal,
 	erp_fa_assetdepreciationperiods.depAmountRpt,
-      erp_fa_assetdepreciationperiods.depAmountLocal AS runningMonthDepreciationLocal,-- 7 is the month which is selected in the filter
-        erp_fa_assetdepreciationperiods.depAmountRpt AS runningMonthDepreciationRpt -- 7 is the month which is selected in the filter
+      IF
+	( MONTH ( erp_fa_depmaster.depDate ) = ' . $month . ', erp_fa_assetdepreciationperiods.depAmountLocal, 0 ) AS runningMonthDepreciationLocal,-- 7 is the month which is selected in the filter
+IF
+	( MONTH ( erp_fa_depmaster.depDate ) = ' . $month . ', erp_fa_assetdepreciationperiods.depAmountRpt, 0 ) AS runningMonthDepreciationRpt -- 7 is the month which is selected in the filter
 FROM
 	erp_fa_depmaster
 	INNER JOIN erp_fa_assetdepreciationperiods ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
 WHERE
 	erp_fa_depmaster.companySystemID IN (' . join(',', $companyID) . ') 
-	AND DATE_FORMAT ( erp_fa_depmaster.depDate,"%Y-%m" ) = "' . $year . '-' . $month . '" -- year which is selected in filter option
+	AND YEAR ( erp_fa_depmaster.depDate ) = ' . $year . ' -- year which is selected in filter option
 	) AS assetDepreciation ON assetDepreciation.companySystemID = erp_fa_asset_master.companySystemID 
 	AND assetDepreciation.faID = erp_fa_asset_master.faID
 	LEFT JOIN (
@@ -982,27 +984,27 @@ erp_fa_asset_master.faID;';
         $monthField = "";
         if ($currency == 2) {
             $currentMonthDep = "sum( ( IF ( assetDepreciation.runningMonthDepreciationLocal IS NULL, 0, assetDepreciation.runningMonthDepreciationLocal ) ) ) AS currentMonthDepreciation";
-            $cost = "round( erp_fa_asset_master.COSTUNIT, 3 ) AS cost";
-            $accumilatedAmount = "IF
+            $cost = "SUM(round( erp_fa_asset_master.COSTUNIT, 3 )) AS cost";
+            $accumilatedAmount = "SUM(IF
 	( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) -
 IF
-	( disposal.disposalAmountLocal IS NULL, 0, disposal.disposalAmountLocal ) AS accumulatedDepreciation";
-            $netBookValue = "round( erp_fa_asset_master.COSTUNIT, 3 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) ) AS netBookValue";
-            $currentYearDep = "IF
-	( DepreciationTotalCurPrevYear.currentYearDepAmountLocal IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountLocal ) AS currentYearDepAmount";
+	( disposal.disposalAmountLocal IS NULL, 0, disposal.disposalAmountLocal )) AS accumulatedDepreciation";
+            $netBookValue = "SUM(round( erp_fa_asset_master.COSTUNIT, 3 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) )) AS netBookValue";
+            $currentYearDep = "SUM(IF
+	( DepreciationTotalCurPrevYear.currentYearDepAmountLocal IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountLocal )) AS currentYearDepAmount";
             foreach ($arrayMonth as $key => $val) {
                 $monthField .= "if(MONTH(erp_fa_depmaster.depDate) = " . ($key + 1) . ",round(erp_fa_assetdepreciationperiods.depAmountLocal, 2),0) as `" . $val . "`,";
             }
         } else {
             $currentMonthDep = "sum( ( IF ( assetDepreciation.runningMonthDepreciationRpt IS NULL, 0, assetDepreciation.runningMonthDepreciationRpt ) ) ) AS currentMonthDepreciation";
-            $cost = "round( erp_fa_asset_master.costUnitRpt, 2 ) AS cost";
-            $accumilatedAmount = "IF
+            $cost = "SUM(round( erp_fa_asset_master.costUnitRpt, 2 )) AS cost";
+            $accumilatedAmount = "SUM(IF
 	( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) -
 IF
-	( disposal.disposalAmountRpt IS NULL, 0, disposal.disposalAmountRpt ) AS accumulatedDepreciation";
-            $netBookValue = "round( erp_fa_asset_master.costUnitRpt, 2 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) ) AS netBookValue";
-            $currentYearDep = "IF
-	( DepreciationTotalCurPrevYear.currentYearDepAmountRpt IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountRpt ) AS currentYearDepAmount";
+	( disposal.disposalAmountRpt IS NULL, 0, disposal.disposalAmountRpt )) AS accumulatedDepreciation";
+            $netBookValue = "SUM(round( erp_fa_asset_master.costUnitRpt, 2 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) )) AS netBookValue";
+            $currentYearDep = "SUM(IF
+	( DepreciationTotalCurPrevYear.currentYearDepAmountRpt IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountRpt )) AS currentYearDepAmount";
             foreach ($arrayMonth as $key => $val) {
                 $monthField .= "if(MONTH(erp_fa_depmaster.depDate) = " . ($key + 1) . ",round(erp_fa_assetdepreciationperiods.depAmountRpt, 2),0) as `" . $val . "`,";
             }
@@ -1173,24 +1175,24 @@ erp_fa_asset_master.faID;';
         $currentYearDep = "";
         if ($currency == 2) {
             $currentMonthDep = "sum( ( IF ( assetDepreciation.runningMonthDepreciationLocal IS NULL, 0, assetDepreciation.runningMonthDepreciationLocal ) ) ) AS currentMonthDepreciation";
-            $cost = "round( erp_fa_asset_master.COSTUNIT, 3 ) AS cost";
-            $accumilatedAmount = "IF
+            $cost = "SUM(round( erp_fa_asset_master.COSTUNIT, 3 )) AS cost";
+            $accumilatedAmount = "SUM(IF
 	( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) -
 IF
-	( disposal.disposalAmountLocal IS NULL, 0, disposal.disposalAmountLocal ) AS accumulatedDepreciation";
-            $netBookValue = "round( erp_fa_asset_master.COSTUNIT, 3 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) ) AS netBookValue";
-            $currentYearDep = "IF
-	( DepreciationTotalCurPrevYear.currentYearDepAmountLocal IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountLocal ) AS currentYearDepAmount";
+	( disposal.disposalAmountLocal IS NULL, 0, disposal.disposalAmountLocal )) AS accumulatedDepreciation";
+            $netBookValue = "SUM(round( erp_fa_asset_master.COSTUNIT, 3 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) )) AS netBookValue";
+            $currentYearDep = "SUM(IF
+	( DepreciationTotalCurPrevYear.currentYearDepAmountLocal IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountLocal )) AS currentYearDepAmount";
         } else {
             $currentMonthDep = "sum( ( IF ( assetDepreciation.runningMonthDepreciationRpt IS NULL, 0, assetDepreciation.runningMonthDepreciationRpt ) ) ) AS currentMonthDepreciation";
-            $cost = "round( erp_fa_asset_master.costUnitRpt, 2 ) AS cost";
-            $accumilatedAmount = "IF
+            $cost = "SUM(round( erp_fa_asset_master.costUnitRpt, 2 )) AS cost";
+            $accumilatedAmount = "SUM(IF
 	( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) -
 IF
-	( disposal.disposalAmountRpt IS NULL, 0, disposal.disposalAmountRpt ) AS accumulatedDepreciation";
-            $netBookValue = "round( erp_fa_asset_master.costUnitRpt, 2 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) ) AS netBookValue";
-            $currentYearDep = "IF
-	( DepreciationTotalCurPrevYear.currentYearDepAmountRpt IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountRpt ) AS currentYearDepAmount";
+	( disposal.disposalAmountRpt IS NULL, 0, disposal.disposalAmountRpt )) AS accumulatedDepreciation";
+            $netBookValue = "SUM(round( erp_fa_asset_master.costUnitRpt, 2 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) )) AS netBookValue";
+            $currentYearDep = "SUM(IF
+	( DepreciationTotalCurPrevYear.currentYearDepAmountRpt IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountRpt )) AS currentYearDepAmount";
         }
 
         $sql = 'SELECT
@@ -1224,14 +1226,16 @@ SELECT
 	erp_fa_assetdepreciationperiods.costUnitRpt AS CostAmountRpt,
 	erp_fa_assetdepreciationperiods.depAmountLocal,
 	erp_fa_assetdepreciationperiods.depAmountRpt,
-      erp_fa_assetdepreciationperiods.depAmountLocal AS runningMonthDepreciationLocal,-- 7 is the month which is selected in the filter
-        erp_fa_assetdepreciationperiods.depAmountRpt AS runningMonthDepreciationRpt -- 7 is the month which is selected in the filter
+      IF
+	( MONTH ( erp_fa_depmaster.depDate ) = ' . $month . ', erp_fa_assetdepreciationperiods.depAmountLocal, 0 ) AS runningMonthDepreciationLocal,-- 7 is the month which is selected in the filter
+IF
+	( MONTH ( erp_fa_depmaster.depDate ) = ' . $month . ', erp_fa_assetdepreciationperiods.depAmountRpt, 0 ) AS runningMonthDepreciationRpt -- 7 is the month which is selected in the filter
 FROM
 	erp_fa_depmaster
 	INNER JOIN erp_fa_assetdepreciationperiods ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
 WHERE
 	erp_fa_depmaster.companySystemID IN (' . join(',', $companyID) . ') 
-	AND DATE_FORMAT ( erp_fa_depmaster.depDate,"%Y-%m" ) = "' . $year . '-' . $month . '" -- year which is selected in filter option
+	AND YEAR ( erp_fa_depmaster.depDate ) = ' . $year . ' -- year which is selected in filter option
 	) AS assetDepreciation ON assetDepreciation.companySystemID = erp_fa_asset_master.companySystemID 
 	AND assetDepreciation.faID = erp_fa_asset_master.faID
 	LEFT JOIN (
@@ -1347,27 +1351,27 @@ erp_fa_asset_master.faCatID;';
         $monthField = "";
         if ($currency == 2) {
             $currentMonthDep = "sum( ( IF ( assetDepreciation.runningMonthDepreciationLocal IS NULL, 0, assetDepreciation.runningMonthDepreciationLocal ) ) ) AS currentMonthDepreciation";
-            $cost = "round( erp_fa_asset_master.COSTUNIT, 3 ) AS cost";
-            $accumilatedAmount = "IF
+            $cost = "SUM(round( erp_fa_asset_master.COSTUNIT, 3 )) AS cost";
+            $accumilatedAmount = "SUM(IF
 	( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) -
 IF
-	( disposal.disposalAmountLocal IS NULL, 0, disposal.disposalAmountLocal ) AS accumulatedDepreciation";
-            $netBookValue = "round( erp_fa_asset_master.COSTUNIT, 3 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) ) AS netBookValue";
-            $currentYearDep = "IF
-	( DepreciationTotalCurPrevYear.currentYearDepAmountLocal IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountLocal ) AS currentYearDepAmount";
+	( disposal.disposalAmountLocal IS NULL, 0, disposal.disposalAmountLocal )) AS accumulatedDepreciation";
+            $netBookValue = "SUM(round( erp_fa_asset_master.COSTUNIT, 3 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationLocal IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationLocal ) )) AS netBookValue";
+            $currentYearDep = "SUM(IF
+	( DepreciationTotalCurPrevYear.currentYearDepAmountLocal IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountLocal )) AS currentYearDepAmount";
             foreach ($arrayMonth as $key => $val) {
                 $monthField .= "if(MONTH(erp_fa_depmaster.depDate) = " . ($key + 1) . ",round(erp_fa_assetdepreciationperiods.depAmountLocal, 2),0) as `" . $val . "`,";
             }
         } else {
             $currentMonthDep = "sum( ( IF ( assetDepreciation.runningMonthDepreciationRpt IS NULL, 0, assetDepreciation.runningMonthDepreciationRpt ) ) ) AS currentMonthDepreciation";
-            $cost = "round( erp_fa_asset_master.costUnitRpt, 2 ) AS cost";
-            $accumilatedAmount = "IF
+            $cost = "SUM(round( erp_fa_asset_master.costUnitRpt, 2 )) AS cost";
+            $accumilatedAmount = "SUM(IF
 	( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) -
 IF
-	( disposal.disposalAmountRpt IS NULL, 0, disposal.disposalAmountRpt ) AS accumulatedDepreciation";
-            $netBookValue = "round( erp_fa_asset_master.costUnitRpt, 2 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) ) AS netBookValue";
-            $currentYearDep = "IF
-	( DepreciationTotalCurPrevYear.currentYearDepAmountRpt IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountRpt ) AS currentYearDepAmount";
+	( disposal.disposalAmountRpt IS NULL, 0, disposal.disposalAmountRpt )) AS accumulatedDepreciation";
+            $netBookValue = "SUM(round( erp_fa_asset_master.costUnitRpt, 2 ) - ( IF ( AccumulatedDepreciation.AccumulatedDepreciationRpt IS NULL, 0, AccumulatedDepreciation.AccumulatedDepreciationRpt ) )) AS netBookValue";
+            $currentYearDep = "SUM(IF
+	( DepreciationTotalCurPrevYear.currentYearDepAmountRpt IS NULL, 0, DepreciationTotalCurPrevYear.currentYearDepAmountRpt )) AS currentYearDepAmount";
             foreach ($arrayMonth as $key => $val) {
                 $monthField .= "if(MONTH(erp_fa_depmaster.depDate) = " . ($key + 1) . ",round(erp_fa_assetdepreciationperiods.depAmountRpt, 2),0) as `" . $val . "`,";
             }

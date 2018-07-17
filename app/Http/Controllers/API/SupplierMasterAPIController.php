@@ -11,6 +11,7 @@
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getSupplierMasterByCompany(),getAssignedCompaniesBySupplier(),
  * -- Date: 06-June 2018 By: Mubashir Description: Modified getSupplierMasterByCompany() to handle filters from local storage
  * -- Date: 25-June 2018 By: Mubashir Description: Added new functions named as getSearchSupplierByCompany()
+ * -- Date: 17-July 2018 By: Fayas Description: Added new functions named as getSupplierMasterAudit()
  */
 
 namespace App\Http\Controllers\API;
@@ -540,5 +541,31 @@ class SupplierMasterAPIController extends AppBaseController
 
 
         return $this->sendResponse($suppliers->toArray(), 'Supplier Master deleted successfully');
+    }
+
+    /**
+     * Display the specified Supplier Master Audit.
+     * GET|HEAD /getSupplierMasterAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getSupplierMasterAudit(Request $request)
+    {
+        $id = $request->get('id');
+
+        $materielRequest = $this->supplierMasterRepository
+           ->with(['created_by','confirmed_by','modified_by','approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('documentSystemID',56);
+            }])
+            ->findWithoutFail($id);
+
+        if (empty($materielRequest)) {
+            return $this->sendError('Supplier Master not found');
+        }
+
+        return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
     }
 }

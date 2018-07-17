@@ -283,10 +283,10 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         if ($exists = Storage::disk('public')->exists($path)) {
             $documentAttachments->delete();
-
             Storage::disk('public')->delete($path);
         } else {
-            return $this->sendError('Attachments not found', 500);
+            $documentAttachments->delete();
+            //return $this->sendError('Document Attachments not found',500);
         }
 
         return $this->sendResponse($id, 'Document Attachments deleted successfully');

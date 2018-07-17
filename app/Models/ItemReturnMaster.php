@@ -289,5 +289,42 @@ class ItemReturnMaster extends Model
         
     ];
 
-    
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function customer_by()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
+    }
+
+    public function segment_by()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function warehouse_by()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseLocation','wareHouseSystemCode');
+    }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\ItemReturnDetails','itemReturnAutoID','itemReturnAutoID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemReturnAutoID');
+    }
 }

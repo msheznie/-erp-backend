@@ -14,13 +14,19 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateStockTransferAPIRequest;
 use App\Http\Requests\API\UpdateStockTransferAPIRequest;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\DocumentMaster;
+use App\Models\ItemAssigned;
 use App\Models\Months;
+use App\Models\Company;
 use App\Models\SegmentMaster;
 use App\Models\StockTransfer;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\StockTransferDetails;
 use App\Repositories\StockTransferRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -132,6 +138,110 @@ class StockTransferAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $input = $this->convertArrayToValue($input);
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+
+        if ($companyFinancePeriod) {
+            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        }
+
+        if (isset($input['tranferDate'])) {
+            if ($input['tranferDate']) {
+                $input['tranferDate'] = new Carbon($input['tranferDate']);
+            }
+        }
+
+        $documentDate = $input['tranferDate'];
+        $monthBegin = $input['FYBiggin'];
+        $monthEnd = $input['FYEnd'];
+
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Transfer Date not between Financial period !');
+        }
+
+        $input['createdPCID'] = gethostname();
+        $input['createdUserID'] = $user->employee['empID'];
+        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+        $lastSerial = StockTransfer::where('companySystemID', $input['companySystemID'])
+            ->orderBy('stockTransferAutoID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 0;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
+        //checking selected segment is active
+        $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isActive', 1)
+            ->first();
+
+        if (empty($segments)) {
+            return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+        if ($input['locationFrom'] == $input['locationTo']) {
+            return $this->sendError('Location From and Location To  cannot me same');
+        }
+
+        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        if ($segment) {
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $companyFrom = Company::where('companySystemID', $input['companyFromSystemID'])->first();
+        if ($companyFrom) {
+            $input['companyFrom'] = $companyFrom->CompanyID;
+        }
+
+        $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
+        if ($companyTo) {
+            $input['companyTo'] = $companyTo->CompanyID;
+        }
+
+        $input['serialNo'] = $lastSerialNumber;
+
+        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+        if ($documentMaster) {
+            $input['documentID'] = $documentMaster->documentID;
+        }
+
+        $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+
+        if ($companyfinanceyear) {
+            $startYear = $companyfinanceyear['bigginingDate'];
+            $finYearExp = explode('-', $startYear);
+            $finYear = $finYearExp[0];
+        } else {
+            $finYear = date("Y");
+        }
+
+        if ($input['interCompanyTransferYN']) {
+            $input['interCompanyTransferYN'] = -1;
+        } else {
+            $input['interCompanyTransferYN'] = 0;
+        }
+
+        if ($documentMaster) {
+            $stockTransferCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['stockTransferCode'] = $stockTransferCode;
+        }
+
         $stockTransfers = $this->stockTransferRepository->create($input);
 
         return $this->sendResponse($stockTransfers->toArray(), 'Stock Transfer saved successfully');
@@ -178,7 +288,7 @@ class StockTransferAPIController extends AppBaseController
     public function show($id)
     {
         /** @var StockTransfer $stockTransfer */
-        $stockTransfer = $this->stockTransferRepository->with(['created_by', 'confirmed_by', 'segment_by', 'location_by'])->findWithoutFail($id);
+        $stockTransfer = $this->stockTransferRepository->with(['created_by', 'confirmed_by', 'segment_by'])->findWithoutFail($id);
 
         if (empty($stockTransfer)) {
             return $this->sendError('Stock Transfer not found');
@@ -235,7 +345,13 @@ class StockTransferAPIController extends AppBaseController
      */
     public function update($id, UpdateStockTransferAPIRequest $request)
     {
+        $userId = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
+
         $input = $request->all();
+
+        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by']);
+        $input = $this->convertArrayToValue($input);
 
         /** @var StockTransfer $stockTransfer */
         $stockTransfer = $this->stockTransferRepository->findWithoutFail($id);
@@ -243,6 +359,94 @@ class StockTransferAPIController extends AppBaseController
         if (empty($stockTransfer)) {
             return $this->sendError('Stock Transfer not found');
         }
+
+        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+
+        if ($companyFinancePeriod) {
+            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        }
+
+        if (isset($input['tranferDate'])) {
+            if ($input['tranferDate']) {
+                $input['tranferDate'] = new Carbon($input['tranferDate']);
+            }
+        }
+
+        $documentDate = $input['tranferDate'];
+        $monthBegin = $input['FYBiggin'];
+        $monthEnd = $input['FYEnd'];
+
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Transfer Date not between Financial period !');
+        }
+
+        //checking selected segment is active
+        $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isActive', 1)
+            ->first();
+
+        if (empty($segments)) {
+            return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+        if ($input['locationFrom'] == $input['locationTo']) {
+            return $this->sendError('Location From and Location To  cannot me same');
+        }
+
+        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        if ($segment) {
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
+        if ($companyTo) {
+            $input['companyTo'] = $companyTo->CompanyID;
+        }
+
+        if ($input['interCompanyTransferYN']) {
+            $input['interCompanyTransferYN'] = -1;
+        } else {
+            $input['interCompanyTransferYN'] = 0;
+        }
+
+        if ($stockTransfer->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $stockTransDetailExist = StockTransferDetails::select(DB::raw('stockTransferDetailsID'))
+                ->where('stockTransferAutoID', $input['stockTransferAutoID'])
+                ->first();
+
+            if (empty($stockTransDetailExist)) {
+                return $this->sendError('Stock Transfer document cannot confirm without details');
+            }
+
+            $checkQuantity = StockTransferDetails::where('stockTransferAutoID', $id)
+                ->where('qty', '<', 1)
+                ->count();
+
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every item should have at least one minimum Qty', 500);
+            }
+
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => 0);
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"]);
+            }
+        }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $user->employee['empID'];
+        $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
+
 
         $stockTransfer = $this->stockTransferRepository->update($input, $id);
 
@@ -415,7 +619,6 @@ class StockTransferAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get();
 
-
         $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
@@ -447,6 +650,217 @@ class StockTransferAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getItemsOptionForStockTransfer(Request $request)
+    {
+        $input = $request->all();
+
+        $companyId = $input['companyId'];
+
+        $items = ItemAssigned::where('companySystemID', $companyId);
+        $items = $items->where('financeCategoryMaster', 1);
+
+        if (array_key_exists('search', $input)) {
+
+            $search = $input['search'];
+
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items
+            ->take(20)
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    public function StockTransferAudit(Request $request)
+    {
+        $id = $request->get('id');
+
+        $stockTransfer = $this->stockTransferRepository->with(['created_by', 'confirmed_by',
+            'modified_by', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('documentSystemID', 13);
+            }])->findWithoutFail($id);
+
+        if (empty($stockTransfer)) {
+            return $this->sendError('Stock Transfer not found');
+        }
+
+        return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer retrieved successfully');
+    }
+
+    public function getStockTransferApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
+            ->where('documentSystemID', 13)
+            ->first();
+
+        $stockTransferMasters = DB::table('erp_documentapproved')->select(
+            'erp_stocktransfer.stockTransferAutoID',
+            'erp_stocktransfer.stockTransferCode',
+            'erp_stocktransfer.documentSystemID',
+            'erp_stocktransfer.refNo',
+            'erp_stocktransfer.tranferDate',
+            'erp_stocktransfer.comment',
+            'erp_stocktransfer.serviceLineCode',
+            'erp_stocktransfer.createdDateTime',
+            'erp_stocktransfer.confirmedDate',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user',
+            'serviceline.ServiceLineDes as serviceLineDescription'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->where('employeesdepartments.documentSystemID', 3)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_stocktransfer', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'stockTransferAutoID')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_stocktransfer.companySystemID', $companyID)
+                ->where('erp_stocktransfer.approved', 0)
+                ->where('erp_stocktransfer.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->join('serviceline', 'erp_stocktransfer.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 13)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $stockTransferMasters = $stockTransferMasters->where(function ($query) use ($search) {
+                $query->where('stockTransferCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($stockTransferMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function getApprovedSTForCurrentUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $stockTransferMasters = DB::table('erp_documentapproved')->select(
+            'erp_stocktransfer.stockTransferAutoID',
+            'erp_stocktransfer.stockTransferCode',
+            'erp_stocktransfer.documentSystemID',
+            'erp_stocktransfer.refNo',
+            'erp_stocktransfer.tranferDate',
+            'erp_stocktransfer.comment',
+            'erp_stocktransfer.serviceLineCode',
+            'erp_stocktransfer.createdDateTime',
+            'erp_stocktransfer.confirmedDate',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user',
+            'serviceline.ServiceLineDes as serviceLineDescription'
+        )->join('erp_stocktransfer', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'stockTransferAutoID')
+                ->where('erp_stocktransfer.companySystemID', $companyID)
+                ->where('erp_stocktransfer.approved', -1)
+                ->where('erp_stocktransfer.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->join('serviceline', 'erp_stocktransfer.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.documentSystemID', 13)
+            ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $stockTransferMasters = $stockTransferMasters->where(function ($query) use ($search) {
+                $query->where('stockTransferCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($stockTransferMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveStockTransfer(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectStockTransfer(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+
     }
 
 }

@@ -171,26 +171,34 @@ class StockTransfer extends Model
     protected $primaryKey  = 'stockTransferAutoID';
 
     public $fillable = [
+        'companySystemID',
         'companyID',
+        'serviceLineSystemID',
         'serviceLineCode',
         'companyFinanceYearID',
+        'companyFinancePeriodID',
         'FYBiggin',
         'FYEnd',
+        'documentSystemID',
         'documentID',
         'serialNo',
         'stockTransferCode',
         'refNo',
         'tranferDate',
         'comment',
+        'companyFromSystemID',
         'companyFrom',
+        'companyToSystemID',
         'companyTo',
         'locationTo',
         'locationFrom',
         'confirmedYN',
+        'confirmedByEmpSystemID',
         'confirmedByEmpID',
         'confirmedByName',
         'confirmedDate',
         'approved',
+        'approvedDate',
         'postedDate',
         'fullyReceived',
         'timesReferred',
@@ -199,8 +207,10 @@ class StockTransfer extends Model
         'createdDateTime',
         'createdUserGroup',
         'createdPCID',
+        'createdUserSystemID',
         'createdUserID',
         'modifiedUser',
+        'modifiedUserSystemID',
         'modifiedPc',
         'timestamp'
     ];
@@ -212,19 +222,26 @@ class StockTransfer extends Model
      */
     protected $casts = [
         'stockTransferAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
+        'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
         'companyFinanceYearID' => 'integer',
+        'companyFinancePeriodID' => 'integer',
+        'documentSystemID' => 'integer',
         'documentID' => 'string',
         'serialNo' => 'integer',
         'stockTransferCode' => 'string',
         'refNo' => 'string',
         'comment' => 'string',
+        'companyFromSystemID' => 'integer',
         'companyFrom' => 'string',
+        'companyToSystemID' => 'integer',
         'companyTo' => 'string',
         'locationTo' => 'integer',
         'locationFrom' => 'integer',
         'confirmedYN' => 'integer',
+        'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approved' => 'integer',
@@ -233,8 +250,10 @@ class StockTransfer extends Model
         'interCompanyTransferYN' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'createdUserGroup' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdPCID' => 'string',
         'createdUserID' => 'string',
+        'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string'
     ];
@@ -281,6 +300,11 @@ class StockTransfer extends Model
     public function approved_by()
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'stockTransferAutoID');
+    }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\StockTransferDetails', 'stockTransferAutoID', 'stockTransferAutoID');
     }
 
     
