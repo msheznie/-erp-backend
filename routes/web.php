@@ -15,3 +15,5 @@ Route::resource('assetFinanceCategories', 'AssetFinanceCategoryController');
 Route::resource('years', 'YearController');
 
 Route::resource('stockTransfers', 'StockTransferController');
+
+Route::resource('stockTransferDetails', 'StockTransferDetailsController');

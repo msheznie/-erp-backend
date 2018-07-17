@@ -270,6 +270,13 @@ class GRVMasterAPIController extends AppBaseController
         $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by']);
         $input = $this->convertArrayToValue($input);
 
+        /** @var GRVMaster $gRVMaster */
+        $gRVMaster = $this->gRVMasterRepository->findWithoutFail($id);
+
+        if (empty($gRVMaster)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
@@ -296,13 +303,6 @@ class GRVMasterAPIController extends AppBaseController
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('GRV Date not between Financial period !');
-        }
-
-        /** @var GRVMaster $gRVMaster */
-        $gRVMaster = $this->gRVMasterRepository->findWithoutFail($id);
-
-        if (empty($gRVMaster)) {
-            return $this->sendError('Good Receipt Voucher not found');
         }
 
         if ($gRVMaster->grvCancelledYN == -1) {
