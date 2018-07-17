@@ -544,6 +544,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
     Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
     Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
+    Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit');
+    Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
 
 });
