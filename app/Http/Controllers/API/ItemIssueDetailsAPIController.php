@@ -537,7 +537,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
 
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
-        $input['issueCostRptTotal'] = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
+        $input['issueCostRptTotal']   = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
 

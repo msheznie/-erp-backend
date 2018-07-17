@@ -267,5 +267,16 @@ class ItemReturnDetails extends Model
         
     ];
 
-    
+    public function uom_issued(){
+        return $this->belongsTo('App\Models\Unit','itemUnitOfMeasure','UnitID');
+    }
+
+    public function uom_receiving(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasureIssued','UnitID');
+    }
+
+    public function issue(){
+        return $this->belongsTo('App\Models\ItemIssueMaster','issueCodeSystem','itemIssueAutoID');
+    }
+
 }
