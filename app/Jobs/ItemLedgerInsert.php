@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\ErpItemLedger;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -48,7 +49,6 @@ class ItemLedgerInsert implements ShouldQueue
             }
             //DB::beginTransaction();
             try {
-
                 $docInforArr = array(
                     'confirmColumnName' => '',
                     'approvedColumnName' => '',
@@ -61,9 +61,8 @@ class ItemLedgerInsert implements ShouldQueue
                 $masterColumnArray = array();
 
                 $empID = \Helper::getEmployeeInfo();
-
                 switch ($masterModel["documentSystemID"]) { // check the document id and set relevant parameters
-                    case 3:
+                    case 3: // GRV
                         $docInforArr["approvedColumnName"] = 'approved';
                         $docInforArr["modelName"] = 'GRVMaster';
                         $docInforArr["childRelation"] = 'details';
@@ -92,12 +91,10 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRptCurrencyID' => 'companyReportingCurrencyID',
                             'wacRpt' => 'GRVcostPerUnitComRptCur',
                             'comments' => '',
-                            'fromDamagedTransactionYN' => 0,
-                            'createdUserSystemID' => Auth::id(),
-                            'createdUserID' => $empID['employeeID']);
+                            'fromDamagedTransactionYN' => 0);
 
                         break;
-                    case 8:
+                    case 8: // Material Issue
                         $docInforArr["approvedColumnName"] = 'approved';
                         $docInforArr["modelName"] = 'ItemIssueMaster';
                         $docInforArr["childRelation"] = 'details';
@@ -126,12 +123,10 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRptCurrencyID' => 'reportingCurrencyID',
                             'wacRpt' => 'issueCostRpt',
                             'comments' => 'comments',
-                            'fromDamagedTransactionYN' => 0,
-                            'createdUserSystemID' => Auth::id(),
-                            'createdUserID' => $empID['employeeID']);
+                            'fromDamagedTransactionYN' => 0);
 
                         break;
-                    case 12:
+                    case 12: //Material Return
                         $docInforArr["approvedColumnName"] = 'approved';
                         $docInforArr["modelName"] = 'ItemReturnMaster';
                         $docInforArr["childRelation"] = 'details';
@@ -160,29 +155,73 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRptCurrencyID' => 'reportingCurrencyID',
                             'wacRpt' => 'unitCostRpt',
                             'comments' => 'comments',
-                            'fromDamagedTransactionYN' => 0,
-                            'createdUserSystemID' => Auth::id(),
-                            'createdUserID' => $empID['employeeID']);
+                            'fromDamagedTransactionYN' => 0);
 
+                        break;
+                    case 13: //Stock Transfer
+                        $docInforArr["approvedColumnName"] = 'approved';
+                        $docInforArr["modelName"] = 'StockTransfer';
+                        $docInforArr["childRelation"] = 'details';
+                        $docInforArr["autoID"] = 'stockTransferAutoID';
+                        $docInforArr["approvedYN"] = -1;
+                        $masterColumnArray = array(
+                            'companySystemID' => 'companySystemID',
+                            'companyID' => 'companyID',
+                            'serviceLineSystemID' => 'serviceLineSystemID',
+                            'serviceLineCode' => 'serviceLineCode',
+                            'documentSystemID' => 'documentSystemID',
+                            'documentID' => 'documentID',
+                            'documentCode' => 'stockTransferCode',
+                            'wareHouseSystemCode' => 'locationFrom',
+                            'transactionDate' => 'tranferDate',
+                            'referenceNumber' => '');
+
+                        $detailColumnArray = array(
+                            'itemSystemCode' => 'itemCodeSystem',
+                            'itemPrimaryCode' => 'itemPrimaryCode',
+                            'itemDescription' => 'itemDescription',
+                            'unitOfMeasure' => 'unitOfMeasure',
+                            'inOutQty' => 'qty',
+                            'wacLocalCurrencyID' => 'localCurrencyID',
+                            'wacLocal' => 'unitCostLocal',
+                            'wacRptCurrencyID' => 'reportingCurrencyID',
+                            'wacRpt' => 'unitCostRpt',
+                            'comments' => 'comments',
+                            'fromDamagedTransactionYN' => 0);
                         break;
                     default:
                         return ['success' => false, 'message' => 'Document ID not found'];
                 }
-
                 $nameSpacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
-                $masterRec = $nameSpacedModel::with([$docInforArr["childRelation"]])->find($masterModel[$docInforArr["autoID"]])->where($docInforArr["approvedColumnName"],$docInforArr["approvedYN"]);
+                $masterRec = $nameSpacedModel::with([$docInforArr["childRelation"]])->where($docInforArr["approvedColumnName"],$docInforArr["approvedYN"])->find($masterModel["autoID"]);
                 if ($masterRec) {
                     if ($masterRec[$docInforArr["childRelation"]]) {
                         $data = [];
+                        $i = 0;
                         foreach ($masterRec[$docInforArr["childRelation"]] as $detail) {
                             foreach ($detailColumnArray as $column => $value) {
-                                $data[$column] = $detail[$value];
+                                if($value == 'inOutQty') {
+                                    if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12) {
+                                        $data[$i][$column] = ABS($detail[$value]); // make qty always plus
+                                    }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13){
+                                        $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
+                                    }else{
+                                        $data[$i][$column] = $detail[$value];
+                                    }
+                                }else{
+                                    $data[$i][$column] = $detail[$value];
+                                }
                             }
                             foreach ($masterColumnArray as $column => $value) {
-                                $data[$column] = $masterRec[$value];
+                                $data[$i][$column] = $masterRec[$value];
                             }
-                            $data['documentSystemCode'] = $masterModel[$docInforArr["autoID"]];
+                            $data[$i]['documentSystemCode'] = $masterModel["autoID"];
+                            $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
+                            $data[$i]['createdUserID'] = $empID->empID;
+                            $i++;
                         }
+                        Log::info($data);
+                        //ErpItemLedger::insert($data);
                     }
                 }
 
