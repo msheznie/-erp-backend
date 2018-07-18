@@ -31,6 +31,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('checkUser', 'UserAPIController@checkUser');
 
     Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
+    Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster');
     Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
     Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
     Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
@@ -259,6 +260,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns');
     Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail');
     Route::get('getLogisticsItemsByProcumentOrder', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogistic');
+    Route::post('procumentOrderPRAttachment', 'ProcumentOrderAPIController@procumentOrderPRAttachment');
+    Route::post('updateSentSupplierDetail', 'ProcumentOrderAPIController@updateSentSupplierDetail');
 
     Route::resource('priorities', 'PriorityAPIController');
 
@@ -563,8 +566,8 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 
 
 Route::get('runQueue', function () {
-    $master  = ['documentSystemID' => 12,'autoID' => 35];
-    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
+    $master  = ['documentSystemID' => 12,'autoID' => 35,'companySystemID' => 31];
+    $job = \App\Jobs\ItemAssignInsert::dispatch($master);
 });
 
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');

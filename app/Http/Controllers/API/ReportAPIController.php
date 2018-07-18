@@ -104,9 +104,11 @@ class ReportAPIController extends AppBaseController
                     expectedDeliveryDate,
                     narration,
                     approvedDate,
-                    erp_purchaseordermaster.companySystemID
+                    erp_purchaseordermaster.companySystemID,
+                    supCont.countryName
                      FROM erp_purchaseordermaster 
-                     LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID 
+                     LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID
+                     LEFT JOIN (SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont ON  supCont.supplierCodeSystem = erp_purchaseordermaster.supplierID
                      LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE approved = -1 AND poType_N <>5 AND (approvedDate BETWEEN "' . $startDate . '" AND "' . $endDate . '") AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ') AND erp_purchaseordermaster.supplierID IN (' . join(',', json_decode($suppliers)) . ')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderMasterID', '=', 'podet.purchaseOrderID');
                         })->leftJoin('financeitemcategorymaster', function ($query) {
@@ -210,6 +212,7 @@ WHERE
                             erp_purchaseordermaster.expectedDeliveryDate,
                             erp_purchaseordermaster.budgetYear,
                             erp_purchaseordermaster.purchaseOrderID,
+                            supCont.countryName,
                             IFNULL(podet.TotalPOVal,0) as TotalPOVal,
                             IFNULL(podet.POQty,0) as POQty,
                             podet.Type,
@@ -246,6 +249,9 @@ WHERE
                      INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN (' . join(',', $companyID) . ') AND erp_grvmaster.approved = -1
                      GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
+                        })
+                        ->leftJoin(DB::raw('(SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont'), function ($join) use ($companyID) {
+                            $join->on('erp_purchaseordermaster.supplierID', '=', 'supCont.supplierCodeSystem');
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate));
@@ -420,6 +426,7 @@ WHERE
                             companymaster.CompanyName, 
                             supplierPrimaryCode as supplierID,
                             supplierName,                     
+                            supCont.countryName,                     
                             SUM(IFNULL(podet.TotalPOVal,0)) as TotalPOVal,
                             SUM(IFNULL(podet.POQty,0)) as POQty, 
                             SUM(IFNULL(podet.POCapex,0)) as POCapex,
@@ -454,6 +461,9 @@ WHERE
                      INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID WHERE erp_grvdetails.purchaseOrderMastertID <> 0 AND erp_grvdetails.companySystemID IN (' . join(',', $companyID) . ') AND erp_grvmaster.approved = -1
                      GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
+                        })
+                        ->leftJoin(DB::raw('(SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont'), function ($join) use ($companyID) {
+                            $join->on('erp_purchaseordermaster.supplierID', '=', 'supCont.supplierCodeSystem');
                         })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
@@ -581,9 +591,11 @@ WHERE
                     expectedDeliveryDate,
                     narration,
                     approvedDate,
-                    erp_purchaseordermaster.companySystemID
+                    erp_purchaseordermaster.companySystemID,
+                    supCont.countryName
                      FROM erp_purchaseordermaster 
                      LEFT JOIN serviceline ON erp_purchaseordermaster.serviceLineSystemID = serviceline.serviceLineSystemID 
+                     LEFT JOIN (SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont ON  supCont.supplierCodeSystem = erp_purchaseordermaster.supplierID
                      LEFT JOIN erp_location ON poLocation = erp_location.locationID WHERE approved = -1 AND poType_N <>5 AND (approvedDate BETWEEN "' . $startDate . '" AND "' . $endDate . '") AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ') AND erp_purchaseordermaster.supplierID IN (' . join(',', json_decode($suppliers)) . ')) as podet'), function ($query) use ($companyID, $startDate, $endDate) {
                             $query->on('purchaseOrderMasterID', '=', 'podet.purchaseOrderID');
                         })->leftJoin('financeitemcategorymaster', function ($query) {
@@ -659,6 +671,7 @@ WHERE
                             'Location' => $val->location,
                             'Supplier Code' => $val->supplierPrimaryCode,
                             'Supplier Name' => $val->supplierName,
+                            'Supplier Country' => $val->countryName,
                             'Credit Period' => $val->creditPeriod,
                             'Delivery Terms' => $val->deliveryTerms,
                             'Payment Terms' => $val->paymentTerms,
@@ -698,7 +711,7 @@ WHERE
                         $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
                     })->download($type);
 
-                    return $this->sendResponse(array(), 'successfully export');
+                    return $this->sendResponse(array(), 'Successfully export');
                 } else if ($request->reportType == 2) {
                     $output = DB::table('erp_purchaseordermaster')
                         ->selectRaw('erp_purchaseordermaster.companyID,
@@ -711,6 +724,7 @@ WHERE
                             erp_purchaseordermaster.expectedDeliveryDate,
                             erp_purchaseordermaster.budgetYear,
                             erp_purchaseordermaster.purchaseOrderID,
+                            supCont.countryName,
                             IFNULL(podet.TotalPOVal,0) as TotalPOVal,
                             IFNULL(podet.POQty,0) as POQty,
                             podet.Type,
@@ -748,6 +762,9 @@ WHERE
                      GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
                         })
+                        ->leftJoin(DB::raw('(SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont'), function ($join) use ($companyID) {
+                            $join->on('erp_purchaseordermaster.supplierID', '=', 'supCont.supplierCodeSystem');
+                        })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate))->orderBy('approvedDate', 'ASC')->get();
 
@@ -761,6 +778,7 @@ WHERE
                             'Expected Delivery Date' => \Helper::dateFormat($val->expectedDeliveryDate),
                             'Supplier Code' => $val->supplierPrimaryCode,
                             'Supplier Name' => $val->supplierName,
+                            'Supplier Country' => $val->countryName,
                             'Budget Year' => $val->budgetYear,
                             'PO Capex Amount' => $val->POCapex,
                             'PO Opex Amount' => $val->POOpex,
@@ -863,7 +881,8 @@ WHERE
                             companymaster.CompanyID,                      
                             companymaster.CompanyName, 
                             supplierPrimaryCode as supplierID,
-                            supplierName,                     
+                            supplierName,
+                            supCont.countryName,                     
                             SUM(IFNULL(podet.TotalPOVal,0)) as TotalPOVal,
                             SUM(IFNULL(podet.POQty,0)) as POQty, 
                             SUM(IFNULL(podet.POCapex,0)) as POCapex,
@@ -899,6 +918,9 @@ WHERE
                      GROUP BY erp_grvdetails.purchaseOrderMastertID) as grvdet'), function ($join) use ($companyID) {
                             $join->on('purchaseOrderID', '=', 'grvdet.purchaseOrderMastertID');
                         })
+                        ->leftJoin(DB::raw('(SELECT countrymaster.countryName,supplierCodeSystem FROM suppliermaster LEFT JOIN countrymaster ON supplierCountryID = countrymaster.countryID) supCont'), function ($join) use ($companyID) {
+                            $join->on('erp_purchaseordermaster.supplierID', '=', 'supCont.supplierCodeSystem');
+                        })
                         ->leftJoin('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
                         ->leftJoin('companymaster', 'erp_purchaseordermaster.companySystemID', '=', 'companymaster.companySystemID')
                         ->whereIN('erp_purchaseordermaster.companySystemID', $companyID)->where('erp_purchaseordermaster.poType_N', '<>', 5)->where('erp_purchaseordermaster.approved', '=', -1)->where('erp_purchaseordermaster.poCancelledYN', '=', 0)->whereIN('erp_purchaseordermaster.supplierID', json_decode($suppliers))->whereBetween(DB::raw("DATE(approvedDate)"), array($startDate, $endDate))->groupBy('supplierID')->orderBy('supplierPrimaryCode', 'ASC')->get();
@@ -907,6 +929,7 @@ WHERE
                         $data[] = array(
                             'SupplierID' => $val->supplierID,
                             'Supplier Name' => $val->supplierName,
+                            'Supplier Country' => $val->countryName,
                             'PO Capex Amount' => $val->POCapex,
                             'PO Opex Amount' => $val->POOpex,
                             'Total PO Amount' => $val->TotalPOVal,

@@ -148,6 +148,7 @@ class PurchaseRequest extends Model
         'approved',
         'approvedDate',
         'timesReferred',
+        'refferedBackYN',
         'prClosedYN',
         'prClosedComments',
         'prClosedByEmpID',
@@ -239,6 +240,7 @@ class PurchaseRequest extends Model
         'isActive' => 'integer',
         'approved' => 'integer',
         'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer',
         'prClosedYN' => 'integer',
         'prClosedComments' => 'string',
         'prClosedByEmpID' => 'string',
@@ -260,7 +262,6 @@ class PurchaseRequest extends Model
         'fromWeb' => 'integer',
         'wo_status' => 'integer',
         'doc_type' => 'integer',
-        'refferedBackYN' => 'integer',
         'isAccrued' => 'integer',
         'budgetYear' => 'integer',
         'prBelongsYear' => 'integer',
@@ -341,6 +342,10 @@ class PurchaseRequest extends Model
     }
 
     public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','purchaseRequestID');
+    }
+
+    public function rejected_by(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','purchaseRequestID');
     }
 

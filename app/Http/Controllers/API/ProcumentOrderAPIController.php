@@ -37,12 +37,14 @@
  * -- Date: 14-june 2018 By: Nazir Description: Added new functions named as purchaseOrderForGRV(),
  * -- Date: 25-june 2018 By: Nazir Description: Added new functions named as getPurchasePaymentStatusHistory(),
  * -- Date: 26-june 2018 By: Nazir Description: Added new functions named as getProcurementOrderReferBack(),
+ * -- Date: 18-july 2018 By: Nazir Description: Added new functions named as procumentOrderPRAttachment(),
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
+use App\Models\DocumentAttachments;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\Months;
@@ -441,19 +443,21 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
             ->first();
 
-        if ($input['poDiscountAmount'] > $poMasterSum['masterTotalSum']) {
+        $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
+
+        if ($input['poDiscountAmount'] > $poMasterSumRounded) {
             return $this->sendError('Discount Amount should be less than order amount.', 500);
         }
 
-        $poMasterSumDeducted = ($poMasterSum['masterTotalSum'] - $input['poDiscountAmount']) + $input['VATAmount'];
+        $poMasterSumDeducted = ($poMasterSumRounded - $input['poDiscountAmount']) + $input['VATAmount'];
 
-        $input['poTotalSupplierTransactionCurrency'] = $poMasterSum['masterTotalSum'];
+        $input['poTotalSupplierTransactionCurrency'] = $poMasterSumDeducted;
 
         $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSumDeducted);
 
         $procumentOrderUpdate->poTotalComRptCurrency = round($currencyConversionMaster['reportingAmount'], 8);
         $procumentOrderUpdate->poTotalLocalCurrency = round($currencyConversionMaster['localAmount'], 8);
-        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = round($poMasterSumDeducted, 8);
+        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = $poMasterSumDeducted;
         $procumentOrderUpdate->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $procumentOrderUpdate->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
@@ -694,6 +698,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+
         //calculate tax amount according to the percantage for tax update
 
         //getting total sum of PO detail Amount
@@ -891,6 +896,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.approved',
                 'erp_purchaseordermaster.approvedDate',
                 'erp_purchaseordermaster.timesReferred',
+                'erp_purchaseordermaster.refferedBackYN',
                 'erp_purchaseordermaster.serviceLineSystemID',
                 'erp_purchaseordermaster.supplierID',
                 'erp_purchaseordermaster.supplierName',
@@ -1228,6 +1234,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_purchaseordermaster.companySystemID', $companyID)
                 ->where('erp_purchaseordermaster.approved', 0)
+                ->where('erp_purchaseordermaster.poCancelledYN', 0)
                 ->where('erp_purchaseordermaster.poConfirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', 0)
             ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
@@ -1247,7 +1254,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
-        
+
         return \DataTables::of($poMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -1376,6 +1383,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'erp_purchaseordermaster.approved',
                 'erp_purchaseordermaster.approvedDate',
                 'erp_purchaseordermaster.timesReferred',
+                'erp_purchaseordermaster.refferedBackYN',
                 'erp_purchaseordermaster.serviceLineSystemID',
                 'erp_purchaseordermaster.supplierID',
                 'erp_purchaseordermaster.supplierName',
@@ -3222,6 +3230,8 @@ WHERE
             return $this->sendError('Procurement Order not found');
         }
 
+        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
+
         $input['companySystemID'] = $purchaseOrder->companySystemID;
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
@@ -3285,7 +3295,9 @@ WHERE
             ->where('purchaseOrderMasterID', $purchaseOrder->purchaseOrderID)
             ->first();
 
-        $poMasterSumDeducted = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) + $purchaseOrder->VATAmount;
+        $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
+
+        $poMasterSumDeducted = ($poMasterSumRounded - $purchaseOrder->poDiscountAmount) + $purchaseOrder->VATAmount;
 
         $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $poMasterSumDeducted);
 
@@ -3296,10 +3308,9 @@ WHERE
         $purchaseOrder->poTotalComRptCurrency = round($currencyConversionMaster['reportingAmount'], 8);
         $purchaseOrder->poTotalLocalCurrency = round($currencyConversionMaster['localAmount'], 8);
         $purchaseOrder->poTotalSupplierDefaultCurrency = round($currencyConversionMasterDefault['documentAmount'], 8);
-        $purchaseOrder->poTotalSupplierTransactionCurrency = round($poMasterSumDeducted, 8);
+        $purchaseOrder->poTotalSupplierTransactionCurrency = $poMasterSumDeducted;
         $purchaseOrder->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $purchaseOrder->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
-
 
         $purchaseOrder->save();
 
@@ -3688,6 +3699,89 @@ FROM
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order reopened successfully');
     }
+
+    public function procumentOrderPRAttachment(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+        $companySystemID = $input['companySystemID'];
+        $documentSystemID = $input['documentSystemID'];
+
+        $prIDS = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+            ->where('companySystemID', $companySystemID)
+            ->groupBy('purchaseRequestID')
+            ->get(['purchaseRequestID']);
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        if ($company) {
+            $companyName = $company->CompanyID;
+        }
+
+        $document = DocumentMaster::where('documentSystemID', $documentSystemID)->first();
+        if ($document) {
+            $documentID = $document->documentID;
+        }
+
+        if (!empty($prIDS)) {
+            foreach ($prIDS as $poDetail) {
+
+                 $docAttachement = DocumentAttachments::where('documentSystemCode', $poDetail['purchaseRequestID'])
+                    ->where('companySystemID', $companySystemID)
+                    ->where('documentSystemID', 1)
+                    ->get();
+
+                if (!empty($docAttachement)) {
+                    foreach ($docAttachement as $doc) {
+
+                        $documentAttachments = new DocumentAttachments;
+                        $documentAttachments->companySystemID = $companySystemID;
+                        $documentAttachments->companyID = $companyName;
+                        $documentAttachments->documentID = $documentID;
+                        $documentAttachments->documentSystemID = $documentSystemID;
+                        $documentAttachments->documentSystemCode = $purchaseOrderID;
+                        $documentAttachments->attachmentDescription = $doc['attachmentDescription'];
+                        $documentAttachments->path = $doc['path'];
+                        $documentAttachments->originalFileName = $doc['originalFileName'];
+                        $documentAttachments->myFileName = $doc['myFileName'];
+                        $documentAttachments->docExpirtyDate = $doc['docExpirtyDate'];
+                        $documentAttachments->attachmentType = $doc['attachmentType'];
+                        $documentAttachments->sizeInKbs = $doc['sizeInKbs'];
+                        $documentAttachments->isUploaded = $doc['isUploaded'];
+                        $documentAttachments->pullFromAnotherDocument = -1;
+                        $documentAttachments->save();
+                    }
+                }
+
+            }
+        }
+
+        return $this->sendResponse($purchaseOrderID, 'PR attachments pulled successfully');
+
+    }
+
+    public function updateSentSupplierDetail(Request $request){
+
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $purchaseOrderID)->first();
+
+        $procumentOrderUpdate->sentToSupplier = -1;
+        $procumentOrderUpdate->sentToSupplierByEmpSystemID = $employee->employeeSystemID;
+        $procumentOrderUpdate->sentToSupplierByEmpID = $employee->empID;
+        $procumentOrderUpdate->sentToSupplierByEmpName = $employee->empName;
+        $procumentOrderUpdate->sentToSupplierDate = now();;
+
+        $procumentOrderUpdate->save();
+
+        return $this->sendResponse($purchaseOrderID, 'Supplier detail updated successfully');
+    }
+
+
 
 
 }
