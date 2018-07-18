@@ -864,6 +864,7 @@ class Helper
                         if(in_array($input["documentSystemID"],[2,5,52,1,50,51])){
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
+                            $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
