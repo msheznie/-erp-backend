@@ -705,9 +705,9 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($input['VATPercentage'] > 0 && $input['supplierVATEligible'] == 1) {
             $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $input['poDiscountAmount']) * ($input['VATPercentage'] / 100);
 
-            $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculatVatAmount);
+            $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $input['VATAmount']);
 
-            $procumentOrderUpdate->VATAmount = $calculatVatAmount;
+            //$procumentOrderUpdate->VATAmount = $calculatVatAmount;
             $procumentOrderUpdate->VATAmountLocal = round($currencyConversionVatAmount['localAmount'], 8);
             $procumentOrderUpdate->VATAmountRpt = round($currencyConversionVatAmount['reportingAmount'], 8);
 
