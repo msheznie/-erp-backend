@@ -220,6 +220,17 @@ class Helper
                     $docInforArr["modelName"] = 'ItemReturnMaster';
                     $docInforArr["primarykey"] = 'itemReturnAutoID';
                     break;
+                case 13:
+                    $docInforArr["documentCodeColumnName"] = 'stockTransferCode';
+                    $docInforArr["confirmColumnName"]      = 'confirmedYN';
+                    $docInforArr["confirmedBy"]            = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_stocktransfer';
+                    $docInforArr["modelName"] = 'StockTransfer';
+                    $docInforArr["primarykey"] = 'stockTransferAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -662,6 +673,30 @@ class Helper
                 $docInforArr["confirmedYN"] = "ConfirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "ConfirmedBySystemID";
                 break;
+            case 12:
+                $docInforArr["tableName"] = 'erp_itemreturnmaster';
+                $docInforArr["modelName"] = 'ItemReturnMaster';
+                $docInforArr["primarykey"] = 'itemReturnAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 13:
+                $docInforArr["tableName"] = 'erp_stocktransfer';
+                $docInforArr["modelName"] = 'StockTransfer';
+                $docInforArr["primarykey"] = 'stockTransferAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -955,6 +990,12 @@ class Helper
         $allCompanies = Models\Company::where('isGroup', 0)->where('isActive', 1)
             ->get();
         return $allCompanies;
+    }
+
+    public static function getCurrencyDecimalPlace($currencyID)
+    {
+        $decimal = Models\CurrencyMaster::where('currencyID', $currencyID)->first();
+        return $decimal['DecimalPlaces'];
     }
 
 

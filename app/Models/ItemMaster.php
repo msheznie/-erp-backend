@@ -185,4 +185,23 @@ class ItemMaster extends Model
     {
         return $this->belongsTo('App\Models\Employee','itemApprovedBySystemID','employeeSystemID');
     }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'itemConfirmedByEMPSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemCodeSystem');
+    }
 }

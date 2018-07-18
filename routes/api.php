@@ -524,7 +524,15 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView');
     Route::get('getStockTransferFormData', 'StockTransferAPIController@getStockTransferFormData');
-
+    Route::get('getStockTransferDetails', 'StockTransferDetailsAPIController@getStockTransferDetails');
+    Route::get('getItemsOptionForStockTransfer', 'StockTransferAPIController@getItemsOptionForStockTransfer');
+    Route::resource('stock_transfer_details', 'StockTransferDetailsAPIController');
+    Route::resource('stock_transfers', 'StockTransferAPIController');
+    Route::get('StockTransferAudit', 'StockTransferAPIController@StockTransferAudit');
+    Route::post('getStockTransferApproval', 'StockTransferAPIController@getStockTransferApproval');
+    Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser');
+    Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer');
+    Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
     Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
     Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
     Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany');
@@ -536,6 +544,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
     Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
     Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
+    Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit');
+    Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
+
 
 });
 
@@ -556,12 +567,7 @@ Route::get('runQueue', function () {
     $job = \App\Jobs\ItemAssignInsert::dispatch($master);
 });
 
-
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
-
 Route::resource('years', 'YearAPIController');
 
-
-
-Route::resource('stock_transfers', 'StockTransferAPIController');
 

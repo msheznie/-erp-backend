@@ -25,6 +25,7 @@ use App\Models\ItemReturnMaster;
 use App\Models\MaterielRequest;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
+use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
 use App\Repositories\AlertRepository;
 use Illuminate\Support\Facades\Auth;
@@ -149,6 +150,13 @@ class email
                     if (!empty($materielIssue)) {
                         $data['docApprovedYN'] = $materielIssue->approved;
                         $data['docCode']       = $materielIssue->itemIssueCode;
+                    }
+                    break;
+                case 13:
+                    $stockTransfer = StockTransfer::where('stockTransferAutoID', $data['docSystemCode'])->first();
+                    if (!empty($stockTransfer)) {
+                        $data['docApprovedYN'] = $stockTransfer->approved;
+                        $data['docCode'] = $stockTransfer->stockTransferCode;
                     }
                     break;
                 case 12:

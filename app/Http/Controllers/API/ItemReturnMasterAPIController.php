@@ -9,7 +9,7 @@
  * -- Description : This file contains the all CRUD for Document Attachments
  * -- REVISION HISTORY
  * -- Date: 16 - July 2018 By: Fayas Description: Added new functions named as getAllMaterielReturnByCompany(),getMaterielReturnFormData()
- * -- Date: 17 - July 2018 By: Fayas Description: Added new functions named as getMaterielReturnAudit()
+ * -- Date: 17 - July 2018 By: Fayas Description: Added new functions named as getMaterielReturnAudit(),getMaterielReturnApprovalByUser(),getMaterielReturnApprovedByUser()
  *
  */
 namespace App\Http\Controllers\API;
@@ -17,6 +17,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateItemReturnMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemReturnMasterAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentMaster;
@@ -676,6 +677,220 @@ class ItemReturnMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($materielReturn->toArray(), 'Materiel Return retrieved successfully');
+    }
+
+    /**
+     * get Materiel Return Approval By User
+     * POST /getMaterielReturnApprovalByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getMaterielReturnApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $itemReturnMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_itemreturnmaster.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As MRServiceLineDes',
+                'warehousemaster.wareHouseDescription As MRWareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+                    ->where('documentSystemID', 1)
+                    ->first();
+
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
+
+                $query->whereIn('employeesdepartments.documentSystemID', [12])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_itemreturnmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'itemReturnAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_itemreturnmaster.companySystemID', $companyId)
+                    ->where('erp_itemreturnmaster.approved', 0)
+                    ->where('erp_itemreturnmaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'erp_itemreturnmaster.wareHouseLocation', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_itemreturnmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [12])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemReturnMaster->where('erp_itemreturnmaster.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('wareHouseLocation', $input)) {
+            if ($input['wareHouseLocation'] && !is_null($input['wareHouseLocation'])) {
+                $itemReturnMaster->where('erp_itemreturnmaster.wareHouseLocation', $input['wareHouseLocation']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemReturnMaster->whereMonth('erp_itemreturnmaster.ReturnDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemReturnMaster->whereYear('erp_itemreturnmaster.ReturnDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemReturnMaster = $itemReturnMaster->where(function ($query) use ($search) {
+                $query->where('itemReturnCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($itemReturnMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemReturnAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+
+    /**
+     * get Materiel Return Approved By User
+     * POST /getMaterielReturnApprovedByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getMaterielReturnApprovedByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $itemReturnMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_itemreturnmaster.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As MRServiceLineDes',
+                'warehousemaster.wareHouseDescription As MRWareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_itemreturnmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'itemReturnAutoID')
+                    ->where('erp_itemreturnmaster.companySystemID', $companyId)
+                    ->where('erp_itemreturnmaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'erp_itemreturnmaster.wareHouseLocation', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_itemreturnmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [12])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemReturnMaster->where('erp_itemreturnmaster.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('wareHouseLocation', $input)) {
+            if ($input['wareHouseFrom'] && !is_null($input['wareHouseLocation'])) {
+                $itemReturnMaster->where('erp_itemreturnmaster.wareHouseLocation', $input['wareHouseLocation']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemReturnMaster->whereMonth('erp_itemreturnmaster.ReturnDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemReturnMaster->whereYear('erp_itemreturnmaster.ReturnDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemReturnMaster = $itemReturnMaster->where(function ($query) use ($search) {
+                $query->where('itemReturnCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($itemReturnMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemReturnAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
 }
