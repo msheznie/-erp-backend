@@ -499,9 +499,17 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+        if($input['selectedStatus'] == 1){
+            $grvStatus = [0];
+        }else if($input['selectedStatus'] == 2){
+            $grvStatus = [1];
+        }else{
+            $grvStatus = [0,1];
+        }
+
         $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
             ->where('approved', -1)
-            ->whereIn('grvRecieved',[0,1])
+            ->whereIn('grvRecieved',$grvStatus)
             ->with(['supplier', 'currency', 'status' => function ($q) {
                 $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
             }, 'supplier' => function ($q) {
@@ -645,9 +653,18 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
         $type = $input['type'];
+        if($input['selectedStatus'] == 1){
+            $grvStatus = [0];
+        }else if($input['selectedStatus'] == 2){
+            $grvStatus = [1];
+        }else{
+            $grvStatus = [0,1];
+        }
+
+
         $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
             ->where('approved', -1)
-            ->whereIn('grvRecieved',[0,1])
+            ->whereIn('grvRecieved',$grvStatus)
             ->with(['supplier', 'currency', 'status' => function ($q) {
                 $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
             }, 'supplier' => function ($q) {

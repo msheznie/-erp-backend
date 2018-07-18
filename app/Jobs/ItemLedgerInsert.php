@@ -8,7 +8,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -45,9 +44,9 @@ class ItemLedgerInsert implements ShouldQueue
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             if (!isset($masterModel['documentSystemID'])) {
-                return ['success' => false, 'message' => 'Parameter document id is missing'];
+                Log::warning('Parameter document id is missing' . date('H:i:s'));
             }
-            //DB::beginTransaction();
+            DB::beginTransaction();
             try {
                 $docInforArr = array(
                     'confirmColumnName' => '',
@@ -78,7 +77,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'documentCode' => 'grvPrimaryCode',
                             'wareHouseSystemCode' => 'grvLocation',
                             'transactionDate' => 'grvDate',
-                            'referenceNumber' => '');
+                            'referenceNumber' => 'grvDoRefNo');
 
                         $detailColumnArray = array(
                             'itemSystemCode' => 'itemCode',
@@ -90,8 +89,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacLocal' => 'GRVcostPerUnitLocalCur',
                             'wacRptCurrencyID' => 'companyReportingCurrencyID',
                             'wacRpt' => 'GRVcostPerUnitComRptCur',
-                            'comments' => '',
-                            'fromDamagedTransactionYN' => 0);
+                            'comments' => 'comment');
 
                         break;
                     case 8: // Material Issue
@@ -110,7 +108,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'documentCode' => 'itemIssueCode',
                             'wareHouseSystemCode' => 'wareHouseFrom',
                             'transactionDate' => 'issueDate',
-                            'referenceNumber' => '');
+                            'referenceNumber' => 'issueRefNo');
 
                         $detailColumnArray = array(
                             'itemSystemCode' => 'itemCodeSystem',
@@ -122,8 +120,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacLocal' => 'issueCostLocal',
                             'wacRptCurrencyID' => 'reportingCurrencyID',
                             'wacRpt' => 'issueCostRpt',
-                            'comments' => 'comments',
-                            'fromDamagedTransactionYN' => 0);
+                            'comments' => 'comments');
 
                         break;
                     case 12: //Material Return
@@ -142,7 +139,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'documentCode' => 'itemReturnCode',
                             'wareHouseSystemCode' => 'wareHouseLocation',
                             'transactionDate' => 'ReturnDate',
-                            'referenceNumber' => '');
+                            'referenceNumber' => 'ReturnRefNo');
 
                         $detailColumnArray = array(
                             'itemSystemCode' => 'itemCodeSystem',
@@ -154,8 +151,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacLocal' => 'unitCostLocal',
                             'wacRptCurrencyID' => 'reportingCurrencyID',
                             'wacRpt' => 'unitCostRpt',
-                            'comments' => 'comments',
-                            'fromDamagedTransactionYN' => 0);
+                            'comments' => 'comments');
 
                         break;
                     case 13: //Stock Transfer
@@ -174,7 +170,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'documentCode' => 'stockTransferCode',
                             'wareHouseSystemCode' => 'locationFrom',
                             'transactionDate' => 'tranferDate',
-                            'referenceNumber' => '');
+                            'referenceNumber' => 'refNo');
 
                         $detailColumnArray = array(
                             'itemSystemCode' => 'itemCodeSystem',
@@ -186,8 +182,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacLocal' => 'unitCostLocal',
                             'wacRptCurrencyID' => 'reportingCurrencyID',
                             'wacRpt' => 'unitCostRpt',
-                            'comments' => 'comments',
-                            'fromDamagedTransactionYN' => 0);
+                            'comments' => 'comments');
                         break;
                     default:
                         return ['success' => false, 'message' => 'Document ID not found'];
@@ -200,7 +195,7 @@ class ItemLedgerInsert implements ShouldQueue
                         $i = 0;
                         foreach ($masterRec[$docInforArr["childRelation"]] as $detail) {
                             foreach ($detailColumnArray as $column => $value) {
-                                if($value == 'inOutQty') {
+                                if($column == 'inOutQty') {
                                     if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12) {
                                         $data[$i][$column] = ABS($detail[$value]); // make qty always plus
                                     }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13){
@@ -218,22 +213,22 @@ class ItemLedgerInsert implements ShouldQueue
                             $data[$i]['documentSystemCode'] = $masterModel["autoID"];
                             $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
                             $data[$i]['createdUserID'] = $empID->empID;
+                            $data[$i]['fromDamagedTransactionYN'] = 0;
+                            $data[$i]['timestamp'] = date('Y-m-d H:i:s');
                             $i++;
                         }
-                        Log::info($data);
-                        //ErpItemLedger::insert($data);
+                        ErpItemLedger::insert($data);
                     }
                 }
-
-                Log::info('location: item ledger Add' . date('H:i:s'));
+                DB::commit();
+                Log::info('Item successfully added to item ledger' . date('H:i:s'));
 
             } catch (\Exception $e) {
-                // DB::rollback();
-                return ['success' => false, 'message' => $e . 'Error Occurred'];
+                DB::rollback();
+                Log::error('Error occurred when adding item to item ledger' . date('H:i:s'));
             }
         } else {
-            Log::info('location: Not exist' . date('H:i:s'));
-            return ['success' => false, 'message' => 'Error'];
+            Log::error('Parameter not exist' . date('H:i:s'));
         }
 
     }

@@ -40,10 +40,10 @@ class Helper
      */
     public static function getCompanyServiceline($company)
     {
-        $companiesByGroup="";
-        if(self::checkIsCompanyGroup($company)){
+        $companiesByGroup = "";
+        if (self::checkIsCompanyGroup($company)) {
             $companiesByGroup = self::getGroupCompany($company);
-        }else{
+        } else {
             $companiesByGroup = (array)$company;
         }
         $serviceline = Models\SegmentMaster::whereIN('companySystemID', $companiesByGroup)->get();
@@ -178,8 +178,8 @@ class Helper
                     break;
                 case 9:
                     $docInforArr["documentCodeColumnName"] = 'RequestCode';
-                    $docInforArr["confirmColumnName"]      = 'ConfirmedYN';
-                    $docInforArr["confirmedBy"]            = 'confirmedEmpName';
+                    $docInforArr["confirmColumnName"] = 'ConfirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedEmpName';
                     $docInforArr["confirmedByEmpID"] = 'ConfirmedBy';
                     $docInforArr["confirmedBySystemID"] = 'ConfirmedBySystemID';
                     $docInforArr["confirmedDate"] = 'ConfirmedDate';
@@ -189,8 +189,8 @@ class Helper
                     break;
                 case 3:
                     $docInforArr["documentCodeColumnName"] = 'grvPrimaryCode';
-                    $docInforArr["confirmColumnName"]      = 'grvConfirmedYN';
-                    $docInforArr["confirmedBy"]            = 'grvConfirmedByName';
+                    $docInforArr["confirmColumnName"] = 'grvConfirmedYN';
+                    $docInforArr["confirmedBy"] = 'grvConfirmedByName';
                     $docInforArr["confirmedByEmpID"] = 'grvConfirmedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'grvConfirmedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'grvConfirmedDate';
@@ -200,8 +200,8 @@ class Helper
                     break;
                 case 8:
                     $docInforArr["documentCodeColumnName"] = 'itemIssueCode';
-                    $docInforArr["confirmColumnName"]      = 'confirmedYN';
-                    $docInforArr["confirmedBy"]            = 'confirmedByName';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
                     $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
@@ -211,8 +211,8 @@ class Helper
                     break;
                 case 12:
                     $docInforArr["documentCodeColumnName"] = 'itemReturnCode';
-                    $docInforArr["confirmColumnName"]      = 'confirmedYN';
-                    $docInforArr["confirmedBy"]            = 'confirmedByName';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
                     $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
@@ -831,6 +831,24 @@ class Helper
     {
         DB::beginTransaction();
         try {
+            switch ($input["documentSystemID"]) {
+                case 2:
+                case 5:
+                case 52:
+                    $docInforArr["tableName"] = 'erp_purchaseordermaster';
+                    $docInforArr["modelName"] = 'ProcumentOrder';
+                    $docInforArr["primarykey"] = 'purchaseOrderID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 1:
+                case 50:
+                case 51:
+                    $docInforArr["tableName"] = 'erp_purchaserequest';
+                    $docInforArr["modelName"] = 'PurchaseRequest';
+                    $docInforArr["primarykey"] = 'purchaseRequestID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+            }
             //check document exist
             $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApprove) {
@@ -843,6 +861,10 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
+                        if(in_array($input["documentSystemID"],[2,5,52,1,50,51])){
+                            $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+                            $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
+                        }
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
                     }
@@ -877,9 +899,9 @@ class Helper
      */
     public static function dateFormat($date)
     {
-        if($date){
+        if ($date) {
             return date("d/m/Y", strtotime($date));
-        }else{
+        } else {
             return '';
         }
 
@@ -952,7 +974,7 @@ class Helper
      */
     public static function companyCurrency($companySystemID)
     {
-        $companyCurrency = Models\Company::with(['localcurrency','reportingcurrency'])
+        $companyCurrency = Models\Company::with(['localcurrency', 'reportingcurrency'])
             ->where('companySystemID', '=', $companySystemID)
             ->first();
         return $companyCurrency;

@@ -240,7 +240,7 @@ class SupplierMaster extends Model
     }
     public function country()
     {
-        return $this->belongsTo('App\Models\CountryMaster','countryID','countryID');
+        return $this->belongsTo('App\Models\CountryMaster','supplierCountryID','countryID');
     }
 
     public function created_by()
