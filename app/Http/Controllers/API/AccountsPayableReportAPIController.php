@@ -25,6 +25,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsPayableLedger;
 use App\Models\ChartOfAccount;
+use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\GeneralLedger;
 use App\Models\SupplierAssigned;
@@ -64,11 +65,14 @@ class AccountsPayableReportAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get(['year']);
 
+        $countries = CountryMaster::all();
+
         $output = array(
             'controlAccount' => $controlAccount,
             'suppliers' => $supplierMaster,
             'departments' => $departments,
             'years' => $years,
+            'countries' => $countries
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -172,7 +176,8 @@ class AccountsPayableReportAPIController extends AppBaseController
             case 'TS':
                 $validator = \Validator::make($request->all(), [
                     'reportTypeID' => 'required',
-                    'year' => 'required'
+                    'year' => 'required',
+                    'countries' => 'required'
                 ]);
 
                 if ($validator->fails()) {
@@ -3464,6 +3469,9 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         }
 
+        $countries = (array)$request->countries;
+        $countrySystemID = collect($countries)->pluck('countryID')->toArray();
+
         $qry = 'SELECT
                         erp_purchaseordermaster.companySystemID,
                         erp_purchaseordermaster.companyID,
@@ -3485,6 +3493,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                         AND poType_N <> 5 
                         AND YEAR ( erp_purchaseordermaster.approvedDate ) = '.$year.' 
                         AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
+                        AND suppliermaster.supplierCountryID IN (' . join(',', $countrySystemID) . ')
                     GROUP BY
                         '.$companyWise.'
                         erp_purchaseordermaster.supplierID 	Order BY Amount DESC;';

@@ -494,16 +494,15 @@ class PurchaseRequestAPIController extends AppBaseController
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $value['approvalGroupID'])
                     ->where('companySystemID', $companySystemID)
                     ->where('documentSystemID', $documentSystemID);
-                //->get();
+                    //->get();
 
                 if ($companyDocument['isServiceLineApproval'] == -1) {
                     $approvalList = $approvalList->where('ServiceLineSystemID', $value['serviceLineSystemID']);
                 }
 
-                $approvalList = $approvalList
-                    ->with(['employee'])
-                    ->groupBy('employeeSystemID')
-                    ->get();
+                $approvalList = $approvalList->with(['employee'])
+                                                ->groupBy('employeeSystemID')
+                                                ->get();
                 $value['approval_list'] = $approvalList;
             }
         }
@@ -1665,7 +1664,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                             ->where('cancelledYN', 0)
                                             ->where('selectedForPO', 0)
                                             ->where('prClosedYN',0)
-                                            ->with(['created_by','priority','location']);
+                                            ->with(['created_by','priority','location','segment']);
 
         if (array_key_exists('selectedForPO', $input)) {
             if($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
@@ -1741,7 +1740,7 @@ class PurchaseRequestAPIController extends AppBaseController
     public function exportReportOpenRequest(Request $request){
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','cancelledYN','PRConfirmedYN','approved','month','year'));
+        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','selectedForPO'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1765,7 +1764,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                             ->where('manuallyClosed', 0)
                                             ->where('cancelledYN', 0)
                                             ->where('selectedForPO', 0)
-                                            ->with(['created_by','priority_pdf','location_pdf']);
+                                            ->where('prClosedYN',0)
+                                            ->with(['created_by','priority_pdf','location_pdf','segment']);
 
         if (array_key_exists('selectedForPO', $input)) {
             if($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
@@ -1776,6 +1776,13 @@ class PurchaseRequestAPIController extends AppBaseController
                 }
             }
         }
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseRequests =  $purchaseRequests->where('serviceLineSystemID',$input['serviceLineSystemID']);
+            }
+        }
+
 
         $purchaseRequests = $purchaseRequests->select(
             ['erp_purchaserequest.purchaseRequestID',
@@ -1815,6 +1822,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $location = "";
             $priority = "";
             $createdBy = "";
+            $serviceLineDes = "";
 
             if(!empty($val->location_pdf)){
                 $location = $val->location_pdf['locationName'];
@@ -1828,9 +1836,15 @@ class PurchaseRequestAPIController extends AppBaseController
                 $createdBy = $val->created_by->empName;
             }
 
+            if(!empty($val->segment)){
+                $serviceLineDes = $val->segment->ServiceLineDes;
+            }
+
+
             $data[] = array(
                 'PR Number' => $val->purchaseRequestCode,
                 'PR Requested Date' => \Helper::dateFormat($val->createdDateTime),
+                'Department' => $serviceLineDes,
                 'Narration' => $val->comments,
                 'Location' => $location,
                 'Priority' => $priority,

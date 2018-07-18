@@ -345,6 +345,10 @@ class PurchaseRequest extends Model
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','purchaseRequestID');
     }
 
+    public function rejected_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','purchaseRequestID');
+    }
+
     public function po_details(){
         return $this->hasMany('App\Models\PurchaseOrderDetails','purchaseRequestID','purchaseRequestID');
     }

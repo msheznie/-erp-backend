@@ -12,6 +12,7 @@
  * -- Date: 06-June 2018 By: Mubashir Description: Modified getSupplierMasterByCompany() to handle filters from local storage
  * -- Date: 25-June 2018 By: Mubashir Description: Added new functions named as getSearchSupplierByCompany()
  * -- Date: 17-July 2018 By: Fayas Description: Added new functions named as getSupplierMasterAudit()
+ * -- Date: 18-July 2018 By: Fayas Description: Added new functions named as exportSupplierMaster()
  */
 
 namespace App\Http\Controllers\API;
@@ -93,7 +94,7 @@ class SupplierMasterAPIController extends AppBaseController
     public function getSupplierMasterByCompany(Request $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'supplierNatureID', 'isActive'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -114,7 +115,25 @@ class SupplierMasterAPIController extends AppBaseController
             $query->where('isDefault', -1)
                 ->with(['currencyMaster']);
         }]);
-            //->whereIn('primaryCompanySystemID', $childCompanies);
+        //->whereIn('primaryCompanySystemID', $childCompanies);
+
+        if (array_key_exists('supplierCountryID', $input)) {
+            if ($input['supplierCountryID'] && !is_null($input['supplierCountryID'])) {
+                $supplierMasters->where('supplierCountryID', '=', $input['supplierCountryID']);
+            }
+        }
+
+        if (array_key_exists('supplierNatureID', $input)) {
+            if ($input['supplierNatureID'] && !is_null($input['supplierNatureID'])) {
+                $supplierMasters->where('supplierNatureID', '=', $input['supplierNatureID']);
+            }
+        }
+
+        if (array_key_exists('isActive', $input)) {
+            if (($input['isActive'] == 0 || $input['isActive'] == 1) && !is_null($input['isActive'])) {
+                $supplierMasters->where('isActive', '=', $input['isActive']);
+            }
+        }
 
         $search = $request->input('search.value');
         if ($search) {
@@ -138,6 +157,123 @@ class SupplierMasterAPIController extends AppBaseController
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
         ///return $this->sendResponse($supplierMasters->toArray(), 'Supplier Masters retrieved successfully');*/
+    }
+
+    /**
+     * export to csv Supplier Master
+     * POST /exportSupplierMaster
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+    public function exportSupplierMaster(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'supplierNatureID', 'isActive'));
+        $type = $request->type;
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee','country', 'supplierCurrency' => function ($query) {
+            $query->where('isDefault', -1)
+                ->with(['currencyMaster']);
+        }]);
+        //->whereIn('primaryCompanySystemID', $childCompanies);
+
+        if (array_key_exists('supplierCountryID', $input)) {
+            if ($input['supplierCountryID'] && !is_null($input['supplierCountryID'])) {
+                $supplierMasters->where('supplierCountryID', '=', $input['supplierCountryID']);
+            }
+        }
+
+        if (array_key_exists('supplierNatureID', $input)) {
+            if ($input['supplierNatureID'] && !is_null($input['supplierNatureID'])) {
+                $supplierMasters->where('supplierNatureID', '=', $input['supplierNatureID']);
+            }
+        }
+
+        if (array_key_exists('isActive', $input)) {
+            if (($input['isActive'] == 0 || $input['isActive'] == 1) && !is_null($input['isActive'])) {
+                $supplierMasters->where('isActive', '=', $input['isActive']);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $supplierMasters = $supplierMasters->where(function ($query) use ($search) {
+                $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
+        }
+        $supplierMasters = $supplierMasters->orderBy('supplierCodeSystem','desc')->get();
+        $data = array();
+        $x = 0;
+        foreach ($supplierMasters as $val) {
+            $x++;
+            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+            $data[$x]['Supplier Name'] = $val->supplierName;
+            $currency = "";
+            $country = "";
+            if(count($val['supplierCurrency']) > 0){
+                if($val['supplierCurrency'][0]['currencyMaster']) {
+                    $currency = $val['supplierCurrency'][0]['currencyMaster']['CurrencyCode'];
+                }
+            }
+
+            if($val['country']){
+                $country = $val['country']['countryName'];
+            }
+
+             $data[$x]['Country'] = $country;
+             $data[$x]['Currency'] = $currency;
+             $data[$x]['Address'] = $val->address;
+             $data[$x]['Telephone'] = $val->telephone;
+             $data[$x]['Fax'] = $val->fax;
+             $data[$x]['Email'] = $val->supEmail;
+             $data[$x]['Website'] = $val->webAddress;
+             $data[$x]['Credit Limit'] = $val->creditLimit;
+             $data[$x]['Credit Period'] = $val->creditPeriod;
+        }
+
+        $csv = \Excel::create('supplier_master', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        /*return \DataTables::eloquent($supplierMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('supplierCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);*/
+        return $this->sendResponse([], 'Supplier Masters export to CSV successfully');
     }
 
 
@@ -522,17 +658,17 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $request->all();
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $companies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $companies = [$companyId];
         }
 
-        $suppliers = SupplierAssigned::whereIn('companySystemID',$companies)
-            ->select(['supplierCodeSytem','supplierName','primarySupplierCode'])
+        $suppliers = SupplierAssigned::whereIn('companySystemID', $companies)
+            ->select(['supplierCodeSytem', 'supplierName', 'primarySupplierCode'])
             ->when(request('search', false), function ($q, $search) {
-                return $q->where(function ($query) use($search) {
-                    return $query->where('primarySupplierCode','LIKE',"%{$search}%")
+                return $q->where(function ($query) use ($search) {
+                    return $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
                         ->orWhere('supplierName', 'LIKE', "%{$search}%");
                 });
             })
@@ -556,9 +692,9 @@ class SupplierMasterAPIController extends AppBaseController
         $id = $request->get('id');
 
         $materielRequest = $this->supplierMasterRepository
-           ->with(['created_by','confirmed_by','modified_by','approved_by' => function ($query) {
+            ->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
-                    ->where('documentSystemID',56);
+                    ->where('documentSystemID', 56);
             }])
             ->findWithoutFail($id);
 

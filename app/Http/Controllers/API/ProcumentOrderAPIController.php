@@ -37,12 +37,14 @@
  * -- Date: 14-june 2018 By: Nazir Description: Added new functions named as purchaseOrderForGRV(),
  * -- Date: 25-june 2018 By: Nazir Description: Added new functions named as getPurchasePaymentStatusHistory(),
  * -- Date: 26-june 2018 By: Nazir Description: Added new functions named as getProcurementOrderReferBack(),
+ * -- Date: 18-july 2018 By: Nazir Description: Added new functions named as procumentOrderPRAttachment(),
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
+use App\Models\DocumentAttachments;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\Months;
@@ -697,7 +699,6 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
 
-
         //calculate tax amount according to the percantage for tax update
 
         //getting total sum of PO detail Amount
@@ -1253,7 +1254,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
-        
+
         return \DataTables::of($poMasters)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -3311,7 +3312,6 @@ WHERE
         $purchaseOrder->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $purchaseOrder->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
-
         $purchaseOrder->save();
 
         foreach ($purchaseOrder->detail as $item) {
@@ -3698,6 +3698,67 @@ FROM
             ->delete();
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order reopened successfully');
+    }
+
+    public function procumentOrderPRAttachment(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+        $companySystemID = $input['companySystemID'];
+        $documentSystemID = $input['documentSystemID'];
+
+        $prIDS = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+            ->where('companySystemID', $companySystemID)
+            ->groupBy('purchaseRequestID')
+            ->get(['purchaseRequestID']);
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        if ($company) {
+            $companyName = $company->CompanyID;
+        }
+
+        $document = DocumentMaster::where('documentSystemID', $documentSystemID)->first();
+        if ($document) {
+            $documentID = $document->documentID;
+        }
+
+        if (!empty($prIDS)) {
+            foreach ($prIDS as $poDetail) {
+
+                 $docAttachement = DocumentAttachments::where('documentSystemCode', $poDetail['purchaseRequestID'])
+                    ->where('companySystemID', $companySystemID)
+                    ->where('documentSystemID', 1)
+                    ->get();
+
+                if (!empty($docAttachement)) {
+                    foreach ($docAttachement as $doc) {
+
+                        $documentAttachments = new DocumentAttachments;
+                        $documentAttachments->companySystemID = $companySystemID;
+                        $documentAttachments->companyID = $companyName;
+                        $documentAttachments->documentID = $documentID;
+                        $documentAttachments->documentSystemID = $documentSystemID;
+                        $documentAttachments->documentSystemCode = $purchaseOrderID;
+                        $documentAttachments->attachmentDescription = $doc['attachmentDescription'];
+                        $documentAttachments->path = $doc['path'];
+                        $documentAttachments->originalFileName = $doc['originalFileName'];
+                        $documentAttachments->myFileName = $doc['myFileName'];
+                        $documentAttachments->docExpirtyDate = $doc['docExpirtyDate'];
+                        $documentAttachments->attachmentType = $doc['attachmentType'];
+                        $documentAttachments->sizeInKbs = $doc['sizeInKbs'];
+                        $documentAttachments->isUploaded = $doc['isUploaded'];
+                        $documentAttachments->pullFromAnotherDocument = -1;
+                        $documentAttachments->save();
+                    }
+                }
+
+            }
+        }
+
+        return $this->sendResponse($purchaseOrderID, 'PR attachments pulled successfully');
+
+
     }
 
 

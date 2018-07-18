@@ -31,6 +31,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('checkUser', 'UserAPIController@checkUser');
 
     Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
+    Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster');
     Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
     Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
     Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
@@ -259,6 +260,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns');
     Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail');
     Route::get('getLogisticsItemsByProcumentOrder', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogistic');
+    Route::post('procumentOrderPRAttachment', 'ProcumentOrderAPIController@procumentOrderPRAttachment');
 
     Route::resource('priorities', 'PriorityAPIController');
 
