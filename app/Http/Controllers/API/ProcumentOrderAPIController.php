@@ -895,6 +895,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.approved',
                 'erp_purchaseordermaster.approvedDate',
                 'erp_purchaseordermaster.timesReferred',
+                'erp_purchaseordermaster.refferedBackYN',
                 'erp_purchaseordermaster.serviceLineSystemID',
                 'erp_purchaseordermaster.supplierID',
                 'erp_purchaseordermaster.supplierName',
@@ -1232,6 +1233,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('erp_purchaseordermaster.companySystemID', $companyID)
                 ->where('erp_purchaseordermaster.approved', 0)
+                ->where('erp_purchaseordermaster.poCancelledYN', 0)
                 ->where('erp_purchaseordermaster.poConfirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', 0)
             ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
@@ -1380,6 +1382,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'erp_purchaseordermaster.approved',
                 'erp_purchaseordermaster.approvedDate',
                 'erp_purchaseordermaster.timesReferred',
+                'erp_purchaseordermaster.refferedBackYN',
                 'erp_purchaseordermaster.serviceLineSystemID',
                 'erp_purchaseordermaster.supplierID',
                 'erp_purchaseordermaster.supplierName',

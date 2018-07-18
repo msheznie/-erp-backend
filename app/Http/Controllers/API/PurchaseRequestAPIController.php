@@ -643,6 +643,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.PRConfirmedYN',
                 'erp_purchaserequest.approved',
                 'erp_purchaserequest.timesReferred',
+                'erp_purchaserequest.refferedBackYN',
                 'erp_purchaserequest.serviceLineSystemID',
                 'erp_purchaserequest.financeCategory',
                 'erp_purchaserequest.documentSystemID',
@@ -731,6 +732,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->where('erp_purchaserequest.companySystemID', $companyId)
                     ->where('erp_purchaserequest.approved', 0)
+                    ->where('erp_purchaserequest.cancelledYN', 0)
                     ->where('erp_purchaserequest.PRConfirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', 0)
