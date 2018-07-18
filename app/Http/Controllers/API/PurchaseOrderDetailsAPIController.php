@@ -627,7 +627,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         // adding supplier Default CurrencyID base currency conversion
         if ($discountedUnitPrice > 0) {
-            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $input['unitCost']);
+            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $discountedUnitPrice);
 
             $input['GRVcostPerUnitSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
             $input['purchaseRetcostPerUniSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);

@@ -441,19 +441,21 @@ class ProcumentOrderAPIController extends AppBaseController
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
             ->first();
 
-        if ($input['poDiscountAmount'] > $poMasterSum['masterTotalSum']) {
+        $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
+
+        if ($input['poDiscountAmount'] > $poMasterSumRounded) {
             return $this->sendError('Discount Amount should be less than order amount.', 500);
         }
 
-        $poMasterSumDeducted = ($poMasterSum['masterTotalSum'] - $input['poDiscountAmount']) + $input['VATAmount'];
+        $poMasterSumDeducted = ($poMasterSumRounded - $input['poDiscountAmount']) + $input['VATAmount'];
 
-        $input['poTotalSupplierTransactionCurrency'] = $poMasterSum['masterTotalSum'];
+        $input['poTotalSupplierTransactionCurrency'] = $poMasterSumDeducted;
 
         $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $poMasterSumDeducted);
 
         $procumentOrderUpdate->poTotalComRptCurrency = round($currencyConversionMaster['reportingAmount'], 8);
         $procumentOrderUpdate->poTotalLocalCurrency = round($currencyConversionMaster['localAmount'], 8);
-        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = round($poMasterSumDeducted, 8);
+        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = $poMasterSumDeducted;
         $procumentOrderUpdate->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $procumentOrderUpdate->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
@@ -693,6 +695,8 @@ class ProcumentOrderAPIController extends AppBaseController
                 }
             }
         }
+
+
 
         //calculate tax amount according to the percantage for tax update
 
@@ -3222,6 +3226,8 @@ WHERE
             return $this->sendError('Procurement Order not found');
         }
 
+        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
+
         $input['companySystemID'] = $purchaseOrder->companySystemID;
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
@@ -3285,7 +3291,9 @@ WHERE
             ->where('purchaseOrderMasterID', $purchaseOrder->purchaseOrderID)
             ->first();
 
-        $poMasterSumDeducted = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) + $purchaseOrder->VATAmount;
+        $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
+
+        $poMasterSumDeducted = ($poMasterSumRounded - $purchaseOrder->poDiscountAmount) + $purchaseOrder->VATAmount;
 
         $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $poMasterSumDeducted);
 
@@ -3296,7 +3304,7 @@ WHERE
         $purchaseOrder->poTotalComRptCurrency = round($currencyConversionMaster['reportingAmount'], 8);
         $purchaseOrder->poTotalLocalCurrency = round($currencyConversionMaster['localAmount'], 8);
         $purchaseOrder->poTotalSupplierDefaultCurrency = round($currencyConversionMasterDefault['documentAmount'], 8);
-        $purchaseOrder->poTotalSupplierTransactionCurrency = round($poMasterSumDeducted, 8);
+        $purchaseOrder->poTotalSupplierTransactionCurrency = $poMasterSumDeducted;
         $purchaseOrder->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $purchaseOrder->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
