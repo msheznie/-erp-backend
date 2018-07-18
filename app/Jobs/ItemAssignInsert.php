@@ -52,24 +52,23 @@ round(sum(inOutQty),2) * if(round(sum(inOutQty),2)=0,0,round((sum((inOutQty*wacR
                     ->where('documentSystemCode', $masterModel['autoID'])
                     ->where('fromDamagedTransactionYN', 0)
                     ->groupBy('companySystemID','itemSystemCode')->get();
-
                 if ($itemLedgerRec) {
                     foreach ($itemLedgerRec as $val) {
                         if ($val['inOutQty'] == 0) {
                             $itemAssignRec = ItemAssigned::where('companySystemID', $val['companySystemID'])->where('itemCodeSystem', $val['itemSystemCode'])
                                 ->update(['wacValueLocal' => 0,
-                                    'wacValueReporting ' => 0,
-                                    'totalQty  ' => $val['inOutQty'],
-                                    'totalValueLocal  ' => 0,
-                                    'totalValueRpt   ' => 0
+                                    'wacValueReporting' => 0,
+                                    'totalQty' => $val['inOutQty'],
+                                    'totalValueLocal' => 0,
+                                    'totalValueRpt' => 0
                                 ]);
                         } else {
                             $itemAssignRec = ItemAssigned::where('companySystemID', $val['companySystemID'])->where('itemCodeSystem', $val['itemSystemCode'])
                                 ->update(['wacValueLocal' => $val['wacCostLocal'],
-                                    'wacValueReporting ' => $val['wacCostRpt'],
-                                    'totalQty  ' => $val['inOutQty'],
-                                    'totalValueLocal  ' => $val['TotalwacCostLocal'],
-                                    'totalValueRpt   ' => $val['TotalwacCostRpt']
+                                    'wacValueReporting' => $val['wacCostRpt'],
+                                    'totalQty' => $val['inOutQty'],
+                                    'totalValueLocal' => $val['TotalwacCostLocal'],
+                                    'totalValueRpt' => $val['TotalwacCostRpt']
                                 ]);
                         }
                     }

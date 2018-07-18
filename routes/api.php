@@ -552,7 +552,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 
 
 Route::get('runQueue', function () {
-    $master  = ['documentSystemID' => 3,'autoID' => 44045,'companySystemID' => 11];
+    $master  = ['documentSystemID' => 12,'autoID' => 35,'companySystemID' => 31];
     $job = \App\Jobs\ItemAssignInsert::dispatch($master);
 });
 
