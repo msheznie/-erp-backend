@@ -970,5 +970,11 @@ class Helper
         return $allCompanies;
     }
 
+    public static function getCurrencyDecimalPlace($currencyID)
+    {
+        $decimal = Models\CurrencyMaster::where('currencyID', $currencyID)->first();
+        return $decimal['DecimalPlaces'];
+    }
+
 
 }

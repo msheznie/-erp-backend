@@ -181,15 +181,19 @@ class PoPaymentTermsAPIController extends AppBaseController
             return $this->sendError('Po Payment Terms not found');
         }
 
+        if($purchaseOrder){
+
+        }
+
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
             ->where('purchaseOrderMasterID', $purchaseOrderID)
             ->first();
 
-        $poMasterSumDeducted = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) + $purchaseOrder->VATAmount;
+        //$poMasterSumDeducted = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) + $purchaseOrder->VATAmount;
 
-        $calculatePer = ($input['comPercentage'] / 100) * $poMasterSumDeducted;
-        $input['comAmount'] = round($calculatePer, 8);
+       //$calculatePer = ($input['comPercentage'] / 100) * $poMasterSumDeducted;
+        //$input['comAmount'] = round($calculatePer, 8);
 
         $poPaymentTerms = $this->poPaymentTermsRepository->update($input, $id);
 

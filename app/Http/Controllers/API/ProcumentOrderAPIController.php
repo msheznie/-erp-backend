@@ -365,7 +365,9 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         $oldPoTotalSupplierTransactionCurrency = $procumentOrder->poTotalSupplierTransactionCurrency;
+
         $employee = \Helper::getEmployeeInfo();
+        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
         //$employee->employeeSystemID;
 
         if ($procumentOrder->WO_amendYN == -1 && $isAmendAccess == 1 && $procumentOrder->WO_amendRequestedByEmpID != $employee->empID) {
@@ -433,7 +435,6 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($erCurrency) {
             $procumentOrderUpdate->supplierDefaultER = $erCurrency->ExchangeRate;
         }
-
 
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
@@ -552,7 +553,7 @@ class ProcumentOrderAPIController extends AppBaseController
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
                     $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($detailSum['total'] - $input['poDiscountAmount']) + $input['VATAmount']);
-                    if ($payment['comAmount'] != round($paymentPercentageAmount, 8)) {
+                    if ($payment['comAmount'] != round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) {
                         return $this->sendError('Payment terms is not matching with the PO total');
                     }
                 }
