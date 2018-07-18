@@ -60,7 +60,8 @@ class DocumentAttachments extends Model
         'sizeInKbs',
         'timeStamp',
         'isUploaded',
-        'path'
+        'path',
+        'pullFromAnotherDocument'
     ];
 
     /**
@@ -81,7 +82,8 @@ class DocumentAttachments extends Model
         'attachmentType' => 'integer',
         'sizeInKbs' => 'float',
         'isUploaded' => 'integer',
-        'path' => 'string'
+        'path' => 'string',
+        'pullFromAnotherDocument' => 'integer'
     ];
 
     /**
