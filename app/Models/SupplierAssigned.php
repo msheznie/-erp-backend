@@ -159,5 +159,11 @@ class SupplierAssigned extends Model
         
     ];
 
-    
+    public function categoryMaster(){
+        return $this->hasOne('App\Models\SupplierCategoryMaster', 'supCategoryMasterID','supCategoryMasterID');
+    }
+
+    public function supplierCurrency(){
+        return $this->hasMany('App\Models\SupplierCurrency','supplierCodeSystem','currency');
+    }
 }

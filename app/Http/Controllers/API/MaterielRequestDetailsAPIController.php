@@ -212,7 +212,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                 ->where('poCancelledYN', 0)
                 ->groupBy('erp_purchaseordermaster.poCancelledYN',
                     'erp_purchaseordermaster.approved');
-        }])
+             }])
             ->where('itemCode', $input['itemCode'])
             ->groupBy('erp_purchaseorderdetails.companySystemID',
                 'erp_purchaseorderdetails.itemCode',
