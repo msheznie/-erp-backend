@@ -545,6 +545,11 @@ class ProcumentOrder extends Model
         return $this->hasMany('\App\Models\PurchaseOrderStatus','purchaseOrderID','purchaseOrderID');
     }
 
+    public function paymentTerms_by()
+    {
+        return $this->hasMany('\App\Models\PoPaymentTerms','poID','purchaseOrderID');
+    }
+
 
 
 }
