@@ -3676,8 +3676,30 @@ FROM
 
         return $this->sendResponse($purchaseOrderID, 'PR attachments pulled successfully');
 
-
     }
+
+    public function updateSentSupplierDetail(Request $request){
+
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $purchaseOrderID)->first();
+
+        $procumentOrderUpdate->sentToSupplier = -1;
+        $procumentOrderUpdate->sentToSupplierByEmpSystemID = $employee->employeeSystemID;
+        $procumentOrderUpdate->sentToSupplierByEmpID = $employee->empID;
+        $procumentOrderUpdate->sentToSupplierByEmpName = $employee->empName;
+        $procumentOrderUpdate->sentToSupplierDate = now();;
+
+        $procumentOrderUpdate->save();
+
+        return $this->sendResponse($purchaseOrderID, 'Supplier detail updated successfully');
+    }
+
+
 
 
 }
