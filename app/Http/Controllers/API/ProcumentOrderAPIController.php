@@ -76,6 +76,7 @@ use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -147,6 +148,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $input['departmentID'] = 'PROC';
 
         $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
+            ->where('documentSystemID', $input['documentSystemID'])
             ->orderBy('purchaseOrderID', 'desc')
             ->first();
 
@@ -281,10 +283,10 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['supplierTransactionER'] = 1;
         }
 
-        $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
+        $currencyConversionDefaultMaster = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], 0);
 
-        if ($erCurrency) {
-            $input['supplierDefaultER'] = $erCurrency->ExchangeRate;
+        if ($currencyConversionDefaultMaster) {
+            $input['supplierDefaultER'] = $currencyConversionDefaultMaster['transToDocER'];
         }
 
         $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
@@ -432,10 +434,10 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->supplierTransactionER = 1;
         }
 
-        $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
+        $currencyConversionDefaultMaster = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], 0);
 
-        if ($erCurrency) {
-            $procumentOrderUpdate->supplierDefaultER = $erCurrency->ExchangeRate;
+        if ($currencyConversionDefaultMaster) {
+            $procumentOrderUpdate->supplierDefaultER =  $currencyConversionDefaultMaster['transToDocER'];
         }
 
         //getting total sum of PO detail Amount
@@ -1177,7 +1179,8 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
-        }, 'company', 'transactioncurrency', 'companydocumentattachment'])->first();
+        }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->first();
+
         return $this->sendResponse($output, 'Data retrieved successfully');
 
     }
@@ -1222,6 +1225,7 @@ class ProcumentOrderAPIController extends AppBaseController
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
             if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
                 $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
@@ -1758,12 +1762,15 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         $commaSeperatedYears = join($input['years'], ",");
         $commaSeperatedCompany = join($input['companySystemID'], ",");
-
+        $currencyField = "";
+        $decimalField = "";
         IF ($input['documentId'] == 1) {
             if ($input['currency'] == 1) {
                 $currencyField = 'GRVcostPerUnitLocalCur';
+                $decimalField = 'localCurrencyDet.DecimalPlaces,';
             } else if ($input['currency'] == 2) {
                 $currencyField = 'GRVcostPerUnitComRptCur';
+                $decimalField = 'rptCurrencyDet.DecimalPlaces,';
             }
         } else if ($input['documentId'] == 2) {
             if ($input['currency'] == 1) {
@@ -1795,95 +1802,50 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         if ($input['documentId'] == 1) {
             $doc1_query = 'SELECT
-        GRVDet.*,
-	PODet.purchaseOrderMasterID,
-	PODet.companyID,
-	PODet.supplierID,
+    '. $decimalField.'
+	GRVDet.*,
+	erp_purchaseordermaster.purchaseOrderID,
 	erp_purchaseordermaster.supplierPrimaryCode,
 	erp_purchaseordermaster.supplierName,
-	PODet.POlocalAmount,
-	PODet.PORptAmount,
-	GRVDet.LinelocalTotal,
-	GRVDet.LineRptTotal,
-	InvoiceDet.InvoicelocalAmount,
-	InvoiceDet.InvoiceRptAmount
+	countrymaster.countryName
 FROM
 	erp_purchaseordermaster
-INNER JOIN (
-	SELECT
-		erp_purchaseorderdetails.purchaseOrderMasterID,
-		erp_purchaseordermaster.companyID,
-		erp_purchaseordermaster.supplierID,
-		erp_purchaseordermaster.approvedDate,
-		sum(
-			GRVcostPerUnitLocalCur * noQty
-		) AS POlocalAmount,
-		sum(
-			GRVcostPerUnitComRptCur * noQty
-		) AS PORptAmount
-	FROM
-		erp_purchaseorderdetails
-	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
-	WHERE
-		erp_purchaseordermaster.approved = -1
-	AND erp_purchaseordermaster.poCancelledYN = 0
-	GROUP BY
-		erp_purchaseorderdetails.purchaseOrderMasterID
-) AS PODet ON erp_purchaseordermaster.purchaseOrderID = PODet.purchaseOrderMasterID
-INNER JOIN (
-	SELECT
-	    ' . $feilds . '
-		erp_grvdetails.purchaseOrderMastertID,
-		erp_grvdetails.companyID,
-		erp_grvmaster.grvDate,
-		supplierID,
-		approvedDate,
-		GRVcostPerUnitLocalCur,
-		GRVcostPerUnitComRptCur,
-		noQty,
-		sum(
-			GRVcostPerUnitLocalCur * noQty
-		) AS LinelocalTotal,
-		sum(
-			GRVcostPerUnitComRptCur * noQty
-		) AS LineRptTotal
-	FROM
-		erp_grvdetails
-	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
-	WHERE
-		erp_grvmaster.approved = -1
-	AND erp_grvmaster.grvCancelledYN = 0 AND year(erp_grvmaster.grvDate) IN (' . $commaSeperatedYears . ')
-	GROUP BY
-		erp_grvdetails.purchaseOrderMastertID,
-		erp_grvmaster.supplierID
-) AS GRVDet ON GRVDet.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
-LEFT JOIN (
-	SELECT
-		erp_bookinvsuppdet.purchaseOrderID,
-		erp_bookinvsuppdet.companyID,
-		erp_bookinvsuppmaster.supplierID,
-		erp_bookinvsuppmaster.postedDate,
-		sum(
-			erp_bookinvsuppdet.totLocalAmount
-		) AS InvoicelocalAmount,
-		sum(
-			erp_bookinvsuppdet.totRptAmount
-		) AS InvoiceRptAmount
-	FROM
-		erp_bookinvsuppdet
-	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
-	WHERE
-		erp_bookinvsuppmaster.approved = - 1
-	AND erp_bookinvsuppmaster.cancelYN = 0
-	GROUP BY
-		erp_bookinvsuppdet.purchaseOrderID
-) AS InvoiceDet ON InvoiceDet.purchaseOrderID = erp_purchaseordermaster.purchaseOrderID
+	INNER JOIN (
+SELECT
+	' . $feilds . '
+	erp_grvdetails.purchaseOrderMastertID,
+	erp_grvdetails.companyID,
+	erp_grvmaster.grvDate,
+	supplierID,
+	approvedDate,
+	GRVcostPerUnitLocalCur,
+	GRVcostPerUnitComRptCur,
+	noQty,
+	sum( GRVcostPerUnitLocalCur * noQty ) AS LinelocalTotal,
+	sum( GRVcostPerUnitComRptCur * noQty ) AS LineRptTotal 
+FROM
+	erp_grvdetails
+	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID 
 WHERE
-	erp_purchaseordermaster.approved = - 1
-AND erp_purchaseordermaster.poCancelledYN = 0
-AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(GRVDet.grvDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID';
-            echo $doc1_query;
-            exit();
+	erp_grvmaster.approved = - 1 
+	AND erp_grvmaster.grvCancelledYN = 0 
+	AND YEAR(erp_grvmaster.grvDate) IN (' . $commaSeperatedYears . ') 
+	AND erp_grvmaster.companySystemID IN (' . $commaSeperatedCompany . ') 
+GROUP BY
+	erp_grvmaster.supplierID 
+	) AS GRVDet ON GRVDet.supplierID = erp_purchaseordermaster.supplierID
+	INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_purchaseordermaster.supplierID
+    LEFT JOIN countrymaster ON suppliermaster.supplierCountryID = countrymaster.countryID 
+    LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=erp_purchaseordermaster.localCurrencyID
+    LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=erp_purchaseordermaster.companyReportingCurrencyID
+WHERE
+	erp_purchaseordermaster.approved = - 1 
+	AND erp_purchaseordermaster.poCancelledYN = 0 
+	AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ')
+GROUP BY
+	erp_purchaseordermaster.supplierID';
+            /*echo $doc1_query;
+            exit();*/
             $supplierReportGRVBase = DB::select($doc1_query);
         } else if ($input['documentId'] == 2) {
             $doc2_query = 'SELECT
@@ -2008,10 +1970,14 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             }
         }
 
+        $decimalPlace = collect($supplierReportGRVBase)->pluck('DecimalPlaces')->toArray();
+        $decimalPlace = array_unique($decimalPlace);
+
         $dataRec = \DataTables::of($supplierReportGRVBase)
             ->addIndexColumn()
             ->with('totalAmount', $alltotal)
             ->with('pageTotal', $pageTotal)
+            ->with('decimalPlace', $decimalPlace)
             ->make(true);
 
         return $dataRec;
@@ -2096,93 +2062,45 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         if ($input['documentId'] == 1) {
 
             $supplierReportGRVBase = DB::select('SELECT
-        GRVDet.*,
-	PODet.purchaseOrderMasterID,
-	PODet.companyID,
-	PODet.supplierID,
+	GRVDet.*,
+	erp_purchaseordermaster.purchaseOrderID,
 	erp_purchaseordermaster.supplierPrimaryCode,
 	erp_purchaseordermaster.supplierName,
-	PODet.POlocalAmount,
-	PODet.PORptAmount,
-	GRVDet.GRVlocalTotal,
-	GRVDet.GRVRptTotal,
-	InvoiceDet.InvoicelocalAmount,
-	InvoiceDet.InvoiceRptAmount
+	countrymaster.countryName
 FROM
 	erp_purchaseordermaster
-INNER JOIN (
-	SELECT
-		erp_purchaseorderdetails.purchaseOrderMasterID,
-		erp_purchaseordermaster.companyID,
-		erp_purchaseordermaster.supplierID,
-		erp_purchaseordermaster.approvedDate,
-		sum(
-			GRVcostPerUnitLocalCur * noQty
-		) AS POlocalAmount,
-		sum(
-			GRVcostPerUnitComRptCur * noQty
-		) AS PORptAmount
-	FROM
-		erp_purchaseorderdetails
-	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
-	WHERE
-		erp_purchaseordermaster.approved = -1
-	AND erp_purchaseordermaster.poCancelledYN = 0
-	GROUP BY
-		erp_purchaseorderdetails.purchaseOrderMasterID
-) AS PODet ON erp_purchaseordermaster.purchaseOrderID = PODet.purchaseOrderMasterID
-INNER JOIN (
-	SELECT
-	    ' . $feilds . '
-		erp_grvdetails.purchaseOrderMastertID,
-		erp_grvdetails.companyID,
-		erp_grvmaster.grvDate,
-		supplierID,
-		approvedDate,
-		GRVcostPerUnitLocalCur,
-		GRVcostPerUnitComRptCur,
-		noQty,
-		sum(
-			GRVcostPerUnitLocalCur * noQty
-		) AS GRVlocalTotal,
-		sum(
-			GRVcostPerUnitComRptCur * noQty
-		) AS GRVRptTotal
-	FROM
-		erp_grvdetails
-	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
-	WHERE
-		erp_grvmaster.approved = -1
-	AND erp_grvmaster.grvCancelledYN = 0 AND year(erp_grvmaster.grvDate) IN (' . $commaSeperatedYears . ')
-	GROUP BY
-		erp_grvdetails.purchaseOrderMastertID,
-		erp_grvmaster.supplierID
-) AS GRVDet ON GRVDet.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
-LEFT JOIN (
-	SELECT
-		erp_bookinvsuppdet.purchaseOrderID,
-		erp_bookinvsuppdet.companyID,
-		erp_bookinvsuppmaster.supplierID,
-		erp_bookinvsuppmaster.postedDate,
-		sum(
-			erp_bookinvsuppdet.totLocalAmount
-		) AS InvoicelocalAmount,
-		sum(
-			erp_bookinvsuppdet.totRptAmount
-		) AS InvoiceRptAmount
-	FROM
-		erp_bookinvsuppdet
-	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_bookinvsuppdet.bookingSuppMasInvAutoID
-	WHERE
-		erp_bookinvsuppmaster.approved = - 1
-	AND erp_bookinvsuppmaster.cancelYN = 0
-	GROUP BY
-		erp_bookinvsuppdet.purchaseOrderID
-) AS InvoiceDet ON InvoiceDet.purchaseOrderID = erp_purchaseordermaster.purchaseOrderID
+	INNER JOIN (
+SELECT
+	' . $feilds . '
+	erp_grvdetails.purchaseOrderMastertID,
+	erp_grvdetails.companyID,
+	erp_grvmaster.grvDate,
+	supplierID,
+	approvedDate,
+	GRVcostPerUnitLocalCur,
+	GRVcostPerUnitComRptCur,
+	noQty,
+	sum( GRVcostPerUnitLocalCur * noQty ) AS LinelocalTotal,
+	sum( GRVcostPerUnitComRptCur * noQty ) AS LineRptTotal 
+FROM
+	erp_grvdetails
+	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID 
 WHERE
-	erp_purchaseordermaster.approved = - 1
-AND erp_purchaseordermaster.poCancelledYN = 0
-AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(GRVDet.grvDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID');
+	erp_grvmaster.approved = - 1 
+	AND erp_grvmaster.grvCancelledYN = 0 
+	AND YEAR(erp_grvmaster.grvDate) IN (' . $commaSeperatedYears . ') 
+	AND erp_grvmaster.companySystemID IN (' . $commaSeperatedCompany . ') 
+GROUP BY
+	erp_grvmaster.supplierID 
+	) AS GRVDet ON GRVDet.supplierID = erp_purchaseordermaster.supplierID
+	INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_purchaseordermaster.supplierID
+    LEFT JOIN countrymaster ON suppliermaster.supplierCountryID = countrymaster.countryID 
+WHERE
+	erp_purchaseordermaster.approved = - 1 
+	AND erp_purchaseordermaster.poCancelledYN = 0 
+	AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ')
+GROUP BY
+	erp_purchaseordermaster.supplierID');
         } else if ($input['documentId'] == 2) {
             $supplierReportGRVBase = DB::select('SELECT
          InvoiceDet.*,
@@ -2303,14 +2221,14 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         foreach ($supplierReportGRVBase as $val) {
-            $test = array('CompanyID' => $val->companyID, 'SupplierCode' => $val->supplierPrimaryCode, 'SupplierName' => $val->supplierName);
+            $test = array('CompanyID' => $val->companyID, 'Supplier Code' => $val->supplierPrimaryCode, 'Supplier Name' => $val->supplierName,'Supplier Country' => $val->countryName);
 
             if (!empty($months)) {
                 foreach ($months as $key => $row) {
-                    if ($input['currency'] == 1) {
+                    if (!empty($val->$key)) {
                         $test[$row] = $val->$key;
                     } else {
-                        $test[$row] = $val->$key;
+                        $test[$row] = '0';
                     }
                     $i++;
                 }
@@ -2469,7 +2387,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
-        }, 'company', 'transactioncurrency', 'companydocumentattachment'])->get();
+        }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
 
         $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $procumentOrder->companySystemID)
             ->where('documentSystemID', $procumentOrder->documentSystemID)
@@ -2493,9 +2411,30 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $documentTitle = 'Direct Order';
         }
 
-        $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc, 'numberFormatting' => $decimal, 'title' => $documentTitle);
+        $poPaymentTerms = PoPaymentTerms::where('poID',  $procumentOrder->purchaseOrderID)
+            ->get();
+
+        $paymentTermsView = '';
+
+        if($poPaymentTerms){
+            foreach($poPaymentTerms as $val){
+                $paymentTermsView .= $val['paymentTemDes'].', ';
+            }
+        }
+
+        $order = array(
+            'podata' => $outputRecord[0],
+            'docRef' => $refernaceDoc,
+            'numberFormatting' => $decimal,
+            'title' => $documentTitle,
+            'paymentTermsView' => $paymentTermsView
+
+        );
 
         $html = view('print.purchase_order_print_pdf', $order);
+
+       // echo $html;
+        //exit();
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
@@ -2623,6 +2562,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 	PODet.supplierID,
 	erp_purchaseordermaster.supplierPrimaryCode,
 	erp_purchaseordermaster.supplierName,
+	erp_purchaseordermaster.purchaseOrderCode,
 	PODet.POlocalAmount,
 	PODet.PORptAmount,
 	warehousemaster.wareHouseDescription
@@ -2750,6 +2690,7 @@ WHERE
 	PODet.supplierID,
 	erp_purchaseordermaster.supplierPrimaryCode,
 	erp_purchaseordermaster.supplierName,
+	erp_purchaseordermaster.purchaseOrderCode,
 	PODet.POlocalAmount,
 	PODet.PORptAmount,
 	warehousemaster.wareHouseDescription
@@ -2817,6 +2758,7 @@ AND PODet.supplierID = ' . $supplierID . '');
 
             $data = array();
             foreach ($detail as $order) {
+                $testArray['PO Number'] = $order->purchaseOrderCode;
                 $testArray['GRV Date'] = date("d/m/Y", strtotime($order->grvDate));
                 $testArray['GRV Number'] = $order->grvPrimaryCode;
                 $testArray['Supplier Name'] = $order->supplierName;
@@ -3267,8 +3209,12 @@ WHERE
         if ($supplierCurrency) {
             $purchaseOrder->supplierDefaultCurrencyID = $supplierCurrency->currencyID;
             $purchaseOrder->supplierTransactionER = 1;
-            $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
-            $purchaseOrder->supplierDefaultER = $erCurrency->ExchangeRate;
+        }
+
+        $currencyConversionDefaultMaster = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], 0);
+
+        if ($currencyConversionDefaultMaster) {
+            $purchaseOrder->supplierDefaultER =  $currencyConversionDefaultMaster['transToDocER'];
         }
 
         $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])

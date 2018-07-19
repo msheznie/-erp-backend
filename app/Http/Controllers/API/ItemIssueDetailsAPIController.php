@@ -303,9 +303,9 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
         $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
-            ->where('companySystemID', $companySystemID)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
+                                        ->where('companySystemID', $companySystemID)
+                                        ->groupBy('itemSystemCode')
+                                        ->sum('inOutQty');
 
         $currentWareHouseStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
             ->where('companySystemID', $companySystemID)

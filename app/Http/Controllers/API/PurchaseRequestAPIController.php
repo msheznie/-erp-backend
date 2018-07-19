@@ -647,6 +647,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.financeCategory',
                 'erp_purchaserequest.documentSystemID',
                 'erp_purchaserequest.manuallyClosed',
+                'erp_purchaserequest.prClosedYN'
             ]);
 
         $search = $request->input('search.value');
@@ -941,8 +942,8 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID', $input['companySystemID'])
-            ->where('documentSystemID', $input['documentSystemID'])
-            ->first();
+                                                                ->where('documentSystemID', $input['documentSystemID'])
+                                                                ->first();
 
         if ($companyDocumentAttachment) {
             $input['docRefNo'] = $companyDocumentAttachment->docRefNumber;

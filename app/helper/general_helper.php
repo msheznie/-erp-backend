@@ -542,6 +542,7 @@ class Helper
         $array = array('trasToLocER' => $trasToLocER,
             'trasToRptER' => $trasToRptER,
             'transToBankER' => $transToBankER,
+            'transToDocER' => $transToDocER,
             'reportingAmount' => $reportingAmount,
             'localAmount' => $localAmount,
             'documentAmount' => $documentAmount,

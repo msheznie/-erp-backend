@@ -31,6 +31,7 @@ use App\Models\GeneralLedger;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\Company;
+use App\Models\Year;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -47,23 +48,33 @@ class AccountsPayableReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
-        $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
 
-        $departments = \Helper::getCompanyServiceline($selectedCompanyId);
+        if($request['reportID'] == 'TS'){
+            $controlAccount = array();
+            $supplierMaster = array();
+            $departments = array();
+        }else{
+            $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
+            $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
 
-        $filterSuppliers = AccountsPayableLedger::whereIN('companySystemID', $companiesByGroup)
-            ->select('supplierCodeSystem')
-            ->groupBy('supplierCodeSystem')
-            ->pluck('supplierCodeSystem');
+            $departments = \Helper::getCompanyServiceline($selectedCompanyId);
 
-        $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
+            $filterSuppliers = AccountsPayableLedger::whereIN('companySystemID', $companiesByGroup)
+                ->select('supplierCodeSystem')
+                ->groupBy('supplierCodeSystem')
+                ->pluck('supplierCodeSystem');
 
-        $years = GeneralLedger::select(DB::raw("YEAR(documentDate) as year"))
-            ->whereNotNull('documentDate')
-            ->groupby('year')
-            ->orderby('year', 'desc')
-            ->get(['year']);
+            $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
+        }
+
+        /*$years = GeneralLedger::select(DB::raw("YEAR(documentDate) as year"))
+                                ->whereNotNull('documentDate')
+                                ->groupby('year')
+                                ->orderby('year', 'desc')
+                                ->get(['year']);*/
+
+        $years = Year::orderby('year', 'desc')->get();
+
 
         $countries = CountryMaster::all();
 
