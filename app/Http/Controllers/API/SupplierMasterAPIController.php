@@ -111,11 +111,21 @@ class SupplierMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
-            $query->where('isDefault', -1)
-                ->with(['currencyMaster']);
-        }]);
-        //->whereIn('primaryCompanySystemID', $childCompanies);
+        $supplierId = 'supplierCodeSytem';
+        if($request['type'] == 'all'){
+            $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee', 'supplierCurrency' => function ($query) {
+                $query->where('isDefault', -1)
+                    ->with(['currencyMaster']);
+            }]);
+            $supplierId = 'supplierCodeSystem';
+        }else{
+            //by_company
+            $supplierMasters = SupplierAssigned::with(['categoryMaster', 'supplierCurrency' => function ($query) {
+                                            $query->where('isDefault', -1)
+                                                ->with(['currencyMaster']);
+                                        }])->whereIn('CompanySystemID', $childCompanies);
+
+        }
 
         if (array_key_exists('supplierCountryID', $input)) {
             if ($input['supplierCountryID'] && !is_null($input['supplierCountryID'])) {
@@ -144,10 +154,10 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         return \DataTables::eloquent($supplierMasters)
-            ->order(function ($query) use ($input) {
+            ->order(function ($query) use ($input,$supplierId) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('supplierCodeSystem', $input['order'][0]['dir']);
+                        $query->orderBy($supplierId, $input['order'][0]['dir']);
                     }
                 }
             })
@@ -188,11 +198,21 @@ class SupplierMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $supplierMasters = SupplierMaster::with(['categoryMaster', 'employee','country', 'supplierCurrency' => function ($query) {
-            $query->where('isDefault', -1)
-                ->with(['currencyMaster']);
-        }]);
-        //->whereIn('primaryCompanySystemID', $childCompanies);
+        $supplierId = 'supplierCodeSytem';
+        if($request['type'] == 'all'){
+            $supplierMasters = SupplierMaster::with(['categoryMaster', 'supplierCurrency' => function ($query) {
+                $query->where('isDefault', -1)
+                    ->with(['currencyMaster']);
+            }]);
+            $supplierId = 'supplierCodeSystem';
+        }else{
+            //by_company
+            $supplierMasters = SupplierAssigned::with(['categoryMaster', 'supplierCurrency' => function ($query) {
+                $query->where('isDefault', -1)
+                    ->with(['currencyMaster']);
+            }])->whereIn('CompanySystemID', $childCompanies);
+
+        }
 
         if (array_key_exists('supplierCountryID', $input)) {
             if ($input['supplierCountryID'] && !is_null($input['supplierCountryID'])) {
@@ -219,7 +239,7 @@ class SupplierMasterAPIController extends AppBaseController
                     ->orWhere('supplierName', 'LIKE', "%{$search}%");
             });
         }
-        $supplierMasters = $supplierMasters->orderBy('supplierCodeSystem','desc')->get();
+        $supplierMasters = $supplierMasters->orderBy($supplierId,'desc')->get();
         $data = array();
         $x = 0;
         foreach ($supplierMasters as $val) {
@@ -258,21 +278,8 @@ class SupplierMasterAPIController extends AppBaseController
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        })->download('csv');
 
-        /*return \DataTables::eloquent($supplierMasters)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('supplierCodeSystem', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->addColumn('Actions', 'Actions', "Actions")
-            //->addColumn('Index', 'Index', "Index")
-            ->make(true);*/
         return $this->sendResponse([], 'Supplier Masters export to CSV successfully');
     }
 
