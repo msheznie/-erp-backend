@@ -336,8 +336,8 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError('Item Issue Master not found');
         }
 
-        if($itemIssueMaster->location != $input['serviceLineSystemID']){
-            $checkDepartmentActive = SupplierMaster::find($input['serviceLineSystemID']);
+        if($itemIssueMaster->serviceLineSystemID != $input['serviceLineSystemID']){
+            $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
                 return $this->sendError('Department not found');
             }
