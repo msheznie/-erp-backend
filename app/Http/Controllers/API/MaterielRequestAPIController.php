@@ -553,6 +553,18 @@ class MaterielRequestAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
+
+        if($materielRequest->location != $input['location']){
+            $checkWareHouseActive = WarehouseMaster::find($input['location']);
+            if (empty($checkWareHouseActive)) {
+                return $this->sendError('Location not found');
+            }
+
+            if($checkWareHouseActive->isActive == 0){
+                return $this->sendError('Selected Location is not active please select different location',500);
+            }
+        }
+
         if ($materielRequest->ConfirmedYN == 0 && $input['ConfirmedYN'] == 1) {
 
 
@@ -665,16 +677,20 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $segments = SegmentMaster::whereIn("companySystemID", $subCompanies);
+        $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies);
 
         if (array_key_exists('isFilter', $input)) {
             if ($input['isFilter'] != 1) {
                 $segments = $segments->where('isActive', 1);
+                $wareHouses = $wareHouses->where('isActive', 1);
             }
         } else {
             $segments = $segments->where('isActive', 1);
+            $wareHouses = $wareHouses->where('isActive', 1);
         }
 
         $segments = $segments->get();
+        $wareHouses = $wareHouses->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -686,8 +702,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $locations = Location::all();
 
-        $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies)
-                                      ->get();
+
 
         $units = Unit::all();
 

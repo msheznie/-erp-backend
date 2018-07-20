@@ -1839,8 +1839,10 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         } else if ($input['documentId'] == 2) {
             if ($input['currency'] == 1) {
                 $currencyField = 'totLocalAmount';
+                $decimalField = 'localCurrencyDet.DecimalPlaces,';
             } else if ($input['currency'] == 2) {
                 $currencyField = 'totRptAmount';
+                $decimalField = 'rptCurrencyDet.DecimalPlaces,';
             }
         }
 
@@ -1913,64 +1915,14 @@ GROUP BY
             $supplierReportGRVBase = DB::select($doc1_query);
         } else if ($input['documentId'] == 2) {
             $doc2_query = 'SELECT
+'. $decimalField.'
          InvoiceDet.*,
-	PODet.purchaseOrderMasterID,
-	PODet.companyID,
-	PODet.supplierID,
+	erp_purchaseordermaster.purchaseOrderID,
 	erp_purchaseordermaster.supplierPrimaryCode,
 	erp_purchaseordermaster.supplierName,
-	PODet.POlocalAmount,
-	PODet.PORptAmount,
-	InvoiceDet.LinelocalTotal,
-	InvoiceDet.LineRptTotal
+	countrymaster.countryName
 FROM
 	erp_purchaseordermaster
-INNER JOIN (
-	SELECT
-		erp_purchaseorderdetails.purchaseOrderMasterID,
-		erp_purchaseordermaster.companyID,
-		erp_purchaseordermaster.supplierID,
-		erp_purchaseordermaster.approvedDate,
-		sum(
-			GRVcostPerUnitLocalCur * noQty
-		) AS POlocalAmount,
-		sum(
-			GRVcostPerUnitComRptCur * noQty
-		) AS PORptAmount
-	FROM
-		erp_purchaseorderdetails
-	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
-	WHERE
-		erp_purchaseordermaster.approved = -1
-	AND erp_purchaseordermaster.poCancelledYN = 0
-	GROUP BY
-		erp_purchaseorderdetails.purchaseOrderMasterID
-) AS PODet ON erp_purchaseordermaster.purchaseOrderID = PODet.purchaseOrderMasterID
-INNER JOIN (
-	SELECT
-		erp_grvdetails.purchaseOrderMastertID,
-		erp_grvdetails.companyID,
-		erp_grvmaster.grvDate,
-		supplierID,
-		approvedDate,
-		GRVcostPerUnitLocalCur,
-		GRVcostPerUnitComRptCur,
-		noQty,
-		sum(
-			GRVcostPerUnitLocalCur * noQty
-		) AS GRVlocalAmount,
-		sum(
-			GRVcostPerUnitComRptCur * noQty
-		) AS GRVRptAmount
-	FROM
-		erp_grvdetails
-	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
-	WHERE
-		erp_grvmaster.approved = -1
-	AND erp_grvmaster.grvCancelledYN = 0
-	GROUP BY
-		erp_grvdetails.purchaseOrderMastertID
-) AS GRVDet ON GRVDet.purchaseOrderMastertID = erp_purchaseordermaster.purchaseOrderID
 LEFT JOIN (
 	SELECT
 	    ' . $feilds . '
@@ -1990,14 +1942,18 @@ LEFT JOIN (
 	WHERE
 		erp_bookinvsuppmaster.approved = - 1
 	AND erp_bookinvsuppmaster.cancelYN = 0
+	AND erp_bookinvsuppmaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 	GROUP BY
-		erp_bookinvsuppdet.purchaseOrderID,
 		erp_bookinvsuppmaster.supplierID
-) AS InvoiceDet ON InvoiceDet.purchaseOrderID = erp_purchaseordermaster.purchaseOrderID
+) AS InvoiceDet ON InvoiceDet.supplierID = erp_purchaseordermaster.supplierID
+INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_purchaseordermaster.supplierID
+    LEFT JOIN countrymaster ON suppliermaster.supplierCountryID = countrymaster.countryID 
+    LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=erp_purchaseordermaster.localCurrencyID
+    LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=erp_purchaseordermaster.companyReportingCurrencyID
 WHERE
 	erp_purchaseordermaster.approved = - 1
 AND erp_purchaseordermaster.poCancelledYN = 0
-AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ') GROUP BY PODet.supplierID';
+AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') AND year(InvoiceDet.postedDate) IN (' . $commaSeperatedYears . ') GROUP BY erp_purchaseordermaster.supplierID';
             $supplierReportGRVBase = DB::select($doc2_query);
         }
         $alltotal = array();
