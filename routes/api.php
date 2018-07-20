@@ -550,6 +550,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit');
     Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
+    Route::resource('po_addons', 'PoAddonsAPIController');
+    Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
+    Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
+
 
 });
 
@@ -566,11 +570,13 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 
 
 Route::get('runQueue', function () {
-    $master  = ['documentSystemID' => 12,'autoID' => 35,'companySystemID' => 31];
-    $job = \App\Jobs\ItemAssignInsert::dispatch($master);
+    $master  = ['documentSystemID' => 3,'autoID' => 44049,'companySystemID' => 11];
+    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
 });
 
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
 Route::resource('years', 'YearAPIController');
+
+
 
 

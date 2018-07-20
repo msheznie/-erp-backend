@@ -188,7 +188,11 @@ class ItemLedgerInsert implements ShouldQueue
                         return ['success' => false, 'message' => 'Document ID not found'];
                 }
                 $nameSpacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
-                $masterRec = $nameSpacedModel::with([$docInforArr["childRelation"]])->where($docInforArr["approvedColumnName"],$docInforArr["approvedYN"])->find($masterModel["autoID"]);
+                $masterRec = $nameSpacedModel::with([$docInforArr["childRelation"] => function($query) use ($masterModel) {
+                    if($masterModel["documentSystemID"] == 3){
+                        $query->where('itemFinanceCategoryID',1);
+                    }
+                }])->where($docInforArr["approvedColumnName"],$docInforArr["approvedYN"])->find($masterModel["autoID"]);
                 if ($masterRec) {
                     if ($masterRec[$docInforArr["childRelation"]]) {
                         $data = [];
@@ -217,7 +221,12 @@ class ItemLedgerInsert implements ShouldQueue
                             $data[$i]['timestamp'] = date('Y-m-d H:i:s');
                             $i++;
                         }
-                        ErpItemLedger::insert($data);
+                        if($data){
+                            Log::info($data);
+                            $itemLedgerInsert = ErpItemLedger::insert($data);
+                            $itemassignInsert = \App\Jobs\ItemAssignInsert::dispatch($masterModel);
+                        }
+
                     }
                 }
                 DB::commit();
