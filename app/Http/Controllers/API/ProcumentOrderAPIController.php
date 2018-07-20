@@ -76,6 +76,7 @@ use App\Repositories\ProcumentOrderRepository;
 use Illuminate\Http\Request;
 use App\Repositories\UserRepository;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -147,6 +148,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $input['departmentID'] = 'PROC';
 
         $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
+            ->where('documentSystemID', $input['documentSystemID'])
             ->orderBy('purchaseOrderID', 'desc')
             ->first();
 
@@ -281,10 +283,10 @@ class ProcumentOrderAPIController extends AppBaseController
             $input['supplierTransactionER'] = 1;
         }
 
-        $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
+        $currencyConversionDefaultMaster = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], 0);
 
-        if ($erCurrency) {
-            $input['supplierDefaultER'] = $erCurrency->ExchangeRate;
+        if ($currencyConversionDefaultMaster) {
+            $input['supplierDefaultER'] = $currencyConversionDefaultMaster['transToDocER'];
         }
 
         $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
@@ -432,10 +434,10 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->supplierTransactionER = 1;
         }
 
-        $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
+        $currencyConversionDefaultMaster = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], 0);
 
-        if ($erCurrency) {
-            $procumentOrderUpdate->supplierDefaultER = $erCurrency->ExchangeRate;
+        if ($currencyConversionDefaultMaster) {
+            $procumentOrderUpdate->supplierDefaultER =  $currencyConversionDefaultMaster['transToDocER'];
         }
 
         //getting total sum of PO detail Amount
@@ -1177,7 +1179,8 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
-        }, 'company', 'transactioncurrency', 'companydocumentattachment'])->first();
+        }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->first();
+
         return $this->sendResponse($output, 'Data retrieved successfully');
 
     }
@@ -2340,7 +2343,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
-        }, 'company', 'transactioncurrency', 'companydocumentattachment'])->get();
+        }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
 
         $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $procumentOrder->companySystemID)
             ->where('documentSystemID', $procumentOrder->documentSystemID)
@@ -2364,9 +2367,30 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $documentTitle = 'Direct Order';
         }
 
-        $order = array('podata' => $outputRecord[0], 'docRef' => $refernaceDoc, 'numberFormatting' => $decimal, 'title' => $documentTitle);
+        $poPaymentTerms = PoPaymentTerms::where('poID',  $procumentOrder->purchaseOrderID)
+            ->get();
+
+        $paymentTermsView = '';
+
+        if($poPaymentTerms){
+            foreach($poPaymentTerms as $val){
+                $paymentTermsView .= $val['paymentTemDes'].', ';
+            }
+        }
+
+        $order = array(
+            'podata' => $outputRecord[0],
+            'docRef' => $refernaceDoc,
+            'numberFormatting' => $decimal,
+            'title' => $documentTitle,
+            'paymentTermsView' => $paymentTermsView
+
+        );
 
         $html = view('print.purchase_order_print_pdf', $order);
+
+       // echo $html;
+        //exit();
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
@@ -3141,8 +3165,12 @@ WHERE
         if ($supplierCurrency) {
             $purchaseOrder->supplierDefaultCurrencyID = $supplierCurrency->currencyID;
             $purchaseOrder->supplierTransactionER = 1;
-            $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
-            $purchaseOrder->supplierDefaultER = $erCurrency->ExchangeRate;
+        }
+
+        $currencyConversionDefaultMaster = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], 0);
+
+        if ($currencyConversionDefaultMaster) {
+            $purchaseOrder->supplierDefaultER =  $currencyConversionDefaultMaster['transToDocER'];
         }
 
         $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])

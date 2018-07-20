@@ -140,9 +140,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError('Item Issue not found', 500);
         }
 
+
         if (isset($input['issueType'])) {
             if ($input['issueType'] == 1) {
-                $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
+                 $item = ItemAssigned::where('idItemAssigned', $input['itemCode'])
                     ->where('companySystemID', $companySystemID)
                     ->first();
             } else if ($input['issueType'] == 2) {
@@ -303,9 +304,9 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
         $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
-            ->where('companySystemID', $companySystemID)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
+                                        ->where('companySystemID', $companySystemID)
+                                        ->groupBy('itemSystemCode')
+                                        ->sum('inOutQty');
 
         $currentWareHouseStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
             ->where('companySystemID', $companySystemID)

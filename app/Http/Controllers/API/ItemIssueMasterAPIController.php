@@ -29,6 +29,7 @@ use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
 use App\Models\Months;
 use App\Models\SegmentMaster;
+use App\Models\SupplierMaster;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
@@ -333,6 +334,28 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         if (empty($itemIssueMaster)) {
             return $this->sendError('Item Issue Master not found');
+        }
+
+        if($itemIssueMaster->location != $input['serviceLineSystemID']){
+            $checkDepartmentActive = SupplierMaster::find($input['serviceLineSystemID']);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Department not found');
+            }
+
+            if($checkDepartmentActive->isActive == 0){
+                return $this->sendError('Selected Department is not active please select different Department',500);
+            }
+        }
+
+        if($itemIssueMaster->wareHouseFrom != $input['wareHouseFrom']){
+            $checkWareHouseActive = WarehouseMaster::find($input['wareHouseFrom']);
+            if (empty($checkWareHouseActive)) {
+                return $this->sendError('WareHouse not found');
+            }
+
+            if($checkWareHouseActive->isActive == 0){
+                return $this->sendError('Selected WareHouse is not active please select different WareHouse',500);
+            }
         }
 
         $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();

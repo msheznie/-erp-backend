@@ -164,13 +164,14 @@ class PoPaymentTermsAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
-        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
+/*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
         if ($supplier) {
             $input['inDays'] = $supplier->creditPeriod;
-        }
+        }*/
 
-        if (!empty($purchaseOrder->expectedDeliveryDate) && !empty($supplier->creditPeriod)) {
-            $addedDate = strtotime("+$supplier->creditPeriod day", strtotime($purchaseOrder->expectedDeliveryDate));
+        $daysin =  $input['inDays'];
+        if (!empty($purchaseOrder->expectedDeliveryDate) && !empty( $daysin)) {
+            $addedDate = strtotime("+$daysin day", strtotime($purchaseOrder->expectedDeliveryDate));
             $input['comDate'] = date("Y-m-d", $addedDate);
         }
 
@@ -179,10 +180,6 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         if (empty($poPaymentTerms)) {
             return $this->sendError('Po Payment Terms not found');
-        }
-
-        if($purchaseOrder){
-
         }
 
         //getting total sum of PO detail Amount
