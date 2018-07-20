@@ -566,8 +566,8 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 
 
 Route::get('runQueue', function () {
-    $master  = ['documentSystemID' => 12,'autoID' => 35,'companySystemID' => 31];
-    $job = \App\Jobs\ItemAssignInsert::dispatch($master);
+    $master  = ['documentSystemID' => 3,'autoID' => 44049,'companySystemID' => 11];
+    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
 });
 
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');

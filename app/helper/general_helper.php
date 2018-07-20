@@ -928,6 +928,12 @@ class Helper
         return $user->employee_id;
     }
 
+    public static function getEmployeeID()
+    {
+        $user = Models\User::find(Auth::id());
+        return $user->empID;
+    }
+
 
     public static function sendResponse($result, $message)
     {
@@ -997,6 +1003,34 @@ class Helper
     {
         $decimal = Models\CurrencyMaster::where('currencyID', $currencyID)->first();
         return $decimal['DecimalPlaces'];
+    }
+
+    public static function dateYear($date)
+    {
+        if ($date) {
+            return date("Y", strtotime($date));
+        } else {
+            return '';
+        }
+    }
+
+    public static function dateMonth($date)
+    {
+        if ($date) {
+            return date("m", strtotime($date));
+        } else {
+            return '';
+        }
+    }
+
+    public static function currentDate()
+    {
+        return date("Y-m-d");
+    }
+
+    public static function currentDateTime()
+    {
+        return date("Y-m-d H:i:s");
     }
 
 
