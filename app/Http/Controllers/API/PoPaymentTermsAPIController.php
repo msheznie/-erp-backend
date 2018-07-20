@@ -182,6 +182,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             return $this->sendError('Po Payment Terms not found');
         }
 
+
         //getting total sum of PO detail Amount
         $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
             ->where('purchaseOrderMasterID', $purchaseOrderID)

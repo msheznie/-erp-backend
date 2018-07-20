@@ -550,6 +550,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit');
     Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
+    Route::resource('po_addons', 'PoAddonsAPIController');
+    Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
+    Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
+
 
 });
 
@@ -572,5 +576,7 @@ Route::get('runQueue', function () {
 
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
 Route::resource('years', 'YearAPIController');
+
+
 
 
