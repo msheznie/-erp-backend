@@ -676,7 +676,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
                         ->update([
                             'VATPercentage' => $input['VATPercentage'],
-                            'VATAmount' => round($vatLineAmount, $supplierCurrencyDecimalPlace),
+                            'VATAmount' => $vatLineAmount,
                             'VATAmountLocal' => round($currencyConversionForLineAmount['localAmount'], 8),
                             'VATAmountRpt' => round($currencyConversionForLineAmount['reportingAmount'], 8)
                         ]);
@@ -696,11 +696,12 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $input['VATAmount']);
 
-            //$procumentOrderUpdate->VATAmount = $calculatVatAmount;
+            $procumentOrderUpdate->VATAmount = $calculatVatAmount;
             $procumentOrderUpdate->VATAmountLocal = round($currencyConversionVatAmount['localAmount'], 8);
             $procumentOrderUpdate->VATAmountRpt = round($currencyConversionVatAmount['reportingAmount'], 8);
 
         } else {
+            $procumentOrderUpdate->VATAmount = 0;
             $procumentOrderUpdate->VATAmountLocal = 0;
             $procumentOrderUpdate->VATAmountRpt = 0;
         }

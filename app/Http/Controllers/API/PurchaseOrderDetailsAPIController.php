@@ -617,11 +617,11 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
 
             $input['GRVcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
-            $input['GRVcostPerUnitSupTransCur'] = round($discountedUnitPrice, 8);
+            $input['GRVcostPerUnitSupTransCur'] = $discountedUnitPrice;
             $input['GRVcostPerUnitComRptCur'] = round($currencyConversion['reportingAmount'], 8);
 
             $input['purchaseRetcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
-            $input['purchaseRetcostPerUnitTranCur'] = round($discountedUnitPrice, 8);
+            $input['purchaseRetcostPerUnitTranCur'] = $discountedUnitPrice;
             $input['purchaseRetcostPerUnitRptCur'] = round($currencyConversion['reportingAmount'], 8);
         }
 
