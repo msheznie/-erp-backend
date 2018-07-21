@@ -210,7 +210,7 @@
                    Not Confirmed & Not Approved <br> Draft Copy
                @endif
                @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
-                   Confirmed & Not Approved
+                   Confirmed & Not Approved <br> Draft Copy
                @endif
            </h3>
          </span>
