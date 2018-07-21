@@ -3315,6 +3315,7 @@ WHERE
 
                 $vatLineAmount = ($calculateItemTax - $calculateItemDiscount);
 
+                $currencyConversionDefaultW = \Helper::currencyConversion($purchaseOrderDetail->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $calculateItemTax);
 
                 $purchaseOrderDetail->GRVcostPerUnitLocalCur = round($currencyConversion['localAmount'], 8);
                 $purchaseOrderDetail->GRVcostPerUnitSupTransCur = round($calculateItemTax, $supplierCurrencyDecimalPlace);
@@ -3322,6 +3323,9 @@ WHERE
                 $purchaseOrderDetail->purchaseRetcostPerUnitLocalCur = round($currencyConversion['localAmount'], 8);
                 $purchaseOrderDetail->purchaseRetcostPerUnitTranCur = round($calculateItemTax, $supplierCurrencyDecimalPlace);
                 $purchaseOrderDetail->purchaseRetcostPerUnitRptCur = round($currencyConversion['reportingAmount'], 8);
+
+                $purchaseOrderDetail->GRVcostPerUnitSupDefaultCur = $currencyConversionDefaultW['documentAmount'];
+                $purchaseOrderDetail->purchaseRetcostPerUniSupDefaultCur = $currencyConversionDefaultW['documentAmount'];
             } else {
                 if ($purchaseOrder->poDiscountAmount > 0) {
                     $calculateItemDiscount = (($purchaseOrderDetail->netAmount - (($purchaseOrder->poDiscountAmount / $poMasterSumRounded) * $purchaseOrderDetail->netAmount)) / $purchaseOrderDetail->noQty);
