@@ -321,6 +321,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
+
         $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
 
         if ($companyFinancePeriod) {
@@ -348,6 +349,29 @@ class ItemReturnMasterAPIController extends AppBaseController
         if (empty($itemReturnMaster)) {
             return $this->sendError('Item Return Master not found');
         }
+
+        if($itemReturnMaster->serviceLineSystemID != $input['serviceLineSystemID']){
+            $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Department not found');
+            }
+
+            if($checkDepartmentActive->isActive == 0){
+                return $this->sendError('Selected Department is not active please select different Department',500);
+            }
+        }
+
+        if($itemReturnMaster->wareHouseLocation != $input['wareHouseLocation']){
+            $checkWareHouseActive = WarehouseMaster::find($input['wareHouseLocation']);
+            if (empty($checkWareHouseActive)) {
+                return $this->sendError('WareHouse not found');
+            }
+
+            if($checkWareHouseActive->isActive == 0){
+                return $this->sendError('Selected WareHouse is not active please select different WareHouse',500);
+            }
+        }
+
 
         if ($itemReturnMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 

@@ -152,8 +152,8 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
 
         $itemIssuesCount =  ItemIssueMaster::whereHas('details',function ($q) use($input){
-                                $q->where('itemCodeSystem',$input['itemCodeSystem']);
-                                })
+                                    $q->where('itemCodeSystem',$input['itemCodeSystem']);
+                                 })
                                 ->where('companySystemID',$companySystemID)
                                 ->where('approved',-1)
                                 ->select('itemIssueAutoID AS value','itemIssueCode AS label')
@@ -524,7 +524,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
         $items = ItemAssigned::where('companySystemID', $companyId)
                             ->where('financeCategoryMaster', 1)
-                            ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned']);
+                            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem']);
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];

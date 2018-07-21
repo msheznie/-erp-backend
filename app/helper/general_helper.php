@@ -971,6 +971,7 @@ class Helper
             ->where('companySystemID', '=', $companySystemID)
             ->where('companyFinanceYearID', $companyFinanceYearID)
             ->where('departmentSystemID', $departmentSystemID)
+            ->where('isActive', -1)
             ->get();
         return $companyFinancePeriod;
     }
