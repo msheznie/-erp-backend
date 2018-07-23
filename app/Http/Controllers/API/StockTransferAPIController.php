@@ -162,7 +162,7 @@ class StockTransferAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Transfer Date not between Financial period !');
+            return $this->sendError('Transfer Date not between Financial period !',500);
         }
 
         $input['createdPCID'] = gethostname();
@@ -185,11 +185,11 @@ class StockTransferAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+            return $this->sendError('Selected segment is not active. Please select an active segment',500);
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot me same');
+            return $this->sendError('Location From and Location To  cannot me same',500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -541,7 +541,7 @@ class StockTransferAPIController extends AppBaseController
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $stockTransferMaster->whereMonth('tranferDate+', '=', $input['month']);
+                $stockTransferMaster->whereMonth('tranferDate', '=', $input['month']);
             }
         }
 
@@ -686,7 +686,8 @@ class StockTransferAPIController extends AppBaseController
             'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('documentSystemID', 13);
-            }])->findWithoutFail($id);
+            }])
+            ->findWithoutFail($id);
 
         if (empty($stockTransfer)) {
             return $this->sendError('Stock Transfer not found');

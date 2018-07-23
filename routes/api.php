@@ -554,7 +554,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
     Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
 
-
+    Route::resource('stock_receives', 'StockReceiveAPIController');
+    Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
+    Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData');
+    Route::get('stockReceiveAudit', 'StockReceiveAPIController@stockReceiveAudit');
+    Route::resource('stock_receive_details', 'StockReceiveDetailsAPIController');
+    Route::get('getStockReceiveDetailsByMaster', 'StockReceiveDetailsAPIController@getStockReceiveDetailsByMaster');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -576,6 +581,8 @@ Route::get('runQueue', function () {
 
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
 Route::resource('years', 'YearAPIController');
+
+
 
 
 
