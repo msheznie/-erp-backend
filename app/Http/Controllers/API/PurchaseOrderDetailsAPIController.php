@@ -401,6 +401,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         $selectedForPO = 0;
                     }
 
+                    $new['poUnitAmount'] = $new['estimatedCost'];
+
                     // checking the qty request is matching with sum total
                     //if ($new['quantityRequested'] >= $totalAddedQty) {
                     if ($new['quantityRequested'] >= $new['poQty']) {
@@ -419,7 +421,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         $prDetail_arr['purchaseOrderMasterID'] = $purchaseOrderID;
                         $prDetail_arr['noQty'] = $new['poQty'];
 
-                        $pobalanceQty = $new['quantityRequested'] - $new['poTakenQty'];
+                        $pobalanceQty = ($new['quantityRequested'] - $new['poTakenQty']);
                         $prDetail_arr['balanceQty'] = $pobalanceQty;
                         $prDetail_arr['requestedQty'] = $new['quantityRequested'];
 
