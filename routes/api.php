@@ -353,6 +353,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('manualCloseProcurementOrderPrecheck', 'ProcumentOrderAPIController@manualCloseProcurementOrderPrecheck');
     Route::post('procumentOrderSegmentchk', 'ProcumentOrderAPIController@procumentOrderSegmentchk');
     Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit');
+    Route::post('getProcurementOrderReopen', 'ProcumentOrderAPIController@getProcurementOrderReopen');
     Route::post('getProcurementOrderReferBack', 'ProcumentOrderAPIController@getProcurementOrderReferBack');
     Route::get('getPurchasePaymentStatusHistory', 'ProcumentOrderAPIController@getPurchasePaymentStatusHistory');
 
@@ -580,3 +581,14 @@ Route::resource('years', 'YearAPIController');
 
 
 
+
+
+Route::resource('purchase_order_master_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
+
+Route::resource('purchase_order_details_reffered_histories', 'PurchaseOrderDetailsRefferedHistoryAPIController');
+
+Route::resource('purchase_order_adv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
+
+Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
+
+Route::resource('document_refered_histories', 'DocumentReferedHistoryAPIController');
