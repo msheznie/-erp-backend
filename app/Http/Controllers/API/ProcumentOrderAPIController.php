@@ -36,8 +36,9 @@
  * -- Date: 05-June 2018 By: Mubashir Description: Modified getProcumentOrderByDocumentType() to handle filters from local storage
  * -- Date: 14-june 2018 By: Nazir Description: Added new functions named as purchaseOrderForGRV(),
  * -- Date: 25-june 2018 By: Nazir Description: Added new functions named as getPurchasePaymentStatusHistory(),
- * -- Date: 26-june 2018 By: Nazir Description: Added new functions named as getProcurementOrderReferBack(),
+ * -- Date: 26-june 2018 By: Nazir Description: Added new functions named as getProcurementOrderReopen(),
  * -- Date: 18-july 2018 By: Nazir Description: Added new functions named as procumentOrderPRAttachment(),
+ * -- Date: 23-July 2018 By: Nazir Description: Added new functions named as getProcurementOrderReferBack(),
  */
 
 namespace App\Http\Controllers\API;
@@ -46,11 +47,16 @@ use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
 use App\Models\AddonCostCategories;
 use App\Models\DocumentAttachments;
+use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\Months;
 use App\Models\Company;
 use App\Models\PoAddons;
+use App\Models\PoPaymentTermsRefferedback;
+use App\Models\PurchaseOrderAdvPaymentRefferedback;
+use App\Models\PurchaseOrderDetailsRefferedHistory;
+use App\Models\PurchaseOrderMasterRefferedHistory;
 use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
@@ -777,7 +783,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
 
             if ($isAmendAccess != 1) {
-                $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $poMasterSumDeducted);
+                $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' =>  $procumentOrderUpdate->poTotalLocalCurrency);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"]);
@@ -3640,7 +3646,7 @@ FROM
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
 
-    public function getProcurementOrderReferBack(Request $request)
+    public function getProcurementOrderReopen(Request $request)
     {
         $input = $request->all();
 
@@ -3818,6 +3824,73 @@ FROM
         $procumentOrderUpdate->save();
 
         return $this->sendResponse($purchaseOrderID, 'Supplier detail updated successfully');
+    }
+
+    public function getProcurementOrderReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        if ($purchaseOrder->refferedBackYN != -1) {
+            return $this->sendError('You cannot Refer Back this PO, its not refer backed');
+        }
+
+        $purchaseOrderArray = $purchaseOrder->toArray();
+
+        $storePOMasterHistory = PurchaseOrderMasterRefferedHistory::insert($purchaseOrderArray);
+
+        $fetchPurchaseOrderDetail = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+            ->get();
+
+        $purchaseOrderDetailArray = $fetchPurchaseOrderDetail->toArray();
+
+        $storePODetailHistory = PurchaseOrderDetailsRefferedHistory::insert($purchaseOrderDetailArray);
+
+        $fetchAdvancePaymentDetails = AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)
+            ->get();
+
+        $advancePaymentDetailsArray = $fetchAdvancePaymentDetails->toArray();
+
+        $storePOAdvPaymentHistory = PurchaseOrderAdvPaymentRefferedback::insert($advancePaymentDetailsArray);
+
+        $fetchPoPaymentTerms = PoPaymentTerms::where('poID', $input['purchaseOrderID'])
+            ->get();
+
+        $PoPaymentTermsArray = $fetchPoPaymentTerms->toArray();
+
+        $storePOAdvPaymentHistory = PoPaymentTermsRefferedback::insert($PoPaymentTermsArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+            ->where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
+            ->get();
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
+            ->where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $purchaseOrder->refferedBackYN = 0;
+            $purchaseOrder->poConfirmedYN = 0;
+            $purchaseOrder->poConfirmedByEmpSystemID = null;
+            $purchaseOrder->poConfirmedByEmpID = null;
+            $purchaseOrder->poConfirmedByName = null;
+            $purchaseOrder->poConfirmedDate = null;
+            $purchaseOrder->save();
+        }
+
+        return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order Amend successfully');
     }
 
 

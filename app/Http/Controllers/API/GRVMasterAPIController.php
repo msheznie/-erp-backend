@@ -277,6 +277,10 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('Good Receipt Voucher not found');
         }
 
+        if ($gRVMaster->grvCancelledYN == -1) {
+            return $this->sendError('Good Receipt Voucher closed. You cannot edit.', 500);
+        }
+
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
@@ -286,6 +290,9 @@ class GRVMasterAPIController extends AppBaseController
         $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
 
         if ($companyFinancePeriod) {
+            if($companyFinancePeriod->isActive != -1 && $companyFinancePeriod->isCurrent != -1){
+                return $this->sendError('GRV Date not between Financial period !', 500);
+            }
             $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod->dateTo;
         }
@@ -305,10 +312,6 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError('GRV Date not between Financial period !');
         }
 
-        if ($gRVMaster->grvCancelledYN == -1) {
-            return $this->sendError('Good Receipt Voucher closed. You cannot edit.', 500);
-        }
-
         $grvType = GRVTypes::where('grvTypeID', $input['grvTypeID'])->first();
         if ($grvType) {
             $input['grvType'] = $grvType->idERP_GrvTpes;
@@ -322,6 +325,16 @@ class GRVMasterAPIController extends AppBaseController
 
         if (empty($segments)) {
             return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+        //checking selected warehouse is active
+        $warehouse = WarehouseMaster::where("wareHouseSystemCode", $input['grvLocation'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isActive', 1)
+            ->first();
+
+        if (empty($warehouse)) {
+            return $this->sendError('Selected location is not active. Please select an active location');
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -748,6 +761,8 @@ class GRVMasterAPIController extends AppBaseController
             'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('documentSystemID', 3);
+            },'details','company_by','currency_by', 'companydocumentattachment_by' => function ($query) {
+                $query->where('documentSystemID', 3);
             }])->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
@@ -939,6 +954,37 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendResponse(array(), $reject["message"]);
         }
 
+    }
+
+    public function goodReceiptVoucherPrintPDF(Request $request)
+    {
+        $id = $request->get('id');
+        $grvMaster = $this->gRVMasterRepository->findWithoutFail($id);
+        if (empty($grvMaster)) {
+            return $this->sendError('GRV Master not found');
+        }
+
+        $outputRecord = $this->gRVMasterRepository->with(['created_by', 'confirmed_by',
+            'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('documentSystemID', 3);
+            },'details','company_by','currency_by', 'companydocumentattachment_by' => function ($query) {
+                $query->where('documentSystemID', 3);
+            }])->findWithoutFail($id);
+
+        $grv = array(
+            'grvData' => $outputRecord
+        );
+
+        $html = view('print.good_receipt_voucher_print_pdf', $grv);
+
+        // echo $html;
+        //exit();
+
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
     }
 
 }

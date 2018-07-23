@@ -716,6 +716,15 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
+
+                            $masterData  = ['documentSystemID' => $docApproved->documentSystemID,'autoID' => $docApproved->documentSystemCode,'companySystemID' => $docApproved->companySystemID];
+                            // insert the record to item ledger
+                            $job1 = \App\Jobs\ItemLedgerInsert::dispatch($masterData)->onQueue('itemledger');
+                            // insert the record to general ledger
+                            if($input["documentSystemID"] == 3) {
+                                $job2 = \App\Jobs\GeneralLedgerInsert::dispatch($masterData)->onQueue('generalledger');
+                            }
+
                         } else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
@@ -972,6 +981,7 @@ class Helper
             ->where('companyFinanceYearID', $companyFinanceYearID)
             ->where('departmentSystemID', $departmentSystemID)
             ->where('isActive', -1)
+            ->where('isCurrent', -1)
             ->get();
         return $companyFinancePeriod;
     }
@@ -981,6 +991,7 @@ class Helper
      * @param $companySystemID - current company id
      * @return array
      */
+
     public static function companyCurrency($companySystemID)
     {
         $companyCurrency = Models\Company::with(['localcurrency', 'reportingcurrency'])

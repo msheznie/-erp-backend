@@ -371,7 +371,7 @@ class GRVDetailsAPIController extends AppBaseController
                     $GRVDetail_arr['supplierPartNumber'] = $new['supplierPartNumber'];
                     $GRVDetail_arr['unitOfMeasure'] = $new['unitOfMeasure'];
                     $GRVDetail_arr['noQty'] = $new['noQty'];
-                    $GRVDetail_arr['prvRecievedQty'] = $new['noQty'];
+                    $GRVDetail_arr['prvRecievedQty'] = $new['receivedQty'];
                     $GRVDetail_arr['poQty'] = $new['poQty'];
                     $totalNetcost = $new['GRVcostPerUnitSupTransCur'] * $new['noQty'];
                     $GRVDetail_arr['unitCost'] = $new['GRVcostPerUnitSupTransCur'];
@@ -392,6 +392,11 @@ class GRVDetailsAPIController extends AppBaseController
                     $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = $new['GRVcostPerUnitSupDefaultCur'];
                     $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = $new['GRVcostPerUnitSupTransCur'];
                     $GRVDetail_arr['GRVcostPerUnitComRptCur'] = $new['GRVcostPerUnitComRptCur'];
+
+                    $GRVDetail_arr['landingCost_LocalCur'] = $new['GRVcostPerUnitLocalCur'];
+                    $GRVDetail_arr['landingCost_TransCur'] = $new['GRVcostPerUnitSupTransCur'];
+                    $GRVDetail_arr['landingCost_RptCur'] = $new['GRVcostPerUnitComRptCur'];
+
                     $GRVDetail_arr['vatRegisteredYN'] = $POMaster->vatRegisteredYN;
                     $GRVDetail_arr['supplierVATEligible'] = $POMaster->supplierVATEligible;
                     $GRVDetail_arr['VATPercentage'] = $new['VATPercentage'];

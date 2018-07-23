@@ -353,6 +353,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('manualCloseProcurementOrderPrecheck', 'ProcumentOrderAPIController@manualCloseProcurementOrderPrecheck');
     Route::post('procumentOrderSegmentchk', 'ProcumentOrderAPIController@procumentOrderSegmentchk');
     Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit');
+    Route::post('getProcurementOrderReopen', 'ProcumentOrderAPIController@getProcurementOrderReopen');
     Route::post('getProcurementOrderReferBack', 'ProcumentOrderAPIController@getProcurementOrderReferBack');
     Route::get('getPurchasePaymentStatusHistory', 'ProcumentOrderAPIController@getPurchasePaymentStatusHistory');
 
@@ -560,9 +561,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('stockReceiveAudit', 'StockReceiveAPIController@stockReceiveAudit');
     Route::resource('stock_receive_details', 'StockReceiveDetailsAPIController');
     Route::get('getStockReceiveDetailsByMaster', 'StockReceiveDetailsAPIController@getStockReceiveDetailsByMaster');
+
+    Route::resource('purchase_order_master_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
+    Route::resource('purchase_order_details_reffered_histories', 'PurchaseOrderDetailsRefferedHistoryAPIController');
+    Route::resource('purchase_order_adv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
+    Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
+    Route::resource('document_refered_histories', 'DocumentReferedHistoryAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
+Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
@@ -576,11 +584,14 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 
 Route::get('runQueue', function () {
     $master  = ['documentSystemID' => 3,'autoID' => 44049,'companySystemID' => 11];
-    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
+    $job = \App\Jobs\ItemLedgerInsert::dispatch($master)->onQueue('itemledger');
 });
 
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
 Route::resource('years', 'YearAPIController');
+
+
+
 
 
 
