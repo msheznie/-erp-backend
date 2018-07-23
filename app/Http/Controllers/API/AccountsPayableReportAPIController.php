@@ -48,7 +48,6 @@ class AccountsPayableReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-
         if($request['reportID'] == 'TS'){
             $controlAccount = array();
             $supplierMaster = array();

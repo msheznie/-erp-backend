@@ -318,5 +318,15 @@ class GRVMaster extends Model
         return $this->hasMany('App\Models\GRVDetails', 'grvAutoID', 'grvAutoID');
     }
 
+    public function company_by()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function companydocumentattachment_by()
+    {
+        return $this->hasMany('App\Models\CompanyDocumentAttachment', 'companySystemID', 'companySystemID');
+    }
+
     
 }

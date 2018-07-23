@@ -558,6 +558,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
+Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
@@ -571,7 +572,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 
 Route::get('runQueue', function () {
     $master  = ['documentSystemID' => 3,'autoID' => 44049,'companySystemID' => 11];
-    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
+    $job = \App\Jobs\ItemLedgerInsert::dispatch($master)->onQueue('itemledger');
 });
 
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
