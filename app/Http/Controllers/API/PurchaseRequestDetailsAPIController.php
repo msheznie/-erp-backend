@@ -506,7 +506,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input = $request->all();
         $prID = $input['purchaseRequestID'];
 
-        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty, 0 as poUnitAmount,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = '.$prID.' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');
+        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = '.$prID.' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');
 
         return $this->sendResponse($detail, 'Purchase Request Details retrieved successfully');
 

@@ -329,15 +329,14 @@ class ItemIssueDetailsAPIController extends AppBaseController
             ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
             ->first();
 
-        if (empty($financeItemCategorySubAssigned)) {
-            return $this->sendError('Finance Category not found');
+        if (!empty($financeItemCategorySubAssigned)) {
+            //return $this->sendError('Finance Category not found');
+            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
         }
-
-        $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-        $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
-        $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
-        $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-        $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
         if ($input['itemFinanceCategoryID'] == 1) {
             $alreadyAdded = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])
@@ -578,6 +577,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     }
                 }
             }
+        }
+
+        if($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0){
+            return $this->sendError("Cost is not updated", 500);
         }
 
         return $this->sendResponse($itemIssueDetails->toArray(), 'ItemIssueDetails updated successfully');

@@ -175,6 +175,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $input['localCurrencyID'] = $itemAssign->wacValueLocalCurrencyID;
         $input['reportingCurrencyID'] = $itemAssign->wacValueReportingCurrencyID;
 
+
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
                                                                         ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
                                                                         ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
@@ -398,6 +399,10 @@ class ItemReturnDetailsAPIController extends AppBaseController
             }else{
                 return $this->sendError('Materiel Issue not found', 500);
             }
+        }
+
+        if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
+            return $this->sendError("Cost is not updated", 500);
         }
 
         $itemReturnDetails = $this->itemReturnDetailsRepository->update($input, $id);
