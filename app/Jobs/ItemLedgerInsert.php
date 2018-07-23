@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use Exception;
 use App\Models\ErpItemLedger;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -76,7 +77,6 @@ class ItemLedgerInsert implements ShouldQueue
                             'documentID' => 'documentID',
                             'documentCode' => 'grvPrimaryCode',
                             'wareHouseSystemCode' => 'grvLocation',
-                            'transactionDate' => 'grvDate',
                             'referenceNumber' => 'grvDoRefNo');
 
                         $detailColumnArray = array(
@@ -107,7 +107,6 @@ class ItemLedgerInsert implements ShouldQueue
                             'documentID' => 'documentID',
                             'documentCode' => 'itemIssueCode',
                             'wareHouseSystemCode' => 'wareHouseFrom',
-                            'transactionDate' => 'issueDate',
                             'referenceNumber' => 'issueRefNo');
 
                         $detailColumnArray = array(
@@ -138,7 +137,6 @@ class ItemLedgerInsert implements ShouldQueue
                             'documentID' => 'documentID',
                             'documentCode' => 'itemReturnCode',
                             'wareHouseSystemCode' => 'wareHouseLocation',
-                            'transactionDate' => 'ReturnDate',
                             'referenceNumber' => 'ReturnRefNo');
 
                         $detailColumnArray = array(
@@ -169,7 +167,6 @@ class ItemLedgerInsert implements ShouldQueue
                             'documentID' => 'documentID',
                             'documentCode' => 'stockTransferCode',
                             'wareHouseSystemCode' => 'locationFrom',
-                            'transactionDate' => 'tranferDate',
                             'referenceNumber' => 'refNo');
 
                         $detailColumnArray = array(
@@ -185,7 +182,9 @@ class ItemLedgerInsert implements ShouldQueue
                             'comments' => 'comments');
                         break;
                     default:
-                        return ['success' => false, 'message' => 'Document ID not found'];
+                        Log::error('Document ID Not Found' . date('H:i:s'));
+                        exit;
+                        break;
                 }
                 $nameSpacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $masterRec = $nameSpacedModel::with([$docInforArr["childRelation"] => function($query) use ($masterModel) {
@@ -218,13 +217,14 @@ class ItemLedgerInsert implements ShouldQueue
                             $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
                             $data[$i]['createdUserID'] = $empID->empID;
                             $data[$i]['fromDamagedTransactionYN'] = 0;
+                            $data[$i]['transactionDate'] = date('Y-m-d H:i:s');
                             $data[$i]['timestamp'] = date('Y-m-d H:i:s');
                             $i++;
                         }
                         if($data){
                             Log::info($data);
                             $itemLedgerInsert = ErpItemLedger::insert($data);
-                            $itemassignInsert = \App\Jobs\ItemAssignInsert::dispatch($masterModel);
+                            $itemassignInsert = \App\Jobs\ItemAssignInsert::dispatch($masterModel)->onQueue('itemassign');
                         }
 
                     }
@@ -240,5 +240,16 @@ class ItemLedgerInsert implements ShouldQueue
             Log::error('Parameter not exist' . date('H:i:s'));
         }
 
+    }
+
+    /**
+     * The job failed to process.
+     *
+     * @param  Exception  $exception
+     * @return void
+     */
+    public function failed(Exception $exception)
+    {
+        // Send user notification of failure, etc...
     }
 }
