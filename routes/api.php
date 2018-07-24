@@ -510,6 +510,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('approveGoodReceiptVoucher', 'GRVMasterAPIController@approveGoodReceiptVoucher');
     Route::post('rejectGoodReceiptVoucher', 'GRVMasterAPIController@rejectGoodReceiptVoucher');
     Route::resource('general_ledgers', 'GeneralLedgerAPIController');
+    Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview');
     Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
     Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany');
     Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
