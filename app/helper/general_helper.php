@@ -1024,6 +1024,7 @@ class Helper
             ->where('companyFinanceYearID', $companyFinanceYearID)
             ->where('departmentSystemID', $departmentSystemID)
             ->where('isActive', -1)
+            ->where('isCurrent', -1)
             ->get();
         return $companyFinancePeriod;
     }
@@ -1033,6 +1034,7 @@ class Helper
      * @param $companySystemID - current company id
      * @return array
      */
+
     public static function companyCurrency($companySystemID)
     {
         $companyCurrency = Models\Company::with(['localcurrency', 'reportingcurrency'])

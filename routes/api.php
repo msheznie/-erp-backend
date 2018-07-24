@@ -353,6 +353,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('manualCloseProcurementOrderPrecheck', 'ProcumentOrderAPIController@manualCloseProcurementOrderPrecheck');
     Route::post('procumentOrderSegmentchk', 'ProcumentOrderAPIController@procumentOrderSegmentchk');
     Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit');
+    Route::post('getProcurementOrderReopen', 'ProcumentOrderAPIController@getProcurementOrderReopen');
     Route::post('getProcurementOrderReferBack', 'ProcumentOrderAPIController@getProcurementOrderReferBack');
     Route::get('getPurchasePaymentStatusHistory', 'ProcumentOrderAPIController@getPurchasePaymentStatusHistory');
 
@@ -555,6 +556,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
 
     Route::resource('stock_receives', 'StockReceiveAPIController');
+    Route::post('srPullFromTransferPreCheck', 'StockReceiveAPIController@srPullFromTransferPreCheck');
     Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
     Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData');
     Route::get('stockReceiveAudit', 'StockReceiveAPIController@stockReceiveAudit');
@@ -565,6 +567,17 @@ Route::group(['middleware' => 'auth:api'], function () {
         $output = \Helper::getEmployeeInfo();
         return $output;
     });
+
+    Route::resource('poMaster_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
+    Route::resource('poDetails_reffered_histories', 'PurchaseOrderDetailsRefferedHistoryAPIController');
+    Route::resource('poAdv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
+    Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
+    Route::resource('document_refered_histories', 'DocumentReferedHistoryAPIController');
+
+    Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
+    Route::resource('years', 'YearAPIController');
+    Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
+    Route::resource('employee_profiles', 'EmployeeProfileAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -579,22 +592,9 @@ Route::get('getBcryptPassword/{password}', function ($password) {
     echo bcrypt($password);
 });
 
-
 Route::get('runQueue', function () {
     $master  = ['documentSystemID' => 3,'autoID' => 44056,'companySystemID' => 11];
     $job = \App\Jobs\UnbilledGRVInsert::dispatch($master)->onQueue('unbilledgrv');
 });
 
-Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
-Route::resource('years', 'YearAPIController');
 
-
-
-
-
-
-
-
-Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
-
-Route::resource('employee_profiles', 'EmployeeProfileAPIController');
