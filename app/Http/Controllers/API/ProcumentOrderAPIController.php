@@ -57,6 +57,7 @@ use App\Models\PoPaymentTermsRefferedback;
 use App\Models\PurchaseOrderAdvPaymentRefferedback;
 use App\Models\PurchaseOrderDetailsRefferedHistory;
 use App\Models\PurchaseOrderMasterRefferedHistory;
+use App\Models\PurchaseRequest;
 use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
@@ -445,7 +446,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
 
         if ($currencyConversionDefaultMaster) {
-            $procumentOrderUpdate->supplierDefaultER =  $currencyConversionDefaultMaster['transToDocER'];
+            $procumentOrderUpdate->supplierDefaultER = $currencyConversionDefaultMaster['transToDocER'];
         }
 
         //getting total sum of PO detail Amount
@@ -616,12 +617,12 @@ class ProcumentOrderAPIController extends AppBaseController
         $getPoAllAddons = PoAddons::where('poId', $purchaseOrderID)
             ->get();
 
-        if(!empty($getPoAllAddons)){
+        if (!empty($getPoAllAddons)) {
 
-            if(!empty($getPoDetailForAddon)){
+            if (!empty($getPoDetailForAddon)) {
                 foreach ($getPoDetailForAddon as $AddonDeta) {
 
-                    $calculateAddonLineAmount =  (($poAddonMasterSumRounded / $poMasterSumRounded ) * $AddonDeta['netAmount']) / $AddonDeta['noQty'];
+                    $calculateAddonLineAmount = (($poAddonMasterSumRounded / $poMasterSumRounded) * $AddonDeta['netAmount']) / $AddonDeta['noQty'];
 
                     $currencyConversionForLineAmountAddon = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateAddonLineAmount);
 
@@ -648,7 +649,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
                     $updatePoDetailAddonDetail->purchaseRetcostPerUnitTranCur = ($AddonDeta['purchaseRetcostPerUnitTranCur'] + $calculateAddonLineAmount);
 
-                    $purchaseRetcostPerUnitRptCur =  round($currencyConversionForLineAmountAddon['reportingAmount'], 8);
+                    $purchaseRetcostPerUnitRptCur = round($currencyConversionForLineAmountAddon['reportingAmount'], 8);
                     $updatePoDetailAddonDetail->purchaseRetcostPerUnitRptCur = ($AddonDeta['purchaseRetcostPerUnitRptCur'] + $purchaseRetcostPerUnitRptCur);
 
                     $updatePoDetailAddonDetail->addonDistCost = $calculateAddonLineAmount;
@@ -783,7 +784,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
 
             if ($isAmendAccess != 1) {
-                $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' =>  $procumentOrderUpdate->poTotalLocalCurrency);
+                $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $procumentOrderUpdate->poTotalLocalCurrency);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"]);
@@ -1875,7 +1876,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         if ($input['documentId'] == 1) {
             $doc1_query = 'SELECT
-    '. $decimalField.'
+    ' . $decimalField . '
 	GRVDet.*,
 	erp_purchaseordermaster.purchaseOrderID,
 	erp_purchaseordermaster.supplierPrimaryCode,
@@ -1922,7 +1923,7 @@ GROUP BY
             $supplierReportGRVBase = DB::select($doc1_query);
         } else if ($input['documentId'] == 2) {
             $doc2_query = 'SELECT
-'. $decimalField.'
+' . $decimalField . '
          InvoiceDet.*,
 	erp_purchaseordermaster.purchaseOrderID,
 	erp_purchaseordermaster.supplierPrimaryCode,
@@ -2248,7 +2249,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         foreach ($supplierReportGRVBase as $val) {
-            $test = array('CompanyID' => $val->companyID, 'Supplier Code' => $val->supplierPrimaryCode, 'Supplier Name' => $val->supplierName,'Supplier Country' => $val->countryName);
+            $test = array('CompanyID' => $val->companyID, 'Supplier Code' => $val->supplierPrimaryCode, 'Supplier Name' => $val->supplierName, 'Supplier Country' => $val->countryName);
 
             if (!empty($months)) {
                 foreach ($months as $key => $row) {
@@ -2438,14 +2439,14 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $documentTitle = 'Direct Order';
         }
 
-        $poPaymentTerms = PoPaymentTerms::where('poID',  $procumentOrder->purchaseOrderID)
+        $poPaymentTerms = PoPaymentTerms::where('poID', $procumentOrder->purchaseOrderID)
             ->get();
 
         $paymentTermsView = '';
 
-        if($poPaymentTerms){
-            foreach($poPaymentTerms as $val){
-                $paymentTermsView .= $val['paymentTemDes'].', ';
+        if ($poPaymentTerms) {
+            foreach ($poPaymentTerms as $val) {
+                $paymentTermsView .= $val['paymentTemDes'] . ', ';
             }
         }
 
@@ -2460,7 +2461,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $html = view('print.purchase_order_print_pdf', $order);
 
-       // echo $html;
+        // echo $html;
         //exit();
 
         $pdf = \App::make('dompdf.wrapper');
@@ -3241,7 +3242,7 @@ WHERE
         $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
 
         if ($currencyConversionDefaultMaster) {
-            $purchaseOrder->supplierDefaultER =  $currencyConversionDefaultMaster['transToDocER'];
+            $purchaseOrder->supplierDefaultER = $currencyConversionDefaultMaster['transToDocER'];
         }
 
         $supplierAssignedDetai = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
@@ -3391,18 +3392,18 @@ WHERE
         }
 
         //updating addons detail for line item
-        $getPoDetailForAddon = PurchaseOrderDetails::where('purchaseOrderMasterID',  $purchaseOrder->purchaseOrderID)
+        $getPoDetailForAddon = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrder->purchaseOrderID)
             ->get();
 
-        $getPoAllAddons = PoAddons::where('poId',  $purchaseOrder->purchaseOrderID)
+        $getPoAllAddons = PoAddons::where('poId', $purchaseOrder->purchaseOrderID)
             ->get();
 
-        if(!empty($getPoAllAddons)){
+        if (!empty($getPoAllAddons)) {
 
-            if(!empty($getPoDetailForAddon)){
+            if (!empty($getPoDetailForAddon)) {
                 foreach ($getPoDetailForAddon as $AddonDeta) {
 
-                    $calculateAddonLineAmount =  (($poAddonMasterSumRounded / $poMasterSumRounded ) * $AddonDeta['netAmount']) / $AddonDeta['noQty'];
+                    $calculateAddonLineAmount = (($poAddonMasterSumRounded / $poMasterSumRounded) * $AddonDeta['netAmount']) / $AddonDeta['noQty'];
 
                     $currencyConversionForLineAmountAddon = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateAddonLineAmount);
 
@@ -3431,7 +3432,7 @@ WHERE
                     $purchaseRetcostPerUnitTranCurAddon = ($AddonDeta['purchaseRetcostPerUnitTranCur'] + $calculateAddonLineAmount);
                     $updatePoDetailAddonDetail->purchaseRetcostPerUnitTranCur = round($purchaseRetcostPerUnitTranCurAddon, $supplierCurrencyDecimalPlace);
 
-                    $purchaseRetcostPerUnitRptCur =  round($currencyConversionForLineAmountAddon['reportingAmount'], 8);
+                    $purchaseRetcostPerUnitRptCur = round($currencyConversionForLineAmountAddon['reportingAmount'], 8);
                     $updatePoDetailAddonDetail->purchaseRetcostPerUnitRptCur = ($AddonDeta['purchaseRetcostPerUnitRptCur'] + $purchaseRetcostPerUnitRptCur);
 
                     $updatePoDetailAddonDetail->addonDistCost = $calculateAddonLineAmount;
@@ -3463,7 +3464,6 @@ WHERE
                     'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
                 ]);
         }
-
 
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Procurement Order retrieved successfully');
@@ -3750,6 +3750,8 @@ FROM
     {
         $input = $request->all();
 
+        $attachmentFound = 0;
+
         $purchaseOrderID = $input['purchaseOrderID'];
         $companySystemID = $input['companySystemID'];
         $documentSystemID = $input['documentSystemID'];
@@ -3772,12 +3774,15 @@ FROM
         if (!empty($prIDS)) {
             foreach ($prIDS as $poDetail) {
 
-                 $docAttachement = DocumentAttachments::where('documentSystemCode', $poDetail['purchaseRequestID'])
+                $purchaseRequest = PurchaseRequest::find($poDetail['purchaseRequestID']);
+
+                $docAttachement = DocumentAttachments::where('documentSystemCode', $poDetail['purchaseRequestID'])
                     ->where('companySystemID', $companySystemID)
-                    ->where('documentSystemID', 1)
+                    ->where('documentSystemID', $purchaseRequest['documentSystemID'])
                     ->get();
 
-                if (!empty($docAttachement)) {
+                if (!empty($docAttachement->toArray())) {
+                    $attachmentFound = 1;
                     foreach ($docAttachement as $doc) {
 
                         $documentAttachments = new DocumentAttachments;
@@ -3801,12 +3806,17 @@ FROM
 
             }
         }
+        if ($attachmentFound == 0) {
+            return $this->sendError('No Attachments Found', 500);
+        } else {
+            return $this->sendResponse($purchaseOrderID, 'PR attachments pulled successfully');
+        }
 
-        return $this->sendResponse($purchaseOrderID, 'PR attachments pulled successfully');
 
     }
 
-    public function updateSentSupplierDetail(Request $request){
+    public function updateSentSupplierDetail(Request $request)
+    {
 
         $input = $request->all();
 
@@ -3894,8 +3904,6 @@ FROM
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order Amend successfully');
     }
-
-
 
 
 }
