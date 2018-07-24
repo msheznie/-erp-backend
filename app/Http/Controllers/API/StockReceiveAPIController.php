@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Stock Receive
  * -- REVISION HISTORY
  * -- Date: 23-July 2018 By: Fayas Description: Added new functions named as getAllStockReceiveByCompany(),getStockReceiveFormData(),stockReceiveAudit()
+ * -- Date: 24-July 2018 By: Fayas Description: Added new functions named as srPullFromTransferPreCheck()
  */
 namespace App\Http\Controllers\API;
 
@@ -577,5 +578,31 @@ class StockReceiveAPIController extends AppBaseController
         return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
     }
 
+    public function srPullFromTransferPreCheck(Request $request)
+    {
+
+        $input = $request->all();
+
+        $id = $input['stockReceiveAutoID'];
+
+        $purchaseOrder = StockReceive::find($id);
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Stock Receive not found');
+        }
+
+        //checking segment is active
+
+        $segments = SegmentMaster::where("serviceLineSystemID", $purchaseOrder->serviceLineSystemID)
+                                    ->where('companySystemID', $input['companySystemID'])
+                                    ->where('isActive', 1)
+                                    ->first();
+
+        if (empty($segments)) {
+            return $this->sendError('Selected Department is not active. Please select an active segment',500);
+        }
+
+        return $this->sendResponse($id, 'success');
+    }
 
 }
