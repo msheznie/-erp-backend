@@ -351,7 +351,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
 
 
-       /* $poQty = PurchaseOrderDetails::with(['order' => function ($query) use ($companySystemID) {
+        $poQty = PurchaseOrderDetails::with(['order' => function ($query) use ($companySystemID) {
             $query->where('companySystemID', $companySystemID)
                 ->where('approved', -1)
                 ->where('poCancelledYN', 0)
@@ -370,12 +370,12 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     'erp_purchaseorderdetails.itemPrimaryCode'
                 ]
             )
-            ->sum('noQty');*/
+            ->sum('noQty');
 
-        $poQty = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
-                                ->where('companySystemID', $companySystemID)
-                                ->groupBy('itemSystemCode')
-                                ->sum('inOutQty');
+        $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
+                                    ->where('companySystemID', $companySystemID)
+                                    ->groupBy('itemSystemCode')
+                                    ->sum('inOutQty');
 
         $grvQty = GRVDetails::with(['master' => function ($query) use ($companySystemID) {
             $query->where('companySystemID', $companySystemID)
@@ -392,8 +392,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             ->sum('noQty');
 
         $quantityOnOrder = $poQty - $grvQty;
-        $quantityInHand  = $poQty;
-
         $input['poQuantity']      = $poQty;
         $input['quantityOnOrder'] = $quantityOnOrder;
         $input['quantityInHand']  = $quantityInHand;
