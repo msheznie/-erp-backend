@@ -242,7 +242,9 @@ class GRVMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var GRVMaster $gRVMaster */
-        $gRVMaster = $this->gRVMasterRepository->with(['created_by', 'confirmed_by', 'segment_by', 'location_by'])->findWithoutFail($id);
+        $gRVMaster = $this->gRVMasterRepository->with(['created_by', 'confirmed_by', 'segment_by', 'location_by','financeperiod_by' => function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }])->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
             return $this->sendError('Good Receipt Voucher not found');
@@ -267,7 +269,7 @@ class GRVMasterAPIController extends AppBaseController
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by','financeperiod_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var GRVMaster $gRVMaster */

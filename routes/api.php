@@ -566,11 +566,21 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getStockTransferForReceive', 'StockTransferAPIController@getStockTransferForReceive');
     Route::get('getStockTransferDetailsByMaster', 'StockTransferAPIController@getStockTransferDetailsByMaster');
 
+    Route::get('getCurrentUserInfo', function () {
+        $output = \Helper::getEmployeeInfo();
+        return $output;
+    });
+
     Route::resource('poMaster_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
     Route::resource('poDetails_reffered_histories', 'PurchaseOrderDetailsRefferedHistoryAPIController');
     Route::resource('poAdv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
     Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
     Route::resource('document_refered_histories', 'DocumentReferedHistoryAPIController');
+
+    Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
+    Route::resource('years', 'YearAPIController');
+    Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
+    Route::resource('employee_profiles', 'EmployeeProfileAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -585,20 +595,9 @@ Route::get('getBcryptPassword/{password}', function ($password) {
     echo bcrypt($password);
 });
 
-
 Route::get('runQueue', function () {
-    $master  = ['documentSystemID' => 3,'autoID' => 44049,'companySystemID' => 11];
-    $job = \App\Jobs\ItemLedgerInsert::dispatch($master)->onQueue('itemledger');
+    $master  = ['documentSystemID' => 3,'autoID' => 44056,'companySystemID' => 11];
+    $job = \App\Jobs\UnbilledGRVInsert::dispatch($master)->onQueue('unbilledgrv');
 });
-
-Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
-Route::resource('years', 'YearAPIController');
-
-
-
-
-
-
-
 
 
