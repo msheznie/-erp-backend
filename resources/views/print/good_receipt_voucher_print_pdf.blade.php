@@ -196,7 +196,7 @@
             <td style="width:33%;font-size: 10px;vertical-align: top;">
                 @if ($grvData->companydocumentattachment_by)
                     <p><span class="font-weight-bold"><span
-                                    class="white-space-pre-line">{!! nl2br($grvData->companydocumentattachment_by[0]->docRefNumber) !!}</span></span>
+                                    class="white-space-pre-line">{!! nl2br($grvData->companydocumentattachment_by?$grvData->companydocumentattachment_by[0]->docRefNumber:'') !!}</span></span>
                     </p>
                 @endif
             </td>
@@ -207,7 +207,7 @@
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 38%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span style="margin-left: 55%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>

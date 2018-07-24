@@ -585,15 +585,15 @@ class StockReceiveAPIController extends AppBaseController
 
         $id = $input['stockReceiveAutoID'];
 
-        $purchaseOrder = StockReceive::find($id);
+        $stockReceive = StockReceive::find($id);
 
-        if (empty($purchaseOrder)) {
+        if (empty($stockReceive)) {
             return $this->sendError('Stock Receive not found');
         }
 
         //checking segment is active
 
-        $segments = SegmentMaster::where("serviceLineSystemID", $purchaseOrder->serviceLineSystemID)
+        $segments = SegmentMaster::where("serviceLineSystemID", $stockReceive->serviceLineSystemID)
                                     ->where('companySystemID', $input['companySystemID'])
                                     ->where('isActive', 1)
                                     ->first();

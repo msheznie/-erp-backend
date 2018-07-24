@@ -222,8 +222,8 @@ class Helper
                     break;
                 case 13:
                     $docInforArr["documentCodeColumnName"] = 'stockTransferCode';
-                    $docInforArr["confirmColumnName"]      = 'confirmedYN';
-                    $docInforArr["confirmedBy"]            = 'confirmedByName';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
                     $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
@@ -274,6 +274,7 @@ class Helper
                             if (array_key_exists('segment', $params)) {
                                 if ($params["segment"]) {
                                     $approvalLevel->where('serviceLineSystemID', $params["segment"]);
+                                    $approvalLevel->where('serviceLineWise', 1);
                                 } else {
                                     return ['success' => false, 'message' => 'No approval setup created for this document'];
                                 }
@@ -286,6 +287,7 @@ class Helper
                             if (array_key_exists('category', $params)) {
                                 if ($params["category"]) {
                                     $approvalLevel->where('categoryID', $params["category"]);
+                                    $approvalLevel->where('isCategoryWiseApproval', -1);
                                 } else {
                                     return ['success' => false, 'message' => 'No approval setup created for this document'];
                                 }
@@ -302,6 +304,7 @@ class Helper
                                         $query->where('valueFrom', '<=', $amount);
                                         $query->where('valueTo', '>=', $amount);
                                     });
+                                    $approvalLevel->where('valueWise', 1);
                                 } else {
                                     return ['success' => false, 'message' => 'No approval setup created for this document'];
                                 }
@@ -310,6 +313,45 @@ class Helper
                             }
                         }
                         $output = $approvalLevel->first();
+
+                        //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
+                        if (empty($output)) {
+                            if ($isCategoryWise) {
+                                $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('isActive', -1);
+                                if ($isSegmentWise) {
+                                    if (array_key_exists('segment', $params)) {
+                                        if ($params["segment"]) {
+                                            $approvalLevel->where('serviceLineSystemID', $params["segment"]);
+                                            $approvalLevel->where('serviceLineWise', 1);
+                                        } else {
+                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        }
+                                    } else {
+                                        return ['success' => false, 'message' => 'Serviceline parameters are missing'];
+                                    }
+                                }
+
+                                if ($isValueWise) {
+                                    if (array_key_exists('amount', $params)) {
+                                        if ($params["amount"]) {
+                                            $amount = $params["amount"];
+                                            $approvalLevel->where(function ($query) use ($amount) {
+                                                $query->where('valueFrom', '<=', $amount);
+                                                $query->where('valueTo', '>=', $amount);
+                                            });
+                                            $approvalLevel->where('valueWise', 1);
+                                        } else {
+                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                        }
+                                    } else {
+                                        return ['success' => false, 'message' => 'Amount parameter are missing'];
+                                    }
+                                }
+
+                                $approvalLevel->where('isCategoryWiseApproval', 0);
+                                $output = $approvalLevel->first();
+                            }
+                        }
 
                         if ($output) {
                             /** get source document master record*/
@@ -717,12 +759,13 @@ class Helper
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
-                            $masterData  = ['documentSystemID' => $docApproved->documentSystemID,'autoID' => $docApproved->documentSystemCode,'companySystemID' => $docApproved->companySystemID];
+                            $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID];
                             // insert the record to item ledger
                             $job1 = \App\Jobs\ItemLedgerInsert::dispatch($masterData)->onQueue('itemledger');
                             // insert the record to general ledger
-                            if($input["documentSystemID"] == 3) {
+                            if ($input["documentSystemID"] == 3) {
                                 $job2 = \App\Jobs\GeneralLedgerInsert::dispatch($masterData)->onQueue('generalledger');
+                                $job3 = \App\Jobs\UnbilledGRVInsert::dispatch($masterData)->onQueue('unbilledgrv');
                             }
 
                         } else {
@@ -871,7 +914,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if(in_array($input["documentSystemID"],[2,5,52,1,50,51])){
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -900,7 +943,7 @@ class Helper
     public static function getEmployeeInfo()
     {
         $user = Models\User::find(Auth::id());
-        $employee = Models\Employee::find($user->employee_id);
+        $employee = Models\Employee::with(['profilepic'])->find($user->employee_id);
         return $employee;
     }
 

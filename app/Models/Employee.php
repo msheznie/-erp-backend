@@ -244,5 +244,9 @@ class Employee extends Model
     public function companies(){
         return $this->belongsToMany('App\Models\Company', 'employeesdepartments','CompanyID','employeeID');
     }
+
+    public function profilepic(){
+        return $this->belongsTo('App\Models\EmployeeProfile', 'employeeSystemID','employeeSystemID');
+    }
     
 }
