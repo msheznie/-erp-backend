@@ -3677,6 +3677,7 @@ FROM
         $purchaseOrder->poConfirmedByEmpID = null;
         $purchaseOrder->poConfirmedByName = null;
         $purchaseOrder->poConfirmedDate = null;
+        $purchaseOrder->RollLevForApp_curr = 1;
         $purchaseOrder->save();
 
         $employee = \Helper::getEmployeeInfo();
@@ -3887,6 +3888,7 @@ FROM
             $purchaseOrder->poConfirmedByEmpID = null;
             $purchaseOrder->poConfirmedByName = null;
             $purchaseOrder->poConfirmedDate = null;
+            $purchaseOrder->RollLevForApp_curr = 1;
             $purchaseOrder->save();
         }
 

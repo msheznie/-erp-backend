@@ -562,9 +562,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('stock_receive_details', 'StockReceiveDetailsAPIController');
     Route::get('getStockReceiveDetailsByMaster', 'StockReceiveDetailsAPIController@getStockReceiveDetailsByMaster');
 
-    Route::resource('purchase_order_master_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
-    Route::resource('purchase_order_details_reffered_histories', 'PurchaseOrderDetailsRefferedHistoryAPIController');
-    Route::resource('purchase_order_adv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
+    Route::resource('poMaster_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
+    Route::resource('poDetails_reffered_histories', 'PurchaseOrderDetailsRefferedHistoryAPIController');
+    Route::resource('poAdv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
     Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
     Route::resource('document_refered_histories', 'DocumentReferedHistoryAPIController');
 });
