@@ -529,7 +529,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
         $items = ItemAssigned::where('companySystemID', $companyId)
                             ->where('financeCategoryMaster', 1)
-                            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem']);
+                            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem','secondaryItemCode']);
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];

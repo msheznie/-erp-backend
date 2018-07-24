@@ -9,12 +9,16 @@
  * -- Description : This file contains the all CRUD for Stock Receive Details
  * -- REVISION HISTORY
  * -- Date: 23-July 2018 By: Fayas Description: Added new functions named as getStockReceiveDetailsByMaster()
+ * -- Date: 24-July 2018 By: Fayas Description: Added new functions named as storeReceiveDetailsFromTransfer()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateStockReceiveDetailsAPIRequest;
 use App\Http\Requests\API\UpdateStockReceiveDetailsAPIRequest;
+use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
+use App\Models\StockTransfer;
+use App\Models\StockTransferDetails;
 use App\Repositories\StockReceiveDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -284,6 +288,31 @@ class StockReceiveDetailsAPIController extends AppBaseController
             return $this->sendError('Stock Receive Details not found');
         }
 
+        $stockTransferDetail = StockTransferDetails::where('stockTransferAutoID',$stockReceiveDetails->stockTransferAutoID)
+                                                    ->where('itemCodeSystem',$stockReceiveDetails->itemCodeSystem)
+                                                    ->first();
+        if (!empty($stockTransferDetail)) {
+
+            $stdTotalPullCount = StockTransferDetails::where('stockTransferAutoID',$stockReceiveDetails->stockTransferAutoID)
+                                                    ->where('itemCodeSystem',$stockReceiveDetails->itemCodeSystem)
+                                                    ->groupBy('itemCodeSystem')
+                                                    ->sum('qty');
+
+            $stockTransferDetail->stockRecieved = 0;
+
+            if($stdTotalPullCount == 0){
+                $stockTransferDetail->addedToRecieved = 0;
+            }
+            $stockTransferDetail->save();
+        }
+
+        $stockTransfer = StockTransfer::where('stockTransferAutoID',$stockReceiveDetails->stockTransferAutoID)->first();
+
+        if (!empty($stockTransfer)) {
+            $stockTransfer->fullyReceived = 0;
+            $stockTransfer->save();
+         }
+
         $stockReceiveDetails->delete();
 
         return $this->sendResponse($id, 'Stock Receive Details deleted successfully');
@@ -302,5 +331,110 @@ class StockReceiveDetailsAPIController extends AppBaseController
                                         ->get();
 
         return $this->sendResponse($items->toArray(), 'Stock Receive details retrieved successfully');
+    }
+
+
+    public function storeReceiveDetailsFromTransfer(Request $request)
+    {
+        $input = $request->all();
+        $stockReceiveAutoID = $input['stockReceiveAutoID'];
+
+        $employee = \Helper::getEmployeeInfo();
+
+
+        foreach ($input['detailTable'] as $newValidation) {
+            if ($newValidation['isChecked']) {
+
+                if($newValidation['rQty'] <= 0 ){
+                    return $this->sendError("Received Qty required", 500);
+                }
+                if ($newValidation['rQty'] > $newValidation['qty']) {
+                    return $this->sendError("Receive qty cannot be greater than transfer qty", 500);
+                }
+            }
+        }
+
+        $stockReceive = StockReceive::where('stockReceiveAutoID', $stockReceiveAutoID)->first();
+
+        if (empty($stockReceive)) {
+            return $this->sendError('Stock Receive not found');
+        }
+
+        $stockTransfer = StockTransfer::find($input['stockTransferAutoID']);
+
+        if (empty($stockTransfer)) {
+            return $this->sendError('Stock Transfer not found');
+        }
+
+        foreach ($input['detailTable'] as $new) {
+
+            if ($new['isChecked'] && $new['rQty'] > 0) {
+                $srDetailExistSameItem = StockReceiveDetails::where('stockReceiveAutoID', $stockReceiveAutoID)
+                    ->where('itemCodeSystem', $new['itemCodeSystem'])
+                    ->where('stockTransferAutoID', $new['stockTransferAutoID'])
+                    ->count();
+
+                if ($srDetailExistSameItem > 0) {
+                    return $this->sendError('Same inventory item cannot be added more than once');
+                }
+            }
+            if ($new['isChecked'] && $new['rQty'] > 0) {
+
+                $item = array();
+                $item['stockReceiveAutoID']  = $stockReceiveAutoID;
+                $item['stockReceiveCode']    = $stockReceive->stockReceiveCode;
+                $item['createdPCID']         = gethostname();
+                $item['createdUserID']       = $employee->empID;
+                $item['createdUserSystemID'] = $employee->employeeSystemID;
+
+                $item['stockTransferAutoID'] = $stockTransfer->stockTransferAutoID;
+                $item['stockTransferCode']   = $stockTransfer->stockTransferCode;
+                $item['stockTransferDate']   = $stockTransfer->tranferDate;
+
+                $item['itemCodeSystem']  = $new['itemCodeSystem'];
+                $item['itemPrimaryCode'] = $new['itemPrimaryCode'];
+                $item['itemDescription'] = $new['itemDescription'];
+                $item['unitOfMeasure']   = $new['unitOfMeasure'];
+                $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
+                $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
+                $item['financeGLcodebBS']         = $new['financeGLcodebBS'];
+                $item['localCurrencyID']          = $new['localCurrencyID'];
+                $item['unitCostLocal']            = $new['unitCostLocal'];
+                $item['reportingCurrencyID']      = $new['reportingCurrencyID'];
+                $item['unitCostRpt']              = $new['unitCostRpt'];
+                $item['qty']                      = $new['rQty'];
+
+                $srdItem = $this->stockReceiveDetailsRepository->create($item);
+
+                $stDetail  = StockTransferDetails::where('stockTransferDetailsID',$new['stockTransferDetailsID'])->first();
+                $stDetail->addedToRecieved = -1;
+
+                $stdTotalPullCount = StockTransferDetails::where('itemCodeSystem', $new['itemCodeSystem'])
+                                                     ->where('stockTransferAutoID', $new['stockTransferAutoID'])
+                                                     ->groupBy('itemCodeSystem')
+                                                     ->sum('qty');
+
+
+                if($stDetail->qty == $stdTotalPullCount){
+                    $stDetail->stockRecieved = -1;
+                }else{
+                    $stDetail->stockRecieved = 0;
+                }
+                $stDetail->save();
+            }
+        }
+
+        $stMasterCheck = StockTransferDetails::where('stockTransferAutoID',$input['stockTransferAutoID'])
+                                                ->where('stockRecieved',0)
+                                                ->count();
+
+        if($stMasterCheck == 0){
+            $stockTransfer->fullyReceived = -1;
+        }else{
+            $stockTransfer->fullyReceived = 0;
+        }
+        $stockTransfer->save();
+
+        return $this->sendResponse('', 'Receive Details saved successfully');
     }
 }

@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Stock Transfer
  * -- REVISION HISTORY
  * -- Date: 13-July 2018 By: Nazir Description: Added new functions named as getStockTransferMasterView() For load Master View
+ * -- Date: 24-July 2018 By: Fayas Description: Added new functions named as getStockTransferForReceive(),getStockTransferDetailsByMaster()
  */
 namespace App\Http\Controllers\API;
 
@@ -22,6 +23,8 @@ use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\Company;
 use App\Models\SegmentMaster;
+use App\Models\StockReceive;
+use App\Models\StockReceiveDetails;
 use App\Models\StockTransfer;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
@@ -862,6 +865,43 @@ class StockTransferAPIController extends AppBaseController
             return $this->sendResponse(array(), $reject["message"]);
         }
 
+    }
+
+    public function getStockTransferForReceive(Request $request)
+    {
+
+        $input = $request->all();
+        $id = $input['stockReceiveAutoID'];
+        $stockReceive = StockReceive::find($id);
+        if (empty($stockReceive)) {
+            return $this->sendError('Stock Receive not found');
+        }
+
+       $stockTransfers =  StockTransfer::where('companyToSystemID',$stockReceive->companyToSystemID)
+                                        ->where('companyFromSystemID',$stockReceive->companyFromSystemID)
+                                        //->where('locationTo',$stockReceive->locationTo)
+                                        //->where('locationFrom',$stockReceive->locationFrom)
+                                        ->where('approved',-1)
+                                        ->where('fullyReceived',0)
+                                        ->orderby('createdDateTime', 'desc')
+                                        ->get();
+
+        return $this->sendResponse($stockTransfers->toArray(), 'Stock Transfer retrieved successfully');
+    }
+
+    public function getStockTransferDetailsByMaster(Request $request)
+    {
+
+        $input = $request->all();
+        $id = $input['stockTransferAutoID'];
+        $stockTransfer = StockTransfer::find($id);
+        if (empty($stockTransfer)) {
+            return $this->sendError('Stock Transfer not found');
+        }
+        $stockTransferDetails  = StockTransferDetails::where('stockTransferAutoID',$id)->with(['unit_by'])
+                                                    ->where('stockRecieved',0)
+                                                    ->get();
+        return $this->sendResponse($stockTransferDetails->toArray(), 'Stock Transfer retrieved successfully');
     }
 
 }
