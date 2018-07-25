@@ -24,6 +24,7 @@ use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
+use App\Models\StockTransfer;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Repositories\ItemIssueDetailsRepository;
@@ -266,42 +267,68 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         }
 
+        if($input['issueCostLocal'] <= 0 || $input['issueCostRpt'] <= 0){
+            return $this->sendError("Cost is not updated", 500);
+        }
         // check policy 18
 
         $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
             ->where('companySystemID', $companySystemID)
             ->first();
 
-        if ($allowPendingApproval->isYesNO == 0) {
-
-            $checkWhether = ItemIssueMaster::where('itemIssueAutoID', '!=', $itemIssueMaster->itemIssueAutoID)
-                ->where('companySystemID', $companySystemID)
-                ->where('wareHouseFromCode', $itemIssueMaster->wareHouseFromCode)
-                ->select([
-                    'erp_itemissuemaster.itemIssueAutoID',
-                    'erp_itemissuemaster.companySystemID',
-                    'erp_itemissuemaster.wareHouseFromCode',
-                    'erp_itemissuemaster.itemIssueCode',
-                    'erp_itemissuemaster.approved'
-                ])
-                ->groupBy(
-                    'erp_itemissuemaster.itemIssueAutoID',
-                    'erp_itemissuemaster.companySystemID',
-                    'erp_itemissuemaster.wareHouseFromCode',
-                    'erp_itemissuemaster.itemIssueCode',
-                    'erp_itemissuemaster.approved'
-                )->whereHas('details', function ($query) use ($companySystemID, $input) {
-                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
-                })
-                ->where('approved', 0)
-                ->first();
+        $checkWhether = ItemIssueMaster::where('itemIssueAutoID', '!=', $itemIssueMaster->itemIssueAutoID)
+                                        ->where('companySystemID', $companySystemID)
+                                        ->where('wareHouseFromCode', $itemIssueMaster->wareHouseFromCode)
+                                        ->select([
+                                            'erp_itemissuemaster.itemIssueAutoID',
+                                            'erp_itemissuemaster.companySystemID',
+                                            'erp_itemissuemaster.wareHouseFromCode',
+                                            'erp_itemissuemaster.itemIssueCode',
+                                            'erp_itemissuemaster.approved'
+                                        ])
+                                        ->groupBy(
+                                            'erp_itemissuemaster.itemIssueAutoID',
+                                            'erp_itemissuemaster.companySystemID',
+                                            'erp_itemissuemaster.wareHouseFromCode',
+                                            'erp_itemissuemaster.itemIssueCode',
+                                            'erp_itemissuemaster.approved'
+                                        )->whereHas('details', function ($query) use ($companySystemID, $input) {
+                                            $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                                        })
+                                        ->where('approved', 0)
+                                        ->first();
             /* approved=0*/
 
-            if (!empty($checkWhether)) {
-                return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
-            }
-
+        if (!empty($checkWhether)) {
+            return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
+
+       /* $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
+                                                //->where('wareHouseFromCode', $itemIssueMaster->wareHouseFromCode)
+                                                ->select([
+                                                    'erp_stocktransfer.stockTransferAutoID',
+                                                    'erp_stocktransfer.companySystemID',
+                                                    //'erp_stocktransfer.wareHouseFromCode',
+                                                    'erp_stocktransfer.stockTransferCode',
+                                                    'erp_stocktransfer.approved'
+                                                ])
+                                                ->groupBy(
+                                                    'erp_stocktransfer.stockTransferAutoID',
+                                                    'erp_stocktransfer.companySystemID',
+                                                    //'erp_itemissuemaster.wareHouseFromCode',
+                                                    'erp_stocktransfer.stockTransferCode',
+                                                    'erp_stocktransfer.approved'
+                                                )->whereHas('details', function ($query) use ($companySystemID, $input) {
+                                                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                                                })
+                                                ->where('approved', 0)
+                                                ->first();*/
+        /* approved=0*/
+
+        /*if (!empty($checkWhetherStockTransfer)) {
+            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }*/
+
 
         $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
                                         ->where('companySystemID', $companySystemID)
@@ -531,15 +558,14 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
 
-        if ((float)$input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->maxQty) {
-            return $this->sendError("No stock Qty. Please check again.", 500);
+        if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentStockQty || $input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentWareHouseStockQty) {
+            return $this->sendError("Qty should not be greater than current stock balance or warehouse stock balance.", 500);
         }
-
 
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
         $input['issueCostRptTotal']   = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
 
-        if($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0){
+        if($input['issueCostLocal'] <= 0 || $input['issueCostRpt'] <= 0){
             return $this->sendError("Cost is not updated", 500);
         }
 
