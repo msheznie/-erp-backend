@@ -5,6 +5,10 @@ namespace App\Jobs;
 use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
+use App\Models\ItemIssueDetails;
+use App\Models\ItemIssueMaster;
+use App\Models\ItemReturnDetails;
+use App\Models\ItemReturnMaster;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -55,7 +59,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['companyID'] = $masterData->companyID;
                             $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
                             $data['serviceLineCode'] = $masterData->serviceLineCode;
-                            $data['masterCompanyID'] = $masterData->masterCompanyID;
+                            $data['masterCompanyID'] = null;
                             $data['documentSystemID'] = $masterData->documentSystemID;
                             $data['documentID'] = $masterData->documentID;
                             $data['documentSystemCode'] = $masterModel["autoID"];
@@ -69,9 +73,9 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentConfirmedDate'] = $masterData->grvConfirmedDate;
                             $data['documentConfirmedBy'] = $masterData->grvConfirmedByEmpID;
                             $data['documentConfirmedByEmpSystemID'] = $masterData->grvConfirmedByEmpSystemID;
-                            $data['documentFinalApprovedDate'] = \Helper::currentDate();
-                            $data['documentFinalApprovedBy'] = \Helper::getEmployeeID();
-                            $data['documentFinalApprovedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+                            $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                            $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                            $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
                             $data['documentNarration'] = $masterData->grvNarration;
                             $data['clientContractID'] = 'X';
                             $data['supplierCodeSystem'] = $masterData->supplierID;
@@ -114,6 +118,146 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentTransAmount'] = ABS($val->transAmount);
                                     $data['documentLocalAmount'] = ABS($val->localAmount);
                                     $data['documentRptAmount'] = ABS($val->rptAmount);
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
+                            }
+                        }
+                        break;
+                    case 8: // MI - Material issue
+                        $masterData = ItemIssueMaster::find($masterModel["autoID"]);
+                        //get balansheet account
+                        $bs = ItemIssueDetails::selectRaw("SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->groupBy('financeGLcodebBSSystemID')->first();
+                        //get pnl account
+                        $pl = ItemIssueDetails::selectRaw("SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodePLSystemID,financeGLcodePL")->WHERE('grvAutoID', $masterModel["autoID"])->groupBy('financeGLcodePLSystemID')->get();
+                        if ($masterData) {
+                            $data['companySystemID'] = $masterData->companySystemID;
+                            $data['companyID'] = $masterData->companyID;
+                            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
+                            $data['serviceLineCode'] = $masterData->serviceLineCode;
+                            $data['masterCompanyID'] = null;
+                            $data['documentSystemID'] = $masterData->documentSystemID;
+                            $data['documentID'] = $masterData->documentID;
+                            $data['documentSystemCode'] = $masterModel["autoID"];
+                            $data['documentCode'] = $masterData->itemIssueCode;
+                            $data['documentDate'] = date('Y-m-d H:i:s');
+                            $data['documentYear'] = \Helper::dateYear($masterData->issueDate);
+                            $data['documentMonth'] = \Helper::dateMonth($masterData->issueDate);
+                            $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                            $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                            $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+                           $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                            $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                            $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                            $data['documentNarration'] = $masterData->comment;
+                            $data['clientContractID'] = $masterData->contractID;
+                            $data['supplierCodeSystem'] = null;
+                            $data['documentTransCurrencyID'] = null;
+                            $data['documentTransCurrencyER'] = null;
+                            $data['documentTransAmount'] = null;
+                            $data['holdingShareholder'] = null;
+                            $data['holdingPercentage'] = null;
+                            $data['nonHoldingPercentage'] = null;
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = \Helper::getEmployeeSystemID();
+                            $data['createdUserPC'] = gethostname();
+                            $data['timestamp'] = \Helper::currentDateTime();
+
+                            if ($bs) {
+                                $data['chartOfAccountSystemID'] = $bs->financeGLcodebBSSystemID;
+                                $data['glCode'] = $bs->financeGLcodebBS;
+                                $data['glAccountType'] = 'BS';
+                                $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = 1;
+                                $data['documentLocalAmount'] = ABS($bs->localAmount);
+                                $data['documentRptCurrencyID'] = $masterData->reportingCurrencyID;
+                                $data['documentRptCurrencyER'] = 1;
+                                $data['documentRptAmount'] = ABS($bs->rptAmount);
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                array_push($finalData, $data);
+                            }
+
+                            if ($pl) {
+                                foreach ($pl as $val) {
+                                    $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
+                                    $data['glCode'] = $val->financeGLcodePL;
+                                    $data['glAccountType'] = 'PL';
+                                    $data['documentLocalCurrencyID'] = $pl->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = 1;
+                                    $data['documentLocalAmount'] = ABS($pl->localAmount);
+                                    $data['documentRptCurrencyID'] = $masterData->reportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = 1;
+                                    $data['documentRptAmount'] = ABS($pl->rptAmount);
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
+                            }
+                        }
+                        break;
+                    case 12: // SR - Material Return
+                        $masterData = ItemReturnMaster::find($masterModel["autoID"]);
+                        //get balansheet account
+                        $bs = ItemReturnDetails::selectRaw("SUM(qtyIssuedDefaultMeasure* unitCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure* unitCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->groupBy('financeGLcodebBSSystemID')->first();
+                        //get pnl account
+                        $pl = ItemReturnDetails::selectRaw("SUM(qtyIssuedDefaultMeasure* unitCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure* unitCostRpt) as rptAmount,financeGLcodePLSystemID,financeGLcodePL")->WHERE('grvAutoID', $masterModel["autoID"])->groupBy('financeGLcodePLSystemID')->get();
+                        if ($masterData) {
+                            $data['companySystemID'] = $masterData->companySystemID;
+                            $data['companyID'] = $masterData->companyID;
+                            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
+                            $data['serviceLineCode'] = $masterData->serviceLineCode;
+                            $data['masterCompanyID'] = null;
+                            $data['documentSystemID'] = $masterData->documentSystemID;
+                            $data['documentID'] = $masterData->documentID;
+                            $data['documentSystemCode'] = $masterModel["autoID"];
+                            $data['documentCode'] = $masterData->itemReturnCode;
+                            $data['documentDate'] = date('Y-m-d H:i:s');
+                            $data['documentYear'] = \Helper::dateYear($masterData->ReturnDate);
+                            $data['documentMonth'] = \Helper::dateMonth($masterData->ReturnDate);
+                            $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                            $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                            $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+                           $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                            $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                            $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                            $data['documentNarration'] = $masterData->comment;
+                            $data['clientContractID'] = 'X';
+                            $data['supplierCodeSystem'] = null;
+                            $data['documentTransCurrencyID'] = null;
+                            $data['documentTransCurrencyER'] = null;
+                            $data['documentTransAmount'] = null;
+                            $data['holdingShareholder'] = null;
+                            $data['holdingPercentage'] = null;
+                            $data['nonHoldingPercentage'] = null;
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = \Helper::getEmployeeSystemID();
+                            $data['createdUserPC'] = gethostname();
+                            $data['timestamp'] = \Helper::currentDateTime();
+
+                            if ($bs) {
+                                $data['chartOfAccountSystemID'] = $bs->financeGLcodebBSSystemID;
+                                $data['glCode'] = $bs->financeGLcodebBS;
+                                $data['glAccountType'] = 'BS';
+                                $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = 1;
+                                $data['documentLocalAmount'] = ABS($bs->localAmount);
+                                $data['documentRptCurrencyID'] = $masterData->reportingCurrencyID;
+                                $data['documentRptCurrencyER'] = 1;
+                                $data['documentRptAmount'] = ABS($bs->rptAmount);
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                array_push($finalData, $data);
+                            }
+
+                            if ($pl) {
+                                foreach ($pl as $val) {
+                                    $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
+                                    $data['glCode'] = $val->financeGLcodePL;
+                                    $data['glAccountType'] = 'PL';
+                                    $data['documentLocalCurrencyID'] = $pl->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = 1;
+                                    $data['documentLocalAmount'] = ABS($pl->localAmount);
+                                    $data['documentRptCurrencyID'] = $masterData->reportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = 1;
+                                    $data['documentRptAmount'] = ABS($pl->rptAmount);
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }

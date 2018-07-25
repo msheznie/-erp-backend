@@ -763,9 +763,11 @@ class Helper
                             // insert the record to item ledger
                             $job1 = \App\Jobs\ItemLedgerInsert::dispatch($masterData)->onQueue('itemledger');
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3) {
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12) {
                                 $job2 = \App\Jobs\GeneralLedgerInsert::dispatch($masterData)->onQueue('generalledger');
-                                $job3 = \App\Jobs\UnbilledGRVInsert::dispatch($masterData)->onQueue('unbilledgrv');
+                                if($input["documentSystemID"] == 3) {
+                                    $job3 = \App\Jobs\UnbilledGRVInsert::dispatch($masterData)->onQueue('unbilledgrv');
+                                }
                             }
 
                         } else {

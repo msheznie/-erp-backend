@@ -566,6 +566,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getCurrentUserInfo', function () {
         $output = \Helper::getEmployeeInfo();
+        if($output->profilepic){
+            $output->profilepic->profileImage = public_path().$output->profilepic->profileImage;
+        }
+        $output["imagePath"] =  Illuminate\Support\Facades\Storage::disk('public')->temporaryUrl('noEmployeeImage.JPG', now()->addMinutes(5));
         return $output;
     });
 

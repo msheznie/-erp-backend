@@ -423,7 +423,7 @@ class GeneralLedger extends Model
     }
 
     public function customer(){
-        return $this->belongsTo('App\Models\CustomerMaster', 'customerCodeSystem','supplierCodeSystem');
+        return $this->belongsTo('App\Models\CustomerMaster', 'supplierCodeSystem','customerCodeSystem');
     }
 
     public function charofaccount(){
@@ -431,15 +431,15 @@ class GeneralLedger extends Model
     }
 
     public function localcurrency(){
-        return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID','documentLocalCurrencyID');
+        return $this->belongsTo('App\Models\CurrencyMaster', 'documentLocalCurrencyID','currencyID');
     }
 
     public function transcurrency(){
-        return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID','documentTransCurrencyID');
+        return $this->belongsTo('App\Models\CurrencyMaster', 'documentTransCurrencyID','currencyID');
     }
 
     public function rptcurrency(){
-        return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID','documentRptCurrencyID');
+        return $this->belongsTo('App\Models\CurrencyMaster', 'documentRptCurrencyID','currencyID');
     }
 
     

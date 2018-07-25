@@ -289,6 +289,10 @@ class GeneralLedgerAPIController extends AppBaseController
             return $this->sendError('General Ledger not found');
         }
 
-        return $this->sendResponse($generalLedger->toArray(), 'General Ledger retrieved successfully');
+        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+        $generalLedger = ['outputData' => $generalLedger->toArray(), 'companyCurrency' => $companyCurrency];
+
+        return $this->sendResponse($generalLedger, 'General Ledger retrieved successfully');
     }
 }
