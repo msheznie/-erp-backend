@@ -539,6 +539,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
         $input['issueCostRptTotal']   = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
 
+        if($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0){
+            return $this->sendError("Cost is not updated", 500);
+        }
+
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
 
 
@@ -577,10 +581,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     }
                 }
             }
-        }
-
-        if($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0){
-            return $this->sendError("Cost is not updated", 500);
         }
 
         return $this->sendResponse($itemIssueDetails->toArray(), 'ItemIssueDetails updated successfully');

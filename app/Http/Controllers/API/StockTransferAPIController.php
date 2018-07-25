@@ -739,7 +739,7 @@ class StockTransferAPIController extends AppBaseController
             if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
                 $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
             }
-            $query->where('employeesdepartments.documentSystemID', 3)
+            $query->where('employeesdepartments.documentSystemID', 13)
                 ->where('employeesdepartments.companySystemID', $companyID)
                 ->where('employeesdepartments.employeeSystemID', $empID);
         })->join('erp_stocktransfer', function ($query) use ($companyID, $empID) {
@@ -901,6 +901,7 @@ class StockTransferAPIController extends AppBaseController
         $stockTransferDetails  = StockTransferDetails::where('stockTransferAutoID',$id)->with(['unit_by'])
                                                     ->where('stockRecieved',0)
                                                     ->get();
+
         return $this->sendResponse($stockTransferDetails->toArray(), 'Stock Transfer retrieved successfully');
     }
 

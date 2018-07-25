@@ -556,6 +556,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
 
     Route::resource('stock_receives', 'StockReceiveAPIController');
+    Route::post('getStockReceiveApproval', 'StockReceiveAPIController@getStockReceiveApproval');
+    Route::post('getApprovedSRForCurrentUser', 'StockReceiveAPIController@getApprovedSRForCurrentUser');
     Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
     Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData');
     Route::get('stockReceiveAudit', 'StockReceiveAPIController@stockReceiveAudit');
