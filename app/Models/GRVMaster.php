@@ -328,5 +328,10 @@ class GRVMaster extends Model
         return $this->hasMany('App\Models\CompanyDocumentAttachment', 'companySystemID', 'companySystemID');
     }
 
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
     
 }

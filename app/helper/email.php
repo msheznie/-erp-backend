@@ -25,6 +25,7 @@ use App\Models\ItemReturnMaster;
 use App\Models\MaterielRequest;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
+use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
 use App\Repositories\AlertRepository;
@@ -164,6 +165,13 @@ class email
                     if (!empty($materielReturn)) {
                         $data['docApprovedYN'] = $materielReturn->approved;
                         $data['docCode']       = $materielReturn->itemReturnCode;
+                    }
+                    break;
+                case 10:
+                    $stockReceive = StockReceive::where('stockReceiveAutoID', $data['docSystemCode'])->first();
+                    if (!empty($stockReceive)) {
+                        $data['docApprovedYN'] = $stockReceive->approved;
+                        $data['docCode']       = $stockReceive->stockReceiveCode;
                     }
                     break;
                 default:

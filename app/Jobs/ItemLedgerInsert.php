@@ -228,9 +228,12 @@ class ItemLedgerInsert implements ShouldQueue
                         }
 
                     }
+                    DB::commit();
+                    Log::info('Item successfully added to item ledger' . date('H:i:s'));
+                }else{
+                    DB::commit();
+                    Log::info('No records found' . date('H:i:s'));
                 }
-                DB::commit();
-                Log::info('Item successfully added to item ledger' . date('H:i:s'));
 
             } catch (\Exception $e) {
                 DB::rollback();

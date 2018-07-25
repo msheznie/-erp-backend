@@ -10,18 +10,21 @@
  * -- REVISION HISTORY
  * -- Date: 23-July 2018 By: Fayas Description: Added new functions named as getAllStockReceiveByCompany(),getStockReceiveFormData(),stockReceiveAudit()
  * -- Date: 24-July 2018 By: Fayas Description: Added new functions named as srPullFromTransferPreCheck()
+ * -- Date: 25-July 2018 By: Fayas Description: Added new functions named as getStockReceiveApproval(),getApprovedSRForCurrentUser()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateStockReceiveAPIRequest;
 use App\Http\Requests\API\UpdateStockReceiveAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentMaster;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\StockReceive;
+use App\Models\StockReceiveDetails;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -279,7 +282,7 @@ class StockReceiveAPIController extends AppBaseController
     public function show($id)
     {
         /** @var StockReceive $stockReceive */
-        $stockReceive = $this->stockReceiveRepository->findWithoutFail($id);
+        $stockReceive = $this->stockReceiveRepository->with(['confirmed_by'])->findWithoutFail($id);
 
         if (empty($stockReceive)) {
             return $this->sendError('Stock Receive not found');
@@ -337,12 +340,99 @@ class StockReceiveAPIController extends AppBaseController
     public function update($id, UpdateStockReceiveAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by']);
+        $input = $this->convertArrayToValue($input);
         /** @var StockReceive $stockReceive */
         $stockReceive = $this->stockReceiveRepository->findWithoutFail($id);
 
         if (empty($stockReceive)) {
             return $this->sendError('Stock Receive not found');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+        $item['modifiedPc'] = gethostname();
+        $item['modifiedUser'] = $employee->empID;
+        $item['modifiedUserSystemID'] = $employee->employeeSystemID;
+
+        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+
+        if ($companyFinancePeriod) {
+            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        }
+
+        if (isset($input['receivedDate'])) {
+            if ($input['receivedDate']) {
+                $input['receivedDate'] = new Carbon($input['receivedDate']);
+            }
+        }
+
+        $documentDate = $input['receivedDate'];
+        $monthBegin = $input['FYBiggin'];
+        $monthEnd = $input['FYEnd'];
+
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Received Date not between Financial period !');
+        }
+
+        //checking selected segment is active
+        $segment = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isActive', 1)
+            ->first();
+
+        if (empty($segment)) {
+            return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+        if ($input['locationFrom'] == $input['locationTo']) {
+            return $this->sendError('Location From and Location To  cannot me same');
+        }
+
+        if ($segment) {
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $companyFrom = Company::where('companySystemID', $input['companyFromSystemID'])->first();
+        if ($companyFrom) {
+            $input['companyFrom'] = $companyFrom->CompanyID;
+        }
+
+        if ($input['interCompanyTransferYN']) {
+            $input['interCompanyTransferYN'] = -1;
+        } else {
+            $input['interCompanyTransferYN'] = 0;
+        }
+
+        if ($stockReceive->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $stockReceiveDetailExist = StockReceiveDetails::where('stockReceiveAutoID', $id)
+                                                           ->count();
+
+            if ($stockReceiveDetailExist == 0) {
+                return $this->sendError('Stock Receive document cannot confirm without details');
+            }
+
+            $checkQuantity = StockReceiveDetails::where('stockReceiveAutoID', $id)
+                                                    ->where('qty', '<', 1)
+                                                    ->count();
+
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every item should have at least one minimum Qty', 500);
+            }
+
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => 0);
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"]);
+            }
         }
 
         $stockReceive = $this->stockReceiveRepository->update($input, $id);
@@ -585,15 +675,15 @@ class StockReceiveAPIController extends AppBaseController
 
         $id = $input['stockReceiveAutoID'];
 
-        $purchaseOrder = StockReceive::find($id);
+        $stockReceive = StockReceive::find($id);
 
-        if (empty($purchaseOrder)) {
+        if (empty($stockReceive)) {
             return $this->sendError('Stock Receive not found');
         }
 
         //checking segment is active
 
-        $segments = SegmentMaster::where("serviceLineSystemID", $purchaseOrder->serviceLineSystemID)
+        $segments = SegmentMaster::where("serviceLineSystemID", $stockReceive->serviceLineSystemID)
                                     ->where('companySystemID', $input['companySystemID'])
                                     ->where('isActive', 1)
                                     ->first();
@@ -603,6 +693,152 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         return $this->sendResponse($id, 'success');
+    }
+
+    public function getApprovedSRForCurrentUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $stockTransferMasters = DB::table('erp_documentapproved')->select(
+            'erp_stockreceive.stockReceiveAutoID',
+            'erp_stockreceive.stockReceiveCode',
+            'erp_stockreceive.documentSystemID',
+            'erp_stockreceive.refNo',
+            'erp_stockreceive.receivedDate',
+            'erp_stockreceive.comment',
+            'erp_stockreceive.serviceLineCode',
+            'erp_stockreceive.createdDateTime',
+            'erp_stockreceive.confirmedDate',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user',
+            'serviceline.ServiceLineDes as serviceLineDescription'
+        )->join('erp_stockreceive', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'stockReceiveAutoID')
+                ->where('erp_stockreceive.companySystemID', $companyID)
+                ->where('erp_stockreceive.approved', -1)
+                ->where('erp_stockreceive.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->join('serviceline', 'erp_stockreceive.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.documentSystemID', 10)
+            ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $stockTransferMasters = $stockTransferMasters->where(function ($query) use ($search) {
+                $query->where('stockReceiveCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($stockTransferMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function getStockReceiveApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
+            ->where('documentSystemID', 10)
+            ->first();
+
+        $stockTransferMasters = DB::table('erp_documentapproved')->select(
+            'erp_stockreceive.stockReceiveAutoID',
+            'erp_stockreceive.stockReceiveCode',
+            'erp_stockreceive.documentSystemID',
+            'erp_stockreceive.refNo',
+            'erp_stockreceive.receivedDate',
+            'erp_stockreceive.comment',
+            'erp_stockreceive.serviceLineCode',
+            'erp_stockreceive.createdDateTime',
+            'erp_stockreceive.confirmedDate',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user',
+            'serviceline.ServiceLineDes as serviceLineDescription'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+               // $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->where('employeesdepartments.documentSystemID', 10)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_stockreceive', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'stockReceiveAutoID')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_stockreceive.companySystemID', $companyID)
+                ->where('erp_stockreceive.approved', 0)
+                ->where('erp_stockreceive.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftjoin('serviceline', 'erp_stockreceive.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 10)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $stockTransferMasters = $stockTransferMasters->where(function ($query) use ($search) {
+                $query->where('stockReceiveCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($stockTransferMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
     }
 
 }
