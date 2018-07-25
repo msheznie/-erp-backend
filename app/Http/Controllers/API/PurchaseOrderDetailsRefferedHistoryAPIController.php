@@ -288,4 +288,19 @@ class PurchaseOrderDetailsRefferedHistoryAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Purchase Order Details Reffered History deleted successfully');
     }
+
+    public function getPoItemsForAmendHistory(Request $request)
+    {
+        $input = $request->all();
+        $poID = $input['purchaseOrderID'];
+        $timesReferred = $input['timesReferred'];
+
+        $items = PurchaseOrderDetailsRefferedHistory::where('purchaseOrderMasterID', $poID)
+            ->where('timesReferred', $timesReferred)
+            ->with(['unit' => function ($query) {
+            }])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Purchase Order Details Reffered History retrieved successfully');
+    }
 }

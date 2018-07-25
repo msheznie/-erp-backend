@@ -231,6 +231,17 @@ class Helper
                     $docInforArr["modelName"] = 'StockTransfer';
                     $docInforArr["primarykey"] = 'stockTransferAutoID';
                     break;
+                case 10:
+                    $docInforArr["documentCodeColumnName"] = 'stockReceiveCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_stockreceive';
+                    $docInforArr["modelName"] = 'StockReceive';
+                    $docInforArr["primarykey"] = 'stockReceiveAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -732,6 +743,18 @@ class Helper
                 $docInforArr["tableName"] = 'erp_stocktransfer';
                 $docInforArr["modelName"] = 'StockTransfer';
                 $docInforArr["primarykey"] = 'stockTransferAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 10:
+                $docInforArr["tableName"] = 'erp_stockreceive';
+                $docInforArr["modelName"] = 'StockReceive';
+                $docInforArr["primarykey"] = 'stockReceiveAutoID';
                 $docInforArr["approvedColumnName"] = 'approved';
                 $docInforArr["approvedBy"] = 'approvedByUserID';
                 $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';

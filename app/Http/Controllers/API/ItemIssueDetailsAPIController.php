@@ -539,6 +539,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
         $input['issueCostRptTotal']   = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
 
+        if($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0){
+            return $this->sendError("Cost is not updated", 500);
+        }
+
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
 
 
@@ -577,10 +581,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     }
                 }
             }
-        }
-
-        if($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0){
-            return $this->sendError("Cost is not updated", 500);
         }
 
         return $this->sendResponse($itemIssueDetails->toArray(), 'ItemIssueDetails updated successfully');
@@ -715,7 +715,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             if ($input['issueType'] == 1) {
                 $items = ItemAssigned::where('companySystemID', $companyId)
                     ->where('financeCategoryMaster', 1)
-                    ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned']);
+                    ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned','secondaryItemCode']);
 
                 if (array_key_exists('search', $input)) {
                     $search = $input['search'];
@@ -752,7 +752,9 @@ class ItemIssueDetailsAPIController extends AppBaseController
                             $temp = array(
                                 'itemDescription' => $item->itemDescription,
                                 'RequestDetailsID' => $item->RequestDetailsID,
-                                'itemPrimaryCode' => $item->item_by->primaryCode);
+                                'itemPrimaryCode' => $item->item_by->primaryCode,
+                                'secondaryItemCode' => $item->item_by->secondaryItemCode
+                            );
 
                             array_push($temArray, $temp);
                         }

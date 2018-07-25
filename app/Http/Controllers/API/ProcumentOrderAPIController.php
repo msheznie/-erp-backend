@@ -53,6 +53,7 @@ use App\Models\EmployeesDepartment;
 use App\Models\Months;
 use App\Models\Company;
 use App\Models\PoAddons;
+use App\Models\PoAddonsRefferedBack;
 use App\Models\PoPaymentTermsRefferedback;
 use App\Models\PurchaseOrderAdvPaymentRefferedback;
 use App\Models\PurchaseOrderDetailsRefferedHistory;
@@ -3859,12 +3860,24 @@ FROM
         $fetchPurchaseOrderDetail = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
             ->get();
 
+        if (!empty($fetchPurchaseOrderDetail)) {
+            foreach ($fetchPurchaseOrderDetail as $poDetail) {
+                $poDetail['timesReferred'] = $purchaseOrder->timesReferred;
+            }
+        }
+
         $purchaseOrderDetailArray = $fetchPurchaseOrderDetail->toArray();
 
         $storePODetailHistory = PurchaseOrderDetailsRefferedHistory::insert($purchaseOrderDetailArray);
 
         $fetchAdvancePaymentDetails = AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)
             ->get();
+
+        if (!empty($fetchAdvancePaymentDetails)) {
+            foreach ($fetchAdvancePaymentDetails as $poAdvancePaymentDetails) {
+                $poAdvancePaymentDetails['timesReferred'] = $purchaseOrder->timesReferred;
+            }
+        }
 
         $advancePaymentDetailsArray = $fetchAdvancePaymentDetails->toArray();
 
@@ -3873,14 +3886,39 @@ FROM
         $fetchPoPaymentTerms = PoPaymentTerms::where('poID', $input['purchaseOrderID'])
             ->get();
 
+        if (!empty($fetchPoPaymentTerms)) {
+            foreach ($fetchPoPaymentTerms as $poPoPaymentTerms) {
+                $poPoPaymentTerms['timesReferred'] = $purchaseOrder->timesReferred;
+            }
+        }
+
         $PoPaymentTermsArray = $fetchPoPaymentTerms->toArray();
 
         $storePOAdvPaymentHistory = PoPaymentTermsRefferedback::insert($PoPaymentTermsArray);
+
+        $fetchPoAddons = PoAddons::where('poId', $input['purchaseOrderID'])
+            ->get();
+
+        if (!empty($fetchPoAddons)) {
+            foreach ($fetchPoAddons as $PoAddons) {
+                $PoAddons['timesReferred'] = $purchaseOrder->timesReferred;
+            }
+        }
+
+        $PoAddonsArray = $fetchPoAddons->toArray();
+
+        $storePOPoAddonsHistory = PoAddonsRefferedBack::insert($PoAddonsArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $purchaseOrderID)
             ->where('companySystemID', $purchaseOrder->companySystemID)
             ->where('documentSystemID', $purchaseOrder->documentSystemID)
             ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $purchaseOrder->timesReferred;
+            }
+        }
 
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
 

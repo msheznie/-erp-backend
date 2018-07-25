@@ -21,6 +21,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentMaster;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
@@ -879,7 +880,21 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $types = ItemIssueType::take(2)->get();
+        $companyPolicy = CompanyPolicyMaster::where('companySystemID',$companyId)
+                                            ->where('companyPolicyCategoryID',22)
+                                            ->first();
+
+        $typeId = [];
+
+        if(!empty($companyPolicy)){
+            if($companyPolicy->isYesNO == 0){
+                $typeId = [2];
+            }else if($companyPolicy->isYesNO == 1){
+                $typeId = [1];
+            }
+        }
+
+        $types = ItemIssueType::whereIn('itemIssueTypeID',$typeId)->get();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
