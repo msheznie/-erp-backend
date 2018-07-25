@@ -236,7 +236,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
             return $this->sendError('Stock Receive Details not found');
         }
 
-        if ($stockReceiveDetails->unitCostLocal == 0 || $stockReceiveDetails->unitCostRpt == 0) {
+        if ($stockReceiveDetails->unitCostLocal <= 0 || $stockReceiveDetails->unitCostRpt <= 0) {
             return $this->sendError("Cost is not updated", 500);
         }
 
@@ -457,6 +457,10 @@ class StockReceiveDetailsAPIController extends AppBaseController
                 $item['reportingCurrencyID'] = $new['reportingCurrencyID'];
                 $item['unitCostRpt'] = $new['unitCostRpt'];
                 $item['qty'] = $new['rQty'];
+
+                if ($item['unitCostLocal'] <= 0 || $item['unitCostRpt'] <= 0) {
+                    return $this->sendError("Cost is not updated", 500);
+                }
 
                 $srdItem = $this->stockReceiveDetailsRepository->create($item);
 
