@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -277,5 +278,19 @@ class PoPaymentTermsRefferedbackAPIController extends AppBaseController
         $poPaymentTermsRefferedback->delete();
 
         return $this->sendResponse($id, 'Po Payment Terms Refferedback deleted successfully');
+    }
+
+    public function getPoPaymentTermsForAmendHistory(Request $request)
+    {
+        $input = $request->all();
+        $timesReferred = $input['timesReferred'];
+
+        $poAdvancePaymentType = PoPaymentTermsRefferedback::select(DB::raw('*, DATE_FORMAT(comDate, "%d/%m/%Y") as comDate'))
+            ->where('poID', $input['purchaseOrderID'])
+            ->where('timesReferred', $timesReferred)
+            ->orderBy('paymentTermID', 'ASC')
+            ->get();
+
+        return $this->sendResponse($poAdvancePaymentType->toArray(), 'Data retrieved successfully');
     }
 }

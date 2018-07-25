@@ -1045,5 +1045,105 @@ class PurchaseOrderMasterRefferedHistory extends Model
         
     ];
 
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'poConfirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'poCancelledBySystemID', 'employeeSystemID');
+    }
+
+    public function manually_closed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'manuallyClosedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function sent_supplier_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'sentToSupplierByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function location()
+    {
+        return $this->belongsTo('App\Models\Location', 'poLocation', 'locationID');
+    }
+
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
+    }
+
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
+    }
+
+    public function fcategory()
+    {
+        return $this->belongsTo('App\Models\FinanceItemCategoryMaster', 'financeCategory', 'itemCategoryID');
+    }
+
+    public function detail()
+    {
+        return $this->hasMany('App\Models\PurchaseOrderDetails', 'purchaseOrderMasterID', 'purchaseOrderID');
+    }
+
+    public function approved()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'purchaseOrderID');
+    }
+
+    public function suppliercontact()
+    {
+        return $this->belongsTo('App\Models\SupplierContactDetails', 'supplierID', 'supplierID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function transactioncurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
+    }
+
+    public function companydocumentattachment()
+    {
+        return $this->hasMany('App\Models\CompanyDocumentAttachment', 'documentSystemID', 'documentSystemID');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     **/
+    public function erpPurchaseorderdetails()
+    {
+        return $this->hasMany(\App\Models\ErpPurchaseorderdetail::class);
+    }
+
+
     
 }

@@ -166,7 +166,7 @@ class PurchaseOrderMasterRefferedHistoryAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PurchaseOrderMasterRefferedHistory $purchaseOrderMasterRefferedHistory */
-        $purchaseOrderMasterRefferedHistory = $this->purchaseOrderMasterRefferedHistoryRepository->findWithoutFail($id);
+        $purchaseOrderMasterRefferedHistory = $this->purchaseOrderMasterRefferedHistoryRepository->with(['created_by', 'confirmed_by', 'segment'])->findWithoutFail($id);
 
         if (empty($purchaseOrderMasterRefferedHistory)) {
             return $this->sendError('Purchase Order Master Reffered History not found');
@@ -288,4 +288,16 @@ class PurchaseOrderMasterRefferedHistoryAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Purchase Order Master Reffered History deleted successfully');
     }
+
+    public function getPoMasterAmendHistory(Request $request)
+    {
+        $input = $request->all();
+
+        $procumentOrderHistory = PurchaseOrderMasterRefferedHistory::where('purchaseOrderID', $input['purchaseOrderID'])
+            ->with(['created_by','location','supplier','currency','fcategory','segment','approved_by'])
+            ->get();
+
+        return $this->sendResponse($procumentOrderHistory, 'Purchase Order Master retrieved successfully');
+    }
+
 }

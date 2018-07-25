@@ -568,6 +568,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('poAdv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
     Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
     Route::resource('document_refered_histories', 'DocumentReferedHistoryAPIController');
+    Route::post('getPoMasterAmendHistory', 'PurchaseOrderMasterRefferedHistoryAPIController@getPoMasterAmendHistory');
+    Route::get('getPoItemsForAmendHistory', 'PurchaseOrderDetailsRefferedHistoryAPIController@getPoItemsForAmendHistory');
+    Route::get('getPoLogisticsItemsForAmendHistory', 'PurchaseOrderAdvPaymentRefferedbackAPIController@getPoLogisticsItemsForAmendHistory');
+    Route::get('getPoPaymentTermsForAmendHistory', 'PoPaymentTermsRefferedbackAPIController@getPoPaymentTermsForAmendHistory');
+    Route::resource('poAddonsReffered_backs', 'PoAddonsRefferedBackAPIController');
+    Route::get('getPoAddonsForAmendHistory', 'PoAddonsRefferedBackAPIController@getPoAddonsForAmendHistory');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -590,6 +596,8 @@ Route::get('runQueue', function () {
 
 Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
 Route::resource('years', 'YearAPIController');
+
+
 
 
 
