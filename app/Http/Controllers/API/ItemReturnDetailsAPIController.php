@@ -156,7 +156,6 @@ class ItemReturnDetailsAPIController extends AppBaseController
                                  })
                                 ->where('companySystemID',$companySystemID)
                                 ->where('approved',-1)
-                                ->select('itemIssueAutoID AS value','itemIssueCode AS label')
                                 ->count();
 
         if($itemIssuesCount == 0){
@@ -209,7 +208,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
             ->where('companySystemID', $companySystemID)
             ->first();
 
-        if ($allowPendingApproval->isYesNO == 0) {
+       // if ($allowPendingApproval->isYesNO == 0) {
 
             $checkWhether = ItemReturnMaster::where('itemReturnAutoID', '!=', $itemReturn->itemReturnAutoID)
                 ->where('companySystemID', $companySystemID)
@@ -238,7 +237,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
             }
 
-        }
+        //}
 
         $itemReturnDetails = $this->itemReturnDetailsRepository->create($input);
         return $this->sendResponse($itemReturnDetails->toArray(), 'Item Return Details saved successfully');
@@ -379,10 +378,6 @@ class ItemReturnDetailsAPIController extends AppBaseController
             $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'];
         }
 
-        if ((float)$input['qtyIssuedDefaultMeasure'] > $itemReturnDetails->qtyFromIssue) {
-            return $this->sendError("Return quantity should not be greater than issues quantity. Please check again.", 500);
-        }
-
         if($input['issueCodeSystem'] != $itemReturnDetails->issueCodeSystem){
 
             $itemIssueDetail = ItemIssueDetails::where('itemIssueAutoID',$input['issueCodeSystem'])
@@ -401,7 +396,12 @@ class ItemReturnDetailsAPIController extends AppBaseController
             }
         }
 
-        if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
+        if ($input['qtyIssuedDefaultMeasure'] > $input['qtyFromIssue']) {
+            return $this->sendError("Return quantity should not be greater than issues quantity. Please check again.", 500);
+        }
+
+
+        if($input['unitCostLocal'] <= 0 || $input['unitCostRpt'] <= 0){
             return $this->sendError("Cost is not updated", 500);
         }
 

@@ -21,6 +21,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
+use App\Models\DocumentAttachments;
 use App\Models\GRVMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\PoAdvancePayment;
@@ -987,6 +988,66 @@ class GRVMasterAPIController extends AppBaseController
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+    }
+
+    public function pullPOAttachment(Request $request)
+    {
+        $input = $request->all();
+
+        $attachmentFound = 0;
+
+        $grvAutoID = $input['grvAutoID'];
+        $companySystemID = $input['companySystemID'];
+        $documentSystemID = $input['documentSystemID'];
+
+        $poIDS = GRVDetails::where('grvAutoID', $grvAutoID)
+            ->groupBy('purchaseOrderMastertID')
+            ->pluck('purchaseOrderMastertID');
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        if ($company) {
+            $companyID = $company->CompanyID;
+        }
+
+        $document = DocumentMaster::where('documentSystemID', $documentSystemID)->first();
+        if ($document) {
+            $documentID = $document->documentID;
+        }
+
+        if (!empty($poIDS)) {
+                $docAttachement = DocumentAttachments::whereIN('documentSystemCode', $poIDS)
+                    ->where('companySystemID', $companySystemID)
+                    ->whereIN('documentSystemID',[2,5,52] )
+                    ->get();
+                if (!empty($docAttachement->toArray())) {
+                    $attachmentFound = 1;
+                    foreach ($docAttachement as $doc) {
+                        $documentAttachments = new DocumentAttachments();
+                        $documentAttachments->companySystemID = $companySystemID;
+                        $documentAttachments->companyID = $companyID;
+                        $documentAttachments->documentID = $documentID;
+                        $documentAttachments->documentSystemID = $documentSystemID;
+                        $documentAttachments->documentSystemCode = $grvAutoID;
+                        $documentAttachments->attachmentDescription = $doc['attachmentDescription'];
+                        $documentAttachments->path = $doc['path'];
+                        $documentAttachments->originalFileName = $doc['originalFileName'];
+                        $documentAttachments->myFileName = $doc['myFileName'];
+                        $documentAttachments->docExpirtyDate = $doc['docExpirtyDate'];
+                        $documentAttachments->attachmentType = $doc['attachmentType'];
+                        $documentAttachments->sizeInKbs = $doc['sizeInKbs'];
+                        $documentAttachments->isUploaded = $doc['isUploaded'];
+                        $documentAttachments->pullFromAnotherDocument = -1;
+                        $documentAttachments->save();
+                    }
+                }
+        }
+        if ($attachmentFound == 0) {
+            return $this->sendError('No Attachments Found', 500);
+        } else {
+            return $this->sendResponse($grvAutoID, 'PO attachments pulled successfully');
+        }
+
+
     }
 
 }

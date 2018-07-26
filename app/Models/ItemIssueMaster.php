@@ -358,6 +358,7 @@ class ItemIssueMaster extends Model
         'customerSystemID',
         'approvedDate',
         'RollLevForApp_curr',
+        'approvedByUserID',
         'approvedByUserSystemID'
     ];
 
@@ -419,6 +420,7 @@ class ItemIssueMaster extends Model
         'is_closed' => 'integer',
         'customerSystemID' => 'integer',
         'RollLevForApp_curr' => 'integer',
+        'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
     ];
 
@@ -469,5 +471,7 @@ class ItemIssueMaster extends Model
     public function approved_by(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemIssueAutoID');
     }
-
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
 }

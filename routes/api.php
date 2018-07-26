@@ -510,6 +510,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('approveGoodReceiptVoucher', 'GRVMasterAPIController@approveGoodReceiptVoucher');
     Route::post('rejectGoodReceiptVoucher', 'GRVMasterAPIController@rejectGoodReceiptVoucher');
     Route::resource('general_ledgers', 'GeneralLedgerAPIController');
+    Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview');
     Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
     Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany');
     Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
@@ -570,6 +571,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getCurrentUserInfo', function () {
         $output = \Helper::getEmployeeInfo();
+        /*if($output->profilepic){
+            $output->profilepic->profileImage = public_path().$output->profilepic->profileImage;
+        }
+        $output["imagePath"] =  Illuminate\Support\Facades\Storage::disk('public')->temporaryUrl('noEmployeeImage.JPG', now()->addMinutes(5));*/
         return $output;
     });
 
@@ -590,6 +595,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
     Route::resource('employee_profiles', 'EmployeeProfileAPIController');
 
+    Route::post('pullPOAttachment', 'GRVMasterAPIController@pullPOAttachment');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -597,6 +604,8 @@ Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVouc
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
+Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
+
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
 
@@ -605,10 +614,15 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master  = ['documentSystemID' => 3,'autoID' => 44056,'companySystemID' => 11];
-    $job = \App\Jobs\UnbilledGRVInsert::dispatch($master)->onQueue('unbilledgrv');
+    $master  = ['documentSystemID' => 12,'autoID' => 1749,'companySystemID' => 11,'employeeSystemID' => 2664];
+    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
 });
 
 
 
 
+
+
+Route::resource('employee_details', 'EmployeeDetailsAPIController');
+
+Route::resource('designations', 'DesignationAPIController');

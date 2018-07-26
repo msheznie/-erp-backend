@@ -259,7 +259,9 @@ class StockReceive extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
-        'timestamp'
+        'timestamp',
+        'approvedByUserID',
+        'approvedByUserSystemID'
     ];
 
     /**
@@ -301,7 +303,9 @@ class StockReceive extends Model
         'createdUserID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
     ];
 
     /**
@@ -350,6 +354,6 @@ class StockReceive extends Model
 
     public function details()
     {
-        return $this->hasMany('App\Models\StockTransferDetails', 'stockReceiveAutoID', 'stockReceiveAutoID');
+        return $this->hasMany('App\Models\StockReceiveDetails', 'stockReceiveAutoID', 'stockReceiveAutoID');
     }
 }

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateGeneralLedgerAPIRequest;
-use App\Http\Requests\API\UpdateGeneralLedgerAPIRequest;
-use App\Models\GeneralLedger;
-use App\Repositories\GeneralLedgerRepository;
+use App\Http\Requests\API\CreateDesignationAPIRequest;
+use App\Http\Requests\API\UpdateDesignationAPIRequest;
+use App\Models\Designation;
+use App\Repositories\DesignationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -13,18 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class GeneralLedgerController
+ * Class DesignationController
  * @package App\Http\Controllers\API
  */
 
-class GeneralLedgerAPIController extends AppBaseController
+class DesignationAPIController extends AppBaseController
 {
-    /** @var  GeneralLedgerRepository */
-    private $generalLedgerRepository;
+    /** @var  DesignationRepository */
+    private $designationRepository;
 
-    public function __construct(GeneralLedgerRepository $generalLedgerRepo)
+    public function __construct(DesignationRepository $designationRepo)
     {
-        $this->generalLedgerRepository = $generalLedgerRepo;
+        $this->designationRepository = $designationRepo;
     }
 
     /**
@@ -32,10 +32,10 @@ class GeneralLedgerAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/generalLedgers",
-     *      summary="Get a listing of the GeneralLedgers.",
-     *      tags={"GeneralLedger"},
-     *      description="Get all GeneralLedgers",
+     *      path="/designations",
+     *      summary="Get a listing of the Designations.",
+     *      tags={"Designation"},
+     *      description="Get all Designations",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -49,7 +49,7 @@ class GeneralLedgerAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/GeneralLedger")
+     *                  @SWG\Items(ref="#/definitions/Designation")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -61,29 +61,29 @@ class GeneralLedgerAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->generalLedgerRepository->pushCriteria(new RequestCriteria($request));
-        $this->generalLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $generalLedgers = $this->generalLedgerRepository->all();
+        $this->designationRepository->pushCriteria(new RequestCriteria($request));
+        $this->designationRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $designations = $this->designationRepository->all();
 
-        return $this->sendResponse($generalLedgers->toArray(), 'General Ledgers retrieved successfully');
+        return $this->sendResponse($designations->toArray(), 'Designations retrieved successfully');
     }
 
     /**
-     * @param CreateGeneralLedgerAPIRequest $request
+     * @param CreateDesignationAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/generalLedgers",
-     *      summary="Store a newly created GeneralLedger in storage",
-     *      tags={"GeneralLedger"},
-     *      description="Store GeneralLedger",
+     *      path="/designations",
+     *      summary="Store a newly created Designation in storage",
+     *      tags={"Designation"},
+     *      description="Store Designation",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="GeneralLedger that should be stored",
+     *          description="Designation that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/GeneralLedger")
+     *          @SWG\Schema(ref="#/definitions/Designation")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -96,7 +96,7 @@ class GeneralLedgerAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/GeneralLedger"
+     *                  ref="#/definitions/Designation"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -106,13 +106,13 @@ class GeneralLedgerAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateGeneralLedgerAPIRequest $request)
+    public function store(CreateDesignationAPIRequest $request)
     {
         $input = $request->all();
 
-        $generalLedgers = $this->generalLedgerRepository->create($input);
+        $designations = $this->designationRepository->create($input);
 
-        return $this->sendResponse($generalLedgers->toArray(), 'General Ledger saved successfully');
+        return $this->sendResponse($designations->toArray(), 'Designation saved successfully');
     }
 
     /**
@@ -120,14 +120,14 @@ class GeneralLedgerAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/generalLedgers/{id}",
-     *      summary="Display the specified GeneralLedger",
-     *      tags={"GeneralLedger"},
-     *      description="Get GeneralLedger",
+     *      path="/designations/{id}",
+     *      summary="Display the specified Designation",
+     *      tags={"Designation"},
+     *      description="Get Designation",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of GeneralLedger",
+     *          description="id of Designation",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -143,7 +143,7 @@ class GeneralLedgerAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/GeneralLedger"
+     *                  ref="#/definitions/Designation"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -155,30 +155,30 @@ class GeneralLedgerAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var GeneralLedger $generalLedger */
-        $generalLedger = $this->generalLedgerRepository->findWithoutFail($id);
+        /** @var Designation $designation */
+        $designation = $this->designationRepository->findWithoutFail($id);
 
-        if (empty($generalLedger)) {
-            return $this->sendError('General Ledger not found');
+        if (empty($designation)) {
+            return $this->sendError('Designation not found');
         }
 
-        return $this->sendResponse($generalLedger->toArray(), 'General Ledger retrieved successfully');
+        return $this->sendResponse($designation->toArray(), 'Designation retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateGeneralLedgerAPIRequest $request
+     * @param UpdateDesignationAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/generalLedgers/{id}",
-     *      summary="Update the specified GeneralLedger in storage",
-     *      tags={"GeneralLedger"},
-     *      description="Update GeneralLedger",
+     *      path="/designations/{id}",
+     *      summary="Update the specified Designation in storage",
+     *      tags={"Designation"},
+     *      description="Update Designation",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of GeneralLedger",
+     *          description="id of Designation",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -186,9 +186,9 @@ class GeneralLedgerAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="GeneralLedger that should be updated",
+     *          description="Designation that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/GeneralLedger")
+     *          @SWG\Schema(ref="#/definitions/Designation")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -201,7 +201,7 @@ class GeneralLedgerAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/GeneralLedger"
+     *                  ref="#/definitions/Designation"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -211,20 +211,20 @@ class GeneralLedgerAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateGeneralLedgerAPIRequest $request)
+    public function update($id, UpdateDesignationAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var GeneralLedger $generalLedger */
-        $generalLedger = $this->generalLedgerRepository->findWithoutFail($id);
+        /** @var Designation $designation */
+        $designation = $this->designationRepository->findWithoutFail($id);
 
-        if (empty($generalLedger)) {
-            return $this->sendError('General Ledger not found');
+        if (empty($designation)) {
+            return $this->sendError('Designation not found');
         }
 
-        $generalLedger = $this->generalLedgerRepository->update($input, $id);
+        $designation = $this->designationRepository->update($input, $id);
 
-        return $this->sendResponse($generalLedger->toArray(), 'GeneralLedger updated successfully');
+        return $this->sendResponse($designation->toArray(), 'Designation updated successfully');
     }
 
     /**
@@ -232,14 +232,14 @@ class GeneralLedgerAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/generalLedgers/{id}",
-     *      summary="Remove the specified GeneralLedger from storage",
-     *      tags={"GeneralLedger"},
-     *      description="Delete GeneralLedger",
+     *      path="/designations/{id}",
+     *      summary="Remove the specified Designation from storage",
+     *      tags={"Designation"},
+     *      description="Delete Designation",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of GeneralLedger",
+     *          description="id of Designation",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -267,32 +267,15 @@ class GeneralLedgerAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var GeneralLedger $generalLedger */
-        $generalLedger = $this->generalLedgerRepository->findWhere($id);
+        /** @var Designation $designation */
+        $designation = $this->designationRepository->findWithoutFail($id);
 
-        if (empty($generalLedger)) {
-            return $this->sendError('General Ledger not found');
+        if (empty($designation)) {
+            return $this->sendError('Designation not found');
         }
 
-        $generalLedger->delete();
+        $designation->delete();
 
-        return $this->sendResponse($id, 'General Ledger deleted successfully');
-    }
-
-
-    public function getGeneralLedgerReview(Request $request)
-    {
-        /** @var GeneralLedger $generalLedger */
-        $generalLedger = $this->generalLedgerRepository->with(['supplier','customer','charofaccount','localcurrency','transcurrency','rptcurrency'])->findWhere(['companySystemID' => $request->companySystemID,'documentSystemID' => $request->documentSystemID,'documentSystemCode' => $request->autoID]);
-
-        if (empty($generalLedger)) {
-            return $this->sendError('General Ledger not found');
-        }
-
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-
-        $generalLedger = ['outputData' => $generalLedger->toArray(), 'companyCurrency' => $companyCurrency];
-
-        return $this->sendResponse($generalLedger, 'General Ledger retrieved successfully');
+        return $this->sendResponse($id, 'Designation deleted successfully');
     }
 }

@@ -248,5 +248,9 @@ class Employee extends Model
     public function profilepic(){
         return $this->belongsTo('App\Models\EmployeeProfile', 'employeeSystemID','employeeSystemID');
     }
+
+    public function details(){
+        return $this->hasOne('App\Models\EmployeeDetails', 'employeeSystemID','employeeSystemID');
+    }
     
 }

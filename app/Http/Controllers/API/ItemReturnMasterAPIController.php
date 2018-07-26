@@ -690,8 +690,10 @@ class ItemReturnMasterAPIController extends AppBaseController
         $id = $request->get('id');
 
         $materielReturn = $this->itemReturnMasterRepository
-                                ->with(['created_by','confirmed_by','modified_by','approved_by' => function ($query) {
-                                    $query->with('employee')
+                                ->with(['created_by','confirmed_by','modified_by','warehouse_by','company','details' => function($q){
+                                    $q->with(['uom_issued','uom_receiving']);
+                                },'approved_by' => function ($query) {
+                                    $query->with('employee.details.designation')
                                         ->where('documentSystemID',12);
                                 }])
                                 ->findWithoutFail($id);

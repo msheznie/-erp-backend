@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Employee;
 use Exception;
 use App\Models\ErpItemLedger;
 use Illuminate\Bus\Queueable;
@@ -42,6 +43,7 @@ class ItemLedgerInsert implements ShouldQueue
      */
     public function handle()
     {
+        Log::useFiles(storage_path().'/logs/item_ledger_jobs.log');
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             if (!isset($masterModel['documentSystemID'])) {
@@ -60,7 +62,7 @@ class ItemLedgerInsert implements ShouldQueue
                 $detailColumnArray = array();
                 $masterColumnArray = array();
 
-                $empID = \Helper::getEmployeeInfo();
+                $empID = Employee::find($masterModel['employeeSystemID']);
                 switch ($masterModel["documentSystemID"]) { // check the document id and set relevant parameters
                     case 3: // GRV
                         $docInforArr["approvedColumnName"] = 'approved';
@@ -86,9 +88,9 @@ class ItemLedgerInsert implements ShouldQueue
                             'unitOfMeasure' => 'unitOfMeasure',
                             'inOutQty' => 'noQty',
                             'wacLocalCurrencyID' => 'localCurrencyID',
-                            'wacLocal' => 'GRVcostPerUnitLocalCur',
+                            'wacLocal' => 'landingCost_LocalCur',
                             'wacRptCurrencyID' => 'companyReportingCurrencyID',
-                            'wacRpt' => 'GRVcostPerUnitComRptCur',
+                            'wacRpt' => 'landingCost_RptCur',
                             'comments' => 'comment');
 
                         break;
@@ -114,7 +116,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'itemPrimaryCode' => 'itemPrimaryCode',
                             'itemDescription' => 'itemDescription',
                             'unitOfMeasure' => 'itemUnitOfMeasure',
-                            'inOutQty' => 'qtyIssued',
+                            'inOutQty' => 'qtyIssuedDefaultMeasure',
                             'wacLocalCurrencyID' => 'localCurrencyID',
                             'wacLocal' => 'issueCostLocal',
                             'wacRptCurrencyID' => 'reportingCurrencyID',
@@ -144,7 +146,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'itemPrimaryCode' => 'itemPrimaryCode',
                             'itemDescription' => 'itemDescription',
                             'unitOfMeasure' => 'itemUnitOfMeasure',
-                            'inOutQty' => 'qtyIssued',
+                            'inOutQty' => 'qtyIssuedDefaultMeasure',
                             'wacLocalCurrencyID' => 'localCurrencyID',
                             'wacLocal' => 'unitCostLocal',
                             'wacRptCurrencyID' => 'reportingCurrencyID',
@@ -224,20 +226,20 @@ class ItemLedgerInsert implements ShouldQueue
                         if($data){
                             Log::info($data);
                             $itemLedgerInsert = ErpItemLedger::insert($data);
-                            $itemassignInsert = \App\Jobs\ItemAssignInsert::dispatch($masterModel)->onQueue('itemassign');
+                            $itemassignInsert = \App\Jobs\ItemAssignInsert::dispatch($masterModel);
                         }
 
                     }
                     DB::commit();
                     Log::info('Item successfully added to item ledger' . date('H:i:s'));
                 }else{
-                    DB::commit();
+                    DB::rollback();
                     Log::info('No records found' . date('H:i:s'));
                 }
 
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error('Error occurred when adding item to item ledger' . date('H:i:s'));
+                Log::error($this->failed($e));
             }
         } else {
             Log::error('Parameter not exist' . date('H:i:s'));
@@ -251,8 +253,8 @@ class ItemLedgerInsert implements ShouldQueue
      * @param  Exception  $exception
      * @return void
      */
-    public function failed(Exception $exception)
+    public function failed($exception)
     {
-        // Send user notification of failure, etc...
+        return $exception->getMessage();
     }
 }
