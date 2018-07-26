@@ -418,5 +418,29 @@ class GeneralLedger extends Model
         
     ];
 
+    public function supplier(){
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierCodeSystem','supplierCodeSystem');
+    }
+
+    public function customer(){
+        return $this->belongsTo('App\Models\CustomerMaster', 'supplierCodeSystem','customerCodeSystem');
+    }
+
+    public function charofaccount(){
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
+    }
+
+    public function localcurrency(){
+        return $this->belongsTo('App\Models\CurrencyMaster', 'documentLocalCurrencyID','currencyID');
+    }
+
+    public function transcurrency(){
+        return $this->belongsTo('App\Models\CurrencyMaster', 'documentTransCurrencyID','currencyID');
+    }
+
+    public function rptcurrency(){
+        return $this->belongsTo('App\Models\CurrencyMaster', 'documentRptCurrencyID','currencyID');
+    }
+
     
 }

@@ -34,6 +34,7 @@ class UnbilledGRVInsert implements ShouldQueue
      */
     public function handle()
     {
+        Log::useFiles(storage_path().'/logs/unbilled_grv_jobs.log');
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             if (!isset($masterModel['documentSystemID'])) {

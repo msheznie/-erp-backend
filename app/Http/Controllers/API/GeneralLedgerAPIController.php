@@ -268,7 +268,7 @@ class GeneralLedgerAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var GeneralLedger $generalLedger */
-        $generalLedger = $this->generalLedgerRepository->findWithoutFail($id);
+        $generalLedger = $this->generalLedgerRepository->findWhere($id);
 
         if (empty($generalLedger)) {
             return $this->sendError('General Ledger not found');
@@ -277,5 +277,22 @@ class GeneralLedgerAPIController extends AppBaseController
         $generalLedger->delete();
 
         return $this->sendResponse($id, 'General Ledger deleted successfully');
+    }
+
+
+    public function getGeneralLedgerReview(Request $request)
+    {
+        /** @var GeneralLedger $generalLedger */
+        $generalLedger = $this->generalLedgerRepository->with(['supplier','customer','charofaccount','localcurrency','transcurrency','rptcurrency'])->findWhere(['companySystemID' => $request->companySystemID,'documentSystemID' => $request->documentSystemID,'documentSystemCode' => $request->autoID]);
+
+        if (empty($generalLedger)) {
+            return $this->sendError('General Ledger not found');
+        }
+
+        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+        $generalLedger = ['outputData' => $generalLedger->toArray(), 'companyCurrency' => $companyCurrency];
+
+        return $this->sendResponse($generalLedger, 'General Ledger retrieved successfully');
     }
 }
