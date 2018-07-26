@@ -331,4 +331,8 @@ class ItemReturnMaster extends Model
     public function approved_by(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemReturnAutoID');
     }
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
 }
