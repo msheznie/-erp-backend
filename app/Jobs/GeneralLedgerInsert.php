@@ -172,10 +172,10 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['glAccountType'] = 'BS';
                                 $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = 1;
-                                $data['documentLocalAmount'] = ABS($bs->localAmount);
+                                $data['documentLocalAmount'] = ABS($bs->localAmount) * -1;
                                 $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
                                 $data['documentRptCurrencyER'] = 1;
-                                $data['documentRptAmount'] = ABS($bs->rptAmount);
+                                $data['documentRptAmount'] = ABS($bs->rptAmount) * -1;
                                 $data['timestamp'] = \Helper::currentDateTime();
                                 array_push($finalData, $data);
                             }
@@ -257,10 +257,10 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['glAccountType'] = 'PL';
                                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = 1;
-                                    $data['documentLocalAmount'] = ABS($val->localAmount);
+                                    $data['documentLocalAmount'] = ABS($val->localAmount) * -1;
                                     $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                                     $data['documentRptCurrencyER'] = 1;
-                                    $data['documentRptAmount'] = ABS($val->rptAmount);
+                                    $data['documentRptAmount'] = ABS($val->rptAmount) * -1;
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }

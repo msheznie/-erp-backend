@@ -88,9 +88,9 @@ class ItemLedgerInsert implements ShouldQueue
                             'unitOfMeasure' => 'unitOfMeasure',
                             'inOutQty' => 'noQty',
                             'wacLocalCurrencyID' => 'localCurrencyID',
-                            'wacLocal' => 'GRVcostPerUnitLocalCur',
+                            'wacLocal' => 'landingCost_LocalCur',
                             'wacRptCurrencyID' => 'companyReportingCurrencyID',
-                            'wacRpt' => 'GRVcostPerUnitComRptCur',
+                            'wacRpt' => 'landingCost_RptCur',
                             'comments' => 'comment');
 
                         break;
@@ -116,7 +116,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'itemPrimaryCode' => 'itemPrimaryCode',
                             'itemDescription' => 'itemDescription',
                             'unitOfMeasure' => 'itemUnitOfMeasure',
-                            'inOutQty' => 'qtyIssued',
+                            'inOutQty' => 'qtyIssuedDefaultMeasure',
                             'wacLocalCurrencyID' => 'localCurrencyID',
                             'wacLocal' => 'issueCostLocal',
                             'wacRptCurrencyID' => 'reportingCurrencyID',
@@ -146,7 +146,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'itemPrimaryCode' => 'itemPrimaryCode',
                             'itemDescription' => 'itemDescription',
                             'unitOfMeasure' => 'itemUnitOfMeasure',
-                            'inOutQty' => 'qtyIssued',
+                            'inOutQty' => 'qtyIssuedDefaultMeasure',
                             'wacLocalCurrencyID' => 'localCurrencyID',
                             'wacLocal' => 'unitCostLocal',
                             'wacRptCurrencyID' => 'reportingCurrencyID',

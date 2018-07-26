@@ -595,6 +595,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
     Route::resource('employee_profiles', 'EmployeeProfileAPIController');
 
+    Route::post('pullPOAttachment', 'GRVMasterAPIController@pullPOAttachment');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
