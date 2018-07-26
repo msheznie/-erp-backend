@@ -654,7 +654,7 @@ class StockReceiveAPIController extends AppBaseController
     {
         $id = $request->get('id');
 
-        $stockReceive = $this->stockReceiveRepository->with(['created_by', 'confirmed_by', 'location_to_by', 'location_from_by', 'details' => function ($q) {
+        $stockReceive = $this->stockReceiveRepository->with(['created_by', 'confirmed_by','company','location_to_by', 'location_from_by', 'details' => function ($q) {
             $q->with(['unit_by']);
         }, 'modified_by', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
