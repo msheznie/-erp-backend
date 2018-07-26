@@ -288,4 +288,23 @@ class PurchaseOrderAdvPaymentRefferedbackAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Purchase Order Adv Payment Refferedback deleted successfully');
     }
+
+
+    public function getPoLogisticsItemsForAmendHistory(Request $request)
+    {
+        $input = $request->all();
+        $poID = $input['purchaseOrderID'];
+        $timesReferred = $input['timesReferred'];
+
+        $items = PurchaseOrderAdvPaymentRefferedback::where('poID', $poID)
+            ->where('timesReferred', $timesReferred)
+            ->where('poTermID', 0)
+            ->where('confirmedYN', 1)
+            ->where('isAdvancePaymentYN', 1)
+            ->where('approvedYN', -1)
+            ->with(['currency', 'supplier_by' => function ($query) {
+            }])->get();
+
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
 }

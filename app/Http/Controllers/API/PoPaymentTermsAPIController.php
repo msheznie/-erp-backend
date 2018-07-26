@@ -109,6 +109,12 @@ class PoPaymentTermsAPIController extends AppBaseController
             $input['comDate'] = '';
         }
 
+        if($input['LCPaymentYN'] == 1){
+            $input['paymentTemDes'] = 'Payment In';
+        }else if($input['LCPaymentYN'] == 2){
+            $input['paymentTemDes'] = 'Advance Payment';
+        }
+
         $poPaymentTerms = $this->poPaymentTermsRepository->create($input);
 
         return $this->sendResponse($poPaymentTerms->toArray(), 'Po Payment Terms saved successfully');
@@ -170,9 +176,13 @@ class PoPaymentTermsAPIController extends AppBaseController
         }*/
 
         $daysin =  $input['inDays'];
-        if (!empty($purchaseOrder->expectedDeliveryDate) && !empty( $daysin)) {
+        if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin != 0) {
             $addedDate = strtotime("+$daysin day", strtotime($purchaseOrder->expectedDeliveryDate));
             $input['comDate'] = date("Y-m-d", $addedDate);
+        }
+
+        if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin == 0) {
+            $input['comDate'] = $purchaseOrder->expectedDeliveryDate;
         }
 
         /** @var PoPaymentTerms $poPaymentTerms */
@@ -192,6 +202,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
        //$calculatePer = ($input['comPercentage'] / 100) * $poMasterSumDeducted;
         //$input['comAmount'] = round($calculatePer, 8);
+
 
         $poPaymentTerms = $this->poPaymentTermsRepository->update($input, $id);
 

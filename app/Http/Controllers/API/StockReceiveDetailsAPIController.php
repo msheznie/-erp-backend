@@ -30,7 +30,6 @@ use Response;
  * Class StockReceiveDetailsController
  * @package App\Http\Controllers\API
  */
-
 class StockReceiveDetailsAPIController extends AppBaseController
 {
     /** @var  StockReceiveDetailsRepository */
@@ -227,16 +226,68 @@ class StockReceiveDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdateStockReceiveDetailsAPIRequest $request)
     {
-        $input = $request->all();
 
-        /** @var StockReceiveDetails $stockReceiveDetails */
+        $input = array_except($request->all(), ['unit_by']);
+        $input = $this->convertArrayToValue($input);
+
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->findWithoutFail($id);
 
         if (empty($stockReceiveDetails)) {
             return $this->sendError('Stock Receive Details not found');
         }
 
+        if ($stockReceiveDetails->unitCostLocal <= 0 || $stockReceiveDetails->unitCostRpt <= 0) {
+            return $this->sendError("Cost is not updated", 500);
+        }
+
+
+        $stdTotalPullSum = StockTransferDetails::where('itemCodeSystem', $stockReceiveDetails->itemCodeSystem)
+                                                    ->where('stockTransferAutoID', $stockReceiveDetails->stockTransferAutoID)
+                                                    ->groupBy('itemCodeSystem')
+                                                    ->sum('qty');
+
+        $stDetail = StockTransferDetails::where('itemCodeSystem', $stockReceiveDetails->itemCodeSystem)
+                                        ->where('stockTransferAutoID', $stockReceiveDetails->stockTransferAutoID)
+                                        ->first();
+
+        $total = $stdTotalPullSum + $input['qty'] - $stockReceiveDetails->qty;
+
+        if ($total > $stDetail->qty) {
+            return $this->sendError("QTY Cannot be greater than transfer QTY. Please check again.", 500);
+        }
+
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->update($input, $id);
+
+        $stdTotalPullCount = StockTransferDetails::where('itemCodeSystem', $stockReceiveDetails->itemCodeSystem)
+                                                    ->where('stockTransferAutoID', $stockReceiveDetails->stockTransferAutoID)
+                                                    ->groupBy('itemCodeSystem')
+                                                    ->sum('qty');
+
+        if (!empty($stDetail)) {
+            $stDetail->addedToRecieved = -1;
+
+            if ($stDetail->qty == $stdTotalPullCount) {
+                $stDetail->stockRecieved = -1;
+            } else {
+                $stDetail->stockRecieved = 0;
+            }
+            $stDetail->save();
+        }
+
+        $stMasterCheck = StockTransferDetails::where('stockTransferAutoID', $stockReceiveDetails->stockTransferAutoID)
+            ->where('stockRecieved', 0)
+            ->count();
+
+        $stockTransfer = StockTransfer::find($stockReceiveDetails->stockTransferAutoID);
+
+        if (!empty($stockTransfer)) {
+            if ($stMasterCheck == 0) {
+                $stockTransfer->fullyReceived = -1;
+            } else {
+                $stockTransfer->fullyReceived = 0;
+            }
+            $stockTransfer->save();
+        }
 
         return $this->sendResponse($stockReceiveDetails->toArray(), 'StockReceiveDetails updated successfully');
     }
@@ -288,30 +339,30 @@ class StockReceiveDetailsAPIController extends AppBaseController
             return $this->sendError('Stock Receive Details not found');
         }
 
-        $stockTransferDetail = StockTransferDetails::where('stockTransferAutoID',$stockReceiveDetails->stockTransferAutoID)
-                                                    ->where('itemCodeSystem',$stockReceiveDetails->itemCodeSystem)
-                                                    ->first();
+        $stockTransferDetail = StockTransferDetails::where('stockTransferAutoID', $stockReceiveDetails->stockTransferAutoID)
+            ->where('itemCodeSystem', $stockReceiveDetails->itemCodeSystem)
+            ->first();
         if (!empty($stockTransferDetail)) {
 
-            $stdTotalPullCount = StockTransferDetails::where('stockTransferAutoID',$stockReceiveDetails->stockTransferAutoID)
-                                                    ->where('itemCodeSystem',$stockReceiveDetails->itemCodeSystem)
-                                                    ->groupBy('itemCodeSystem')
-                                                    ->sum('qty');
+            $stdTotalPullCount = StockTransferDetails::where('stockTransferAutoID', $stockReceiveDetails->stockTransferAutoID)
+                ->where('itemCodeSystem', $stockReceiveDetails->itemCodeSystem)
+                ->groupBy('itemCodeSystem')
+                ->sum('qty');
 
             $stockTransferDetail->stockRecieved = 0;
 
-            if($stdTotalPullCount == 0){
+            if ($stdTotalPullCount == 0) {
                 $stockTransferDetail->addedToRecieved = 0;
             }
             $stockTransferDetail->save();
         }
 
-        $stockTransfer = StockTransfer::where('stockTransferAutoID',$stockReceiveDetails->stockTransferAutoID)->first();
+        $stockTransfer = StockTransfer::where('stockTransferAutoID', $stockReceiveDetails->stockTransferAutoID)->first();
 
         if (!empty($stockTransfer)) {
             $stockTransfer->fullyReceived = 0;
             $stockTransfer->save();
-         }
+        }
 
         $stockReceiveDetails->delete();
 
@@ -323,12 +374,12 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $input = $request->all();
         $stockTransferAutoID = $input['stockReceiveAutoID'];
 
-        $items = StockReceiveDetails::select('stockReceiveDetailsID','unitCostRpt','unitOfMeasure',
-                                              'itemCodeSystem','itemPrimaryCode','itemDescription',
-                                              'qty','stockTransferCode','comments')
-                                        ->where('stockReceiveAutoID', $stockTransferAutoID)
-                                        ->with(['unit_by'])
-                                        ->get();
+        $items = StockReceiveDetails::select('stockReceiveDetailsID', 'unitCostRpt', 'unitOfMeasure',
+                                            'itemCodeSystem', 'itemPrimaryCode', 'itemDescription',
+                                            'qty', 'stockTransferCode', 'comments')
+                                            ->where('stockReceiveAutoID', $stockTransferAutoID)
+                                            ->with(['unit_by'])
+                                            ->get();
 
         return $this->sendResponse($items->toArray(), 'Stock Receive details retrieved successfully');
     }
@@ -345,7 +396,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
         foreach ($input['detailTable'] as $newValidation) {
             if ($newValidation['isChecked']) {
 
-                if($newValidation['rQty'] <= 0 ){
+                if ($newValidation['rQty'] <= 0) {
                     return $this->sendError("Received Qty required", 500);
                 }
                 if ($newValidation['rQty'] > $newValidation['qty']) {
@@ -377,60 +428,67 @@ class StockReceiveDetailsAPIController extends AppBaseController
                 if ($srDetailExistSameItem > 0) {
                     return $this->sendError('Same inventory item cannot be added more than once');
                 }
-            }
-            if ($new['isChecked'] && $new['rQty'] > 0) {
+
+                if ($new['unitCostLocal'] == 0 || $new['unitCostRpt'] == 0) {
+                    return $this->sendError("Cost is not updated", 500);
+                }
+
 
                 $item = array();
-                $item['stockReceiveAutoID']  = $stockReceiveAutoID;
-                $item['stockReceiveCode']    = $stockReceive->stockReceiveCode;
-                $item['createdPCID']         = gethostname();
-                $item['createdUserID']       = $employee->empID;
+                $item['stockReceiveAutoID'] = $stockReceiveAutoID;
+                $item['stockReceiveCode'] = $stockReceive->stockReceiveCode;
+                $item['createdPCID'] = gethostname();
+                $item['createdUserID'] = $employee->empID;
                 $item['createdUserSystemID'] = $employee->employeeSystemID;
 
                 $item['stockTransferAutoID'] = $stockTransfer->stockTransferAutoID;
-                $item['stockTransferCode']   = $stockTransfer->stockTransferCode;
-                $item['stockTransferDate']   = $stockTransfer->tranferDate;
+                $item['stockTransferCode'] = $stockTransfer->stockTransferCode;
+                $item['stockTransferDate'] = $stockTransfer->tranferDate;
 
-                $item['itemCodeSystem']  = $new['itemCodeSystem'];
+                $item['itemCodeSystem'] = $new['itemCodeSystem'];
                 $item['itemPrimaryCode'] = $new['itemPrimaryCode'];
                 $item['itemDescription'] = $new['itemDescription'];
-                $item['unitOfMeasure']   = $new['unitOfMeasure'];
+                $item['unitOfMeasure'] = $new['unitOfMeasure'];
                 $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                 $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
-                $item['financeGLcodebBS']         = $new['financeGLcodebBS'];
-                $item['localCurrencyID']          = $new['localCurrencyID'];
-                $item['unitCostLocal']            = $new['unitCostLocal'];
-                $item['reportingCurrencyID']      = $new['reportingCurrencyID'];
-                $item['unitCostRpt']              = $new['unitCostRpt'];
-                $item['qty']                      = $new['rQty'];
+                $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                $item['localCurrencyID'] = $new['localCurrencyID'];
+                $item['unitCostLocal'] = $new['unitCostLocal'];
+                $item['reportingCurrencyID'] = $new['reportingCurrencyID'];
+                $item['unitCostRpt'] = $new['unitCostRpt'];
+                $item['qty'] = $new['rQty'];
+
+                if ($item['unitCostLocal'] <= 0 || $item['unitCostRpt'] <= 0) {
+                    return $this->sendError("Cost is not updated", 500);
+                }
 
                 $srdItem = $this->stockReceiveDetailsRepository->create($item);
 
-                $stDetail  = StockTransferDetails::where('stockTransferDetailsID',$new['stockTransferDetailsID'])->first();
+                $stDetail = StockTransferDetails::where('stockTransferDetailsID', $new['stockTransferDetailsID'])->first();
                 $stDetail->addedToRecieved = -1;
 
                 $stdTotalPullCount = StockTransferDetails::where('itemCodeSystem', $new['itemCodeSystem'])
-                                                     ->where('stockTransferAutoID', $new['stockTransferAutoID'])
-                                                     ->groupBy('itemCodeSystem')
-                                                     ->sum('qty');
+                                                            ->where('stockTransferAutoID', $new['stockTransferAutoID'])
+                                                            ->groupBy('itemCodeSystem')
+                                                            ->sum('qty');
 
 
-                if($stDetail->qty == $stdTotalPullCount){
+                if ($stDetail->qty == $stdTotalPullCount) {
                     $stDetail->stockRecieved = -1;
-                }else{
+                } else {
                     $stDetail->stockRecieved = 0;
                 }
                 $stDetail->save();
             }
         }
 
-        $stMasterCheck = StockTransferDetails::where('stockTransferAutoID',$input['stockTransferAutoID'])
-                                                ->where('stockRecieved',0)
-                                                ->count();
+        $stMasterCheck = StockTransferDetails::where('stockTransferAutoID', $input['stockTransferAutoID'])
+            ->where('stockRecieved', 0)
+            ->count();
 
-        if($stMasterCheck == 0){
+        if ($stMasterCheck == 0) {
             $stockTransfer->fullyReceived = -1;
-        }else{
+        } else {
             $stockTransfer->fullyReceived = 0;
         }
         $stockTransfer->save();

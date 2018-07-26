@@ -170,6 +170,11 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
 
+
+        if($input['unitCostLocal'] <= 0 || $input['unitCostRpt'] <= 0){
+            return $this->sendError("Cost is not updated", 500);
+        }
+
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
             ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
@@ -317,6 +322,11 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         if (empty($stockTransferDetails)) {
             return $this->sendError('Stock Transfer Details not found');
+        }
+
+
+        if ($input['qty'] > $stockTransferDetails->currentStockQty || $input['qty'] > $stockTransferDetails->warehouseStockQty ) {
+            return $this->sendError('Qty should not be greater than current stock balance or warehouse stock balance.');
         }
 
         $input['modifiedPc'] = gethostname();
