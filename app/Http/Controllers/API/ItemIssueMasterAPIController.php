@@ -12,6 +12,7 @@
  * -- Date: 22-June 2018 By: Fayas Description: Added new functions named as getAllMaterielRequestNotSelectedForIssueByCompany()
  * -- Date: 27-June 2018 By: Fayas Description: Added new functions named as getMaterielIssueAudit()
  * -- Date: 28-June 2018 By: Fayas Description: Added new functions named as getMaterielIssueApprovalByUser(),getMaterielIssueApprovedByUser()
+ * -- Date: 26-July 2018 By: Fayas Description: Added new functions named as printItemIssue()
  */
 namespace App\Http\Controllers\API;
 
@@ -978,8 +979,10 @@ class ItemIssueMasterAPIController extends AppBaseController
         $id = $request->get('id');
 
          $materielRequest = $this->itemIssueMasterRepository
-            ->with(['created_by','confirmed_by','modified_by','approved_by' => function ($query) {
-                $query->with('employee')
+            ->with(['created_by','confirmed_by','modified_by','warehouse_by','company','details.uom_issuing','approved_by' => function ($query) {
+                $query->with(['employee' =>  function($q){
+                        $q->with(['details.designation']);
+                     }])
                     ->where('documentSystemID',8);
             }])
             ->findWithoutFail($id);
@@ -990,6 +993,52 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
     }
+
+   /* public function printItemIssue(Request $request)
+    {
+        $id = $request->get('id');
+        $purchaseRequest = $this->itemIssueMasterRepository->with(['created_by', 'confirmed_by',
+            'priority_pdf', 'location', 'details.uom', 'company', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->whereIn('documentSystemID', [1, 50, 51]);
+            }
+        ])->findWithoutFail($id);
+
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        $array = array('request' => $purchaseRequest);
+        $time = strtotime("now");
+        $fileName = 'purchase_request_' . $id . '_' . $time . '.pdf';
+
+        $html = view('print.purchase_request', $array);
+
+        //return $html;
+        //return $this->sendResponse($html->render(), 'Purchase Request retrieved successfully');
+        //return \PDF::loadHTML($html)->setPaper('a4', 'landscape')->setWarnings(false)->download($fileName);
+
+        // die();
+
+        //  $pdf = \PDF::loadView('print.purchase_request', $array);
+        //  return $pdf->download('purchase_request_'.$id.'.pdf');
+
+        $pdf = \App::make('dompdf.wrapper');
+        //$pdf->setWatermarkText('example', '150px');
+
+        $text = 'watermark';
+        $opacity = 0.9;
+        $size = '100px';
+
+        //$pdf->setWatermarkText($text, $size,$opacity, $rotate = '10deg', $top = '30%');
+        //$pdf->getDomPDF()->set_option("enable_php", true);
+
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
+    }*/
 
 
 }

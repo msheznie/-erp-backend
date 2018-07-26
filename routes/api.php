@@ -597,6 +597,8 @@ Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVouc
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
+Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
+
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
 
@@ -612,3 +614,8 @@ Route::get('runQueue', function () {
 
 
 
+
+
+Route::resource('employee_details', 'EmployeeDetailsAPIController');
+
+Route::resource('designations', 'DesignationAPIController');
