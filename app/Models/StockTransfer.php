@@ -212,7 +212,9 @@ class StockTransfer extends Model
         'modifiedUser',
         'modifiedUserSystemID',
         'modifiedPc',
-        'timestamp'
+        'timestamp',
+        'approvedByUserID',
+        'approvedByUserSystemID'
     ];
 
     /**
@@ -255,7 +257,9 @@ class StockTransfer extends Model
         'createdUserID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
     ];
 
     /**

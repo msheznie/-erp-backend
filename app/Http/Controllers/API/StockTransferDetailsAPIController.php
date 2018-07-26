@@ -16,6 +16,7 @@ use App\Http\Requests\API\UpdateStockTransferDetailsAPIRequest;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
+use App\Models\ItemIssueMaster;
 use App\Models\StockTransferDetails;
 use App\Models\StockTransfer;
 use App\Models\Company;
@@ -160,6 +161,60 @@ class StockTransferDetailsAPIController extends AppBaseController
             return $this->sendError('Stock Transfer not found');
         }
 
+
+        $checkWhetherItemIssuePending = ItemIssueMaster::where('companySystemID', $companySystemID)
+            ->where('wareHouseFromCode', $stockTransferMaster->locationFrom)
+            ->select([
+                'erp_itemissuemaster.itemIssueAutoID',
+                'erp_itemissuemaster.companySystemID',
+                'erp_itemissuemaster.wareHouseFromCode',
+                'erp_itemissuemaster.itemIssueCode',
+                'erp_itemissuemaster.approved'
+            ])
+            ->groupBy(
+                'erp_itemissuemaster.itemIssueAutoID',
+                'erp_itemissuemaster.companySystemID',
+                'erp_itemissuemaster.wareHouseFromCode',
+                'erp_itemissuemaster.itemIssueCode',
+                'erp_itemissuemaster.approved'
+            )->whereHas('details', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemCode']);
+            })
+            ->where('approved', 0)
+            ->first();
+        /* approved=0*/
+
+        if (!empty($checkWhetherItemIssuePending)) {
+            return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssuePending->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        $checkWhetherStockTransfer = StockTransfer::where('stockTransferAutoID','!=' ,$stockTransferMaster->stockTransferAutoID)
+            ->where('companySystemID', $companySystemID)
+            ->where('locationFrom', $stockTransferMaster->locationFrom)
+            ->select([
+                'erp_stocktransfer.stockTransferAutoID',
+                'erp_stocktransfer.companySystemID',
+                'erp_stocktransfer.locationFrom',
+                'erp_stocktransfer.stockTransferCode',
+                'erp_stocktransfer.approved'
+            ])
+            ->groupBy(
+                'erp_stocktransfer.stockTransferAutoID',
+                'erp_stocktransfer.companySystemID',
+                'erp_stocktransfer.locationFrom',
+                'erp_stocktransfer.stockTransferCode',
+                'erp_stocktransfer.approved'
+            )->whereHas('details', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemCode']);
+            })
+            ->where('approved', 0)
+            ->first();
+        /* approved=0*/
+
+        if (!empty($checkWhetherStockTransfer)) {
+            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
         $input['stockTransferCode'] = $stockTransferMaster->stockTransferCode;
         $input['itemCodeSystem'] = $item->itemCodeSystem;
         $input['itemPrimaryCode'] = $item->itemPrimaryCode;
@@ -169,6 +224,11 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['unitCostRpt'] = $item->wacValueReporting;
         $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+
+
+        if($input['unitCostLocal'] <= 0 || $input['unitCostRpt'] <= 0){
+            return $this->sendError("Cost is not updated", 500);
+        }
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
@@ -317,6 +377,11 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         if (empty($stockTransferDetails)) {
             return $this->sendError('Stock Transfer Details not found');
+        }
+
+
+        if ($input['qty'] > $stockTransferDetails->currentStockQty || $input['qty'] > $stockTransferDetails->warehouseStockQty ) {
+            return $this->sendError('Qty should not be greater than current stock balance or warehouse stock balance.');
         }
 
         $input['modifiedPc'] = gethostname();
