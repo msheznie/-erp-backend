@@ -18,6 +18,7 @@ namespace App\helper;
 use App\Models;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Response;
 use InfyOm\Generator\Utils\ResponseUtil;
 
@@ -782,17 +783,16 @@ class Helper
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
-                            $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID];
+                            $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID,'employeeSystemID' => $empInfo->employeeSystemID];
                             // insert the record to item ledger
-                            $job1 = \App\Jobs\ItemLedgerInsert::dispatch($masterData)->onQueue('itemledger');
+                            $job1 = \App\Jobs\ItemLedgerInsert::dispatch($masterData);
                             // insert the record to general ledger
                             if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12) {
-                                $job2 = \App\Jobs\GeneralLedgerInsert::dispatch($masterData)->onQueue('generalledger');
-                                if($input["documentSystemID"] == 3) {
-                                    $job3 = \App\Jobs\UnbilledGRVInsert::dispatch($masterData)->onQueue('unbilledgrv');
+                                $job2 = \App\Jobs\GeneralLedgerInsert::dispatch($masterData);
+                                if ($input["documentSystemID"] == 3) {
+                                    $job3 = \App\Jobs\UnbilledGRVInsert::dispatch($masterData);
                                 }
                             }
-
                         } else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
