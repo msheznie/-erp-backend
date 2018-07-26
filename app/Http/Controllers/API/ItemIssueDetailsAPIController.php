@@ -303,31 +303,31 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
-       /* $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
-                                                //->where('wareHouseFromCode', $itemIssueMaster->wareHouseFromCode)
-                                                ->select([
-                                                    'erp_stocktransfer.stockTransferAutoID',
-                                                    'erp_stocktransfer.companySystemID',
-                                                    //'erp_stocktransfer.wareHouseFromCode',
-                                                    'erp_stocktransfer.stockTransferCode',
-                                                    'erp_stocktransfer.approved'
-                                                ])
-                                                ->groupBy(
-                                                    'erp_stocktransfer.stockTransferAutoID',
-                                                    'erp_stocktransfer.companySystemID',
-                                                    //'erp_itemissuemaster.wareHouseFromCode',
-                                                    'erp_stocktransfer.stockTransferCode',
-                                                    'erp_stocktransfer.approved'
-                                                )->whereHas('details', function ($query) use ($companySystemID, $input) {
-                                                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
-                                                })
-                                                ->where('approved', 0)
-                                                ->first();*/
+       $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
+                                            ->where('locationFrom', $itemIssueMaster->wareHouseFromCode)
+                                            ->select([
+                                                'erp_stocktransfer.stockTransferAutoID',
+                                                'erp_stocktransfer.companySystemID',
+                                                'erp_stocktransfer.locationFrom',
+                                                'erp_stocktransfer.stockTransferCode',
+                                                'erp_stocktransfer.approved'
+                                            ])
+                                            ->groupBy(
+                                                'erp_stocktransfer.stockTransferAutoID',
+                                                'erp_stocktransfer.companySystemID',
+                                                'erp_itemissuemaster.locationFrom',
+                                                'erp_stocktransfer.stockTransferCode',
+                                                'erp_stocktransfer.approved'
+                                            )->whereHas('details', function ($query) use ($companySystemID, $input) {
+                                                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                                            })
+                                            ->where('approved', 0)
+                                            ->first();
         /* approved=0*/
 
-        /*if (!empty($checkWhetherStockTransfer)) {
+        if (!empty($checkWhetherStockTransfer)) {
             return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
-        }*/
+        }
 
 
         $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
@@ -336,15 +336,16 @@ class ItemIssueDetailsAPIController extends AppBaseController
                                         ->sum('inOutQty');
 
         $currentWareHouseStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
-            ->where('companySystemID', $companySystemID)
-            ->where('wareHouseSystemCode', $itemIssue->wareHouseFrom)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
+                                                    ->where('companySystemID', $companySystemID)
+                                                    ->where('wareHouseSystemCode', $itemIssue->wareHouseFrom)
+                                                    ->groupBy('itemSystemCode')
+                                                    ->sum('inOutQty');
+
         $currentStockQtyInDamageReturn = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
-            ->where('companySystemID', $companySystemID)
-            ->where('fromDamagedTransactionYN', 1)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
+                                                        ->where('companySystemID', $companySystemID)
+                                                        ->where('fromDamagedTransactionYN', 1)
+                                                        ->groupBy('itemSystemCode')
+                                                        ->sum('inOutQty');
 
 
         $input['currentStockQty'] = $currentStockQty;
