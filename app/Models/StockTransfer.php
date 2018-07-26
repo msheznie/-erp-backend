@@ -311,5 +311,8 @@ class StockTransfer extends Model
         return $this->hasMany('App\Models\StockTransferDetails', 'stockTransferAutoID', 'stockTransferAutoID');
     }
 
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
     
 }

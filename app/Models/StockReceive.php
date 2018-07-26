@@ -356,4 +356,8 @@ class StockReceive extends Model
     {
         return $this->hasMany('App\Models\StockReceiveDetails', 'stockReceiveAutoID', 'stockReceiveAutoID');
     }
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
 }
