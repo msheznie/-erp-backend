@@ -238,7 +238,9 @@ class ItemReturnMaster extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
-        'timestamp'
+        'timestamp',
+        'approvedByUserID',
+        'approvedByUserSystemID'
     ];
 
     /**
@@ -277,7 +279,9 @@ class ItemReturnMaster extends Model
         'createdUserID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
     ];
 
     /**

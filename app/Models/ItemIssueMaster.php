@@ -358,6 +358,7 @@ class ItemIssueMaster extends Model
         'customerSystemID',
         'approvedDate',
         'RollLevForApp_curr',
+        'approvedByUserID',
         'approvedByUserSystemID'
     ];
 
@@ -419,6 +420,7 @@ class ItemIssueMaster extends Model
         'is_closed' => 'integer',
         'customerSystemID' => 'integer',
         'RollLevForApp_curr' => 'integer',
+        'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
     ];
 

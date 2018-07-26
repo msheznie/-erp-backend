@@ -180,7 +180,9 @@ class GRVMaster extends Model
         'modifiedUserSystemID',
         'createdDateTime',
         'timeStamp',
-        'stampDate'
+        'stampDate',
+        'approvedByUserID',
+        'approvedByUserSystemID'
     ];
 
     /**
@@ -257,6 +259,8 @@ class GRVMaster extends Model
         'modifiedUser' => 'string',
         'modifiedUserSystemID' => 'integer',
         'stampDate' => 'string',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer'
     ];
 
     /**
