@@ -3818,7 +3818,6 @@ FROM
 
     public function updateSentSupplierDetail(Request $request)
     {
-
         $input = $request->all();
 
         $purchaseOrderID = $input['purchaseOrderID'];
