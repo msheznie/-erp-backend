@@ -693,10 +693,6 @@ class ProcumentOrderAPIController extends AppBaseController
         }
         //calculate tax amount according to the percantage for tax update
 
-        //getting total sum of PO detail Amount
-        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
-            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-            ->first();
 
         //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
         if ($input['VATPercentage'] > 0 && $input['supplierVATEligible'] == 1) {
