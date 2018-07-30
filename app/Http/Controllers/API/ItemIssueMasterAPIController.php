@@ -987,10 +987,16 @@ class ItemIssueMasterAPIController extends AppBaseController
             }])
             ->findWithoutFail($id);
 
-
-
         if (empty($materielRequest)) {
             return $this->sendError('Materiel Issue not found');
+        }
+
+        $docAttachment = CompanyDocumentAttachment::where('companySystemID',$materielRequest->companySystemID)
+                                                    ->where('documentSystemID',$materielRequest->documentSystemID)
+                                                    ->first();
+
+        if (!empty($docAttachment)) {
+            $materielRequest->docRefNo = $docAttachment->docRefNumber;
         }
 
         return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
