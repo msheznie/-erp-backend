@@ -987,6 +987,8 @@ class ItemIssueMasterAPIController extends AppBaseController
             }])
             ->findWithoutFail($id);
 
+
+
         if (empty($materielRequest)) {
             return $this->sendError('Materiel Issue not found');
         }
@@ -994,21 +996,16 @@ class ItemIssueMasterAPIController extends AppBaseController
         return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
     }
 
-   /* public function printItemIssue(Request $request)
+    public function printItemIssue(Request $request)
     {
-        $id = $request->get('id');
-        $purchaseRequest = $this->itemIssueMasterRepository->with(['created_by', 'confirmed_by',
-            'priority_pdf', 'location', 'details.uom', 'company', 'approved_by' => function ($query) {
-                $query->with('employee')
-                    ->whereIn('documentSystemID', [1, 50, 51]);
-            }
-        ])->findWithoutFail($id);
+       $id = $request->get('id');
+        $materielRequest = $this->itemIssueMasterRepository->getIssueAudit($id);
 
-        if (empty($purchaseRequest)) {
-            return $this->sendError('Purchase Request not found');
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Issue not found');
         }
 
-        $array = array('request' => $purchaseRequest);
+        $array = array('request' => $materielRequest);
         $time = strtotime("now");
         $fileName = 'purchase_request_' . $id . '_' . $time . '.pdf';
 
@@ -1038,7 +1035,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
-    }*/
+    }
 
 
 }
