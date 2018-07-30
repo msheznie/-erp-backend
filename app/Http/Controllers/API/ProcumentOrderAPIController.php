@@ -693,10 +693,6 @@ class ProcumentOrderAPIController extends AppBaseController
         }
         //calculate tax amount according to the percantage for tax update
 
-        //getting total sum of PO detail Amount
-        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
-            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-            ->first();
 
         //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
         if ($input['VATPercentage'] > 0 && $input['supplierVATEligible'] == 1) {
@@ -3660,15 +3656,15 @@ FROM
         }
 
         if ($purchaseOrder->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this PO its already partially approved');
+            return $this->sendError('You cannot reopen this PO it is already partially approved');
         }
 
         if ($purchaseOrder->approved == -1) {
-            return $this->sendError('You cannot reopen this PO its already fully approved');
+            return $this->sendError('You cannot reopen this PO it is already fully approved');
         }
 
         if ($purchaseOrder->poConfirmedYN == 0) {
-            return $this->sendError('You cannot reopen this PO, its not confirmed');
+            return $this->sendError('You cannot reopen this PO, it is not confirmed');
         }
 
         // updating fields
@@ -3849,7 +3845,7 @@ FROM
         }
 
         if ($purchaseOrder->refferedBackYN != -1) {
-            return $this->sendError('You cannot Refer Back this PO, its not refer backed');
+            return $this->sendError('You cannot refer Back this PO');
         }
 
         $purchaseOrderArray = $purchaseOrder->toArray();
