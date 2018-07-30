@@ -697,6 +697,14 @@ class StockTransferAPIController extends AppBaseController
             return $this->sendError('Stock Transfer not found');
         }
 
+        $docAttachment = CompanyDocumentAttachment::where('companySystemID',$stockTransfer->companySystemID)
+            ->where('documentSystemID',$stockTransfer->documentSystemID)
+            ->first();
+
+        if (!empty($docAttachment)) {
+            $stockTransfer->docRefNo = $docAttachment->docRefNumber;
+        }
+
         return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer retrieved successfully');
     }
 

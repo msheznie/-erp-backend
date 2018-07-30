@@ -702,6 +702,14 @@ class ItemReturnMasterAPIController extends AppBaseController
             return $this->sendError('Materiel Return not found');
         }
 
+        $docAttachment = CompanyDocumentAttachment::where('companySystemID',$materielReturn->companySystemID)
+            ->where('documentSystemID',$materielReturn->documentSystemID)
+            ->first();
+
+        if (!empty($docAttachment)) {
+            $materielReturn->docRefNo = $docAttachment->docRefNumber;
+        }
+
         return $this->sendResponse($materielReturn->toArray(), 'Materiel Return retrieved successfully');
     }
 

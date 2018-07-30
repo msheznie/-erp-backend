@@ -483,6 +483,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
     Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
+    Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
     Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
     Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser');
