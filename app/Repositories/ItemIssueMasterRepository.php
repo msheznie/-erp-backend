@@ -86,4 +86,13 @@ class ItemIssueMasterRepository extends BaseRepository
     {
         return ItemIssueMaster::class;
     }
+    public function getIssueAudit($id){
+        return  $this->with(['created_by','confirmed_by','modified_by','warehouse_by','company','details.uom_issuing','approved_by' => function ($query) {
+            $query->with(['employee' =>  function($q){
+                $q->with(['details.designation']);
+            }])
+                ->where('documentSystemID',8);
+             }])
+            ->findWithoutFail($id);
+    }
 }

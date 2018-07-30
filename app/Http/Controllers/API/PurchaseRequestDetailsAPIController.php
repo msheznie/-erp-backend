@@ -380,7 +380,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $grvQty = GRVDetails::with(['master' => function ($query) use ($companySystemID) {
             $query->where('companySystemID', $companySystemID)
                    ->where('grvTypeID', 2)
-                ->groupBy('erp_grvmaster.companySystemID', 'erp_grvmaster.grvType');
+                   ->groupBy('erp_grvmaster.companySystemID', 'erp_grvmaster.grvType');
              }])
             ->where('itemCode', $input['itemCode'])
             ->groupBy('erp_grvdetails.itemCode')

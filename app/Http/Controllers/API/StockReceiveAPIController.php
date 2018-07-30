@@ -665,6 +665,14 @@ class StockReceiveAPIController extends AppBaseController
             return $this->sendError('Stock Receive not found');
         }
 
+        $docAttachment = CompanyDocumentAttachment::where('companySystemID',$stockReceive->companySystemID)
+            ->where('documentSystemID',$stockReceive->documentSystemID)
+            ->first();
+
+        if (!empty($docAttachment)) {
+            $stockReceive->docRefNo = $docAttachment->docRefNumber;
+        }
+
         return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
     }
 

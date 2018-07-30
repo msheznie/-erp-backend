@@ -11,6 +11,7 @@
  * -- Date: 12-June 2018 By: Fayas Description: Added new functions named as getAllRequestByCompany(),getRequestFormData()
  * -- Date: 19-June 2018 By: Fayas Description: Added new functions named as materielRequestAudit()
  * -- Date: 13-July 2018 By: Fayas Description: Added new functions named as getAllNotApprovedRequestByUser(),getApprovedMaterielRequestsByUser()
+ * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as requestReopen()
  */
 namespace App\Http\Controllers\API;
 
@@ -19,7 +20,9 @@ use App\Http\Requests\API\UpdateMaterielRequestAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\MaterielRequest;
@@ -746,6 +749,106 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         return $this->sendResponse($materielRequest->toArray(), 'Materiel Request retrieved successfully');
+    }
+
+    public function requestReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $requestID = $input['RequestID'];
+
+        $materielRequest = MaterielRequest::find($requestID);
+        $emails = array();
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Request not found');
+        }
+
+        if ($materielRequest->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Request its already partially approved');
+        }
+
+        if ($materielRequest->approved == -1) {
+            return $this->sendError('You cannot reopen this Request its already fully approved');
+        }
+
+        if ($materielRequest->ConfirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Request, its not confirmed');
+        }
+
+        // updating fields
+
+        $materielRequest->ConfirmedYN = 0;
+        $materielRequest->ConfirmedBySystemID = null;
+        $materielRequest->ConfirmedBy = null;
+        $materielRequest->confirmedEmpName = null;
+        $materielRequest->ConfirmedDate = null;
+        $materielRequest->RollLevForApp_curr = 1;
+        $materielRequest->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $materielRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $materielRequest->RequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $materielRequest->RequestCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $materielRequest->companySystemID)
+            ->where('documentSystemCode', $materielRequest->RequestID)
+            ->where('documentSystemID', $materielRequest->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $materielRequest->companySystemID)
+                    ->where('documentSystemID', $materielRequest->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $requestID)
+                                        ->where('companySystemID', $materielRequest->companySystemID)
+                                        ->where('documentSystemID', $materielRequest->documentSystemID)
+                                        ->delete();
+
+        return $this->sendResponse($materielRequest->toArray(), 'Purchase Order reopened successfully');
     }
 
 }
