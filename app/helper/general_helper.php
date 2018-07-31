@@ -1114,5 +1114,17 @@ class Helper
         return date("Y-m-d H:i:s");
     }
 
+    public static function getCompanyDocRefNo($companySystemID,$documentSystemID)
+    {
 
+        $docAttachment = Models\CompanyDocumentAttachment::where('companySystemID',$companySystemID)
+            ->where('documentSystemID',$documentSystemID)
+            ->first();
+
+        if (!empty($docAttachment)) {
+            return $docAttachment->docRefNumber;
+        }else{
+            return "";
+        }
+    }
 }

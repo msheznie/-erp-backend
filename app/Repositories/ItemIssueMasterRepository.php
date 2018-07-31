@@ -86,7 +86,7 @@ class ItemIssueMasterRepository extends BaseRepository
     {
         return ItemIssueMaster::class;
     }
-    public function getIssueAudit($id){
+    public function getAudit($id){
         return  $this->with(['created_by','confirmed_by','modified_by','warehouse_by','company','details.uom_issuing','approved_by' => function ($query) {
             $query->with(['employee' =>  function($q){
                 $q->with(['details.designation']);

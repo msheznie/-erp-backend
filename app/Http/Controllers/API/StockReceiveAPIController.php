@@ -11,6 +11,7 @@
  * -- Date: 23-July 2018 By: Fayas Description: Added new functions named as getAllStockReceiveByCompany(),getStockReceiveFormData(),stockReceiveAudit()
  * -- Date: 24-July 2018 By: Fayas Description: Added new functions named as srPullFromTransferPreCheck()
  * -- Date: 25-July 2018 By: Fayas Description: Added new functions named as getStockReceiveApproval(),getApprovedSRForCurrentUser()
+ * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as printStockReceive()
  */
 namespace App\Http\Controllers\API;
 
@@ -653,28 +654,39 @@ class StockReceiveAPIController extends AppBaseController
     public function stockReceiveAudit(Request $request)
     {
         $id = $request->get('id');
+        $stockReceive = $this->stockReceiveRepository->getAudit($id);
 
-        $stockReceive = $this->stockReceiveRepository->with(['created_by', 'confirmed_by','company','location_to_by', 'location_from_by', 'details' => function ($q) {
-            $q->with(['unit_by']);
-        }, 'modified_by', 'approved_by' => function ($query) {
-            $query->with('employee.details.designation')
-                ->where('documentSystemID', 10);
-        }])->findWithoutFail($id);
+        if (empty($stockReceive)) {
+            return $this->sendError('Materiel Return not found');
+        }
+
+        $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID,$stockReceive->documentSystemID);
+
+        return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
+    }
+
+    public function printStockReceive(Request $request)
+    {
+        $id = $request->get('id');
+        $stockReceive = $this->stockReceiveRepository->getAudit($id);
 
         if (empty($stockReceive)) {
             return $this->sendError('Stock Receive not found');
         }
 
-        $docAttachment = CompanyDocumentAttachment::where('companySystemID',$stockReceive->companySystemID)
-            ->where('documentSystemID',$stockReceive->documentSystemID)
-            ->first();
+        $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID,$stockReceive->documentSystemID);
 
-        if (!empty($docAttachment)) {
-            $stockReceive->docRefNo = $docAttachment->docRefNumber;
-        }
+        $array = array('entity' => $stockReceive);
+        $time = strtotime("now");
+        $fileName = 'stock_receive' . $id . '_' . $time . '.pdf';
+        $html = view('print.stock_receive', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
 
-        return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
+
+
 
     public function srPullFromTransferPreCheck(Request $request)
     {
