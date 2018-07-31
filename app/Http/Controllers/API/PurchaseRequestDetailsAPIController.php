@@ -351,7 +351,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
 
 
-        $poQty = PurchaseOrderDetails::whereHas('order' ,function ($query) use ($companySystemID) {
+        $poQty = PurchaseOrderDetails::whereHas('order',function ($query) use ($companySystemID) {
                                             $query->where('companySystemID', $companySystemID)
                                                 ->where('approved', -1)
                                                 ->where('poCancelledYN', 0);
@@ -374,7 +374,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                                     ->groupBy('itemSystemCode')
                                     ->sum('inOutQty');
 
-        $grvQty = GRVDetails::whereHas('master' , function ($query) use ($companySystemID) {
+        $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID) {
             $query->where('companySystemID', $companySystemID)
                    ->where('grvTypeID', 2)
                    ->groupBy('erp_grvmaster.companySystemID');
