@@ -141,8 +141,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input['companySystemID'] = $item->companySystemID;
         $input['companyID'] = $item->companyID;
         $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
-        $input['maxQty'] = $item->maxQty;
-        $input['minQty'] = $item->minQty;
+        $input['maxQty'] = $item->maximunQty;
+        $input['minQty'] = $item->minimumQty;
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
             ->where('mainItemCategoryID', $item->financeCategoryMaster)
@@ -174,8 +174,6 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
         $input['itemCategoryID'] = 0;
-        $input['maxQty'] = 0;
-        $input['minQty'] = 0;
 
         // check policy 18
 

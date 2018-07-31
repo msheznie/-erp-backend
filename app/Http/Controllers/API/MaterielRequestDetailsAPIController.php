@@ -177,6 +177,12 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             $input['maxQty'] = 0;
         }
 
+        if($item->minimumQty){
+            $input['minQty'] = $item->minimumQty;
+        }else{
+            $input['minQty'] = 0;
+        }
+
         $input['allowCreatePR']      = 0;
         $input['selectedToCreatePR'] = 0;
 
