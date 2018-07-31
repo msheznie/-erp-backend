@@ -174,10 +174,11 @@ class StockTransferAPIController extends AppBaseController
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
         $lastSerial = StockTransfer::where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('stockTransferAutoID', 'desc')
             ->first();
 
-        $lastSerialNumber = 0;
+        $lastSerialNumber = 1;
         if ($lastSerial) {
             $lastSerialNumber = intval($lastSerial->serialNo) + 1;
         }

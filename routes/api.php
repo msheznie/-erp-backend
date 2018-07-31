@@ -598,6 +598,16 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('pullPOAttachment', 'GRVMasterAPIController@pullPOAttachment');
 
+
+    Route::resource('employee_details', 'EmployeeDetailsAPIController');
+    Route::resource('designations', 'DesignationAPIController');
+
+    Route::resource('purchase_returns', 'PurchaseReturnAPIController');
+    Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany');
+    Route::get('getPurchaseReturnFormData', 'PurchaseReturnAPIController@getPurchaseReturnFormData');
+    Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
+    
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -627,6 +637,4 @@ Route::get('runQueue', function () {
 
 
 
-Route::resource('employee_details', 'EmployeeDetailsAPIController');
 
-Route::resource('designations', 'DesignationAPIController');
