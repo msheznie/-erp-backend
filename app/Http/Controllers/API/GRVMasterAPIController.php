@@ -711,6 +711,10 @@ class GRVMasterAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
+        $allowPartialGRVPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 23)
+            ->where('companySystemID', $companyId)
+            ->first();
+
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
@@ -723,7 +727,8 @@ class GRVMasterAPIController extends AppBaseController
             'financialYears' => $financialYears,
             'suppliers' => $supplier,
             'grvTypes' => $grvTypes,
-            'companyFinanceYear' => $companyFinanceYear
+            'companyFinanceYear' => $companyFinanceYear,
+            'companyPolicy' => $allowPartialGRVPolicy
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -766,7 +771,7 @@ class GRVMasterAPIController extends AppBaseController
                     ->where('documentSystemID', 3);
             },'details','company_by','currency_by', 'companydocumentattachment_by' => function ($query) {
                 $query->where('documentSystemID', 3);
-            }])->findWithoutFail($id);
+            },'location_by'])->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
             return $this->sendError('Good Receipt Voucher not found');
