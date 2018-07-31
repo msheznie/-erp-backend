@@ -24,6 +24,7 @@
  * -- Date: 23-May 2018 By: Fayas Description: Added new functions named as purchaseRequestAudit()
  * -- Date: 06-June 2018 By: Mubashir Description: Modified getPurchaseRequestByDocumentType() to handle filters from local storage
  * -- Date: 11-June 2018 By: Fayas Description: Added new functions named as getReportOpenRequest(),exportReportOpenRequest()
+ * -- Date: 31-July 2018 By: Nazir Description: Added new functions named as getPurchaseRequestReopen()
  */
 namespace App\Http\Controllers\API;
 
@@ -1868,6 +1869,107 @@ class PurchaseRequestAPIController extends AppBaseController
         })->download($type);
         return $this->sendResponse(array(), 'successfully export');
 
-
     }
+
+    public function getPurchaseRequestReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseRequestId = $input['purchaseRequestId'];
+
+        $purchaseRequest = PurchaseRequest::find($purchaseRequestId);
+        $emails = array();
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($purchaseRequest->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Request it is already partially approved');
+        }
+
+        if ($purchaseRequest->approved == -1) {
+            return $this->sendError('You cannot reopen this Request it is already fully approved');
+        }
+
+        if ($purchaseRequest->PRConfirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Request, it is not confirmed');
+        }
+
+        // updating fields
+
+        $purchaseRequest->PRConfirmedYN = 0;
+        $purchaseRequest->PRConfirmedBySystemID = null;
+        $purchaseRequest->PRConfirmedBy = null;
+        $purchaseRequest->PRConfirmedByEmpName = null;
+        $purchaseRequest->PRConfirmedDate = null;
+        $purchaseRequest->RollLevForApp_curr = 1;
+        $purchaseRequest->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $purchaseRequest->companySystemID)
+                    ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request reopened successfully');
+    }
+
+
 }
