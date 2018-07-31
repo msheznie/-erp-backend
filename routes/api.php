@@ -362,6 +362,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport');
     Route::post('reportSpentAnalysisDrilldownExport', 'ProcumentOrderAPIController@reportSpentAnalysisDrilldownExport');
     Route::post('reportSpentAnalysisHeader', 'ProcumentOrderAPIController@reportSpentAnalysisHeader');
+    Route::post('reportPoEmployeePerformance', 'ProcumentOrderAPIController@reportPoEmployeePerformance');
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
@@ -441,6 +442,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('procumentOrderPrHistory', 'ProcumentOrderAPIController@procumentOrderPrHistory');
     Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck');
     Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier');
+    Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance');
 
     Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger');
 

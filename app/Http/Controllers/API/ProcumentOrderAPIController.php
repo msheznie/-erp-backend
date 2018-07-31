@@ -3938,5 +3938,152 @@ FROM
         return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order Amend successfully');
     }
 
+    public function reportPoEmployeePerformance(Request $request)
+    {
+        $validator = \Validator::make($request->all(), [
+            'companySystemID' => 'required',
+            'years' => 'required'
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('companySystemID'));
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $year = $request->years;
+
+        $output = \DB::select('select
+	poConfirmedByEmpID,
+	POConfirmedEmpName,
+	designation,
+	count(poConfirmedByEmpSystemID) as count,
+	sum(POValue) as TotalValue
+from
+(
+SELECT
+	erp_purchaseordermaster.purchaseOrderID,
+	erp_purchaseordermaster.companySystemID,
+	erp_purchaseordermaster.companyID,
+	erp_purchaseordermaster.purchaseOrderCode,
+	erp_purchaseordermaster.narration,
+	erp_purchaseordermaster.supplierPrimaryCode,
+	erp_purchaseordermaster.supplierName,
+	YEAR (erp_purchaseordermaster.approvedDate) AS YEAR,
+	erp_purchaseordermaster.poConfirmedByEmpSystemID,
+	erp_purchaseordermaster.poConfirmedByEmpID,
+	employees.empName as POConfirmedEmpName,
+	hrms_designation.designation,
+	sum((erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty)) AS POVALUE
+FROM
+	erp_purchaseordermaster
+	INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
+	INNER JOIN employees ON erp_purchaseordermaster.poConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN hrms_employeedetails ON employees.employeeSystemID = hrms_employeedetails.employeeSystemID
+	INNER JOIN hrms_designation ON hrms_designation.designationID = hrms_employeedetails.designationID
+WHERE
+	year(erp_purchaseordermaster.approvedDate) = "' . $year . '"
+	AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_purchaseordermaster.poConfirmedYN = 1
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	AND erp_purchaseordermaster.approved =-1
+	AND erp_purchaseordermaster.poType_N <> 6
+group by purchaseOrderID,companySystemID	) as pocountfnal
+	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY count DESC;');
+        //dd(DB::getQueryLog());
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+
+    }
+
+    public function exportPoEmployeePerformance(Request $request)
+    {
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('companySystemID'));
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $year = $request->years;
+        $type = $request->type;
+
+        $output = \DB::select('select
+	poConfirmedByEmpID,
+	POConfirmedEmpName,
+	designation,
+	count(poConfirmedByEmpSystemID) as count,
+	sum(POValue) as TotalValue
+from
+(
+SELECT
+	erp_purchaseordermaster.purchaseOrderID,
+	erp_purchaseordermaster.companySystemID,
+	erp_purchaseordermaster.companyID,
+	erp_purchaseordermaster.purchaseOrderCode,
+	erp_purchaseordermaster.narration,
+	erp_purchaseordermaster.supplierPrimaryCode,
+	erp_purchaseordermaster.supplierName,
+	YEAR (erp_purchaseordermaster.approvedDate) AS YEAR,
+	erp_purchaseordermaster.poConfirmedByEmpSystemID,
+	erp_purchaseordermaster.poConfirmedByEmpID,
+	employees.empName as POConfirmedEmpName,
+	hrms_designation.designation,
+	sum((erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty)) AS POVALUE
+FROM
+	erp_purchaseordermaster
+	INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
+	INNER JOIN employees ON erp_purchaseordermaster.poConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN hrms_employeedetails ON employees.employeeSystemID = hrms_employeedetails.employeeSystemID
+	INNER JOIN hrms_designation ON hrms_designation.designationID = hrms_employeedetails.designationID
+WHERE
+	year(erp_purchaseordermaster.approvedDate) = "' . $year . '"
+	AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_purchaseordermaster.poConfirmedYN = 1
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	AND erp_purchaseordermaster.approved =-1
+	AND erp_purchaseordermaster.poType_N <> 6
+group by purchaseOrderID,companySystemID	) as pocountfnal
+	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY count DESC;');
+
+        if ($output) {
+            $x = 0;
+            foreach ($output as $val) {
+                $data[$x]['Emp ID'] = $val->poConfirmedByEmpID;
+                $data[$x]['Employee Name'] = $val->POConfirmedEmpName;
+                $data[$x]['Designation'] = $val->designation;
+                $data[$x]['Year'] = $year;
+                $data[$x]['Count'] = $val->count;
+                $data[$x]['Total'] = $val->TotalValue;
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+        $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+
+    }
+
 
 }
