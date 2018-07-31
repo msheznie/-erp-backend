@@ -362,6 +362,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport');
     Route::post('reportSpentAnalysisDrilldownExport', 'ProcumentOrderAPIController@reportSpentAnalysisDrilldownExport');
     Route::post('reportSpentAnalysisHeader', 'ProcumentOrderAPIController@reportSpentAnalysisHeader');
+    Route::post('reportPoEmployeePerformance', 'ProcumentOrderAPIController@reportPoEmployeePerformance');
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
@@ -441,6 +442,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('procumentOrderPrHistory', 'ProcumentOrderAPIController@procumentOrderPrHistory');
     Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck');
     Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier');
+    Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance');
 
     Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger');
 
@@ -483,6 +485,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
     Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
+    Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
     Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
     Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser');
@@ -605,6 +608,9 @@ Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
 Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
 Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
 Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
+Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
+Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
+Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 

@@ -11,6 +11,7 @@
  * -- Date: 23-July 2018 By: Fayas Description: Added new functions named as getAllStockReceiveByCompany(),getStockReceiveFormData(),stockReceiveAudit()
  * -- Date: 24-July 2018 By: Fayas Description: Added new functions named as srPullFromTransferPreCheck()
  * -- Date: 25-July 2018 By: Fayas Description: Added new functions named as getStockReceiveApproval(),getApprovedSRForCurrentUser()
+ * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as printStockReceive()
  */
 namespace App\Http\Controllers\API;
 
@@ -41,7 +42,6 @@ use Response;
  * Class StockReceiveController
  * @package App\Http\Controllers\API
  */
-
 class StockReceiveAPIController extends AppBaseController
 {
     /** @var  StockReceiveRepository */
@@ -164,8 +164,8 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         $lastSerial = StockReceive::where('companySystemID', $input['companySystemID'])
-                                    ->orderBy('stockReceiveAutoID', 'desc')
-                                    ->first();
+            ->orderBy('stockReceiveAutoID', 'desc')
+            ->first();
 
         $lastSerialNumber = 0;
         if ($lastSerial) {
@@ -179,11 +179,11 @@ class StockReceiveAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment',500);
+            return $this->sendError('Selected segment is not active. Please select an active segment', 500);
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot me same',500);
+            return $this->sendError('Location From and Location To  cannot me same', 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -408,15 +408,15 @@ class StockReceiveAPIController extends AppBaseController
         if ($stockReceive->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
             $stockReceiveDetailExist = StockReceiveDetails::where('stockReceiveAutoID', $id)
-                                                           ->count();
+                ->count();
 
             if ($stockReceiveDetailExist == 0) {
                 return $this->sendError('Stock Receive document cannot confirm without details');
             }
 
             $checkQuantity = StockReceiveDetails::where('stockReceiveAutoID', $id)
-                                                    ->where('qty', '<', 1)
-                                                    ->count();
+                ->where('qty', '<', 1)
+                ->count();
 
             if ($checkQuantity > 0) {
                 return $this->sendError('Every item should have at least one minimum Qty', 500);
@@ -495,7 +495,7 @@ class StockReceiveAPIController extends AppBaseController
     public function getAllStockReceiveByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'locationFrom','locationTo','confirmedYN', 'approved',
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'locationFrom', 'locationTo', 'confirmedYN', 'approved',
             'grvRecieved', 'month', 'year', 'invoicedBooked'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -504,8 +504,8 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         $stockReceive = StockReceive::where('companySystemID', $input['companyId'])
-                                    ->where('documentSystemID', $input['documentId'])
-                                    ->with(['created_by','segment_by']);
+            ->where('documentSystemID', $input['documentId'])
+            ->with(['created_by', 'segment_by']);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
@@ -613,10 +613,10 @@ class StockReceiveAPIController extends AppBaseController
         $month = Months::all();
 
         $years = StockReceive::select(DB::raw("YEAR(createdDateTime) as year"))
-                                ->whereNotNull('createdDateTime')
-                                ->groupby('year')
-                                ->orderby('year', 'desc')
-                                ->get();
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get();
 
         $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
@@ -654,19 +654,39 @@ class StockReceiveAPIController extends AppBaseController
     public function stockReceiveAudit(Request $request)
     {
         $id = $request->get('id');
+        $stockReceive = $this->stockReceiveRepository->getAudit($id);
 
-        $stockReceive = $this->stockReceiveRepository->with(['created_by', 'confirmed_by',
-                                                               'modified_by', 'approved_by' => function ($query) {
-                                                                    $query->with('employee')
-                                                                        ->where('documentSystemID', 10);
-                                                                }])->findWithoutFail($id);
+        if (empty($stockReceive)) {
+            return $this->sendError('Materiel Return not found');
+        }
+
+        $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID,$stockReceive->documentSystemID);
+
+        return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
+    }
+
+    public function printStockReceive(Request $request)
+    {
+        $id = $request->get('id');
+        $stockReceive = $this->stockReceiveRepository->getAudit($id);
 
         if (empty($stockReceive)) {
             return $this->sendError('Stock Receive not found');
         }
 
-        return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
+        $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID,$stockReceive->documentSystemID);
+
+        $array = array('entity' => $stockReceive);
+        $time = strtotime("now");
+        $fileName = 'stock_receive' . $id . '_' . $time . '.pdf';
+        $html = view('print.stock_receive', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
+
+
 
     public function srPullFromTransferPreCheck(Request $request)
     {
@@ -684,12 +704,12 @@ class StockReceiveAPIController extends AppBaseController
         //checking segment is active
 
         $segments = SegmentMaster::where("serviceLineSystemID", $stockReceive->serviceLineSystemID)
-                                    ->where('companySystemID', $input['companySystemID'])
-                                    ->where('isActive', 1)
-                                    ->first();
+            ->where('companySystemID', $input['companySystemID'])
+            ->where('isActive', 1)
+            ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected Department is not active. Please select an active segment',500);
+            return $this->sendError('Selected Department is not active. Please select an active segment', 500);
         }
 
         return $this->sendResponse($id, 'success');
@@ -798,7 +818,7 @@ class StockReceiveAPIController extends AppBaseController
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
             if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
-               // $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                // $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
             }
             $query->where('employeesdepartments.documentSystemID', 10)
                 ->where('employeesdepartments.companySystemID', $companyID)

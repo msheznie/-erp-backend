@@ -693,10 +693,6 @@ class ProcumentOrderAPIController extends AppBaseController
         }
         //calculate tax amount according to the percantage for tax update
 
-        //getting total sum of PO detail Amount
-        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
-            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-            ->first();
 
         //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
         if ($input['VATPercentage'] > 0 && $input['supplierVATEligible'] == 1) {
@@ -3660,15 +3656,15 @@ FROM
         }
 
         if ($purchaseOrder->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this PO its already partially approved');
+            return $this->sendError('You cannot reopen this PO it is already partially approved');
         }
 
         if ($purchaseOrder->approved == -1) {
-            return $this->sendError('You cannot reopen this PO its already fully approved');
+            return $this->sendError('You cannot reopen this PO it is already fully approved');
         }
 
         if ($purchaseOrder->poConfirmedYN == 0) {
-            return $this->sendError('You cannot reopen this PO, its not confirmed');
+            return $this->sendError('You cannot reopen this PO, it is not confirmed');
         }
 
         // updating fields
@@ -3818,7 +3814,6 @@ FROM
 
     public function updateSentSupplierDetail(Request $request)
     {
-
         $input = $request->all();
 
         $purchaseOrderID = $input['purchaseOrderID'];
@@ -3850,7 +3845,7 @@ FROM
         }
 
         if ($purchaseOrder->refferedBackYN != -1) {
-            return $this->sendError('You cannot Refer Back this PO, its not refer backed');
+            return $this->sendError('You cannot refer Back this PO');
         }
 
         $purchaseOrderArray = $purchaseOrder->toArray();
@@ -3941,6 +3936,153 @@ FROM
         }
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order Amend successfully');
+    }
+
+    public function reportPoEmployeePerformance(Request $request)
+    {
+        $validator = \Validator::make($request->all(), [
+            'companySystemID' => 'required',
+            'years' => 'required'
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('companySystemID'));
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $year = $request->years;
+
+        $output = \DB::select('select
+	poConfirmedByEmpID,
+	POConfirmedEmpName,
+	designation,
+	count(poConfirmedByEmpSystemID) as count,
+	sum(POValue) as TotalValue
+from
+(
+SELECT
+	erp_purchaseordermaster.purchaseOrderID,
+	erp_purchaseordermaster.companySystemID,
+	erp_purchaseordermaster.companyID,
+	erp_purchaseordermaster.purchaseOrderCode,
+	erp_purchaseordermaster.narration,
+	erp_purchaseordermaster.supplierPrimaryCode,
+	erp_purchaseordermaster.supplierName,
+	YEAR (erp_purchaseordermaster.approvedDate) AS YEAR,
+	erp_purchaseordermaster.poConfirmedByEmpSystemID,
+	erp_purchaseordermaster.poConfirmedByEmpID,
+	employees.empName as POConfirmedEmpName,
+	hrms_designation.designation,
+	sum((erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty)) AS POVALUE
+FROM
+	erp_purchaseordermaster
+	INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
+	INNER JOIN employees ON erp_purchaseordermaster.poConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN hrms_employeedetails ON employees.employeeSystemID = hrms_employeedetails.employeeSystemID
+	INNER JOIN hrms_designation ON hrms_designation.designationID = hrms_employeedetails.designationID
+WHERE
+	year(erp_purchaseordermaster.approvedDate) = "' . $year . '"
+	AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_purchaseordermaster.poConfirmedYN = 1
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	AND erp_purchaseordermaster.approved =-1
+	AND erp_purchaseordermaster.poType_N <> 6
+group by purchaseOrderID,companySystemID	) as pocountfnal
+	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY count DESC;');
+        //dd(DB::getQueryLog());
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+
+    }
+
+    public function exportPoEmployeePerformance(Request $request)
+    {
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('companySystemID'));
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $year = $request->years;
+        $type = $request->type;
+
+        $output = \DB::select('select
+	poConfirmedByEmpID,
+	POConfirmedEmpName,
+	designation,
+	count(poConfirmedByEmpSystemID) as count,
+	sum(POValue) as TotalValue
+from
+(
+SELECT
+	erp_purchaseordermaster.purchaseOrderID,
+	erp_purchaseordermaster.companySystemID,
+	erp_purchaseordermaster.companyID,
+	erp_purchaseordermaster.purchaseOrderCode,
+	erp_purchaseordermaster.narration,
+	erp_purchaseordermaster.supplierPrimaryCode,
+	erp_purchaseordermaster.supplierName,
+	YEAR (erp_purchaseordermaster.approvedDate) AS YEAR,
+	erp_purchaseordermaster.poConfirmedByEmpSystemID,
+	erp_purchaseordermaster.poConfirmedByEmpID,
+	employees.empName as POConfirmedEmpName,
+	hrms_designation.designation,
+	sum((erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty)) AS POVALUE
+FROM
+	erp_purchaseordermaster
+	INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
+	INNER JOIN employees ON erp_purchaseordermaster.poConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN hrms_employeedetails ON employees.employeeSystemID = hrms_employeedetails.employeeSystemID
+	INNER JOIN hrms_designation ON hrms_designation.designationID = hrms_employeedetails.designationID
+WHERE
+	year(erp_purchaseordermaster.approvedDate) = "' . $year . '"
+	AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_purchaseordermaster.poConfirmedYN = 1
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	AND erp_purchaseordermaster.approved =-1
+	AND erp_purchaseordermaster.poType_N <> 6
+group by purchaseOrderID,companySystemID	) as pocountfnal
+	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY count DESC;');
+
+        if ($output) {
+            $x = 0;
+            foreach ($output as $val) {
+                $data[$x]['Emp ID'] = $val->poConfirmedByEmpID;
+                $data[$x]['Employee Name'] = $val->POConfirmedEmpName;
+                $data[$x]['Designation'] = $val->designation;
+                $data[$x]['Year'] = $year;
+                $data[$x]['Count'] = $val->count;
+                $data[$x]['Total'] = $val->TotalValue;
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+        $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+
     }
 
 

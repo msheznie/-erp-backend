@@ -585,7 +585,7 @@ class FinancialReportAPIController extends AppBaseController
                                 WHERE
                                     DATE(erp_generalledger.documentDate) <= "' . $toDate . '"	
                                     AND erp_generalledger.chartOfAccountSystemID  = ' . $chartOfAccountID . '
-                                    AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ');';
+                                    AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')  ORDER BY erp_generalledger.documentDate;';
 
         $output = \DB::select($query);
         //dd(DB::getQueryLog());

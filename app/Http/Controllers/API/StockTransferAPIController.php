@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 13-July 2018 By: Nazir Description: Added new functions named as getStockTransferMasterView() For load Master View
  * -- Date: 24-July 2018 By: Fayas Description: Added new functions named as getStockTransferForReceive(),getStockTransferDetailsByMaster()
+ * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as printStockTransfer()
  */
 namespace App\Http\Controllers\API;
 
@@ -685,19 +686,38 @@ class StockTransferAPIController extends AppBaseController
     {
         $id = $request->get('id');
 
-        $stockTransfer = $this->stockTransferRepository->with(['created_by', 'confirmed_by',
-            'modified_by', 'approved_by' => function ($query) {
-                $query->with('employee')
-                    ->where('documentSystemID', 13);
-            }])
-            ->findWithoutFail($id);
+        $stockTransfer = $this->stockTransferRepository->getAudit($id);
 
         if (empty($stockTransfer)) {
             return $this->sendError('Stock Transfer not found');
         }
 
+        $stockTransfer->docRefNo = \Helper::getCompanyDocRefNo($stockTransfer->companySystemID,$stockTransfer->documentSystemID);
+
         return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer retrieved successfully');
     }
+
+    public function printStockTransfer(Request $request)
+    {
+        $id = $request->get('id');
+        $stockTransfer = $this->stockTransferRepository->getAudit($id);
+
+        if (empty($stockTransfer)) {
+            return $this->sendError('Stock Transfer not found');
+        }
+
+        $stockTransfer->docRefNo = \Helper::getCompanyDocRefNo($stockTransfer->companySystemID,$stockTransfer->documentSystemID);
+
+        $array = array('entity' => $stockTransfer);
+        $time = strtotime("now");
+        $fileName = 'stock_transfer' . $id . '_' . $time . '.pdf';
+        $html = view('print.stock_transfer', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
 
     public function getStockTransferApproval(Request $request)
     {

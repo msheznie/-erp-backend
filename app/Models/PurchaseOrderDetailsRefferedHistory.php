@@ -714,5 +714,9 @@ class PurchaseOrderDetailsRefferedHistory extends Model
         
     ];
 
+    public function unit(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+
     
 }

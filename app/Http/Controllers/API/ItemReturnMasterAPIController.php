@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 16 - July 2018 By: Fayas Description: Added new functions named as getAllMaterielReturnByCompany(),getMaterielReturnFormData()
  * -- Date: 17 - July 2018 By: Fayas Description: Added new functions named as getMaterielReturnAudit(),getMaterielReturnApprovalByUser(),getMaterielReturnApprovedByUser()
+ * -- Date: 30 - July 2018 By: Fayas Description: Added new functions named as printItemReturn()
  *
  */
 namespace App\Http\Controllers\API;
@@ -689,20 +690,36 @@ class ItemReturnMasterAPIController extends AppBaseController
     {
         $id = $request->get('id');
 
-        $materielReturn = $this->itemReturnMasterRepository
-                                ->with(['created_by','confirmed_by','modified_by','warehouse_by','company','details' => function($q){
-                                    $q->with(['uom_issued','uom_receiving']);
-                                },'approved_by' => function ($query) {
-                                    $query->with('employee.details.designation')
-                                        ->where('documentSystemID',12);
-                                }])
-                                ->findWithoutFail($id);
+        $materielReturn = $this->itemReturnMasterRepository->getAudit($id);
 
         if (empty($materielReturn)) {
             return $this->sendError('Materiel Return not found');
         }
 
+        $materielReturn->docRefNo = \Helper::getCompanyDocRefNo($materielReturn->companySystemID,$materielReturn->documentSystemID);
+
         return $this->sendResponse($materielReturn->toArray(), 'Materiel Return retrieved successfully');
+    }
+
+    public function printItemReturn(Request $request)
+    {
+        $id = $request->get('id');
+        $materielReturn = $this->itemReturnMasterRepository->getAudit($id);
+
+        if (empty($materielReturn)) {
+            return $this->sendError('Materiel Return not found');
+        }
+
+        $materielReturn->docRefNo = \Helper::getCompanyDocRefNo($materielReturn->companySystemID,$materielReturn->documentSystemID);
+
+        $array = array('entity' => $materielReturn);
+        $time = strtotime("now");
+        $fileName = 'materiel_return' . $id . '_' . $time . '.pdf';
+        $html = view('print.materiel_return', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
     /**

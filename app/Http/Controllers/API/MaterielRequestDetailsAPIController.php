@@ -206,13 +206,12 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $input['financeGLcodePL']   = $financeItemCategorySubAssigned->financeGLcodePL;
         $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
-
-       /* $poQty = PurchaseOrderDetails::with(['order' => function ($query) use ($companySystemID) {
-            $query->where('companySystemID', $companySystemID)
-                ->where('approved', -1)
-                ->where('poCancelledYN', 0)
-                ->groupBy('erp_purchaseordermaster.poCancelledYN',
-                    'erp_purchaseordermaster.approved');
+        $poQty = PurchaseOrderDetails::with(['order' => function ($query) use ($companySystemID) {
+                    $query->where('companySystemID', $companySystemID)
+                        ->where('approved', -1)
+                        ->where('poCancelledYN', 0)
+                        ->groupBy('erp_purchaseordermaster.poCancelledYN',
+                            'erp_purchaseordermaster.approved');
              }])
             ->where('itemCode', $input['itemCode'])
             ->groupBy('erp_purchaseorderdetails.companySystemID',
@@ -226,29 +225,28 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                     'erp_purchaseorderdetails.itemPrimaryCode'
                 ]
             )
-            ->sum('noQty');*/
+            ->sum('noQty');
 
-        $poQty = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
+        $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
                                 ->where('companySystemID', $companySystemID)
                                 ->groupBy('itemSystemCode')
                                 ->sum('inOutQty');
 
         $grvQty = GRVDetails::with(['master' => function ($query) use ($companySystemID) {
-            $query->where('companySystemID', $companySystemID)
-                ->groupBy('erp_grvmaster.companySystemID', 'erp_grvmaster.grvType');
-        }])
-            ->where('itemCode', $input['itemCode'])
-            ->groupBy('erp_grvdetails.itemCode')
-            ->select(
-                [
-                    'erp_grvdetails.companySystemID',
-                    'erp_grvdetails.itemCode'
-                ])
-            ->sum('noQty');
+                            $query->where('companySystemID', $companySystemID)
+                                ->where('grvTypeID', 2)
+                                ->groupBy('erp_grvmaster.companySystemID', 'erp_grvmaster.grvType');
+                             }])
+                            ->where('itemCode', $input['itemCode'])
+                            ->groupBy('erp_grvdetails.itemCode')
+                            ->select(
+                                [
+                                    'erp_grvdetails.companySystemID',
+                                    'erp_grvdetails.itemCode'
+                                ])
+                            ->sum('noQty');
 
         $quantityOnOrder = $poQty - $grvQty;
-        $quantityInHand  = $poQty;
-
         $input['quantityOnOrder'] = $quantityOnOrder;
         $input['quantityInHand']  = $quantityInHand;
 
@@ -256,11 +254,11 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             return $this->sendError("No stock Qty. Please check again.", 500);
         }
 
-        if((($input['quantityInHand'] - $input['quantityRequested']) + $input['quantityOnOrder']) <= $input['minQty']){
+        /*if((($input['quantityInHand'] - $input['quantityRequested']) + $input['quantityOnOrder']) <= $input['minQty']){
             $input['allowCreatePR'] =  -1;
         }else{
             $input['allowCreatePR']   =  0;
-        }
+        }*/
 
         $materielRequestDetails = $this->materielRequestDetailsRepository->create($input);
 
