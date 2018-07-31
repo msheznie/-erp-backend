@@ -38,7 +38,10 @@
  * -- Date: 25-june 2018 By: Nazir Description: Added new functions named as getPurchasePaymentStatusHistory(),
  * -- Date: 26-june 2018 By: Nazir Description: Added new functions named as getProcurementOrderReopen(),
  * -- Date: 18-july 2018 By: Nazir Description: Added new functions named as procumentOrderPRAttachment(),
- * -- Date: 23-July 2018 By: Nazir Description: Added new functions named as getProcurementOrderReferBack(),
+ * -- Date: 18-july 2018 By: Nazir Description: Added new functions named as updateSentSupplierDetail(),
+ * -- Date: 20-July 2018 By: Nazir Description: Added new functions named as getProcurementOrderReferBack(),
+ * -- Date: 30-July 2018 By: Nazir Description: Added new functions named as reportPoEmployeePerformance(),
+ * -- Date: 31-July 2018 By: Nazir Description: Added new functions named as exportPoEmployeePerformance(),
  */
 
 namespace App\Http\Controllers\API;
@@ -879,7 +882,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function getProcumentOrderByDocumentType(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -945,6 +948,18 @@ class ProcumentOrderAPIController extends AppBaseController
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
                 $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('supplierID', $input)) {
+            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                $procumentOrders->where('supplierID', $input['supplierID']);
+            }
+        }
+
+        if (array_key_exists('sentToSupplier', $input)) {
+            if (($input['sentToSupplier'] == 0 || $input['sentToSupplier'] == -1) && !is_null($input['sentToSupplier'])) {
+                $procumentOrders->where('sentToSupplier', $input['sentToSupplier']);
             }
         }
 
@@ -1392,7 +1407,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
     public function getProcumentOrderAllAmendments(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1413,6 +1428,24 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('poCancelledYN', $input)) {
+            if (($input['poCancelledYN'] == 0 || $input['poCancelledYN'] == -1) && !is_null($input['poCancelledYN'])) {
+                $procumentOrders->where('poCancelledYN', $input['poCancelledYN']);
+            }
+        }
+
+        if (array_key_exists('poConfirmedYN', $input)) {
+            if (($input['poConfirmedYN'] == 0 || $input['poConfirmedYN'] == 1) && !is_null($input['poConfirmedYN'])) {
+                $procumentOrders->where('poConfirmedYN', $input['poConfirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $procumentOrders->where('approved', $input['approved']);
             }
         }
 
@@ -1437,6 +1470,18 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
                 $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('supplierID', $input)) {
+            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                $procumentOrders->where('supplierID', $input['supplierID']);
+            }
+        }
+
+        if (array_key_exists('sentToSupplier', $input)) {
+            if (($input['sentToSupplier'] == 0 || $input['sentToSupplier'] == -1) && !is_null($input['sentToSupplier'])) {
+                $procumentOrders->where('sentToSupplier', $input['sentToSupplier']);
             }
         }
 
