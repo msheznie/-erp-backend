@@ -351,37 +351,34 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
 
 
-        $poQty = PurchaseOrderDetails::with(['order' => function ($query) use ($companySystemID) {
-            $query->where('companySystemID', $companySystemID)
-                ->where('approved', -1)
-                ->where('poCancelledYN', 0)
-                ->groupBy('erp_purchaseordermaster.poCancelledYN',
-                    'erp_purchaseordermaster.approved');
-             }])
-            ->where('itemCode', $input['itemCode'])
-            ->groupBy('erp_purchaseorderdetails.companySystemID',
-                'erp_purchaseorderdetails.itemCode',
-                'erp_purchaseorderdetails.itemPrimaryCode'
-            )
-            ->select(
-                [
-                    'erp_purchaseorderdetails.companySystemID',
-                    'erp_purchaseorderdetails.itemCode',
-                    'erp_purchaseorderdetails.itemPrimaryCode'
-                ]
-            )
-            ->sum('noQty');
+        $poQty = PurchaseOrderDetails::whereHas('order' ,function ($query) use ($companySystemID) {
+                                            $query->where('companySystemID', $companySystemID)
+                                                ->where('approved', -1)
+                                                ->where('poCancelledYN', 0);
+                                             })
+                                            ->where('itemCode', $input['itemCode'])
+                                            ->groupBy('erp_purchaseorderdetails.companySystemID',
+                                                'erp_purchaseorderdetails.itemCode'
+                                            )
+                                            ->select(
+                                                [
+                                                    'erp_purchaseorderdetails.companySystemID',
+                                                    'erp_purchaseorderdetails.itemCode',
+                                                    'erp_purchaseorderdetails.itemPrimaryCode'
+                                                ]
+                                            )
+                                            ->sum('noQty');
 
         $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
                                     ->where('companySystemID', $companySystemID)
                                     ->groupBy('itemSystemCode')
                                     ->sum('inOutQty');
 
-        $grvQty = GRVDetails::with(['master' => function ($query) use ($companySystemID) {
+        $grvQty = GRVDetails::whereHas('master' , function ($query) use ($companySystemID) {
             $query->where('companySystemID', $companySystemID)
                    ->where('grvTypeID', 2)
-                   ->groupBy('erp_grvmaster.companySystemID', 'erp_grvmaster.grvType');
-             }])
+                   ->groupBy('erp_grvmaster.companySystemID');
+             })
             ->where('itemCode', $input['itemCode'])
             ->groupBy('erp_grvdetails.itemCode')
             ->select(

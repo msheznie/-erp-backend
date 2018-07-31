@@ -138,10 +138,11 @@ class GRVMasterAPIController extends AppBaseController
         $input['documentID'] = 'GRV';
 
         $lastSerial = GRVMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('grvAutoID', 'desc')
             ->first();
 
-        $lastSerialNumber = 0;
+        $lastSerialNumber = 1;
         if ($lastSerial) {
             $lastSerialNumber = intval($lastSerial->grvSerialNo) + 1;
         }
@@ -589,7 +590,7 @@ class GRVMasterAPIController extends AppBaseController
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $grvMaster->whereMonth('grvDate+', '=', $input['month']);
+                $grvMaster->whereMonth('grvDate', '=', $input['month']);
             }
         }
 

@@ -172,6 +172,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $input['documentID'] = 'SR';
 
         $lastSerial = ItemReturnMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->orderBy('itemReturnAutoID', 'desc')
             ->first();
 
