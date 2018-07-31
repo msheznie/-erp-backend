@@ -38,7 +38,10 @@
  * -- Date: 25-june 2018 By: Nazir Description: Added new functions named as getPurchasePaymentStatusHistory(),
  * -- Date: 26-june 2018 By: Nazir Description: Added new functions named as getProcurementOrderReopen(),
  * -- Date: 18-july 2018 By: Nazir Description: Added new functions named as procumentOrderPRAttachment(),
- * -- Date: 23-July 2018 By: Nazir Description: Added new functions named as getProcurementOrderReferBack(),
+ * -- Date: 18-july 2018 By: Nazir Description: Added new functions named as updateSentSupplierDetail(),
+ * -- Date: 20-July 2018 By: Nazir Description: Added new functions named as getProcurementOrderReferBack(),
+ * -- Date: 30-July 2018 By: Nazir Description: Added new functions named as reportPoEmployeePerformance(),
+ * -- Date: 31-July 2018 By: Nazir Description: Added new functions named as exportPoEmployeePerformance(),
  */
 
 namespace App\Http\Controllers\API;
@@ -879,7 +882,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function getProcumentOrderByDocumentType(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -945,6 +948,18 @@ class ProcumentOrderAPIController extends AppBaseController
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
                 $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('supplierID', $input)) {
+            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                $procumentOrders->where('supplierID', $input['supplierID']);
+            }
+        }
+
+        if (array_key_exists('sentToSupplier', $input)) {
+            if (($input['sentToSupplier'] == 0 || $input['sentToSupplier'] == -1) && !is_null($input['sentToSupplier'])) {
+                $procumentOrders->where('sentToSupplier', $input['sentToSupplier']);
             }
         }
 
@@ -1392,7 +1407,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
     public function getProcumentOrderAllAmendments(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1413,6 +1428,24 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $procumentOrders->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('poCancelledYN', $input)) {
+            if (($input['poCancelledYN'] == 0 || $input['poCancelledYN'] == -1) && !is_null($input['poCancelledYN'])) {
+                $procumentOrders->where('poCancelledYN', $input['poCancelledYN']);
+            }
+        }
+
+        if (array_key_exists('poConfirmedYN', $input)) {
+            if (($input['poConfirmedYN'] == 0 || $input['poConfirmedYN'] == 1) && !is_null($input['poConfirmedYN'])) {
+                $procumentOrders->where('poConfirmedYN', $input['poConfirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $procumentOrders->where('approved', $input['approved']);
             }
         }
 
@@ -1437,6 +1470,18 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
                 $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('supplierID', $input)) {
+            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                $procumentOrders->where('supplierID', $input['supplierID']);
+            }
+        }
+
+        if (array_key_exists('sentToSupplier', $input)) {
+            if (($input['sentToSupplier'] == 0 || $input['sentToSupplier'] == -1) && !is_null($input['sentToSupplier'])) {
+                $procumentOrders->where('sentToSupplier', $input['sentToSupplier']);
             }
         }
 
@@ -3936,6 +3981,153 @@ FROM
         }
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Purchase Order Amend successfully');
+    }
+
+    public function reportPoEmployeePerformance(Request $request)
+    {
+        $validator = \Validator::make($request->all(), [
+            'companySystemID' => 'required',
+            'years' => 'required'
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('companySystemID'));
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $year = $request->years;
+
+        $output = \DB::select('select
+	poConfirmedByEmpID,
+	POConfirmedEmpName,
+	designation,
+	count(poConfirmedByEmpSystemID) as count,
+	sum(POValue) as TotalValue
+from
+(
+SELECT
+	erp_purchaseordermaster.purchaseOrderID,
+	erp_purchaseordermaster.companySystemID,
+	erp_purchaseordermaster.companyID,
+	erp_purchaseordermaster.purchaseOrderCode,
+	erp_purchaseordermaster.narration,
+	erp_purchaseordermaster.supplierPrimaryCode,
+	erp_purchaseordermaster.supplierName,
+	YEAR (erp_purchaseordermaster.approvedDate) AS YEAR,
+	erp_purchaseordermaster.poConfirmedByEmpSystemID,
+	erp_purchaseordermaster.poConfirmedByEmpID,
+	employees.empName as POConfirmedEmpName,
+	hrms_designation.designation,
+	sum((erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty)) AS POVALUE
+FROM
+	erp_purchaseordermaster
+	INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
+	INNER JOIN employees ON erp_purchaseordermaster.poConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN hrms_employeedetails ON employees.employeeSystemID = hrms_employeedetails.employeeSystemID
+	INNER JOIN hrms_designation ON hrms_designation.designationID = hrms_employeedetails.designationID
+WHERE
+	year(erp_purchaseordermaster.approvedDate) = "' . $year . '"
+	AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_purchaseordermaster.poConfirmedYN = 1
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	AND erp_purchaseordermaster.approved =-1
+	AND erp_purchaseordermaster.poType_N <> 6
+group by purchaseOrderID,companySystemID	) as pocountfnal
+	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY count DESC;');
+        //dd(DB::getQueryLog());
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+
+    }
+
+    public function exportPoEmployeePerformance(Request $request)
+    {
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('companySystemID'));
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $year = $request->years;
+        $type = $request->type;
+
+        $output = \DB::select('select
+	poConfirmedByEmpID,
+	POConfirmedEmpName,
+	designation,
+	count(poConfirmedByEmpSystemID) as count,
+	sum(POValue) as TotalValue
+from
+(
+SELECT
+	erp_purchaseordermaster.purchaseOrderID,
+	erp_purchaseordermaster.companySystemID,
+	erp_purchaseordermaster.companyID,
+	erp_purchaseordermaster.purchaseOrderCode,
+	erp_purchaseordermaster.narration,
+	erp_purchaseordermaster.supplierPrimaryCode,
+	erp_purchaseordermaster.supplierName,
+	YEAR (erp_purchaseordermaster.approvedDate) AS YEAR,
+	erp_purchaseordermaster.poConfirmedByEmpSystemID,
+	erp_purchaseordermaster.poConfirmedByEmpID,
+	employees.empName as POConfirmedEmpName,
+	hrms_designation.designation,
+	sum((erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty)) AS POVALUE
+FROM
+	erp_purchaseordermaster
+	INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
+	INNER JOIN employees ON erp_purchaseordermaster.poConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN hrms_employeedetails ON employees.employeeSystemID = hrms_employeedetails.employeeSystemID
+	INNER JOIN hrms_designation ON hrms_designation.designationID = hrms_employeedetails.designationID
+WHERE
+	year(erp_purchaseordermaster.approvedDate) = "' . $year . '"
+	AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
+	AND erp_purchaseordermaster.poConfirmedYN = 1
+	AND erp_purchaseordermaster.poCancelledYN = 0
+	AND erp_purchaseordermaster.approved =-1
+	AND erp_purchaseordermaster.poType_N <> 6
+group by purchaseOrderID,companySystemID	) as pocountfnal
+	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY count DESC;');
+
+        if ($output) {
+            $x = 0;
+            foreach ($output as $val) {
+                $data[$x]['Emp ID'] = $val->poConfirmedByEmpID;
+                $data[$x]['Employee Name'] = $val->POConfirmedEmpName;
+                $data[$x]['Designation'] = $val->designation;
+                $data[$x]['Year'] = $year;
+                $data[$x]['Count'] = $val->count;
+                $data[$x]['Total'] = $val->TotalValue;
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+        $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+
     }
 
 

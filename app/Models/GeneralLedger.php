@@ -348,6 +348,7 @@ class GeneralLedger extends Model
         'isAllocationJV',
         'createdDateTime',
         'createdUserID',
+        'createdUserSystemID',
         'createdUserPC',
         'timestamp'
     ];
@@ -406,6 +407,7 @@ class GeneralLedger extends Model
         'isAddon' => 'integer',
         'isAllocationJV' => 'integer',
         'createdUserID' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdUserPC' => 'string'
     ];
 

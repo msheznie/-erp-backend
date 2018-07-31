@@ -787,7 +787,7 @@ class Helper
                             // insert the record to item ledger
                             $job1 = \App\Jobs\ItemLedgerInsert::dispatch($masterData);
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12) {
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10) {
                                 $job2 = \App\Jobs\GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $job3 = \App\Jobs\UnbilledGRVInsert::dispatch($masterData);
