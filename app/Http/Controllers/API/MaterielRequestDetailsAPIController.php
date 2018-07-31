@@ -228,7 +228,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                                 ->groupBy('itemSystemCode')
                                 ->sum('inOutQty');
 
-        $grvQty = GRVDetails::whereHas('master' , function ($query) use ($companySystemID) {
+        $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID) {
                             $query->where('companySystemID', $companySystemID)
                                 ->where('grvTypeID', 2)
                                 ->groupBy('erp_grvmaster.companySystemID');
