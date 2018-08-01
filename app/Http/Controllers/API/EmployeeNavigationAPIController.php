@@ -64,12 +64,18 @@ class EmployeeNavigationAPIController extends AppBaseController
     public function store(CreateEmployeeNavigationAPIRequest $request)
     {
         $input = $request->all();
+        $employees = collect($input["employeeSystemID"])->pluck("employeeSystemID")->toArray();
 
-        $validate = EmployeeNavigation::where('companyID',$request->companyID)->where('employeeSystemID',$request->employeeSystemID)->exists();
+        $validate = EmployeeNavigation::where('companyID',$request->companyID)->whereIN('employeeSystemID',$employees)->exists();
         if($validate){
             return $this->sendError('Selected employee already exists in the selected user group');
         }else{
-            $employeeNavigations = $this->employeeNavigationRepository->create($input);
+            if($employees){
+                foreach ($employees as $val){
+                    $inputArr = ["companyID" => $input["companyID"],"userGroupID" => $input["userGroupID"], "employeeSystemID" => $val];
+                    $employeeNavigations = $this->employeeNavigationRepository->create($inputArr);
+                }
+            }
         }
 
         return $this->sendResponse($employeeNavigations->toArray(), 'Employee Navigation saved successfully');
