@@ -184,7 +184,7 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot me same', 500);
+            return $this->sendError('Location From and Location To  cannot be same', 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -388,7 +388,7 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot me same');
+            return $this->sendError('Location From and Location To  cannot be same');
         }
 
         if ($segment) {
