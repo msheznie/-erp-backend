@@ -194,7 +194,7 @@ class StockTransferAPIController extends AppBaseController
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot me same',500);
+            return $this->sendError('Location From and Location To  cannot be same',500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -398,7 +398,7 @@ class StockTransferAPIController extends AppBaseController
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot me same');
+            return $this->sendError('Location From and Location To  cannot be same');
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -900,8 +900,8 @@ class StockTransferAPIController extends AppBaseController
 
        $stockTransfers =  StockTransfer::where('companyToSystemID',$stockReceive->companyToSystemID)
                                         ->where('companyFromSystemID',$stockReceive->companyFromSystemID)
-                                        //->where('locationTo',$stockReceive->locationTo)
-                                        //->where('locationFrom',$stockReceive->locationFrom)
+                                        ->where('locationTo',$stockReceive->locationTo)
+                                        ->where('locationFrom',$stockReceive->locationFrom)
                                         ->where('approved',-1)
                                         ->where('fullyReceived',0)
                                         ->orderby('createdDateTime', 'desc')
