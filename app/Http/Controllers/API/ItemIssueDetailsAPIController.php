@@ -315,10 +315,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
                                             ->groupBy(
                                                 'erp_stocktransfer.stockTransferAutoID',
                                                 'erp_stocktransfer.companySystemID',
-                                                'erp_itemissuemaster.locationFrom',
+                                                'erp_stocktransfer.locationFrom',
                                                 'erp_stocktransfer.stockTransferCode',
                                                 'erp_stocktransfer.approved'
-                                            )->whereHas('details', function ($query) use ($companySystemID, $input) {
+                                            )
+                                            ->whereHas('details', function ($query) use ($companySystemID, $input) {
                                                 $query->where('itemCodeSystem', $input['itemCodeSystem']);
                                             })
                                             ->where('approved', 0)
