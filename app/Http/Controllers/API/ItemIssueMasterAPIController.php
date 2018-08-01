@@ -377,7 +377,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $documentDate = $input['issueDate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
-        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd)) {
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('Issue Date not between Financial period !', 500);
         }
