@@ -428,7 +428,7 @@ class StockTransferAPIController extends AppBaseController
             }
 
             $checkQuantity = StockTransferDetails::where('stockTransferAutoID', $id)
-                ->where('qty', '<', 1)
+                ->where('qty', '<=', 0)
                 ->count();
 
             if ($checkQuantity > 0) {
