@@ -254,8 +254,13 @@ class ItemLedgerInsert implements ShouldQueue
                         }
                         if($data){
                             Log::info($data);
+                            $items = collect($data)->pluck("itemSystemCode")->toArray();
                             $itemLedgerInsert = ErpItemLedger::insert($data);
-                            $itemassignInsert = \App\Jobs\ItemAssignInsert::dispatch($masterModel);
+                            if($items) {
+                                Log::info($items);
+                                $masterModel["items"] = $items;
+                                $itemassignInsert = \App\Jobs\ItemAssignInsert::dispatch($masterModel);
+                            }
                         }
 
                     }
