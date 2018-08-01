@@ -13,3 +13,7 @@ Route::resource('purchaseReturns', 'PurchaseReturnController');
 
 
 Route::resource('purchaseReturnDetails', 'PurchaseReturnDetailsController');
+
+Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredController');
+
+Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryController');

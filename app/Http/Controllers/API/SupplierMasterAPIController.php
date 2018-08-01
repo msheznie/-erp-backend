@@ -683,7 +683,7 @@ class SupplierMasterAPIController extends AppBaseController
             ->get();
 
 
-        return $this->sendResponse($suppliers->toArray(), 'Supplier Master deleted successfully');
+        return $this->sendResponse($suppliers->toArray(), 'Data retrieved successfully');
     }
 
     /**

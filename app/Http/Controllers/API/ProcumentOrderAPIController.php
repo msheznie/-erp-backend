@@ -160,10 +160,19 @@ class ProcumentOrderAPIController extends AppBaseController
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
         $input['departmentID'] = 'PROC';
 
-        $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
-            ->where('documentSystemID', $input['documentSystemID'])
-            ->orderBy('purchaseOrderID', 'desc')
-            ->first();
+        if ($input['documentSystemID'] == 5 && $input['poType_N'] == 5) {
+            $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
+                ->where('documentSystemID', $input['documentSystemID'])
+                ->where('poType_N', 5)
+                ->orderBy('purchaseOrderID', 'desc')
+                ->first();
+        } else {
+            $lastSerial = ProcumentOrder::where('companySystemID', $input['companySystemID'])
+                ->where('documentSystemID', $input['documentSystemID'])
+                ->orderBy('purchaseOrderID', 'desc')
+                ->first();
+        }
+
 
         $lastSerialNumber = 0;
         if ($lastSerial) {

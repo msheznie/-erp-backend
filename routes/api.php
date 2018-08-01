@@ -368,6 +368,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
     Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
     Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
+    Route::post('getPurchaseRequestReferBack', 'PurchaseRequestAPIController@getPurchaseRequestReferBack');
 
     Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
@@ -609,6 +610,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany');
     Route::get('getPurchaseReturnFormData', 'PurchaseReturnAPIController@getPurchaseReturnFormData');
     Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
+
+    Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
+    Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
+
+    Route::post('getPrMasterAmendHistory', 'PurchaseRequestReferredAPIController@getPrMasterAmendHistory');
     
 
 });
@@ -634,6 +640,8 @@ Route::get('runQueue', function () {
     $master  = ['documentSystemID' => 10,'autoID' => 2856,'companySystemID' => 26,'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
+
+
 
 
 
