@@ -49,10 +49,9 @@ if(round(sum(inOutQty),2)=0,0,round((sum((inOutQty*wacLocal))/round(sum(inOutQty
 if(round(sum(inOutQty),2)=0,0,round((sum((inOutQty*wacRpt))/round(sum(inOutQty),2)),9)) as wacCostRpt,
 round(sum(inOutQty),2) * if(round(sum(inOutQty),2)=0,0,round((sum((inOutQty*wacLocal))/round(sum(inOutQty),2)),9)) as TotalwacCostLocal,
 round(sum(inOutQty),2) * if(round(sum(inOutQty),2)=0,0,round((sum((inOutQty*wacRpt))/round(sum(inOutQty),2)),9)) as TotalwacCostRpt')
-                    ->where('documentSystemID', $masterModel['documentSystemID'])
                     ->where('companySystemID', $masterModel['companySystemID'])
-                    ->where('documentSystemCode', $masterModel['autoID'])
                     ->where('fromDamagedTransactionYN', 0)
+                    ->whereIN('itemSystemCode', $masterModel['items'])
                     ->groupBy('companySystemID','itemSystemCode')->get();
                 Log::info($itemLedgerRec);
                 if ($itemLedgerRec) {
