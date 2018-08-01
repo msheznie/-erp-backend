@@ -641,3 +641,6 @@ Route::get('runQueue', function () {
 
 
 
+
+
+Route::resource('contracts', 'ContractAPIController');

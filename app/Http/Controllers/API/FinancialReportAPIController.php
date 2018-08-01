@@ -17,8 +17,11 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
+use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinanceYear;
+use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -45,9 +48,17 @@ class FinancialReportAPIController extends AppBaseController
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
         }
         $companyFinanceYear = $companyFinanceYear->orderBy('bigginingDate', 'DESC')->get();
+        $departments = \Helper::getCompanyServiceline($selectedCompanyId);
 
+        $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID',$companiesByGroup)->get(['chartOfAccountSystemID',
+                                                                                              'AccountCode','AccountDescription','catogaryBLorPL']);
+
+        $contracts = Contract::whereIN('companySystemID',$companiesByGroup)->get(['contractUID','ContractNumber','contractDescription']);
         $output = array(
-            'companyFinanceYear' => $companyFinanceYear
+            'companyFinanceYear' => $companyFinanceYear,
+            'departments' => $departments,
+            'controlAccount' => $controlAccount,
+            'contracts' => $contracts
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -63,6 +74,46 @@ class FinancialReportAPIController extends AppBaseController
                     'fromDate' => 'required',
                     'toDate' => 'required|date|after_or_equal:fromDate',
                     'companyFinanceYearID' => 'required'
+                ]);
+
+                $companyFinanceYearID = $request->companyFinanceYearID;
+
+                $companyFinanceYear = CompanyFinanceYear::where("companyFinanceYearID", $companyFinanceYearID)->first();
+
+
+                if (empty($companyFinanceYear)) {
+                    return $this->sendError('Finance Year Not Found');
+                }
+
+                $bigginingDate = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
+                $endingDate = (new Carbon($companyFinanceYear->endingDate))->format('Y-m-d');
+
+                $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
+                $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+
+
+                if (!($fromDate >= $bigginingDate) || !($fromDate <= $endingDate)) {
+                    return $this->sendError('From Date not between Financial year !', 500);
+                } else if (!($toDate >= $bigginingDate) || !($toDate <= $endingDate)) {
+                    return $this->sendError('To Date not between Financial year !', 500);
+                } else if ($fromDate > $toDate) {
+                    return $this->sendError('The To date must be greater than the From date !', 500);
+                }
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+
+            case 'FGL':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'companyFinanceYearID' => 'required',
+                    'glCodes' => 'required',
+                    'departments' => 'required',
+                    'contracts' => 'required'
                 ]);
 
                 $companyFinanceYearID = $request->companyFinanceYearID;
@@ -183,6 +234,51 @@ class FinancialReportAPIController extends AppBaseController
                 $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
                 $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
                 $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
+                return array('reportData' => $output,
+                    'companyName' => $checkIsGroup->CompanyName,
+                    'isGroup' => $checkIsGroup->isGroup,
+                    'total' => $total,
+                    'decimalPlaceLocal' => $decimalPlaceLocal,
+                    'decimalPlaceRpt' => $decimalPlaceRpt,
+                    'currencyLocal' => $requestCurrencyLocal->CurrencyCode,
+                    'currencyRpt' => $requestCurrencyRpt->CurrencyCode,
+                );
+                break;
+            case 'FGL': // General Ledger
+
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getGeneralLedger($request);
+
+                $currencyIdLocal = 1;
+                $currencyIdRpt = 2;
+
+                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+
+                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
+
+
+                if (!empty($decimalPlaceUniqueLocal)) {
+                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+                }
+
+                if (!empty($decimalPlaceUniqueRpt)) {
+                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
+                }
+
+                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
+                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
+
+                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
+                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
+                $total = array();
+                $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('documentLocalAmountDebit')->toArray());
+                $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('documentLocalAmountCredit')->toArray());
+                $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('documentRptAmountDebit')->toArray());
+                $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('documentRptAmountCredit')->toArray());
                 return array('reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
@@ -769,5 +865,130 @@ class FinancialReportAPIController extends AppBaseController
 
     }
 
+
+    public function getGeneralLedger($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        //$fromDate = $asOfDate->addDays(1);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        //$toDate = $toDate->addDays(1);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        //DB::enableQueryLog();
+
+        $isCompanyWise = '';
+        $isCompanyWiseGL = '';
+        $isCompanyWiseGLGroupBy = '';
+
+        if ($request->reportSD == 'company_wise' ) {
+            $isCompanyWise = 'companySystemID,';
+            $isCompanyWiseGL = 'erp_generalledger.companySystemID,';
+        }
+
+        $query = 'SELECT * 
+                    FROM
+                        (
+                    SELECT
+                        * 
+                    FROM
+                        (
+                    SELECT
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        erp_generalledger.serviceLineSystemID,
+                        erp_generalledger.serviceLineCode,
+                        erp_generalledger.documentSystemID,
+                        erp_generalledger.documentID,
+                        erp_generalledger.documentSystemCode,
+                        erp_generalledger.documentCode,
+                        erp_generalledger.documentDate,
+                        erp_generalledger.chartOfAccountSystemID,
+                        erp_generalledger.glCode,
+                        erp_generalledger.glAccountType,
+                        erp_generalledger.documentNarration,
+                        erp_generalledger.clientContractID,
+                        erp_generalledger.supplierCodeSystem,
+                        erp_generalledger.documentLocalCurrencyID,
+                    IF
+                        ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
+                    IF
+                        ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) AS localCredit,
+                        erp_generalledger.documentRptCurrencyID,
+                    IF
+                        ( documentRptAmount > 0, documentRptAmount, 0 ) AS rptDebit,
+                    IF
+                        ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
+                    IF
+                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                    WHERE
+                        erp_generalledger.companySystemID = 7 
+                        AND (
+                        STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) BETWEEN STR_TO_DATE( \'01/01/2018\', "%d/%m/%Y" ) 
+                        AND STR_TO_DATE( \'31/05/2018\', "%d/%m/%Y" ) 
+                        ) 
+                        ) AS erp_qry_GL UNION ALL
+                    SELECT
+                        * 
+                    FROM
+                        (
+                    SELECT
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        erp_generalledger.serviceLineSystemID,
+                        erp_generalledger.serviceLineCode,
+                        "" AS documentSystemID,
+                        "" AS documentID,
+                        "" AS documentSystemCode,
+                        "" AS documentCode,
+                        "" AS documentDate,
+                        erp_generalledger.chartOfAccountSystemID,
+                        erp_generalledger.glCode,
+                        "BS" AS glAccountType,
+                        "Opening Balance" AS documentNarration,
+                        "" AS clientContractID,
+                        "" AS supplierCodeSystem,
+                        erp_generalledger.documentLocalCurrencyID,
+                        sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
+                        sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
+                        erp_generalledger.documentRptCurrencyID,
+                        sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ) AS rptDebit,
+                        sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) AS rptCredit,
+                        "" AS isCustomer 
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                    WHERE
+                        erp_generalledger.companySystemID = 7 
+                        AND erp_generalledger.glAccountType = "BS" 
+                        AND ( STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) < STR_TO_DATE( \'01/01/2018\', "%d/%m/%Y" ) ) 
+                    GROUP BY
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.serviceLineSystemID,
+                        erp_generalledger.chartOfAccountSystemID 
+                        ) AS erp_qry_gl_bf 
+                        ) AS GL_final 
+                    ORDER BY
+                        documentDate';
+
+        $output = \DB::select($query);
+        //dd(DB::getQueryLog());
+        return $output;
+
+    }
 
 }

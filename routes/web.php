@@ -13,3 +13,5 @@ Route::resource('purchaseReturns', 'PurchaseReturnController');
 
 
 Route::resource('purchaseReturnDetails', 'PurchaseReturnDetailsController');
+
+Route::resource('contracts', 'ContractController');
