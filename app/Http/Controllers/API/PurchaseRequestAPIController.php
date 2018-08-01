@@ -25,6 +25,7 @@
  * -- Date: 06-June 2018 By: Mubashir Description: Modified getPurchaseRequestByDocumentType() to handle filters from local storage
  * -- Date: 11-June 2018 By: Fayas Description: Added new functions named as getReportOpenRequest(),exportReportOpenRequest()
  * -- Date: 31-July 2018 By: Nazir Description: Added new functions named as getPurchaseRequestReopen()
+ * -- Date: 01-August 2018 By: Nazir Description: Added new functions named as getPurchaseRequestReferBack()
  */
 namespace App\Http\Controllers\API;
 
@@ -37,16 +38,19 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\Months;
+use App\Models\PrDetailsReferedHistory;
 use App\Models\Priority;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
 use App\Models\ProcumentOrder;
+use App\Models\PurchaseRequestReferred;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -1970,6 +1974,74 @@ class PurchaseRequestAPIController extends AppBaseController
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request reopened successfully');
     }
+
+    public function getPurchaseRequestReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseRequestId = $input['purchaseRequestId'];
+
+        $purchaseRequest = PurchaseRequest::find($purchaseRequestId);
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($purchaseRequest->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this request');
+        }
+
+        $purchaseRequestArray = $purchaseRequest->toArray();
+
+        $storePORequestHistory = PurchaseRequestReferred::insert($purchaseRequestArray);
+
+        $fetchPurchaseRequestDetails = PurchaseRequestDetails::where('purchaseRequestID', $purchaseRequestId)
+            ->get();
+
+        if (!empty($fetchPurchaseRequestDetails)) {
+            foreach ($fetchPurchaseRequestDetails as $prDetail) {
+                $prDetail['timesReferred'] = $purchaseRequest->timesReferred;
+            }
+        }
+
+        $purchaseRequestDetailArray = $fetchPurchaseRequestDetails->toArray();
+
+        $storePRDetailHistory = PrDetailsReferedHistory::insert($purchaseRequestDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $purchaseRequestId)
+            ->where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $purchaseRequest->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseRequestId)
+            ->where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $purchaseRequest->refferedBackYN = 0;
+            $purchaseRequest->PRConfirmedYN = 0;
+            $purchaseRequest->PRConfirmedBySystemID = null;
+            $purchaseRequest->PRConfirmedBy = null;
+            $purchaseRequest->PRConfirmedByEmpName = null;
+            $purchaseRequest->PRConfirmedDate = null;
+            $purchaseRequest->RollLevForApp_curr = 1;
+            $purchaseRequest->save();
+        }
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request Amend successfully');
+    }
+
+
 
 
 }
