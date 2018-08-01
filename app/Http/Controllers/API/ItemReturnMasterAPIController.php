@@ -176,7 +176,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             ->orderBy('itemReturnAutoID', 'desc')
             ->first();
 
-        $lastSerialNumber = 0;
+        $lastSerialNumber = 1;
         if ($lastSerial) {
             $lastSerialNumber = intval($lastSerial->serialNo) + 1;
         }
