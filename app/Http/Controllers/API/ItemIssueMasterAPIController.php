@@ -377,7 +377,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $documentDate = $input['issueDate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
-        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd)) {
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('Issue Date not between Financial period !', 500);
         }
@@ -949,9 +949,9 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
             //->where("selectedForIssue", 0);
-            ->where("approved", -1);
-
-        $materielRequests = $materielRequests->select(['RequestID', 'RequestCode']);
+            ->where("approved", -1)
+            ->where("serviceLineSystemID",$request['serviceLineSystemID'])
+            ->where("location", $request['wareHouseFrom']);
 
         $search = $input['search'];
 
@@ -963,7 +963,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             });
         }
 
-        $materielRequests = $materielRequests->get();
+        $materielRequests = $materielRequests->get(['RequestID', 'RequestCode']);
         return $this->sendResponse($materielRequests->toArray(), 'Materiel Issue updated successfully');
     }
 

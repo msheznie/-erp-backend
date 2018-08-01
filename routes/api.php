@@ -497,6 +497,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
     Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
     Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation');
+    Route::post('exportStockLedgerReport', 'ErpItemLedgerAPIController@exportStockLedgerReport');
     Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport');
 
     Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
@@ -615,6 +616,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
 
     Route::post('getPrMasterAmendHistory', 'PurchaseRequestReferredAPIController@getPrMasterAmendHistory');
+
+    Route::resource('contracts', 'ContractAPIController');
     
 
 });
@@ -637,15 +640,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master  = ['documentSystemID' => 10,'autoID' => 2856,'companySystemID' => 26,'employeeSystemID' => 2664];
-    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    $master  = ['documentSystemID' => 8,'autoID' => 43334,'companySystemID' => 11,'employeeSystemID' => 2664];
+    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
 });
-
-
-
-
-
-
-
-
 

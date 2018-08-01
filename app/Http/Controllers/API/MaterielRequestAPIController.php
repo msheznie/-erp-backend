@@ -404,7 +404,6 @@ class MaterielRequestAPIController extends AppBaseController
 
         $lastSerial = MaterielRequest::where('companySystemID', $input['companySystemID'])
                                         ->where('documentSystemID', $input['documentSystemID'])
-                                        ->where('companyFinanceYearID', $input['companyFinanceYearID'])
                                         ->orderBy('RequestID', 'desc')
                                         ->first();
 

@@ -160,7 +160,7 @@ class StockReceiveAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Receive Date not between Financial period !');
+            return $this->sendError('Receive Date not between Financial period !',500);
         }
 
         $lastSerial = StockReceive::where('companySystemID', $input['companySystemID'])
@@ -184,7 +184,7 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot me same', 500);
+            return $this->sendError('Location From and Location To  cannot be same', 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -388,7 +388,7 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot me same');
+            return $this->sendError('Location From and Location To  cannot be same');
         }
 
         if ($segment) {

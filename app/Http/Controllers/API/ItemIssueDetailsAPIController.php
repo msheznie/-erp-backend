@@ -144,7 +144,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         if (isset($input['issueType'])) {
             if ($input['issueType'] == 1) {
-                 $item = ItemAssigned::where('idItemAssigned', $input['itemCode'])
+                $item = ItemAssigned::where('idItemAssigned', $input['itemCode'])
                     ->where('companySystemID', $companySystemID)
                     ->first();
             } else if ($input['issueType'] == 2) {
@@ -267,7 +267,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         }
 
-        if($input['issueCostLocal'] <= 0 || $input['issueCostRpt'] <= 0){
+        if ($input['issueCostLocal'] <= 0 || $input['issueCostRpt'] <= 0) {
             return $this->sendError("Cost is not updated", 500);
         }
         // check policy 18
@@ -277,52 +277,53 @@ class ItemIssueDetailsAPIController extends AppBaseController
             ->first();
 
         $checkWhether = ItemIssueMaster::where('itemIssueAutoID', '!=', $itemIssueMaster->itemIssueAutoID)
-                                        ->where('companySystemID', $companySystemID)
-                                        ->where('wareHouseFromCode', $itemIssueMaster->wareHouseFromCode)
-                                        ->select([
-                                            'erp_itemissuemaster.itemIssueAutoID',
-                                            'erp_itemissuemaster.companySystemID',
-                                            'erp_itemissuemaster.wareHouseFromCode',
-                                            'erp_itemissuemaster.itemIssueCode',
-                                            'erp_itemissuemaster.approved'
-                                        ])
-                                        ->groupBy(
-                                            'erp_itemissuemaster.itemIssueAutoID',
-                                            'erp_itemissuemaster.companySystemID',
-                                            'erp_itemissuemaster.wareHouseFromCode',
-                                            'erp_itemissuemaster.itemIssueCode',
-                                            'erp_itemissuemaster.approved'
-                                        )->whereHas('details', function ($query) use ($companySystemID, $input) {
-                                            $query->where('itemCodeSystem', $input['itemCodeSystem']);
-                                        })
-                                        ->where('approved', 0)
-                                        ->first();
-            /* approved=0*/
+            ->where('companySystemID', $companySystemID)
+            ->where('wareHouseFrom', $itemIssueMaster->wareHouseFrom)
+            ->select([
+                'erp_itemissuemaster.itemIssueAutoID',
+                'erp_itemissuemaster.companySystemID',
+                'erp_itemissuemaster.wareHouseFromCode',
+                'erp_itemissuemaster.itemIssueCode',
+                'erp_itemissuemaster.approved'
+            ])
+            ->groupBy(
+                'erp_itemissuemaster.itemIssueAutoID',
+                'erp_itemissuemaster.companySystemID',
+                'erp_itemissuemaster.wareHouseFromCode',
+                'erp_itemissuemaster.itemIssueCode',
+                'erp_itemissuemaster.approved'
+            )->whereHas('details', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+            })
+            ->where('approved', 0)
+            ->first();
+        /* approved=0*/
 
         if (!empty($checkWhether)) {
             return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
-       $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
-                                            ->where('locationFrom', $itemIssueMaster->wareHouseFromCode)
-                                            ->select([
-                                                'erp_stocktransfer.stockTransferAutoID',
-                                                'erp_stocktransfer.companySystemID',
-                                                'erp_stocktransfer.locationFrom',
-                                                'erp_stocktransfer.stockTransferCode',
-                                                'erp_stocktransfer.approved'
-                                            ])
-                                            ->groupBy(
-                                                'erp_stocktransfer.stockTransferAutoID',
-                                                'erp_stocktransfer.companySystemID',
-                                                'erp_itemissuemaster.locationFrom',
-                                                'erp_stocktransfer.stockTransferCode',
-                                                'erp_stocktransfer.approved'
-                                            )->whereHas('details', function ($query) use ($companySystemID, $input) {
-                                                $query->where('itemCodeSystem', $input['itemCodeSystem']);
-                                            })
-                                            ->where('approved', 0)
-                                            ->first();
+        $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
+            ->where('locationFrom', $itemIssueMaster->wareHouseFrom)
+            ->select([
+                'erp_stocktransfer.stockTransferAutoID',
+                'erp_stocktransfer.companySystemID',
+                'erp_stocktransfer.locationFrom',
+                'erp_stocktransfer.stockTransferCode',
+                'erp_stocktransfer.approved'
+            ])
+            ->groupBy(
+                'erp_stocktransfer.stockTransferAutoID',
+                'erp_stocktransfer.companySystemID',
+                'erp_stocktransfer.locationFrom',
+                'erp_stocktransfer.stockTransferCode',
+                'erp_stocktransfer.approved'
+            )
+            ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+            })
+            ->where('approved', 0)
+            ->first();
         /* approved=0*/
 
         if (!empty($checkWhetherStockTransfer)) {
@@ -331,21 +332,21 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
 
         $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
-                                        ->where('companySystemID', $companySystemID)
-                                        ->groupBy('itemSystemCode')
-                                        ->sum('inOutQty');
+            ->where('companySystemID', $companySystemID)
+            ->groupBy('itemSystemCode')
+            ->sum('inOutQty');
 
         $currentWareHouseStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
-                                                    ->where('companySystemID', $companySystemID)
-                                                    ->where('wareHouseSystemCode', $itemIssue->wareHouseFrom)
-                                                    ->groupBy('itemSystemCode')
-                                                    ->sum('inOutQty');
+            ->where('companySystemID', $companySystemID)
+            ->where('wareHouseSystemCode', $itemIssue->wareHouseFrom)
+            ->groupBy('itemSystemCode')
+            ->sum('inOutQty');
 
         $currentStockQtyInDamageReturn = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
-                                                        ->where('companySystemID', $companySystemID)
-                                                        ->where('fromDamagedTransactionYN', 1)
-                                                        ->groupBy('itemSystemCode')
-                                                        ->sum('inOutQty');
+            ->where('companySystemID', $companySystemID)
+            ->where('fromDamagedTransactionYN', 1)
+            ->groupBy('itemSystemCode')
+            ->sum('inOutQty');
 
 
         $input['currentStockQty'] = $currentStockQty;
@@ -408,7 +409,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
                         if ($checkMRD == 0) {
                             $materielRequest->selectedForIssue = -1;
-                        }else{
+                        } else {
                             $materielRequest->selectedForIssue = 0;
                         }
                         $materielRequest->save();
@@ -564,9 +565,9 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
-        $input['issueCostRptTotal']   = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
+        $input['issueCostRptTotal'] = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
 
-        if($input['issueCostLocal'] <= 0 || $input['issueCostRpt'] <= 0){
+        if ($input['issueCostLocal'] <= 0 || $input['issueCostRpt'] <= 0) {
             return $this->sendError("Cost is not updated", 500);
         }
 
@@ -601,7 +602,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
                         if ($checkMRD == 0) {
                             $materielRequest->selectedForIssue = -1;
-                        }else{
+                        } else {
                             $materielRequest->selectedForIssue = 0;
                         }
                         $materielRequest->save();
@@ -610,7 +611,21 @@ class ItemIssueDetailsAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($itemIssueDetails->toArray(), 'ItemIssueDetails updated successfully');
+        $message = "Item updated successfully";
+        $itemIssueDetails->warningMsg = 0;
+
+        if (($itemIssueDetails->currentStockQty - $itemIssueDetails->qtyIssuedDefaultMeasure) < $itemIssueDetails->minQty) {
+             $minQtyPolicy = CompanyPolicyMaster::where('companySystemID', $itemIssue->companySystemID)
+                ->where('companyPolicyCategoryID', 6)
+                ->first();
+            if (!empty($minQtyPolicy)) {
+                if ($minQtyPolicy->isYesNO == 1) {
+                    $itemIssueDetails->warningMsg = 1;
+                    $message = 'Quantity is falling below the minimum inventory level.';
+                }
+            }
+        }
+        return $this->sendResponse($itemIssueDetails->toArray(), $message);
     }
 
     /**
@@ -670,8 +685,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             if ($itemIssue->reqDocID > 0) {
                 $detailExistMRDetail = MaterielRequestDetails::where('itemCode', $itemIssueDetails->itemCodeSystem)
-                                        ->where('RequestID', $itemIssue->reqDocID)
-                                        ->first();
+                    ->where('RequestID', $itemIssue->reqDocID)
+                    ->first();
 
                 if (!empty($detailExistMRDetail)) {
 
@@ -742,7 +757,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             if ($input['issueType'] == 1) {
                 $items = ItemAssigned::where('companySystemID', $companyId)
                     ->where('financeCategoryMaster', 1)
-                    ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned','secondaryItemCode']);
+                    ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode']);
 
                 if (array_key_exists('search', $input)) {
                     $search = $input['search'];

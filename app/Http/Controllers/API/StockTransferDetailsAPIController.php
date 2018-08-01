@@ -13,6 +13,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateStockTransferDetailsAPIRequest;
 use App\Http\Requests\API\UpdateStockTransferDetailsAPIRequest;
+use App\Models\CompanyPolicyMaster;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
@@ -163,7 +164,7 @@ class StockTransferDetailsAPIController extends AppBaseController
 
 
         $checkWhetherItemIssuePending = ItemIssueMaster::where('companySystemID', $companySystemID)
-            ->where('wareHouseFromCode', $stockTransferMaster->locationFrom)
+            ->where('wareHouseFrom', $stockTransferMaster->locationFrom)
             ->select([
                 'erp_itemissuemaster.itemIssueAutoID',
                 'erp_itemissuemaster.companySystemID',
@@ -188,7 +189,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             return $this->sendError("There is a Materiel Issue (" . $checkWhetherItemIssuePending->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
-        $checkWhetherStockTransfer = StockTransfer::where('stockTransferAutoID','!=' ,$stockTransferMaster->stockTransferAutoID)
+        $checkWhetherStockTransfer = StockTransfer::where('stockTransferAutoID', '!=', $stockTransferMaster->stockTransferAutoID)
             ->where('companySystemID', $companySystemID)
             ->where('locationFrom', $stockTransferMaster->locationFrom)
             ->select([
@@ -226,7 +227,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
 
 
-        if($input['unitCostLocal'] <= 0 || $input['unitCostRpt'] <= 0){
+        if ($input['unitCostLocal'] <= 0 || $input['unitCostRpt'] <= 0) {
             return $this->sendError("Cost is not updated", 500);
         }
 
@@ -262,7 +263,6 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
         $stockTransferDetails = $this->stockTransferDetailsRepository->create($input);
-
         return $this->sendResponse($stockTransferDetails->toArray(), 'Stock Transfer Details saved successfully');
     }
 
@@ -379,8 +379,12 @@ class StockTransferDetailsAPIController extends AppBaseController
             return $this->sendError('Stock Transfer Details not found');
         }
 
+        $stockTransfer = StockTransfer::where("stockTransferAutoID", $stockTransferDetails->stockTransferAutoID)->first();
+        if (empty($stockTransfer)) {
+            return $this->sendError('Stock Transfer not found');
+        }
 
-        if ($input['qty'] > $stockTransferDetails->currentStockQty || $input['qty'] > $stockTransferDetails->warehouseStockQty ) {
+        if ($input['qty'] > $stockTransferDetails->currentStockQty || $input['qty'] > $stockTransferDetails->warehouseStockQty) {
             return $this->sendError('Qty should not be greater than current stock balance or warehouse stock balance.');
         }
 
@@ -389,7 +393,28 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         $stockTransferDetails = $this->stockTransferDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($stockTransferDetails->toArray(), 'Stock Transfer Details updated successfully');
+
+        $message = "Item updated successfully";
+        $stockTransferDetails->warningMsg = 0;
+
+        $item = ItemAssigned::where('itemCodeSystem', $stockTransferDetails->itemCodeSystem)
+                                                    ->where('companySystemID', $stockTransfer->companySystemID)
+                                                    ->first();
+
+        if (!empty($item)) {
+            if (($stockTransferDetails->currentStockQty - $stockTransferDetails->qty) < $item->minimumQty) {
+                $minQtyPolicy = CompanyPolicyMaster::where('companySystemID', $stockTransfer->companySystemID)
+                    ->where('companyPolicyCategoryID', 6)
+                    ->first();
+                if (!empty($minQtyPolicy)) {
+                    if ($minQtyPolicy->isYesNO == 1) {
+                        $stockTransferDetails->warningMsg = 1;
+                        $message = 'Quantity is falling below the minimum inventory level.';
+                    }
+                }
+            }
+        }
+        return $this->sendResponse($stockTransferDetails->toArray(), $message);
     }
 
     /**
