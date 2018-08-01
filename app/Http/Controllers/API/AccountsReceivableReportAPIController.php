@@ -3640,6 +3640,8 @@ WHERE
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
         $serviceLineSystemID = collect($servicelines)->pluck('serviceLineSystemID')->toArray();
 
+        array_push($serviceLineSystemID, 24);
+
         $currency = $request->currencyID;
 
         if ($currency == 2) {

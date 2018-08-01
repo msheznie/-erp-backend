@@ -368,6 +368,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
     Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
     Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
+    Route::post('getPurchaseRequestReferBack', 'PurchaseRequestAPIController@getPurchaseRequestReferBack');
 
     Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
@@ -610,6 +611,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany');
     Route::get('getPurchaseReturnFormData', 'PurchaseReturnAPIController@getPurchaseReturnFormData');
     Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
+
+    Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
+    Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
+
+    Route::post('getPrMasterAmendHistory', 'PurchaseRequestReferredAPIController@getPrMasterAmendHistory');
+
+    Route::resource('contracts', 'ContractAPIController');
     
 
 });
@@ -636,12 +644,3 @@ Route::get('runQueue', function () {
     $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
 });
 
-
-
-
-
-
-
-
-
-Route::resource('contracts', 'ContractAPIController');
