@@ -452,6 +452,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
                 $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                 $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
                 $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                $item['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
                 $item['localCurrencyID'] = $new['localCurrencyID'];
                 $item['unitCostLocal'] = $new['unitCostLocal'];
                 $item['reportingCurrencyID'] = $new['reportingCurrencyID'];

@@ -942,7 +942,7 @@ class FinancialReportAPIController extends AppBaseController
         $contracts = (array)$request->contracts;
         $contractsId = array_filter(collect($contracts)->pluck('contractUID')->toArray());
 
-        //array_push($contractsId, 24);
+        array_push($contractsId, 159);
         //contracts
 
         //DB::enableQueryLog();
