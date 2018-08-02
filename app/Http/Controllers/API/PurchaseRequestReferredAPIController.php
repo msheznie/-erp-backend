@@ -166,7 +166,7 @@ class PurchaseRequestReferredAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PurchaseRequestReferred $purchaseRequestReferred */
-        $purchaseRequestReferred = $this->purchaseRequestReferredRepository->findWithoutFail($id);
+        $purchaseRequestReferred = $this->purchaseRequestReferredRepository->with(['created_by', 'confirmed_by', 'segment'])->findWithoutFail($id);
 
         if (empty($purchaseRequestReferred)) {
             return $this->sendError('Purchase Request Referred not found');

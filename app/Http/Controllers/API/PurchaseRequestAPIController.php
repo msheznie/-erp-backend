@@ -1999,7 +1999,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if (!empty($fetchPurchaseRequestDetails)) {
             foreach ($fetchPurchaseRequestDetails as $prDetail) {
-                $prDetail['timesReferred'] = $purchaseRequest->timesReferred;
+                $prDetail['timesReffered'] = $purchaseRequest->timesReferred;
             }
         }
 
