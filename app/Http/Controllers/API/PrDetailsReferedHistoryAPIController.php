@@ -278,4 +278,19 @@ class PrDetailsReferedHistoryAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Pr Details Refered History deleted successfully');
     }
+
+    public function getPrItemsForAmendHistory(Request $request)
+    {
+        $input = $request->all();
+        $prID = $input['purchaseRequestID'];
+        $timesReffered = $input['timesReffered'];
+
+        $items = PrDetailsReferedHistory::where('purchaseRequestID', $prID)
+            ->where('timesReffered', $timesReffered)
+            ->with(['uom' => function ($query) {
+            }])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Pr Details Reffered History retrieved successfully');
+    }
 }
