@@ -262,7 +262,6 @@ class ItemLedgerInsert implements ShouldQueue
                                 $itemassignInsert = \App\Jobs\ItemAssignInsert::dispatch($masterModel);
                             }
                         }
-
                     }
                     DB::commit();
                     Log::info('Item successfully added to item ledger' . date('H:i:s'));
