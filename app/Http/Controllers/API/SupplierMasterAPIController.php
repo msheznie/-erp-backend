@@ -397,7 +397,7 @@ class SupplierMasterAPIController extends AppBaseController
      */
     public function store(CreateSupplierMasterAPIRequest $request)
     {
-        $input = $request->all();
+        $input = $this->convertArrayToValue($request->all());
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
@@ -430,6 +430,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
+
 
         $supplierMasters = $this->supplierMasterRepository->create($input);
 
