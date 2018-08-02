@@ -1308,6 +1308,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'erp_purchaseordermaster.createdDateTime',
             'erp_purchaseordermaster.poConfirmedDate',
             'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
+            'erp_purchaseordermaster.poType_N',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
