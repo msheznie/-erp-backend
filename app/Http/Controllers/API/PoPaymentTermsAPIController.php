@@ -155,12 +155,6 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        if (isset($input['comDate'])) {
-            if ($input['comDate']) {
-                // $input['comDate'] = new Carbon($input['comDate']);
-            }
-        }
-
         $purchaseOrderID = $input['poID'];
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
@@ -174,16 +168,25 @@ class PoPaymentTermsAPIController extends AppBaseController
         if ($supplier) {
             $input['inDays'] = $supplier->creditPeriod;
         }*/
-
         $daysin =  $input['inDays'];
-        if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin != 0) {
-            $addedDate = strtotime("+$daysin day", strtotime($purchaseOrder->expectedDeliveryDate));
-            $input['comDate'] = date("Y-m-d", $addedDate);
+        if($purchaseOrder->documentSystemID == 5 && $purchaseOrder->poType_N == 5){
+            if (isset($input['comDate'])) {
+                if ($input['comDate']) {
+                    $input['comDate'] = new Carbon($input['comDate']);
+                }
+            }
+        }else{
+            if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin != 0) {
+                $addedDate = strtotime("+$daysin day", strtotime($purchaseOrder->expectedDeliveryDate));
+                $input['comDate'] = date("Y-m-d", $addedDate);
+            }
+
+            if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin == 0) {
+                $input['comDate'] = $purchaseOrder->expectedDeliveryDate;
+            }
         }
 
-        if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin == 0) {
-            $input['comDate'] = $purchaseOrder->expectedDeliveryDate;
-        }
+
 
         /** @var PoPaymentTerms $poPaymentTerms */
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
@@ -236,8 +239,7 @@ class PoPaymentTermsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $poAdvancePaymentType = PoPaymentTerms::select(DB::raw('*, DATE_FORMAT(comDate, "%d/%m/%Y") as comDate'))
-            ->where('poID', $input['purchaseOrderID'])
+        $poAdvancePaymentType = PoPaymentTerms::where('poID', $input['purchaseOrderID'])
             ->orderBy('paymentTermID', 'ASC')
             ->get();
 
