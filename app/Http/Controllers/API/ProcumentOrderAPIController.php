@@ -489,7 +489,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $procumentOrderUpdate->poTotalComRptCurrency = round($currencyConversionMaster['reportingAmount'], 8);
         $procumentOrderUpdate->poTotalLocalCurrency = round($currencyConversionMaster['localAmount'], 8);
-        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = $poMasterSumDeducted;
+        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = round($poMasterSumDeducted, 8);
         $procumentOrderUpdate->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $procumentOrderUpdate->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
@@ -3346,7 +3346,7 @@ WHERE
         $purchaseOrder->poTotalComRptCurrency = round($currencyConversionMaster['reportingAmount'], 8);
         $purchaseOrder->poTotalLocalCurrency = round($currencyConversionMaster['localAmount'], 8);
         $purchaseOrder->poTotalSupplierDefaultCurrency = round($currencyConversionMasterDefault['documentAmount'], 8);
-        $purchaseOrder->poTotalSupplierTransactionCurrency = $poMasterSumDeducted;
+        $purchaseOrder->poTotalSupplierTransactionCurrency = round($poMasterSumDeducted, 8);
         $purchaseOrder->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $purchaseOrder->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
