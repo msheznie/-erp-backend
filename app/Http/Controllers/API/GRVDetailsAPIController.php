@@ -61,7 +61,7 @@ class GRVDetailsAPIController extends AppBaseController
         $this->gRVDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $gRVDetails = $this->gRVDetailsRepository->all();
 
-        return $this->sendResponse($gRVDetails->toArray(), 'GRV Details retrieved successfully');
+        return $this->sendResponse($gRVDetails->toArray(), 'GRV details retrieved successfully');
     }
 
     /**
@@ -78,7 +78,7 @@ class GRVDetailsAPIController extends AppBaseController
 
         $gRVDetails = $this->gRVDetailsRepository->create($input);
 
-        return $this->sendResponse($gRVDetails->toArray(), 'GRV Details saved successfully');
+        return $this->sendResponse($gRVDetails->toArray(), 'GRV details saved successfully');
     }
 
     /**
@@ -98,7 +98,7 @@ class GRVDetailsAPIController extends AppBaseController
             return $this->sendError('GRV Details not found');
         }
 
-        return $this->sendResponse($gRVDetails->toArray(), 'GRV Details retrieved successfully');
+        return $this->sendResponse($gRVDetails->toArray(), 'GRV details retrieved successfully');
     }
 
     /**
@@ -150,7 +150,7 @@ class GRVDetailsAPIController extends AppBaseController
                 $detailExistPODetail = PurchaseOrderDetails::find($input['purchaseOrderDetailsID']);
                 if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
                     if (($input['poQty'] - $input['prvRecievedQty']) != $input['noQty']) {
-                        return $this->sendError('GRV Qty should be equal to PO Qty', 422);
+                        return $this->sendError('GRV qty should be equal to PO qty', 422);
                     }
                 }
 
@@ -203,7 +203,7 @@ class GRVDetailsAPIController extends AppBaseController
 
             }
             DB::commit();
-            return $this->sendResponse($gRVDetails->toArray(), 'GRV Details updated successfully');
+            return $this->sendResponse($gRVDetails->toArray(), 'GRV details updated successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError('Error Occurred', 422);
@@ -328,7 +328,7 @@ class GRVDetailsAPIController extends AppBaseController
         $frontDetailcount = count(array_filter($size));
 
         if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
-            $poDetailTotal = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderMastertID'])
+            $poDetailTotal = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderMastertID'])->where('goodsRecievedYN','<>',2)
                 ->count();
             if ($poDetailTotal != $frontDetailcount) {
                 return $this->sendError('All PO detail items should be pulled for this grv', 422);
@@ -359,6 +359,18 @@ class GRVDetailsAPIController extends AppBaseController
                             if ($grvDetailExistSameItem['purchaseOrderMastertID'] != $new['purchaseOrderMasterID']) {
                                 return $this->sendError('You cannot add multiple PO details', 422);
                             }
+                        }
+                    }
+
+                    //checking if item category is same or not
+
+                    $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                        ->where('grvAutoID', $grvAutoID)
+                        ->first();
+
+                    if ($grvDetailExistSameItem) {
+                        if($new['itemFinanceCategoryID'] != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
+                            return $this->sendError('You cannot add different category item', 422);
                         }
                     }
 
@@ -465,7 +477,7 @@ class GRVDetailsAPIController extends AppBaseController
                 }
             }
             DB::commit();
-            return $this->sendResponse('', 'GRV Details saved successfully');
+            return $this->sendResponse('', 'GRV details saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError('Error Occurred');

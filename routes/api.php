@@ -619,8 +619,6 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('contracts', 'ContractAPIController');
     Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
-    
-
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -641,8 +639,8 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master  = ['documentSystemID' => 8,'autoID' => 43334,'companySystemID' => 11,'employeeSystemID' => 2664];
-    $job = \App\Jobs\ItemLedgerInsert::dispatch($master);
+    $master  = ['documentSystemID' => 12,'autoID' => 1749,'companySystemID' => 11,'employeeSystemID' => 2664];
+    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 
 Route::get('runQueueSR', function () {

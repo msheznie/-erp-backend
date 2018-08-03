@@ -147,7 +147,7 @@ class EmployeeAPIController extends AppBaseController
             $employees = Employee::where(function ($query) use ($search) {
                 $query->where('empID', 'LIKE', "%{$search}%")
                     ->orWhere('empName', 'LIKE', "%{$search}%");
-            });
+            })->where('discharegedYN',0);
         }
 
         $employees = $employees
