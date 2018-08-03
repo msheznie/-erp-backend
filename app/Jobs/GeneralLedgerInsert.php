@@ -320,10 +320,10 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['glAccountType'] = 'BS';
                                 $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = 1;
-                                $data['documentLocalAmount'] = ABS($bs->localAmount);
+                                $data['documentLocalAmount'] = ABS($bs->localAmount) * -1;
                                 $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
                                 $data['documentRptCurrencyER'] = 1;
-                                $data['documentRptAmount'] = ABS($bs->rptAmount);
+                                $data['documentRptAmount'] = ABS($bs->rptAmount) * -1;
                                 $data['timestamp'] = \Helper::currentDateTime();
                                 array_push($finalData, $data);
                             }
@@ -334,10 +334,10 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['glAccountType'] = 'BS';
                                 $data['documentLocalCurrencyID'] = $pl->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = 1;
-                                $data['documentLocalAmount'] = ABS($pl->localAmount) * -1;
+                                $data['documentLocalAmount'] = ABS($pl->localAmount);
                                 $data['documentRptCurrencyID'] = $pl->reportingCurrencyID;
                                 $data['documentRptCurrencyER'] = 1;
-                                $data['documentRptAmount'] = ABS($pl->rptAmount) * -1;
+                                $data['documentRptAmount'] = ABS($pl->rptAmount);
                                 $data['timestamp'] = \Helper::currentDateTime();
                                 array_push($finalData, $data);
                             }
@@ -389,10 +389,10 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['glAccountType'] = 'BS';
                                 $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = 1;
-                                $data['documentLocalAmount'] = ABS($bs->localAmount) * -1;
+                                $data['documentLocalAmount'] = ABS($bs->localAmount);
                                 $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
                                 $data['documentRptCurrencyER'] = 1;
-                                $data['documentRptAmount'] = ABS($bs->rptAmount) * -1;
+                                $data['documentRptAmount'] = ABS($bs->rptAmount);
                                 $data['timestamp'] = \Helper::currentDateTime();
                                 array_push($finalData, $data);
                             }
@@ -416,7 +416,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         Log::warning('Document ID not found ' . date('H:i:s'));
                 }
 
-                if ($data) {
+                if ($finalData) {
                     Log::info($finalData);
                     $generalLedgerInsert = GeneralLedger::insert($finalData);
                     Log::info('Successfully inserted to GL table ' . date('H:i:s'));
