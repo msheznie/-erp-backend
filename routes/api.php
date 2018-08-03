@@ -618,8 +618,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getPrMasterAmendHistory', 'PurchaseRequestReferredAPIController@getPrMasterAmendHistory');
 
     Route::resource('contracts', 'ContractAPIController');
-
-
+    Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

@@ -237,6 +237,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+        $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
 
         $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
             ->where('companySystemID', $companySystemID)

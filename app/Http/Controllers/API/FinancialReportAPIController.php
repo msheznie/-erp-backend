@@ -49,11 +49,12 @@ class FinancialReportAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->orderBy('bigginingDate', 'DESC')->get();
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
+        //$departments[] = array("serviceLineSystemID" => 24, "ServiceLineCode" => 'X', "serviceLineMasterCode" => 'X', "ServiceLineDes" => 'X');
 
-        $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID',$companiesByGroup)->get(['chartOfAccountSystemID',
-                                                                                              'AccountCode','AccountDescription','catogaryBLorPL']);
+        $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)->get(['chartOfAccountSystemID',
+            'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
 
-        $contracts = Contract::whereIN('companySystemID',$companiesByGroup)->get(['contractUID','ContractNumber','contractDescription']);
+        $contracts = Contract::whereIN('companySystemID', $companiesByGroup)->get(['contractUID', 'ContractNumber', 'contractDescription']);
         $output = array(
             'companyFinanceYear' => $companyFinanceYear,
             'departments' => $departments,
@@ -110,35 +111,10 @@ class FinancialReportAPIController extends AppBaseController
                     'reportTypeID' => 'required',
                     'fromDate' => 'required',
                     'toDate' => 'required|date|after_or_equal:fromDate',
-                    'companyFinanceYearID' => 'required',
                     'glCodes' => 'required',
                     'departments' => 'required',
                     'contracts' => 'required'
                 ]);
-
-                $companyFinanceYearID = $request->companyFinanceYearID;
-
-                $companyFinanceYear = CompanyFinanceYear::where("companyFinanceYearID", $companyFinanceYearID)->first();
-
-
-                if (empty($companyFinanceYear)) {
-                    return $this->sendError('Finance Year Not Found');
-                }
-
-                $bigginingDate = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
-                $endingDate = (new Carbon($companyFinanceYear->endingDate))->format('Y-m-d');
-
-                $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
-                $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
-
-
-                if (!($fromDate >= $bigginingDate) || !($fromDate <= $endingDate)) {
-                    return $this->sendError('From Date not between Financial year !', 500);
-                } else if (!($toDate >= $bigginingDate) || !($toDate <= $endingDate)) {
-                    return $this->sendError('To Date not between Financial year !', 500);
-                } else if ($fromDate > $toDate) {
-                    return $this->sendError('The To date must be greater than the From date !', 500);
-                }
 
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
@@ -275,10 +251,10 @@ class FinancialReportAPIController extends AppBaseController
                 $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
 
                 $total = array();
-                $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('documentLocalAmountDebit')->toArray());
-                $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('documentLocalAmountCredit')->toArray());
-                $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('documentRptAmountDebit')->toArray());
-                $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('documentRptAmountCredit')->toArray());
+                $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
+                $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
+                $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
+                $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
                 return array('reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
@@ -467,6 +443,79 @@ class FinancialReportAPIController extends AppBaseController
 
                 return $this->sendResponse(array(), 'successfully export');
                 break;
+            case 'FGL':
+                $reportTypeID = $request->reportTypeID;
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $checkIsGroup = Company::find($request->companySystemID);
+                $data = array();
+                $output = $this->getGeneralLedger($request);
+
+                $currencyIdLocal = 1;
+                $currencyIdRpt = 2;
+
+                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+
+                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
+
+
+                if (!empty($decimalPlaceUniqueLocal)) {
+                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+                }
+
+                if (!empty($decimalPlaceUniqueRpt)) {
+                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
+                }
+
+                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
+                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
+
+                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
+                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
+                $currencyLocal = $requestCurrencyLocal->CurrencyCode;
+                $currencyRpt = $requestCurrencyRpt->CurrencyCode;
+
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x]['Company Name'] = $val->CompanyName;
+                        $data[$x]['GL Code'] = $val->glCode;
+                        $data[$x]['Account Description'] = $val->AccountDescription;
+
+                        $data[$x]['Document Number'] = $val->documentCode;
+                        $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Document Narration'] = $val->documentNarration;
+                        $data[$x]['Service Line'] = $val->serviceLineCode;
+                        $data[$x]['Contract'] = $val->clientContractID;
+                        $data[$x]['Supplier/Customer'] = $val->isCustomer;
+
+                        if ($checkIsGroup->isGroup == 0) {
+                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
+                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
+                        }
+
+                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
+                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
+                        $x++;
+                    }
+                }
+                $csv = \Excel::create('general_ledger', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -497,7 +546,7 @@ class FinancialReportAPIController extends AppBaseController
         $isCompanyWiseGL = '';
         $isCompanyWiseGLGroupBy = '';
 
-        if ($request->reportSD == 'company_wise' ) {
+        if ($request->reportSD == 'company_wise') {
             $isCompanyWise = 'companySystemID,';
             $isCompanyWiseGL = 'erp_generalledger.companySystemID,';
         }
@@ -869,11 +918,9 @@ class FinancialReportAPIController extends AppBaseController
     public function getGeneralLedger($request)
     {
         $fromDate = new Carbon($request->fromDate);
-        //$fromDate = $asOfDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
         $toDate = new Carbon($request->toDate);
-        //$toDate = $toDate->addDays(1);
         $toDate = $toDate->format('Y-m-d');
 
         $companyID = "";
@@ -884,18 +931,22 @@ class FinancialReportAPIController extends AppBaseController
             $companyID = (array)$request->companySystemID;
         }
 
+        $glCodes = (array)$request->glCodes;
+        $chartOfAccountId = array_filter(collect($glCodes)->pluck('chartOfAccountSystemID')->toArray());
+
+        $departments = (array)$request->departments;
+        $serviceLineId = array_filter(collect($departments)->pluck('serviceLineSystemID')->toArray());
+
+        array_push($serviceLineId, 24);
+
+        $contracts = (array)$request->contracts;
+        $contractsId = array_filter(collect($contracts)->pluck('contractUID')->toArray());
+
+        array_push($contractsId, 159);
+        //contracts
+
         //DB::enableQueryLog();
-
-        $isCompanyWise = '';
-        $isCompanyWiseGL = '';
-        $isCompanyWiseGLGroupBy = '';
-
-        if ($request->reportSD == 'company_wise' ) {
-            $isCompanyWise = 'companySystemID,';
-            $isCompanyWiseGL = 'erp_generalledger.companySystemID,';
-        }
-
-        $query = 'SELECT * 
+         $query = 'SELECT * 
                     FROM
                         (
                     SELECT
@@ -919,6 +970,8 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger.clientContractID,
                         erp_generalledger.supplierCodeSystem,
                         erp_generalledger.documentLocalCurrencyID,
+                        chartofaccounts.AccountDescription,
+                        companymaster.CompanyName,
                     IF
                         ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
                     IF
@@ -934,12 +987,14 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
+                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
                     WHERE
-                        erp_generalledger.companySystemID = 7 
-                        AND (
-                        STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) BETWEEN STR_TO_DATE( \'01/01/2018\', "%d/%m/%Y" ) 
-                        AND STR_TO_DATE( \'31/05/2018\', "%d/%m/%Y" ) 
-                        ) 
+                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
+                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
+                        AND  erp_generalledger.contractUID IN (' . join(',', $contractsId) . ')
                         ) AS erp_qry_GL UNION ALL
                     SELECT
                         * 
@@ -962,6 +1017,8 @@ class FinancialReportAPIController extends AppBaseController
                         "" AS clientContractID,
                         "" AS supplierCodeSystem,
                         erp_generalledger.documentLocalCurrencyID,
+                        chartofaccounts.AccountDescription,
+                        companymaster.CompanyName,
                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
                         sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
                         erp_generalledger.documentRptCurrencyID,
@@ -972,10 +1029,15 @@ class FinancialReportAPIController extends AppBaseController
                         erp_generalledger
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
                         LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
+                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
                     WHERE
-                        erp_generalledger.companySystemID = 7 
+                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND erp_generalledger.glAccountType = "BS" 
-                        AND ( STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) < STR_TO_DATE( \'01/01/2018\', "%d/%m/%Y" ) ) 
+                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
+                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
+                        AND  erp_generalledger.contractUID IN (' . join(',', $contractsId) . ')
+                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                     GROUP BY
                         erp_generalledger.companySystemID,
                         erp_generalledger.serviceLineSystemID,
@@ -983,7 +1045,7 @@ class FinancialReportAPIController extends AppBaseController
                         ) AS erp_qry_gl_bf 
                         ) AS GL_final 
                     ORDER BY
-                        documentDate';
+                        documentDate ASC';
 
         $output = \DB::select($query);
         //dd(DB::getQueryLog());

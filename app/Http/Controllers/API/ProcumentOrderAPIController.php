@@ -797,6 +797,10 @@ class ProcumentOrderAPIController extends AppBaseController
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"]);
+                }else{
+                    $procumentOrderUpdate->WO_confirmedYN = 1;
+                    $procumentOrderUpdate->WO_confirmedDate = now();
+                    $procumentOrderUpdate->WO_confirmedByEmpID = $employee->empID;
                 }
             }
         }
@@ -1308,6 +1312,7 @@ class ProcumentOrderAPIController extends AppBaseController
             'erp_purchaseordermaster.createdDateTime',
             'erp_purchaseordermaster.poConfirmedDate',
             'erp_purchaseordermaster.poTotalSupplierTransactionCurrency',
+            'erp_purchaseordermaster.poType_N',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
@@ -3603,6 +3608,7 @@ ORDER BY
             ->where('poCancelledYN', 0)
             ->where('poClosedYN', 0)
             ->where('grvRecieved', '<>', 2)
+            ->where('WO_confirmedYN', 1)
             ->where('manuallyClosed', 0)
             ->orderBy('purchaseOrderID', 'DESC')
             ->get();
