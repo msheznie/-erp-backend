@@ -49,6 +49,7 @@ class FinancialReportAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->orderBy('bigginingDate', 'DESC')->get();
         $departments = \Helper::getCompanyServiceline($selectedCompanyId);
+        //$departments[] = array("serviceLineSystemID" => 24, "ServiceLineCode" => 'X', "serviceLineMasterCode" => 'X', "ServiceLineDes" => 'X');
 
         $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)->get(['chartOfAccountSystemID',
             'AccountCode', 'AccountDescription', 'catogaryBLorPL']);
@@ -110,35 +111,10 @@ class FinancialReportAPIController extends AppBaseController
                     'reportTypeID' => 'required',
                     'fromDate' => 'required',
                     'toDate' => 'required|date|after_or_equal:fromDate',
-                    'companyFinanceYearID' => 'required',
                     'glCodes' => 'required',
                     'departments' => 'required',
                     'contracts' => 'required'
                 ]);
-
-                $companyFinanceYearID = $request->companyFinanceYearID;
-
-                $companyFinanceYear = CompanyFinanceYear::where("companyFinanceYearID", $companyFinanceYearID)->first();
-
-
-                if (empty($companyFinanceYear)) {
-                    return $this->sendError('Finance Year Not Found');
-                }
-
-                $bigginingDate = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
-                $endingDate = (new Carbon($companyFinanceYear->endingDate))->format('Y-m-d');
-
-                $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
-                $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
-
-
-                if (!($fromDate >= $bigginingDate) || !($fromDate <= $endingDate)) {
-                    return $this->sendError('From Date not between Financial year !', 500);
-                } else if (!($toDate >= $bigginingDate) || !($toDate <= $endingDate)) {
-                    return $this->sendError('To Date not between Financial year !', 500);
-                } else if ($fromDate > $toDate) {
-                    return $this->sendError('The To date must be greater than the From date !', 500);
-                }
 
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
@@ -961,12 +937,16 @@ class FinancialReportAPIController extends AppBaseController
         $departments = (array)$request->departments;
         $serviceLineId = array_filter(collect($departments)->pluck('serviceLineSystemID')->toArray());
 
+        array_push($serviceLineId, 24);
+
         $contracts = (array)$request->contracts;
         $contractsId = array_filter(collect($contracts)->pluck('contractUID')->toArray());
+
+        array_push($contractsId, 159);
         //contracts
 
         //DB::enableQueryLog();
-        $query = 'SELECT * 
+         $query = 'SELECT * 
                     FROM
                         (
                     SELECT
