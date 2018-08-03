@@ -446,7 +446,7 @@ class GRVMasterAPIController extends AppBaseController
                                 }
                             }
                         } else {
-                            return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . 'has logistics. You can confirm the GRV only after logistics details are updated.');
+                            return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . ' has logistics. You can confirm the GRV only after logistics details are updated.');
                         }
                     }
                 }

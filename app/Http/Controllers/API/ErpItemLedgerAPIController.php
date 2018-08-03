@@ -1011,7 +1011,7 @@ WHERE
 
         }
 
-        $sql = "SELECT
+        /*$sql = "SELECT
 	finalStockTaking.companySystemID,
 	finalStockTaking.companyID,
 	finalStockTaking.wareHouseSystemCode,
@@ -1086,7 +1086,72 @@ WHERE
 	AND itemmaster.financeCategoryMaster = 1  
 ORDER BY
 	erp_itemledger.itemSystemCode ASC) AS finalStockTaking
-	GROUP BY companySystemID,wareHouseSystemCode,itemSystemCode";
+	GROUP BY companySystemID,wareHouseSystemCode,itemSystemCode";*/
+
+        $sql = "SELECT
+	ItemLedger.companySystemID,
+	ItemLedger.companyID,
+	ItemLedger.itemSystemCode,
+	ItemLedger.itemPrimaryCode,
+	ItemLedger.itemDescription,
+	ItemLedger.unitOfMeasure,
+	ItemLedger.UnitShortCode,
+	ItemLedger.partNumber,
+	ItemLedger.categoryDescription,
+	ItemLedger.wareHouseSystemCode,
+	ItemLedger.wareHouseDescription,
+	sum( Qty ) AS StockQty,
+	LocalCurrency,
+IF
+	( sum( localAmount ) / sum( Qty ) IS NULL, 0, sum( localAmount ) / sum( Qty ) ) AS AvgCostLocal,
+	sum( localAmount ) AS TotalCostLocal,
+	RepCurrency,
+IF
+	( sum( rptAmount ) / sum( Qty ) IS NULL, 0, sum( rptAmount ) / sum( Qty ) ) AS AvgCostRpt,
+	sum( rptAmount ) AS TotalCostRpt,
+	ItemLedger.LocalCurrencyDecimals,
+	ItemLedger.RptCurrencyDecimals 
+FROM
+	(
+SELECT
+	erp_itemledger.companySystemID,
+	erp_itemledger.companyID,
+	erp_itemledger.wareHouseSystemCode,
+	warehousemaster.wareHouseDescription,
+	erp_itemledger.documentSystemID,
+	erp_itemledger.documentSystemCode,
+	erp_itemledger.itemSystemCode,
+	erp_itemledger.itemPrimaryCode,
+	erp_itemledger.itemDescription,
+	erp_itemledger.unitOfMeasure,
+	units.UnitShortCode,
+	financeitemcategorysub.categoryDescription,
+	itemmaster.secondaryItemCode AS partNumber,
+	units.UnitShortCode AS UOM,
+	round( erp_itemledger.inOutQty, 2 ) AS Qty,
+	currencymaster.CurrencyName AS LocalCurrency,
+	round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
+	currencymaster_1.CurrencyName AS RepCurrency,
+	round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals 
+FROM
+	`erp_itemledger`
+	INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
+	INNER JOIN `financeitemcategorysub` ON `itemmaster`.`financeCategorySub` = `financeitemcategorysub`.`itemCategorySubID`
+	LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
+	LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
+	LEFT JOIN `units` ON `erp_itemledger`.`unitOfMeasure` = `units`.`UnitID`
+	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode 
+WHERE
+	itemmaster.financeCategoryMaster = 1 
+	AND DATE(erp_itemledger.transactionDate) <= '$date' 
+	AND erp_itemledger.companySystemID IN (".join(',',$subCompanies).")
+	AND erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).")
+	) AS ItemLedger 
+GROUP BY
+	ItemLedger.companySystemID,
+	ItemLedger.itemSystemCode";
 
         $data = DB::select($sql);
 
@@ -1135,7 +1200,7 @@ ORDER BY
             $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
         }
 
-        $stockTaking = DB::select("SELECT
+        /*$stockTaking = DB::select("SELECT
 	finalStockTaking.companySystemID,
 	finalStockTaking.companyID,
 	finalStockTaking.wareHouseSystemCode,
@@ -1208,7 +1273,74 @@ WHERE
 	AND itemmaster.financeCategoryMaster = 1  
 ORDER BY
 	erp_itemledger.itemSystemCode ASC) AS finalStockTaking
-	GROUP BY companySystemID,wareHouseSystemCode,itemSystemCode");
+	GROUP BY companySystemID,wareHouseSystemCode,itemSystemCode");*/
+
+        $sql = "SELECT
+	ItemLedger.companySystemID,
+	ItemLedger.companyID,
+	ItemLedger.itemSystemCode,
+	ItemLedger.itemPrimaryCode,
+	ItemLedger.itemDescription,
+	ItemLedger.unitOfMeasure,
+	ItemLedger.UnitShortCode,
+	ItemLedger.partNumber,
+	ItemLedger.categoryDescription,
+	ItemLedger.wareHouseSystemCode,
+	ItemLedger.wareHouseDescription,
+	sum( Qty ) AS StockQty,
+	LocalCurrency,
+IF
+	( sum( localAmount ) / sum( Qty ) IS NULL, 0, sum( localAmount ) / sum( Qty ) ) AS AvgCostLocal,
+	sum( localAmount ) AS TotalCostLocal,
+	RepCurrency,
+IF
+	( sum( rptAmount ) / sum( Qty ) IS NULL, 0, sum( rptAmount ) / sum( Qty ) ) AS AvgCostRpt,
+	sum( rptAmount ) AS TotalCostRpt,
+	ItemLedger.LocalCurrencyDecimals,
+	ItemLedger.RptCurrencyDecimals 
+FROM
+	(
+SELECT
+	erp_itemledger.companySystemID,
+	erp_itemledger.companyID,
+	erp_itemledger.wareHouseSystemCode,
+	warehousemaster.wareHouseDescription,
+	erp_itemledger.documentSystemID,
+	erp_itemledger.documentSystemCode,
+	erp_itemledger.itemSystemCode,
+	erp_itemledger.itemPrimaryCode,
+	erp_itemledger.itemDescription,
+	erp_itemledger.unitOfMeasure,
+	units.UnitShortCode,
+	financeitemcategorysub.categoryDescription,
+	itemmaster.secondaryItemCode AS partNumber,
+	units.UnitShortCode AS UOM,
+	round( erp_itemledger.inOutQty, 2 ) AS Qty,
+	currencymaster.CurrencyName AS LocalCurrency,
+	round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
+	currencymaster_1.CurrencyName AS RepCurrency,
+	round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
+	currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+	currencymaster_1.DecimalPlaces AS RptCurrencyDecimals 
+FROM
+	`erp_itemledger`
+	INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
+	INNER JOIN `financeitemcategorysub` ON `itemmaster`.`financeCategorySub` = `financeitemcategorysub`.`itemCategorySubID`
+	LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
+	LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
+	LEFT JOIN `units` ON `erp_itemledger`.`unitOfMeasure` = `units`.`UnitID`
+	LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode 
+WHERE
+	itemmaster.financeCategoryMaster = 1 
+	AND DATE(erp_itemledger.transactionDate) <= '$date' 
+	AND erp_itemledger.companySystemID IN (".join(',',$subCompanies).")
+	AND erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).")
+	) AS ItemLedger 
+GROUP BY
+	ItemLedger.companySystemID,
+	ItemLedger.itemSystemCode";
+
+        $stockTaking = DB::select($sql);
 
         foreach ($stockTaking as $val) {
             $data[] = array(
@@ -1223,7 +1355,7 @@ ORDER BY
                 'Total Cost Rpt' => round($val->TotalCostRpt,$val->RptCurrencyDecimals),
                 'Total Cost Local' => round($val->TotalCostLocal,$val->LocalCurrencyDecimals),
                 'Physical Qty' =>'',
-                'Bin Location' => $val->BinLocation
+                'Bin Location' => ''
             );
         }
 
