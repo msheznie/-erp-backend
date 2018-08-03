@@ -85,6 +85,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
                             $data['documentNarration'] = $masterData->grvNarration;
                             $data['clientContractID'] = 'X';
+                            $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = $masterData->supplierID;
                             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransactionER;
@@ -159,6 +160,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
+                            $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = null;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
@@ -230,6 +232,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
+                            $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = null;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
@@ -301,6 +304,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
+                            $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = null;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
@@ -370,6 +374,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
+                            $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = null;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
