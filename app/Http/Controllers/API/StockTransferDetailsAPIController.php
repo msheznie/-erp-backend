@@ -226,11 +226,6 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
 
-
-        if ($input['unitCostLocal'] <= 0 || $input['unitCostRpt'] <= 0) {
-            return $this->sendError("Cost is not updated", 500);
-        }
-
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
             ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
@@ -245,13 +240,21 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->sum('inOutQty');
 
         $currentWareHouseStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
-            ->where('companySystemID', $companySystemID)
-            ->where('wareHouseSystemCode', $stockTransferMaster->locationFrom)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
+                                                ->where('companySystemID', $companySystemID)
+                                                ->where('wareHouseSystemCode', $stockTransferMaster->locationFrom)
+                                                ->groupBy('itemSystemCode')
+                                                ->sum('inOutQty');
 
-        $input['currentStockQty'] = $currentStockQty;
+        $input['currentStockQty']   = $currentStockQty;
         $input['warehouseStockQty'] = $currentWareHouseStockQty;
+
+        if ($currentStockQty <= 0) {
+            return $this->sendError("No Stock available", 500);
+        }
+
+        if ($input['unitCostLocal'] <= 0 || $input['unitCostRpt'] <= 0) {
+            return $this->sendError("Cost is not updated", 500);
+        }
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
