@@ -253,7 +253,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $total = $stdTotalPullSum + $input['qty'] - $stockReceiveDetails->qty;
 
         if ($total > $stDetail->qty) {
-            return $this->sendError("QTY Cannot be greater than transfer QTY. Please check again.", 500);
+            return $this->sendError("You cannot return more than the issued Qty.", 500);
         }
 
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->update($input, $id);
@@ -426,14 +426,16 @@ class StockReceiveDetailsAPIController extends AppBaseController
                     ->count();
 
                 if ($srDetailExistSameItem > 0) {
-                    return $this->sendError('Same inventory item cannot be added more than once');
+                    return $this->sendError('Same inventory item cannot be added more than once',500);
                 }
 
                 if ($new['unitCostLocal'] == 0 || $new['unitCostRpt'] == 0) {
-                    return $this->sendError("Cost is not updated", 500);
+                    return $this->sendError("Cost is 0. You cannot issue", 500);
                 }
 
-
+                if ($new['unitCostLocal'] < 0 || $new['unitCostRpt'] < 0) {
+                    return $this->sendError("Cost is negative. You cannot issue", 500);
+                }
                 $item = array();
                 $item['stockReceiveAutoID'] = $stockReceiveAutoID;
                 $item['stockReceiveCode'] = $stockReceive->stockReceiveCode;
@@ -457,11 +459,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
                 $item['unitCostLocal'] = $new['unitCostLocal'];
                 $item['reportingCurrencyID'] = $new['reportingCurrencyID'];
                 $item['unitCostRpt'] = $new['unitCostRpt'];
-                $item['qty'] = $new['rQty'];
-
-                if ($item['unitCostLocal'] <= 0 || $item['unitCostRpt'] <= 0) {
-                    return $this->sendError("Cost is not updated", 500);
-                }
+                $item['qty'] = $new['qty'];
 
                 $srdItem = $this->stockReceiveDetailsRepository->create($item);
 
