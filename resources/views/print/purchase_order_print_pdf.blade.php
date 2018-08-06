@@ -531,7 +531,7 @@
             <tr style="border-top: 1px solid black;">
                 <th style="text-align: center; width: 2%;">#</th>
                 <th style="text-align: center; width: 8%;">Item Code</th>
-                <th style="text-align: center; width: 20%;">Item Description</th>
+                <th style="text-align: center; width: 34%;">Item Description</th>
                 <th style="text-align: center; width: 5%;">Sup.Part No</th>
                 <th style="text-align: center ; width: 5%;">UOM</th>
                 <th style="text-align: center ; width: 5%;">Qty</th>
@@ -551,7 +551,7 @@
                 <tr style="border-bottom: 1px solid black;">
                     <td>{{ $x  }}</td>
                     <td>{{$det->itemPrimaryCode}}</td>
-                    <td>{{$det->itemDescription}} <br> {{$det->comment}}</td>
+                    <td nobr="true">{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
