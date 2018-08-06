@@ -267,9 +267,15 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         }
 
-        if ($input['issueCostLocal'] <= 0 || $input['issueCostRpt'] <= 0) {
-            return $this->sendError("Cost is not updated", 500);
+        if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
+            return $this->sendError("Cost is 0. You cannot issue.", 500);
         }
+
+        if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
+            return $this->sendError("Cost is negative. You cannot issue.", 500);
+        }
+
+
         // check policy 18
 
         $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
@@ -353,18 +359,31 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $input['currentWareHouseStockQty'] = $currentWareHouseStockQty;
         $input['currentStockQtyInDamageReturn'] = $currentStockQtyInDamageReturn;
 
+        if($currentWareHouseStockQty <= 0){
+            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+        }
+
+        if($currentStockQty <= 0){
+            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+        }
+
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
-            ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
-            ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
-            ->first();
+                                                                        ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
+                                                                        ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
+                                                                        ->first();
 
         if (!empty($financeItemCategorySubAssigned)) {
-            //return $this->sendError('Finance Category not found');
             $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
             $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
             $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
             $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+        }else{
+            return $this->sendError("Account code not updated.", 500);
+        }
+
+        if(!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']){
+            return $this->sendError("Account code not updated.", 500);
         }
 
         if ($input['itemFinanceCategoryID'] == 1) {
@@ -550,25 +569,40 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $convention = $unitConvention->conversion;
                 $input['convertionMeasureVal'] = $convention;
                 if ($convention > 0) {
-                    $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'] / $convention;
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] / $convention),2);
                 } else {
-                    $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'] * $convention;
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] * $convention),2);
                 }
             }
         } else {
             $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'];
         }
 
+        if($itemIssueDetails->currentWareHouseStockQty <= 0){
+            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+        }
 
-        if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentStockQty || $input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentWareHouseStockQty) {
-            return $this->sendError("Qty should not be greater than current stock balance or warehouse stock balance.", 500);
+        if($itemIssueDetails->currentStockQty <= 0){
+            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+        }
+
+        if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentWareHouseStockQty) {
+            return $this->sendError("Current warehouse stock Qty is: " .$itemIssueDetails->currentWareHouseStockQty." .You cannot issue more than the current warehouse stock qty.", 500);
+        }
+
+        if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentStockQty) {
+            return $this->sendError( "Current stock Qty is: ".$itemIssueDetails->currentStockQty." .You cannot issue more than the current stock qty.", 500);
         }
 
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
         $input['issueCostRptTotal'] = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
 
-        if ($input['issueCostLocal'] <= 0 || $input['issueCostRpt'] <= 0) {
-            return $this->sendError("Cost is not updated", 500);
+        if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
+            return $this->sendError("Cost is 0. You cannot issue.", 500);
+        }
+
+        if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
+            return $this->sendError("Cost is negative. You cannot issue.", 500);
         }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
