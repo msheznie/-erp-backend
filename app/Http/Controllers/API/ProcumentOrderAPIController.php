@@ -475,6 +475,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $poMasterSumRounded = round($poMasterSum['masterTotalSum'], $supplierCurrencyDecimalPlace);
         $poAddonMasterSumRounded = round($poAddonMasterSum['addonTotalSum'], $supplierCurrencyDecimalPlace);
 
+
         $newlyUpdatedPoTotalAmount = $poMasterSumRounded + $poAddonMasterSumRounded;
 
         if ($input['poDiscountAmount'] > $newlyUpdatedPoTotalAmount) {
