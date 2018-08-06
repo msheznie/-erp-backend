@@ -79,6 +79,7 @@ class PoAdvancePayment extends Model
         'currencyID',
         'reqAmount',
         'reqAmountTransCur_amount',
+        'logisticCategoryID',
         'confirmedYN',
         'approvedYN',
         'selectedToPayment',
@@ -116,6 +117,7 @@ class PoAdvancePayment extends Model
         'currencyID' => 'integer',
         'reqAmount' => 'float',
         'reqAmountTransCur_amount' => 'float',
+        'logisticCategoryID' => 'integer',
         'confirmedYN' => 'integer',
         'approvedYN' => 'integer',
         'selectedToPayment' => 'integer',
@@ -156,6 +158,11 @@ class PoAdvancePayment extends Model
     public function company()
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function grv_by()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
     }
 
 

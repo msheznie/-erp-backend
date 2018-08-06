@@ -18,6 +18,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePoAdvancePaymentAPIRequest;
 use App\Http\Requests\API\UpdatePoAdvancePaymentAPIRequest;
+use App\Models\GRVDetails;
+use App\Models\GRVMaster;
 use App\Models\PoAdvancePayment;
 use App\Repositories\PoAdvancePaymentRepository;
 use Illuminate\Http\Request;
@@ -191,15 +193,30 @@ class PoAdvancePaymentAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var PoAdvancePayment $poAdvancePayment */
-        $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
-
-        if (empty($poAdvancePayment)) {
-            return $this->sendError('Po Advance Payment not found');
+        DB::beginTransaction();
+        try {
+            $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
+            if (empty($poAdvancePayment)) {
+                return $this->sendError('Po Advance Payment not found');
+            }
+            if ($poAdvancePayment["grvAutoID"]) {
+                $grv = GRVMaster::find($poAdvancePayment["grvAutoID"]);
+                if ($grv) {
+                    if ($grv["grvConfirmedYN"]) {
+                        return $this->sendError('Selected logistic charge is linked to GRV ' . $grv["grvPrimaryCode"]);
+                    }
+                }
+            }
+            $poAdvancePayment->delete();
+            if ($poAdvancePayment) {
+                $grvDetail = GRVDetails::where('grvAutoID', $poAdvancePayment["grvAutoID"])->update(['logisticsCharges_TransCur' => 0, 'logisticsCharges_LocalCur' => 0, 'logisticsChargest_RptCur' => 0, 'landingCost_TransCur' => DB::raw('GRVcostPerUnitSupTransCur'), 'landingCost_LocalCur' => DB::raw('GRVcostPerUnitLocalCur'), 'landingCost_RptCur' => DB::raw('GRVcostPerUnitComRptCur')]);
+            }
+            DB::commit();
+            return $this->sendResponse($id, 'Po advance payment deleted successfully');
+        }catch (\Exception $exception){
+            DB::rollback();
+            return $this->sendError($id, 'Error Occurred');
         }
-
-        $poAdvancePayment->delete();
-
-        return $this->sendResponse($id, 'Po Advance Payment deleted successfully');
     }
 
     public function poPaymentTermsAdvanceDetailView(Request $request)
@@ -238,7 +255,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->where('confirmedYN', 1)
             ->where('isAdvancePaymentYN', 1)
             ->where('approvedYN', -1)
-            ->with(['currency', 'supplier_by' => function ($query) {
+            ->with(['grv_by','currency', 'supplier_by' => function ($query) {
             }])->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
@@ -289,9 +306,9 @@ HAVING
 ORDER BY
 	erp_grvmaster.grvAutoID DESC');
 
-        if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
+        /*if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
             return $this->sendError('Please select a GRV as there is a GRV done for this PO');
-        }
+        }*/
 
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
         $input['serviceLineID'] = $purchaseOrder->serviceLine;
@@ -304,11 +321,12 @@ ORDER BY
         $input['narration'] = $input['detail']['narration'];
 
         //grv code sorting
-        if (isset($input['detail']['grvAutoID']) && !empty($input['detail']['grvAutoID'])) {
+        /*if (isset($input['detail']['grvAutoID']) && !empty($input['detail']['grvAutoID'])) {
             $input['grvAutoID'] = $input['detail']['grvAutoID'];
         } else {
             $input['grvAutoID'] = 0;
-        }
+        }*/
+
         if (isset($input['detail']['reqDate'])) {
             $masterDate = str_replace('/', '-', $input['detail']['reqDate']);
             $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
@@ -316,6 +334,7 @@ ORDER BY
         $input['currencyID'] = $input['detail']['currencyID'][0];
         $input['reqAmount'] = $input['detail']['reqAmount'];
         $input['reqAmountTransCur_amount'] = $input['detail']['reqAmount'];
+        $input['logisticCategoryID'] = $input['detail']['logisticCategoryID'];
 
         $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID,  $input['currencyID'], $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
@@ -366,10 +385,33 @@ ORDER BY
         $items = PoAdvancePayment::where('grvAutoID', $grvAutoID)
             ->where('confirmedYN', 1)
             ->where('approvedYN', -1)
-            ->with(['currency', 'supplier_by' => function ($query) {
+            ->with(['grv_by','currency', 'supplier_by' => function ($query) {
             }])->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    public function unlinkLogistic(Request $request)
+    {
+        /** @var PoAdvancePayment $poAdvancePayment */
+        $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($request->poAdvPaymentID);
+
+        if (empty($poAdvancePayment)) {
+            return $this->sendError('Po Advance Payment not found');
+        }
+
+        if($poAdvancePayment["grvAutoID"]){
+            $grv = GRVMaster::find($poAdvancePayment["grvAutoID"]);
+            if($grv){
+                if($grv["grvConfirmedYN"]){
+                    return $this->sendError('Selected logistic charge is linked to GRV '.$grv["grvPrimaryCode"]);
+                }
+            }
+        }
+
+        $poAdvancePayment = $this->poAdvancePaymentRepository->update(['grvAutoID' => 0], $request->poAdvPaymentID);
+
+        return $this->sendResponse([], 'Successfully unlinked');
     }
 
 
