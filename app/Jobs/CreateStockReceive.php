@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentMaster;
 use App\Models\StockReceive;
@@ -69,13 +70,10 @@ class CreateStockReceive implements ShouldQueue
                     $stockReceive->companyID = $stMaster->companyTo;
                     $stockReceive->serviceLineSystemID = NULl;
                     $stockReceive->serviceLineCode = NULl;
-                    $stockReceive->companyFinanceYearID = $stMaster->companyFinanceYearID;
-                    $stockReceive->companyFinancePeriodID = $stMaster->companyFinanceYearID;
                     $stockReceive->FYBiggin = $stMaster->FYBiggin;
                     $stockReceive->FYEnd = $stMaster->FYEnd;
                     $stockReceive->serialNo = $lastSerialNumber;
                     $stockReceive->refNo = $stMaster->refNo;
-                    $stockReceive->receivedDate = $stMaster->tranferDate;
                     $stockReceive->comment = $stMaster->comment;
                     $stockReceive->companyFromSystemID = $stMaster->companyFromSystemID;
                     $stockReceive->companyFrom = $stMaster->companyFrom;
@@ -93,9 +91,24 @@ class CreateStockReceive implements ShouldQueue
                     $stockReceive->createdUserSystemID = $stMaster->createdUserSystemID;
                     $stockReceive->createdUserID = $stMaster->createdUserID;
 
-                    $companyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $stMaster->companyFinanceYearID)
-                        ->where('companySystemID', $stMaster->companyToSystemID)
-                        ->first();
+
+                    $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $stMaster->companyToSystemID)
+                                                                    ->where('departmentSystemID', 10)
+                                                                    ->where('isActive', -1)
+                                                                    ->where('dateFrom','<',$stMaster->tranferDate)
+                                                                    ->where('dateTo','>',$stMaster->tranferDate)
+                                                                    ->where('isCurrent', -1)
+                                                                    ->first();
+
+                    $companyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
+                                                            ->where('companySystemID', $stMaster->companyToSystemID)
+                                                            ->first();
+
+                    if(!empty($toCompanyFinancePeriod)){
+                        $stockReceive->companyFinanceYearID   = $toCompanyFinancePeriod->companyFinanceYearID;
+                        $stockReceive->companyFinancePeriodID = $toCompanyFinancePeriod->companyFinancePeriodID;
+                        $stockReceive->receivedDate = $stMaster->tranferDate;
+                    }
 
                     if ($companyFinanceYear) {
                         $startYear = $companyFinanceYear['bigginingDate'];
