@@ -248,6 +248,8 @@ class PoAdvancePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        //$input = $this->convertArrayToValue($input);
+
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
@@ -317,7 +319,7 @@ ORDER BY
         $input['reqAmount'] = $input['detail']['reqAmount'];
         $input['reqAmountTransCur_amount'] = $input['detail']['reqAmount'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID,  $input['currencyID'], $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
+        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID,  $input['detail']['currencyID'], $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
         //$input['detail']['reqAmount'];
         $input['reqAmountInPOTransCur'] = $companyCurrencyConversion['documentAmount'];

@@ -1136,4 +1136,9 @@ class Helper
             return "";
         }
     }
+
+    public static function roundValue($value)
+    {
+        return round($value,7);
+    }
 }
