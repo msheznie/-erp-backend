@@ -489,7 +489,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $procumentOrderUpdate->poTotalComRptCurrency = round($currencyConversionMaster['reportingAmount'], 8);
         $procumentOrderUpdate->poTotalLocalCurrency = round($currencyConversionMaster['localAmount'], 8);
-        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = $poMasterSumDeducted;
+        $procumentOrderUpdate->poTotalSupplierTransactionCurrency = round($poMasterSumDeducted, 8);
         $procumentOrderUpdate->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $procumentOrderUpdate->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
@@ -572,11 +572,11 @@ class ProcumentOrderAPIController extends AppBaseController
                         ->update([
                             'GRVcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
                             'GRVcostPerUnitSupDefaultCur' => round($currencyConversionLineDefault['documentAmount'], 8),
-                            'GRVcostPerUnitSupTransCur' => round($calculateItemTax, $supplierCurrencyDecimalPlace),
+                            'GRVcostPerUnitSupTransCur' => round($calculateItemTax, 8),
                             'GRVcostPerUnitComRptCur' => round($currencyConversion['reportingAmount'], 8),
                             'purchaseRetcostPerUniSupDefaultCur' => round($currencyConversionLineDefault['documentAmount'], 8),
                             'purchaseRetcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
-                            'purchaseRetcostPerUnitTranCur' => round($calculateItemTax, $supplierCurrencyDecimalPlace),
+                            'purchaseRetcostPerUnitTranCur' => round($calculateItemTax, 8),
                             'purchaseRetcostPerUnitRptCur' => round($currencyConversion['reportingAmount'], 8),
                             'VATPercentage' => $input['VATPercentage'],
                             'VATAmount' => round($vatLineAmount, 8),
@@ -606,11 +606,11 @@ class ProcumentOrderAPIController extends AppBaseController
                         ->update([
                             'GRVcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
                             'GRVcostPerUnitSupDefaultCur' => round($currencyConversionLineDefault['documentAmount'], 8),
-                            'GRVcostPerUnitSupTransCur' => round($calculateItemDiscount, $supplierCurrencyDecimalPlace),
+                            'GRVcostPerUnitSupTransCur' => round($calculateItemDiscount, 8),
                             'GRVcostPerUnitComRptCur' => round($currencyConversion['reportingAmount'], 8),
                             'purchaseRetcostPerUniSupDefaultCur' => round($currencyConversionLineDefault['documentAmount'], 8),
                             'purchaseRetcostPerUnitLocalCur' => round($currencyConversion['localAmount'], 8),
-                            'purchaseRetcostPerUnitTranCur' => round($calculateItemDiscount, $supplierCurrencyDecimalPlace),
+                            'purchaseRetcostPerUnitTranCur' => round($calculateItemDiscount, 8),
                             'purchaseRetcostPerUnitRptCur' => round($currencyConversion['reportingAmount'], 8),
                             //'VATPercentage' => $procumentOrder->VATPercentage,
                             'VATPercentage' => 0,
@@ -643,27 +643,29 @@ class ProcumentOrderAPIController extends AppBaseController
 
                     $updatePoDetailAddonDetail = PurchaseOrderDetails::find($AddonDeta['purchaseOrderDetailsID']);
 
-                    $GRVcostPerUnitLocalCur = round($currencyConversionForLineAmountAddon['localAmount'], 8);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitLocalCur = ($AddonDeta['GRVcostPerUnitLocalCur'] + $GRVcostPerUnitLocalCur);
+                    $GRVcostPerUnitLocalCurAddon = ($AddonDeta['GRVcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
+                    $updatePoDetailAddonDetail->GRVcostPerUnitLocalCur = round($GRVcostPerUnitLocalCurAddon, 8);
 
-                    $GRVcostPerUnitSupDefaultCur = round($currencyConversionLineAmountAddonDefault['documentAmount'], 8);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitSupDefaultCur = ($AddonDeta['GRVcostPerUnitSupDefaultCur'] + $GRVcostPerUnitSupDefaultCur);
+                    $GRVcostPerUnitSupDefaultCurAddon = ($AddonDeta['GRVcostPerUnitSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
+                    $updatePoDetailAddonDetail->GRVcostPerUnitSupDefaultCur = round($GRVcostPerUnitSupDefaultCurAddon, 8);
 
-                    $updatePoDetailAddonDetail->GRVcostPerUnitSupTransCur = ($AddonDeta['GRVcostPerUnitSupTransCur'] + $calculateAddonLineAmount);
+                    $GRVcostPerUnitSupTransCurAddon = ($AddonDeta['GRVcostPerUnitSupTransCur'] + $calculateAddonLineAmount);
+                    $updatePoDetailAddonDetail->GRVcostPerUnitSupTransCur = round($GRVcostPerUnitSupTransCurAddon, 8);
 
-                    $GRVcostPerUnitComRptCur = round($currencyConversionForLineAmountAddon['reportingAmount'], 8);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitComRptCur = ($AddonDeta['GRVcostPerUnitComRptCur'] + $GRVcostPerUnitComRptCur);
+                    $GRVcostPerUnitComRptCurAddon = ($AddonDeta['GRVcostPerUnitComRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
+                    $updatePoDetailAddonDetail->GRVcostPerUnitComRptCur = round($GRVcostPerUnitComRptCurAddon, 8);
 
-                    $purchaseRetcostPerUniSupDefaultCur = round($currencyConversionLineAmountAddonDefault['documentAmount'], 8);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUniSupDefaultCur = ($AddonDeta['purchaseRetcostPerUniSupDefaultCur'] + $purchaseRetcostPerUniSupDefaultCur);
+                    $purchaseRetcostPerUniSupDefaultCurAddon = ($AddonDeta['purchaseRetcostPerUniSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
+                    $updatePoDetailAddonDetail->purchaseRetcostPerUniSupDefaultCur = round($purchaseRetcostPerUniSupDefaultCurAddon, 8);
 
-                    $purchaseRetcostPerUnitLocalCur = round($currencyConversionForLineAmountAddon['localAmount'], 8);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitLocalCur = ($AddonDeta['purchaseRetcostPerUnitLocalCur'] + $purchaseRetcostPerUnitLocalCur);
+                    $purchaseRetcostPerUnitLocalCurAddon = ($AddonDeta['purchaseRetcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
+                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitLocalCur = round($purchaseRetcostPerUnitLocalCurAddon, 8);
 
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitTranCur = ($AddonDeta['purchaseRetcostPerUnitTranCur'] + $calculateAddonLineAmount);
+                    $purchaseRetcostPerUnitTranCurAddon = ($AddonDeta['purchaseRetcostPerUnitTranCur'] + $calculateAddonLineAmount);
+                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitTranCur = round($purchaseRetcostPerUnitTranCurAddon, 8);
 
-                    $purchaseRetcostPerUnitRptCur = round($currencyConversionForLineAmountAddon['reportingAmount'], 8);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitRptCur = ($AddonDeta['purchaseRetcostPerUnitRptCur'] + $purchaseRetcostPerUnitRptCur);
+                    $purchaseRetcostPerUnitRptCur = ($AddonDeta['purchaseRetcostPerUnitRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
+                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitRptCur = round($purchaseRetcostPerUnitRptCur, 8);
 
                     $updatePoDetailAddonDetail->addonDistCost = $calculateAddonLineAmount;
                     $updatePoDetailAddonDetail->addonPurchaseReturnCost = $calculateAddonLineAmount;
@@ -3346,7 +3348,7 @@ WHERE
         $purchaseOrder->poTotalComRptCurrency = round($currencyConversionMaster['reportingAmount'], 8);
         $purchaseOrder->poTotalLocalCurrency = round($currencyConversionMaster['localAmount'], 8);
         $purchaseOrder->poTotalSupplierDefaultCurrency = round($currencyConversionMasterDefault['documentAmount'], 8);
-        $purchaseOrder->poTotalSupplierTransactionCurrency = $poMasterSumDeducted;
+        $purchaseOrder->poTotalSupplierTransactionCurrency = round($poMasterSumDeducted, 8);
         $purchaseOrder->companyReportingER = round($currencyConversionMaster['trasToRptER'], 8);
         $purchaseOrder->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
@@ -3381,14 +3383,14 @@ WHERE
                 $currencyConversionDefaultW = \Helper::currencyConversion($purchaseOrderDetail->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $calculateItemTax);
 
                 $purchaseOrderDetail->GRVcostPerUnitLocalCur = round($currencyConversion['localAmount'], 8);
-                $purchaseOrderDetail->GRVcostPerUnitSupTransCur = round($calculateItemTax, $supplierCurrencyDecimalPlace);
+                $purchaseOrderDetail->GRVcostPerUnitSupTransCur = round($calculateItemTax, 8);
                 $purchaseOrderDetail->GRVcostPerUnitComRptCur = round($currencyConversion['reportingAmount'], 8);
                 $purchaseOrderDetail->purchaseRetcostPerUnitLocalCur = round($currencyConversion['localAmount'], 8);
-                $purchaseOrderDetail->purchaseRetcostPerUnitTranCur = round($calculateItemTax, $supplierCurrencyDecimalPlace);
+                $purchaseOrderDetail->purchaseRetcostPerUnitTranCur = round($calculateItemTax, 8);
                 $purchaseOrderDetail->purchaseRetcostPerUnitRptCur = round($currencyConversion['reportingAmount'], 8);
 
-                $purchaseOrderDetail->GRVcostPerUnitSupDefaultCur = $currencyConversionDefaultW['documentAmount'];
-                $purchaseOrderDetail->purchaseRetcostPerUniSupDefaultCur = $currencyConversionDefaultW['documentAmount'];
+                $purchaseOrderDetail->GRVcostPerUnitSupDefaultCur = round($currencyConversionDefaultW['documentAmount'], 8);
+                $purchaseOrderDetail->purchaseRetcostPerUniSupDefaultCur = round($currencyConversionDefaultW['documentAmount'], 8);
             } else {
                 if ($purchaseOrder->poDiscountAmount > 0) {
                     $calculateItemDiscount = (($purchaseOrderDetail->netAmount - (($purchaseOrder->poDiscountAmount / $poMasterSumRounded) * $purchaseOrderDetail->netAmount)) / $purchaseOrderDetail->noQty);
@@ -3402,14 +3404,14 @@ WHERE
 
 
                 $purchaseOrderDetail->GRVcostPerUnitLocalCur = round($currencyConversion['localAmount'], 8);
-                $purchaseOrderDetail->GRVcostPerUnitSupTransCur = round($calculateItemDiscount, $supplierCurrencyDecimalPlace);
+                $purchaseOrderDetail->GRVcostPerUnitSupTransCur = round($calculateItemDiscount, 8);
                 $purchaseOrderDetail->GRVcostPerUnitComRptCur = round($currencyConversion['reportingAmount'], 8);
                 $purchaseOrderDetail->purchaseRetcostPerUnitLocalCur = round($currencyConversion['localAmount'], 8);
-                $purchaseOrderDetail->purchaseRetcostPerUnitTranCur = round($calculateItemDiscount, $supplierCurrencyDecimalPlace);
+                $purchaseOrderDetail->purchaseRetcostPerUnitTranCur = round($calculateItemDiscount, 8);
                 $purchaseOrderDetail->purchaseRetcostPerUnitRptCur = round($currencyConversion['reportingAmount'], 8);
 
-                $purchaseOrderDetail->GRVcostPerUnitSupDefaultCur = $currencyConversionLineDefault['documentAmount'];
-                $purchaseOrderDetail->purchaseRetcostPerUniSupDefaultCur = $currencyConversionLineDefault['documentAmount'];
+                $purchaseOrderDetail->GRVcostPerUnitSupDefaultCur = round($currencyConversionLineDefault['documentAmount'], 8);
+                $purchaseOrderDetail->purchaseRetcostPerUniSupDefaultCur = round($currencyConversionLineDefault['documentAmount'], 8);
             }
 
 
@@ -3467,29 +3469,29 @@ WHERE
 
                     $updatePoDetailAddonDetail = PurchaseOrderDetails::find($AddonDeta['purchaseOrderDetailsID']);
 
-                    $GRVcostPerUnitLocalCur = round($currencyConversionForLineAmountAddon['localAmount'], 8);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitLocalCur = ($AddonDeta['GRVcostPerUnitLocalCur'] + $GRVcostPerUnitLocalCur);
+                    $GRVcostPerUnitLocalCurAddon = ($AddonDeta['GRVcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
+                    $updatePoDetailAddonDetail->GRVcostPerUnitLocalCur = round($GRVcostPerUnitLocalCurAddon, 8);
 
-                    $GRVcostPerUnitSupDefaultCur = round($currencyConversionLineAmountAddonDefault['documentAmount'], 8);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitSupDefaultCur = ($AddonDeta['GRVcostPerUnitSupDefaultCur'] + $GRVcostPerUnitSupDefaultCur);
+                    $GRVcostPerUnitSupDefaultCurAddon = ($AddonDeta['GRVcostPerUnitSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
+                    $updatePoDetailAddonDetail->GRVcostPerUnitSupDefaultCur = round($GRVcostPerUnitSupDefaultCurAddon, 8);
 
                     $GRVcostPerUnitSupTransCurAddon = ($AddonDeta['GRVcostPerUnitSupTransCur'] + $calculateAddonLineAmount);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitSupTransCur = round($GRVcostPerUnitSupTransCurAddon, $supplierCurrencyDecimalPlace);
+                    $updatePoDetailAddonDetail->GRVcostPerUnitSupTransCur = round($GRVcostPerUnitSupTransCurAddon, 8);
 
-                    $GRVcostPerUnitComRptCur = round($currencyConversionForLineAmountAddon['reportingAmount'], 8);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitComRptCur = ($AddonDeta['GRVcostPerUnitComRptCur'] + $GRVcostPerUnitComRptCur);
+                    $GRVcostPerUnitComRptCurAddon = ($AddonDeta['GRVcostPerUnitComRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
+                    $updatePoDetailAddonDetail->GRVcostPerUnitComRptCur = round($GRVcostPerUnitComRptCurAddon, 8);
 
-                    $purchaseRetcostPerUniSupDefaultCur = round($currencyConversionLineAmountAddonDefault['documentAmount'], 8);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUniSupDefaultCur = ($AddonDeta['purchaseRetcostPerUniSupDefaultCur'] + $purchaseRetcostPerUniSupDefaultCur);
+                    $purchaseRetcostPerUniSupDefaultCurAddon = ($AddonDeta['purchaseRetcostPerUniSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
+                    $updatePoDetailAddonDetail->purchaseRetcostPerUniSupDefaultCur = round($purchaseRetcostPerUniSupDefaultCurAddon, 8);
 
-                    $purchaseRetcostPerUnitLocalCur = round($currencyConversionForLineAmountAddon['localAmount'], 8);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitLocalCur = ($AddonDeta['purchaseRetcostPerUnitLocalCur'] + $purchaseRetcostPerUnitLocalCur);
+                    $purchaseRetcostPerUnitLocalCurAddon = ($AddonDeta['purchaseRetcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
+                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitLocalCur = round($purchaseRetcostPerUnitLocalCurAddon, 8);
 
                     $purchaseRetcostPerUnitTranCurAddon = ($AddonDeta['purchaseRetcostPerUnitTranCur'] + $calculateAddonLineAmount);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitTranCur = round($purchaseRetcostPerUnitTranCurAddon, $supplierCurrencyDecimalPlace);
+                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitTranCur = round($purchaseRetcostPerUnitTranCurAddon, 8);
 
-                    $purchaseRetcostPerUnitRptCur = round($currencyConversionForLineAmountAddon['reportingAmount'], 8);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitRptCur = ($AddonDeta['purchaseRetcostPerUnitRptCur'] + $purchaseRetcostPerUnitRptCur);
+                    $purchaseRetcostPerUnitRptCur = ($AddonDeta['purchaseRetcostPerUnitRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
+                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitRptCur = round($purchaseRetcostPerUnitRptCur, 8);
 
                     $updatePoDetailAddonDetail->addonDistCost = $calculateAddonLineAmount;
                     $updatePoDetailAddonDetail->addonPurchaseReturnCost = $calculateAddonLineAmount;

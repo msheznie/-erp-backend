@@ -643,3 +643,7 @@ Route::get('runQueue', function () {
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 
+Route::get('runQueueSR', function () {
+     $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',1026)->first();
+     $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
+});

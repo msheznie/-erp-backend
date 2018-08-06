@@ -283,7 +283,7 @@ class StockReceiveAPIController extends AppBaseController
     public function show($id)
     {
         /** @var StockReceive $stockReceive */
-        $stockReceive = $this->stockReceiveRepository->with(['confirmed_by'])->findWithoutFail($id);
+        $stockReceive = $this->stockReceiveRepository->with(['confirmed_by','segment_by'])->findWithoutFail($id);
 
         if (empty($stockReceive)) {
             return $this->sendError('Stock Receive not found');

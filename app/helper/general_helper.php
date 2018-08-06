@@ -15,6 +15,10 @@
 
 namespace App\helper;
 
+use App\Jobs\CreateStockReceive;
+use App\Jobs\GeneralLedgerInsert;
+use App\Jobs\ItemLedgerInsert;
+use App\Jobs\UnbilledGRVInsert;
 use App\Models;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -785,12 +789,12 @@ class Helper
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID,'employeeSystemID' => $empInfo->employeeSystemID];
                             // insert the record to item ledger
-                            $job1 = \App\Jobs\ItemLedgerInsert::dispatch($masterData);
+                            $job1 = ItemLedgerInsert::dispatch($masterData);
                             // insert the record to general ledger
                             if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10) {
-                                $job2 = \App\Jobs\GeneralLedgerInsert::dispatch($masterData);
+                                $job2 = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
-                                    $job3 = \App\Jobs\UnbilledGRVInsert::dispatch($masterData);
+                                    $job3 = UnbilledGRVInsert::dispatch($masterData);
                                 }
                             }
                         } else {
@@ -801,6 +805,11 @@ class Helper
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
                         $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+
+                        if( $input["documentSystemID"] == 13 && !empty($sourceModel)){
+                            //$jobSR = CreateStockReceive::dispatch($sourceModel);
+                        }
+
                         $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
 
                         $emails = array();

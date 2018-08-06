@@ -19,6 +19,7 @@ use App\Http\Requests\API\UpdateStockTransferAPIRequest;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
 use App\Models\Months;
@@ -27,6 +28,7 @@ use App\Models\SegmentMaster;
 use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
 use App\Models\StockTransfer;
+use App\Models\SupplierMaster;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -167,6 +169,30 @@ class StockTransferAPIController extends AppBaseController
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('Transfer Date not between Financial period !',500);
+        }
+
+        $checkCustomer = CustomerMaster::where('companyLinkedToSystemID',$input['companyToSystemID'])->count();
+        if($checkCustomer == 0){
+            // return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.',500);
+        }
+
+        $checkSupplier = SupplierMaster::where('companyLinkedToSystemID',$input['companyToSystemID'])->count();
+        if($checkCustomer == 0){
+           // return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.',500);
+        }
+
+        $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
+                                                        ->where('departmentSystemID', 10)
+                                                        ->where('isActive', -1)
+                                                        ->where('dateFrom','<',$documentDate)
+                                                        ->where('dateTo','>',$documentDate)
+                                                        ->where('isCurrent', -1)
+                                                        ->count();
+
+        $companyTo = Company::where('companySystemID',$input['companyToSystemID'])->first();
+
+        if($toCompanyFinancePeriod == 0){
+            return $this->sendError('Financial year and period is not activated in '.$companyTo->CompanyName,500);
         }
 
         $input['createdPCID'] = gethostname();
@@ -385,6 +411,21 @@ class StockTransferAPIController extends AppBaseController
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('Transfer Date not between Financial period !');
+        }
+
+
+        $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
+                                                        ->where('departmentSystemID', 10)
+                                                        ->where('isActive', -1)
+                                                        ->where('dateFrom','<',$documentDate)
+                                                        ->where('dateTo','>',$documentDate)
+                                                        ->where('isCurrent', -1)
+                                                        ->count();
+
+        $companyTo = Company::where('companySystemID',$input['companyToSystemID'])->first();
+
+        if($toCompanyFinancePeriod == 0){
+            return $this->sendError('Financial year and period is not activated in '.$companyTo->CompanyName,500);
         }
 
         //checking selected segment is active
