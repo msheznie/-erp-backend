@@ -588,6 +588,12 @@ class StockTransferAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('interCompanyTransferYN', $input)) {
+            if (($input['interCompanyTransferYN'] == 0 || $input['interCompanyTransferYN'] == -1) && !is_null($input['interCompanyTransferYN'])) {
+                $stockTransferMaster->where('interCompanyTransferYN', $input['interCompanyTransferYN']);
+            }
+        }
+
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
                 $stockTransferMaster->whereMonth('tranferDate', '=', $input['month']);

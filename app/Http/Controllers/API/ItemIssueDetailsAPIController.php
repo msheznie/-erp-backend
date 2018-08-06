@@ -267,7 +267,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         }
 
-        if ($input['issueCostLocal'] = 0 || $input['issueCostRpt'] = 0) {
+        if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
             return $this->sendError("Cost is 0. You cannot issue.", 500);
         }
 
@@ -597,7 +597,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
         $input['issueCostRptTotal'] = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
 
-        if ($input['issueCostLocal'] = 0 || $input['issueCostRpt'] = 0) {
+        if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
             return $this->sendError("Cost is 0. You cannot issue.", 500);
         }
 

@@ -174,7 +174,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $input['localCurrencyID'] = $itemAssign->wacValueLocalCurrencyID;
         $input['reportingCurrencyID'] = $itemAssign->wacValueReportingCurrencyID;
 
-        if($input['unitCostLocal'] = 0 || $input['unitCostRpt'] = 0){
+        if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
             return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
@@ -412,7 +412,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         }
 
 
-        if($input['unitCostLocal'] = 0 || $input['unitCostRpt'] = 0){
+        if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
             return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
