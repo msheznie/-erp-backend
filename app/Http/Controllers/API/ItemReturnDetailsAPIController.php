@@ -407,19 +407,27 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 return $this->sendError('Materiel Issue not found', 500);
             }
         }
-        if ($input['qtyIssuedDefaultMeasure'] > $input['qtyFromIssue']) {
-            return $this->sendError("You cannot return more than the issued Qty", 500,$qtyError);
-        }
-
 
         if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+            $this->itemReturnDetailsRepository->update($input, $id);
             return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
         if($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0){
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+            $this->itemReturnDetailsRepository->update($input, $id);
             return $this->sendError("Cost is negative. You cannot issue", 500);
         }
 
+        if ($input['qtyIssuedDefaultMeasure'] > $input['qtyFromIssue']) {
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+            $this->itemReturnDetailsRepository->update($input, $id);
+            return $this->sendError("You cannot return more than the issued Qty", 500,$qtyError);
+        }
 
         $itemReturnDetails = $this->itemReturnDetailsRepository->update($input, $id);
 

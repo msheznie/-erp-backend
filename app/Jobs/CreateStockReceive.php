@@ -8,6 +8,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
+use App\Models\GeneralLedger;
 use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
 use App\Models\StockTransfer;
@@ -166,24 +167,18 @@ class CreateStockReceive implements ShouldQueue
                         $customerInvoiceData['bookingAmountTrans'] = $bookingAmountRpt;
                         $customerInvoiceData['bookingAmountLocal'] = $bookingAmountLocal;
                         $customerInvoiceData['bookingAmountRpt'] = $bookingAmountRpt;
-
                         $customerInvoiceData['confirmedYN'] = 1;
                         $customerInvoiceData['confirmedByEmpSystemID'] = $stMaster->confirmedByEmpSystemID;
                         $customerInvoiceData['confirmedByEmpID'] = $stMaster->confirmedByEmpID;
                         $customerInvoiceData['confirmedByName'] = $stMaster->confirmedByName;
                         $customerInvoiceData['confirmedDate'] = $stMaster->confirmedDate;
-
                         $customerInvoiceData['approved'] = -1;
                         $customerInvoiceData['approvedDate'] = $stMaster->approvedDate;
-
                         $customerInvoiceData['documentType'] = 11;
-
                         $customerInvoiceData['interCompanyTransferYN'] = $stMaster->interCompanyTransferYN;
-
                         $customerInvoiceData['createdUserSystemID'] = $stMaster->confirmedByEmpSystemID;
                         $customerInvoiceData['createdUserID'] = $stMaster->confirmedByEmpID;
                         $customerInvoiceData['createdPcID'] = $stMaster->modifiedPc;
-
 
                         $customerInvoice = $customerInvoiceRep->create($customerInvoiceData);
 
@@ -228,6 +223,98 @@ class CreateStockReceive implements ShouldQueue
                         Log::info($customerInvoice);
                         Log::info($customerInvoiceDetailPL);
                         Log::info($customerInvoiceDetailBS);
+
+                        // GL start entry
+
+                        $data = [];
+                        $finalData = [];
+                        if ($customerInvoice) {
+                            $data['companySystemID'] = $customerInvoice->companySystemID;
+                            $data['companyID'] = $customerInvoice->companyID;
+                            $data['serviceLineSystemID'] = $customerInvoice->serviceLineSystemID;
+                            $data['serviceLineCode'] = $customerInvoice->serviceLineCode;
+                            $data['masterCompanyID'] = null;
+                            $data['documentSystemID'] = $customerInvoice->documentSystemiD;
+                            $data['documentID'] = $customerInvoice->documentID;
+                            $data['documentSystemCode'] = $customerInvoice->custInvoiceDirectAutoID;
+                            $data['documentCode'] = $customerInvoice->bookingInvCode;
+                            $data['documentDate'] = $today;
+                            $data['documentYear'] = \Helper::dateYear($customerInvoice->bookingDate);
+                            $data['documentMonth'] = \Helper::dateMonth($customerInvoice->bookingDate);
+                            $data['documentConfirmedDate'] = $customerInvoice->confirmedDate;
+                            $data['documentConfirmedBy'] = $customerInvoice->confirmedByEmpID;
+                            $data['documentConfirmedByEmpSystemID'] = $customerInvoice->confirmedByEmpSystemID;
+                            $data['documentFinalApprovedDate'] = $customerInvoice->approvedDate;
+                            $data['documentFinalApprovedBy'] = $stMaster->approvedByUserID;
+                            $data['documentFinalApprovedByEmpSystemID'] = $stMaster->approvedByUserSystemID;
+                            $data['documentNarration'] = $customerInvoice->comments;
+                            $data['clientContractID'] = 'X';
+                            $data['contractUID'] = 159;
+                            $data['supplierCodeSystem'] = null;
+                            $data['holdingShareholder'] = null;
+                            $data['holdingPercentage'] = null;
+                            $data['nonHoldingPercentage'] = null;
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = $stMaster->approvedByUserID;
+                            $data['createdUserSystemID'] = $stMaster->approvedByUserSystemID;
+                            $data['createdUserPC'] = gethostname();
+                            $data['timestamp'] = \Helper::currentDateTime();
+
+                            $glAR = $data;
+                            $glBS = $data;
+                            $glPL = $data;
+
+                            if ($customerInvoiceDetailBS) {
+                                $glBS['chartOfAccountSystemID'] = 747;
+                                $glBS['glCode'] = $customerInvoiceDetailBS->glCode;
+                                $glBS['glAccountType'] = $customerInvoiceDetailBS->accountType;
+                                $glBS['documentLocalCurrencyID'] = $customerInvoiceDetailBS->localCurrency;
+                                $glBS['documentLocalCurrencyER'] = 1;
+                                $glBS['documentLocalAmount'] = ABS($customerInvoiceDetailBS->localAmount) * -1;
+                                $glBS['documentRptCurrencyID'] = $customerInvoiceDetailBS->comRptCurrency;
+                                $glBS['documentRptCurrencyER'] = 1;
+                                $glBS['documentRptAmount'] = ABS($customerInvoiceDetailBS->comRptAmount) * -1;
+                                $glBS['documentTransCurrencyID'] = $customerInvoiceDetailBS->invoiceAmountCurrency;
+                                $glBS['documentTransCurrencyER'] = 1;
+                                $glBS['documentTransAmount'] =  ABS($customerInvoiceDetailBS->invoiceAmount) * -1;
+                                array_push($finalData, $glBS);
+                            }
+
+                            if ($customerInvoiceDetailPL) {
+                                $glPL['chartOfAccountSystemID'] = 693;
+                                $glPL['glCode'] = $customerInvoiceDetailPL->glCode;
+                                $glPL['glAccountType'] = $customerInvoiceDetailPL->accountType;
+                                $glPL['documentLocalCurrencyID'] = $customerInvoiceDetailPL->localCurrency;
+                                $glPL['documentLocalCurrencyER'] = 1;
+                                $glPL['documentLocalAmount'] = ABS($customerInvoiceDetailPL->localAmount) * -1;
+                                $glPL['documentRptCurrencyID'] = $customerInvoiceDetailPL->comRptCurrency;
+                                $glPL['documentRptCurrencyER'] = 1;
+                                $glPL['documentRptAmount'] = ABS($customerInvoiceDetailPL->comRptAmount) * -1;
+                                $glPL['documentTransCurrencyID'] = $customerInvoiceDetailPL->invoiceAmountCurrency;
+                                $glPL['documentTransCurrencyER'] = 1;
+                                $glPL['documentTransAmount'] =  ABS($customerInvoiceDetailPL->invoiceAmount)* -1;
+                                array_push($finalData, $glPL);
+                            }
+
+                            if ($customerInvoice) {
+                                $glAR['chartOfAccountSystemID'] = 647;
+                                $glAR['glCode'] = '9999983';
+                                $glAR['glAccountType'] = 'BS';
+                                $glAR['documentLocalCurrencyID'] = $customerInvoice->localCurrencyID;
+                                $glAR['documentLocalCurrencyER'] = 1;
+                                $glAR['documentLocalAmount'] = ABS($customerInvoice->bookingAmountLocal);
+                                $glAR['documentRptCurrencyID'] = $customerInvoice->companyReportingCurrencyID;
+                                $glAR['documentRptCurrencyER'] = 1;
+                                $glAR['documentRptAmount'] = ABS($customerInvoice->bookingAmountRpt);
+                                $glAR['documentTransCurrencyID'] = $customerInvoice->custTransactionCurrencyID;
+                                $glAR['documentTransCurrencyER'] = 1;
+                                $glAR['documentTransAmount'] =  ABS($customerInvoice->bookingAmountTrans);
+                                array_push($finalData, $glAR);
+                            }
+                            $generalLedgerInsert = GeneralLedger::insert($finalData);
+                        }
+                        // GL end
+
                     }
 
                     $push = true;

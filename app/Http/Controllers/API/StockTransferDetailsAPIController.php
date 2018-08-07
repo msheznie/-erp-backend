@@ -397,20 +397,40 @@ class StockTransferDetailsAPIController extends AppBaseController
             return $this->sendError('Stock Transfer not found');
         }
 
-        if ($input['qty'] > $stockTransferDetails->warehouseStockQty) {
-            return $this->sendError("Current warehouse stock Qty is: ".$stockTransferDetails->warehouseStockQty." .You cannot issue more than the current warehouse stock qty.",500,$qtyError);
-        }
-
-        if ($input['qty'] > $stockTransferDetails->currentStockQty) {
-            return $this->sendError("Current stock Qty is: ".$stockTransferDetails->currentStockQty." .You cannot issue more than the current stock qty.",500,$qtyError);
-        }
-
         if ( $stockTransferDetails->unitCostLocal == 0 ||  $stockTransferDetails->unitCostRpt == 0) {
+            $input['qty'] = 0;
+            $this->stockTransferDetailsRepository->update($input, $id);
             return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
         if ( $stockTransferDetails->unitCostLocal < 0 ||  $stockTransferDetails->unitCostRpt < 0) {
+            $input['qty'] = 0;
+            $this->stockTransferDetailsRepository->update($input, $id);
             return $this->sendError("Cost is negative. You cannot issue", 500);
+        }
+
+        if($stockTransferDetails->currentStockQty <= 0){
+            $input['qty'] = 0;
+            $this->stockTransferDetailsRepository->update($input, $id);
+            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+        }
+
+        if($stockTransferDetails->warehouseStockQty <= 0){
+            $input['qty'] = 0;
+            $this->stockTransferDetailsRepository->update($input, $id);
+            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+        }
+
+        if ($input['qty'] > $stockTransferDetails->warehouseStockQty) {
+            $input['qty'] = 0;
+            $this->stockTransferDetailsRepository->update($input, $id);
+            return $this->sendError("Current warehouse stock Qty is: ".$stockTransferDetails->warehouseStockQty." .You cannot issue more than the current warehouse stock qty.",500,$qtyError);
+        }
+
+        if ($input['qty'] > $stockTransferDetails->currentStockQty) {
+            $input['qty'] = 0;
+            $this->stockTransferDetailsRepository->update($input, $id);
+            return $this->sendError("Current stock Qty is: ".$stockTransferDetails->currentStockQty." .You cannot issue more than the current stock qty.",500,$qtyError);
         }
 
         $input['modifiedPc'] = gethostname();

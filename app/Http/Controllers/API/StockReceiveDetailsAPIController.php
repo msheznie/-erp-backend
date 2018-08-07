@@ -237,10 +237,14 @@ class StockReceiveDetailsAPIController extends AppBaseController
         }
 
         if ($stockReceiveDetails->unitCostLocal == 0 || $stockReceiveDetails->unitCostRpt == 0) {
+            $input['qty'] = 0;
+            $this->stockReceiveDetailsRepository->update($input, $id);
             return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
         if ($stockReceiveDetails->unitCostLocal < 0 || $stockReceiveDetails->unitCostRpt < 0) {
+            $input['qty'] = 0;
+            $this->stockReceiveDetailsRepository->update($input, $id);
             return $this->sendError("Cost is negative. You cannot issue", 500);
         }
 
@@ -256,6 +260,8 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $total = $stdTotalPullSum + $input['qty'] - $stockReceiveDetails->qty;
 
         if ($total > $stDetail->qty) {
+            $input['qty'] = 0;
+            $this->stockReceiveDetailsRepository->update($input, $id);
             return $this->sendError("You cannot return more than the issued Qty.", 500,$qtyError);
         }
 
