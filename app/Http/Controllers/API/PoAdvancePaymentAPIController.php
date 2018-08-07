@@ -335,15 +335,15 @@ ORDER BY
         }
         $input['currencyID'] = $input['detail']['currencyID'][0];
         $input['reqAmount'] = $input['detail']['reqAmount'];
-        $input['reqAmountTransCur_amount'] = $input['detail']['reqAmount'];
+        $input['reqAmountTransCur_amount'] = \Helper::roundValue($input['detail']['reqAmount']);
         $input['logisticCategoryID'] = $input['detail']['logisticCategoryID'];
 
         $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID,  $input['detail']['currencyID'], $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
         //$input['detail']['reqAmount'];
-        $input['reqAmountInPOTransCur'] = $companyCurrencyConversion['documentAmount'];
-        $input['reqAmountInPOLocalCur'] = $companyCurrencyConversion['localAmount'];
-        $input['reqAmountInPORptCur'] = $companyCurrencyConversion['reportingAmount'];
+        $input['reqAmountInPOTransCur'] = \Helper::roundValue($companyCurrencyConversion['documentAmount']);
+        $input['reqAmountInPOLocalCur'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+        $input['reqAmountInPORptCur'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
 
         $input['requestedByEmpID'] = $user->employee['empID'];
         $input['requestedByEmpName'] = $user->employee['empName'];
