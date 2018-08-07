@@ -229,17 +229,20 @@ class StockReceiveDetailsAPIController extends AppBaseController
 
         $input = array_except($request->all(), ['unit_by']);
         $input = $this->convertArrayToValue($input);
-
+        $qtyError = array('type' => 'qty');
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->findWithoutFail($id);
 
         if (empty($stockReceiveDetails)) {
             return $this->sendError('Stock Receive Details not found');
         }
 
-        if ($stockReceiveDetails->unitCostLocal <= 0 || $stockReceiveDetails->unitCostRpt <= 0) {
-            return $this->sendError("Cost is not updated", 500);
+        if ($stockReceiveDetails->unitCostLocal == 0 || $stockReceiveDetails->unitCostRpt == 0) {
+            return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
+        if ($stockReceiveDetails->unitCostLocal < 0 || $stockReceiveDetails->unitCostRpt < 0) {
+            return $this->sendError("Cost is negative. You cannot issue", 500);
+        }
 
         $stdTotalPullSum = StockTransferDetails::where('itemCodeSystem', $stockReceiveDetails->itemCodeSystem)
                                                     ->where('stockTransferAutoID', $stockReceiveDetails->stockTransferAutoID)
@@ -253,7 +256,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $total = $stdTotalPullSum + $input['qty'] - $stockReceiveDetails->qty;
 
         if ($total > $stDetail->qty) {
-            return $this->sendError("You cannot return more than the issued Qty.", 500);
+            return $this->sendError("You cannot return more than the issued Qty.", 500,$qtyError);
         }
 
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->update($input, $id);
