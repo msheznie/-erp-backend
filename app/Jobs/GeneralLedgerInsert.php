@@ -95,13 +95,13 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['supplierCodeSystem'] = $masterData->supplierID;
                             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransactionER;
-                            $data['documentTransAmount'] = $masterData->details[0]->transAmount * -1;
+                            $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transAmount * -1);
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = $masterData->details[0]->localAmount * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localAmount * -1);
                             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-                            $data['documentRptAmount'] = $masterData->details[0]->rptAmount * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptAmount * -1);
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = null;
                             $data['nonHoldingPercentage'] = null;
@@ -117,9 +117,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
                                     $data['glCode'] = $val->financeGLcodebBS;
                                     $data['glAccountType'] = 'BS';
-                                    $data['documentTransAmount'] = ABS($val->transAmount);
-                                    $data['documentLocalAmount'] = ABS($val->localAmount);
-                                    $data['documentRptAmount'] = ABS($val->rptAmount);
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
@@ -130,9 +130,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
                                     $data['glCode'] = $val->financeGLcodePL;
                                     $data['glAccountType'] = 'PL';
-                                    $data['documentTransAmount'] = ABS($val->transAmount);
-                                    $data['documentLocalAmount'] = ABS($val->localAmount);
-                                    $data['documentRptAmount'] = ABS($val->rptAmount);
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
@@ -146,9 +146,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['chartOfAccountSystemID'] = $val->UnbilledGRVAccountSystemID;
                                     $data['glCode'] = $val->UnbilledGRVAccount;
                                     $data['glAccountType'] = 'BS';
-                                    $data['documentTransAmount'] = ABS($val->transAmount) * -1;
-                                    $data['documentLocalAmount'] = ABS($val->localAmount) * -1;
-                                    $data['documentRptAmount'] = ABS($val->rptAmount) * -1;
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) * -1);
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) * -1);
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) * -1);
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
@@ -183,7 +183,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
                             $data['contractUID'] = 159;
-                            $data['supplierCodeSystem'] = null;
+                            $data['supplierCodeSystem'] = 0;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
@@ -255,7 +255,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
                             $data['contractUID'] = 159;
-                            $data['supplierCodeSystem'] = null;
+                            $data['supplierCodeSystem'] = 0;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
@@ -327,7 +327,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
                             $data['contractUID'] = 159;
-                            $data['supplierCodeSystem'] = null;
+                            $data['supplierCodeSystem'] = 0;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
@@ -397,7 +397,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
                             $data['contractUID'] = 159;
-                            $data['supplierCodeSystem'] = null;
+                            $data['supplierCodeSystem'] = 0;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;

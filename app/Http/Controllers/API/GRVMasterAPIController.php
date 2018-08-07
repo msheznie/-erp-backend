@@ -447,7 +447,11 @@ class GRVMasterAPIController extends AppBaseController
                                 }
                             }
                         } else {
-                            return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . ' has logistics. You can confirm the GRV only after logistics details are updated.');
+                            $grvCheck = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN',1)
+                                ->where('grvAutoID',$id)->get();
+                            if (count($grvCheck) == 0) {
+                                return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . ' has logistics. You can confirm the GRV only after logistics details are updated.');
+                            }
                         }
                     }
                 }
