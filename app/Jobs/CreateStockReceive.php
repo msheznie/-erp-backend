@@ -12,6 +12,7 @@ use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
 use App\Models\StockTransfer;
 use App\Models\StockTransferDetails;
+use App\Repositories\CustomerInvoiceDirectDetailRepository;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -41,19 +42,19 @@ class CreateStockReceive implements ShouldQueue
      *
      * @return void
      */
-    public function handle(CustomerInvoiceDirectRepository $customerInvoiceRep)
+    public function handle(CustomerInvoiceDirectRepository $customerInvoiceRep,
+                           CustomerInvoiceDirectDetailRepository $customerInvoiceDetailRep)
     {
         Log::useFiles(storage_path() . '/logs/create_stock_receive_jobs.log');
         $st = $this->stMaster;
         $stMaster = StockTransfer::where('stockTransferAutoID', $st->stockTransferAutoID)->first();
         if (!empty($stMaster)) {
-            //Log::info($stMaster);
             DB::beginTransaction();
             try {
                 Log::info('Successfully start  stock_receive' . date('H:i:s'));
-                // Log::info($stMaster);
                 if ($stMaster->interCompanyTransferYN == -1) {
 
+                    $stDetails = StockTransferDetails::where("stockTransferAutoID", $stMaster->stockTransferAutoID)->get();
                     $customerInvoiceData = array();
                     $customerInvoiceData['transactionMode'] = null;
                     $customerInvoiceData['companySystemID'] = $stMaster->companyFromSystemID;
@@ -69,6 +70,7 @@ class CreateStockReceive implements ShouldQueue
                                                                     ->first();
 
                     $today = date('Y-m-d');
+                    $comment = "Inter Company Stock Transfer from " . $stMaster->companyFrom . " to " . $stMaster->companyTo . " " . $stMaster->stockTransferCode;
 
                     if (!empty($fromCompanyFinancePeriod)) {
                         $fromCompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
@@ -112,14 +114,13 @@ class CreateStockReceive implements ShouldQueue
                         $customerInvoiceData['bookingInvCode'] = $bookingInvCode;
                         $customerInvoiceData['bookingDate'] = $today;
 
-                        $comment = "Inter Company Stock Transfer from " . $stMaster->companyFrom . " to " . $stMaster->companyTo . " " . $stMaster->stockTransferCode;
                         $customerInvoiceData['comments'] = $comment;
 
                         $customer = CustomerMaster::where('companyLinkedToSystemID', $stMaster->companyToSystemID)->first();
 
-                        if(!empty($customer)){
-                            $customerInvoiceData['customerID']        = $customer->customerCodeSystem;
-                            $customerInvoiceData['customerGLCode']    = $customer->custGLaccount;
+                        if (!empty($customer)) {
+                            $customerInvoiceData['customerID'] = $customer->customerCodeSystem;
+                            $customerInvoiceData['customerGLCode'] = $customer->custGLaccount;
                             $customerInvoiceData['customerInvoiceNo'] = $stMaster->stockTransferCode;
                             $customerInvoiceData['customerInvoiceDate'] = $today;
                         }
@@ -128,9 +129,9 @@ class CreateStockReceive implements ShouldQueue
                         $customerInvoiceData['serviceEndDate'] = $today;
                         $customerInvoiceData['performaDate'] = $today;
 
-                        $fromCompany = Company::where('companySystemID',$stMaster->companyFromSystemID)->first();
+                        $fromCompany = Company::where('companySystemID', $stMaster->companyFromSystemID)->first();
 
-                        if($fromCompany){
+                        if ($fromCompany) {
                             $customerInvoiceData['companyReportingCurrencyID'] = $fromCompany->reportingCurrency;
                             $customerInvoiceData['companyReportingER'] = 1;
 
@@ -141,18 +142,38 @@ class CreateStockReceive implements ShouldQueue
                             $customerInvoiceData['custTransactionCurrencyER'] = 1;
                         }
 
-                        $customerInvoiceData['bookingAmountTrans'] = '';
-                        $customerInvoiceData['bookingAmountLocal'] = '';
-                        $customerInvoiceData['bookingAmountRpt'] = '';
+                        $bookingAmountLocal = 0;
+                        $bookingAmountRpt = 0;
+                        $totalLocal = 0;
+                        $totalRpt = 0;
+                        $revenueTotalLocal = 0;
+                        $revenueTotalRpt = 0;
+                        $totalQty = 0;
 
+                        foreach ($stDetails as $new) {
+                            $bookingAmountLocal = $bookingAmountLocal + (($new['unitCostLocal'] * 1.03) * $new['qty']);
+                            $bookingAmountRpt = $bookingAmountRpt + (($new['unitCostRpt'] * 1.03) * $new['qty']);
+
+                            $totalLocal = $totalLocal + (($new['unitCostLocal']) * $new['qty']);
+                            $totalRpt = $totalRpt + (($new['unitCostRpt']) * $new['qty']);
+
+                            $revenueTotalLocal = $revenueTotalLocal + (($new['unitCostLocal'] * 0.03) * $new['qty']);
+                            $revenueTotalRpt = $revenueTotalRpt + (($new['unitCostRpt'] * 0.03) * $new['qty']);
+
+                            $totalQty = $totalQty + $new['qty'];
+                        }
+
+                        $customerInvoiceData['bookingAmountTrans'] = $bookingAmountRpt;
+                        $customerInvoiceData['bookingAmountLocal'] = $bookingAmountLocal;
+                        $customerInvoiceData['bookingAmountRpt'] = $bookingAmountRpt;
 
                         $customerInvoiceData['confirmedYN'] = 1;
                         $customerInvoiceData['confirmedByEmpSystemID'] = $stMaster->confirmedByEmpSystemID;
-                        $customerInvoiceData['confirmedByEmpID']       = $stMaster->confirmedByEmpID;
-                        $customerInvoiceData['confirmedByName']        = $stMaster->confirmedByName;
-                        $customerInvoiceData['confirmedDate']          = $stMaster->confirmedDate;
+                        $customerInvoiceData['confirmedByEmpID'] = $stMaster->confirmedByEmpID;
+                        $customerInvoiceData['confirmedByName'] = $stMaster->confirmedByName;
+                        $customerInvoiceData['confirmedDate'] = $stMaster->confirmedDate;
 
-                        $customerInvoiceData['approved']     = -1;
+                        $customerInvoiceData['approved'] = -1;
                         $customerInvoiceData['approvedDate'] = $stMaster->approvedDate;
 
                         $customerInvoiceData['documentType'] = 11;
@@ -162,11 +183,55 @@ class CreateStockReceive implements ShouldQueue
                         $customerInvoiceData['createdUserSystemID'] = $stMaster->confirmedByEmpSystemID;
                         $customerInvoiceData['createdUserID'] = $stMaster->confirmedByEmpID;
                         $customerInvoiceData['createdPcID'] = $stMaster->modifiedPc;
+
+
+                        $customerInvoice = $customerInvoiceRep->create($customerInvoiceData);
+                        $cusInvoiceDetails = array();
+
+                        $cusInvoiceDetails['custInvoiceDirectID'] = $customerInvoice->custInvoiceDirectAutoID;
+                        $cusInvoiceDetails['companyID'] = $stMaster->companyID;
+                        $cusInvoiceDetails['serviceLineCode'] = $stMaster->serviceLineCode;
+                        $cusInvoiceDetails['customerID'] = $customer->customerCodeSystem;
+                        $cusInvoiceDetails['comments'] = $comment;
+
+                        $cusInvoiceDetails['unitOfMeasure'] = 7;
+                        $cusInvoiceDetails['invoiceQty'] = 1;
+                        $cusInvoiceDetails['invoiceAmountCurrency'] = $fromCompany->reportingCurrency;;
+                        $cusInvoiceDetails['invoiceAmountCurrencyER'] = 1;
+                        $cusInvoiceDetails['localCurrency'] = $fromCompany->localCurrencyID;
+                        $cusInvoiceDetails['localCurrencyER'] = 1;
+                        $cusInvoiceDetails['comRptCurrency'] = $fromCompany->reportingCurrency;;
+                        $cusInvoiceDetails['comRptCurrencyER'] = 1;
+
+
+                        $glBS = $cusInvoiceDetails;
+                        $glPL = $cusInvoiceDetails;
+
+                        $glBS['glCode'] = '91582';
+                        $glBS['glCodeDes'] = 'Product Revenue -Intercompany';
+                        $glBS['accountType'] = 'PL';
+                        $glBS['invoiceAmount'] = $revenueTotalRpt;
+                        $glBS['unitCost']      = $revenueTotalRpt;
+                        $glBS['localAmount']   =   $revenueTotalLocal;
+                        $glBS['comRptAmount']  =  $revenueTotalRpt;
+
+                        $glPL['glCode']        = '20023';
+                        $glPL['glCodeDes']     = 'Intercompany stock transfer';
+                        $glPL['accountType']   = 'BS';
+                        $glPL['invoiceAmount'] = $totalRpt;
+                        $glPL['unitCost']      = $totalRpt;
+                        $glPL['localAmount']   = $totalLocal;
+                        $glPL['comRptAmount']  = $totalRpt;
+
+                        $customerInvoiceDetailPL = $customerInvoiceDetailRep->create($glPL);
+                        $customerInvoiceDetailBS = $customerInvoiceDetailRep->create($glBS);
+
+                        Log::info($customerInvoice);
+                        Log::info($customerInvoiceDetailPL);
+                        Log::info($customerInvoiceDetailBS);
                     }
 
-                    $customerInvoiceRep->create($customerInvoiceData);
-                    Log::info($customerInvoiceData);
-                    $push = false;
+                    $push = true;
                     if ($push) {
                         $lastSerial = StockReceive::where('companySystemID', $stMaster->companyToSystemID)
                             ->where('companyFinanceYearID', $stMaster->companyFinanceYearID)
@@ -210,12 +275,12 @@ class CreateStockReceive implements ShouldQueue
 
 
                         $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $stMaster->companyToSystemID)
-                            ->where('departmentSystemID', 10)
-                            ->where('isActive', -1)
-                            ->where('dateFrom', '<', $stMaster->tranferDate)
-                            ->where('dateTo', '>', $stMaster->tranferDate)
-                            ->where('isCurrent', -1)
-                            ->first();
+                                                                        ->where('departmentSystemID', 10)
+                                                                        ->where('isActive', -1)
+                                                                        ->where('dateFrom', '<', $stMaster->tranferDate)
+                                                                        ->where('dateTo', '>', $stMaster->tranferDate)
+                                                                        ->where('isCurrent', -1)
+                                                                        ->first();
 
                         if (!empty($toCompanyFinancePeriod)) {
                             $companyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
@@ -245,10 +310,6 @@ class CreateStockReceive implements ShouldQueue
                         $stockTransferCode = ($stockReceive->companyID . '\\' . $finYear . '\\' . $stockReceive->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
                         $stockReceive->stockReceiveCode = $stockTransferCode;
                         $stockReceive->save();
-                        Log::info($stockReceive);
-
-                        $stDetails = StockTransferDetails::where("stockTransferAutoID", $stMaster->stockTransferAutoID)->get();
-
                         foreach ($stDetails as $new) {
 
                             $item = array();
@@ -276,12 +337,12 @@ class CreateStockReceive implements ShouldQueue
                                 // return $this->sendError("Cost is not updated", 500);
                             } else {
                                 $srdItem = StockReceiveDetails::insert($item);
+                                Log::info($srdItem);
                                 $stDetail = StockTransferDetails::where('stockTransferDetailsID', $new['stockTransferDetailsID'])->first();
                                 $stDetail->addedToRecieved = -1;
                                 $stDetail->stockRecieved = -1;
                                 $stDetail->save();
                             }
-
                         }
 
                         $stMaster->fullyReceived = -1;

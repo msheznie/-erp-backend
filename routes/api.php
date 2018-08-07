@@ -620,6 +620,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('contracts', 'ContractAPIController');
     Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
+
+    Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+    Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -648,11 +651,3 @@ Route::get('runQueueSR', function () {
      $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',2918)->first();
      $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
 });
-
-
-
-
-
-Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
-
-Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
