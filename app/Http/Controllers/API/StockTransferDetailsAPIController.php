@@ -381,9 +381,9 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
-
         $input = array_except($request->all(), 'unit_by');
         $input = $this->convertArrayToValue($input);
+        $qtyError = array('type' => 'qty');
 
         /** @var StockTransferDetails $stockTransferDetails */
         $stockTransferDetails = $this->stockTransferDetailsRepository->findWithoutFail($id);
@@ -398,11 +398,19 @@ class StockTransferDetailsAPIController extends AppBaseController
         }
 
         if ($input['qty'] > $stockTransferDetails->warehouseStockQty) {
-            return $this->sendError("Current warehouse stock Qty is: ".$stockTransferDetails->warehouseStockQty." .You cannot issue more than the current warehouse stock qty.",500);
+            return $this->sendError("Current warehouse stock Qty is: ".$stockTransferDetails->warehouseStockQty." .You cannot issue more than the current warehouse stock qty.",500,$qtyError);
         }
 
         if ($input['qty'] > $stockTransferDetails->currentStockQty) {
-            return $this->sendError("Current stock Qty is: ".$stockTransferDetails->currentStockQty." .You cannot issue more than the current stock qty.",500);
+            return $this->sendError("Current stock Qty is: ".$stockTransferDetails->currentStockQty." .You cannot issue more than the current stock qty.",500,$qtyError);
+        }
+
+        if ($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0) {
+            return $this->sendError("Cost is 0. You cannot issue", 500);
+        }
+
+        if ($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0) {
+            return $this->sendError("Cost is negative. You cannot issue", 500);
         }
 
         $input['modifiedPc'] = gethostname();

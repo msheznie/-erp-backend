@@ -644,6 +644,14 @@ Route::get('runQueue', function () {
 });
 
 Route::get('runQueueSR', function () {
-     $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',1026)->first();
+     $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',2918)->first();
      $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
 });
+
+
+
+
+
+Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+
+Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');

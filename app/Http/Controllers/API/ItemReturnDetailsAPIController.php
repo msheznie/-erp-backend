@@ -354,6 +354,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
     {
         $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue']);
         $input = $this->convertArrayToValue($input);
+        $qtyError = array('type' => 'qty');
 
         /** @var ItemReturnDetails $itemReturnDetails */
         $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
@@ -406,9 +407,8 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 return $this->sendError('Materiel Issue not found', 500);
             }
         }
-
         if ($input['qtyIssuedDefaultMeasure'] > $input['qtyFromIssue']) {
-            return $this->sendError("You cannot return more than the issued Qty", 500);
+            return $this->sendError("You cannot return more than the issued Qty", 500,$qtyError);
         }
 
 
