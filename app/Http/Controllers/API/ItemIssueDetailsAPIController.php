@@ -275,7 +275,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError("Cost is negative. You cannot issue.", 500);
         }
 
-
         // check policy 18
 
         $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
@@ -542,7 +541,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         $input = array_except($request->all(), ['uom_default', 'uom_issuing']);
         $input = $this->convertArrayToValue($input);
-
+        $qtyError = array('type' => 'qty');
         /** @var ItemIssueDetails $itemIssueDetails */
         $itemIssueDetails = $this->itemIssueDetailsRepository->findWithoutFail($id);
 
@@ -587,11 +586,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
         if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentWareHouseStockQty) {
-            return $this->sendError("Current warehouse stock Qty is: " .$itemIssueDetails->currentWareHouseStockQty." .You cannot issue more than the current warehouse stock qty.", 500);
+            return $this->sendError("Current warehouse stock Qty is: " .$itemIssueDetails->currentWareHouseStockQty." .You cannot issue more than the current warehouse stock qty.", 500,$qtyError);
         }
 
         if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentStockQty) {
-            return $this->sendError( "Current stock Qty is: ".$itemIssueDetails->currentStockQty." .You cannot issue more than the current stock qty.", 500);
+            return $this->sendError( "Current stock Qty is: ".$itemIssueDetails->currentStockQty." .You cannot issue more than the current stock qty.", 500,$qtyError);
         }
 
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];

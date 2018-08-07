@@ -19,9 +19,9 @@ class AppBaseController extends BaseController
     {
         return Response::json(ResponseUtil::makeResponse($message, $result));
     }
-    public function sendError($error, $code = 404)
+    public function sendError($error, $code = 404,$errorType = array('type' => ''))
     {
-        return Response::json(ResponseUtil::makeError($error), $code);
+        return Response::json(ResponseUtil::makeError($error,$errorType), $code);
     }
 
 

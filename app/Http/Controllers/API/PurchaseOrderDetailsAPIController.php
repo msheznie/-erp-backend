@@ -467,21 +467,21 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         if ($new['poUnitAmount'] > 0) {
                             $currencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $new['poUnitAmount']);
 
-                            $prDetail_arr['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                            $prDetail_arr['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                             $prDetail_arr['GRVcostPerUnitSupTransCur'] = $new['poUnitAmount'];
-                            $prDetail_arr['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
+                            $prDetail_arr['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
 
-                            $prDetail_arr['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                            $prDetail_arr['purchaseRetcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                             $prDetail_arr['purchaseRetcostPerUnitTranCur'] = $new['poUnitAmount'];
-                            $prDetail_arr['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
+                            $prDetail_arr['purchaseRetcostPerUnitRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
                         }
 
                         // adding supplier Default CurrencyID base currency conversion
                         if ($new['poUnitAmount'] > 0) {
                             $currencyConversionDefault = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $new['poUnitAmount']);
 
-                            $prDetail_arr['GRVcostPerUnitSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
-                            $prDetail_arr['purchaseRetcostPerUniSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
+                            $prDetail_arr['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+                            $prDetail_arr['purchaseRetcostPerUniSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
                         }
 
                         $item = $this->purchaseOrderDetailsRepository->create($prDetail_arr);

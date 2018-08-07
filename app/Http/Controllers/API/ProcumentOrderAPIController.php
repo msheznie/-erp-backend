@@ -698,9 +698,9 @@ class ProcumentOrderAPIController extends AppBaseController
                     PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
                         ->update([
                             'VATPercentage' => $input['VATPercentage'],
-                            'VATAmount' => $vatLineAmount,
-                            'VATAmountLocal' => round($currencyConversionForLineAmount['localAmount'], 8),
-                            'VATAmountRpt' => round($currencyConversionForLineAmount['reportingAmount'], 8)
+                            'VATAmount' => \Helper::roundValue($vatLineAmount),
+                            'VATAmountLocal' => \Helper::roundValue($currencyConversionForLineAmount['localAmount']),
+                            'VATAmountRpt' => \Helper::roundValue($currencyConversionForLineAmount['reportingAmount'])
                         ]);
                 }
             }
@@ -714,9 +714,9 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $input['VATAmount']);
 
-            $procumentOrderUpdate->VATAmount = $calculatVatAmount;
-            $procumentOrderUpdate->VATAmountLocal = round($currencyConversionVatAmount['localAmount'], 8);
-            $procumentOrderUpdate->VATAmountRpt = round($currencyConversionVatAmount['reportingAmount'], 8);
+            $procumentOrderUpdate->VATAmount = \Helper::roundValue($calculatVatAmount);
+            $procumentOrderUpdate->VATAmountLocal = \Helper::roundValue($currencyConversionVatAmount['localAmount']);
+            $procumentOrderUpdate->VATAmountRpt = \Helper::roundValue($currencyConversionVatAmount['reportingAmount']);
 
         } else {
             $procumentOrderUpdate->VATAmount = 0;
@@ -3314,8 +3314,8 @@ WHERE
 
         if ($purchaseOrder->supplierVATEligible == 1) {
             $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->VATAmount);
-            $purchaseOrder->VATAmountLocal = round($currencyConversionVatAmount['localAmount'], 8);
-            $purchaseOrder->VATAmountRpt = round($currencyConversionVatAmount['reportingAmount'], 8);
+            $purchaseOrder->VATAmountLocal = \Helper::roundValue($currencyConversionVatAmount['localAmount']);
+            $purchaseOrder->VATAmountRpt = \Helper::roundValue($currencyConversionVatAmount['reportingAmount']);
         } else {
             $purchaseOrder->VATAmount = 0;
             $purchaseOrder->VATAmountLocal = 0;
@@ -3428,9 +3428,9 @@ WHERE
                 $currencyConversionForLineAmount = \Helper::currencyConversion($purchaseOrderDetail->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $vatLineAmount);
 
                 $purchaseOrderDetail->VATPercentage = round($purchaseOrder->VATPercentage, 2);
-                $purchaseOrderDetail->VATAmount = round($vatLineAmount, 8);
-                $purchaseOrderDetail->VATAmountLocal = round($currencyConversionForLineAmount['localAmount'], 8);
-                $purchaseOrderDetail->VATAmountRpt = round($currencyConversionForLineAmount['reportingAmount'], 8);
+                $purchaseOrderDetail->VATAmount = \Helper::roundValue($vatLineAmount);
+                $purchaseOrderDetail->VATAmountLocal = \Helper::roundValue($currencyConversionForLineAmount['localAmount']);
+                $purchaseOrderDetail->VATAmountRpt = \Helper::roundValue($currencyConversionForLineAmount['reportingAmount']);
             } else {
                 $purchaseOrderDetail->VATPercentage = 0;
                 $purchaseOrderDetail->VATAmount = 0;
@@ -3516,9 +3516,9 @@ WHERE
 
             $updatePOMaster = ProcumentOrder::find($purchaseOrder->purchaseOrderID)
                 ->update([
-                    'VATAmount' => $calculatVatAmount,
-                    'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
-                    'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
+                    'VATAmount' => \Helper::roundValue($calculatVatAmount),
+                    'VATAmountLocal' => \Helper::roundValue($currencyConversionVatAmount['localAmount']),
+                    'VATAmountRpt' => \Helper::roundValue($currencyConversionVatAmount['reportingAmount'])
                 ]);
         }
 

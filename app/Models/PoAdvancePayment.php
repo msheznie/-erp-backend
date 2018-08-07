@@ -74,11 +74,16 @@ class PoAdvancePayment extends Model
         'poTermID',
         'supplierID',
         'SupplierPrimaryCode',
+        'liabilityAccountSysemID',
+        'liabilityAccount',
+        'UnbilledGRVAccountSystemID',
+        'UnbilledGRVAccount',
         'reqDate',
         'narration',
         'currencyID',
         'reqAmount',
         'reqAmountTransCur_amount',
+        'logisticCategoryID',
         'confirmedYN',
         'approvedYN',
         'selectedToPayment',
@@ -112,10 +117,15 @@ class PoAdvancePayment extends Model
         'poTermID' => 'integer',
         'supplierID' => 'integer',
         'SupplierPrimaryCode' => 'string',
+        'liabilityAccountSysemID' => 'integer',
+        'liabilityAccount'  => 'string',
+        'UnbilledGRVAccountSystemID' => 'integer',
+        'UnbilledGRVAccount'  => 'string',
         'narration' => 'string',
         'currencyID' => 'integer',
         'reqAmount' => 'float',
         'reqAmountTransCur_amount' => 'float',
+        'logisticCategoryID' => 'integer',
         'confirmedYN' => 'integer',
         'approvedYN' => 'integer',
         'selectedToPayment' => 'integer',
@@ -156,6 +166,16 @@ class PoAdvancePayment extends Model
     public function company()
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function grv_by()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
+    }
+
+    public function category_by()
+    {
+        return $this->belongsTo('App\Models\AddonCostCategories', 'logisticCategoryID', 'idaddOnCostCategories');
     }
 
 
