@@ -49,6 +49,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
 use App\Models\AddonCostCategories;
+use App\Models\Alert;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
@@ -739,7 +740,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                return $this->sendError('Every item should have at least one minimum qty requested', 500);
             }
 
             //checking atleast one po payment terms should exist
@@ -757,7 +758,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->count();
 
             if ($checkPoPaymentTermsAmount > 0) {
-                return $this->sendError('You cannot confirm Payment term with 0 amount', 500);
+                return $this->sendError('You cannot confirm payment term with 0 amount', 500);
             }
 
             //po payment terms exist
@@ -767,7 +768,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->first();
 
             if (!empty($PoPaymentTerms)) {
-                return $this->sendError('Advance Payment Request is pending');
+                return $this->sendError('Advance payment request is pending');
             }
 
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
@@ -1591,7 +1592,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->first();
 
         if (!empty($detailExistAPD)) {
-            return $this->sendError('Cannot ' . $comment . '. Advance Payment is created for this PO');
+            return $this->sendError('Cannot ' . $comment . '. Advance payment is created for this PO');
         }
 
         return $this->sendResponse($purchaseOrderID, 'Details retrieved successfully');
@@ -3170,7 +3171,7 @@ WHERE
         }
 
         if ($detailExistAPD) {
-            return $this->sendError('You cannot amend Advance Payment is created for this PO');
+            return $this->sendError('You cannot amend advance payment is created for this PO');
         }
 
         if ($procurementOrder->poClosedYN == 1) {
@@ -3883,15 +3884,99 @@ FROM
 
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $purchaseOrderID)->first();
 
+        $company = Company::where('companySystemID', $procumentOrderUpdate->companySystemID)->first();
+
+        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrderUpdate->purchaseOrderID)->with(['detail' => function ($query) {
+            $query->with('unit');
+        }, 'approved_by' => function ($query) {
+            $query->with('employee');
+            $query->whereIN('documentSystemID', [2, 5, 52]);
+        }, 'suppliercontact' => function ($query) {
+            $query->where('isDefault', -1);
+        }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
+
+        $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $procumentOrderUpdate->companySystemID)
+            ->where('documentSystemID', $procumentOrderUpdate->documentSystemID)
+            ->first();
+
+        $currencyDecimal = CurrencyMaster::select('DecimalPlaces')->where('currencyID', $procumentOrderUpdate->supplierTransactionCurrencyID)
+            ->first();
+        $decimal = 2;
+        if (!empty($currencyDecimal)) {
+            $decimal = $currencyDecimal['DecimalPlaces'];
+        }
+
+        $documentTitle = 'Purchase Order';
+        if ($procumentOrderUpdate->documentSystemID == 2) {
+            $documentTitle = 'Purchase Order';
+        } else if ($procumentOrderUpdate->documentSystemID == 5 && $procumentOrderUpdate->poType_N == 5) {
+            $documentTitle = 'Work Order';
+        } else if ($procumentOrderUpdate->documentSystemID == 5 && $procumentOrderUpdate->poType_N == 6) {
+            $documentTitle = 'Sub Work Order';
+        } else if ($procumentOrderUpdate->documentSystemID == 52) {
+            $documentTitle = 'Direct Order';
+        }
+
+        $poPaymentTerms = PoPaymentTerms::where('poID', $procumentOrderUpdate->purchaseOrderID)
+            ->get();
+
+        $paymentTermsView = '';
+
+        if ($poPaymentTerms) {
+            foreach ($poPaymentTerms as $val) {
+                $paymentTermsView .= $val['paymentTemDes'] . ', ';
+            }
+        }
+
+        $order = array(
+            'podata' => $outputRecord[0],
+            'docRef' => $refernaceDoc,
+            'numberFormatting' => $decimal,
+            'title' => $documentTitle,
+            'paymentTermsView' => $paymentTermsView
+
+        );
+        $html = view('print.purchase_order_print_pdf', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html)->save('emailAttachment/po_print_' . time() . '.pdf');
+
+        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
+            "<br>This is an auto generated email. Please do not reply to this email because we are not" .
+            "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+
+
+        if (!empty($procumentOrderUpdate->supplierEmail)) {
+            $dataEmail['empName'] = $procumentOrderUpdate->supplierName;
+            $dataEmail['empEmail'] = $procumentOrderUpdate->supplierEmail;
+
+            $dataEmail['companySystemID'] = $procumentOrderUpdate->companySystemID;
+            $dataEmail['companyID'] = $procumentOrderUpdate->companyID;
+
+            $dataEmail['docID'] = $procumentOrderUpdate->documentID;
+            $dataEmail['docSystemID'] = $procumentOrderUpdate->documentSystemID;
+            $dataEmail['docSystemCode'] = $procumentOrderUpdate->purchaseOrderID;
+
+            $dataEmail['docApprovedYN'] = $procumentOrderUpdate->approved;
+            $dataEmail['docCode'] = $procumentOrderUpdate->purchaseOrderCode;
+
+            $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
+
+            $dataEmail['isEmailSend'] = 0;
+            $dataEmail['attachmentFileName'] = 'po_print_' . time();
+            $dataEmail['alertMessage'] = "New order from " . $company->CompanyName;
+            $dataEmail['emailAlertMessage'] = $temp;
+            Alert::create($dataEmail);
+        }
+
         $procumentOrderUpdate->sentToSupplier = -1;
         $procumentOrderUpdate->sentToSupplierByEmpSystemID = $employee->employeeSystemID;
         $procumentOrderUpdate->sentToSupplierByEmpID = $employee->empID;
         $procumentOrderUpdate->sentToSupplierByEmpName = $employee->empName;
-        $procumentOrderUpdate->sentToSupplierDate = now();;
+        $procumentOrderUpdate->sentToSupplierDate = now();
 
         $procumentOrderUpdate->save();
 
-        return $this->sendResponse($purchaseOrderID, 'Supplier detail updated successfully');
+        return $this->sendResponse($purchaseOrderID, 'Sent supplier detail updated successfully');
     }
 
     public function getProcurementOrderReferBack(Request $request)
