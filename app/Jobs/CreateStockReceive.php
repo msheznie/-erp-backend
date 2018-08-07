@@ -186,14 +186,13 @@ class CreateStockReceive implements ShouldQueue
 
 
                         $customerInvoice = $customerInvoiceRep->create($customerInvoiceData);
-                        $cusInvoiceDetails = array();
 
+                        $cusInvoiceDetails = array();
                         $cusInvoiceDetails['custInvoiceDirectID'] = $customerInvoice->custInvoiceDirectAutoID;
                         $cusInvoiceDetails['companyID'] = $stMaster->companyID;
                         $cusInvoiceDetails['serviceLineCode'] = $stMaster->serviceLineCode;
                         $cusInvoiceDetails['customerID'] = $customer->customerCodeSystem;
                         $cusInvoiceDetails['comments'] = $comment;
-
                         $cusInvoiceDetails['unitOfMeasure'] = 7;
                         $cusInvoiceDetails['invoiceQty'] = 1;
                         $cusInvoiceDetails['invoiceAmountCurrency'] = $fromCompany->reportingCurrency;;
@@ -337,7 +336,6 @@ class CreateStockReceive implements ShouldQueue
                                 // return $this->sendError("Cost is not updated", 500);
                             } else {
                                 $srdItem = StockReceiveDetails::insert($item);
-                                Log::info($srdItem);
                                 $stDetail = StockTransferDetails::where('stockTransferDetailsID', $new['stockTransferDetailsID'])->first();
                                 $stDetail->addedToRecieved = -1;
                                 $stDetail->stockRecieved = -1;
