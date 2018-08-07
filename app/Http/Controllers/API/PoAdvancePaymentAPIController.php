@@ -297,7 +297,7 @@ FROM
 	erp_grvmaster
 INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
 WHERE
-	erp_grvmaster.grvConfirmedYN = 1
+	erp_grvmaster.grvConfirmedYN = 0
 AND erp_grvmaster.approved = 0
 GROUP BY
 	erp_grvmaster.grvAutoID,
@@ -308,9 +308,9 @@ HAVING
 ORDER BY
 	erp_grvmaster.grvAutoID DESC');
 
-        /*if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
+        if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
             return $this->sendError('Please select a GRV as there is a GRV done for this PO');
-        }*/
+        }
 
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
         $input['serviceLineID'] = $purchaseOrder->serviceLine;
@@ -323,11 +323,11 @@ ORDER BY
         $input['narration'] = $input['detail']['narration'];
 
         //grv code sorting
-        /*if (isset($input['detail']['grvAutoID']) && !empty($input['detail']['grvAutoID'])) {
+        if (isset($input['detail']['grvAutoID']) && !empty($input['detail']['grvAutoID'])) {
             $input['grvAutoID'] = $input['detail']['grvAutoID'];
         } else {
             $input['grvAutoID'] = 0;
-        }*/
+        }
 
         if (isset($input['detail']['reqDate'])) {
             $masterDate = str_replace('/', '-', $input['detail']['reqDate']);
@@ -335,15 +335,15 @@ ORDER BY
         }
         $input['currencyID'] = $input['detail']['currencyID'][0];
         $input['reqAmount'] = $input['detail']['reqAmount'];
-        $input['reqAmountTransCur_amount'] = $input['detail']['reqAmount'];
+        $input['reqAmountTransCur_amount'] = \Helper::roundValue($input['detail']['reqAmount']);
         $input['logisticCategoryID'] = $input['detail']['logisticCategoryID'];
 
         $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID,  $input['detail']['currencyID'], $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
         //$input['detail']['reqAmount'];
-        $input['reqAmountInPOTransCur'] = $companyCurrencyConversion['documentAmount'];
-        $input['reqAmountInPOLocalCur'] = $companyCurrencyConversion['localAmount'];
-        $input['reqAmountInPORptCur'] = $companyCurrencyConversion['reportingAmount'];
+        $input['reqAmountInPOTransCur'] = \Helper::roundValue($companyCurrencyConversion['documentAmount']);
+        $input['reqAmountInPOLocalCur'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+        $input['reqAmountInPORptCur'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
 
         $input['requestedByEmpID'] = $user->employee['empID'];
         $input['requestedByEmpName'] = $user->employee['empName'];

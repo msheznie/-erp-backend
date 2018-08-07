@@ -429,6 +429,7 @@ class GRVMasterAPIController extends AppBaseController
             // checking logistic details  exist and updating grv id in erp_purchaseorderadvpayment  table
             $fetchingGRVDetails = GRVDetails::select(DB::raw('purchaseOrderMastertID'))
                 ->where('grvAutoID', $input['grvAutoID'])
+                ->groupBy('purchaseOrderMastertID')
                 ->get();
 
             if ($fetchingGRVDetails) {
@@ -436,7 +437,7 @@ class GRVMasterAPIController extends AppBaseController
                     $poMaster = ProcumentOrder::find($der['purchaseOrderMastertID']);
                     if ($poMaster->logisticsAvailable == -1) {
                         $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN',1)
-                            ->get();
+                            ->where('grvAutoID',0)->get();
                         if (count($poAdvancePaymentdetail) > 0) {
                             foreach ($poAdvancePaymentdetail as $advance) {
                                 if ($advance['grvAutoID'] == 0) {
