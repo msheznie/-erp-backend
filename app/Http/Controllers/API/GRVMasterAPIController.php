@@ -482,13 +482,13 @@ class GRVMasterAPIController extends AppBaseController
 
                     $logisticsChargest_RptCur = ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
 
-                    $updateGRVDetail_log_detail->logisticsCharges_TransCur = $logisticsCharges_TransCur;
-                    $updateGRVDetail_log_detail->logisticsCharges_LocalCur = $logisticsCharges_LocalCur;
-                    $updateGRVDetail_log_detail->logisticsChargest_RptCur = $logisticsChargest_RptCur;
+                    $updateGRVDetail_log_detail->logisticsCharges_TransCur = \Helper::roundValue($logisticsCharges_TransCur);
+                    $updateGRVDetail_log_detail->logisticsCharges_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur);
+                    $updateGRVDetail_log_detail->logisticsChargest_RptCur = \Helper::roundValue($logisticsChargest_RptCur);
 
-                    $updateGRVDetail_log_detail->landingCost_TransCur = $logisticsCharges_TransCur + $row['GRVcostPerUnitSupTransCur'];
-                    $updateGRVDetail_log_detail->landingCost_LocalCur = $logisticsCharges_LocalCur + $row['GRVcostPerUnitLocalCur'];
-                    $updateGRVDetail_log_detail->landingCost_RptCur = $logisticsChargest_RptCur + $row['GRVcostPerUnitComRptCur'];
+                    $updateGRVDetail_log_detail->landingCost_TransCur = \Helper::roundValue($logisticsCharges_TransCur) + $row['GRVcostPerUnitSupTransCur'];
+                    $updateGRVDetail_log_detail->landingCost_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur) + $row['GRVcostPerUnitLocalCur'];
+                    $updateGRVDetail_log_detail->landingCost_RptCur = \Helper::roundValue($logisticsChargest_RptCur) + $row['GRVcostPerUnitComRptCur'];
 
                     $updateGRVDetail_log_detail->save();
                 }

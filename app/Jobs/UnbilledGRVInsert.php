@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\GRVDetails;
+use App\Models\PoAdvancePayment;
 use App\Models\UnbilledGrvGroupBy;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -46,6 +47,10 @@ class UnbilledGRVInsert implements ShouldQueue
                 Log::info($output);
                 if ($output) {
                     UnbilledGrvGroupBy::insert($output->toArray());
+                    $output = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,erp_grvmaster.grvDate,erp_grvmaster.supplierTransactionCurrencyID,erp_grvmaster.supplierTransactionER as supplierTransactionCurrencyER,erp_grvmaster.companyReportingCurrencyID,erp_grvmaster.companyReportingER,erp_grvmaster.localCurrencyID,erp_grvmaster.localCurrencyER,SUM(reqAmountInPOTransCur) as totTransactionAmount,SUM(reqAmountInPOLocalCur) as totLocalAmount, SUM(reqAmountInPORptCur) as totRptAmount,'POG' as grvType,NOW() as timeStamp")->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->where('erp_purchaseorderadvpayment.grvAutoID',$masterModel["autoID"])->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID')->get();
+                    if($output){
+                        UnbilledGrvGroupBy::insert($output->toArray());
+                    }
                     DB::commit();
                     Log::info('Successfully updated to unbilled grv table' . date('H:i:s'));
                 }else{
