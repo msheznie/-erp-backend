@@ -429,6 +429,7 @@ class GRVMasterAPIController extends AppBaseController
             // checking logistic details  exist and updating grv id in erp_purchaseorderadvpayment  table
             $fetchingGRVDetails = GRVDetails::select(DB::raw('purchaseOrderMastertID'))
                 ->where('grvAutoID', $input['grvAutoID'])
+                ->groupBy('purchaseOrderMastertID')
                 ->get();
 
             if ($fetchingGRVDetails) {
