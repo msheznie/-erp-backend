@@ -10,6 +10,7 @@ use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemReturnDetails;
 use App\Models\ItemReturnMaster;
+use App\Models\PoAdvancePayment;
 use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
 use App\Models\StockTransfer;
@@ -55,12 +56,17 @@ class GeneralLedgerInsert implements ShouldQueue
                 switch ($masterModel["documentSystemID"]) {
                     case 3: // GRV
                         $masterData = GRVMaster::with(['details' => function ($query) {
-                            $query->selectRaw("SUM(landingCost_LocalCur*noQty) as localAmount, SUM(landingCost_RptCur*noQty) as rptAmount,SUM(landingCost_TransCur*noQty) as transAmount,grvAutoID");
+                            $query->selectRaw("SUM(GRVcostPerUnitLocalCur*noQty) as localAmount, SUM(GRVcostPerUnitComRptCur*noQty) as rptAmount,SUM(GRVcostPerUnitSupTransCur*noQty) as transAmount,grvAutoID");
                         }])->find($masterModel["autoID"]);
                         //get balansheet account
                         $bs = GRVDetails::selectRaw("SUM(landingCost_LocalCur*noQty) as localAmount, SUM(landingCost_RptCur*noQty) as rptAmount,SUM(landingCost_TransCur*noQty) as transAmount,financeGLcodebBSSystemID,financeGLcodebBS")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->groupBy('financeGLcodebBSSystemID')->get();
+
                         //get pnl account
                         $pl = GRVDetails::selectRaw("SUM(landingCost_LocalCur*noQty) as localAmount, SUM(landingCost_RptCur*noQty) as rptAmount,SUM(landingCost_TransCur*noQty) as transAmount,financeGLcodePLSystemID,financeGLcodePL")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->WHERE('includePLForGRVYN', -1)->groupBy('financeGLcodePLSystemID')->get();
+
+                        //unbilledGRV for logistic
+                        $unbilledGRV = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,erp_grvmaster.grvDate,erp_purchaseorderadvpayment.currencyID,erp_grvmaster.supplierTransactionER as supplierTransactionCurrencyER,erp_grvmaster.companyReportingCurrencyID,erp_grvmaster.companyReportingER,erp_grvmaster.localCurrencyID,erp_grvmaster.localCurrencyER,SUM(reqAmountTransCur_amount) as transAmount,SUM(reqAmountInPOLocalCur) as localAmount, SUM(reqAmountInPORptCur) as rptAmount,'POG' as grvType,NOW() as timeStamp,erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID,erp_purchaseorderadvpayment.UnbilledGRVAccount")->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->where('erp_purchaseorderadvpayment.grvAutoID',$masterModel["autoID"])->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID')->get();
+
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
@@ -89,13 +95,13 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['supplierCodeSystem'] = $masterData->supplierID;
                             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransactionER;
-                            $data['documentTransAmount'] = $masterData->details[0]->transAmount * -1;
+                            $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transAmount * -1);
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = $masterData->details[0]->localAmount * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localAmount * -1);
                             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-                            $data['documentRptAmount'] = $masterData->details[0]->rptAmount * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptAmount * -1);
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = null;
                             $data['nonHoldingPercentage'] = null;
@@ -111,9 +117,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
                                     $data['glCode'] = $val->financeGLcodebBS;
                                     $data['glAccountType'] = 'BS';
-                                    $data['documentTransAmount'] = ABS($val->transAmount);
-                                    $data['documentLocalAmount'] = ABS($val->localAmount);
-                                    $data['documentRptAmount'] = ABS($val->rptAmount);
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
@@ -124,9 +130,25 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
                                     $data['glCode'] = $val->financeGLcodePL;
                                     $data['glAccountType'] = 'PL';
-                                    $data['documentTransAmount'] = ABS($val->transAmount);
-                                    $data['documentLocalAmount'] = ABS($val->localAmount);
-                                    $data['documentRptAmount'] = ABS($val->rptAmount);
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
+                            }
+
+                            if ($unbilledGRV) {
+                                foreach ($unbilledGRV as $val) {
+                                    $data['documentTransCurrencyID'] = $val->currencyID;
+                                    $data['documentTransCurrencyID'] = 1;
+                                    $data['supplierCodeSystem'] = $val->supplierID;
+                                    $data['chartOfAccountSystemID'] = $val->UnbilledGRVAccountSystemID;
+                                    $data['glCode'] = $val->UnbilledGRVAccount;
+                                    $data['glAccountType'] = 'BS';
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) * -1);
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) * -1);
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) * -1);
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
@@ -161,7 +183,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
                             $data['contractUID'] = 159;
-                            $data['supplierCodeSystem'] = null;
+                            $data['supplierCodeSystem'] = 0;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
@@ -233,7 +255,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
                             $data['contractUID'] = 159;
-                            $data['supplierCodeSystem'] = null;
+                            $data['supplierCodeSystem'] = 0;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
@@ -305,7 +327,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
                             $data['contractUID'] = 159;
-                            $data['supplierCodeSystem'] = null;
+                            $data['supplierCodeSystem'] = 0;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
@@ -375,7 +397,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentNarration'] = $masterData->comment;
                             $data['clientContractID'] = 'X';
                             $data['contractUID'] = 159;
-                            $data['supplierCodeSystem'] = null;
+                            $data['supplierCodeSystem'] = 0;
                             $data['documentTransCurrencyID'] = 0;
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;

@@ -1,0 +1,261 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="CustomerInvoiceDirectDetail",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="custInvDirDetAutoID",
+ *          description="custInvDirDetAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="custInvoiceDirectID",
+ *          description="custInvoiceDirectID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="serviceLineCode",
+ *          description="serviceLineCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerID",
+ *          description="customerID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="glCode",
+ *          description="glCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="glCodeDes",
+ *          description="glCodeDes",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="accountType",
+ *          description="accountType",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="comments",
+ *          description="comments",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="invoiceAmountCurrency",
+ *          description="invoiceAmountCurrency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="invoiceAmountCurrencyER",
+ *          description="invoiceAmountCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="unitOfMeasure",
+ *          description="unitOfMeasure",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="invoiceQty",
+ *          description="invoiceQty",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="unitCost",
+ *          description="unitCost",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="invoiceAmount",
+ *          description="invoiceAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="localCurrency",
+ *          description="localCurrency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="localCurrencyER",
+ *          description="localCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="localAmount",
+ *          description="localAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptCurrency",
+ *          description="comRptCurrency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptCurrencyER",
+ *          description="comRptCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptAmount",
+ *          description="comRptAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="discountLocalAmount",
+ *          description="discountLocalAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="discountAmount",
+ *          description="discountAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="discountRptAmount",
+ *          description="discountRptAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="discountRate",
+ *          description="discountRate",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="performaMasterID",
+ *          description="performaMasterID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="clientContractID",
+ *          description="clientContractID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      )
+ * )
+ */
+class CustomerInvoiceDirectDetail extends Model
+{
+
+    public $table = 'erp_custinvoicedirectdet';
+    
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
+    protected $primaryKey  = 'custInvDirDetAutoID';
+
+
+    public $fillable = [
+        'custInvoiceDirectID',
+        'companyID',
+        'serviceLineCode',
+        'customerID',
+        'glCode',
+        'glCodeDes',
+        'accountType',
+        'comments',
+        'invoiceAmountCurrency',
+        'invoiceAmountCurrencyER',
+        'unitOfMeasure',
+        'invoiceQty',
+        'unitCost',
+        'invoiceAmount',
+        'localCurrency',
+        'localCurrencyER',
+        'localAmount',
+        'comRptCurrency',
+        'comRptCurrencyER',
+        'comRptAmount',
+        'discountLocalAmount',
+        'discountAmount',
+        'discountRptAmount',
+        'discountRate',
+        'performaMasterID',
+        'clientContractID',
+        'timesReferred',
+        'timeStamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'custInvDirDetAutoID' => 'integer',
+        'custInvoiceDirectID' => 'integer',
+        'companyID' => 'string',
+        'serviceLineCode' => 'string',
+        'customerID' => 'integer',
+        'glCode' => 'string',
+        'glCodeDes' => 'string',
+        'accountType' => 'string',
+        'comments' => 'string',
+        'invoiceAmountCurrency' => 'integer',
+        'invoiceAmountCurrencyER' => 'float',
+        'unitOfMeasure' => 'integer',
+        'invoiceQty' => 'float',
+        'unitCost' => 'float',
+        'invoiceAmount' => 'float',
+        'localCurrency' => 'integer',
+        'localCurrencyER' => 'float',
+        'localAmount' => 'float',
+        'comRptCurrency' => 'integer',
+        'comRptCurrencyER' => 'float',
+        'comRptAmount' => 'float',
+        'discountLocalAmount' => 'float',
+        'discountAmount' => 'float',
+        'discountRptAmount' => 'float',
+        'discountRate' => 'integer',
+        'performaMasterID' => 'integer',
+        'clientContractID' => 'string',
+        'timesReferred' => 'integer'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}

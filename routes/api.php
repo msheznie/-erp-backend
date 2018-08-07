@@ -363,6 +363,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('reportSpentAnalysisDrilldownExport', 'ProcumentOrderAPIController@reportSpentAnalysisDrilldownExport');
     Route::post('reportSpentAnalysisHeader', 'ProcumentOrderAPIController@reportSpentAnalysisHeader');
     Route::post('reportPoEmployeePerformance', 'ProcumentOrderAPIController@reportPoEmployeePerformance');
+    Route::post('unlinkLogistic', 'PoAdvancePaymentAPIController@unlinkLogistic');
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
@@ -619,6 +620,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('contracts', 'ContractAPIController');
     Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
+
+    Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+    Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -644,6 +648,6 @@ Route::get('runQueue', function () {
 });
 
 Route::get('runQueueSR', function () {
-     $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',1026)->first();
+     $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',2919)->first();
      $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
 });

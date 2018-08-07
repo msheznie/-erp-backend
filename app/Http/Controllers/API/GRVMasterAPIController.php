@@ -429,14 +429,15 @@ class GRVMasterAPIController extends AppBaseController
             // checking logistic details  exist and updating grv id in erp_purchaseorderadvpayment  table
             $fetchingGRVDetails = GRVDetails::select(DB::raw('purchaseOrderMastertID'))
                 ->where('grvAutoID', $input['grvAutoID'])
+                ->groupBy('purchaseOrderMastertID')
                 ->get();
 
             if ($fetchingGRVDetails) {
                 foreach ($fetchingGRVDetails as $der) {
                     $poMaster = ProcumentOrder::find($der['purchaseOrderMastertID']);
-                    $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])
-                        ->get();
                     if ($poMaster->logisticsAvailable == -1) {
+                        $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN',1)
+                            ->where('grvAutoID',0)->get();
                         if (count($poAdvancePaymentdetail) > 0) {
                             foreach ($poAdvancePaymentdetail as $advance) {
                                 if ($advance['grvAutoID'] == 0) {
@@ -446,7 +447,11 @@ class GRVMasterAPIController extends AppBaseController
                                 }
                             }
                         } else {
-                            return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . ' has logistics. You can confirm the GRV only after logistics details are updated.');
+                            $grvCheck = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN',1)
+                                ->where('grvAutoID',$id)->get();
+                            if (count($grvCheck) == 0) {
+                                return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . ' has logistics. You can confirm the GRV only after logistics details are updated.');
+                            }
                         }
                     }
                 }
@@ -482,13 +487,13 @@ class GRVMasterAPIController extends AppBaseController
 
                     $logisticsChargest_RptCur = ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
 
-                    $updateGRVDetail_log_detail->logisticsCharges_TransCur = $logisticsCharges_TransCur;
-                    $updateGRVDetail_log_detail->logisticsCharges_LocalCur = $logisticsCharges_LocalCur;
-                    $updateGRVDetail_log_detail->logisticsChargest_RptCur = $logisticsChargest_RptCur;
+                    $updateGRVDetail_log_detail->logisticsCharges_TransCur = \Helper::roundValue($logisticsCharges_TransCur);
+                    $updateGRVDetail_log_detail->logisticsCharges_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur);
+                    $updateGRVDetail_log_detail->logisticsChargest_RptCur = \Helper::roundValue($logisticsChargest_RptCur);
 
-                    $updateGRVDetail_log_detail->landingCost_TransCur = $logisticsCharges_TransCur + $row['GRVcostPerUnitSupTransCur'];
-                    $updateGRVDetail_log_detail->landingCost_LocalCur = $logisticsCharges_LocalCur + $row['GRVcostPerUnitLocalCur'];
-                    $updateGRVDetail_log_detail->landingCost_RptCur = $logisticsChargest_RptCur + $row['GRVcostPerUnitComRptCur'];
+                    $updateGRVDetail_log_detail->landingCost_TransCur = \Helper::roundValue($logisticsCharges_TransCur) + $row['GRVcostPerUnitSupTransCur'];
+                    $updateGRVDetail_log_detail->landingCost_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur) + $row['GRVcostPerUnitLocalCur'];
+                    $updateGRVDetail_log_detail->landingCost_RptCur = \Helper::roundValue($logisticsChargest_RptCur) + $row['GRVcostPerUnitComRptCur'];
 
                     $updateGRVDetail_log_detail->save();
                 }

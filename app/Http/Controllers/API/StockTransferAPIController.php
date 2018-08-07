@@ -416,6 +416,33 @@ class StockTransferAPIController extends AppBaseController
             return $this->sendError('Transfer Date not between Financial period !');
         }
 
+        if ($input['interCompanyTransferYN']) {
+
+            $checkCustomer = CustomerMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->count();
+            if ($checkCustomer == 0) {
+                return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500);
+            }
+
+            $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->count();
+            if ($checkSupplier == 0) {
+                return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500);
+            }
+
+            $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
+                ->where('departmentSystemID', 10)
+                ->where('isActive', -1)
+                ->where('dateFrom', '<', $documentDate)
+                ->where('dateTo', '>', $documentDate)
+                ->where('isCurrent', -1)
+                ->count();
+
+            $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
+
+            if ($toCompanyFinancePeriod == 0) {
+                return $this->sendError('Financial year and period is not activated in ' . $companyTo->CompanyName, 500);
+            }
+        }
+
 
         $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
             ->where('departmentSystemID', 10)
