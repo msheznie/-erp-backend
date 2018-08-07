@@ -255,7 +255,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->where('confirmedYN', 1)
             ->where('isAdvancePaymentYN', 1)
             ->where('approvedYN', -1)
-            ->with(['grv_by','currency', 'supplier_by' => function ($query) {
+            ->with(['category_by','grv_by','currency', 'supplier_by' => function ($query) {
             }])->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
@@ -352,6 +352,10 @@ ORDER BY
         if ($supplier) {
             $input['supplierID'] = $input['detail']['supplierID'];
             $input['SupplierPrimaryCode'] = $supplier->primarySupplierCode;
+            $input['liabilityAccountSysemID'] = $supplier->liabilityAccountSysemID;
+            $input['liabilityAccount'] = $supplier->liabilityAccount;
+            $input['UnbilledGRVAccountSystemID'] = $supplier->UnbilledGRVAccountSystemID;
+            $input['UnbilledGRVAccount'] = $supplier->UnbilledGRVAccount;
         }
 
         //updating default coloums
@@ -387,7 +391,7 @@ ORDER BY
         $items = PoAdvancePayment::where('grvAutoID', $grvAutoID)
             ->where('confirmedYN', 1)
             ->where('approvedYN', -1)
-            ->with(['grv_by','currency', 'supplier_by' => function ($query) {
+            ->with(['category_by','grv_by','currency', 'supplier_by' => function ($query) {
             }])->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');

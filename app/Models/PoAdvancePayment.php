@@ -74,6 +74,10 @@ class PoAdvancePayment extends Model
         'poTermID',
         'supplierID',
         'SupplierPrimaryCode',
+        'liabilityAccountSysemID',
+        'liabilityAccount',
+        'UnbilledGRVAccountSystemID',
+        'UnbilledGRVAccount',
         'reqDate',
         'narration',
         'currencyID',
@@ -113,6 +117,10 @@ class PoAdvancePayment extends Model
         'poTermID' => 'integer',
         'supplierID' => 'integer',
         'SupplierPrimaryCode' => 'string',
+        'liabilityAccountSysemID' => 'integer',
+        'liabilityAccount'  => 'string',
+        'UnbilledGRVAccountSystemID' => 'integer',
+        'UnbilledGRVAccount'  => 'string',
         'narration' => 'string',
         'currencyID' => 'integer',
         'reqAmount' => 'float',
@@ -163,6 +171,11 @@ class PoAdvancePayment extends Model
     public function grv_by()
     {
         return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
+    }
+
+    public function category_by()
+    {
+        return $this->belongsTo('App\Models\AddonCostCategories', 'logisticCategoryID', 'idaddOnCostCategories');
     }
 
 
