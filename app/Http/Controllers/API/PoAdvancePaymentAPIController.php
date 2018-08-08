@@ -277,10 +277,6 @@ class PoAdvancePaymentAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
-        if($purchaseOrder->grvRecieved == 2){
-            return $this->sendError('PO is fully received, you cannot add logistic detail');
-        }
-
         $supplier = SupplierMaster::where('supplierCodeSystem', $input['detail']['supplierID'])->first();
 
         if (empty($supplier)) {
@@ -297,7 +293,7 @@ FROM
 	erp_grvmaster
 INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
 WHERE
-	erp_grvmaster.grvConfirmedYN = 1
+	erp_grvmaster.grvConfirmedYN = 0
 AND erp_grvmaster.approved = 0
 GROUP BY
 	erp_grvmaster.grvAutoID,
@@ -308,8 +304,18 @@ HAVING
 ORDER BY
 	erp_grvmaster.grvAutoID DESC');
 
-        if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
-            return $this->sendError('Please select a GRV as there is a GRV done for this PO');
+        if($purchaseOrder->grvRecieved == 1){
+            if(empty($input['detail']['grvAutoID'])) {
+                return $this->sendError('Please select a GRV as there is a GRV done for this PO');
+            }
+        }
+
+        if($purchaseOrder->grvRecieved == 2){
+            if(!empty($detail) && empty($input['detail']['grvAutoID'])) {
+                return $this->sendError('Please select a GRV as there is a GRV done for this PO');
+            }else if(empty($detail)){
+                return $this->sendError('PO is fully received you cannot add logistic');
+            }
         }
 
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
