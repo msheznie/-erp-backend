@@ -624,6 +624,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
     Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+    Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
