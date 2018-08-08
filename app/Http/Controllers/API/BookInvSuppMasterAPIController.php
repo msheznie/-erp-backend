@@ -287,4 +287,19 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Book Inv Supp Master deleted successfully');
     }
+
+
+    public function getInvoiceMasterRecord(Request $request)
+    {
+        $id = $request->get('id');
+        $outputRecord = $this->bookInvSuppMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('documentSystemID', 3);
+            },'details','company_by','currency_by', 'companydocumentattachment_by' => function ($query) {
+                $query->where('documentSystemID', 3);
+            }])->findWithoutFail($id);
+
+        return $this->sendResponse($outputRecord, 'Data retrieved successfully');
+
+    }
 }
