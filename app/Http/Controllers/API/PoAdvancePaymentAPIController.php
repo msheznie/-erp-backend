@@ -311,8 +311,10 @@ ORDER BY
         }
 
         if($purchaseOrder->grvRecieved == 2){
-            if(empty($detail)) {
-                return $this->sendError('PO is fully reveived you cannot add logistic');
+            if(!empty($detail) && empty($input['detail']['grvAutoID'])) {
+                return $this->sendError('Please select a GRV as there is a GRV done for this PO');
+            }else if(empty($detail)){
+                return $this->sendError('PO is fully received you cannot add logistic');
             }
         }
 
