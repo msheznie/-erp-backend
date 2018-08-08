@@ -623,6 +623,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
     Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
+
+    Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
+    Route::post('validateINVReport', 'InventoryReportAPIController@validateReport');
+    Route::post('generateINVReport', 'InventoryReportAPIController@generateReport');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
