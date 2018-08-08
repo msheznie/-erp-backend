@@ -621,9 +621,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('contracts', 'ContractAPIController');
     Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
 
+<<<<<<< HEAD
+    Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+
+=======
     Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
     Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
-    Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+>>>>>>> 443b72ee483d8bab78e7811d455d29e9e767ae12
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
