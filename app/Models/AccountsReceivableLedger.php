@@ -183,13 +183,15 @@ class AccountsReceivableLedger extends Model
 
     public $table = 'erp_accountsreceivableledger';
     
-    const CREATED_AT = 'timeStamp';
+    const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
 
     protected $primaryKey  = 'arAutoID';
 
     public $fillable = [
+        'companySystemID',
         'companyID',
+        'documentSystemID',
         'documentID',
         'documentCodeSystem',
         'documentCode',
@@ -230,7 +232,9 @@ class AccountsReceivableLedger extends Model
      */
     protected $casts = [
         'arAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
+        'documentSystemID' => 'integer',
         'documentID' => 'string',
         'documentCodeSystem' => 'integer',
         'documentCode' => 'string',

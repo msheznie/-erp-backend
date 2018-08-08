@@ -3564,7 +3564,7 @@ FROM
 	erp_grvmaster
 INNER JOIN erp_grvdetails ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
 WHERE
-	erp_grvmaster.grvConfirmedYN = 0
+	erp_grvmaster.grvConfirmedYN = 1
 AND erp_grvmaster.approved = 0
 GROUP BY
 	erp_grvmaster.grvAutoID,
@@ -3882,6 +3882,8 @@ FROM
 
         $employee = \Helper::getEmployeeInfo();
 
+        $emailSentTo = 0;
+
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $purchaseOrderID)->first();
 
         $company = Company::where('companySystemID', $procumentOrderUpdate->companySystemID)->first();
@@ -3946,6 +3948,7 @@ FROM
 
 
         if (!empty($procumentOrderUpdate->supplierEmail)) {
+            $emailSentTo = 1;
             $dataEmail['empName'] = $procumentOrderUpdate->supplierName;
             $dataEmail['empEmail'] = $procumentOrderUpdate->supplierEmail;
 
@@ -3976,7 +3979,13 @@ FROM
 
         $procumentOrderUpdate->save();
 
-        return $this->sendResponse($purchaseOrderID, 'Sent supplier detail updated successfully');
+        if($emailSentTo == 0){
+            return $this->sendResponse($emailSentTo, 'Supplier email is not updated. Email notification is sent');
+        }else{
+            return $this->sendResponse($emailSentTo, 'Supplier notification email sent');
+        }
+
+
     }
 
     public function getProcurementOrderReferBack(Request $request)
