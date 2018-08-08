@@ -178,7 +178,7 @@ class StockTransferAPIController extends AppBaseController
                 return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500);
             }
 
-            $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->count();
+            $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyFromSystemID'])->count();
             if ($checkSupplier == 0) {
                 return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500);
             }
@@ -423,7 +423,7 @@ class StockTransferAPIController extends AppBaseController
                 return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500);
             }
 
-            $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->count();
+            $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyFromSystemID'])->count();
             if ($checkSupplier == 0) {
                 return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500);
             }
