@@ -174,21 +174,32 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $input['localCurrencyID'] = $itemAssign->wacValueLocalCurrencyID;
         $input['reportingCurrencyID'] = $itemAssign->wacValueReportingCurrencyID;
 
+        if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
+            return $this->sendError("Cost is 0. You cannot issue", 500);
+        }
+
+        if($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0){
+            return $this->sendError("Cost is negative. You cannot issue", 500);
+        }
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
                                                                         ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
                                                                         ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
                                                                         ->first();
 
-        if (empty($financeItemCategorySubAssigned)) {
-            return $this->sendError('Finance Category not found');
+        if (!empty($financeItemCategorySubAssigned)) {
+            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+        }else{
+            return $this->sendError("Account code not updated.", 500);
         }
 
-        $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-        $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
-        $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
-        $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-        $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+        if(!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']){
+            return $this->sendError("Account code not updated.", 500);
+        }
 
         if ($input['itemFinanceCategoryID'] == 1) {
             $alreadyAdded = ItemReturnMaster::where('itemReturnAutoID', $input['itemReturnAutoID'])
@@ -343,6 +354,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
     {
         $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue']);
         $input = $this->convertArrayToValue($input);
+        $qtyError = array('type' => 'qty');
 
         /** @var ItemReturnDetails $itemReturnDetails */
         $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
@@ -369,9 +381,9 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 $convention = $unitConvention->conversion;
                 $input['convertionMeasureVal'] = $convention;
                 if ($convention > 0) {
-                    $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'] / $convention;
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] / $convention),2);
                 } else {
-                    $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'] * $convention;
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] * $convention),2);
                 }
             }
         } else {
@@ -396,13 +408,25 @@ class ItemReturnDetailsAPIController extends AppBaseController
             }
         }
 
-        if ($input['qtyIssuedDefaultMeasure'] > $input['qtyFromIssue']) {
-            return $this->sendError("Return quantity should not be greater than issues quantity. Please check again.", 500);
+        if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+            $this->itemReturnDetailsRepository->update($input, $id);
+            return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
+        if($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0){
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+            $this->itemReturnDetailsRepository->update($input, $id);
+            return $this->sendError("Cost is negative. You cannot issue", 500);
+        }
 
-        if($input['unitCostLocal'] <= 0 || $input['unitCostRpt'] <= 0){
-            return $this->sendError("Cost is not updated", 500);
+        if ($input['qtyIssuedDefaultMeasure'] > $input['qtyFromIssue']) {
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+            $this->itemReturnDetailsRepository->update($input, $id);
+            return $this->sendError("You cannot return more than the issued Qty", 500,$qtyError);
         }
 
         $itemReturnDetails = $this->itemReturnDetailsRepository->update($input, $id);

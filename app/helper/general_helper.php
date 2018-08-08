@@ -797,6 +797,12 @@ class Helper
                                     $job3 = UnbilledGRVInsert::dispatch($masterData);
                                 }
                             }
+
+                            $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+                            if( $input["documentSystemID"] == 13 && !empty($sourceModel)){
+                                $jobSR = CreateStockReceive::dispatch($sourceModel);
+                            }
+
                         } else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
@@ -805,10 +811,6 @@ class Helper
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
                         $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
-
-                        if( $input["documentSystemID"] == 13 && !empty($sourceModel)){
-                            //$jobSR = CreateStockReceive::dispatch($sourceModel);
-                        }
 
                         $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
 
@@ -1135,5 +1137,10 @@ class Helper
         }else{
             return "";
         }
+    }
+
+    public static function roundValue($value)
+    {
+        return round($value,7);
     }
 }
