@@ -651,3 +651,8 @@ Route::get('runQueueSR', function () {
      $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',2919)->first();
      $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
 });
+
+
+Route::resource('book_inv_supp_masters', 'BookInvSuppMasterAPIController');
+
+Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
