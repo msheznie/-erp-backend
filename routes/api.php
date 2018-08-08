@@ -648,8 +648,10 @@ Route::get('runQueue', function () {
 });
 
 Route::get('runQueueSR', function () {
-     $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',2919)->first();
-     $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
+    /* $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',2919)->first();
+     $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);*/
+    $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2887)->first();
+    $job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
 
