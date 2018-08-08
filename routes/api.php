@@ -630,6 +630,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportINVReport', 'InventoryReportAPIController@exportReport');
 
     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+    Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
