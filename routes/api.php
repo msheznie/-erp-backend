@@ -635,6 +635,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
     Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
     Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
+
+    Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');
+    Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController');
+    Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController');
+    Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
+    Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
+    Route::resource('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -665,8 +672,3 @@ Route::get('runQueueSR', function () {
    // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
-
-
-
-
-Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');
