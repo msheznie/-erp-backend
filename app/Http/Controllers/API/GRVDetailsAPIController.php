@@ -350,6 +350,10 @@ class GRVDetailsAPIController extends AppBaseController
                         }
                     }
 
+                    if ($new['noQty'] > ($new['poQty'] - $new['receivedQty'])) {
+                        return $this->sendError('Number of quantity should not be greater than received qty', 422);
+                    }
+
                     if ($allowMultiplePO->isYesNO == 0) {
                         $grvDetailExistSameItem = GRVDetails::select(DB::raw('purchaseOrderMastertID'))
                             ->where('grvAutoID', $grvAutoID)

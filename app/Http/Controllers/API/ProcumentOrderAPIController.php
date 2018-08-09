@@ -63,6 +63,7 @@ use App\Models\PurchaseOrderAdvPaymentRefferedback;
 use App\Models\PurchaseOrderDetailsRefferedHistory;
 use App\Models\PurchaseOrderMasterRefferedHistory;
 use App\Models\PurchaseRequest;
+use App\Models\SupplierContactDetails;
 use App\Models\SupplierMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
@@ -3882,6 +3883,8 @@ FROM
 
         $employee = \Helper::getEmployeeInfo();
 
+        $emailSentTo = 0;
+
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $purchaseOrderID)->first();
 
         $company = Company::where('companySystemID', $procumentOrderUpdate->companySystemID)->first();
@@ -3940,14 +3943,19 @@ FROM
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html)->save('emailAttachment/po_print_' . time() . '.pdf');
 
+        $fetchSupEmail = SupplierContactDetails::where('supplierID', $procumentOrderUpdate->supplierID)
+            ->where('isDefault', -1)
+            ->first();
+
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
             "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
 
 
-        if (!empty($procumentOrderUpdate->supplierEmail)) {
+        if (!empty($fetchSupEmail->contactPersonEmail)) {
+            $emailSentTo = 1;
             $dataEmail['empName'] = $procumentOrderUpdate->supplierName;
-            $dataEmail['empEmail'] = $procumentOrderUpdate->supplierEmail;
+            $dataEmail['empEmail'] = $fetchSupEmail->contactPersonEmail;
 
             $dataEmail['companySystemID'] = $procumentOrderUpdate->companySystemID;
             $dataEmail['companyID'] = $procumentOrderUpdate->companyID;
@@ -3976,7 +3984,13 @@ FROM
 
         $procumentOrderUpdate->save();
 
-        return $this->sendResponse($purchaseOrderID, 'Sent supplier detail updated successfully');
+        if($emailSentTo == 0){
+            return $this->sendResponse($emailSentTo, 'Supplier email is not updated. Email notification is sent');
+        }else{
+            return $this->sendResponse($emailSentTo, 'Supplier notification email sent to '.$fetchSupEmail->contactPersonEmail.'');
+        }
+
+
     }
 
     public function getProcurementOrderReferBack(Request $request)

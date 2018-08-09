@@ -287,4 +287,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Book Inv Supp Master deleted successfully');
     }
+
+
+    public function getInvoiceMasterRecord(Request $request)
+    {
+        $input = $request->all();
+
+        $output = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])->with(['grvdetail' => function ($query) {
+            $query->with('grv');
+        },'approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 11);
+        }, 'company', 'transactioncurrency','localcurrency', 'rptcurrency','supplier'])->first();
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+
+    }
 }

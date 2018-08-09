@@ -271,7 +271,7 @@ class BookInvSuppMaster extends Model
 
     public $table = 'erp_bookinvsuppmaster';
     
-    const CREATED_AT = 'createdDateTime';
+    const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = 'bookingSuppMasInvAutoID';
@@ -324,6 +324,7 @@ class BookInvSuppMaster extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
+        'createdDateAndTime',
         'cancelYN',
         'cancelComment',
         'cancelDate',
@@ -377,7 +378,6 @@ class BookInvSuppMaster extends Model
         'createdPcID' => 'string',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'createdDateTime' => 'string',
         'cancelYN' => 'integer',
         'cancelComment' => 'string',
         'canceledByEmpSystemID' => 'integer',
@@ -393,6 +393,51 @@ class BookInvSuppMaster extends Model
     public static $rules = [
         
     ];
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'bookingSuppMasInvAutoID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function transactioncurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
+    }
+
+    public function localcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function rptcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+    }
+
+    public function grvdetail()
+    {
+        return $this->hasMany('App\Models\BookInvSuppDet', 'bookingSuppMasInvAutoID', 'bookingSuppMasInvAutoID');
+    }
 
     
 }
