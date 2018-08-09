@@ -445,6 +445,7 @@ class FinancialReportAPIController extends AppBaseController
                 break;
             case 'FGL':
                 $reportTypeID = $request->reportTypeID;
+                $reportSD = $request->reportSD;
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
@@ -479,31 +480,142 @@ class FinancialReportAPIController extends AppBaseController
                 $currencyLocal = $requestCurrencyLocal->CurrencyCode;
                 $currencyRpt = $requestCurrencyRpt->CurrencyCode;
 
-                if ($output) {
-                    $x = 0;
-                    foreach ($output as $val) {
-                        $data[$x]['Company ID'] = $val->companyID;
-                        $data[$x]['Company Name'] = $val->CompanyName;
-                        $data[$x]['GL Code'] = $val->glCode;
-                        $data[$x]['Account Description'] = $val->AccountDescription;
-
-                        $data[$x]['Document Number'] = $val->documentCode;
-                        $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
-                        $data[$x]['Document Narration'] = $val->documentNarration;
-                        $data[$x]['Service Line'] = $val->serviceLineCode;
-                        $data[$x]['Contract'] = $val->clientContractID;
-                        $data[$x]['Supplier/Customer'] = $val->isCustomer;
-
-                        if ($checkIsGroup->isGroup == 0) {
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
+                if ($reportSD == "glCode_wise") {
+                    if (!empty($output)) {
+                        $outputArr = array();
+                        foreach ($output as $val1) {
+                            $outputArr[$val1->glCode.' - '.$val1->AccountDescription][] = $val1;
                         }
 
-                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
-                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
+                        $x = 0;
+                        $total = array();
+                        $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
+                        $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
+                        $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
+                        $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
+                        foreach ($outputArr as $key => $values) {
+                            $data[$x][''] = $key;
+                            $x++;
+                            $data[$x]['Company ID'] = 'Document Code';
+                            $data[$x]['Company Name'] = 'Company Name';
+                            $data[$x]['Document Number'] = 'Document Number';
+                            $data[$x]['Date'] = 'Date';
+                            $data[$x]['Document Narration'] = 'Document Narration';
+                            $data[$x]['Service Line'] = 'Service Line';
+                            $data[$x]['Contract'] = 'Contract';
+                            $data[$x]['Supplier/Customer'] = 'Supplier/Customer';
+                            if ($checkIsGroup->isGroup == 0) {
+                                $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = 'Debit (Local Currency - ' . $currencyLocal . ')';
+                                $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = 'Credit (Local Currency - ' . $currencyLocal . ')';
+                            }
+                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = 'Debit (Reporting Currency - ' . $currencyRpt . ')';
+                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = 'Credit (Reporting Currency - ' . $currencyRpt . ')';
+                            if (!empty($values)) {
+                                $subTotalDebitRpt = 0;
+                                $subTotalCreditRpt = 0;
+                                $subTotalDebitLocal = 0;
+                                $subTotalCreditRptLocal = 0;
+                                foreach ($values as $val) {
+                                    $x++;
+                                    $data[$x]['Company ID'] = $val->companyID;
+                                    $data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x]['Document Number'] = $val->documentCode;
+                                    $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
+                                    $data[$x]['Document Narration'] = $val->documentNarration;
+                                    $data[$x]['Service Line'] = $val->serviceLineCode;
+                                    $data[$x]['Contract'] = $val->clientContractID;
+                                    $data[$x]['Supplier/Customer'] = $val->isCustomer;
+
+                                    if ($checkIsGroup->isGroup == 0) {
+                                         $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
+                                         $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
+                                    }
+
+                                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
+                                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
+                                    $subTotalDebitRpt  += $val->rptDebit;
+                                    $subTotalCreditRpt += $val->rptCredit;
+
+                                    $subTotalDebitLocal += $val->localDebit;
+                                    $subTotalCreditRptLocal += $val->localCredit;
+                                }
+                                $x++;
+                                $data[$x]['Company ID'] = '';
+                                $data[$x]['Company Name'] = '';
+                                $data[$x]['Document Number'] = '';
+                                $data[$x]['Date'] = '';
+                                $data[$x]['Document Narration'] = '';
+                                $data[$x]['Service Line'] = '';
+                                $data[$x]['Contract'] = '';
+                                $data[$x]['Supplier/Customer'] = 'Total';
+
+                                if ($checkIsGroup->isGroup == 0) {
+                                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal, $decimalPlaceLocal);
+                                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
+                                }
+
+                                $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt, $decimalPlaceRpt);
+                                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalCreditRpt,$decimalPlaceRpt);
+
+                                $x++;
+                                $data[$x][''] = '';
+                                $data[$x][''] = '';
+                                $data[$x][''] = '';
+                                $data[$x][''] = '';
+                                $data[$x][''] = '';
+                                $data[$x][''] = '';
+                                if ($checkIsGroup->isGroup == 0) {
+                                    $data[$x][''] = '';
+                                    $data[$x][''] = '';
+                                }
+                                $data[$x][''] = '';
+                                $data[$x][''] = '';
+                            }
+                        }
                         $x++;
+                        $data[$x]['Company ID'] = '';
+                        $data[$x]['Company Name'] = '';
+                        $data[$x]['Document Number'] = '';
+                        $data[$x]['Date'] = '';
+                        $data[$x]['Document Narration'] = '';
+                        $data[$x]['Service Line'] = '';
+                        $data[$x]['Contract'] = '';
+                        $data[$x]['Supplier/Customer'] = 'Grand Total';
+                        if ($checkIsGroup->isGroup == 0) {
+                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountDebit'], $decimalPlaceLocal);
+                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountCredit'], $decimalPlaceLocal);
+                        }
+                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountDebit'], $decimalPlaceRpt); ;
+                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountCredit'], $decimalPlaceRpt);;
+                    }
+                } else {
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['GL Code'] = $val->glCode;
+                            $data[$x]['Account Description'] = $val->AccountDescription;
+
+                            $data[$x]['Document Number'] = $val->documentCode;
+                            $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
+                            $data[$x]['Document Narration'] = $val->documentNarration;
+                            $data[$x]['Service Line'] = $val->serviceLineCode;
+                            $data[$x]['Contract'] = $val->clientContractID;
+                            $data[$x]['Supplier/Customer'] = $val->isCustomer;
+
+                            if ($checkIsGroup->isGroup == 0) {
+                                $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
+                                $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
+                            }
+
+                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
+                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
+                            $x++;
+                        }
                     }
                 }
+
                 $csv = \Excel::create('general_ledger', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
@@ -932,6 +1044,7 @@ class FinancialReportAPIController extends AppBaseController
         }
 
         $glCodes = (array)$request->glCodes;
+        $type = $request->type;
         $chartOfAccountId = array_filter(collect($glCodes)->pluck('chartOfAccountSystemID')->toArray());
 
         $departments = (array)$request->departments;
@@ -946,7 +1059,7 @@ class FinancialReportAPIController extends AppBaseController
         //contracts
 
         //DB::enableQueryLog();
-         $query = 'SELECT * 
+        $query = 'SELECT * 
                     FROM
                         (
                     SELECT
@@ -1041,7 +1154,7 @@ class FinancialReportAPIController extends AppBaseController
                     GROUP BY
                         erp_generalledger.companySystemID,
                         erp_generalledger.serviceLineSystemID,
-                        erp_generalledger.chartOfAccountSystemID 
+                        erp_generalledger.chartOfAccountSystemID
                         ) AS erp_qry_gl_bf 
                         ) AS GL_final 
                     ORDER BY
