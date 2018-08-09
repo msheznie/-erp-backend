@@ -25,7 +25,6 @@ use Response;
  * Class BookInvSuppMasterController
  * @package App\Http\Controllers\API
  */
-
 class BookInvSuppMasterAPIController extends AppBaseController
 {
     /** @var  BookInvSuppMasterRepository */
@@ -295,10 +294,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $output = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])->with(['grvdetail' => function ($query) {
             $query->with('grv');
-        },'approved_by' => function ($query) {
+        }, 'directdetail' => function ($query) {
+            $query->with('segment');
+        }, 'detail' => function ($query) {
+            $query->with('grv');
+        }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
-        }, 'company', 'transactioncurrency','localcurrency', 'rptcurrency','supplier'])->first();
+        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 

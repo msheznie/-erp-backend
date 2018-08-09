@@ -28,11 +28,36 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
     }
 
     /**
-     * Display a listing of the AdvancePaymentDetails.
-     * GET|HEAD /advancePaymentDetails
-     *
      * @param Request $request
      * @return Response
+     *
+     * @SWG\Get(
+     *      path="/advancePaymentDetails",
+     *      summary="Get a listing of the AdvancePaymentDetails.",
+     *      tags={"AdvancePaymentDetails"},
+     *      description="Get all AdvancePaymentDetails",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/AdvancePaymentDetails")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
      */
     public function index(Request $request)
     {
@@ -44,12 +69,42 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
     }
 
     /**
-     * Store a newly created AdvancePaymentDetails in storage.
-     * POST /advancePaymentDetails
-     *
      * @param CreateAdvancePaymentDetailsAPIRequest $request
-     *
      * @return Response
+     *
+     * @SWG\Post(
+     *      path="/advancePaymentDetails",
+     *      summary="Store a newly created AdvancePaymentDetails in storage",
+     *      tags={"AdvancePaymentDetails"},
+     *      description="Store AdvancePaymentDetails",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="AdvancePaymentDetails that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/AdvancePaymentDetails")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AdvancePaymentDetails"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
      */
     public function store(CreateAdvancePaymentDetailsAPIRequest $request)
     {
@@ -61,12 +116,42 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
     }
 
     /**
-     * Display the specified AdvancePaymentDetails.
-     * GET|HEAD /advancePaymentDetails/{id}
-     *
-     * @param  int $id
-     *
+     * @param int $id
      * @return Response
+     *
+     * @SWG\Get(
+     *      path="/advancePaymentDetails/{id}",
+     *      summary="Display the specified AdvancePaymentDetails",
+     *      tags={"AdvancePaymentDetails"},
+     *      description="Get AdvancePaymentDetails",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AdvancePaymentDetails",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AdvancePaymentDetails"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
      */
     public function show($id)
     {
@@ -81,13 +166,50 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
     }
 
     /**
-     * Update the specified AdvancePaymentDetails in storage.
-     * PUT/PATCH /advancePaymentDetails/{id}
-     *
-     * @param  int $id
+     * @param int $id
      * @param UpdateAdvancePaymentDetailsAPIRequest $request
-     *
      * @return Response
+     *
+     * @SWG\Put(
+     *      path="/advancePaymentDetails/{id}",
+     *      summary="Update the specified AdvancePaymentDetails in storage",
+     *      tags={"AdvancePaymentDetails"},
+     *      description="Update AdvancePaymentDetails",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AdvancePaymentDetails",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="AdvancePaymentDetails that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/AdvancePaymentDetails")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AdvancePaymentDetails"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
      */
     public function update($id, UpdateAdvancePaymentDetailsAPIRequest $request)
     {
@@ -106,12 +228,42 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
     }
 
     /**
-     * Remove the specified AdvancePaymentDetails from storage.
-     * DELETE /advancePaymentDetails/{id}
-     *
-     * @param  int $id
-     *
+     * @param int $id
      * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/advancePaymentDetails/{id}",
+     *      summary="Remove the specified AdvancePaymentDetails from storage",
+     *      tags={"AdvancePaymentDetails"},
+     *      description="Delete AdvancePaymentDetails",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AdvancePaymentDetails",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
      */
     public function destroy($id)
     {
