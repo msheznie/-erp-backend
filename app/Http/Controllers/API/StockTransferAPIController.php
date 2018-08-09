@@ -429,33 +429,18 @@ class StockTransferAPIController extends AppBaseController
             }
 
             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
-                ->where('departmentSystemID', 10)
-                ->where('isActive', -1)
-                ->where('dateFrom', '<', $documentDate)
-                ->where('dateTo', '>', $documentDate)
-                ->where('isCurrent', -1)
-                ->count();
+                                                            ->where('departmentSystemID', 10)
+                                                            ->where('isActive', -1)
+                                                            ->where('dateFrom', '<', $documentDate)
+                                                            ->where('dateTo', '>', $documentDate)
+                                                            ->where('isCurrent', -1)
+                                                            ->count();
 
             $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
 
             if ($toCompanyFinancePeriod == 0) {
                 return $this->sendError('Financial year and period is not activated in ' . $companyTo->CompanyName, 500);
             }
-        }
-
-
-        $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
-            ->where('departmentSystemID', 10)
-            ->where('isActive', -1)
-            ->where('dateFrom', '<', $documentDate)
-            ->where('dateTo', '>', $documentDate)
-            ->where('isCurrent', -1)
-            ->count();
-
-        $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
-
-        if ($toCompanyFinancePeriod == 0) {
-            return $this->sendError('Financial year and period is not activated in ' . $companyTo->CompanyName, 500);
         }
 
         //checking selected segment is active

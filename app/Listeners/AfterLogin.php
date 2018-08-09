@@ -31,8 +31,6 @@ class AfterLogin
      */
     public function handle(logHistory $event)
     {
-
-        Log::info('AfterLogin Listener');
         //Log::info($event->accessToken);
 
         //$accessToken = $event->accessToken;

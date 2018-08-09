@@ -51,7 +51,5 @@ class RevokeOldTokens
                 }
             }
         }
-
-        Log::info('End  revoked');
     }
 }

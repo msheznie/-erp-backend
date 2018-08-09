@@ -16,7 +16,6 @@ use Response;
  * Class CustomerInvoiceDirectDetailController
  * @package App\Http\Controllers\API
  */
-
 class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 {
     /** @var  CustomerInvoiceDirectDetailRepository */
@@ -278,4 +277,6 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Customer Invoice Direct Detail deleted successfully');
     }
+
+
 }

@@ -29,7 +29,6 @@ class LogSuccessfulLogin
      */
     public function handle(Login $event)
     {
-        Log::info('Log success Listener');
         if(!empty($event)){
             $logHistory = new UsersLogHistory();
             $user = User::with(['employee'])->find($event->user->id);

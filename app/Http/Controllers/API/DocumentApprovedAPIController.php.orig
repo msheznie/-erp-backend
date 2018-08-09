@@ -143,10 +143,11 @@ class DocumentApprovedAPIController extends AppBaseController
     {
         $input = $request->all();
         $search = $request->input('search.value');
-
+<<<<<<< HEAD
         $employeeSystemID= \Helper::getEmployeeSystemID();
-
-
+=======
+        $employeeSystemID=746;
+>>>>>>> 931ca9934edae9241210eda907fe331d79179117
         $where = "";
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
