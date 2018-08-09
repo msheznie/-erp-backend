@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerInvoiceDirectDetail;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -16,7 +17,6 @@ use Response;
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
  */
-
 class CustomerInvoiceDirectAPIController extends AppBaseController
 {
     /** @var  CustomerInvoiceDirectRepository */
@@ -281,15 +281,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
     public function customerInvoiceDetails(request $request)
     {
-        $input=$request->all();
-        $id=$input['id'];
+        $input = $request->all();
+        $id = $input['id'];
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company','customer'])->findWithoutFail($id);
 
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found');
-        }else{
-            return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer Invoice Direct deleted successfully');
+        } else {
+            $CustomerInvoiceDirectDetail = CustomerInvoiceDirectDetail::select('*')->where('custInvoiceDirectID', $id)->get();
+            $data['master'] = $customerInvoiceDirect;
+            $data['detail'] = $CustomerInvoiceDirectDetail;
+            return $this->sendResponse($data, 'Customer Invoice Direct deleted successfully');
         }
     }
 }

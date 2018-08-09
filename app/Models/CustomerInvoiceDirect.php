@@ -591,5 +591,15 @@ class CustomerInvoiceDirect extends Model
         
     ];
 
-    
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster','customerID',  'customerCodeSystem');
+    }
+
 }

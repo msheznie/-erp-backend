@@ -144,7 +144,7 @@ class DocumentApprovedAPIController extends AppBaseController
         $input = $request->all();
         $search = $request->input('search.value');
 
-        $employeeSystemID= \Helper::getEmployeeSystemID();
+        $employeeSystemID=  \Helper::getEmployeeSystemID();
 
 
         $where = "";
@@ -169,12 +169,12 @@ class DocumentApprovedAPIController extends AppBaseController
             $where .= " WHERE  (documentCode LIKE '%$search%' OR  comments LIKE '%$search%' OR SupplierOrCustomer LIKE '%$search%' OR DocumentValue LIKE '%$search%' )";
         }
 
-        $qry="SELECT * FROM (SELECT
+          $qry="SELECT * FROM (SELECT
 	*
 FROM
 	(
 SELECT
-((erp_documentapproved.rollLevelOrder-1)/erp_approvallevel.noOfLevels)*100 as completed,
+DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -225,7 +225,7 @@ SELECT
 FROM
 	(
 SELECT
-((erp_documentapproved.rollLevelOrder-1)/erp_approvallevel.noOfLevels)*100 as completed,
+DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -277,7 +277,7 @@ SELECT
 FROM
 	(
 SELECT
-((erp_documentapproved.rollLevelOrder-1)/erp_approvallevel.noOfLevels)*100 as completed,
+DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -327,7 +327,7 @@ SELECT
 FROM
 	(
 SELECT
-((erp_documentapproved.rollLevelOrder-1)/erp_approvallevel.noOfLevels)*100 as completed,
+DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -377,7 +377,7 @@ SELECT
 FROM
 	(
 SELECT
-((erp_documentapproved.rollLevelOrder-1)/erp_approvallevel.noOfLevels)*100 as completed,
+DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -426,7 +426,7 @@ SELECT
 FROM
 	(
 SELECT
-((erp_documentapproved.rollLevelOrder-1)/erp_approvallevel.noOfLevels)*100 as completed,
+DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -476,7 +476,7 @@ SELECT
 FROM
 	(
 SELECT
-((erp_documentapproved.rollLevelOrder-1)/erp_approvallevel.noOfLevels)*100 as completed,
+DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
@@ -520,7 +520,7 @@ WHERE
 	AND erp_documentapproved.documentSystemID IN ( 19 ) 
 	AND employeesdepartments.employeeSystemID = $employeeSystemID 
 	) AS PendingCreditNoteApprovals
-	)t $where ORDER BY docConfirmedDate $sort";
+	)t INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID $where ORDER BY docConfirmedDate $sort";
 
 
 
