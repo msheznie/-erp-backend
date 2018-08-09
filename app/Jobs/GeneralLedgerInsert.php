@@ -379,8 +379,13 @@ class GeneralLedgerInsert implements ShouldQueue
                             }
 
                             if ($pl) {
-                                $data['chartOfAccountSystemID'] = 605;
-                                $data['glCode'] = '9999988';
+                                if($masterData->interCompanyTransferYN == -1){
+                                    $data['chartOfAccountSystemID'] = 747;
+                                    $data['glCode'] = '20023';
+                                }else{
+                                    $data['chartOfAccountSystemID'] = 605;
+                                    $data['glCode'] = '9999988';
+                                }
                                 $data['glAccountType'] = 'BS';
                                 $data['documentLocalCurrencyID'] = $pl->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = 1;
@@ -449,8 +454,13 @@ class GeneralLedgerInsert implements ShouldQueue
                             }
 
                             if ($pl) {
-                                $data['chartOfAccountSystemID'] = 605;
-                                $data['glCode'] = '9999988';
+                                if($masterData->interCompanyTransferYN == -1){
+                                    $data['chartOfAccountSystemID'] = 747;
+                                    $data['glCode'] = '20023';
+                                }else{
+                                    $data['chartOfAccountSystemID'] = 605;
+                                    $data['glCode'] = '9999988';
+                                }
                                 $data['glAccountType'] = 'BS';
                                 $data['documentLocalCurrencyID'] = $pl->localCurrencyID;
                                 $data['documentLocalCurrencyER'] = 1;

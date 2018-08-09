@@ -963,65 +963,65 @@ GROUP BY
         }
 
         $sql = "SELECT
-	ItemLedger.companySystemID,
-	ItemLedger.companyID,
-	ItemLedger.itemSystemCode,
-	ItemLedger.itemPrimaryCode,
-	ItemLedger.itemDescription,
-	ItemLedger.unitOfMeasure,
-	ItemLedger.secondaryItemCode,
-	ItemLedger.UnitShortCode,
-	ItemLedger.categoryDescription,
-	ItemLedger.transactionDate,
-	ItemLedger.LocalCurrencyDecimals,
-	ItemLedger.RptCurrencyDecimals,
-	sum( Qty ) AS Qty,
-	LocalCurrency,
-IF
-	( sum( localAmount ) / sum( Qty ) IS NULL, 0, sum( localAmount ) / sum( Qty ) ) AS WACLocal,
-	sum( localAmount ) AS WacLocalAmount,
-	RepCurrency,
-IF
-	( sum( rptAmount ) / sum( Qty ) IS NULL, 0, sum( rptAmount ) / sum( Qty ) ) AS WACRpt,
-	sum( rptAmount ) AS WacRptAmount 
-FROM
-	(
-SELECT
-	erp_itemledger.companySystemID,
-	erp_itemledger.companyID,
-	erp_itemledger.documentSystemID,
-	erp_itemledger.documentSystemCode,
-	erp_itemledger.itemSystemCode,
-	erp_itemledger.itemPrimaryCode,
-	erp_itemledger.itemDescription,
-	erp_itemledger.unitOfMeasure,
-	erp_itemledger.transactionDate,
-	financeitemcategorysub.categoryDescription,
-	itemmaster.secondaryItemCode,
-	units.UnitShortCode,
-	round( erp_itemledger.inOutQty, 2 ) AS Qty,
-	currencymaster.CurrencyName AS LocalCurrency,
-	round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
-	currencymaster_1.CurrencyName AS RepCurrency,
-	round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
-    currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
-    currencymaster_1.DecimalPlaces AS RptCurrencyDecimals               
-FROM
-	`erp_itemledger`
-	INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
-	INNER JOIN `financeitemcategorysub` ON `itemmaster`.`financeCategorySub` = `financeitemcategorysub`.`itemCategorySubID`
-	LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
-	LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
-	LEFT JOIN `units` ON `erp_itemledger`.`unitOfMeasure` = `units`.`UnitID` 
-WHERE
-	erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
-	AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-	AND itemmaster.financeCategoryMaster = 1 
-	AND DATE(erp_itemledger.transactionDate) <= '$date' 
-	) AS ItemLedger 
-GROUP BY
-	ItemLedger.companySystemID,
-	ItemLedger.itemSystemCode";
+                ItemLedger.companySystemID,
+                ItemLedger.companyID,
+                ItemLedger.itemSystemCode,
+                ItemLedger.itemPrimaryCode,
+                ItemLedger.itemDescription,
+                ItemLedger.unitOfMeasure,
+                ItemLedger.secondaryItemCode,
+                ItemLedger.UnitShortCode,
+                ItemLedger.categoryDescription,
+                ItemLedger.transactionDate,
+                ItemLedger.LocalCurrencyDecimals,
+                ItemLedger.RptCurrencyDecimals,
+                sum( Qty ) AS Qty,
+                LocalCurrency,
+            IF
+                ( sum( localAmount ) / sum( Qty ) IS NULL, 0, sum( localAmount ) / sum( Qty ) ) AS WACLocal,
+                sum( localAmount ) AS WacLocalAmount,
+                RepCurrency,
+            IF
+                ( sum( rptAmount ) / sum( Qty ) IS NULL, 0, sum( rptAmount ) / sum( Qty ) ) AS WACRpt,
+                sum( rptAmount ) AS WacRptAmount 
+            FROM
+                (
+            SELECT
+                erp_itemledger.companySystemID,
+                erp_itemledger.companyID,
+                erp_itemledger.documentSystemID,
+                erp_itemledger.documentSystemCode,
+                erp_itemledger.itemSystemCode,
+                erp_itemledger.itemPrimaryCode,
+                erp_itemledger.itemDescription,
+                erp_itemledger.unitOfMeasure,
+                erp_itemledger.transactionDate,
+                financeitemcategorysub.categoryDescription,
+                itemmaster.secondaryItemCode,
+                units.UnitShortCode,
+                round( erp_itemledger.inOutQty, 2 ) AS Qty,
+                currencymaster.CurrencyName AS LocalCurrency,
+                round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
+                currencymaster_1.CurrencyName AS RepCurrency,
+                round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
+                currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
+                currencymaster_1.DecimalPlaces AS RptCurrencyDecimals               
+            FROM
+                `erp_itemledger`
+                INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
+                INNER JOIN `financeitemcategorysub` ON `itemmaster`.`financeCategorySub` = `financeitemcategorysub`.`itemCategorySubID`
+                LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
+                LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
+                LEFT JOIN `units` ON `erp_itemledger`.`unitOfMeasure` = `units`.`UnitID` 
+            WHERE
+                erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
+                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                AND itemmaster.financeCategoryMaster = 1 
+                AND DATE(erp_itemledger.transactionDate) <= '$date' 
+                ) AS ItemLedger 
+            GROUP BY
+                ItemLedger.companySystemID,
+                ItemLedger.itemSystemCode";
         $items = DB::select($sql);
 
         foreach ($items as $val) {
