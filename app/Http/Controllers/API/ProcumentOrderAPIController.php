@@ -3941,7 +3941,7 @@ FROM
         );
         $html = view('print.purchase_order_print_pdf', $order);
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html)->save('emailAttachment/po_print_' . time() . '.pdf');
+        $pdf->loadHTML($html)->save('C:/inetpub/wwwroot/GEARSERP/GEARSWEBPORTAL/Portal/uploads/emailAttachment/po_print_' . time() . '.pdf');
 
         $fetchSupEmail = SupplierContactDetails::where('supplierID', $procumentOrderUpdate->supplierID)
             ->where('isDefault', -1)
@@ -3970,7 +3970,7 @@ FROM
             $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
             $dataEmail['isEmailSend'] = 0;
-            $dataEmail['attachmentFileName'] = 'po_print_' . time();
+            $dataEmail['attachmentFileName'] = 'po_print_' . time().'pdf';
             $dataEmail['alertMessage'] = "New order from " . $company->CompanyName;
             $dataEmail['emailAlertMessage'] = $temp;
             Alert::create($dataEmail);
