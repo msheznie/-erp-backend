@@ -271,7 +271,7 @@ class BookInvSuppMaster extends Model
 
     public $table = 'erp_bookinvsuppmaster';
     
-    const CREATED_AT = 'createdDateTime';
+    const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = 'bookingSuppMasInvAutoID';
@@ -324,6 +324,7 @@ class BookInvSuppMaster extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
+        'createdDateAndTime',
         'cancelYN',
         'cancelComment',
         'cancelDate',
@@ -377,7 +378,6 @@ class BookInvSuppMaster extends Model
         'createdPcID' => 'string',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'createdDateTime' => 'string',
         'cancelYN' => 'integer',
         'cancelComment' => 'string',
         'canceledByEmpSystemID' => 'integer',
@@ -422,6 +422,21 @@ class BookInvSuppMaster extends Model
     public function transactioncurrency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
+    }
+
+    public function localcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function rptcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+    }
+
+    public function grvdetail()
+    {
+        return $this->hasMany('App\Models\BookInvSuppDet', 'bookingSuppMasInvAutoID', 'bookingSuppMasInvAutoID');
     }
 
     

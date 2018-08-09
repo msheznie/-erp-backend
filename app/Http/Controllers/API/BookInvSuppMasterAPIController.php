@@ -291,15 +291,16 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
     public function getInvoiceMasterRecord(Request $request)
     {
-        $id = $request->get('id');
-        $outputRecord = $this->bookInvSuppMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
-                $query->with('employee')
-                    ->where('documentSystemID', 3);
-            },'details','company_by','currency_by', 'companydocumentattachment_by' => function ($query) {
-                $query->where('documentSystemID', 3);
-            }])->findWithoutFail($id);
+        $input = $request->all();
 
-        return $this->sendResponse($outputRecord, 'Data retrieved successfully');
+        $output = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])->with(['grvdetail' => function ($query) {
+            $query->with('grv');
+        },'approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 11);
+        }, 'company', 'transactioncurrency','localcurrency', 'rptcurrency','supplier'])->first();
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
 
     }
 }

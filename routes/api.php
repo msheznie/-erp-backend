@@ -624,6 +624,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
     Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+
+    Route::resource('book_inv_supp_masters', 'BookInvSuppMasterAPIController');
+    Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
+    Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -656,6 +660,3 @@ Route::get('runQueueSR', function () {
 });
 
 
-Route::resource('book_inv_supp_masters', 'BookInvSuppMasterAPIController');
-
-Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');

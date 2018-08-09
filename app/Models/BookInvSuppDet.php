@@ -178,7 +178,7 @@ class BookInvSuppDet extends Model
 {
 
     public $table = 'erp_bookinvsuppdet';
-    
+
     const CREATED_AT = 'timesReferred';
     const UPDATED_AT = 'timesReferred';
 
@@ -253,8 +253,13 @@ class BookInvSuppDet extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    
+    public function grv()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
+    }
+
+
 }
