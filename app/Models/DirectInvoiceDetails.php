@@ -1,0 +1,216 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : DirectInvoiceDetails.php
+ * -- Project Name : ERP
+ * -- Module Name :  DirectInvoiceDetails
+ * -- Author : Nazir
+ * -- Create date : 09 - August 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="DirectInvoiceDetails",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="directInvoiceDetailsID",
+ *          description="directInvoiceDetailsID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="directInvoiceAutoID",
+ *          description="directInvoiceAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="serviceLineCode",
+ *          description="serviceLineCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="glCode",
+ *          description="glCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="glCodeDes",
+ *          description="glCodeDes",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="comments",
+ *          description="comments",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="percentage",
+ *          description="percentage",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="DIAmountCurrency",
+ *          description="DIAmountCurrency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="DIAmountCurrencyER",
+ *          description="DIAmountCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="DIAmount",
+ *          description="DIAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="localCurrency",
+ *          description="localCurrency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="localCurrencyER",
+ *          description="localCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="localAmount",
+ *          description="localAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptCurrency",
+ *          description="comRptCurrency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptCurrencyER",
+ *          description="comRptCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptAmount",
+ *          description="comRptAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="budgetYear",
+ *          description="budgetYear",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="isExtraAddon",
+ *          description="isExtraAddon",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      )
+ * )
+ */
+class DirectInvoiceDetails extends Model
+{
+
+    public $table = 'erp_directinvoicedetails';
+    
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
+
+    protected $primaryKey = 'directInvoiceDetailsID';
+
+    public $fillable = [
+        'directInvoiceAutoID',
+        'companyID',
+        'serviceLineSystemID',
+        'serviceLineCode',
+        'glCode',
+        'glCodeDes',
+        'comments',
+        'percentage',
+        'DIAmountCurrency',
+        'DIAmountCurrencyER',
+        'DIAmount',
+        'localCurrency',
+        'localCurrencyER',
+        'localAmount',
+        'comRptCurrency',
+        'comRptCurrencyER',
+        'comRptAmount',
+        'budgetYear',
+        'isExtraAddon',
+        'timesReferred',
+        'timeStamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'directInvoiceDetailsID' => 'integer',
+        'directInvoiceAutoID' => 'integer',
+        'companyID' => 'string',
+        'serviceLineSystemID' => 'integer',
+        'serviceLineCode' => 'string',
+        'glCode' => 'string',
+        'glCodeDes' => 'string',
+        'comments' => 'string',
+        'percentage' => 'float',
+        'DIAmountCurrency' => 'integer',
+        'DIAmountCurrencyER' => 'float',
+        'DIAmount' => 'float',
+        'localCurrency' => 'integer',
+        'localCurrencyER' => 'float',
+        'localAmount' => 'float',
+        'comRptCurrency' => 'integer',
+        'comRptCurrencyER' => 'float',
+        'comRptAmount' => 'float',
+        'budgetYear' => 'integer',
+        'isExtraAddon' => 'integer',
+        'timesReferred' => 'integer'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    
+}

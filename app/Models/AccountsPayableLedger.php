@@ -192,7 +192,7 @@ class AccountsPayableLedger extends Model
 
     public $table = 'erp_accountspayableledger';
 
-    const CREATED_AT = 'timeStamp';
+    const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
 
     protected $primaryKey  = 'apAutoID';

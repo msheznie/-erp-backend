@@ -630,6 +630,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportINVReport', 'InventoryReportAPIController@exportReport');
 
     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
+
+    Route::resource('book_inv_supp_masters', 'BookInvSuppMasterAPIController');
+    Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
+    Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
     Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
     Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
     Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
@@ -660,13 +664,13 @@ Route::get('runQueue', function () {
 });
 
 Route::get('runQueueSR', function () {
-    /* $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',2919)->first();
-     $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);*/
-    $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2887)->first();
-    $job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
+     $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',2920)->first();
+     $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
+   // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
+    //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
 
-Route::resource('book_inv_supp_masters', 'BookInvSuppMasterAPIController');
 
-Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
+
+Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');

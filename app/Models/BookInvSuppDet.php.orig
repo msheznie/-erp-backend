@@ -178,9 +178,15 @@ class BookInvSuppDet extends Model
 {
 
     public $table = 'erp_bookinvsuppdet';
-
+<<<<<<< HEAD
+    
     const CREATED_AT = 'timeStamp';
     const UPDATED_AT = 'timeStamp';
+=======
+
+    const CREATED_AT = 'timesReferred';
+    const UPDATED_AT = 'timesReferred';
+>>>>>>> 64960899bd06fd073b6dde5f3e5a77a8def39bde
 
     protected $primaryKey = 'bookingSupInvoiceDetAutoID';
 
@@ -260,7 +266,6 @@ class BookInvSuppDet extends Model
     {
         return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
     }
-
 
 
 }
