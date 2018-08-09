@@ -627,6 +627,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
     Route::post('validateINVReport', 'InventoryReportAPIController@validateReport');
     Route::post('generateINVReport', 'InventoryReportAPIController@generateReport');
+    Route::post('exportINVReport', 'InventoryReportAPIController@exportReport');
 
     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
     Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
