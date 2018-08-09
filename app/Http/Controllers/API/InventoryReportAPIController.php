@@ -62,7 +62,7 @@ class InventoryReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        $warehouse = WarehouseMaster::whereIN('companySystemID', $companiesByGroup)->where('isActive', 1)->get();
+        $warehouse = WarehouseMaster::whereIN('companySystemID', $companiesByGroup)->get();
         $document = DocumentMaster::where('departmentSystemID', 10)->get();
 
         $output = array(
