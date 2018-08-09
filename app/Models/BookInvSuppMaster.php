@@ -449,5 +449,10 @@ class BookInvSuppMaster extends Model
         return $this->hasMany('App\Models\DirectInvoiceDetails', 'directInvoiceAutoID', 'bookingSuppMasInvAutoID');
     }
 
+    public function suppliergrv()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'supplierGLCode', 'chartOfAccountSystemID');
+    }
+
     
 }

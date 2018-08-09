@@ -146,6 +146,8 @@ class DocumentApprovedAPIController extends AppBaseController
 
         $employeeSystemID= \Helper::getEmployeeSystemID();
 
+        $employeeSystemID = 724;
+
 
         $where = "";
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {

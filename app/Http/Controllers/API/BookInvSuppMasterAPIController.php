@@ -301,7 +301,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
-        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail'])->first();
+        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 
