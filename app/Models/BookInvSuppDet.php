@@ -179,8 +179,8 @@ class BookInvSuppDet extends Model
 
     public $table = 'erp_bookinvsuppdet';
     
-    const CREATED_AT = 'timesReferred';
-    const UPDATED_AT = 'timesReferred';
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
 
     protected $primaryKey = 'bookingSupInvoiceDetAutoID';
 
