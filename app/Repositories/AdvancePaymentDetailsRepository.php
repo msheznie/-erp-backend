@@ -8,7 +8,7 @@ use InfyOm\Generator\Common\BaseRepository;
 /**
  * Class AdvancePaymentDetailsRepository
  * @package App\Repositories
- * @version April 25, 2018, 7:33 am UTC
+ * @version August 9, 2018, 10:02 am UTC
  *
  * @method AdvancePaymentDetails findWithoutFail($id, $columns = ['*'])
  * @method AdvancePaymentDetails find($id, $columns = ['*'])
