@@ -56,16 +56,16 @@ class GeneralLedgerInsert implements ShouldQueue
                 switch ($masterModel["documentSystemID"]) {
                     case 3: // GRV
                         $masterData = GRVMaster::with(['details' => function ($query) {
-                            $query->selectRaw("SUM(GRVcostPerUnitLocalCur*noQty) as localAmount, SUM(GRVcostPerUnitComRptCur*noQty) as rptAmount,SUM(GRVcostPerUnitSupTransCur*noQty) as transAmount,grvAutoID");
+                            $query->selectRaw("SUM(GRVcostPerUnitLocalCur*noQty) as localAmount, SUM(GRVcostPerUnitComRptCur*noQty) as rptAmount,SUM(GRVcostPerUnitSupTransCur*noQty) as transAmount,grvAutoID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER");
                         }])->find($masterModel["autoID"]);
                         //get balansheet account
-                        $bs = GRVDetails::selectRaw("SUM(landingCost_LocalCur*noQty) as localAmount, SUM(landingCost_RptCur*noQty) as rptAmount,SUM(landingCost_TransCur*noQty) as transAmount,financeGLcodebBSSystemID,financeGLcodebBS")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->groupBy('financeGLcodebBSSystemID')->get();
+                        $bs = GRVDetails::selectRaw("SUM(landingCost_LocalCur*noQty) as localAmount, SUM(landingCost_RptCur*noQty) as rptAmount,SUM(landingCost_TransCur*noQty) as transAmount,financeGLcodebBSSystemID,financeGLcodebBS,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->groupBy('financeGLcodebBSSystemID')->get();
 
                         //get pnl account
-                        $pl = GRVDetails::selectRaw("SUM(landingCost_LocalCur*noQty) as localAmount, SUM(landingCost_RptCur*noQty) as rptAmount,SUM(landingCost_TransCur*noQty) as transAmount,financeGLcodePLSystemID,financeGLcodePL")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->WHERE('includePLForGRVYN', -1)->groupBy('financeGLcodePLSystemID')->get();
+                        $pl = GRVDetails::selectRaw("SUM(landingCost_LocalCur*noQty) as localAmount, SUM(landingCost_RptCur*noQty) as rptAmount,SUM(landingCost_TransCur*noQty) as transAmount,financeGLcodePLSystemID,financeGLcodePL,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->WHERE('includePLForGRVYN', -1)->groupBy('financeGLcodePLSystemID')->get();
 
                         //unbilledGRV for logistic
-                        $unbilledGRV = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,erp_grvmaster.grvDate,erp_purchaseorderadvpayment.currencyID,erp_grvmaster.supplierTransactionER as supplierTransactionCurrencyER,erp_grvmaster.companyReportingCurrencyID,erp_grvmaster.companyReportingER,erp_grvmaster.localCurrencyID,erp_grvmaster.localCurrencyER,SUM(reqAmountTransCur_amount) as transAmount,SUM(reqAmountInPOLocalCur) as localAmount, SUM(reqAmountInPORptCur) as rptAmount,'POG' as grvType,NOW() as timeStamp,erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID,erp_purchaseorderadvpayment.UnbilledGRVAccount")->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->where('erp_purchaseorderadvpayment.grvAutoID',$masterModel["autoID"])->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID')->get();
+                        $unbilledGRV = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_purchaseorderadvpayment.supplierID,poID as purchaseOrderID,erp_purchaseorderadvpayment.grvAutoID,erp_grvmaster.grvDate,erp_purchaseorderadvpayment.currencyID as supplierTransactionCurrencyID,'1' as supplierTransactionCurrencyER,erp_purchaseordermaster.companyReportingCurrencyID, ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPORptCur)),7) as companyReportingER,erp_purchaseordermaster.localCurrencyID,ROUND((SUM(reqAmountTransCur_amount)/SUM(reqAmountInPOLocalCur)),7) as localCurrencyER,SUM(reqAmountTransCur_amount) as transAmount,SUM(reqAmountInPOLocalCur) as localAmount, SUM(reqAmountInPORptCur) as rptAmount,'POG' as grvType,NOW() as timeStamp,erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID,erp_purchaseorderadvpayment.UnbilledGRVAccount")->leftJoin('erp_grvmaster', 'erp_purchaseorderadvpayment.grvAutoID', '=', 'erp_grvmaster.grvAutoID')->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', '=', 'erp_purchaseordermaster.purchaseOrderID')->where('erp_purchaseorderadvpayment.grvAutoID',$masterModel["autoID"])->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID')->get();
 
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
@@ -93,14 +93,14 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['clientContractID'] = 'X';
                             $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = $masterData->supplierID;
-                            $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
-                            $data['documentTransCurrencyER'] = $masterData->supplierTransactionER;
+                            $data['documentTransCurrencyID'] = $masterData->details[0]->supplierTransactionCurrencyID;
+                            $data['documentTransCurrencyER'] = $masterData->details[0]->supplierTransactionER;
                             $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transAmount * -1);
-                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                            $data['documentLocalCurrencyID'] = $masterData->details[0]->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $masterData->details[0]->localCurrencyER;
                             $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localAmount * -1);
-                            $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
-                            $data['documentRptCurrencyER'] = $masterData->companyReportingER;
+                            $data['documentRptCurrencyID'] = $masterData->details[0]->companyReportingCurrencyID;
+                            $data['documentRptCurrencyER'] = $masterData->details[0]->companyReportingER;
                             $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptAmount * -1);
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = null;
@@ -117,8 +117,16 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
                                     $data['glCode'] = $val->financeGLcodebBS;
                                     $data['glAccountType'] = 'BS';
+                                    $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $val->supplierTransactionER;
                                     $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+
+                                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
                                     $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+
+                                    $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = $val->companyReportingER;
                                     $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
@@ -130,8 +138,16 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
                                     $data['glCode'] = $val->financeGLcodePL;
                                     $data['glAccountType'] = 'PL';
+                                    $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $val->supplierTransactionER;
                                     $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+
+                                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
                                     $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+
+                                    $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = $val->companyReportingER;
                                     $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
@@ -146,8 +162,16 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['chartOfAccountSystemID'] = $val->UnbilledGRVAccountSystemID;
                                     $data['glCode'] = $val->UnbilledGRVAccount;
                                     $data['glAccountType'] = 'BS';
+                                    $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $val->supplierTransactionER;
                                     $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) * -1);
+
+                                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
                                     $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) * -1);
+
+                                    $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = $val->companyReportingER;
                                     $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) * -1);
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
