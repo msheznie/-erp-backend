@@ -3980,7 +3980,9 @@ FROM
 
             $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
-            $pdfName = "\\\\192.168.1.37\\uploads\\emailAttachment\\po_print_" . time() . ".pdf";
+            $location = \DB::table('systemmanualfolder')->first();
+            $pdfName = $location->folderDes."emailAttachment\\po_print_" . time() . ".pdf";
+
             $dataEmail['isEmailSend'] = 0;
             $dataEmail['attachmentFileName'] = $pdfName;
             $dataEmail['alertMessage'] = "New order from " . $company->CompanyName;
