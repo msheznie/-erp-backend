@@ -667,3 +667,6 @@ Route::get('runQueueSR', function () {
 });
 
 
+
+
+Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');

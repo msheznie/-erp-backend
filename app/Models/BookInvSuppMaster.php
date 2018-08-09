@@ -439,5 +439,15 @@ class BookInvSuppMaster extends Model
         return $this->hasMany('App\Models\BookInvSuppDet', 'bookingSuppMasInvAutoID', 'bookingSuppMasInvAutoID');
     }
 
+    public function detail()
+    {
+        return $this->hasMany('App\Models\BookInvSuppDet', 'bookingSuppMasInvAutoID', 'bookingSuppMasInvAutoID');
+    }
+
+    public function directdetail()
+    {
+        return $this->hasMany('App\Models\DirectInvoiceDetails', 'directInvoiceAutoID', 'bookingSuppMasInvAutoID');
+    }
+
     
 }

@@ -11,3 +11,5 @@ Route::resource('customerInvoiceDirectDetails', 'CustomerInvoiceDirectDetailCont
 Route::resource('bookInvSuppMasters', 'BookInvSuppMasterController');
 
 Route::resource('bookInvSuppDets', 'BookInvSuppDetController');
+
+Route::resource('directInvoiceDetails', 'DirectInvoiceDetailsController');
