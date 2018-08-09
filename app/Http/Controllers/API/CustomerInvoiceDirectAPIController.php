@@ -278,4 +278,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Customer Invoice Direct deleted successfully');
     }
+
+    public function customerInvoiceDetails(request $request)
+    {
+        $input=$request->all();
+        $id=$input['id'];
+        /** @var CustomerInvoiceDirect $customerInvoiceDirect */
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
+
+        if (empty($customerInvoiceDirect)) {
+            return $this->sendError('Customer Invoice Direct not found');
+        }else{
+            return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer Invoice Direct deleted successfully');
+        }
+    }
 }

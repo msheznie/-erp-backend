@@ -410,7 +410,7 @@ class CustomerInvoiceDirect extends Model
 
     public $table = 'erp_custinvoicedirect';
     
-    const CREATED_AT = 'createdDateTime';
+    const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
     protected $primaryKey  = 'custInvoiceDirectAutoID';
 
@@ -499,7 +499,8 @@ class CustomerInvoiceDirect extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'createdDateAndTime'
     ];
 
     /**
@@ -577,7 +578,8 @@ class CustomerInvoiceDirect extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'createdDateTime' => 'string'
+        'createdDateTime' => 'string',
+        'createdDateAndTime' => 'string'
     ];
 
     /**

@@ -631,6 +631,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
     Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
+    Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
+    Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
+
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
