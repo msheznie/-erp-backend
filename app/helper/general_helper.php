@@ -16,6 +16,7 @@
 namespace App\helper;
 
 use App\Jobs\CreateStockReceive;
+use App\Jobs\CreateSupplierInvoice;
 use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
 use App\Jobs\UnbilledGRVInsert;
@@ -789,18 +790,21 @@ class Helper
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID,'employeeSystemID' => $empInfo->employeeSystemID];
                             // insert the record to item ledger
-                            $job1 = ItemLedgerInsert::dispatch($masterData);
+                            $jobIL = ItemLedgerInsert::dispatch($masterData);
                             // insert the record to general ledger
                             if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10) {
-                                $job2 = GeneralLedgerInsert::dispatch($masterData);
+                                $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
-                                    $job3 = UnbilledGRVInsert::dispatch($masterData);
+                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
                                 }
                             }
 
                             $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
                             if( $input["documentSystemID"] == 13 && !empty($sourceModel)){
-                                $jobSR = CreateStockReceive::dispatch($sourceModel);
+                                $jobCI = CreateStockReceive::dispatch($sourceModel);
+                            }
+                            if( $input["documentSystemID"] == 10 && !empty($sourceModel)){
+                                $jobSI = CreateSupplierInvoice::dispatch($sourceModel);
                             }
 
                         } else {
