@@ -641,7 +641,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController');
     Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
-    Route::resource('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
+    Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
     Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
     Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
 });
