@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : AdvancePaymentDetails.php
+ * -- Project Name : ERP
+ * -- Module Name :  AdvancePaymentDetails
+ * -- Author : Nazir
+ * -- Create date : 10 - August 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -137,11 +147,11 @@ class AdvancePaymentDetails extends Model
 {
 
     public $table = 'erp_advancepaymentdetails';
-    
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
 
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
 
+    protected $primaryKey = 'advancePaymentDetailAutoID';
 
     public $fillable = [
         'PayMasterAutoId',
