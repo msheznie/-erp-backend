@@ -610,8 +610,12 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('purchase_returns', 'PurchaseReturnAPIController');
     Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany');
+    Route::get('grvForPurchaseReturn', 'PurchaseReturnAPIController@grvForPurchaseReturn');
+    Route::get('grvDetailByMasterForPurchaseReturn', 'PurchaseReturnAPIController@grvDetailByMasterForPurchaseReturn');
     Route::get('getPurchaseReturnFormData', 'PurchaseReturnAPIController@getPurchaseReturnFormData');
+    Route::post('purchaseReturnSegmentChkActive', 'PurchaseReturnAPIController@purchaseReturnSegmentChkActive');
     Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
+    Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster');
 
     Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
     Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');

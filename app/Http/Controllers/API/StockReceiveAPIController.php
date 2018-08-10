@@ -22,6 +22,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentMaster;
+use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\StockReceive;
@@ -421,6 +422,35 @@ class StockReceiveAPIController extends AppBaseController
 
             if ($checkQuantity > 0) {
                 return $this->sendError('Every item should have at least one minimum Qty', 500);
+            }
+
+            $stockReceiveDetails = StockReceiveDetails::where('stockReceiveAutoID', $id)->get();
+
+            $notAssignItems = "";
+            $count = 0;
+            foreach ($stockReceiveDetails as $srDetail){
+                $itemAssign = ItemAssigned::where("companySystemID",$stockReceive->companySystemID)
+                                            ->where("itemCodeSystem",$srDetail->itemCodeSystem)
+                                            ->first();
+
+                if(empty($itemAssign)){
+                    if($count == 0){
+                        $notAssignItems = $srDetail->itemPrimaryCode;
+                    }else{
+                        $notAssignItems = $notAssignItems.", ".$srDetail->itemPrimaryCode;
+                    }
+
+                    $count ++;
+                }
+            }
+
+            if($count > 0){
+                if($count < 5){
+                    $notAssignItems = $notAssignItems." are not assigned to ".$stockReceive->companyID.". Please assign and try again";
+                    return $this->sendError($notAssignItems, 500);
+                }else{
+                    return $this->sendError("Some items are not assigned to ".$stockReceive->companyID.". Please assign and try again", 500);
+                }
             }
 
             unset($input['confirmedYN']);

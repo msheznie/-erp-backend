@@ -8,7 +8,8 @@
  * -- Create date : 31 - July 2018
  * -- Description : This file contains the all CRUD for Purchase Return
  * -- REVISION HISTORY
- * -- Date: 26-March 2018 By: Fayas Description: Added new functions named as getPurchaseReturnByCompany(),getPurchaseReturnFormData()
+ * -- Date: 10 - August 2018 By: Fayas Description: Added new functions named as getPurchaseReturnByCompany(),getPurchaseReturnFormData()
+ * -- Date: 10 - August 2018 By: Fayas Description: Added new functions named as purchaseReturnSegmentChkActive(),grvForPurchaseReturn()
  */
 namespace App\Http\Controllers\API;
 
@@ -20,6 +21,8 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
+use App\Models\GRVDetails;
+use App\Models\GRVMaster;
 use App\Models\GRVTypes;
 use App\Models\Location;
 use App\Models\Months;
@@ -293,7 +296,7 @@ class PurchaseReturnAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PurchaseReturn $purchaseReturn */
-        $purchaseReturn = $this->purchaseReturnRepository->findWithoutFail($id);
+        $purchaseReturn = $this->purchaseReturnRepository->with(['segment_by','location_by','financeperiod_by'])->findWithoutFail($id);
 
         if (empty($purchaseReturn)) {
             return $this->sendError('Purchase Return not found');
@@ -588,6 +591,73 @@ class PurchaseReturnAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function purchaseReturnSegmentChkActive(Request $request)
+    {
+
+        $input = $request->all();
+
+        $purchaseReturnAutoID = $input['purchaseReturnAutoID'];
+
+        $purchaseReturn = PurchaseReturn::find($purchaseReturnAutoID);
+
+        if (empty($purchaseReturn)) {
+            return $this->sendError('Purchase Return not found');
+        }
+
+        //checking segment is active
+
+        $segments = SegmentMaster::where("serviceLineSystemID", $purchaseReturn->serviceLineSystemID)
+                                  ->where('companySystemID', $purchaseReturn->companySystemID)
+                                  ->where('isActive', 1)
+                                  ->first();
+
+        if (empty($segments)) {
+            return $this->sendError('Selected segment is not active. Please select an active segment');
+        }
+
+        return $this->sendResponse($purchaseReturn, 'sucess');
+    }
+
+    public function grvForPurchaseReturn(Request $request)
+    {
+
+        $input = $request->all();
+
+        $purchaseReturnAutoID = $input['purchaseReturnAutoID'];
+
+        $purchaseReturn = PurchaseReturn::find($purchaseReturnAutoID);
+
+        if (empty($purchaseReturn)) {
+            return $this->sendError('Purchase Return not found');
+        }
+
+        $grv = GRVMaster::where('companySystemID',$purchaseReturn->companySystemID)
+                        ->where('serviceLineSystemID',$purchaseReturn->serviceLineSystemID)
+                        ->where('grvLocation',$purchaseReturn->purchaseReturnLocation)
+                        ->where('supplierID',$purchaseReturn->supplierID)
+                        ->get();
+
+        return $this->sendResponse($grv, 'success');
+    }
+
+    public function grvDetailByMasterForPurchaseReturn(Request $request)
+    {
+
+        $input = $request->all();
+
+        $grvAutoID = $input['grvAutoID'];
+
+        $grvMaster = GRVMaster::find($grvAutoID);
+
+        if (empty($grvMaster)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        $grvDetails = GRVDetails::where('grvAutoID',$grvMaster->grvAutoID)->with(['unit'])->get();
+
+        return $this->sendResponse($grvDetails, 'success');
     }
 
 }
