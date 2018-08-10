@@ -144,7 +144,7 @@ class DocumentApprovedAPIController extends AppBaseController
         $input = $request->all();
         $search = $request->input('search.value');
 
-        $employeeSystemID=  \Helper::getEmployeeSystemID();
+        $employeeSystemID= 11;// \Helper::getEmployeeSystemID();
 
 
         $where = "";
@@ -169,7 +169,7 @@ class DocumentApprovedAPIController extends AppBaseController
             $where .= " WHERE  (documentCode LIKE '%$search%' OR  comments LIKE '%$search%' OR SupplierOrCustomer LIKE '%$search%' OR DocumentValue LIKE '%$search%' )";
         }
 
-          $qry="SELECT * FROM (SELECT
+           $qry="SELECT * FROM (SELECT
 	*
 FROM
 	(
@@ -543,7 +543,7 @@ WHERE
     }
 
     function getTotalCountOfApproval(){
-        $employeeSystemID= \Helper::getEmployeeSystemID();
+        $employeeSystemID=11; // \Helper::getEmployeeSystemID();
         $qry="
         SELECT IFNULL(SUM(totalCount),0) as totalCount FROM (
 SELECT

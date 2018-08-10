@@ -674,3 +674,14 @@ Route::get('runQueueSR', function () {
    // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
+
+
+Route::resource('performa_details', 'PerformaDetailsAPIController');
+
+Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
+
+Route::resource('ticket_masters', 'TicketMasterAPIController');
+
+Route::resource('field_masters', 'FieldMasterAPIController');
+
+Route::resource('taxdetails', 'TaxdetailAPIController');

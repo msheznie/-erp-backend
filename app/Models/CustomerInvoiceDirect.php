@@ -602,4 +602,15 @@ class CustomerInvoiceDirect extends Model
         return $this->belongsTo('App\Models\CustomerMaster','customerID',  'customerCodeSystem');
     }
 
+   public function invoicedetails()
+    {
+        return $this->hasMany('App\Models\CustomerInvoiceDirectDetail','custInvoiceDirectID','custInvoiceDirectAutoID');
+    }
+
+    public function tax(){
+        return $this->belongsTo('App\Models\TaxDetail','custInvoiceDirectAutoID','documentSystemCode');
+    }
+
+
+
 }
