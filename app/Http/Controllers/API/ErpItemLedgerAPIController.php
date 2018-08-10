@@ -1462,8 +1462,10 @@ WHERE
 	) AS ItemLedger 
 GROUP BY
 	ItemLedger.companySystemID,
-	ItemLedger.itemSystemCode";
-
+	ItemLedger.itemSystemCode
+        HAVING
+        (StockQty != 0 OR AvgCostLocal != 0 OR TotalCostLocal != 0 OR AvgCostRpt != 0 OR AvgCostRpt != 0 OR TotalCostRpt != 0)";
+        
         $stockTaking = DB::select($sql);
 
         foreach ($stockTaking as $val) {
