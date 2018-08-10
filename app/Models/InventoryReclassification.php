@@ -1,0 +1,291 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="InventoryReclassification",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="inventoryreclassificationID",
+ *          description="inventoryreclassificationID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="serviceLineSystemID",
+ *          description="serviceLineSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="serviceLineCode",
+ *          description="serviceLineCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyFinanceYearID",
+ *          description="companyFinanceYearID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyFinancePeriodID",
+ *          description="companyFinancePeriodID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentSystemID",
+ *          description="documentSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentID",
+ *          description="documentID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="narration",
+ *          description="narration",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedYN",
+ *          description="confirmedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByEmpSystemID",
+ *          description="confirmedByEmpSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByEmpID",
+ *          description="confirmedByEmpID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByName",
+ *          description="confirmedByName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approved",
+ *          description="approved",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserID",
+ *          description="approvedByUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserSystemID",
+ *          description="approvedByUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="RollLevForApp_curr",
+ *          description="RollLevForApp_curr",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="rejectedYN",
+ *          description="rejectedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserGroup",
+ *          description="createdUserGroup",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdPCid",
+ *          description="createdPCid",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserSystemID",
+ *          description="createdUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserSystemID",
+ *          description="modifiedUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUser",
+ *          description="modifiedUser",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPc",
+ *          description="modifiedPc",
+ *          type="string"
+ *      )
+ * )
+ */
+class InventoryReclassification extends Model
+{
+
+    public $table = 'erp_inventoryreclassification';
+    
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
+
+    protected $primaryKey = 'inventoryreclassificationID';
+
+    public $fillable = [
+        'companySystemID',
+        'companyID',
+        'serviceLineSystemID',
+        'serviceLineCode',
+        'companyFinanceYearID',
+        'companyFinancePeriodID',
+        'FYBiggin',
+        'FYEnd',
+        'documentSystemID',
+        'documentID',
+        'documentCode',
+        'inventoryReclassificationDate',
+        'narration',
+        'confirmedYN',
+        'confirmedByEmpSystemID',
+        'confirmedByEmpID',
+        'confirmedByName',
+        'confirmedDate',
+        'approved',
+        'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
+        'postedDate',
+        'RollLevForApp_curr',
+        'rejectedYN',
+        'timesReferred',
+        'createdDateTime',
+        'createdUserGroup',
+        'createdPCid',
+        'createdUserSystemID',
+        'createdUserID',
+        'modifiedUserSystemID',
+        'modifiedUser',
+        'modifiedPc',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'inventoryreclassificationID' => 'integer',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
+        'serviceLineSystemID' => 'integer',
+        'serviceLineCode' => 'string',
+        'companyFinanceYearID' => 'integer',
+        'companyFinancePeriodID' => 'integer',
+        'documentSystemID' => 'integer',
+        'documentID' => 'string',
+        'documentCode' => 'string',
+        'narration' => 'string',
+        'confirmedYN' => 'integer',
+        'confirmedByEmpSystemID' => 'integer',
+        'confirmedByEmpID' => 'string',
+        'confirmedByName' => 'string',
+        'approved' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
+        'RollLevForApp_curr' => 'integer',
+        'rejectedYN' => 'integer',
+        'timesReferred' => 'integer',
+        'createdUserGroup' => 'string',
+        'createdPCid' => 'string',
+        'createdUserSystemID' => 'integer',
+        'createdUserID' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUser' => 'string',
+        'modifiedPc' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function segment_by()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'inventoryreclassificationID');
+    }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\InventoryReclassificationDetail', 'inventoryreclassificationID', 'inventoryreclassificationID');
+    }
+
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+}

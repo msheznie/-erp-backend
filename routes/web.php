@@ -21,3 +21,13 @@ Route::resource('paySupplierInvoiceDetails', 'PaySupplierInvoiceDetailController
 Route::resource('directPaymentDetails', 'DirectPaymentDetailsController');
 
 Route::resource('advancePaymentDetails', 'AdvancePaymentDetailsController');
+
+
+
+
+
+
+
+Route::resource('inventoryReclassificationDetails', 'InventoryReclassificationDetailController');
+
+Route::resource('inventoryReclassifications', 'InventoryReclassificationController');
