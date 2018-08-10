@@ -144,7 +144,7 @@ class DocumentApprovedAPIController extends AppBaseController
         $input = $request->all();
         $search = $request->input('search.value');
 
-        $employeeSystemID= 11;// \Helper::getEmployeeSystemID();
+        $employeeSystemID =  \Helper::getEmployeeSystemID();
 
 
         $where = "";
@@ -543,7 +543,7 @@ WHERE
     }
 
     function getTotalCountOfApproval(){
-        $employeeSystemID=11; // \Helper::getEmployeeSystemID();
+        $employeeSystemID= \Helper::getEmployeeSystemID();
         $qry="
         SELECT IFNULL(SUM(totalCount),0) as totalCount FROM (
 SELECT

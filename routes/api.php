@@ -641,9 +641,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController');
     Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
-    Route::resource('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
+    Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
     Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
     Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
+
+    Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
+
+    Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -664,16 +668,17 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master  = ['documentSystemID' => 12,'autoID' => 1749,'companySystemID' => 11,'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 12, 'autoID' => 1749, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 
 Route::get('runQueueSR', function () {
-     $stMaster  = \App\Models\StockTransfer::where('stockTransferAutoID',2920)->first();
-     $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
-   // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
+    $stMaster = \App\Models\StockTransfer::where('stockTransferAutoID', 2920)->first();
+    $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
+    // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
+
 
 
 Route::resource('performa_details', 'PerformaDetailsAPIController');
@@ -685,3 +690,8 @@ Route::resource('ticket_masters', 'TicketMasterAPIController');
 Route::resource('field_masters', 'FieldMasterAPIController');
 
 Route::resource('taxdetails', 'TaxdetailAPIController');
+
+Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
+
+Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
+

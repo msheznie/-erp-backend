@@ -382,7 +382,7 @@ class GRVDetailsAPIController extends AppBaseController
 
                     $grvDetailExistSameItem = GRVDetails::select(DB::raw('itemCode'))
                         ->where('grvAutoID', $grvAutoID)
-                        ->where('itemCode', $new['itemCode'])
+                        ->where('purchaseOrderDetailsID', $new['purchaseOrderDetailsID'])
                         ->first();
 
                     if ($grvDetailExistSameItem) {

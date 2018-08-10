@@ -25,7 +25,6 @@ use Response;
  * Class PaySupplierInvoiceMasterController
  * @package App\Http\Controllers\API
  */
-
 class PaySupplierInvoiceMasterAPIController extends AppBaseController
 {
     /** @var  PaySupplierInvoiceMasterRepository */
@@ -293,7 +292,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->first();
+            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'supplierdetail', 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {
+                $query->with('segment');
+            }, 'approved_by' => function ($query) {
+                $query->with('employee');
+                $query->where('documentSystemID', 4);
+            }])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 
