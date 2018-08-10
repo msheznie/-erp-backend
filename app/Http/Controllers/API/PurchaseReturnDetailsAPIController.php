@@ -8,7 +8,8 @@
  * -- Create date : 31 - July 2018
  * -- Description : This file contains the all CRUD for Purchase Return
  * -- REVISION HISTORY
- * -- Date: 26-March 2018 By: Fayas Description: Added new functions named as getPurchaseRequestByDocumentType()
+ * -- Date: 10-August 2018 By: Fayas Description: Added new functions named as getPurchaseRequestByDocumentType()
+ * -- Date: 10-August 2018 By: Fayas Description: Added new functions named as getItemsByPurchaseReturnMaster()
  */
 namespace App\Http\Controllers\API;
 
@@ -16,6 +17,7 @@ use App\Http\Requests\API\CreatePurchaseReturnDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseReturnDetailsAPIRequest;
 use App\Models\PurchaseReturnDetails;
 use App\Repositories\PurchaseReturnDetailsRepository;
+use App\Repositories\PurchaseReturnRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -31,10 +33,12 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 {
     /** @var  PurchaseReturnDetailsRepository */
     private $purchaseReturnDetailsRepository;
+    private $purchaseReturnRepository;
 
-    public function __construct(PurchaseReturnDetailsRepository $purchaseReturnDetailsRepo)
+    public function __construct(PurchaseReturnDetailsRepository $purchaseReturnDetailsRepo,PurchaseReturnRepository $purchaseReturnRepository)
     {
         $this->purchaseReturnDetailsRepository = $purchaseReturnDetailsRepo;
+        $this->purchaseReturnRepository = $purchaseReturnRepository;
     }
 
     /**
@@ -288,4 +292,21 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Purchase Return Details deleted successfully');
     }
+
+    public function getItemsByPurchaseReturnMaster(Request $request)
+    {
+
+        $input = $request->all();
+        /** @var PurchaseReturn $purchaseReturn */
+        $purchaseReturn =  $this->purchaseReturnRepository->findWithoutFail($input['id']);
+
+        if (empty($purchaseReturn)) {
+            return $this->sendError('Purchase Return  not found');
+        }
+
+        $purchaseReturnDetails = PurchaseReturnDetails::where('purhaseReturnAutoID',$input['id'])->with(['unit','grv_master'])->get();
+
+        return $this->sendResponse($purchaseReturnDetails, 'Purchase Return Details retrieved successfully');
+    }
+
 }

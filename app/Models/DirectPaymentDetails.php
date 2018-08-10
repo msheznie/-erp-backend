@@ -274,15 +274,16 @@ class DirectPaymentDetails extends Model
 {
 
     public $table = 'erp_directpaymentdetails';
-    
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
 
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
 
+    protected $primaryKey  = 'directPaymentDetailsID';
 
     public $fillable = [
         'directPaymentAutoID',
         'companyID',
+        'serviceLineSystemID',
         'serviceLineCode',
         'supplierID',
         'expenseClaimMasterAutoID',
@@ -335,6 +336,7 @@ class DirectPaymentDetails extends Model
         'directPaymentDetailsID' => 'integer',
         'directPaymentAutoID' => 'integer',
         'companyID' => 'string',
+        'serviceLineSystemID' => 'string',
         'serviceLineCode' => 'string',
         'supplierID' => 'integer',
         'expenseClaimMasterAutoID' => 'integer',
@@ -385,6 +387,11 @@ class DirectPaymentDetails extends Model
     public static $rules = [
         
     ];
+
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
 
     
 }
