@@ -557,6 +557,7 @@ class PaySupplierInvoiceMaster extends Model
         'payAmountCompRpt',
         'suppAmountDocTotal',
         'confirmedYN',
+        'confirmedByEmpSystemID',
         'confirmedByEmpID',
         'confirmedByName',
         'confirmedDate',
@@ -665,6 +666,7 @@ class PaySupplierInvoiceMaster extends Model
         'payAmountCompRpt' => 'float',
         'suppAmountDocTotal' => 'float',
         'confirmedYN' => 'integer',
+        'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approved' => 'integer',
@@ -724,10 +726,62 @@ class PaySupplierInvoiceMaster extends Model
         
     ];
 
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
     public function supplier()
     {
         return $this->belongsTo('App\Models\SupplierMaster', 'BPVsupplierID', 'supplierCodeSystem');
     }
 
-    
+    public function bankaccount()
+    {
+        return $this->belongsTo('App\Models\BankAccount', 'BPVAccount', 'bankAccountAutoID');
+    }
+
+    public function transactioncurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransCurrencyID', 'currencyID');
+    }
+
+    public function supplierdetail()
+    {
+        return $this->hasMany('App\Models\PaySupplierInvoiceDetail', 'PayMasterAutoId', 'PayMasterAutoId');
+    }
+
+    public function directdetail()
+    {
+        return $this->hasMany('App\Models\DirectPaymentDetails', 'directPaymentAutoID', 'PayMasterAutoId');
+    }
+
+    public function localcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function rptcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyRptCurrencyID', 'currencyID');
+    }
+
+    public function advancedetail()
+    {
+        return $this->hasMany('App\Models\AdvancePaymentDetails', 'PayMasterAutoId', 'PayMasterAutoId');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'PayMasterAutoId');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+
+
+
 }

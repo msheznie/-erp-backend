@@ -451,7 +451,7 @@ class BookInvSuppMaster extends Model
 
     public function suppliergrv()
     {
-        return $this->belongsTo('App\Models\ChartOfAccount', 'supplierGLCode', 'chartOfAccountSystemID');
+        return $this->belongsTo('App\Models\ChartOfAccount', 'supplierGLCodeSystemID', 'chartOfAccountSystemID');
     }
 
     

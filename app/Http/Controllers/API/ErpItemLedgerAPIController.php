@@ -1249,7 +1249,7 @@ GROUP BY
 	ItemLedger.companySystemID,
 	ItemLedger.itemSystemCode 
 	HAVING 
-	(StockQty != 0 AND AvgCostLocal != 0 AND TotalCostLocal != 0 AND AvgCostRpt != 0 AND AvgCostRpt != 0 AND TotalCostRpt != 0)";
+	(StockQty != 0 OR AvgCostLocal != 0 OR TotalCostLocal != 0 OR AvgCostRpt != 0 OR AvgCostRpt != 0 OR TotalCostRpt != 0)";
 
         $data = DB::select($sql);
 
@@ -1462,7 +1462,9 @@ WHERE
 	) AS ItemLedger 
 GROUP BY
 	ItemLedger.companySystemID,
-	ItemLedger.itemSystemCode";
+	ItemLedger.itemSystemCode
+        HAVING
+        (StockQty != 0 OR AvgCostLocal != 0 OR TotalCostLocal != 0 OR AvgCostRpt != 0 OR AvgCostRpt != 0 OR TotalCostRpt != 0)";
 
         $stockTaking = DB::select($sql);
 
