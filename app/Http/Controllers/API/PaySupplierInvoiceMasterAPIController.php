@@ -293,7 +293,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->first();
+            ->with(['supplier'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 

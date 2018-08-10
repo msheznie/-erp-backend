@@ -624,6 +624,17 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+        //updating detail level exchange rate
+        if (!empty($updateDetailDiscount)) {
+            foreach ($updateDetailDiscount as $itemDiscont) {
+                PurchaseOrderDetails::where('purchaseOrderDetailsID', $itemDiscont['purchaseOrderDetailsID'])
+                    ->update([
+                        'supplierDefaultER' => $procumentOrderUpdate->supplierDefaultER,
+                        'companyReportingER' => $procumentOrderUpdate->companyReportingER,
+                        'localCurrencyER' => $procumentOrderUpdate->localCurrencyER,
+                    ]);
+            }
+        }
 
         //updating addons detail for line item
         $getPoDetailForAddon = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
@@ -3969,8 +3980,11 @@ FROM
 
             $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
+            $location = \DB::table('systemmanualfolder')->first();
+            $pdfName = $location->folderDes."emailAttachment\\po_print_" . time() . ".pdf";
+
             $dataEmail['isEmailSend'] = 0;
-            $dataEmail['attachmentFileName'] = 'po_print_' . time().'pdf';
+            $dataEmail['attachmentFileName'] = $pdfName;
             $dataEmail['alertMessage'] = "New order from " . $company->CompanyName;
             $dataEmail['emailAlertMessage'] = $temp;
             Alert::create($dataEmail);
@@ -3984,10 +3998,10 @@ FROM
 
         $procumentOrderUpdate->save();
 
-        if($emailSentTo == 0){
+        if ($emailSentTo == 0) {
             return $this->sendResponse($emailSentTo, 'Supplier email is not updated. Email notification is sent');
-        }else{
-            return $this->sendResponse($emailSentTo, 'Supplier notification email sent to '.$fetchSupEmail->contactPersonEmail.'');
+        } else {
+            return $this->sendResponse($emailSentTo, 'Supplier notification email sent to ' . $fetchSupEmail->contactPersonEmail . '');
         }
 
 
