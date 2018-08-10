@@ -616,6 +616,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('purchaseReturnSegmentChkActive', 'PurchaseReturnAPIController@purchaseReturnSegmentChkActive');
     Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
     Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster');
+    Route::post('storePurchaseReturnDetailsFromGRV', 'PurchaseReturnDetailsAPIController@storePurchaseReturnDetailsFromGRV');
 
     Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
     Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
