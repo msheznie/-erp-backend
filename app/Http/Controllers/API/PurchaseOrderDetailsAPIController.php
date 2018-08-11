@@ -651,9 +651,16 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if (!empty($purchaseOrderDetails->purchaseRequestDetailsID) && !empty($purchaseOrderDetails->purchaseRequestID)) {
 
+            //checking the fullyOrdered or partial in po
+            $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
+                ->where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
+                ->first();
+
+            $updatedPRQty = $detailSum['totalPoqty'];
+
             $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
 
-            $checkQuentity = ($detailExistPRDetail->quantityRequested - $input['noQty']);
+            $checkQuentity = ($detailExistPRDetail->quantityRequested - $updatedPRQty);
 
             if ($checkQuentity == 0) {
                 $fullyOrdered = 2;
@@ -665,12 +672,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $selectedForPO = 0;
             }
 
-            //checking the fullyOrdered or partial in po
-            $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
-                ->where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
-                ->first();
-
-            $updatedPRQty = $detailSum['totalPoqty'];
 
 
             $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
