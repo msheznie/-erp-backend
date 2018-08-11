@@ -636,6 +636,7 @@ class PurchaseReturnAPIController extends AppBaseController
         $grv = GRVMaster::where('companySystemID',$purchaseReturn->companySystemID)
                         ->where('serviceLineSystemID',$purchaseReturn->serviceLineSystemID)
                         ->where('grvLocation',$purchaseReturn->purchaseReturnLocation)
+                        ->where('approved',-1)
                         ->where('supplierID',$purchaseReturn->supplierID)
                         ->get();
 
