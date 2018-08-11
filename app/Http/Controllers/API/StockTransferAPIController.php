@@ -175,21 +175,23 @@ class StockTransferAPIController extends AppBaseController
 
             $checkCustomer = CustomerMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->count();
             if ($checkCustomer == 0) {
-                return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500);
+                $cusError = array('type' => 'cus_not');
+                return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500,$cusError);
             }
 
             $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyFromSystemID'])->count();
             if ($checkSupplier == 0) {
-                return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500);
+                $supError = array('type' => 'sup_not');
+                return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500,$supError);
             }
 
             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
-                ->where('departmentSystemID', 10)
-                ->where('isActive', -1)
-                ->where('dateFrom', '<', $documentDate)
-                ->where('dateTo', '>', $documentDate)
-                ->where('isCurrent', -1)
-                ->count();
+                                                            ->where('departmentSystemID', 10)
+                                                            ->where('isActive', -1)
+                                                            ->where('dateFrom', '<', $documentDate)
+                                                            ->where('dateTo', '>', $documentDate)
+                                                            ->where('isCurrent', -1)
+                                                            ->count();
 
             $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
 

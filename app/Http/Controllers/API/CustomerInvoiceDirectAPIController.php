@@ -283,16 +283,28 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
+
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company','customer'])->findWithoutFail($id);
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'customer','tax', 'invoicedetails'
+        => function ($query) {
+                $query->with(['performadetails' => function ($query) {
+                    $query->with(['freebillingmaster' => function ($query) {
+                        $query->with(['ticketmaster' => function ($query) {
+                            $query->with(['field']);
+                        }]);
+                    }]);
+                }]);
+            }
+        ])->findWithoutFail($id);
 
         if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found');
+            return $this->sendError('Customer Invoice Direct not found', 500);
         } else {
-            $CustomerInvoiceDirectDetail = CustomerInvoiceDirectDetail::select('*')->where('custInvoiceDirectID', $id)->get();
-            $data['master'] = $customerInvoiceDirect;
-            $data['detail'] = $CustomerInvoiceDirectDetail;
-            return $this->sendResponse($data, 'Customer Invoice Direct deleted successfully');
+            /*   $CustomerInvoiceDirectDetail = CustomerInvoiceDirectDetail::select('*')->where('custInvoiceDirectID', $id)->get();
+               $data['data']['master'] = $customerInvoiceDirect;
+               $data['data']['detail'] = $CustomerInvoiceDirectDetail;*/
+
+            return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct deleted successfully');
         }
     }
 }

@@ -3624,6 +3624,7 @@ ORDER BY
             ->where('grvRecieved', '<>', 2)
             ->where('WO_confirmedYN', 1)
             ->where('manuallyClosed', 0)
+            ->where('poType_N','<>', 5)
             ->orderBy('purchaseOrderID', 'DESC')
             ->get();
 

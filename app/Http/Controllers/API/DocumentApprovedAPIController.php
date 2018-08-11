@@ -146,8 +146,6 @@ class DocumentApprovedAPIController extends AppBaseController
 
         $employeeSystemID =  \Helper::getEmployeeSystemID();
 
-        $employeeSystemID = 724;
-
         $where = "";
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -170,7 +168,7 @@ class DocumentApprovedAPIController extends AppBaseController
             $where .= " WHERE  (documentCode LIKE '%$search%' OR  comments LIKE '%$search%' OR SupplierOrCustomer LIKE '%$search%' OR DocumentValue LIKE '%$search%' )";
         }
 
-          $qry="SELECT * FROM (SELECT
+           $qry="SELECT * FROM (SELECT
 	*
 FROM
 	(

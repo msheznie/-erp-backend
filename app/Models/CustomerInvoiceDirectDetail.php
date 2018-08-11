@@ -257,5 +257,7 @@ class CustomerInvoiceDirectDetail extends Model
         
     ];
 
-    
+    public function performadetails(){
+        return $this->belongsTo('App\Models\PerformaDetails','custInvoiceDirectID','invoiceSsytemCode');
+    }
 }
