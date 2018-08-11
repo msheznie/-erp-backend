@@ -665,8 +665,16 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $selectedForPO = 0;
             }
 
+            //checking the fullyOrdered or partial in po
+            $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
+                ->where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
+                ->first();
+
+            $updatedPRQty = $detailSum['totalPoqty'] + $input['noQty'];
+
+
             $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
-                ->update(['selectedForPO' => $selectedForPO, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $input['noQty'], 'prClosedYN' => $prClosedYN]);
+                ->update(['selectedForPO' => $selectedForPO, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => $prClosedYN]);
 
             //check all details fullyOrdered in PR Master
             $prMasterfullyOrdered = PurchaseRequestDetails::where('purchaseRequestID', $purchaseOrderDetails->purchaseRequestID)
