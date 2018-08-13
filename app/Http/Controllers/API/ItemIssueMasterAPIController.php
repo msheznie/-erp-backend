@@ -389,12 +389,17 @@ class ItemIssueMasterAPIController extends AppBaseController
             $input["customerID"] = $customer->CutomerCode;
         }
 
-        $contract = Contract::where("contractUID",$input["contractUIID"])->first();
 
-        if(!empty($contract)){
-            $input["contractID"] = $contract->ContractNumber;
+        if (isset($input['contractUID'])) {
+            $contract = Contract::where("contractUID", $input["contractUIID"])->first();
+
+            if (!empty($contract)) {
+                $input["contractID"] = $contract->ContractNumber;
+            }
+        }else{
+            $input['contractUID'] = null;
+            $input['contractID'] = null;
         }
-
         $documentDate = $input['issueDate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];

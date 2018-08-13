@@ -431,6 +431,11 @@ class ItemReturnDetailsAPIController extends AppBaseController
             return $this->sendError("You cannot return more than the issued Qty", 500,$qtyError);
         }
 
+        if($input['qtyIssued'] == '' || is_null($input['qtyIssued'])){
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+        }
+
         $itemReturnDetails = $this->itemReturnDetailsRepository->update($input, $id);
 
         return $this->sendResponse($itemReturnDetails->toArray(), 'ItemReturnDetails updated successfully');

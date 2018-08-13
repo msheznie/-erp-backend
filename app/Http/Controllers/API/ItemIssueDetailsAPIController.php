@@ -20,6 +20,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
+use App\Models\ItemClientReferenceNumberMaster;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\MaterielRequest;
@@ -397,8 +398,20 @@ class ItemIssueDetailsAPIController extends AppBaseController
             }
         }
 
-        //$erp_itemclientreferencenumbermaster =
 
+        if($itemIssue->customerSystemID && $itemIssue->companySystemID && $itemIssue->contractUIID){
+
+            $clientReferenceNumber = ItemClientReferenceNumberMaster::where('companySystemID',$itemIssue->companySystemID)
+                                                                       ->where('itemSystemCode',$input['itemCodeSystem'])
+                                                                       ->where('customerID',$itemIssue->customerSystemID)
+                                                                       ->where('contractUIID',$itemIssue->contractUIID)
+                                                                       ->first();
+
+            if(!empty($clientReferenceNumber)){
+                $input['clientReferenceNumber'] = $clientReferenceNumber->clientReferenceNumber;
+            }
+
+        }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->create($input);
 
@@ -630,6 +643,12 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
         $input['issueCostRptTotal'] = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
+
+
+        if($input['qtyIssued'] == '' || is_null($input['qtyIssued'])){
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+        }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
 
