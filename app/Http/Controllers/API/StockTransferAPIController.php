@@ -742,7 +742,7 @@ class StockTransferAPIController extends AppBaseController
 
         $items = $items
             ->take(20)
-            ->get();
+            ->get(['itemPrimaryCode','itemDescription','itemCodeSystem','secondaryItemCode']);
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
