@@ -339,12 +339,20 @@ ORDER BY
             $masterDate = str_replace('/', '-', $input['detail']['reqDate']);
             $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
         }
-        $input['currencyID'] = $input['detail']['currencyID'][0];
+
+        $currencyID = null;
+
+        if(is_array($input['detail']['currencyID'])){
+            $currencyID = $input['detail']['currencyID'][0];
+        }else{
+            $currencyID = $input['detail']['currencyID'];
+        }
+        $input['currencyID'] = $currencyID;
         $input['reqAmount'] = $input['detail']['reqAmount'];
         $input['reqAmountTransCur_amount'] = \Helper::roundValue($input['detail']['reqAmount']);
         $input['logisticCategoryID'] = $input['detail']['logisticCategoryID'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID,  $input['detail']['currencyID'], $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
+        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID,  $currencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
         //$input['detail']['reqAmount'];
         $input['reqAmountInPOTransCur'] = \Helper::roundValue($companyCurrencyConversion['documentAmount']);

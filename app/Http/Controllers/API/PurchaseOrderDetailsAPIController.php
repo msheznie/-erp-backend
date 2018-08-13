@@ -651,9 +651,16 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if (!empty($purchaseOrderDetails->purchaseRequestDetailsID) && !empty($purchaseOrderDetails->purchaseRequestID)) {
 
+            //checking the fullyOrdered or partial in po
+            $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
+                ->where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
+                ->first();
+
+            $updatedPRQty = $detailSum['totalPoqty'];
+
             $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
 
-            $checkQuentity = ($detailExistPRDetail->quantityRequested - $input['noQty']);
+            $checkQuentity = ($detailExistPRDetail->quantityRequested - $updatedPRQty);
 
             if ($checkQuentity == 0) {
                 $fullyOrdered = 2;
@@ -665,8 +672,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $selectedForPO = 0;
             }
 
+
+
             $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
-                ->update(['selectedForPO' => $selectedForPO, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $input['noQty'], 'prClosedYN' => $prClosedYN]);
+                ->update(['selectedForPO' => $selectedForPO, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => $prClosedYN]);
 
             //check all details fullyOrdered in PR Master
             $prMasterfullyOrdered = PurchaseRequestDetails::where('purchaseRequestID', $purchaseOrderDetails->purchaseRequestID)
@@ -744,18 +753,25 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     'selectedForPOByEmpID' => null
                 ]);
 
-            $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
+           // $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
 
-            $poQty = $detailExistPRDetail->poQuantity - $purchaseOrderDetails->noQty;
+            //checking the fullyOrdered or partial in po
+            $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
+                ->where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
+                ->first();
 
-            if ($poQty == 0) {
+            $updatedPRQty = $detailSum['totalPoqty'];
+
+            //$poQty = $detailExistPRDetail->poQuantity - $purchaseOrderDetails->noQty;
+
+            if ($updatedPRQty == 0) {
                 $fullyOrdered = 0;
             } else {
                 $fullyOrdered = 1;
             }
 
             $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
-                ->update(['selectedForPO' => 0, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $poQty, 'prClosedYN' => 0]);
+                ->update(['selectedForPO' => 0, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => 0]);
         }
 
         //calculate tax amount according to the percantage for tax update
@@ -812,18 +828,25 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             'selectedForPOByEmpID' => null
                         ]);
 
-                    $detailExistPRDetail = PurchaseRequestDetails::find($cvDeatil['purchaseRequestDetailsID']);
+                    //$detailExistPRDetail = PurchaseRequestDetails::find($cvDeatil['purchaseRequestDetailsID']);
 
-                    $poQty = ($detailExistPRDetail->poQuantity - $cvDeatil['noQty']);
+                    //$poQty = ($detailExistPRDetail->poQuantity - $cvDeatil['noQty']);
 
-                    if ($poQty == 0) {
+                    //checking the fullyOrdered or partial in po
+                    $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
+                        ->where('purchaseRequestDetailsID', $cvDeatil['purchaseRequestDetailsID'])
+                        ->first();
+
+                    $updatedPRQty = $detailSum['totalPoqty'];
+
+                    if ($updatedPRQty == 0) {
                         $fullyOrdered = 0;
                     } else {
                         $fullyOrdered = 1;
                     }
 
                     $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $cvDeatil['purchaseRequestDetailsID'])
-                        ->update(['selectedForPO' => 0, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $poQty, 'prClosedYN' => 0]);
+                        ->update(['selectedForPO' => 0, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => 0]);
                 }
             }
         }
