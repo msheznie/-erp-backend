@@ -982,6 +982,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
             'priority_pdf', 'location_pdf', 'details.uom', 'company', 'segment', 'approved_by' => function ($query) {
                 $query->with('employee')
+                    ->where('rejectedYN', 0)
                     ->whereIn('documentSystemID', [1, 50, 51]);
             }
         ])->findWithoutFail($id);
@@ -1596,6 +1597,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
             'priority_pdf', 'location', 'details.uom', 'company', 'approved_by' => function ($query) {
                 $query->with('employee')
+                    ->where('rejectedYN', 0)
                     ->whereIn('documentSystemID', [1, 50, 51]);
             }
         ])->findWithoutFail($id);

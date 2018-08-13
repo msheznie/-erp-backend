@@ -736,13 +736,14 @@ class StockTransferAPIController extends AppBaseController
 
             $items = $items->where(function ($query) use ($search) {
                 $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
             });
         }
 
         $items = $items
             ->take(20)
-            ->get();
+            ->get(['itemPrimaryCode','itemDescription','itemCodeSystem','secondaryItemCode']);
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
