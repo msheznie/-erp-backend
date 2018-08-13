@@ -404,8 +404,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($procumentOrder->poCancelledYN == -1) {
             return $this->sendError('This Purchase Order closed. You cannot edit.', 500);
         }
-
-
+        
         if ($procumentOrder->approved == -1 && $procumentOrder->WO_amendYN != -1 && $isAmendAccess != 1) {
             return $this->sendError('This Purchase Order fully approved. You cannot edit.', 500);
         }
@@ -1288,6 +1287,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->with('unit');
         }, 'approved' => function ($query) {
             $query->with('employee');
+            $query->where('rejectedYN', 0);
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
@@ -2483,6 +2483,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $query->with('unit');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
+            $query->where('rejectedYN', 0);
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
@@ -3943,6 +3944,8 @@ FROM
             }
         }
 
+        $nowTime = time();
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
@@ -3953,8 +3956,8 @@ FROM
         );
         $html = view('print.purchase_order_print_pdf', $order);
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html)->save('C:/inetpub/wwwroot/GEARSERP/GEARSWEBPORTAL/Portal/uploads/emailAttachment/po_print_' . time() . '.pdf');
 
+        $pdf->loadHTML($html)->save('C:/inetpub/wwwroot/GEARSERP/GEARSWEBPORTAL/Portal/uploads/emailAttachment/po_print_' . $nowTime . '.pdf');
         $fetchSupEmail = SupplierContactDetails::where('supplierID', $procumentOrderUpdate->supplierID)
             ->where('isDefault', -1)
             ->first();
@@ -3962,7 +3965,6 @@ FROM
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
             "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
-
 
         if (!empty($fetchSupEmail->contactPersonEmail)) {
             $emailSentTo = 1;
@@ -3982,7 +3984,7 @@ FROM
             $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
             $location = \DB::table('systemmanualfolder')->first();
-            $pdfName = $location->folderDes."emailAttachment\\po_print_" . time() . ".pdf";
+            $pdfName = $location->folderDes."emailAttachment\\po_print_" . $nowTime . ".pdf";
 
             $dataEmail['isEmailSend'] = 0;
             $dataEmail['attachmentFileName'] = $pdfName;

@@ -20,6 +20,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
+use App\Models\ItemClientReferenceNumberMaster;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\MaterielRequest;
@@ -358,18 +359,18 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $input['currentWareHouseStockQty'] = $currentWareHouseStockQty;
         $input['currentStockQtyInDamageReturn'] = $currentStockQtyInDamageReturn;
 
-        if($currentWareHouseStockQty <= 0){
+        if ($currentWareHouseStockQty <= 0) {
             return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
         }
 
-        if($currentStockQty <= 0){
+        if ($currentStockQty <= 0) {
             return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
         }
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
-                                                                        ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
-                                                                        ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
-                                                                        ->first();
+            ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
+            ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
+            ->first();
 
         if (!empty($financeItemCategorySubAssigned)) {
             $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
@@ -377,11 +378,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
             $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
-        }else{
+        } else {
             return $this->sendError("Account code not updated.", 500);
         }
 
-        if(!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']){
+        if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
             return $this->sendError("Account code not updated.", 500);
         }
 
@@ -395,6 +396,21 @@ class ItemIssueDetailsAPIController extends AppBaseController
             if ($alreadyAdded) {
                 return $this->sendError("Selected item is already added. Please check again", 500);
             }
+        }
+
+
+        if($itemIssue->customerSystemID && $itemIssue->companySystemID && $itemIssue->contractUIID){
+
+            $clientReferenceNumber = ItemClientReferenceNumberMaster::where('companySystemID',$itemIssue->companySystemID)
+                                                                       ->where('itemSystemCode',$input['itemCodeSystem'])
+                                                                       ->where('customerID',$itemIssue->customerSystemID)
+                                                                       ->where('contractUIID',$itemIssue->contractUIID)
+                                                                       ->first();
+
+            if(!empty($clientReferenceNumber)){
+                $input['clientReferenceNumber'] = $clientReferenceNumber->clientReferenceNumber;
+            }
+
         }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->create($input);
@@ -568,9 +584,9 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $convention = $unitConvention->conversion;
                 $input['convertionMeasureVal'] = $convention;
                 if ($convention > 0) {
-                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] / $convention),2);
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] / $convention), 2);
                 } else {
-                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] * $convention),2);
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] * $convention), 2);
                 }
             }
         } else {
@@ -593,7 +609,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError("Cost is negative. You cannot issue.", 500);
         }
 
-        if($itemIssueDetails->currentStockQty <= 0){
+        if ($itemIssueDetails->currentStockQty <= 0) {
             $input['issueCostRptTotal'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
             $input['qtyIssued'] = 0;
@@ -601,7 +617,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
         }
 
-        if($itemIssueDetails->currentWareHouseStockQty <= 0){
+        if ($itemIssueDetails->currentWareHouseStockQty <= 0) {
             $input['issueCostRptTotal'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
             $input['qtyIssued'] = 0;
@@ -614,7 +630,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['qtyIssuedDefaultMeasure'] = 0;
             $input['qtyIssued'] = 0;
             $this->itemIssueDetailsRepository->update($input, $id);
-            return $this->sendError( "Current stock Qty is: ".$itemIssueDetails->currentStockQty." .You cannot issue more than the current stock qty.", 500,$qtyError);
+            return $this->sendError("Current stock Qty is: " . $itemIssueDetails->currentStockQty . " .You cannot issue more than the current stock qty.", 500, $qtyError);
         }
 
         if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentWareHouseStockQty) {
@@ -622,11 +638,17 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['qtyIssuedDefaultMeasure'] = 0;
             $input['qtyIssued'] = 0;
             $this->itemIssueDetailsRepository->update($input, $id);
-            return $this->sendError("Current warehouse stock Qty is: " .$itemIssueDetails->currentWareHouseStockQty." .You cannot issue more than the current warehouse stock qty.", 500,$qtyError);
+            return $this->sendError("Current warehouse stock Qty is: " . $itemIssueDetails->currentWareHouseStockQty . " .You cannot issue more than the current warehouse stock qty.", 500, $qtyError);
         }
 
         $input['issueCostLocalTotal'] = $itemIssueDetails->issueCostLocal * $input['qtyIssuedDefaultMeasure'];
         $input['issueCostRptTotal'] = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
+
+
+        if($input['qtyIssued'] == '' || is_null($input['qtyIssued'])){
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+        }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
 
@@ -672,7 +694,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $itemIssueDetails->warningMsg = 0;
 
         if (($itemIssueDetails->currentStockQty - $itemIssueDetails->qtyIssuedDefaultMeasure) < $itemIssueDetails->minQty) {
-             $minQtyPolicy = CompanyPolicyMaster::where('companySystemID', $itemIssue->companySystemID)
+            $minQtyPolicy = CompanyPolicyMaster::where('companySystemID', $itemIssue->companySystemID)
                 ->where('companyPolicyCategoryID', 6)
                 ->first();
             if (!empty($minQtyPolicy)) {
@@ -820,7 +842,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
                     $search = $input['search'];
                     $items = $items->where(function ($query) use ($search) {
                         $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                            ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                            ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                            ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
                     });
                 }
 
@@ -839,9 +862,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
                             $search = $input['search'];
                             $items = $items->where(function ($query) use ($search) {
                                 $query->whereHas('item_by', function ($q) use ($search) {
-                                    $q->where('primaryCode', 'LIKE', "%{$search}%");
-                                })
-                                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                                    $q->where(function ($query) use ($search) {
+                                        $query->where('primaryCode', 'LIKE', "%{$search}%")
+                                              ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+                                    });
+                                })->orWhere('itemDescription', 'LIKE', "%{$search}%");
                             });
                         }
 

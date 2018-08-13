@@ -736,7 +736,8 @@ class StockTransferAPIController extends AppBaseController
 
             $items = $items->where(function ($query) use ($search) {
                 $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
             });
         }
 

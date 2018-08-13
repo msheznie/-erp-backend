@@ -653,6 +653,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
 
     Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
+    Route::get('getContractByCustomer', 'CustomerMasterAPIController@getContractByCustomer');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -700,3 +702,6 @@ Route::resource('inv_reclassification_details', 'InventoryReclassificationDetail
 
 Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
 
+
+
+Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
