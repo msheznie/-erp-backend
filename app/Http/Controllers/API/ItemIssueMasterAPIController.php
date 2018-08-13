@@ -23,6 +23,8 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
+use App\Models\Contract;
+use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
@@ -45,6 +47,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use SwaggerFixures\Customer;
 
 /**
  * Class ItemIssueMasterController
@@ -218,6 +221,12 @@ class ItemIssueMasterAPIController extends AppBaseController
             $finYear = date("Y");
         }
 
+        $customer = CustomerMaster::where("customerCodeSystem",$input["customerSystemID"])->first();
+
+        if(!empty($customer)){
+            $input["customerID"] = $customer->CutomerCode;
+        }
+
         if ($documentMaster) {
             $itemIssueCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['itemIssueCode'] = $itemIssueCode;
@@ -372,6 +381,18 @@ class ItemIssueMasterAPIController extends AppBaseController
             if ($input['issueDate']) {
                 $input['issueDate'] = new Carbon($input['issueDate']);
             }
+        }
+
+        $customer = CustomerMaster::where("customerCodeSystem",$input["customerSystemID"])->first();
+
+        if(!empty($customer)){
+            $input["customerID"] = $customer->CutomerCode;
+        }
+
+        $contract = Contract::where("contractUID",$input["contractUIID"])->first();
+
+        if(!empty($contract)){
+            $input["contractID"] = $contract->ContractNumber;
         }
 
         $documentDate = $input['issueDate'];
