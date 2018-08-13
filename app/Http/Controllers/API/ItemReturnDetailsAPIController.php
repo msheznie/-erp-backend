@@ -141,7 +141,9 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $input['itemReturnCode'] = $itemReturn->itemReturnCode;
 
 
-        $itemAssign = ItemAssigned::where('itemCodeSystem',$input['itemCodeSystem'])->first();
+        $itemAssign = ItemAssigned::where('itemCodeSystem',$input['itemCodeSystem'])
+                                   ->where('companySystemID',$companySystemID)
+                                   ->first();
 
         if (empty($itemAssign)) {
             return $this->sendError('Item not found', 500);
