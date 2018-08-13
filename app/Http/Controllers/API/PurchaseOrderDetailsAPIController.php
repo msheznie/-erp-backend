@@ -352,13 +352,18 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
+        $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
+        if(!in_array(true,$isCheckArr)){
+            return $this->sendError("Please select item qty,check");
+        }
+
         foreach ($input['detailTable'] as $newValidation) {
-            if (($newValidation['isChecked'] && $newValidation['poQty'] == '') || ($newValidation['isChecked'] == '' && $newValidation['poQty'] > 0)) {
+            if (($newValidation['isChecked'] && $newValidation['poQty'] == "") || ($newValidation['isChecked'] == '' && $newValidation['poQty'] > 0) ) {
                 $validator = \Validator::make($newValidation, [
                     'poQty' => 'required',
                     'isChecked' => 'required',
                 ]);
-            } else {
+            }else {
                 $validator = \Validator::make($newValidation, [
                 ]);
             }
@@ -535,6 +540,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         }
 
+
         //calculate tax amount according to the percantage for tax update
 
         //getting total sum of PO detail Amount
@@ -673,7 +679,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
 
 
-
             $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
                 ->update(['selectedForPO' => $selectedForPO, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => $prClosedYN]);
 
@@ -692,26 +697,26 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         }
 
-/*        //calculate tax amount according to the percantage for tax update
+        /*        //calculate tax amount according to the percantage for tax update
 
-        //getting total sum of PO detail Amount
-        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
-            ->where('purchaseOrderMasterID', $input['purchaseOrderMasterID'])
-            ->first();
+                //getting total sum of PO detail Amount
+                $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+                    ->where('purchaseOrderMasterID', $input['purchaseOrderMasterID'])
+                    ->first();
 
-        //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
-        if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
-            $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
+                //if($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1 && $purchaseOrder->vatRegisteredYN == 0){
+                if ($purchaseOrder->VATPercentage > 0 && $purchaseOrder->supplierVATEligible == 1) {
+                    $calculatVatAmount = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) * ($purchaseOrder->VATPercentage / 100);
 
-            $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculatVatAmount);
+                    $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculatVatAmount);
 
-            $updatePOMaster = ProcumentOrder::find($input['purchaseOrderMasterID'])
-                ->update([
-                    'VATAmount' => $calculatVatAmount,
-                    'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
-                    'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
-                ]);
-        }*/
+                    $updatePOMaster = ProcumentOrder::find($input['purchaseOrderMasterID'])
+                        ->update([
+                            'VATAmount' => $calculatVatAmount,
+                            'VATAmountLocal' => round($currencyConversionVatAmount['localAmount'], 8),
+                            'VATAmountRpt' => round($currencyConversionVatAmount['reportingAmount'], 8)
+                        ]);
+                }*/
 
         return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details updated successfully');
     }
@@ -753,7 +758,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     'selectedForPOByEmpID' => null
                 ]);
 
-           // $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
+            // $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
 
             //checking the fullyOrdered or partial in po
             $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
@@ -970,7 +975,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }])
             ->where('purchaseOrderMasterID', $poID)
             ->where('GRVSelectedYN', 0)
-            ->where('goodsRecievedYN','<>', 2)
+            ->where('goodsRecievedYN', '<>', 2)
             ->where('manuallyClosed', 0)
             ->get();
 
