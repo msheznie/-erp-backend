@@ -704,4 +704,4 @@ Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController
 
 
 
-Route::resource('item_client_reference_number_masters', 'ItemClientReferenceNumberMasterAPIController');
+Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
