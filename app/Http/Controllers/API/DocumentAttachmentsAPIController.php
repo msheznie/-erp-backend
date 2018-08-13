@@ -72,6 +72,9 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $input = $request->all();
 
+        /*$fileName= "Consolidated_top_suppliers.png";
+        return Storage::disk('public')->download($fileName);*/
+
         /** @var DocumentAttachments $documentAttachments */
         $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['id']);
 
@@ -80,14 +83,51 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
         if ($exists = Storage::disk('public')->exists($documentAttachments->path)) {
-            $tempContent = Storage::disk('public')->get($documentAttachments->path);
-            $content = utf8_encode($tempContent);
-            $array = array('content' => $content, 'name' => $documentAttachments->myFileName);
-            return response()->json($array, 200, ['Content-type' => 'application/json; charset=utf-8'], JSON_UNESCAPED_UNICODE);
-
+            return Storage::disk('public')->download($documentAttachments->path,$documentAttachments->myFileName);
         } else {
             return $this->sendError('Attachments not found', 500);
         }
+    }
+
+    function downloadFileFrom(Request $request) {
+
+        $input = $request->all();
+
+        $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($input['id']);
+
+        if (empty($documentAttachments)) {
+            return $this->sendError('Document Attachments not found');
+        }
+
+        $fileName = "Desktop/upload/".$documentAttachments->path;
+
+
+        /*$filename = 'temp-image.jpg';
+        $tempImage = tempnam(sys_get_temp_dir(), $filename);
+        copy('https://my-cdn.com/files/image.jpg', $tempImage);
+
+        return response()->download($tempImage, $filename);*/
+        $pathToFile = public_path('http://192.168.1.100/purchase_request_32829.pdf');
+
+
+        return Response::download($pathToFile);
+
+        //return redirect( . 'test.pdf');
+
+        /*$ftp = Storage::createFtpDriver([
+            'host'     => '192.168.1.100',
+            'username' => 'administrator',
+            'password' => 'asd@123',
+            'port'     => '8080', // your ftp port
+            'timeout'  => '30', // timeout setting
+        ]);
+
+        $filecontent = $ftp->get($fileName); // read file content
+        // download file.
+        return Response::make($filecontent, '200', array(
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="'.basename($fileName).'"'
+        ));*/
     }
 
     /**
@@ -101,8 +141,28 @@ class DocumentAttachmentsAPIController extends AppBaseController
     public function store(CreateDocumentAttachmentsAPIRequest $request)
     {
 
-
         $input = $request->all();
+        $extension = $input['fileType'];
+
+        $blockExtensions = ['ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
+            'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
+            'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
+            'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
+             'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
+              'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
+              'xbap', 'xnk','php'];
+
+        if (in_array($extension, $blockExtensions))
+        {
+            return $this->sendError('This type of file not allow to upload.',500);
+        }
+
+
+        if(isset($input['size'])){
+            if ($input['size'] > 20971520) {
+                return $this->sendError("Maximum allowed file size is 20 MB. Please upload lesser than 20 MB.");
+            }
+        }
 
         if (isset($input['docExpirtyDate'])) {
             if ($input['docExpirtyDate']) {
@@ -134,8 +194,6 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $file = $request->request->get('file');
         $decodeFile = base64_decode($file);
-
-        $extension = $input['fileType'];
 
         $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
 
@@ -221,8 +279,24 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError('Document Attachments not found');
         }
 
-        $documentAttachments->delete();
+        $path = $documentAttachments->path;
+
+        $attachment = DocumentAttachments::where('attachmentID', $id)
+            ->first();
+
+        if($attachment['pullFromAnotherDocument'] == 0){
+            if ($exists = Storage::disk('public')->exists($path)) {
+                $documentAttachments->delete();
+                Storage::disk('public')->delete($path);
+            } else {
+                $documentAttachments->delete();
+            }
+        }else if($attachment['pullFromAnotherDocument'] == -1){
+            $documentAttachments->delete();
+        }
 
         return $this->sendResponse($id, 'Document Attachments deleted successfully');
+
+
     }
 }

@@ -246,6 +246,7 @@ class ProcumentOrder extends Model
         'grvRecieved',
         'invoicedBooked',
         'timesReferred',
+        'refferedBackYN',
         'poType',
         'poType_N',
         'docRefNo',
@@ -387,6 +388,7 @@ class ProcumentOrder extends Model
         'grvRecieved' => 'integer',
         'invoicedBooked' => 'integer',
         'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer',
         'poType' => 'string',
         'poType_N' => 'integer',
         'docRefNo' => 'string',
@@ -541,6 +543,11 @@ class ProcumentOrder extends Model
     public function status()
     {
         return $this->hasMany('\App\Models\PurchaseOrderStatus','purchaseOrderID','purchaseOrderID');
+    }
+
+    public function paymentTerms_by()
+    {
+        return $this->hasMany('\App\Models\PoPaymentTerms','poID','purchaseOrderID');
     }
 
 

@@ -50,8 +50,8 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'root' => 'C:\inetpub\wwwroot\GEARSERP\GEARSWEBPORTAL\Portal\uploads', //storage_path('app/public'),
+            'url' => 'C:\inetpub\wwwroot\GEARSERP\GEARSWEBPORTAL\Portal\uploads' , //env('APP_URL').'/storage',
             'visibility' => 'public',
         ],
 
@@ -62,6 +62,21 @@ return [
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
+        ],
+
+        'ftp' => [
+            'driver'   => 'ftp',
+            'host'     => 'gears.gulfenergy-int.com',
+            'username' => 'gearsadmin@gulfenergy-int.com',
+            'password' => 'Gea-1234',
+            'port'     => 21,
+
+            // Optional FTP Settings...
+            // 'port'     => 21,
+            // 'root'     => '',
+            // 'passive'  => true,
+            // 'ssl'      => true,
+            // 'timeout'  => 30,
         ],
 
     ],

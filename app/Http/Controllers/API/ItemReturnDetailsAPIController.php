@@ -1,0 +1,572 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : ItemReturnDetailsAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Item Return Details
+ * -- Author : Mohamed Fayas
+ * -- Create date : 16 - July 2018
+ * -- Description : This file contains the all CRUD for Document Attachments
+ * -- REVISION HISTORY
+ * -- Date: 16 - July 2018 By: Fayas Description: Added new functions named as getItemsByMaterielReturn(),getItemsOptionsMaterielReturn()
+ *
+ */
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateItemReturnDetailsAPIRequest;
+use App\Http\Requests\API\UpdateItemReturnDetailsAPIRequest;
+use App\Models\CompanyPolicyMaster;
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\ItemAssigned;
+use App\Models\ItemIssueDetails;
+use App\Models\ItemIssueMaster;
+use App\Models\ItemReturnDetails;
+use App\Models\ItemReturnMaster;
+use App\Models\Unit;
+use App\Models\UnitConversion;
+use App\Repositories\ItemReturnDetailsRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class ItemReturnDetailsController
+ * @package App\Http\Controllers\API
+ */
+class ItemReturnDetailsAPIController extends AppBaseController
+{
+    /** @var  ItemReturnDetailsRepository */
+    private $itemReturnDetailsRepository;
+
+    public function __construct(ItemReturnDetailsRepository $itemReturnDetailsRepo)
+    {
+        $this->itemReturnDetailsRepository = $itemReturnDetailsRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/itemReturnDetails",
+     *      summary="Get a listing of the ItemReturnDetails.",
+     *      tags={"ItemReturnDetails"},
+     *      description="Get all ItemReturnDetails",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/ItemReturnDetails")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->itemReturnDetailsRepository->pushCriteria(new RequestCriteria($request));
+        $this->itemReturnDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $itemReturnDetails = $this->itemReturnDetailsRepository->all();
+
+        return $this->sendResponse($itemReturnDetails->toArray(), 'Item Return Details retrieved successfully');
+    }
+
+    /**
+     * @param CreateItemReturnDetailsAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/itemReturnDetails",
+     *      summary="Store a newly created ItemReturnDetails in storage",
+     *      tags={"ItemReturnDetails"},
+     *      description="Store ItemReturnDetails",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ItemReturnDetails that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ItemReturnDetails")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ItemReturnDetails"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateItemReturnDetailsAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $input = $this->convertArrayToValue($input);
+
+        $companySystemID = $input['companySystemID'];
+
+        $itemReturn = ItemReturnMaster::where('itemReturnAutoID', $input['itemReturnAutoID'])->first();
+
+        if (empty($itemReturn)) {
+            return $this->sendError('Item Return not found', 500);
+        }
+
+        $input['itemReturnCode'] = $itemReturn->itemReturnCode;
+
+
+        $itemAssign = ItemAssigned::where('itemCodeSystem',$input['itemCodeSystem'])
+                                   ->where('companySystemID',$companySystemID)
+                                   ->first();
+
+        if (empty($itemAssign)) {
+            return $this->sendError('Item not found', 500);
+        }
+
+        $input['itemPrimaryCode'] = $itemAssign->itemPrimaryCode;
+        $input['itemDescription'] = $itemAssign->itemDescription;
+
+
+        $itemIssuesCount =  ItemIssueMaster::whereHas('details',function ($q) use($input){
+                                    $q->where('itemCodeSystem',$input['itemCodeSystem']);
+                                 })
+                                ->where('companySystemID',$companySystemID)
+                                ->where('approved',-1)
+                                ->count();
+
+        if($itemIssuesCount == 0){
+            return $this->sendError('Selected item is not issued. Please check again', 500);
+        }
+
+        $input['itemUnitOfMeasure'] = $itemAssign->itemUnitOfMeasure;
+        $input['unitOfMeasureIssued'] = $itemAssign->itemUnitOfMeasure;
+
+        $input['unitCostLocal'] = $itemAssign->wacValueLocal;
+        $input['unitCostRpt'] = $itemAssign->wacValueReporting;
+
+        $input['itemFinanceCategoryID'] = $itemAssign->financeCategoryMaster;
+        $input['itemFinanceCategorySubID'] = $itemAssign->financeCategorySub;
+        $input['convertionMeasureVal'] = 1;
+        $input['localCurrencyID'] = $itemAssign->wacValueLocalCurrencyID;
+        $input['reportingCurrencyID'] = $itemAssign->wacValueReportingCurrencyID;
+
+        if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
+            return $this->sendError("Cost is 0. You cannot issue", 500);
+        }
+
+        if($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0){
+            return $this->sendError("Cost is negative. You cannot issue", 500);
+        }
+
+        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
+                                                                        ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
+                                                                        ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
+                                                                        ->first();
+
+        if (!empty($financeItemCategorySubAssigned)) {
+            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+        }else{
+            return $this->sendError("Account code not updated.", 500);
+        }
+
+        if(!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']){
+            return $this->sendError("Account code not updated.", 500);
+        }
+
+        if ($input['itemFinanceCategoryID'] == 1) {
+            $alreadyAdded = ItemReturnMaster::where('itemReturnAutoID', $input['itemReturnAutoID'])
+                ->whereHas('details', function ($query) use ($input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->first();
+
+            if ($alreadyAdded) {
+                return $this->sendError("Selected item is already added. Please check again", 500);
+            }
+        }
+
+        // check policy 18
+
+        $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+       // if ($allowPendingApproval->isYesNO == 0) {
+
+            $checkWhether = ItemReturnMaster::where('itemReturnAutoID', '!=', $itemReturn->itemReturnAutoID)
+                ->where('companySystemID', $companySystemID)
+                ->where('wareHouseLocation', $itemReturn->wareHouseLocation)
+                ->select([
+                    'erp_itemreturnmaster.itemReturnAutoID',
+                    'erp_itemreturnmaster.companySystemID',
+                    'erp_itemreturnmaster.wareHouseLocation',
+                    'erp_itemreturnmaster.itemReturnCode',
+                    'erp_itemreturnmaster.approved'
+                ])
+                ->groupBy(
+                    'erp_itemreturnmaster.itemReturnAutoID',
+                    'erp_itemreturnmaster.companySystemID',
+                    'erp_itemreturnmaster.wareHouseLocation',
+                    'erp_itemreturnmaster.itemReturnCode',
+                    'erp_itemreturnmaster.approved'
+                )->whereHas('details', function ($query) use ($companySystemID, $input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->where('approved', 0)
+                ->first();
+            /* approved=0*/
+
+            if (!empty($checkWhether)) {
+                return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            }
+
+        //}
+
+        $itemReturnDetails = $this->itemReturnDetailsRepository->create($input);
+        return $this->sendResponse($itemReturnDetails->toArray(), 'Item Return Details saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/itemReturnDetails/{id}",
+     *      summary="Display the specified ItemReturnDetails",
+     *      tags={"ItemReturnDetails"},
+     *      description="Get ItemReturnDetails",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ItemReturnDetails",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ItemReturnDetails"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var ItemReturnDetails $itemReturnDetails */
+        $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
+
+        if (empty($itemReturnDetails)) {
+            return $this->sendError('Item Return Details not found');
+        }
+
+        return $this->sendResponse($itemReturnDetails->toArray(), 'Item Return Details retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateItemReturnDetailsAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/itemReturnDetails/{id}",
+     *      summary="Update the specified ItemReturnDetails in storage",
+     *      tags={"ItemReturnDetails"},
+     *      description="Update ItemReturnDetails",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ItemReturnDetails",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ItemReturnDetails that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ItemReturnDetails")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ItemReturnDetails"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateItemReturnDetailsAPIRequest $request)
+    {
+        $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue']);
+        $input = $this->convertArrayToValue($input);
+        $qtyError = array('type' => 'qty');
+
+        /** @var ItemReturnDetails $itemReturnDetails */
+        $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
+
+        if (empty($itemReturnDetails)) {
+            return $this->sendError('Item Return Details not found');
+        }
+
+        $itemReturnMaster = ItemReturnMaster::find($input['itemReturnAutoID']);
+
+        if (empty($itemReturnMaster)) {
+            return $this->sendError('Item Return not found');
+        }
+
+        if ($input['itemUnitOfMeasure'] != $input['unitOfMeasureIssued']) {
+            $unitConvention = UnitConversion::where('masterUnitID', $input['itemUnitOfMeasure'])
+                ->where('subUnitID', $input['unitOfMeasureIssued'])
+                ->first();
+            if (empty($unitConvention)) {
+                return $this->sendError('Unit Convention not found', 500);
+            }
+
+            if ($unitConvention) {
+                $convention = $unitConvention->conversion;
+                $input['convertionMeasureVal'] = $convention;
+                if ($convention > 0) {
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] / $convention),2);
+                } else {
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] * $convention),2);
+                }
+            }
+        } else {
+            $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'];
+        }
+
+        if($input['issueCodeSystem'] != $itemReturnDetails->issueCodeSystem){
+
+            $itemIssueDetail = ItemIssueDetails::where('itemIssueAutoID',$input['issueCodeSystem'])
+                                               ->where('itemCodeSystem',$input['itemCodeSystem'])->first();
+
+            if(!empty($itemIssueDetail)){
+                $input['itemUnitOfMeasure']   = $itemIssueDetail->itemUnitOfMeasure;
+                $input['unitOfMeasureIssued'] = $itemIssueDetail->unitOfMeasureIssued;
+                $input['unitCostLocal']       = $itemIssueDetail->issueCostLocal;
+                $input['unitCostRpt']         = $itemIssueDetail->issueCostRpt;
+                $input['qtyFromIssue']        = $itemIssueDetail->qtyIssuedDefaultMeasure;
+                $input['qtyIssued']           = 0;
+                $input['qtyIssuedDefaultMeasure']  = 0;
+            }else{
+                return $this->sendError('Materiel Issue not found', 500);
+            }
+        }
+
+        if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+            $this->itemReturnDetailsRepository->update($input, $id);
+            return $this->sendError("Cost is 0. You cannot issue", 500);
+        }
+
+        if($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0){
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+            $this->itemReturnDetailsRepository->update($input, $id);
+            return $this->sendError("Cost is negative. You cannot issue", 500);
+        }
+
+        if ($input['qtyIssuedDefaultMeasure'] > $input['qtyFromIssue']) {
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+            $this->itemReturnDetailsRepository->update($input, $id);
+            return $this->sendError("You cannot return more than the issued Qty", 500,$qtyError);
+        }
+
+        $itemReturnDetails = $this->itemReturnDetailsRepository->update($input, $id);
+
+        return $this->sendResponse($itemReturnDetails->toArray(), 'ItemReturnDetails updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/itemReturnDetails/{id}",
+     *      summary="Remove the specified ItemReturnDetails from storage",
+     *      tags={"ItemReturnDetails"},
+     *      description="Delete ItemReturnDetails",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ItemReturnDetails",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var ItemReturnDetails $itemReturnDetails */
+        $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
+
+        if (empty($itemReturnDetails)) {
+            return $this->sendError('Item Return Details not found');
+        }
+
+        $itemReturnDetails->delete();
+
+        return $this->sendResponse($id, 'Item Return Details deleted successfully');
+    }
+
+    /**
+     * Display a listing of the items by Materiel Return.
+     * GET|HEAD /getItemsByMaterielReturn
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getItemsByMaterielReturn(Request $request)
+    {
+        $input = $request->all();
+        $rId = $input['itemReturnAutoID'];
+
+        $itemReturnMaster = ItemReturnMaster::find($rId);
+
+        if (empty($itemReturnMaster)) {
+            return $this->sendError('Item Return not found');
+        }
+
+        $items = ItemReturnDetails::where('itemReturnAutoID', $rId)
+            ->with(['uom_issued', 'uom_receiving', 'issue'])
+            ->get();
+
+        foreach ($items as $item) {
+
+            $issueUnit = Unit::where('UnitID', $item['itemUnitOfMeasure'])->with(['unitConversion.sub_unit'])->first();
+
+            $issueUnits = array();
+            foreach ($issueUnit->unitConversion as $unit) {
+                $temArray = array('value' => $unit->sub_unit->UnitID, 'label' => $unit->sub_unit->UnitShortCode);
+                array_push($issueUnits, $temArray);
+            }
+
+            $item->issueUnits = $issueUnits;
+
+
+            if($item['itemCodeSystem']){
+                $itemIssues = ItemIssueMaster::whereHas('details',function ($q) use($item){
+                                                     $q->where('itemCodeSystem',$item['itemCodeSystem']);
+                                                  })
+                                                  ->where('companySystemID',$itemReturnMaster->companySystemID)
+                                                  ->where('approved',-1)
+                                                  ->select('itemIssueAutoID AS value','itemIssueCode AS label')
+                                                  ->get();
+
+                $item->issues = $itemIssues;
+            }else{
+                $item->issues = [];
+            }
+        }
+
+        return $this->sendResponse($items->toArray(), 'Material Return Details retrieved successfully');
+    }
+
+    /**
+     * get Items Options Materiel Return
+     * GET|HEAD /getItemsOptionsMaterielReturn
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getItemsOptionsMaterielReturn(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $input['companyId'];
+
+        $items = ItemAssigned::where('companySystemID', $companyId)
+                            ->where('financeCategoryMaster', 1)
+                            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem','secondaryItemCode']);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+
+    }
+}

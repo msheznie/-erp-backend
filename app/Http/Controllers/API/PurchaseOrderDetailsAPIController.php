@@ -401,6 +401,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         $selectedForPO = 0;
                     }
 
+                    $new['poUnitAmount'] = $new['estimatedCost'];
+
                     // checking the qty request is matching with sum total
                     //if ($new['quantityRequested'] >= $totalAddedQty) {
                     if ($new['quantityRequested'] >= $new['poQty']) {
@@ -419,7 +421,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         $prDetail_arr['purchaseOrderMasterID'] = $purchaseOrderID;
                         $prDetail_arr['noQty'] = $new['poQty'];
 
-                        $pobalanceQty = $new['quantityRequested'] - $new['poTakenQty'];
+                        $pobalanceQty = ($new['quantityRequested'] - $new['poTakenQty']);
                         $prDetail_arr['balanceQty'] = $pobalanceQty;
                         $prDetail_arr['requestedQty'] = $new['quantityRequested'];
 
@@ -465,21 +467,21 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         if ($new['poUnitAmount'] > 0) {
                             $currencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $new['poUnitAmount']);
 
-                            $prDetail_arr['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                            $prDetail_arr['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                             $prDetail_arr['GRVcostPerUnitSupTransCur'] = $new['poUnitAmount'];
-                            $prDetail_arr['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
+                            $prDetail_arr['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
 
-                            $prDetail_arr['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                            $prDetail_arr['purchaseRetcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                             $prDetail_arr['purchaseRetcostPerUnitTranCur'] = $new['poUnitAmount'];
-                            $prDetail_arr['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
+                            $prDetail_arr['purchaseRetcostPerUnitRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
                         }
 
                         // adding supplier Default CurrencyID base currency conversion
                         if ($new['poUnitAmount'] > 0) {
                             $currencyConversionDefault = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $new['poUnitAmount']);
 
-                            $prDetail_arr['GRVcostPerUnitSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
-                            $prDetail_arr['purchaseRetcostPerUniSupDefaultCur'] = $currencyConversionDefault['documentAmount'];
+                            $prDetail_arr['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+                            $prDetail_arr['purchaseRetcostPerUniSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
                         }
 
                         $item = $this->purchaseOrderDetailsRepository->create($prDetail_arr);
@@ -617,17 +619,17 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $discountedUnitPrice);
 
             $input['GRVcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
-            $input['GRVcostPerUnitSupTransCur'] = round($discountedUnitPrice, 8);
+            $input['GRVcostPerUnitSupTransCur'] = $discountedUnitPrice;
             $input['GRVcostPerUnitComRptCur'] = round($currencyConversion['reportingAmount'], 8);
 
             $input['purchaseRetcostPerUnitLocalCur'] = round($currencyConversion['localAmount'], 8);
-            $input['purchaseRetcostPerUnitTranCur'] = round($discountedUnitPrice, 8);
+            $input['purchaseRetcostPerUnitTranCur'] = $discountedUnitPrice;
             $input['purchaseRetcostPerUnitRptCur'] = round($currencyConversion['reportingAmount'], 8);
         }
 
         // adding supplier Default CurrencyID base currency conversion
         if ($discountedUnitPrice > 0) {
-            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $input['unitCost']);
+            $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierDefaultCurrencyID, $discountedUnitPrice);
 
             $input['GRVcostPerUnitSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
             $input['purchaseRetcostPerUniSupDefaultCur'] = round($currencyConversionDefault['documentAmount'], 8);
@@ -649,9 +651,16 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         if (!empty($purchaseOrderDetails->purchaseRequestDetailsID) && !empty($purchaseOrderDetails->purchaseRequestID)) {
 
+            //checking the fullyOrdered or partial in po
+            $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
+                ->where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
+                ->first();
+
+            $updatedPRQty = $detailSum['totalPoqty'];
+
             $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
 
-            $checkQuentity = ($detailExistPRDetail->quantityRequested - $input['noQty']);
+            $checkQuentity = ($detailExistPRDetail->quantityRequested - $updatedPRQty);
 
             if ($checkQuentity == 0) {
                 $fullyOrdered = 2;
@@ -663,8 +672,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $selectedForPO = 0;
             }
 
+
+
             $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
-                ->update(['selectedForPO' => $selectedForPO, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $input['noQty'], 'prClosedYN' => $prClosedYN]);
+                ->update(['selectedForPO' => $selectedForPO, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => $prClosedYN]);
 
             //check all details fullyOrdered in PR Master
             $prMasterfullyOrdered = PurchaseRequestDetails::where('purchaseRequestID', $purchaseOrderDetails->purchaseRequestID)
@@ -742,18 +753,25 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                     'selectedForPOByEmpID' => null
                 ]);
 
-            $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
+           // $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
 
-            $poQty = $detailExistPRDetail->poQuantity - $purchaseOrderDetails->noQty;
+            //checking the fullyOrdered or partial in po
+            $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
+                ->where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
+                ->first();
 
-            if ($poQty == 0) {
+            $updatedPRQty = $detailSum['totalPoqty'];
+
+            //$poQty = $detailExistPRDetail->poQuantity - $purchaseOrderDetails->noQty;
+
+            if ($updatedPRQty == 0) {
                 $fullyOrdered = 0;
             } else {
                 $fullyOrdered = 1;
             }
 
             $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $purchaseOrderDetails->purchaseRequestDetailsID)
-                ->update(['selectedForPO' => 0, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $poQty, 'prClosedYN' => 0]);
+                ->update(['selectedForPO' => 0, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => 0]);
         }
 
         //calculate tax amount according to the percantage for tax update
@@ -810,18 +828,25 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             'selectedForPOByEmpID' => null
                         ]);
 
-                    $detailExistPRDetail = PurchaseRequestDetails::find($cvDeatil['purchaseRequestDetailsID']);
+                    //$detailExistPRDetail = PurchaseRequestDetails::find($cvDeatil['purchaseRequestDetailsID']);
 
-                    $poQty = ($detailExistPRDetail->poQuantity - $cvDeatil['noQty']);
+                    //$poQty = ($detailExistPRDetail->poQuantity - $cvDeatil['noQty']);
 
-                    if ($poQty == 0) {
+                    //checking the fullyOrdered or partial in po
+                    $detailSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(noQty),0) as totalPoqty'))
+                        ->where('purchaseRequestDetailsID', $cvDeatil['purchaseRequestDetailsID'])
+                        ->first();
+
+                    $updatedPRQty = $detailSum['totalPoqty'];
+
+                    if ($updatedPRQty == 0) {
                         $fullyOrdered = 0;
                     } else {
                         $fullyOrdered = 1;
                     }
 
                     $updateDetail = PurchaseRequestDetails::where('purchaseRequestDetailsID', $cvDeatil['purchaseRequestDetailsID'])
-                        ->update(['selectedForPO' => 0, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $poQty, 'prClosedYN' => 0]);
+                        ->update(['selectedForPO' => 0, 'fullyOrdered' => $fullyOrdered, 'poQuantity' => $updatedPRQty, 'prClosedYN' => 0]);
                 }
             }
         }

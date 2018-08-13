@@ -15,6 +15,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMaterielRequestDetailsAPIRequest;
 use App\Http\Requests\API\UpdateMaterielRequestDetailsAPIRequest;
+use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\GRVDetails;
 use App\Models\ItemAssigned;
@@ -176,6 +177,12 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             $input['maxQty'] = 0;
         }
 
+        if($item->minimumQty){
+            $input['minQty'] = $item->minimumQty;
+        }else{
+            $input['minQty'] = 0;
+        }
+
         $input['allowCreatePR']      = 0;
         $input['selectedToCreatePR'] = 0;
 
@@ -205,51 +212,49 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $input['financeGLcodePL']   = $financeItemCategorySubAssigned->financeGLcodePL;
         $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
+        $poQty = PurchaseOrderDetails::whereHas('order' , function ($query) use ($companySystemID) {
+                                                $query->where('companySystemID', $companySystemID)
+                                                    ->where('approved', -1)
+                                                    ->where('poCancelledYN', 0);
+                                         })
+                                        ->where('itemCode', $input['itemCode'])
+                                        ->groupBy('erp_purchaseorderdetails.companySystemID',
+                                            'erp_purchaseorderdetails.itemCode')
+                                        ->select(
+                                            [
+                                                'erp_purchaseorderdetails.companySystemID',
+                                                'erp_purchaseorderdetails.itemCode',
+                                                'erp_purchaseorderdetails.itemPrimaryCode'
+                                            ]
+                                        )
+                                        ->sum('noQty');
 
-        $poQty = PurchaseOrderDetails::with(['order' => function ($query) use ($companySystemID) {
-            $query->where('companySystemID', $companySystemID)
-                ->where('approved', -1)
-                ->where('poCancelledYN', 0)
-                ->groupBy('erp_purchaseordermaster.poCancelledYN',
-                    'erp_purchaseordermaster.approved');
-        }])
-            ->where('itemCode', $input['itemCode'])
-            ->groupBy('erp_purchaseorderdetails.companySystemID',
-                'erp_purchaseorderdetails.itemCode',
-                'erp_purchaseorderdetails.itemPrimaryCode'
-            )
-            ->select(
-                [
-                    'erp_purchaseorderdetails.companySystemID',
-                    'erp_purchaseorderdetails.itemCode',
-                    'erp_purchaseorderdetails.itemPrimaryCode'
-                ]
-            )
-            ->sum('noQty');
+        $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
+                                ->where('companySystemID', $companySystemID)
+                                ->groupBy('itemSystemCode')
+                                ->sum('inOutQty');
 
-        $grvQty = GRVDetails::with(['master' => function ($query) use ($companySystemID) {
-            $query->where('companySystemID', $companySystemID)
-                ->groupBy('erp_grvmaster.companySystemID', 'erp_grvmaster.grvType');
-        }])
-            ->where('itemCode', $input['itemCode'])
-            ->groupBy('erp_grvdetails.itemCode')
-            ->select(
-                [
-                    'erp_grvdetails.companySystemID',
-                    'erp_grvdetails.itemCode'
-                ])
-            ->sum('noQty');
+        $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID) {
+                            $query->where('companySystemID', $companySystemID)
+                                ->where('grvTypeID', 2)
+                                ->groupBy('erp_grvmaster.companySystemID');
+                             })
+                            ->where('itemCode', $input['itemCode'])
+                            ->groupBy('erp_grvdetails.itemCode')
+                            ->select(
+                                [
+                                    'erp_grvdetails.companySystemID',
+                                    'erp_grvdetails.itemCode'
+                                ])
+                            ->sum('noQty');
 
         $quantityOnOrder = $poQty - $grvQty;
-        $quantityInHand  = $poQty;
-
         $input['quantityOnOrder'] = $quantityOnOrder;
         $input['quantityInHand']  = $quantityInHand;
 
         if($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']){
             return $this->sendError("No stock Qty. Please check again.", 500);
         }
-
 
         $materielRequestDetails = $this->materielRequestDetailsRepository->create($input);
 
@@ -354,7 +359,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdateMaterielRequestDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), ['uom_default','uom_issuing','item_by']);
+        $input = array_except($request->all(), ['uom_default', 'uom_issuing', 'item_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var MaterielRequestDetails $materielRequestDetails */
@@ -364,37 +369,43 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             return $this->sendError('Materiel Request Details not found');
         }
 
-        $materielRequest = MaterielRequest::where('RequestID',$input['RequestID'])->first();
-        if($materielRequest->approved == -1){
-            return $this->sendError('This Materiel Request fully approved. You can not edit.',500);
+        $materielRequest = MaterielRequest::where('RequestID', $input['RequestID'])->first();
+        if ($materielRequest->approved == -1) {
+            return $this->sendError('This Materiel Request fully approved. You can not edit.', 500);
         }
 
-        if($input['unitOfMeasure'] != $input['unitOfMeasureIssued']){
-            $unitConvention = UnitConversion::where('masterUnitID',$input['unitOfMeasure'])
-                                            ->where('subUnitID',$input['unitOfMeasureIssued'])
-                                            ->first();
+        if ($input['unitOfMeasure'] != $input['unitOfMeasureIssued']) {
+            $unitConvention = UnitConversion::where('masterUnitID', $input['unitOfMeasure'])
+                ->where('subUnitID', $input['unitOfMeasureIssued'])
+                ->first();
 
             if (empty($unitConvention)) {
                 return $this->sendError('Unit Convention not found', 500);
             }
 
-            if($unitConvention){
-                $convention  = $unitConvention->conversion;
+            if ($unitConvention) {
+                $convention = $unitConvention->conversion;
                 $input['convertionMeasureVal'] = $convention;
-                if($convention> 0 ){
+                if ($convention > 0) {
                     $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] / $convention;
-                }else{
+                } else {
                     $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] * $convention;
                 }
             }
-        }else{
-            $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'];
-        }
+            } else {
+                $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'];
+            }
 
 
-        if((float)$input['qtyIssuedDefaultMeasure'] > $materielRequestDetails->quantityInHand){
-            return $this->sendError("No stock Qty. Please check again.", 500);
-        }
+            if ((float)$input['qtyIssuedDefaultMeasure'] > $materielRequestDetails->quantityInHand) {
+                return $this->sendError("No stock Qty. Please check again.", 500);
+            }
+
+          if((($input['quantityInHand'] - $input['quantityRequested']) + $input['quantityOnOrder']) <= $input['minQty']){
+                   $input['allowCreatePR'] =  -1;
+          }else{
+                   $input['allowCreatePR']   =  0;
+          }
 
         $materielRequestDetails = $this->materielRequestDetailsRepository->update($input, $id);
 

@@ -1,50 +1,157 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : AdvancePaymentDetails.php
+ * -- Project Name : ERP
+ * -- Module Name :  AdvancePaymentDetails
+ * -- Author : Nazir
+ * -- Create date : 10 - August 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
-//use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Class AdvancePaymentDetails
- * @package App\Models
- * @version April 25, 2018, 7:33 am UTC
- *
- * @property integer PayMasterAutoId
- * @property integer poAdvPaymentID
- * @property string companyID
- * @property integer purchaseOrderID
- * @property string purchaseOrderCode
- * @property string comments
- * @property float paymentAmount
- * @property integer supplierTransCurrencyID
- * @property float supplierTransER
- * @property integer supplierDefaultCurrencyID
- * @property float supplierDefaultCurrencyER
- * @property integer localCurrencyID
- * @property float localER
- * @property integer comRptCurrencyID
- * @property float comRptER
- * @property float supplierDefaultAmount
- * @property float supplierTransAmount
- * @property float localAmount
- * @property float comRptAmount
- * @property integer timesReferred
- * @property string|\Carbon\Carbon timeStamp
+ * @SWG\Definition(
+ *      definition="AdvancePaymentDetails",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="advancePaymentDetailAutoID",
+ *          description="advancePaymentDetailAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="PayMasterAutoId",
+ *          description="PayMasterAutoId",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="poAdvPaymentID",
+ *          description="poAdvPaymentID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="purchaseOrderID",
+ *          description="purchaseOrderID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="purchaseOrderCode",
+ *          description="purchaseOrderCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="comments",
+ *          description="comments",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="paymentAmount",
+ *          description="paymentAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierTransCurrencyID",
+ *          description="supplierTransCurrencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierTransER",
+ *          description="supplierTransER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierDefaultCurrencyID",
+ *          description="supplierDefaultCurrencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierDefaultCurrencyER",
+ *          description="supplierDefaultCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="localCurrencyID",
+ *          description="localCurrencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="localER",
+ *          description="localER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptCurrencyID",
+ *          description="comRptCurrencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptER",
+ *          description="comRptER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierDefaultAmount",
+ *          description="supplierDefaultAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierTransAmount",
+ *          description="supplierTransAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="localAmount",
+ *          description="localAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptAmount",
+ *          description="comRptAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      )
+ * )
  */
 class AdvancePaymentDetails extends Model
 {
-    //use SoftDeletes;
 
     public $table = 'erp_advancepaymentdetails';
-    
-    const CREATED_AT = 'createdDateTime';
+
+    const CREATED_AT = 'timeStamp';
     const UPDATED_AT = 'timeStamp';
 
     protected $primaryKey = 'advancePaymentDetailAutoID';
-
-    protected $dates = ['deleted_at'];
-
 
     public $fillable = [
         'PayMasterAutoId',

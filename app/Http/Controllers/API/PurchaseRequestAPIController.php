@@ -24,6 +24,8 @@
  * -- Date: 23-May 2018 By: Fayas Description: Added new functions named as purchaseRequestAudit()
  * -- Date: 06-June 2018 By: Mubashir Description: Modified getPurchaseRequestByDocumentType() to handle filters from local storage
  * -- Date: 11-June 2018 By: Fayas Description: Added new functions named as getReportOpenRequest(),exportReportOpenRequest()
+ * -- Date: 31-July 2018 By: Nazir Description: Added new functions named as getPurchaseRequestReopen()
+ * -- Date: 01-August 2018 By: Nazir Description: Added new functions named as getPurchaseRequestReferBack()
  */
 namespace App\Http\Controllers\API;
 
@@ -36,16 +38,19 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\Months;
+use App\Models\PrDetailsReferedHistory;
 use App\Models\Priority;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
 use App\Models\ProcumentOrder;
+use App\Models\PurchaseRequestReferred;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -141,7 +146,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
             $items = $items->where(function ($query) use ($search) {
                 $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                      ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                      ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
             });
         }
 
@@ -165,9 +171,18 @@ class PurchaseRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $companyId = $input['companyId'];
 
-        $segments = SegmentMaster::where("companySystemID", $companyId);
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+        $segments = SegmentMaster::whereIn("companySystemID", $childCompanies);
 
         if (array_key_exists('isFilter', $input)) {
             if ($input['isFilter'] != 1) {
@@ -485,16 +500,15 @@ class PurchaseRequestAPIController extends AppBaseController
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $value['approvalGroupID'])
                     ->where('companySystemID', $companySystemID)
                     ->where('documentSystemID', $documentSystemID);
-                //->get();
+                    //->get();
 
                 if ($companyDocument['isServiceLineApproval'] == -1) {
                     $approvalList = $approvalList->where('ServiceLineSystemID', $value['serviceLineSystemID']);
                 }
 
-                $approvalList = $approvalList
-                    ->with(['employee'])
-                    ->groupBy('employeeSystemID')
-                    ->get();
+                $approvalList = $approvalList->with(['employee'])
+                                                ->groupBy('employeeSystemID')
+                                                ->get();
                 $value['approval_list'] = $approvalList;
             }
         }
@@ -634,10 +648,12 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.PRConfirmedYN',
                 'erp_purchaserequest.approved',
                 'erp_purchaserequest.timesReferred',
+                'erp_purchaserequest.refferedBackYN',
                 'erp_purchaserequest.serviceLineSystemID',
                 'erp_purchaserequest.financeCategory',
                 'erp_purchaserequest.documentSystemID',
                 'erp_purchaserequest.manuallyClosed',
+                'erp_purchaserequest.prClosedYN'
             ]);
 
         $search = $request->input('search.value');
@@ -722,6 +738,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->where('erp_purchaserequest.companySystemID', $companyId)
                     ->where('erp_purchaserequest.approved', 0)
+                    ->where('erp_purchaserequest.cancelledYN', 0)
                     ->where('erp_purchaserequest.PRConfirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', 0)
@@ -931,8 +948,8 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID', $input['companySystemID'])
-            ->where('documentSystemID', $input['documentSystemID'])
-            ->first();
+                                                                ->where('documentSystemID', $input['documentSystemID'])
+                                                                ->first();
 
         if ($companyDocumentAttachment) {
             $input['docRefNo'] = $companyDocumentAttachment->docRefNumber;
@@ -1653,7 +1670,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                             ->where('manuallyClosed', 0)
                                             ->where('cancelledYN', 0)
                                             ->where('selectedForPO', 0)
-                                            ->with(['created_by','priority','location']);
+                                            ->where('prClosedYN',0)
+                                            ->with(['created_by','priority','location','segment']);
 
         if (array_key_exists('selectedForPO', $input)) {
             if($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
@@ -1664,6 +1682,12 @@ class PurchaseRequestAPIController extends AppBaseController
 
                     });
                 }
+            }
+        }
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseRequests =  $purchaseRequests->where('serviceLineSystemID',$input['serviceLineSystemID']);
             }
         }
 
@@ -1723,7 +1747,7 @@ class PurchaseRequestAPIController extends AppBaseController
     public function exportReportOpenRequest(Request $request){
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','cancelledYN','PRConfirmedYN','approved','month','year'));
+        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','selectedForPO'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1747,7 +1771,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                             ->where('manuallyClosed', 0)
                                             ->where('cancelledYN', 0)
                                             ->where('selectedForPO', 0)
-                                            ->with(['created_by','priority_pdf','location_pdf']);
+                                            ->where('prClosedYN',0)
+                                            ->with(['created_by','priority_pdf','location_pdf','segment']);
 
         if (array_key_exists('selectedForPO', $input)) {
             if($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
@@ -1758,6 +1783,13 @@ class PurchaseRequestAPIController extends AppBaseController
                 }
             }
         }
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseRequests =  $purchaseRequests->where('serviceLineSystemID',$input['serviceLineSystemID']);
+            }
+        }
+
 
         $purchaseRequests = $purchaseRequests->select(
             ['erp_purchaserequest.purchaseRequestID',
@@ -1797,6 +1829,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $location = "";
             $priority = "";
             $createdBy = "";
+            $serviceLineDes = "";
 
             if(!empty($val->location_pdf)){
                 $location = $val->location_pdf['locationName'];
@@ -1810,9 +1843,15 @@ class PurchaseRequestAPIController extends AppBaseController
                 $createdBy = $val->created_by->empName;
             }
 
+            if(!empty($val->segment)){
+                $serviceLineDes = $val->segment->ServiceLineDes;
+            }
+
+
             $data[] = array(
                 'PR Number' => $val->purchaseRequestCode,
                 'PR Requested Date' => \Helper::dateFormat($val->createdDateTime),
+                'Department' => $serviceLineDes,
                 'Narration' => $val->comments,
                 'Location' => $location,
                 'Priority' => $priority,
@@ -1834,6 +1873,175 @@ class PurchaseRequestAPIController extends AppBaseController
         })->download($type);
         return $this->sendResponse(array(), 'successfully export');
 
-
     }
+
+    public function getPurchaseRequestReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseRequestId = $input['purchaseRequestId'];
+
+        $purchaseRequest = PurchaseRequest::find($purchaseRequestId);
+        $emails = array();
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($purchaseRequest->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Request it is already partially approved');
+        }
+
+        if ($purchaseRequest->approved == -1) {
+            return $this->sendError('You cannot reopen this Request it is already fully approved');
+        }
+
+        if ($purchaseRequest->PRConfirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Request, it is not confirmed');
+        }
+
+        // updating fields
+
+        $purchaseRequest->PRConfirmedYN = 0;
+        $purchaseRequest->PRConfirmedBySystemID = null;
+        $purchaseRequest->PRConfirmedBy = null;
+        $purchaseRequest->PRConfirmedByEmpName = null;
+        $purchaseRequest->PRConfirmedDate = null;
+        $purchaseRequest->RollLevForApp_curr = 1;
+        $purchaseRequest->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $purchaseRequest->companySystemID)
+                    ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+            ->where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request reopened successfully');
+    }
+
+    public function getPurchaseRequestReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseRequestId = $input['purchaseRequestId'];
+
+        $purchaseRequest = PurchaseRequest::find($purchaseRequestId);
+        if (empty($purchaseRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($purchaseRequest->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this request');
+        }
+
+        $purchaseRequestArray = $purchaseRequest->toArray();
+
+        $storePORequestHistory = PurchaseRequestReferred::insert($purchaseRequestArray);
+
+        $fetchPurchaseRequestDetails = PurchaseRequestDetails::where('purchaseRequestID', $purchaseRequestId)
+            ->get();
+
+        if (!empty($fetchPurchaseRequestDetails)) {
+            foreach ($fetchPurchaseRequestDetails as $prDetail) {
+                $prDetail['timesReffered'] = $purchaseRequest->timesReferred;
+            }
+        }
+
+        $purchaseRequestDetailArray = $fetchPurchaseRequestDetails->toArray();
+
+        $storePRDetailHistory = PrDetailsReferedHistory::insert($purchaseRequestDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $purchaseRequestId)
+            ->where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $purchaseRequest->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $purchaseRequestId)
+            ->where('companySystemID', $purchaseRequest->companySystemID)
+            ->where('documentSystemID', $purchaseRequest->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $purchaseRequest->refferedBackYN = 0;
+            $purchaseRequest->PRConfirmedYN = 0;
+            $purchaseRequest->PRConfirmedBySystemID = null;
+            $purchaseRequest->PRConfirmedBy = null;
+            $purchaseRequest->PRConfirmedByEmpName = null;
+            $purchaseRequest->PRConfirmedDate = null;
+            $purchaseRequest->RollLevForApp_curr = 1;
+            $purchaseRequest->save();
+        }
+
+        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request Amend successfully');
+    }
+
+
+
+
 }

@@ -19,17 +19,16 @@ use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\GRVMaster;
+use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
+use App\Models\ItemReturnMaster;
 use App\Models\MaterielRequest;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
+use App\Models\StockReceive;
+use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
-use App\Repositories\AlertRepository;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Response;
-use InfyOm\Generator\Utils\ResponseUtil;
-
 
 class email
 {
@@ -140,6 +139,34 @@ class email
                     if (!empty($grvMaster)) {
                         $data['docApprovedYN'] = $grvMaster->approved;
                         $data['docCode']       = $grvMaster->grvPrimaryCode;
+                    }
+                    break;
+                case 8:
+                    $materielIssue = ItemIssueMaster::where('itemIssueAutoID', $data['docSystemCode'])->first();
+                    if (!empty($materielIssue)) {
+                        $data['docApprovedYN'] = $materielIssue->approved;
+                        $data['docCode']       = $materielIssue->itemIssueCode;
+                    }
+                    break;
+                case 13:
+                    $stockTransfer = StockTransfer::where('stockTransferAutoID', $data['docSystemCode'])->first();
+                    if (!empty($stockTransfer)) {
+                        $data['docApprovedYN'] = $stockTransfer->approved;
+                        $data['docCode'] = $stockTransfer->stockTransferCode;
+                    }
+                    break;
+                case 12:
+                    $materielReturn = ItemReturnMaster::where('itemReturnAutoID', $data['docSystemCode'])->first();
+                    if (!empty($materielReturn)) {
+                        $data['docApprovedYN'] = $materielReturn->approved;
+                        $data['docCode']       = $materielReturn->itemReturnCode;
+                    }
+                    break;
+                case 10:
+                    $stockReceive = StockReceive::where('stockReceiveAutoID', $data['docSystemCode'])->first();
+                    if (!empty($stockReceive)) {
+                        $data['docApprovedYN'] = $stockReceive->approved;
+                        $data['docCode']       = $stockReceive->stockReceiveCode;
                     }
                     break;
                 default:

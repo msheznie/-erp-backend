@@ -124,6 +124,7 @@ class SupplierMaster extends Model
         'supplierConfirmedDate',
         'RollLevForApp_curr',
         'isCriticalYN',
+        'companyLinkedToSystemID',
         'companyLinkedTo',
         'createdUserGroup',
         'createdPcID',
@@ -188,6 +189,7 @@ class SupplierMaster extends Model
         'supplierConfirmedEmpName' => 'string',
         'RollLevForApp_curr' => 'integer',
         'isCriticalYN' => 'integer',
+        'companyLinkedToSystemID' => 'integer',
         'companyLinkedTo' => 'string',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
@@ -240,7 +242,27 @@ class SupplierMaster extends Model
     }
     public function country()
     {
-        return $this->belongsTo('App\Models\CountryMaster','countryID','countryID');
+        return $this->belongsTo('App\Models\CountryMaster','supplierCountryID','countryID');
     }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'supplierConfirmedEmpSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','supplierCodeSystem');
+    }
+
 
 }

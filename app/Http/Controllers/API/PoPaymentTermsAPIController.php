@@ -86,7 +86,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->where('purchaseOrderMasterID', $purchaseOrderID)
             ->first();
 
-        if(empty($prDetailExist)){
+        if (empty($prDetailExist)) {
             return $this->sendError('At least one item should added to create payment term');
         }
 
@@ -102,11 +102,17 @@ class PoPaymentTermsAPIController extends AppBaseController
             $input['inDays'] = $supplier->creditPeriod;
         }
 
-        if(!empty($purchaseOrder->expectedDeliveryDate) && !empty($supplier->creditPeriod)){
+        if (!empty($purchaseOrder->expectedDeliveryDate) && !empty($supplier->creditPeriod)) {
             $addedDate = strtotime("+$supplier->creditPeriod day", strtotime($purchaseOrder->expectedDeliveryDate));
             $input['comDate'] = date("Y-m-d", $addedDate);
-        }else{
+        } else {
             $input['comDate'] = '';
+        }
+
+        if($input['LCPaymentYN'] == 1){
+            $input['paymentTemDes'] = 'Payment In';
+        }else if($input['LCPaymentYN'] == 2){
+            $input['paymentTemDes'] = 'Advance Payment';
         }
 
         $poPaymentTerms = $this->poPaymentTermsRepository->create($input);
@@ -149,12 +155,6 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        if (isset($input['comDate'])) {
-            if ($input['comDate']) {
-               // $input['comDate'] = new Carbon($input['comDate']);
-            }
-        }
-
         $purchaseOrderID = $input['poID'];
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
@@ -164,15 +164,29 @@ class PoPaymentTermsAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
-        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
+/*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
         if ($supplier) {
             $input['inDays'] = $supplier->creditPeriod;
+        }*/
+        $daysin =  $input['inDays'];
+        if($purchaseOrder->documentSystemID == 5 && $purchaseOrder->poType_N == 5){
+            if (isset($input['comDate'])) {
+                if ($input['comDate']) {
+                    $input['comDate'] = new Carbon($input['comDate']);
+                }
+            }
+        }else{
+            if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin != 0) {
+                $addedDate = strtotime("+$daysin day", strtotime($purchaseOrder->expectedDeliveryDate));
+                $input['comDate'] = date("Y-m-d", $addedDate);
+            }
+
+            if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin == 0) {
+                $input['comDate'] = $purchaseOrder->expectedDeliveryDate;
+            }
         }
 
-        if(!empty($purchaseOrder->expectedDeliveryDate) && !empty($supplier->creditPeriod)){
-            $addedDate = strtotime("+$supplier->creditPeriod day", strtotime($purchaseOrder->expectedDeliveryDate));
-            $input['comDate'] = date("Y-m-d", $addedDate);
-        }
+
 
         /** @var PoPaymentTerms $poPaymentTerms */
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
@@ -180,6 +194,18 @@ class PoPaymentTermsAPIController extends AppBaseController
         if (empty($poPaymentTerms)) {
             return $this->sendError('Po Payment Terms not found');
         }
+
+
+        //getting total sum of PO detail Amount
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            ->where('purchaseOrderMasterID', $purchaseOrderID)
+            ->first();
+
+        //$poMasterSumDeducted = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) + $purchaseOrder->VATAmount;
+
+       //$calculatePer = ($input['comPercentage'] / 100) * $poMasterSumDeducted;
+        //$input['comAmount'] = round($calculatePer, 8);
+
 
         $poPaymentTerms = $this->poPaymentTermsRepository->update($input, $id);
 
@@ -197,8 +223,7 @@ class PoPaymentTermsAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var PoPaymentTerms $poPaymentTerms */
-        $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
-        ;
+        $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);;
         if (empty($poPaymentTerms)) {
             return $this->sendError('Po Payment Terms not found');
         }
@@ -214,8 +239,7 @@ class PoPaymentTermsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $poAdvancePaymentType = PoPaymentTerms::select(DB::raw('*, DATE_FORMAT(comDate, "%d/%m/%Y") as comDate'))
-            ->where('poID', $input['purchaseOrderID'])
+        $poAdvancePaymentType = PoPaymentTerms::where('poID', $input['purchaseOrderID'])
             ->orderBy('paymentTermID', 'ASC')
             ->get();
 

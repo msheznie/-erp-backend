@@ -356,7 +356,10 @@ class ItemIssueMaster extends Model
         'is_closed',
         'timestamp',
         'customerSystemID',
-        'approvedDate'
+        'approvedDate',
+        'RollLevForApp_curr',
+        'approvedByUserID',
+        'approvedByUserSystemID'
     ];
 
     /**
@@ -415,7 +418,10 @@ class ItemIssueMaster extends Model
         'modifiedPc' => 'string',
         'contRefNo' => 'string',
         'is_closed' => 'integer',
-        'customerSystemID' => 'integer'
+        'customerSystemID' => 'integer',
+        'RollLevForApp_curr' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
     ];
 
     /**
@@ -460,6 +466,13 @@ class ItemIssueMaster extends Model
     public function details()
     {
         return $this->hasMany('App\Models\ItemIssueDetails','itemIssueAutoID','itemIssueAutoID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemIssueAutoID');
+    }
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 
 }

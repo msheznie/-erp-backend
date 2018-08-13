@@ -10,14 +10,19 @@
  * -- REVISION HISTORY
  * -- Date: 20-June 2018 By: Fayas Description: Added new functions named as getAllMaterielIssuesByCompany(),getMaterielIssueFormData()
  * -- Date: 22-June 2018 By: Fayas Description: Added new functions named as getAllMaterielRequestNotSelectedForIssueByCompany()
+ * -- Date: 27-June 2018 By: Fayas Description: Added new functions named as getMaterielIssueAudit()
+ * -- Date: 28-June 2018 By: Fayas Description: Added new functions named as getMaterielIssueApprovalByUser(),getMaterielIssueApprovedByUser()
+ * -- Date: 26-July 2018 By: Fayas Description: Added new functions named as printItemIssue()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateItemIssueMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemIssueMasterAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentMaster;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
@@ -26,6 +31,7 @@ use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
 use App\Models\Months;
 use App\Models\SegmentMaster;
+use App\Models\SupplierMaster;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
@@ -161,7 +167,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $documentDate = $input['issueDate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
-        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd)) {
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('Issue Date not between Financial period !', 500);
         }
@@ -170,10 +176,11 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input['documentID'] = 'MI';
 
         $lastSerial = ItemIssueMaster::where('companySystemID', $input['companySystemID'])
+                                    ->where('companyFinanceYearID', $input['companyFinanceYearID'])
                                     ->orderBy('itemIssueAutoID', 'desc')
                                     ->first();
 
-        $lastSerialNumber = 0;
+        $lastSerialNumber = 1;
         if ($lastSerial) {
             $lastSerialNumber = intval($lastSerial->serialNo) + 1;
         }
@@ -196,6 +203,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         $input['serialNo'] = $lastSerialNumber;
+        $input['RollLevForApp_curr'] = 1;
 
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
 
@@ -261,7 +269,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ItemIssueMaster $itemIssueMaster */
-        $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
+        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by','created_by'])->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
             return $this->sendError('Item Issue Master not found');
@@ -319,6 +327,9 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function update($id, UpdateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['created_by','confirmedByName',
+            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID']);
+
         $input = $this->convertArrayToValue($input);
 
         /** @var ItemIssueMaster $itemIssueMaster */
@@ -326,6 +337,28 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         if (empty($itemIssueMaster)) {
             return $this->sendError('Item Issue Master not found');
+        }
+
+        if($itemIssueMaster->serviceLineSystemID != $input['serviceLineSystemID']){
+            $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Department not found');
+            }
+
+            if($checkDepartmentActive->isActive == 0){
+                return $this->sendError('Selected Department is not active please select different Department',500);
+            }
+        }
+
+        if($itemIssueMaster->wareHouseFrom != $input['wareHouseFrom']){
+            $checkWareHouseActive = WarehouseMaster::find($input['wareHouseFrom']);
+            if (empty($checkWareHouseActive)) {
+                return $this->sendError('WareHouse not found');
+            }
+
+            if($checkWareHouseActive->isActive == 0){
+                return $this->sendError('Selected WareHouse is not active please select different WareHouse',500);
+            }
         }
 
         $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
@@ -344,7 +377,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $documentDate = $input['issueDate'];
         $monthBegin = $input['FYBiggin'];
         $monthEnd = $input['FYEnd'];
-        if (($documentDate > $monthBegin) && ($documentDate < $monthEnd)) {
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
             return $this->sendError('Issue Date not between Financial period !', 500);
         }
@@ -404,7 +437,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             $amount = ItemIssueDetails::where('itemIssueAutoID', $id)
                                         ->sum('issueCostRptTotal');
-
+            $input['RollLevForApp_curr'] = 1;
             $params = array('autoID' => $id,
                 'company' => $itemIssueMaster->companySystemID,
                 'document' => $itemIssueMaster->documentSystemID,
@@ -598,6 +631,220 @@ class ItemIssueMasterAPIController extends AppBaseController
     }
 
     /**
+     * get Materiel Issue Approved By User
+     * POST /getMaterielIssueApprovedByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getMaterielIssueApprovedByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $itemIssueMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_itemissuemaster.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As MIServiceLineDes',
+                'warehousemaster.wareHouseDescription As MIWareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_itemissuemaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'itemIssueAutoID')
+                    ->where('erp_itemissuemaster.companySystemID', $companyId)
+                    ->where('erp_itemissuemaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'wareHouseFrom', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_itemissuemaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [8])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemIssueMaster->where('erp_itemissuemaster.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('wareHouseFrom', $input)) {
+            if ($input['wareHouseFrom'] && !is_null($input['wareHouseFrom'])) {
+                $itemIssueMaster->where('erp_itemissuemaster.wareHouseFrom', $input['wareHouseFrom']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemIssueMaster->whereMonth('erp_itemissuemaster.issueDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemIssueMaster->whereYear('erp_itemissuemaster.issueDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
+                $query->where('itemIssueCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($itemIssueMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemIssueAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    /**
+     * get Materiel Issue Approval By User
+     * POST /getMaterielIssueApprovalByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getMaterielIssueApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $itemIssueMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_itemissuemaster.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As MIServiceLineDes',
+                'warehousemaster.wareHouseDescription As MIWareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+                                                                ->where('documentSystemID', 1)
+                                                                ->first();
+
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
+
+                $query->whereIn('employeesdepartments.documentSystemID', [8])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_itemissuemaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'itemIssueAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_itemissuemaster.companySystemID', $companyId)
+                    ->where('erp_itemissuemaster.approved', 0)
+                    ->where('erp_itemissuemaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'wareHouseFrom', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_itemissuemaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [8])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemIssueMaster->where('erp_itemissuemaster.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('wareHouseFrom', $input)) {
+            if ($input['wareHouseFrom'] && !is_null($input['wareHouseFrom'])) {
+                $itemIssueMaster->where('erp_itemissuemaster.wareHouseFrom', $input['wareHouseFrom']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemIssueMaster->whereMonth('erp_itemissuemaster.issueDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemIssueMaster->whereYear('erp_itemissuemaster.issueDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
+                $query->where('itemIssueCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($itemIssueMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemIssueAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+
+    /**
      * get Materiel Issue Form Data
      * Get /getMaterielIssueFormData
      *
@@ -635,7 +882,21 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $types = ItemIssueType::take(2)->get();
+        $companyPolicy = CompanyPolicyMaster::where('companySystemID',$companyId)
+                                            ->where('companyPolicyCategoryID',22)
+                                            ->first();
+
+        $typeId = [];
+
+        if(!empty($companyPolicy)){
+            if($companyPolicy->isYesNO == 0){
+                $typeId = [2];
+            }else if($companyPolicy->isYesNO == 1){
+                $typeId = [1];
+            }
+        }
+
+        $types = ItemIssueType::whereIn('itemIssueTypeID',$typeId)->get();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
@@ -688,9 +949,9 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
             //->where("selectedForIssue", 0);
-            ->where("approved", -1);
-
-        $materielRequests = $materielRequests->select(['RequestID', 'RequestCode']);
+            ->where("approved", -1)
+            ->where("serviceLineSystemID",$request['serviceLineSystemID'])
+            ->where("location", $request['wareHouseFrom']);
 
         $search = $input['search'];
 
@@ -702,8 +963,51 @@ class ItemIssueMasterAPIController extends AppBaseController
             });
         }
 
-        $materielRequests = $materielRequests->get();
+        $materielRequests = $materielRequests->get(['RequestID', 'RequestCode']);
         return $this->sendResponse($materielRequests->toArray(), 'Materiel Issue updated successfully');
+    }
+
+    /**
+     * Display the specified Materiel Issue Audit.
+     * GET|HEAD /getMaterielIssueAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getMaterielIssueAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $materielRequest = $this->itemIssueMasterRepository->getAudit($id);
+
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Issue not found');
+        }
+
+        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID,$materielRequest->documentSystemID);
+
+        return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
+    }
+
+    public function printItemIssue(Request $request)
+    {
+        $id = $request->get('id');
+        $materielRequest = $this->itemIssueMasterRepository->getAudit($id);
+
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Issue not found');
+        }
+
+        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID,$materielRequest->documentSystemID);
+
+        $array = array('entity' => $materielRequest);
+        $time = strtotime("now");
+        $fileName = 'item_issue_' . $id . '_' . $time . '.pdf';
+        $html = view('print.item_issue', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
 }

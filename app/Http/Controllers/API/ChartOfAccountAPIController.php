@@ -321,8 +321,8 @@ class ChartOfAccountAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType'])
-                                        ->whereIn('primaryCompanySystemID',$childCompanies);
+        $chartOfAccount = ChartOfAccount::with(['controlAccount', 'accountType']);
+                                       // ->whereIn('primaryCompanySystemID',$childCompanies);
 
         if (array_key_exists('controlAccountsSystemID', $input)) {
             if ($input['controlAccountsSystemID'] && !is_null($input['controlAccountsSystemID'])) {

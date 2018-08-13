@@ -180,7 +180,9 @@ class GRVMaster extends Model
         'modifiedUserSystemID',
         'createdDateTime',
         'timeStamp',
-        'stampDate'
+        'stampDate',
+        'approvedByUserID',
+        'approvedByUserSystemID'
     ];
 
     /**
@@ -257,6 +259,8 @@ class GRVMaster extends Model
         'modifiedUser' => 'string',
         'modifiedUserSystemID' => 'integer',
         'stampDate' => 'string',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer'
     ];
 
     /**
@@ -311,6 +315,26 @@ class GRVMaster extends Model
     public function approved_by()
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'grvAutoID');
+    }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\GRVDetails', 'grvAutoID', 'grvAutoID');
+    }
+
+    public function company_by()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function companydocumentattachment_by()
+    {
+        return $this->hasMany('App\Models\CompanyDocumentAttachment', 'companySystemID', 'companySystemID');
+    }
+
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
     }
 
     

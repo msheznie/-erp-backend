@@ -207,10 +207,10 @@
          <span class="watermarkText">
            <h3 class="text-muted">
                @if($podata->poConfirmedYN == 0 && $podata->approved == 0)
-                   Not Confirmed & Not Approved
+                   Not Confirmed & Not Approved <br> Draft Copy
                @endif
                @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
-                   Confirmed & Not Approved
+                   Confirmed & Not Approved <br> Draft Copy
                @endif
            </h3>
          </span>
@@ -222,7 +222,9 @@
                 <td width="60%">
                     <table>
                         <tr>
-                            <td>&nbsp;</td>
+                            <td><img src="logos/{{$podata->company->companyLogo}}" width="180px" height="60px"></td>
+                        </tr>
+                        <tr>
                             <td>
                                 <h3 class="font-weight-bold">
                                     {{$title}}
@@ -292,7 +294,7 @@
                         <tr>
                             <td style="width: 100%" colspan="3"><p>
                                     @if ($podata->soldToAddressDescriprion)
-                                        {{$podata->soldToAddressDescriprion}}
+                                        {!! nl2br($podata->soldToAddressDescriprion) !!}
                                     @endif
                                 </p>
                             </td>
@@ -336,10 +338,9 @@
                             <td colspan="3">{{$podata->supplierName}}</td>
                         </tr>
                         <tr>
-                            <td colspan="3">{{$podata->supplierAddress}}</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">{{$podata->soldToAddressDescriprion}}</td>
+                            <td colspan="3">
+                                {!! nl2br($podata->supplierAddress) !!}
+                            </td>
                         </tr>
                         <tr>
                             <td><span class="font-weight-bold">Contact</span></td>
@@ -400,7 +401,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td colspan="3">{{$podata->shippingAddressDescriprion}} </td>
+                            <td colspan="3">{!! nl2br($podata->shippingAddressDescriprion) !!}</td>
                         </tr>
                         <tr>
                             <td colspan="3"><span class="title">&nbsp;</span></td>
@@ -443,7 +444,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td colspan="3">{{$podata->invoiceToAddressDescription}} </td>
+                            <td colspan="3">{!! nl2br($podata->invoiceToAddressDescription) !!}</td>
                         </tr>
                         <tr>
                             <td style="width: 20%"><span class="font-weight-bold">Payment Contact</span></td>
@@ -530,7 +531,7 @@
             <tr style="border-top: 1px solid black;">
                 <th style="text-align: center; width: 2%;">#</th>
                 <th style="text-align: center; width: 8%;">Item Code</th>
-                <th style="text-align: center; width: 20%;">Item Description</th>
+                <th style="text-align: center; width: 34%;">Item Description</th>
                 <th style="text-align: center; width: 5%;">Sup.Part No</th>
                 <th style="text-align: center ; width: 5%;">UOM</th>
                 <th style="text-align: center ; width: 5%;">Qty</th>
@@ -550,7 +551,7 @@
                 <tr style="border-bottom: 1px solid black;">
                     <td>{{ $x  }}</td>
                     <td>{{$det->itemPrimaryCode}}</td>
-                    <td>{{$det->itemDescription}} <br> {{$det->comment}}</td>
+                    <td nobr="true">{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
@@ -641,7 +642,7 @@
             <tr style="padding-bottom: 2%;">
                 <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Payment Terms</span></td>
                 <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
-                <td style="width:85%;vertical-align: top;">{!! nl2br($podata->paymentTerms) !!}</td>
+                <td style="width:85%;vertical-align: top;">{{$paymentTermsView}}</td>
             </tr>
         </table>
     </div>

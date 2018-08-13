@@ -10,14 +10,19 @@
  * -- REVISION HISTORY
  * -- Date: 12-June 2018 By: Fayas Description: Added new functions named as getAllRequestByCompany(),getRequestFormData()
  * -- Date: 19-June 2018 By: Fayas Description: Added new functions named as materielRequestAudit()
+ * -- Date: 13-July 2018 By: Fayas Description: Added new functions named as getAllNotApprovedRequestByUser(),getApprovedMaterielRequestsByUser()
+ * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as requestReopen()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMaterielRequestAPIRequest;
 use App\Http\Requests\API\UpdateMaterielRequestAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\MaterielRequest;
@@ -31,6 +36,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\MaterielRequestRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -184,6 +190,163 @@ class MaterielRequestAPIController extends AppBaseController
     }
 
     /**
+     * get All Not Approved Request By User
+     * POST /getAllNotApprovedRequestByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getAllNotApprovedRequestByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'ConfirmedYN', 'approved'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $companyId = $request['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $materielRequests = DB::table('erp_documentapproved')
+            ->select(
+                'erp_request.*',
+                'serviceline.ServiceLineDes As MRServiceLineDes',
+                'warehousemaster.wareHouseDescription As MRWareHouseDescription',
+                'erp_priority.priorityDescription As MRPriorityDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                    ->whereIn('employeesdepartments.documentSystemID', [9])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_request', function ($query) use ($companyId) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'RequestID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_request.companySystemID', $companyId)
+                    ->where('erp_request.approved', 0)
+                    ->where('erp_request.ConfirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_request.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('erp_priority', 'erp_request.priority', 'erp_priority.priorityID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [9])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $materielRequests = $materielRequests->where(function ($query) use ($search) {
+                $query->where('RequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($materielRequests)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('RequestID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    /**
+     * get Approved Materiel Requests By User
+     * POST /getMaterielIssueApprovedByUser
+     *
+     * @param Request $request
+     *
+     * @return Response
+     */
+
+    public function getApprovedMaterielRequestsByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $materielRequests = DB::table('erp_documentapproved')
+            ->select(
+                'erp_request.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As MRServiceLineDes',
+                'warehousemaster.wareHouseDescription As MRWareHouseDescription',
+                'erp_priority.priorityDescription As MRPriorityDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_request', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'RequestID')
+                    ->where('erp_request.companySystemID', $companyId)
+                    ->where('erp_request.approved', -1)
+                    ->where('erp_request.ConfirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_request.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('erp_priority', 'erp_request.priority', 'erp_priority.priorityID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [9])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $materielRequests = $materielRequests->where(function ($query) use ($search) {
+                $query->where('RequestCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($materielRequests)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('RequestID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    /**
      * @param CreateMaterielRequestAPIRequest $request
      * @return Response
      *
@@ -237,13 +400,14 @@ class MaterielRequestAPIController extends AppBaseController
         $input['departmentSystemID'] = 10;
         $input['documentSystemID'] =  9;
         $input['ConfirmedYN'] =  0;
+        $input['RollLevForApp_curr'] = 1;
 
         $lastSerial = MaterielRequest::where('companySystemID', $input['companySystemID'])
                                         ->where('documentSystemID', $input['documentSystemID'])
                                         ->orderBy('RequestID', 'desc')
                                         ->first();
 
-        $lastSerialNumber = 0;
+        $lastSerialNumber = 1;
         if ($lastSerial) {
             $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
         }
@@ -392,6 +556,18 @@ class MaterielRequestAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
+
+        if($materielRequest->location != $input['location']){
+            $checkWareHouseActive = WarehouseMaster::find($input['location']);
+            if (empty($checkWareHouseActive)) {
+                return $this->sendError('Location not found');
+            }
+
+            if($checkWareHouseActive->isActive == 0){
+                return $this->sendError('Selected Location is not active please select different location',500);
+            }
+        }
+
         if ($materielRequest->ConfirmedYN == 0 && $input['ConfirmedYN'] == 1) {
 
 
@@ -504,16 +680,20 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $segments = SegmentMaster::whereIn("companySystemID", $subCompanies);
+        $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies);
 
         if (array_key_exists('isFilter', $input)) {
             if ($input['isFilter'] != 1) {
                 $segments = $segments->where('isActive', 1);
+                $wareHouses = $wareHouses->where('isActive', 1);
             }
         } else {
             $segments = $segments->where('isActive', 1);
+            $wareHouses = $wareHouses->where('isActive', 1);
         }
 
         $segments = $segments->get();
+        $wareHouses = $wareHouses->get();
 
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -525,8 +705,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         $locations = Location::all();
 
-        $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies)
-                                      ->get();
+
 
         $units = Unit::all();
 
@@ -570,6 +749,106 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         return $this->sendResponse($materielRequest->toArray(), 'Materiel Request retrieved successfully');
+    }
+
+    public function requestReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $requestID = $input['RequestID'];
+
+        $materielRequest = MaterielRequest::find($requestID);
+        $emails = array();
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Request not found');
+        }
+
+        if ($materielRequest->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Request its already partially approved');
+        }
+
+        if ($materielRequest->approved == -1) {
+            return $this->sendError('You cannot reopen this Request its already fully approved');
+        }
+
+        if ($materielRequest->ConfirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Request, its not confirmed');
+        }
+
+        // updating fields
+
+        $materielRequest->ConfirmedYN = 0;
+        $materielRequest->ConfirmedBySystemID = null;
+        $materielRequest->ConfirmedBy = null;
+        $materielRequest->confirmedEmpName = null;
+        $materielRequest->ConfirmedDate = null;
+        $materielRequest->RollLevForApp_curr = 1;
+        $materielRequest->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $materielRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $materielRequest->RequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $materielRequest->RequestCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $materielRequest->companySystemID)
+            ->where('documentSystemCode', $materielRequest->RequestID)
+            ->where('documentSystemID', $materielRequest->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $materielRequest->companySystemID)
+                    ->where('documentSystemID', $materielRequest->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $requestID)
+                                        ->where('companySystemID', $materielRequest->companySystemID)
+                                        ->where('documentSystemID', $materielRequest->documentSystemID)
+                                        ->delete();
+
+        return $this->sendResponse($materielRequest->toArray(), 'Purchase Order reopened successfully');
     }
 
 }
