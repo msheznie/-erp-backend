@@ -21,6 +21,7 @@ use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\ProcumentOrder;
 use App\Models\CompanyPolicyMaster;
+use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderDetails;
 use App\Repositories\GRVDetailsRepository;
 use Illuminate\Http\Request;
@@ -339,6 +340,12 @@ class GRVDetailsAPIController extends AppBaseController
         try {
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
+                    $grvDetailItem = ProcumentOrderDetail::select('receivedQty')
+                        ->where('purchaseOrderDetailsID', $new['purchaseOrderDetailsID'])
+                        ->first();
+
+                    $new['receivedQty'] = $grvDetailItem['receivedQty'];
+
                     if (($new['noQty'] == '' || $new['noQty'] == 0)) {
                         return $this->sendError('Qty cannot be zero', 422);
                     } else {
@@ -349,6 +356,8 @@ class GRVDetailsAPIController extends AppBaseController
                             }
                         }
                     }
+
+
 
                     if ($new['noQty'] > ($new['poQty'] - $new['receivedQty'])) {
                         return $this->sendError('Number of quantity should not be greater than received qty', 422);
@@ -361,7 +370,7 @@ class GRVDetailsAPIController extends AppBaseController
 
                         if (!empty($grvDetailExistSameItem)) {
                             if ($grvDetailExistSameItem['purchaseOrderMastertID'] != $new['purchaseOrderMasterID']) {
-                                return $this->sendError('You cannot add multiple PO details', 422);
+                                return $this->sendError('You cannot add details from multiple PO', 422);
                             }
                         }
                     }
