@@ -477,4 +477,10 @@ class ItemIssueMaster extends Model
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 
+    public function finance_period_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+
 }
