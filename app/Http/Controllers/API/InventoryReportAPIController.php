@@ -258,6 +258,7 @@ class InventoryReportAPIController extends AppBaseController
                             $data[$x]['Document Code'] = $val->documentCode;
                             $data[$x]['Trans Date'] = \Helper::dateFormat($val->transactionDate);
                             $data[$x]['Service Line'] = $val->serviceLineCode;
+                            $data[$x]['Warehouse'] = $val->wareHouseDescription;
                             $data[$x]['Ref Number'] = $val->referenceNumber;
                             $data[$x]['Processed By'] = $val->empName;
                             $data[$x]['Item Code'] = $val->itemPrimaryCode;

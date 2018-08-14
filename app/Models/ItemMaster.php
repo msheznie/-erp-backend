@@ -162,7 +162,8 @@ class ItemMaster extends Model
      * @var array
      */
     public static $rules = [
-        
+        //'secondaryItemCode'  => 'required',
+        //'secondaryItemCode' => 'unique:itemmaster,secondaryItemCode',
     ];
 
     public function unit(){

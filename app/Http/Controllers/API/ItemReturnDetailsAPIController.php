@@ -24,6 +24,7 @@ use App\Models\ItemReturnDetails;
 use App\Models\ItemReturnMaster;
 use App\Models\Unit;
 use App\Models\UnitConversion;
+use App\Models\WarehouseMaster;
 use App\Repositories\ItemReturnDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -136,6 +137,19 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
         if (empty($itemReturn)) {
             return $this->sendError('Item Return not found', 500);
+        }
+
+
+        if($itemReturn->wareHouseLocation){
+            $wareHouse = WarehouseMaster::where("wareHouseSystemCode",$itemReturn->wareHouseLocation)->first();
+            if (empty($wareHouse)) {
+                return $this->sendError('Warehouse not found', 500);
+            }
+            if($wareHouse->isActive == 0){
+                return $this->sendError('Please select a active warehouse.'.$wareHouse->wareHouseSystemCode,500);
+            }
+        }else{
+            return $this->sendError('Please select a warehouse.', 500);
         }
 
         $input['itemReturnCode'] = $itemReturn->itemReturnCode;
