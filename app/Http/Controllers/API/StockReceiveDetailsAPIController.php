@@ -480,7 +480,6 @@ class StockReceiveDetailsAPIController extends AppBaseController
                                                             ->groupBy('itemCodeSystem')
                                                             ->sum('qty');
 
-
                 if ($stDetail->qty == $stdTotalPullCount) {
                     $stDetail->stockRecieved = -1;
                 } else {

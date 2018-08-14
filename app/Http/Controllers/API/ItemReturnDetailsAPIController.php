@@ -141,7 +141,9 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $input['itemReturnCode'] = $itemReturn->itemReturnCode;
 
 
-        $itemAssign = ItemAssigned::where('itemCodeSystem',$input['itemCodeSystem'])->first();
+        $itemAssign = ItemAssigned::where('itemCodeSystem',$input['itemCodeSystem'])
+                                   ->where('companySystemID',$companySystemID)
+                                   ->first();
 
         if (empty($itemAssign)) {
             return $this->sendError('Item not found', 500);
@@ -429,6 +431,11 @@ class ItemReturnDetailsAPIController extends AppBaseController
             return $this->sendError("You cannot return more than the issued Qty", 500,$qtyError);
         }
 
+        if($input['qtyIssued'] == '' || is_null($input['qtyIssued'])){
+            $input['qtyIssued'] = 0;
+            $input['qtyIssuedDefaultMeasure']  = 0;
+        }
+
         $itemReturnDetails = $this->itemReturnDetailsRepository->update($input, $id);
 
         return $this->sendResponse($itemReturnDetails->toArray(), 'ItemReturnDetails updated successfully');
@@ -559,7 +566,8 @@ class ItemReturnDetailsAPIController extends AppBaseController
             $search = $input['search'];
             $items = $items->where(function ($query) use ($search) {
                 $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
             });
         }
 

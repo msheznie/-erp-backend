@@ -11,12 +11,14 @@
 -- Date: 19-March 2018 By: Fayas Description: Added new functions named as getAllCustomers()
 -- Date: 20-March 2018 By: Fayas Description: Added new functions named as getCustomerFormData(),getAssignedCompaniesByCustomer()
 -- Date: 21-June 2018 By: Fayas Description: Added new functions named as getSearchCustomerByCompany()
+-- Date: 13-August 2018 By: Fayas Description: Added new functions named as getContractByCustomer()
 
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerMasterAPIRequest;
 use App\Http\Requests\API\UpdateCustomerMasterAPIRequest;
+use App\Models\Contract;
 use App\Models\CustomerMaster;
 use App\Models\Company;
 use App\Models\CountryMaster;
@@ -483,7 +485,34 @@ class CustomerMasterAPIController extends AppBaseController
                                             ->get();
 
 
-        return $this->sendResponse($customers->toArray(), 'Customer Master deleted successfully');
+        return $this->sendResponse($customers->toArray(), 'Customer Master retrieved successfully');
     }
+
+    public function getContractByCustomer(Request $request)
+    {
+
+        $companyId = $request->companyId;
+        $input = $request->all();
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $companies = \Helper::getGroupCompany($companyId);
+        }else{
+            $companies = [$companyId];
+        }
+
+        $contract = Contract::whereIn('companySystemID',$companies)
+            ->where('clientID',$input['customer_id'])
+            ->when(request('search', false), function ($q, $search) {
+                return $q->where(function ($query) use($search) {
+                    return $query->where('ContractNumber','LIKE',"%{$search}%");
+                });
+            })
+            ->get(['ContractNumber','contractUID']);
+
+
+        return $this->sendResponse($contract->toArray(), 'Contracts by Customer retrieved successfully');
+    }
+
 
 }

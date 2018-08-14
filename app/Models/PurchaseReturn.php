@@ -441,7 +441,7 @@ class PurchaseReturn extends Model
 
     public function details()
     {
-        return $this->hasMany('App\Models\GRVDetails', 'purhaseReturnAutoID', 'purhaseReturnAutoID');
+        return $this->hasMany('App\Models\PurchaseReturnDetails', 'purhaseReturnAutoID', 'purhaseReturnAutoID');
     }
 
     public function company_by()

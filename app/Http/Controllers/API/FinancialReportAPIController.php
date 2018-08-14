@@ -496,7 +496,7 @@ class FinancialReportAPIController extends AppBaseController
                         foreach ($outputArr as $key => $values) {
                             $data[$x][''] = $key;
                             $x++;
-                            $data[$x]['Company ID'] = 'Document Code';
+                            $data[$x]['Company ID'] = 'Company ID';
                             $data[$x]['Company Name'] = 'Company Name';
                             $data[$x]['Document Number'] = 'Document Number';
                             $data[$x]['Date'] = 'Date';

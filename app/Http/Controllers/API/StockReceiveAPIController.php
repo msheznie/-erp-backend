@@ -22,6 +22,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentMaster;
+use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\StockReceive;
@@ -160,7 +161,7 @@ class StockReceiveAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Receive Date not between Financial period !',500);
+            return $this->sendError('Receive Date not between Financial period !', 500);
         }
 
         $lastSerial = StockReceive::where('companySystemID', $input['companySystemID'])
@@ -283,7 +284,7 @@ class StockReceiveAPIController extends AppBaseController
     public function show($id)
     {
         /** @var StockReceive $stockReceive */
-        $stockReceive = $this->stockReceiveRepository->with(['confirmed_by','segment_by'])->findWithoutFail($id);
+        $stockReceive = $this->stockReceiveRepository->with(['confirmed_by', 'segment_by'])->findWithoutFail($id);
 
         if (empty($stockReceive)) {
             return $this->sendError('Stock Receive not found');
@@ -423,6 +424,37 @@ class StockReceiveAPIController extends AppBaseController
                 return $this->sendError('Every item should have at least one minimum Qty', 500);
             }
 
+            $stockReceiveDetails = StockReceiveDetails::where('stockReceiveAutoID', $id)->get();
+
+
+            if ($stockReceive->interCompanyTransferYN == -1) {
+                $notAssignItems = "";
+                $count = 0;
+                foreach ($stockReceiveDetails as $srDetail) {
+                    $itemAssign = ItemAssigned::where("companySystemID", $stockReceive->companySystemID)
+                        ->where("itemCodeSystem", $srDetail->itemCodeSystem)
+                        ->first();
+
+                    if (empty($itemAssign)) {
+                        if ($count == 0) {
+                            $notAssignItems = $srDetail->itemPrimaryCode;
+                        } else {
+                            $notAssignItems = $notAssignItems . ", " . $srDetail->itemPrimaryCode;
+                        }
+
+                        $count++;
+                    }
+                }
+
+                if ($count > 0) {
+                    if ($count < 5) {
+                        $notAssignItems = $notAssignItems . " are not assigned to " . $stockReceive->companyID . ". Please assign and try again";
+                        return $this->sendError($notAssignItems, 500);
+                    } else {
+                        return $this->sendError("Some items are not assigned to " . $stockReceive->companyID . ". Please assign and try again", 500);
+                    }
+                }
+            }
             unset($input['confirmedYN']);
             unset($input['confirmedByEmpSystemID']);
             unset($input['confirmedByEmpID']);
@@ -667,7 +699,7 @@ class StockReceiveAPIController extends AppBaseController
             return $this->sendError('Materiel Return not found');
         }
 
-        $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID,$stockReceive->documentSystemID);
+        $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
 
         return $this->sendResponse($stockReceive->toArray(), 'Stock Receive retrieved successfully');
     }
@@ -681,7 +713,7 @@ class StockReceiveAPIController extends AppBaseController
             return $this->sendError('Stock Receive not found');
         }
 
-        $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID,$stockReceive->documentSystemID);
+        $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
 
         $array = array('entity' => $stockReceive);
         $time = strtotime("now");
@@ -692,7 +724,6 @@ class StockReceiveAPIController extends AppBaseController
 
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
-
 
 
     public function srPullFromTransferPreCheck(Request $request)

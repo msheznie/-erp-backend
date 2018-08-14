@@ -28,12 +28,7 @@ use App\Models\PurchaseRequest;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
-use App\Repositories\AlertRepository;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Response;
-use InfyOm\Generator\Utils\ResponseUtil;
-
 
 class email
 {

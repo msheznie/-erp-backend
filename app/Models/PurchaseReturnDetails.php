@@ -268,5 +268,23 @@ class PurchaseReturnDetails extends Model
         
     ];
 
-    
+    public function master()
+    {
+        return $this->belongsTo('App\Models\PurchaseReturn', 'purhaseReturnAutoID', 'purhaseReturnAutoID');
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo('App\Models\Unit', 'unitOfMeasure', 'UnitID');
+    }
+
+    public function grv_master()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
+    }
+
+    public function grv_detail_master()
+    {
+        return $this->belongsTo('App\Models\GRVDetails', 'grvDetailsID', 'grvDetailsID');
+    }
 }
