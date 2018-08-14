@@ -144,7 +144,7 @@ class DocumentApprovedAPIController extends AppBaseController
         $input = $request->all();
         $search = $request->input('search.value');
 
-        $employeeSystemID =  \Helper::getEmployeeSystemID();
+        $employeeSystemID = 11;
 
 
         $where = "";
