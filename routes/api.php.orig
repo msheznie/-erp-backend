@@ -653,13 +653,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
 
     Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
-
+<<<<<<< HEAD
     Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
     Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView');
     Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData');
-
+=======
     Route::get('getContractByCustomer', 'CustomerMasterAPIController@getContractByCustomer');
-
+>>>>>>> e3f358869ce461671ccfaf9ab68fedd58023d1ab
 
 });
 
