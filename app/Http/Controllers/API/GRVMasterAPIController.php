@@ -707,7 +707,7 @@ class GRVMasterAPIController extends AppBaseController
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $grvTypes = GRVTypes::all();
+        $grvTypes = GRVTypes::where('grvTypeID',2)->get();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
