@@ -9,11 +9,13 @@
  * -- Description : This file contains the all CRUD for Po Payment Terms
  * -- REVISION HISTORY
  * -- Date: 20-April 2018 By: Nazir Description: Added new functions named as getProcumentOrderPaymentTerms(),
+ * -- Date: 14-August 2018 By: Nazir Description: Added new functions named as updateAllPaymentTerms(),
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePoPaymentTermsAPIRequest;
 use App\Http\Requests\API\UpdatePoPaymentTermsAPIRequest;
+use App\Models\PoAddons;
 use App\Models\PoPaymentTerms;
 use App\Models\SupplierMaster;
 use App\Models\ProcumentOrder;
@@ -109,9 +111,9 @@ class PoPaymentTermsAPIController extends AppBaseController
             $input['comDate'] = '';
         }
 
-        if($input['LCPaymentYN'] == 1){
+        if ($input['LCPaymentYN'] == 1) {
             $input['paymentTemDes'] = 'Payment In';
-        }else if($input['LCPaymentYN'] == 2){
+        } else if ($input['LCPaymentYN'] == 2) {
             $input['paymentTemDes'] = 'Advance Payment';
         }
 
@@ -164,18 +166,18 @@ class PoPaymentTermsAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
-/*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
-        if ($supplier) {
-            $input['inDays'] = $supplier->creditPeriod;
-        }*/
-        $daysin =  $input['inDays'];
-        if($purchaseOrder->documentSystemID == 5 && $purchaseOrder->poType_N == 5){
+        /*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
+                if ($supplier) {
+                    $input['inDays'] = $supplier->creditPeriod;
+                }*/
+        $daysin = $input['inDays'];
+        if ($purchaseOrder->documentSystemID == 5 && $purchaseOrder->poType_N == 5) {
             if (isset($input['comDate'])) {
                 if ($input['comDate']) {
                     $input['comDate'] = new Carbon($input['comDate']);
                 }
             }
-        }else{
+        } else {
             if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin != 0) {
                 $addedDate = strtotime("+$daysin day", strtotime($purchaseOrder->expectedDeliveryDate));
                 $input['comDate'] = date("Y-m-d", $addedDate);
@@ -185,7 +187,6 @@ class PoPaymentTermsAPIController extends AppBaseController
                 $input['comDate'] = $purchaseOrder->expectedDeliveryDate;
             }
         }
-
 
 
         /** @var PoPaymentTerms $poPaymentTerms */
@@ -203,7 +204,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         //$poMasterSumDeducted = ($poMasterSum['masterTotalSum'] - $purchaseOrder->poDiscountAmount) + $purchaseOrder->VATAmount;
 
-       //$calculatePer = ($input['comPercentage'] / 100) * $poMasterSumDeducted;
+        //$calculatePer = ($input['comPercentage'] / 100) * $poMasterSumDeducted;
         //$input['comAmount'] = round($calculatePer, 8);
 
 
@@ -244,6 +245,78 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->get();
 
         return $this->sendResponse($poAdvancePaymentType->toArray(), 'Data retrieved successfully');
+    }
+
+    public function updateAllPaymentTerms(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        //getting total sum of PO detail Amount
+        $poMasterSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            ->where('purchaseOrderMasterID', $purchaseOrderID)
+            ->first();
+
+        //getting addon Total for PO
+        $poAddonMasterSum = PoAddons::select(DB::raw('COALESCE(SUM(amount),0) as addonTotalSum'))
+            ->where('poId', $purchaseOrderID)
+            ->first();
+
+        $poAdvancePaymentType = PoPaymentTerms::where('poID', $purchaseOrderID)
+            ->get();
+
+        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
+
+        $orderAmount = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'];
+        $orderAmountRounded = round($orderAmount, $supplierCurrencyDecimalPlace);
+        $discountAmount = $purchaseOrder->poDiscountAmount;
+        $vatAmount = $purchaseOrder->VATAmount;
+
+        if (!empty($poAdvancePaymentType)) {
+            foreach ($poAdvancePaymentType as $advance) {
+
+                //calculation advance amount
+                $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmountRounded - $discountAmount) + $vatAmount);
+                $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
+
+                //update payment terms table
+                $paymentTermUpdate = PoPaymentTerms::find($advance['paymentTermID']);
+                $paymentTermUpdate->comAmount = $roundedCalculatePer;
+                $paymentTermUpdate->save();
+
+                $PoAdvancePaymentFetch = PoAdvancePayment::where('poTermID', $advance['paymentTermID'])
+                    ->where('poID', $purchaseOrderID)
+                    ->first();
+
+                if(!empty($PoAdvancePaymentFetch)){
+
+                    //update advance payment terms table
+                    $advancePaymentTermUpdate = PoAdvancePayment::find($PoAdvancePaymentFetch->poAdvPaymentID);
+
+                    $advancePaymentTermUpdate->reqAmount = $roundedCalculatePer;
+                    $advancePaymentTermUpdate->reqAmountTransCur_amount = $roundedCalculatePer;
+
+                    $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $roundedCalculatePer);
+
+                    $advancePaymentTermUpdate->reqAmountInPOTransCur = $roundedCalculatePer;
+                    $advancePaymentTermUpdate->reqAmountInPOLocalCur = $companyCurrencyConversion['localAmount'];
+                    $advancePaymentTermUpdate->reqAmountInPORptCur = $companyCurrencyConversion['reportingAmount'];
+                    $advancePaymentTermUpdate->save();
+                }
+            }
+
+        }
+
+        return $this->sendResponse($purchaseOrder, 'Data retrieved successfully');
+
     }
 
 }

@@ -404,7 +404,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($procumentOrder->poCancelledYN == -1) {
             return $this->sendError('This Purchase Order closed. You cannot edit.', 500);
         }
-        
+
         if ($procumentOrder->approved == -1 && $procumentOrder->WO_amendYN != -1 && $isAmendAccess != 1) {
             return $this->sendError('This Purchase Order fully approved. You cannot edit.', 500);
         }
