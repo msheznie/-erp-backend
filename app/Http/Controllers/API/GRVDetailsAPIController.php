@@ -136,6 +136,10 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError('GRV not found');
             }
 
+            if(is_null($input['noQty'])){
+                $input['noQty'] = 0;
+            }
+
             $gRVDetails = $this->gRVDetailsRepository->update($input, $id);
 
             $input['modifiedPc'] = gethostname();
