@@ -1017,6 +1017,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.financeCategory',
                 'erp_purchaseordermaster.grvRecieved',
                 'erp_purchaseordermaster.invoicedBooked',
+                'erp_purchaseordermaster.sentToSupplier'
             ]);
 
         $search = $request->input('search.value');
@@ -1542,7 +1543,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'erp_purchaseordermaster.grvRecieved',
                 'erp_purchaseordermaster.invoicedBooked',
                 'erp_purchaseordermaster.documentSystemID',
-                'erp_purchaseordermaster.poType_N',
+                'erp_purchaseordermaster.sentToSupplier',
+                'erp_purchaseordermaster.poType_N'
             ]);
 
         $search = $request->input('search.value');
