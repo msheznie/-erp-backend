@@ -370,7 +370,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             if($checkWareHouseActive->isActive == 0){
                 $itemIssueUpdate = ItemIssueMaster::find($id);
-                $itemIssueMaster->wareHouseFrom = null;
+                $itemIssueUpdate->wareHouseFrom = null;
                 $itemIssueUpdate->save();
                 return $this->sendError('Please select a active warehouse',500,$wareHouseError);
             }

@@ -260,7 +260,9 @@ class ItemReturnMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ItemReturnMaster $itemReturnMaster */
-        $itemReturnMaster = $this->itemReturnMasterRepository->with(['confirmed_by','created_by'])->findWithoutFail($id);
+        $itemReturnMaster = $this->itemReturnMasterRepository->with(['confirmed_by','created_by','finance_period_by'=> function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }])->findWithoutFail($id);
 
         if (empty($itemReturnMaster)) {
             return $this->sendError('Item Return Master not found');
@@ -319,10 +321,10 @@ class ItemReturnMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by','confirmedByName',
-            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID']);
+            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID','finance_period_by']);
 
         $input = $this->convertArrayToValue($input);
-
+        $wareHouseError = array('type' => 'wareHouse');
 
         $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
 
@@ -359,18 +361,21 @@ class ItemReturnMasterAPIController extends AppBaseController
             }
 
             if($checkDepartmentActive->isActive == 0){
-                return $this->sendError('Selected Department is not active please select different Department',500);
+                return $this->sendError('Please select a active department.',500);
             }
         }
 
         if($itemReturnMaster->wareHouseLocation != $input['wareHouseLocation']){
             $checkWareHouseActive = WarehouseMaster::find($input['wareHouseLocation']);
             if (empty($checkWareHouseActive)) {
-                return $this->sendError('WareHouse not found');
+                return $this->sendError('WareHouse not found',500,$wareHouseError);
             }
 
             if($checkWareHouseActive->isActive == 0){
-                return $this->sendError('Selected WareHouse is not active please select different WareHouse',500);
+                $itemReturnUpdate = ItemReturnMaster::find($id);
+                $itemReturnUpdate->wareHouseLocation = null;
+                $itemReturnUpdate->save();
+                return $this->sendError('Please select a active warehouse.',500,$wareHouseError);
             }
         }
 
