@@ -299,6 +299,8 @@ class GRVMasterAPIController extends AppBaseController
             }
             $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        } else{
+            return $this->sendError('Please select a financial period', 500);
         }
 
         if (isset($input['stampDate'])) {
@@ -419,11 +421,11 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             $checkQuantity = GRVDetails::where('grvAutoID', $id)
-                ->where('noQty', '<', 1)
+                ->where('noQty', '<=', 0)
                 ->count();
 
             if ($checkQuantity > 0) {
-                return $this->sendError('Every item should have at least one minimum Qty', 500);
+                return $this->sendError('Every item should have at least a qty', 500);
             }
 
             // checking logistic details  exist and updating grv id in erp_purchaseorderadvpayment  table

@@ -347,7 +347,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('po_advance_payments', 'PoAdvancePaymentAPIController');
     Route::resource('procumentOrderPaymentTermsCRUD', 'PoPaymentTermsAPIController');
     Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
-    Route::post('updateAllPaymentTerms', 'PoPaymentTermsAPIController@updateAllPaymentTerms');
     Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel');
     Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack');
     Route::post('manualCloseProcurementOrder', 'ProcumentOrderAPIController@manualCloseProcurementOrder');
@@ -654,13 +653,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
 
     Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
-
+<<<<<<< HEAD
     Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
     Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView');
     Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData');
-
+=======
     Route::get('getContractByCustomer', 'CustomerMasterAPIController@getContractByCustomer');
-
+>>>>>>> e3f358869ce461671ccfaf9ab68fedd58023d1ab
 
 });
 

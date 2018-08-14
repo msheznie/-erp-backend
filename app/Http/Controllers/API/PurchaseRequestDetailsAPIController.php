@@ -44,7 +44,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
     private $purchaseRequestRepository;
 
-    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo,PurchaseRequestRepository $purchaseRequestRepo)
+    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo, PurchaseRequestRepository $purchaseRequestRepo)
     {
         $this->purchaseRequestDetailsRepository = $purchaseRequestDetailsRepo;
         $this->purchaseRequestRepository = $purchaseRequestRepo;
@@ -102,7 +102,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
 
-         $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemCode'])
             ->where('companySystemID', $companySystemID)
             ->first();
 
@@ -111,19 +111,19 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
 
         $purchaseRequest = PurchaseRequest::where('purchaseRequestID', $input['purchaseRequestID'])
-                                           ->first();
+            ->first();
 
 
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request Details not found');
         }
 
-        if($purchaseRequest->cancelledYN == -1){
-            return $this->sendError('This Purchase Request already closed. You can not add.',500);
+        if ($purchaseRequest->cancelledYN == -1) {
+            return $this->sendError('This Purchase Request already closed. You can not add.', 500);
         }
 
-        if($purchaseRequest->approved == 1){
-            return $this->sendError('This Purchase Request fully approved. You can not add.',500);
+        if ($purchaseRequest->approved == 1) {
+            return $this->sendError('This Purchase Request fully approved. You can not add.', 500);
         }
 
         $input['budgetYear'] = $purchaseRequest->budgetYear;
@@ -209,20 +209,20 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
                 $anyPendingApproval = $checkWhether->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
                     $query->where('itemPrimaryCode', $item->itemPrimaryCode);
-                                /* $query->groupBy(
-                                     'erp_purchaserequestdetails.itemCode',
-                                     'erp_purchaserequestdetails.itemPrimaryCode',
-                                     'erp_purchaserequestdetails.selectedForPO',
-                                     'erp_purchaserequestdetails.prClosedYN',
-                                     'erp_purchaserequestdetails.fullyOrdered'
-                                 )->select([
-                                 'erp_purchaserequestdetails.itemCode',
-                                 'erp_purchaserequestdetails.itemPrimaryCode',
-                                 'erp_purchaserequestdetails.selectedForPO',
-                                 'erp_purchaserequestdetails.prClosedYN',
-                                 'erp_purchaserequestdetails.fullyOrdered'
-                              ]);*/
-                    })
+                    /* $query->groupBy(
+                         'erp_purchaserequestdetails.itemCode',
+                         'erp_purchaserequestdetails.itemPrimaryCode',
+                         'erp_purchaserequestdetails.selectedForPO',
+                         'erp_purchaserequestdetails.prClosedYN',
+                         'erp_purchaserequestdetails.fullyOrdered'
+                     )->select([
+                     'erp_purchaserequestdetails.itemCode',
+                     'erp_purchaserequestdetails.itemPrimaryCode',
+                     'erp_purchaserequestdetails.selectedForPO',
+                     'erp_purchaserequestdetails.prClosedYN',
+                     'erp_purchaserequestdetails.fullyOrdered'
+                  ]);*/
+                })
                     ->where('approved', 0)
                     ->where('cancelledYN', 0)
                     ->first();
@@ -258,19 +258,19 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                             ->where('selectedForPO', 0)
                             ->where('prClosedYN', 0)
                             ->where('fullyOrdered', 0);
-                                    /* $query->groupBy(
-                                         'erp_purchaserequestdetails.itemCode',
-                                         'erp_purchaserequestdetails.itemPrimaryCode',
-                                         'erp_purchaserequestdetails.selectedForPO',
-                                         'erp_purchaserequestdetails.prClosedYN',
-                                         'erp_purchaserequestdetails.fullyOrdered'
-                                     )->select([
-                                     'erp_purchaserequestdetails.itemCode',
-                                     'erp_purchaserequestdetails.itemPrimaryCode',
-                                     'erp_purchaserequestdetails.selectedForPO',
-                                     'erp_purchaserequestdetails.prClosedYN',
-                                     'erp_purchaserequestdetails.fullyOrdered'
-                                  ]);*/
+                        /* $query->groupBy(
+                             'erp_purchaserequestdetails.itemCode',
+                             'erp_purchaserequestdetails.itemPrimaryCode',
+                             'erp_purchaserequestdetails.selectedForPO',
+                             'erp_purchaserequestdetails.prClosedYN',
+                             'erp_purchaserequestdetails.fullyOrdered'
+                         )->select([
+                         'erp_purchaserequestdetails.itemCode',
+                         'erp_purchaserequestdetails.itemPrimaryCode',
+                         'erp_purchaserequestdetails.selectedForPO',
+                         'erp_purchaserequestdetails.prClosedYN',
+                         'erp_purchaserequestdetails.fullyOrdered'
+                      ]);*/
                     })
                     ->where('approved', -1)
                     ->where('cancelledYN', 0)
@@ -306,19 +306,19 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                             ->where('selectedForPO', 0)
                             ->where('prClosedYN', 0)
                             ->where('fullyOrdered', 1);
-                                    /* $query->groupBy(
-                                         'erp_purchaserequestdetails.itemCode',
-                                         'erp_purchaserequestdetails.itemPrimaryCode',
-                                         'erp_purchaserequestdetails.selectedForPO',
-                                         'erp_purchaserequestdetails.prClosedYN',
-                                         'erp_purchaserequestdetails.fullyOrdered'
-                                     )->select([
-                                     'erp_purchaserequestdetails.itemCode',
-                                     'erp_purchaserequestdetails.itemPrimaryCode',
-                                     'erp_purchaserequestdetails.selectedForPO',
-                                     'erp_purchaserequestdetails.prClosedYN',
-                                     'erp_purchaserequestdetails.fullyOrdered'
-                                  ]);*/
+                        /* $query->groupBy(
+                             'erp_purchaserequestdetails.itemCode',
+                             'erp_purchaserequestdetails.itemPrimaryCode',
+                             'erp_purchaserequestdetails.selectedForPO',
+                             'erp_purchaserequestdetails.prClosedYN',
+                             'erp_purchaserequestdetails.fullyOrdered'
+                         )->select([
+                         'erp_purchaserequestdetails.itemCode',
+                         'erp_purchaserequestdetails.itemPrimaryCode',
+                         'erp_purchaserequestdetails.selectedForPO',
+                         'erp_purchaserequestdetails.prClosedYN',
+                         'erp_purchaserequestdetails.fullyOrdered'
+                      ]);*/
                     })
                     ->where('approved', -1)
                     ->where('cancelledYN', 0)
@@ -331,14 +331,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
                 /* PO check*/
 
-                $checkPOPending  = ProcumentOrder::where('companySystemID', $companySystemID)
-                                                    ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
-                                                    ->whereHas('detail', function ($query) use ($item) {
-                                                        $query->where('itemPrimaryCode', $item->itemPrimaryCode);
-                                                    })
-                                                    ->where('approved', 0)
-                                                    ->where('poCancelledYN', 0)
-                                                    ->first();
+                $checkPOPending = ProcumentOrder::where('companySystemID', $companySystemID)
+                    ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
+                    ->whereHas('detail', function ($query) use ($item) {
+                        $query->where('itemPrimaryCode', $item->itemPrimaryCode);
+                    })
+                    ->where('approved', 0)
+                    ->where('poCancelledYN', 0)
+                    ->first();
 
                 if (!empty($checkPOPending)) {
                     return $this->sendError("There is a purchase order (" . $checkPOPending->purchaseOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
@@ -349,34 +349,34 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         }
 
 
-        $poQty = PurchaseOrderDetails::whereHas('order',function ($query) use ($companySystemID) {
-                                            $query->where('companySystemID', $companySystemID)
-                                                ->where('approved', -1)
-                                                ->where('poCancelledYN', 0);
-                                             })
-                                            ->where('itemCode', $input['itemCode'])
-                                            ->groupBy('erp_purchaseorderdetails.companySystemID',
-                                                'erp_purchaseorderdetails.itemCode'
-                                            )
-                                            ->select(
-                                                [
-                                                    'erp_purchaseorderdetails.companySystemID',
-                                                    'erp_purchaseorderdetails.itemCode',
-                                                    'erp_purchaseorderdetails.itemPrimaryCode'
-                                                ]
-                                            )
-                                            ->sum('noQty');
+        $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($companySystemID) {
+            $query->where('companySystemID', $companySystemID)
+                ->where('approved', -1)
+                ->where('poCancelledYN', 0);
+        })
+            ->where('itemCode', $input['itemCode'])
+            ->groupBy('erp_purchaseorderdetails.companySystemID',
+                'erp_purchaseorderdetails.itemCode'
+            )
+            ->select(
+                [
+                    'erp_purchaseorderdetails.companySystemID',
+                    'erp_purchaseorderdetails.itemCode',
+                    'erp_purchaseorderdetails.itemPrimaryCode'
+                ]
+            )
+            ->sum('noQty');
 
         $quantityInHand = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
-                                    ->where('companySystemID', $companySystemID)
-                                    ->groupBy('itemSystemCode')
-                                    ->sum('inOutQty');
+            ->where('companySystemID', $companySystemID)
+            ->groupBy('itemSystemCode')
+            ->sum('inOutQty');
 
-        $grvQty = GRVDetails::whereHas('grv_master' , function ($query) use ($companySystemID) {
+        $grvQty = GRVDetails::whereHas('grv_master', function ($query) use ($companySystemID) {
             $query->where('companySystemID', $companySystemID)
-                   ->where('grvTypeID', 2)
-                   ->groupBy('erp_grvmaster.companySystemID');
-             })
+                ->where('grvTypeID', 2)
+                ->groupBy('erp_grvmaster.companySystemID');
+        })
             ->where('itemCode', $input['itemCode'])
             ->groupBy('erp_grvdetails.itemCode')
             ->select(
@@ -387,9 +387,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             ->sum('noQty');
 
         $quantityOnOrder = $poQty - $grvQty;
-        $input['poQuantity']      = $poQty;
+        $input['poQuantity'] = $poQty;
         $input['quantityOnOrder'] = $quantityOnOrder;
-        $input['quantityInHand']  = $quantityInHand;
+        $input['quantityInHand'] = $quantityInHand;
 
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->create($input);
 
@@ -441,11 +441,19 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');
         }
-        if($purchaseRequest->cancelledYN == -1){
-            return $this->sendError('This Purchase Request already closed. You can not edit.',500);
+        if ($purchaseRequest->cancelledYN == -1) {
+            return $this->sendError('This Purchase Request already closed. You can not edit.', 500);
         }
-        if($purchaseRequest->approved == 1){
-            return $this->sendError('This Purchase Request fully approved. You can not edit.',500);
+        if ($purchaseRequest->approved == 1) {
+            return $this->sendError('This Purchase Request fully approved. You can not edit.', 500);
+        }
+
+        if (empty($input['quantityRequested'])) {
+            $input['quantityRequested'] = 0;
+        }
+
+        if (empty($input['estimatedCost'])) {
+            $input['estimatedCost'] = 0;
         }
 
         $purchaseRequestDetails = $this->purchaseRequestDetailsRepository->update($input, $id);
@@ -474,11 +482,11 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         if (empty($purchaseRequest)) {
             return $this->sendError('Purchase Request not found');
         }
-        if($purchaseRequest->cancelledYN == -1){
-            return $this->sendError('This Purchase Request already closed. You can not delete.',500);
+        if ($purchaseRequest->cancelledYN == -1) {
+            return $this->sendError('This Purchase Request already closed. You can not delete.', 500);
         }
-        if($purchaseRequest->approved == 1){
-            return $this->sendError('This Purchase Request fully approved. You can not delete.',500);
+        if ($purchaseRequest->approved == 1) {
+            return $this->sendError('This Purchase Request fully approved. You can not delete.', 500);
         }
 
         $purchaseRequestDetails->delete();
@@ -499,7 +507,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $input = $request->all();
         $prID = $input['purchaseRequestID'];
 
-        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = '.$prID.' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');
+        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = ' . $prID . ' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');
 
         return $this->sendResponse($detail, 'Purchase Request Details retrieved successfully');
 

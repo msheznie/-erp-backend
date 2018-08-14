@@ -611,6 +611,23 @@ class CustomerInvoiceDirect extends Model
         return $this->belongsTo('App\Models\TaxDetail','custInvoiceDirectAutoID','documentSystemCode');
     }
 
+    public function createduser(){
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+    public function bankaccount(){
+        return $this->belongsTo('App\Models\BankAccount', 'bankAccountID', 'bankAccountAutoID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'custInvoiceDirectAutoID');
+    }
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'custTransactionCurrencyID', 'currencyID');
+    }
+
+
 
 
 }
