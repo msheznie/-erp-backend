@@ -789,6 +789,12 @@ class Helper
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID,'employeeSystemID' => $empInfo->employeeSystemID];
+
+                            if($input["documentSystemID"] == 57){
+                                $itemMaster = $namespacedModel::selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
+                                $itemAssign = Models\ItemAssigned::insert($itemMaster->toArray());
+                            }
+
                             // insert the record to item ledger
                             $jobIL = ItemLedgerInsert::dispatch($masterData);
                             // insert the record to general ledger
