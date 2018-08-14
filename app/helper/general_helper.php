@@ -790,9 +790,14 @@ class Helper
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID,'employeeSystemID' => $empInfo->employeeSystemID];
 
-                            if($input["documentSystemID"] == 57){
+                            if($input["documentSystemID"] == 57){ //Auto assign item to itemassign table
                                 $itemMaster = $namespacedModel::selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
                                 $itemAssign = Models\ItemAssigned::insert($itemMaster->toArray());
+                            }
+
+                            if($input["documentSystemID"] == 56){ //Auto assign item to supplier table
+                                $supplierMaster = $namespacedModel::selectRaw('supplierCodeSystem as supplierCodeSytem,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,uniqueTextcode,primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
+                                $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
                             }
 
                             // insert the record to item ledger
