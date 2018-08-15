@@ -31,6 +31,7 @@ use App\Models\ItemAssigned;
 use App\Models\Unit;
 use App\Models\YesNoSelection;
 use App\Repositories\ItemMasterRepository;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -383,7 +384,18 @@ class ItemMasterAPIController extends AppBaseController
      */
     public function store(CreateItemMasterAPIRequest $request)
     {
+
+
         $input = $request->all();
+
+        $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
+
+        $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
+        $validator = \Validator::make($input, ['secondaryItemCode' => 'unique:itemmaster'], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
@@ -430,6 +442,15 @@ class ItemMasterAPIController extends AppBaseController
     public function updateItemMaster(Request $request)
     {
         $input = $request->all();
+        $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
+        $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
+        $validator = \Validator::make($input, [
+            'secondaryItemCode' =>  Rule::unique('itemmaster')->ignore($input['itemCodeSystem'], 'itemCodeSystem')
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);

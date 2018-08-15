@@ -278,7 +278,9 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ItemIssueMaster $itemIssueMaster */
-        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by','created_by'])->findWithoutFail($id);
+        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by','created_by','finance_period_by'=> function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }])->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
             return $this->sendError('Item Issue Master not found');
@@ -336,10 +338,11 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function update($id, UpdateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by','confirmedByName',
+        $input = array_except($input, ['created_by','confirmedByName','finance_period_by',
             'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID']);
 
         $input = $this->convertArrayToValue($input);
+        $wareHouseError = array('type' => 'wareHouse');
 
         /** @var ItemIssueMaster $itemIssueMaster */
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
@@ -348,25 +351,28 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError('Item Issue Master not found');
         }
 
-        if($itemIssueMaster->serviceLineSystemID != $input['serviceLineSystemID']){
+        if($input['serviceLineSystemID']){
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
                 return $this->sendError('Department not found');
             }
 
             if($checkDepartmentActive->isActive == 0){
-                return $this->sendError('Selected Department is not active please select different Department',500);
+                return $this->sendError('Please select a active department',500);
             }
         }
 
-        if($itemIssueMaster->wareHouseFrom != $input['wareHouseFrom']){
+        if($input['wareHouseFrom']){
             $checkWareHouseActive = WarehouseMaster::find($input['wareHouseFrom']);
             if (empty($checkWareHouseActive)) {
-                return $this->sendError('WareHouse not found');
+                return $this->sendError('WareHouse not found',500,$wareHouseError);
             }
 
             if($checkWareHouseActive->isActive == 0){
-                return $this->sendError('Selected WareHouse is not active please select different WareHouse',500);
+                $itemIssueUpdate = ItemIssueMaster::find($id);
+                $itemIssueUpdate->wareHouseFrom = null;
+                $itemIssueUpdate->save();
+                return $this->sendError('Please select a active warehouse',500,$wareHouseError);
             }
         }
 

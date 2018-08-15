@@ -354,15 +354,20 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
         if(!in_array(true,$isCheckArr)){
-            return $this->sendError("Please select item qty,check");
+            return $this->sendError("No items selected to add.");
         }
 
         foreach ($input['detailTable'] as $newValidation) {
             if (($newValidation['isChecked'] && $newValidation['poQty'] == "") || ($newValidation['isChecked'] == '' && $newValidation['poQty'] > 0) ) {
+
+                $messages = [
+                    'required' => 'PO quantity field is required.',
+                ];
+
                 $validator = \Validator::make($newValidation, [
                     'poQty' => 'required',
                     'isChecked' => 'required',
-                ]);
+                ],$messages);
             }else {
                 $validator = \Validator::make($newValidation, [
                 ]);

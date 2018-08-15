@@ -25,9 +25,11 @@ use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
+use App\Models\SegmentMaster;
 use App\Models\StockTransfer;
 use App\Models\Unit;
 use App\Models\UnitConversion;
+use App\Models\WarehouseMaster;
 use App\Repositories\ItemIssueDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -142,6 +144,29 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError('Item Issue not found', 500);
         }
 
+        if($itemIssue->wareHouseFrom){
+            $wareHouse = WarehouseMaster::where("wareHouseSystemCode",$itemIssue->wareHouseFrom)->first();
+            if (empty($wareHouse)) {
+                return $this->sendError('Warehouse not found', 500);
+            }
+            if($wareHouse->isActive == 0){
+                return $this->sendError('Please select a active warehouse.',500);
+            }
+        }else{
+            return $this->sendError('Please select a warehouse.', 500);
+        }
+
+        if($itemIssue->serviceLineSystemID) {
+            $checkDepartmentActive = SegmentMaster::find($itemIssue->serviceLineSystemID);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Department not found');
+            }
+            if ($checkDepartmentActive->isActive == 0) {
+                return $this->sendError('Please select a active department', 500);
+            }
+        }else{
+            return $this->sendError('Please select a department.', 500);
+        }
 
         if (isset($input['issueType'])) {
             if ($input['issueType'] == 1) {
@@ -257,8 +282,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['itemPrimaryCode'] = $item->item_by->primaryCode;
 
             $itemAssigned = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
-                ->where('companySystemID', $companySystemID)
-                ->first();
+                                        ->where('companySystemID', $companySystemID)
+                                        ->first();
 
             $input['issueCostLocal'] = $itemAssigned->wacValueLocal;
             $input['issueCostLocalTotal'] = $itemAssigned->wacValueLocal * $input['qtyIssuedDefaultMeasure'];
@@ -298,7 +323,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 'erp_itemissuemaster.wareHouseFromCode',
                 'erp_itemissuemaster.itemIssueCode',
                 'erp_itemissuemaster.approved'
-            )->whereHas('details', function ($query) use ($companySystemID, $input) {
+            )
+            ->whereHas('details', function ($query) use ($companySystemID, $input) {
                 $query->where('itemCodeSystem', $input['itemCodeSystem']);
             })
             ->where('approved', 0)
