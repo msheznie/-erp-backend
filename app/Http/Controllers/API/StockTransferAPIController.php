@@ -148,12 +148,16 @@ class StockTransferAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        $inputParam = $input;
+        $inputParam["departmentSystmeID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else{
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
+        unset($inputParam);
 
         if (isset($input['tranferDate'])) {
             if ($input['tranferDate']) {
@@ -324,7 +328,11 @@ class StockTransferAPIController extends AppBaseController
     public function show($id)
     {
         /** @var StockTransfer $stockTransfer */
-        $stockTransfer = $this->stockTransferRepository->with(['created_by', 'confirmed_by', 'segment_by'])->findWithoutFail($id);
+        $stockTransfer = $this->stockTransferRepository->with(['created_by', 'confirmed_by', 'segment_by','finance_period_by'=> function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        },'finance_year_by'=> function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($stockTransfer)) {
             return $this->sendError('Stock Transfer not found');
@@ -386,7 +394,7 @@ class StockTransferAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by','finance_period_by','finance_year_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var StockTransfer $stockTransfer */
@@ -396,12 +404,22 @@ class StockTransferAPIController extends AppBaseController
             return $this->sendError('Stock Transfer not found');
         }
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
         }
+
+        $inputParam = $input;
+        $inputParam["departmentSystmeID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else{
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+        }
+
+        unset($inputParam);
 
         if (isset($input['tranferDate'])) {
             if ($input['tranferDate']) {
@@ -476,6 +494,33 @@ class StockTransferAPIController extends AppBaseController
         }
 
         if ($stockTransfer->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $messages = [
+                'locationFrom.required' => 'Location from field is required.',
+                'locationFrom.min' => 'Location from field is required.',
+                'locationTo.required' => 'Location to field is required.',
+                'locationTo.min' => 'Location to field is required.',
+                'companyFinanceYearID.required' => 'Finance year field is required.',
+                'companyFinanceYearID.min' => 'Finance year field is required.',
+                'tranferDate.required' => 'Transfer Date field is required.',
+                'companyToSystemID.required' => 'Company to field is required.',
+                'companyToSystemID.min' => 'Company to field is required.',
+                'companyFromSystemID.required' => 'Company from field is required.',
+                'companyFromSystemID.min' => 'Company from field is required.'
+            ];
+            $validator = \Validator::make($input, [
+                'locationFrom' => 'required|numeric|min:1',
+                'locationTo' => 'required|numeric|min:1',
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'tranferDate' => 'required',
+                'companyToSystemID' => 'required|numeric|min:1',
+                'companyFromSystemID' => 'required|numeric|min:1'
+            ],$messages);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
 
             $stockTransDetailExist = StockTransferDetails::select(DB::raw('stockTransferDetailsID'))
                 ->where('stockTransferAutoID', $input['stockTransferAutoID'])
@@ -698,12 +743,7 @@ class StockTransferAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
-        $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
-        if (isset($request['type']) && $request['type'] == 'add') {
-            $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
-        }
-        $companyFinanceYear = $companyFinanceYear->get();
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
         $companies = \Helper::allCompanies();
 

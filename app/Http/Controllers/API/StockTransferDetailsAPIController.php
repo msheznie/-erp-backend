@@ -148,7 +148,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         if (!empty($itemExist)) {
-            return $this->sendError('Added Item All Ready Exist');
+            return $this->sendError('Selected item all ready exist',500);
         }
 
         if (empty($item)) {
@@ -159,7 +159,32 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         if (empty($stockTransferMaster)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError('Stock Transfer not found',500);
+        }
+
+        $messages = [
+            'locationFrom.required' => 'Location from field is required.',
+            'locationFrom.min' => 'Location from field is required.',
+            'locationTo.required' => 'Location to field is required.',
+            'locationTo.min' => 'Location to field is required.',
+            'companyFinanceYearID.required' => 'Finance year field is required.',
+            'companyFinanceYearID.min' => 'Finance year field is required.',
+            'companyToSystemID.required' => 'Company to field is required.',
+            'companyToSystemID.min' => 'Company to field is required.',
+            'companyFromSystemID.required' => 'Company from field is required.',
+            'companyFromSystemID.min' => 'Company from field is required.'
+        ];
+        $validator = \Validator::make($stockTransferMaster->toArray(), [
+            'locationFrom' => 'required|numeric|min:1',
+            'locationTo' => 'required|numeric|min:1',
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'companyToSystemID' => 'required|numeric|min:1',
+            'companyFromSystemID' => 'required|numeric|min:1'
+        ],$messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
         }
 
 
