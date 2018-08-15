@@ -154,12 +154,16 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        $inputParam = $input;
+        $inputParam["departmentSystmeID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else{
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
+        unset($inputParam);
 
         if (isset($input['issueDate'])) {
             if ($input['issueDate']) {
@@ -280,6 +284,8 @@ class ItemIssueMasterAPIController extends AppBaseController
         /** @var ItemIssueMaster $itemIssueMaster */
         $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by','created_by','finance_period_by'=> function($query){
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        },'finance_year_by'=> function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }])->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
@@ -338,7 +344,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function update($id, UpdateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by','confirmedByName','finance_period_by',
+        $input = array_except($input, ['created_by','confirmedByName','finance_period_by','finance_year_by',
             'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID']);
 
         $input = $this->convertArrayToValue($input);
@@ -376,12 +382,22 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
         }
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
         }
+
+        $inputParam = $input;
+        $inputParam["departmentSystmeID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else{
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+        }
+
+        unset($inputParam);
 
         if (isset($input['issueDate'])) {
             if ($input['issueDate']) {

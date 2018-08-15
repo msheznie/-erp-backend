@@ -314,5 +314,16 @@ class StockTransfer extends Model
     public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
+
+    public function finance_period_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function finance_year_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
     
 }

@@ -142,12 +142,16 @@ class StockReceiveAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        $inputParam = $input;
+        $inputParam["departmentSystmeID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else{
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
+        unset($inputParam);
 
         if (isset($input['receivedDate'])) {
             if ($input['receivedDate']) {
@@ -284,7 +288,11 @@ class StockReceiveAPIController extends AppBaseController
     public function show($id)
     {
         /** @var StockReceive $stockReceive */
-        $stockReceive = $this->stockReceiveRepository->with(['confirmed_by', 'segment_by'])->findWithoutFail($id);
+        $stockReceive = $this->stockReceiveRepository->with(['confirmed_by', 'segment_by','finance_period_by'=> function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        },'finance_year_by'=> function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($stockReceive)) {
             return $this->sendError('Stock Receive not found');
@@ -342,7 +350,7 @@ class StockReceiveAPIController extends AppBaseController
     public function update($id, UpdateStockReceiveAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by','finance_period_by','finance_year_by']);
         $input = $this->convertArrayToValue($input);
         /** @var StockReceive $stockReceive */
         $stockReceive = $this->stockReceiveRepository->findWithoutFail($id);
@@ -356,11 +364,19 @@ class StockReceiveAPIController extends AppBaseController
         $item['modifiedUser'] = $employee->empID;
         $item['modifiedUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
 
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        $inputParam = $input;
+        $inputParam["departmentSystmeID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else{
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
 
         if (isset($input['receivedDate'])) {
@@ -667,12 +683,7 @@ class StockReceiveAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
-        $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
-        if (isset($request['type']) && $request['type'] == 'add') {
-            $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
-        }
-        $companyFinanceYear = $companyFinanceYear->get();
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
         $companies = \Helper::allCompanies();
 
