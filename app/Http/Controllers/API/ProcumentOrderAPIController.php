@@ -58,6 +58,7 @@ use App\Models\Months;
 use App\Models\Company;
 use App\Models\PoAddons;
 use App\Models\PoAddonsRefferedBack;
+use App\Models\PoAdvancePayment;
 use App\Models\PoPaymentTermsRefferedback;
 use App\Models\PurchaseOrderAdvPaymentRefferedback;
 use App\Models\PurchaseOrderDetailsRefferedHistory;
@@ -3541,6 +3542,26 @@ WHERE
                 ]);
         }
 
+        //Update request payment
+        $PoAdvancePaymentFetch = PoAdvancePayment::where('poID', $purchaseOrder->purchaseOrderID)
+            ->get();
+
+        if(!empty($PoAdvancePaymentFetch)){
+            foreach($PoAdvancePaymentFetch as $advance){
+                $advancePaymentTermUpdate = PoAdvancePayment::find($advance->poAdvPaymentID);
+
+                $advancePaymentTermUpdate->supplierID = $purchaseOrder->supplierID;
+                $advancePaymentTermUpdate->SupplierPrimaryCode = $purchaseOrder->supplierPrimaryCode;
+                $advancePaymentTermUpdate->currencyID = $purchaseOrder->supplierTransactionCurrencyID;
+
+                $companyCurrencyConversionAD = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $advance['reqAmount']);
+
+                $advancePaymentTermUpdate->reqAmountInPOLocalCur = $companyCurrencyConversionAD['localAmount'];
+                $advancePaymentTermUpdate->reqAmountInPORptCur = $companyCurrencyConversionAD['reportingAmount'];
+
+                $advancePaymentTermUpdate->save();
+            }
+        }
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Procurement Order retrieved successfully');
     }

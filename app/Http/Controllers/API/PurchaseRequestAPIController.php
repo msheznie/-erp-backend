@@ -1902,7 +1902,6 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         // updating fields
-
         $purchaseRequest->PRConfirmedYN = 0;
         $purchaseRequest->PRConfirmedBySystemID = null;
         $purchaseRequest->PRConfirmedBy = null;
