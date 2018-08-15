@@ -15,12 +15,16 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateInventoryReclassificationAPIRequest;
 use App\Http\Requests\API\UpdateInventoryReclassificationAPIRequest;
+use App\Models\Company;
+use App\Models\DocumentMaster;
 use App\Models\InventoryReclassification;
 use App\Models\SegmentMaster;
 use App\Models\WarehouseMaster;
 use App\Repositories\InventoryReclassificationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -121,6 +125,62 @@ class InventoryReclassificationAPIController extends AppBaseController
     public function store(CreateInventoryReclassificationAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $validator = \Validator::make($request->all(), [
+            'serviceLineSystemID' => 'required',
+            'narration' => 'required',
+            'inventoryReclassificationDate' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystmeID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else{
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+        }
+
+        unset($inputParam);
+        $input['inventoryReclassificationDate'] = new Carbon($input['inventoryReclassificationDate']);
+
+        $monthBegin = $input['FYBiggin'];
+        $monthEnd = $input['FYEnd'];
+
+        if (($input['inventoryReclassificationDate'] >= $monthBegin) && ($input['inventoryReclassificationDate'] <= $monthEnd)) {
+        } else {
+            return $this->sendError('Reclassification Date not between Financial period !');
+        }
+
+        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        if ($segment) {
+            $input['serviceLineCode'] = $segment->ServiceLineCode;
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->companyID;
+        }
+
+        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+        if ($documentMaster) {
+            $input['documentID'] = $company->documentID;
+        }
+
+        $input['createdPCid'] = gethostname();
+        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
         $inventoryReclassifications = $this->inventoryReclassificationRepository->create($input);
 

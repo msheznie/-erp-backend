@@ -246,6 +246,8 @@ class GRVMasterAPIController extends AppBaseController
         /** @var GRVMaster $gRVMaster */
         $gRVMaster = $this->gRVMasterRepository->with(['created_by', 'confirmed_by', 'segment_by', 'location_by','financeperiod_by' => function($query){
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        },'financeyear_by' => function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }])->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
@@ -271,7 +273,7 @@ class GRVMasterAPIController extends AppBaseController
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by','financeperiod_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by','financeperiod_by','financeyear_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var GRVMaster $gRVMaster */
@@ -291,17 +293,22 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        if ($companyFinancePeriod) {
-            if($companyFinancePeriod->isActive != -1 && $companyFinancePeriod->isCurrent != -1){
-                return $this->sendError('GRV Date not between Financial period !', 500);
-            }
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
-        } else{
-            return $this->sendError('Please select a financial period', 500);
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
         }
+
+        $inputParam = $input;
+        $inputParam["departmentSystmeID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else{
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+        }
+
+        unset($inputParam);
 
         if (isset($input['stampDate'])) {
             if ($input['stampDate']) {

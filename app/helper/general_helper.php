@@ -1158,4 +1158,44 @@ class Helper
     {
         return round($value,7);
     }
+
+
+    public static function companyFinanceYearCheck($input)
+    {
+        $companyFinanceYear = Models\CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
+        if ($companyFinanceYear) {
+            if($companyFinanceYear->isActive != -1 && $companyFinanceYear->isCurrent != -1){
+                return ['success' => false, 'message' => 'Selected finance year is not active'];
+            }else{
+                return ['success' => true, 'message' => $companyFinanceYear];
+            }
+        } else{
+            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $input['companySystemID'])->where('isActive', -1)->where('isCurrent', -1)->where('isCurrent', -1)->first();
+            if(!$companyFinanceYear){
+                return ['success' => false, 'message' => 'Company has no active finance year'];
+            }else{
+                return ['success' => false, 'message' => 'Please select a finance year'];
+            }
+        }
+    }
+
+    public static function companyFinancePeriodCheck($input)
+    {
+        $companyFinancePeriod = Models\CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+        if ($companyFinancePeriod) {
+            if($companyFinancePeriod->isActive != -1 && $companyFinancePeriod->isCurrent != -1){
+                return ['success' => false, 'message' => 'Selected finance period is not active'];
+            }
+            else{
+                return ['success' => true, 'message' => $companyFinancePeriod];
+            }
+        } else{
+            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $input['companySystemID'])->where('isActive', -1)->where('isCurrent', -1)->where('departmentSystemID',$input['departmentSystemID'])->where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
+            if(!$companyFinancePeriod){
+                return ['success' => false, 'message' => 'Company has no active finance period'];
+            }else{
+                return ['success' => false, 'message' => 'Please select a finance period'];
+            }
+        }
+    }
 }
