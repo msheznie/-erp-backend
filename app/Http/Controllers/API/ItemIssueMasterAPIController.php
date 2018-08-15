@@ -280,6 +280,8 @@ class ItemIssueMasterAPIController extends AppBaseController
         /** @var ItemIssueMaster $itemIssueMaster */
         $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by','created_by','finance_period_by'=> function($query){
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        },'finance_year_by'=> function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }])->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
@@ -338,7 +340,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function update($id, UpdateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by','confirmedByName','finance_period_by',
+        $input = array_except($input, ['created_by','confirmedByName','finance_period_by','finance_year_by',
             'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID']);
 
         $input = $this->convertArrayToValue($input);
