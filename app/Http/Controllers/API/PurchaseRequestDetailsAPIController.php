@@ -150,7 +150,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             ->first();
 
         if (empty($financeItemCategorySubAssigned)) {
-            return $this->sendError('Finance Category not found');
+            return $this->sendError('Finance category not assigned for the selected item.');
         }
 
 
