@@ -730,7 +730,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $input['VATAmount']);
 
-            $procumentOrderUpdate->VATAmount = \Helper::roundValue($calculatVatAmount);
+            $procumentOrderUpdate->VATAmount = $input['VATAmount'];
             $procumentOrderUpdate->VATAmountLocal = \Helper::roundValue($currencyConversionVatAmount['localAmount']);
             $procumentOrderUpdate->VATAmountRpt = \Helper::roundValue($currencyConversionVatAmount['reportingAmount']);
 
@@ -3536,7 +3536,7 @@ WHERE
 
             $updatePOMaster = ProcumentOrder::find($purchaseOrder->purchaseOrderID)
                 ->update([
-                    'VATAmount' => \Helper::roundValue($calculatVatAmount),
+                    'VATAmount' => round($calculatVatAmount, $supplierCurrencyDecimalPlace),
                     'VATAmountLocal' => \Helper::roundValue($currencyConversionVatAmount['localAmount']),
                     'VATAmountRpt' => \Helper::roundValue($currencyConversionVatAmount['reportingAmount'])
                 ]);
@@ -3546,8 +3546,8 @@ WHERE
         $PoAdvancePaymentFetch = PoAdvancePayment::where('poID', $purchaseOrder->purchaseOrderID)
             ->get();
 
-        if(!empty($PoAdvancePaymentFetch)){
-            foreach($PoAdvancePaymentFetch as $advance){
+        if (!empty($PoAdvancePaymentFetch)) {
+            foreach ($PoAdvancePaymentFetch as $advance) {
                 $advancePaymentTermUpdate = PoAdvancePayment::find($advance->poAdvPaymentID);
 
                 $advancePaymentTermUpdate->supplierID = $purchaseOrder->supplierID;

@@ -284,12 +284,12 @@ class PoPaymentTermsAPIController extends AppBaseController
             foreach ($poAdvancePaymentType as $advance) {
 
                 //calculation advance amount
-                $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmountRounded - $discountAmount) + $vatAmount);
+                $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmount - $discountAmount) + $vatAmount);
                 $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
 
                 //update payment terms table
                 $paymentTermUpdate = PoPaymentTerms::find($advance['paymentTermID']);
-                $paymentTermUpdate->comAmount = $roundedCalculatePer;
+                $paymentTermUpdate->comAmount = round($calculatePer, $supplierCurrencyDecimalPlace);;
                 $paymentTermUpdate->save();
 
                 $PoAdvancePaymentFetch = PoAdvancePayment::where('poTermID', $advance['paymentTermID'])
