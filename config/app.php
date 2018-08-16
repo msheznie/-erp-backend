@@ -224,6 +224,7 @@ return [
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'Helper' => App\Helper\Helper::class,
         'Email' => App\Helper\email::class,
+        'Inventory' => App\Helper\inventory::class,
         'Formula' => App\Helper\Formula::class,
         //'PDF' => Barryvdh\DomPDF\Facade::class,
         'PDF' => Seguce92\DomPDF\Facade::class,

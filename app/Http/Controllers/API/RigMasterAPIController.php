@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateTaxdetailAPIRequest;
-use App\Http\Requests\API\UpdateTaxdetailAPIRequest;
-use App\Models\Taxdetail;
-use App\Models\CustomerInvoiceDirect;
-use App\Repositories\TaxdetailRepository;
+use App\Http\Requests\API\CreateRigMasterAPIRequest;
+use App\Http\Requests\API\UpdateRigMasterAPIRequest;
+use App\Models\RigMaster;
+use App\Repositories\RigMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -14,18 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class TaxdetailController
+ * Class RigMasterController
  * @package App\Http\Controllers\API
  */
 
-class TaxdetailAPIController extends AppBaseController
+class RigMasterAPIController extends AppBaseController
 {
-    /** @var  TaxdetailRepository */
-    private $taxdetailRepository;
+    /** @var  RigMasterRepository */
+    private $rigMasterRepository;
 
-    public function __construct(TaxdetailRepository $taxdetailRepo)
+    public function __construct(RigMasterRepository $rigMasterRepo)
     {
-        $this->taxdetailRepository = $taxdetailRepo;
+        $this->rigMasterRepository = $rigMasterRepo;
     }
 
     /**
@@ -33,10 +32,10 @@ class TaxdetailAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/taxdetails",
-     *      summary="Get a listing of the Taxdetails.",
-     *      tags={"Taxdetail"},
-     *      description="Get all Taxdetails",
+     *      path="/rigMasters",
+     *      summary="Get a listing of the RigMasters.",
+     *      tags={"RigMaster"},
+     *      description="Get all RigMasters",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -50,7 +49,7 @@ class TaxdetailAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/Taxdetail")
+     *                  @SWG\Items(ref="#/definitions/RigMaster")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -62,29 +61,29 @@ class TaxdetailAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->taxdetailRepository->pushCriteria(new RequestCriteria($request));
-        $this->taxdetailRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $taxdetails = $this->taxdetailRepository->all();
+        $this->rigMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->rigMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $rigMasters = $this->rigMasterRepository->all();
 
-        return $this->sendResponse($taxdetails->toArray(), 'Taxdetails retrieved successfully');
+        return $this->sendResponse($rigMasters->toArray(), 'Rig Masters retrieved successfully');
     }
 
     /**
-     * @param CreateTaxdetailAPIRequest $request
+     * @param CreateRigMasterAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/taxdetails",
-     *      summary="Store a newly created Taxdetail in storage",
-     *      tags={"Taxdetail"},
-     *      description="Store Taxdetail",
+     *      path="/rigMasters",
+     *      summary="Store a newly created RigMaster in storage",
+     *      tags={"RigMaster"},
+     *      description="Store RigMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Taxdetail that should be stored",
+     *          description="RigMaster that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Taxdetail")
+     *          @SWG\Schema(ref="#/definitions/RigMaster")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -97,7 +96,7 @@ class TaxdetailAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Taxdetail"
+     *                  ref="#/definitions/RigMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -107,13 +106,13 @@ class TaxdetailAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateTaxdetailAPIRequest $request)
+    public function store(CreateRigMasterAPIRequest $request)
     {
         $input = $request->all();
 
-        $taxdetails = $this->taxdetailRepository->create($input);
+        $rigMasters = $this->rigMasterRepository->create($input);
 
-        return $this->sendResponse($taxdetails->toArray(), 'Taxdetail saved successfully');
+        return $this->sendResponse($rigMasters->toArray(), 'Rig Master saved successfully');
     }
 
     /**
@@ -121,14 +120,14 @@ class TaxdetailAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/taxdetails/{id}",
-     *      summary="Display the specified Taxdetail",
-     *      tags={"Taxdetail"},
-     *      description="Get Taxdetail",
+     *      path="/rigMasters/{id}",
+     *      summary="Display the specified RigMaster",
+     *      tags={"RigMaster"},
+     *      description="Get RigMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Taxdetail",
+     *          description="id of RigMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -144,7 +143,7 @@ class TaxdetailAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Taxdetail"
+     *                  ref="#/definitions/RigMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -156,30 +155,30 @@ class TaxdetailAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var Taxdetail $taxdetail */
-        $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
+        /** @var RigMaster $rigMaster */
+        $rigMaster = $this->rigMasterRepository->findWithoutFail($id);
 
-        if (empty($taxdetail)) {
-            return $this->sendError('Taxdetail not found');
+        if (empty($rigMaster)) {
+            return $this->sendError('Rig Master not found');
         }
 
-        return $this->sendResponse($taxdetail->toArray(), 'Taxdetail retrieved successfully');
+        return $this->sendResponse($rigMaster->toArray(), 'Rig Master retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateTaxdetailAPIRequest $request
+     * @param UpdateRigMasterAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/taxdetails/{id}",
-     *      summary="Update the specified Taxdetail in storage",
-     *      tags={"Taxdetail"},
-     *      description="Update Taxdetail",
+     *      path="/rigMasters/{id}",
+     *      summary="Update the specified RigMaster in storage",
+     *      tags={"RigMaster"},
+     *      description="Update RigMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Taxdetail",
+     *          description="id of RigMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -187,9 +186,9 @@ class TaxdetailAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Taxdetail that should be updated",
+     *          description="RigMaster that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Taxdetail")
+     *          @SWG\Schema(ref="#/definitions/RigMaster")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -202,7 +201,7 @@ class TaxdetailAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Taxdetail"
+     *                  ref="#/definitions/RigMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -212,20 +211,20 @@ class TaxdetailAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateTaxdetailAPIRequest $request)
+    public function update($id, UpdateRigMasterAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var Taxdetail $taxdetail */
-        $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
+        /** @var RigMaster $rigMaster */
+        $rigMaster = $this->rigMasterRepository->findWithoutFail($id);
 
-        if (empty($taxdetail)) {
-            return $this->sendError('Taxdetail not found');
+        if (empty($rigMaster)) {
+            return $this->sendError('Rig Master not found');
         }
 
-        $taxdetail = $this->taxdetailRepository->update($input, $id);
+        $rigMaster = $this->rigMasterRepository->update($input, $id);
 
-        return $this->sendResponse($taxdetail->toArray(), 'Taxdetail updated successfully');
+        return $this->sendResponse($rigMaster->toArray(), 'RigMaster updated successfully');
     }
 
     /**
@@ -233,14 +232,14 @@ class TaxdetailAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/taxdetails/{id}",
-     *      summary="Remove the specified Taxdetail from storage",
-     *      tags={"Taxdetail"},
-     *      description="Delete Taxdetail",
+     *      path="/rigMasters/{id}",
+     *      summary="Remove the specified RigMaster from storage",
+     *      tags={"RigMaster"},
+     *      description="Delete RigMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Taxdetail",
+     *          description="id of RigMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -268,31 +267,15 @@ class TaxdetailAPIController extends AppBaseController
      */
     public function destroy($id)
     {
+        /** @var RigMaster $rigMaster */
+        $rigMaster = $this->rigMasterRepository->findWithoutFail($id);
 
-        /** @var Taxdetail $taxdetail */
-        $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
-
-        if (empty($taxdetail)) {
-            return $this->sendError('e','Taxdetail not found');
+        if (empty($rigMaster)) {
+            return $this->sendError('Rig Master not found');
         }
 
-        $master['vatOutputGLCodeSystemID'] = NULL;
-        $master['vatOutputGLCode'] = NULL;
-        $master['VATPercentage'] = NULL;
-        $master['VATAmount'] = 0;
-        $master['VATAmountLocal'] = 0;
-        $master['VATAmountRpt'] = 0;
+        $rigMaster->delete();
 
-        CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$taxdetail->documentSystemCode)->update($master);
-
-        $taxdetail->delete();
-
-        return $this->sendResponse('s', 'Taxdetail deleted successfully');
-    }
-
-    public function customerInvoiceTaxDetail(Request $request){
-        $id=$request['id'];
-        $tax=Taxdetail::select('*')->where('documentSystemCode',$id)->get();
-        return $this->sendResponse($tax, 'Taxdetail deleted successfully');
+        return $this->sendResponse($id, 'Rig Master deleted successfully');
     }
 }
