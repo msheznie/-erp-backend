@@ -626,7 +626,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('contracts', 'ContractAPIController');
     Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
 
-    Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+
     Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 
     Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
@@ -657,12 +657,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
     Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView');
     Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData');
-
+    Route::post('getCustomerInvoicePerformaDetails', 'CustomerInvoiceDirectAPIController@getCustomerInvoicePerformaDetails');
     Route::get('getContractByCustomer', 'CustomerMasterAPIController@getContractByCustomer');
+    Route::post('saveCustomerinvoicePerforma', 'CustomerInvoiceDirectAPIController@saveCustomerinvoicePerforma');
+    Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail');
+    Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails');
 
 
 });
-
+Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
@@ -711,3 +714,7 @@ Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController
 
 
 Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
+
+Route::resource('performa_masters', 'PerformaMasterAPIController');
+
+Route::resource('rig_masters', 'RigMasterAPIController');
