@@ -695,12 +695,16 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
     Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
+
+<<<<<<< HEAD
     Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
     Route::resource('debit_notes', 'DebitNoteAPIController');
     Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
+=======
     Route::resource('performa_masters', 'PerformaMasterAPIController');
-    Route::resource('rig_masters', 'RigMasterAPIController');
 
+    Route::resource('rig_masters', 'RigMasterAPIController');
+>>>>>>> f2565b09b186fdabcc60c2833791b24477717762
 
 });
 
@@ -731,6 +735,11 @@ Route::get('runQueueSR', function () {
     $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
     // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
+<<<<<<< HEAD
+});
+
+=======
+
 });
 
 
@@ -739,5 +748,4 @@ Route::get('runQueueSR', function () {
 
 
 
-
-
+>>>>>>> f2565b09b186fdabcc60c2833791b24477717762
