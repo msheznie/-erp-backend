@@ -895,7 +895,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             foreach ($updateDetailDiscount as $itemDiscont) {
 
-                $calculateItemDiscount = (($itemDiscont['netAmount'] - (($purchaseOrder->poDiscountAmount / $purchaseOrder->poTotalSupplierTransactionCurrency) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
+                $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['poDiscountAmount'] / $purchaseOrder->poTotalSupplierTransactionCurrency) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
 
                 $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateItemDiscount);
 
