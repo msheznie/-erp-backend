@@ -17,6 +17,7 @@
  * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as approveGoodReceiptVoucher() For Approve GRV Master
  * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as rejectGoodReceiptVoucher() For Reject GRV Master
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateGRVMasterAPIRequest;
@@ -114,7 +115,7 @@ class GRVMasterAPIController extends AppBaseController
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
-        } else{
+        } else {
             $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
@@ -146,7 +147,7 @@ class GRVMasterAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('GRV Date not between Financial period !');
+            return $this->sendError('GRV date is not within the financial period!');
         }
 
         $input['createdPcID'] = gethostname();
@@ -262,9 +263,9 @@ class GRVMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var GRVMaster $gRVMaster */
-        $gRVMaster = $this->gRVMasterRepository->with(['created_by', 'confirmed_by', 'segment_by', 'location_by','financeperiod_by' => function($query){
+        $gRVMaster = $this->gRVMasterRepository->with(['created_by', 'confirmed_by', 'segment_by', 'location_by', 'financeperiod_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        },'financeyear_by' => function($query){
+        }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }])->findWithoutFail($id);
 
@@ -291,7 +292,7 @@ class GRVMasterAPIController extends AppBaseController
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by','financeperiod_by','financeyear_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var GRVMaster $gRVMaster */
@@ -416,7 +417,7 @@ class GRVMasterAPIController extends AppBaseController
             $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
-            } else{
+            } else {
                 $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
                 $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
             }
@@ -429,7 +430,7 @@ class GRVMasterAPIController extends AppBaseController
 
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('GRV Date not between Financial period !');
+                return $this->sendError('GRV date is not within the financial period!');
             }
 
             //getting total sum of PO detail Amount
@@ -463,8 +464,8 @@ class GRVMasterAPIController extends AppBaseController
                 foreach ($fetchingGRVDetails as $der) {
                     $poMaster = ProcumentOrder::find($der['purchaseOrderMastertID']);
                     if ($poMaster->logisticsAvailable == -1) {
-                        $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN',1)
-                            ->where('grvAutoID',0)->get();
+                        $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN', 1)
+                            ->where('grvAutoID', 0)->get();
                         if (count($poAdvancePaymentdetail) > 0) {
                             foreach ($poAdvancePaymentdetail as $advance) {
                                 if ($advance['grvAutoID'] == 0) {
@@ -474,8 +475,8 @@ class GRVMasterAPIController extends AppBaseController
                                 }
                             }
                         } else {
-                            $grvCheck = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN',1)
-                                ->where('grvAutoID',$id)->get();
+                            $grvCheck = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN', 1)
+                                ->where('grvAutoID', $id)->get();
                             if (count($grvCheck) == 0) {
                                 return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . ' has logistics. You can confirm the GRV only after logistics details are updated.');
                             }
@@ -732,7 +733,7 @@ class GRVMasterAPIController extends AppBaseController
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $grvTypes = GRVTypes::where('grvTypeID',2)->get();
+        $grvTypes = GRVTypes::where('grvTypeID', 2)->get();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
@@ -803,9 +804,9 @@ class GRVMasterAPIController extends AppBaseController
             'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('documentSystemID', 3);
-            },'details','company_by','currency_by', 'companydocumentattachment_by' => function ($query) {
+            }, 'details', 'company_by', 'currency_by', 'companydocumentattachment_by' => function ($query) {
                 $query->where('documentSystemID', 3);
-            },'location_by'])->findWithoutFail($id);
+            }, 'location_by'])->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
             return $this->sendError('Good Receipt Voucher not found');
@@ -1010,7 +1011,7 @@ class GRVMasterAPIController extends AppBaseController
             'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('documentSystemID', 3);
-            },'details','company_by','currency_by', 'companydocumentattachment_by' => function ($query) {
+            }, 'details', 'company_by', 'currency_by', 'companydocumentattachment_by' => function ($query) {
                 $query->where('documentSystemID', 3);
             }])->findWithoutFail($id);
 
@@ -1054,31 +1055,31 @@ class GRVMasterAPIController extends AppBaseController
         }
 
         if (!empty($poIDS)) {
-                $docAttachement = DocumentAttachments::whereIN('documentSystemCode', $poIDS)
-                    ->where('companySystemID', $companySystemID)
-                    ->whereIN('documentSystemID',[2,5,52] )
-                    ->get();
-                if (!empty($docAttachement->toArray())) {
-                    $attachmentFound = 1;
-                    foreach ($docAttachement as $doc) {
-                        $documentAttachments = new DocumentAttachments();
-                        $documentAttachments->companySystemID = $companySystemID;
-                        $documentAttachments->companyID = $companyID;
-                        $documentAttachments->documentID = $documentID;
-                        $documentAttachments->documentSystemID = $documentSystemID;
-                        $documentAttachments->documentSystemCode = $grvAutoID;
-                        $documentAttachments->attachmentDescription = $doc['attachmentDescription'];
-                        $documentAttachments->path = $doc['path'];
-                        $documentAttachments->originalFileName = $doc['originalFileName'];
-                        $documentAttachments->myFileName = $doc['myFileName'];
-                        $documentAttachments->docExpirtyDate = $doc['docExpirtyDate'];
-                        $documentAttachments->attachmentType = $doc['attachmentType'];
-                        $documentAttachments->sizeInKbs = $doc['sizeInKbs'];
-                        $documentAttachments->isUploaded = $doc['isUploaded'];
-                        $documentAttachments->pullFromAnotherDocument = -1;
-                        $documentAttachments->save();
-                    }
+            $docAttachement = DocumentAttachments::whereIN('documentSystemCode', $poIDS)
+                ->where('companySystemID', $companySystemID)
+                ->whereIN('documentSystemID', [2, 5, 52])
+                ->get();
+            if (!empty($docAttachement->toArray())) {
+                $attachmentFound = 1;
+                foreach ($docAttachement as $doc) {
+                    $documentAttachments = new DocumentAttachments();
+                    $documentAttachments->companySystemID = $companySystemID;
+                    $documentAttachments->companyID = $companyID;
+                    $documentAttachments->documentID = $documentID;
+                    $documentAttachments->documentSystemID = $documentSystemID;
+                    $documentAttachments->documentSystemCode = $grvAutoID;
+                    $documentAttachments->attachmentDescription = $doc['attachmentDescription'];
+                    $documentAttachments->path = $doc['path'];
+                    $documentAttachments->originalFileName = $doc['originalFileName'];
+                    $documentAttachments->myFileName = $doc['myFileName'];
+                    $documentAttachments->docExpirtyDate = $doc['docExpirtyDate'];
+                    $documentAttachments->attachmentType = $doc['attachmentType'];
+                    $documentAttachments->sizeInKbs = $doc['sizeInKbs'];
+                    $documentAttachments->isUploaded = $doc['isUploaded'];
+                    $documentAttachments->pullFromAnotherDocument = -1;
+                    $documentAttachments->save();
                 }
+            }
         }
         if ($attachmentFound == 0) {
             return $this->sendError('No Attachments Found', 500);

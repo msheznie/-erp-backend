@@ -181,7 +181,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $monthEnd = $input['FYEnd'];
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Issue Date not between Financial period !', 500);
+            return $this->sendError('Issue date is not within the selected financial period !', 500);
         }
 
         $input['documentSystemID'] = 8;
@@ -484,7 +484,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $monthEnd = $input['FYEnd'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Issue Date not between Financial period !', 500);
+                return $this->sendError('Issue date is not within the selected financial period !', 500);
             }
 
             $checkItems = ItemIssueDetails::where('itemIssueAutoID', $id)

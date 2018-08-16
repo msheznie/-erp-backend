@@ -170,7 +170,7 @@ class StockReceiveAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Receive Date not between Financial period !', 500);
+            return $this->sendError('Receive date is not within the selected financial period !', 500);
         }
 
         $lastSerial = StockReceive::where('companySystemID', $input['companySystemID'])
@@ -431,7 +431,7 @@ class StockReceiveAPIController extends AppBaseController
 
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Received Date not between Financial period !');
+                return $this->sendError('Receive date is not within the selected financial period !');
             }
 
             $stockReceiveDetailExist = StockReceiveDetails::where('stockReceiveAutoID', $id)

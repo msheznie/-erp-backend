@@ -203,8 +203,8 @@ class FreeBillingMasterPerforma extends Model
 
     public $table = 'freebillingmasterperforma';
     
-    const CREATED_AT = 'confirmedDate';
-    const UPDATED_AT = 'confirmedDate';
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
 
     protected $primaryKey  = 'idbillingMasterPerforma';
 

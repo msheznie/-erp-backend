@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateTaxdetailAPIRequest;
-use App\Http\Requests\API\UpdateTaxdetailAPIRequest;
-use App\Models\Taxdetail;
-use App\Models\CustomerInvoiceDirect;
-use App\Repositories\TaxdetailRepository;
+use App\Http\Requests\API\CreatePerformaMasterAPIRequest;
+use App\Http\Requests\API\UpdatePerformaMasterAPIRequest;
+use App\Models\PerformaMaster;
+use App\Repositories\PerformaMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -14,18 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class TaxdetailController
+ * Class PerformaMasterController
  * @package App\Http\Controllers\API
  */
 
-class TaxdetailAPIController extends AppBaseController
+class PerformaMasterAPIController extends AppBaseController
 {
-    /** @var  TaxdetailRepository */
-    private $taxdetailRepository;
+    /** @var  PerformaMasterRepository */
+    private $performaMasterRepository;
 
-    public function __construct(TaxdetailRepository $taxdetailRepo)
+    public function __construct(PerformaMasterRepository $performaMasterRepo)
     {
-        $this->taxdetailRepository = $taxdetailRepo;
+        $this->performaMasterRepository = $performaMasterRepo;
     }
 
     /**
@@ -33,10 +32,10 @@ class TaxdetailAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/taxdetails",
-     *      summary="Get a listing of the Taxdetails.",
-     *      tags={"Taxdetail"},
-     *      description="Get all Taxdetails",
+     *      path="/performaMasters",
+     *      summary="Get a listing of the PerformaMasters.",
+     *      tags={"PerformaMaster"},
+     *      description="Get all PerformaMasters",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -50,7 +49,7 @@ class TaxdetailAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/Taxdetail")
+     *                  @SWG\Items(ref="#/definitions/PerformaMaster")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -62,29 +61,29 @@ class TaxdetailAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->taxdetailRepository->pushCriteria(new RequestCriteria($request));
-        $this->taxdetailRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $taxdetails = $this->taxdetailRepository->all();
+        $this->performaMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->performaMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $performaMasters = $this->performaMasterRepository->all();
 
-        return $this->sendResponse($taxdetails->toArray(), 'Taxdetails retrieved successfully');
+        return $this->sendResponse($performaMasters->toArray(), 'Performa Masters retrieved successfully');
     }
 
     /**
-     * @param CreateTaxdetailAPIRequest $request
+     * @param CreatePerformaMasterAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/taxdetails",
-     *      summary="Store a newly created Taxdetail in storage",
-     *      tags={"Taxdetail"},
-     *      description="Store Taxdetail",
+     *      path="/performaMasters",
+     *      summary="Store a newly created PerformaMaster in storage",
+     *      tags={"PerformaMaster"},
+     *      description="Store PerformaMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Taxdetail that should be stored",
+     *          description="PerformaMaster that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Taxdetail")
+     *          @SWG\Schema(ref="#/definitions/PerformaMaster")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -97,7 +96,7 @@ class TaxdetailAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Taxdetail"
+     *                  ref="#/definitions/PerformaMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -107,13 +106,13 @@ class TaxdetailAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateTaxdetailAPIRequest $request)
+    public function store(CreatePerformaMasterAPIRequest $request)
     {
         $input = $request->all();
 
-        $taxdetails = $this->taxdetailRepository->create($input);
+        $performaMasters = $this->performaMasterRepository->create($input);
 
-        return $this->sendResponse($taxdetails->toArray(), 'Taxdetail saved successfully');
+        return $this->sendResponse($performaMasters->toArray(), 'Performa Master saved successfully');
     }
 
     /**
@@ -121,14 +120,14 @@ class TaxdetailAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/taxdetails/{id}",
-     *      summary="Display the specified Taxdetail",
-     *      tags={"Taxdetail"},
-     *      description="Get Taxdetail",
+     *      path="/performaMasters/{id}",
+     *      summary="Display the specified PerformaMaster",
+     *      tags={"PerformaMaster"},
+     *      description="Get PerformaMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Taxdetail",
+     *          description="id of PerformaMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -144,7 +143,7 @@ class TaxdetailAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Taxdetail"
+     *                  ref="#/definitions/PerformaMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -156,30 +155,30 @@ class TaxdetailAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var Taxdetail $taxdetail */
-        $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
+        /** @var PerformaMaster $performaMaster */
+        $performaMaster = $this->performaMasterRepository->findWithoutFail($id);
 
-        if (empty($taxdetail)) {
-            return $this->sendError('Taxdetail not found');
+        if (empty($performaMaster)) {
+            return $this->sendError('Performa Master not found');
         }
 
-        return $this->sendResponse($taxdetail->toArray(), 'Taxdetail retrieved successfully');
+        return $this->sendResponse($performaMaster->toArray(), 'Performa Master retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateTaxdetailAPIRequest $request
+     * @param UpdatePerformaMasterAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/taxdetails/{id}",
-     *      summary="Update the specified Taxdetail in storage",
-     *      tags={"Taxdetail"},
-     *      description="Update Taxdetail",
+     *      path="/performaMasters/{id}",
+     *      summary="Update the specified PerformaMaster in storage",
+     *      tags={"PerformaMaster"},
+     *      description="Update PerformaMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Taxdetail",
+     *          description="id of PerformaMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -187,9 +186,9 @@ class TaxdetailAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Taxdetail that should be updated",
+     *          description="PerformaMaster that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Taxdetail")
+     *          @SWG\Schema(ref="#/definitions/PerformaMaster")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -202,7 +201,7 @@ class TaxdetailAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Taxdetail"
+     *                  ref="#/definitions/PerformaMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -212,20 +211,20 @@ class TaxdetailAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateTaxdetailAPIRequest $request)
+    public function update($id, UpdatePerformaMasterAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var Taxdetail $taxdetail */
-        $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
+        /** @var PerformaMaster $performaMaster */
+        $performaMaster = $this->performaMasterRepository->findWithoutFail($id);
 
-        if (empty($taxdetail)) {
-            return $this->sendError('Taxdetail not found');
+        if (empty($performaMaster)) {
+            return $this->sendError('Performa Master not found');
         }
 
-        $taxdetail = $this->taxdetailRepository->update($input, $id);
+        $performaMaster = $this->performaMasterRepository->update($input, $id);
 
-        return $this->sendResponse($taxdetail->toArray(), 'Taxdetail updated successfully');
+        return $this->sendResponse($performaMaster->toArray(), 'PerformaMaster updated successfully');
     }
 
     /**
@@ -233,14 +232,14 @@ class TaxdetailAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/taxdetails/{id}",
-     *      summary="Remove the specified Taxdetail from storage",
-     *      tags={"Taxdetail"},
-     *      description="Delete Taxdetail",
+     *      path="/performaMasters/{id}",
+     *      summary="Remove the specified PerformaMaster from storage",
+     *      tags={"PerformaMaster"},
+     *      description="Delete PerformaMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Taxdetail",
+     *          description="id of PerformaMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -268,31 +267,15 @@ class TaxdetailAPIController extends AppBaseController
      */
     public function destroy($id)
     {
+        /** @var PerformaMaster $performaMaster */
+        $performaMaster = $this->performaMasterRepository->findWithoutFail($id);
 
-        /** @var Taxdetail $taxdetail */
-        $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
-
-        if (empty($taxdetail)) {
-            return $this->sendError('e','Taxdetail not found');
+        if (empty($performaMaster)) {
+            return $this->sendError('Performa Master not found');
         }
 
-        $master['vatOutputGLCodeSystemID'] = NULL;
-        $master['vatOutputGLCode'] = NULL;
-        $master['VATPercentage'] = NULL;
-        $master['VATAmount'] = 0;
-        $master['VATAmountLocal'] = 0;
-        $master['VATAmountRpt'] = 0;
+        $performaMaster->delete();
 
-        CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$taxdetail->documentSystemCode)->update($master);
-
-        $taxdetail->delete();
-
-        return $this->sendResponse('s', 'Taxdetail deleted successfully');
-    }
-
-    public function customerInvoiceTaxDetail(Request $request){
-        $id=$request['id'];
-        $tax=Taxdetail::select('*')->where('documentSystemCode',$id)->get();
-        return $this->sendResponse($tax, 'Taxdetail deleted successfully');
+        return $this->sendResponse($id, 'Performa Master deleted successfully');
     }
 }

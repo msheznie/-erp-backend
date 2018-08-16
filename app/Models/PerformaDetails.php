@@ -105,8 +105,8 @@ class PerformaDetails extends Model
 
     public $table = 'erp_performadetails';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timestamp';
+    const UPDATED_AT = 'timestamp';
 
     protected $primaryKey  = 'idperformaDetails';
 

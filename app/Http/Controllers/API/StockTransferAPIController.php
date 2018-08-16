@@ -177,7 +177,7 @@ class StockTransferAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Transfer Date not between Financial period !', 500);
+            return $this->sendError('Transfer date is not within the selected financial period !', 500);
         }
 
 
@@ -497,7 +497,7 @@ class StockTransferAPIController extends AppBaseController
 
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Transfer Date not between Financial period !', 500);
+                return $this->sendError('Transfer date is not within the selected financial period !', 500);
             }
 
             $validator = \Validator::make($input, [
@@ -536,6 +536,63 @@ class StockTransferAPIController extends AppBaseController
             unset($input['confirmedByEmpID']);
             unset($input['confirmedByName']);
             unset($input['confirmedDate']);
+
+            $itemTransferDetails = StockTransferDetails::where('stockTransferAutoID', $id)->get();
+
+            $finalError = array('cost_zero' => array(),
+                'cost_neg' => array(),
+                'currentStockQty_zero' => array(),
+                'currentWareHouseStockQty_zero' => array(),
+                'currentStockQty_more' => array(),
+                'currentWareHouseStockQty_more' => array());
+            $error_count = 0;
+
+            foreach ($itemTransferDetails as $item) {
+                $updateItem = StockTransferDetails::find($item['itemIssueDetailID']);
+                $data = array('companySystemID' => $stockTransfer->companySystemID,
+                    'itemCodeSystem' => $updateItem->itemCodeSystem,
+                    'wareHouseId' => $stockTransfer->wareHouseFrom);
+                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
+                $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+                $updateItem->issueCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                $updateItem->issueCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
+                $updateItem->save();
+
+                if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
+                    array_push($finalError['cost_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
+                    array_push($finalError['cost_neg'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->currentWareHouseStockQty <= 0) {
+                    array_push($finalError['currentStockQty_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->currentStockQty <= 0) {
+                    array_push($finalError['currentWareHouseStockQty_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                    array_push($finalError['currentStockQty_more'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+
+                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                    array_push($finalError['currentWareHouseStockQty_more'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
+
+
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => 0);
             $confirm = \Helper::confirmDocument($params);

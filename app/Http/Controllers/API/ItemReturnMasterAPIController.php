@@ -173,7 +173,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $monthEnd = $input['FYEnd'];
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Return Date not between Financial period !', 500);
+            return $this->sendError('Return date is not within the selected financial period !', 500);
         }
 
         $input['documentSystemID'] = 12;
@@ -349,35 +349,36 @@ class ItemReturnMasterAPIController extends AppBaseController
         if (empty($itemReturnMaster)) {
             return $this->sendError('Item Return Master not found');
         }
+        if (isset($input['serviceLineSystemID'])) {
+            if ($itemReturnMaster->serviceLineSystemID != $input['serviceLineSystemID']) {
+                $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
+                if (empty($checkDepartmentActive)) {
+                    return $this->sendError('Department not found');
+                }
 
-        if($itemReturnMaster->serviceLineSystemID != $input['serviceLineSystemID']){
-            $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
-            if (empty($checkDepartmentActive)) {
-                return $this->sendError('Department not found');
-            }
-
-            if($checkDepartmentActive->isActive == 0){
-                $itemReturnUpdate = ItemReturnMaster::find($id);
-                $itemReturnUpdate->serviceLineSystemID = null;
-                $itemReturnUpdate->save();
-                return $this->sendError('Please select a active department.',500,$serviceLineError);
-            }
-        }
-
-        if($itemReturnMaster->wareHouseLocation != $input['wareHouseLocation']){
-            $checkWareHouseActive = WarehouseMaster::find($input['wareHouseLocation']);
-            if (empty($checkWareHouseActive)) {
-                return $this->sendError('WareHouse not found',500,$wareHouseError);
-            }
-
-            if($checkWareHouseActive->isActive == 0){
-                $itemReturnUpdate = ItemReturnMaster::find($id);
-                $itemReturnUpdate->wareHouseLocation = null;
-                $itemReturnUpdate->save();
-                return $this->sendError('Please select a active warehouse.',500,$wareHouseError);
+                if ($checkDepartmentActive->isActive == 0) {
+                    $itemReturnUpdate = ItemReturnMaster::find($id);
+                    $itemReturnUpdate->serviceLineSystemID = null;
+                    $itemReturnUpdate->save();
+                    return $this->sendError('Please select a active department.', 500, $serviceLineError);
+                }
             }
         }
+        if (isset($input['wareHouseLocation'])) {
+            if ($itemReturnMaster->wareHouseLocation != $input['wareHouseLocation']) {
+                $checkWareHouseActive = WarehouseMaster::find($input['wareHouseLocation']);
+                if (empty($checkWareHouseActive)) {
+                    return $this->sendError('WareHouse not found', 500, $wareHouseError);
+                }
 
+                if ($checkWareHouseActive->isActive == 0) {
+                    $itemReturnUpdate = ItemReturnMaster::find($id);
+                    $itemReturnUpdate->wareHouseLocation = null;
+                    $itemReturnUpdate->save();
+                    return $this->sendError('Please select a active warehouse.', 500, $wareHouseError);
+                }
+            }
+        }
 
         if ($itemReturnMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -414,7 +415,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             $monthEnd = $input['FYEnd'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Return Date not between Financial period !', 500);
+                return $this->sendError('Return date is not within the selected financial period !', 500);
             }
 
             $checkItems = ItemReturnDetails::where('itemReturnAutoID', $id)
