@@ -786,6 +786,19 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('Advance payment request is pending');
             }
 
+            //getting total sum of Po Payment Terms
+            $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum'))
+                ->where('poID', $input['purchaseOrderID'])
+                ->first();
+
+            //return floatval($poMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
+
+            if (abs(($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
+
+            } else {
+                return $this->sendError('Payment terms total is not matching with the PO total');
+            }
+
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
 
@@ -797,7 +810,10 @@ class ProcumentOrderAPIController extends AppBaseController
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
                     $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']) + $input['VATAmount']);
-                    if ($payment['comAmount'] != round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) {
+
+                    if (abs(($payment['comAmount'] - round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) / round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) < 0.00001) {
+
+                    } else {
                         return $this->sendError('Payment terms is not matching with the PO total');
                     }
                 }
@@ -837,7 +853,6 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->WO_confirmedByEmpID = $employee->empID;
 
             $procumentOrderUpdate->save();
-
 
             if ($procumentOrderUpdate->poTotalSupplierTransactionCurrency != $oldPoTotalSupplierTransactionCurrency) {
                 $emails = array();
@@ -880,6 +895,83 @@ class ProcumentOrderAPIController extends AppBaseController
                     return $this->sendError($sendEmail["message"], 500);
                 }
 
+                //adding budget consume table
+                $idsDeleted = array();
+                if ($procumentOrder->approved == -1) {
+
+                    $budgetDetail = BudgetConsumedData::where('companySystemID', $procumentOrder->companySystemID)
+                        ->where('documentSystemCode', $procumentOrder->purchaseOrderID)
+                        ->where('documentSystemID', $procumentOrder->documentSystemID)
+                        ->get();
+
+                    if (!empty($budgetDetail)) {
+                        foreach ($budgetDetail as $bd) {
+                            array_push($idsDeleted, $bd->budgetConsumedDataAutoID);
+                        }
+                        BudgetConsumedData::destroy($idsDeleted);
+                    }
+
+                }
+
+                // insert the record to budget consumed data
+                $budgetConsumeData = array();
+                $poMaster = ProcumentOrder::selectRaw('MONTH(createdDateTime) as month, purchaseOrderCode,documentID,documentSystemID, financeCategory')->find($procumentOrder->purchaseOrderID);
+
+                if ($poMaster->financeCategory == 3) {
+                    $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.serviceLineCode,erp_purchaseorderdetails.budgetYear,erp_purchaseorderdetails.localCurrencyID FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $procumentOrder->purchaseOrderID . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.budgetYear');
+                    if (!empty($poDetail)) {
+                        foreach ($poDetail as $value) {
+                            $budgetConsumeData[] = array(
+                                "companySystemID" => $value->companySystemID,
+                                "companyID" => $value->companyID,
+                                "serviceLineSystemID" => $value->serviceLineSystemID,
+                                "serviceLineCode" => $value->serviceLineCode,
+                                "documentSystemID" => $poMaster["documentSystemID"],
+                                "documentID" => $poMaster["documentID"],
+                                "documentSystemCode" => $procumentOrder->purchaseOrderID,
+                                "documentCode" => $poMaster["purchaseOrderCode"],
+                                "chartOfAccountID" => 9,
+                                "GLCode" => 10000,
+                                "year" => $value->budgetYear,
+                                "month" => $poMaster["month"],
+                                "consumedLocalCurrencyID" => $value->localCurrencyID,
+                                "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
+                                "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
+                                "consumedRptAmount" => $value->GRVcostPerUnitComRptCur,
+                                "timestamp" => date('d/m/Y H:i:s A')
+                            );
+                        }
+                        $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
+                    }
+                } else {
+                    $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.serviceLineCode,erp_purchaseorderdetails.budgetYear,erp_purchaseorderdetails.localCurrencyID FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $procumentOrder->purchaseOrderID . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.budgetYear');
+                    if (!empty($poDetail)) {
+                        foreach ($poDetail as $value) {
+                            if ($value->financeGLcodePLSystemID != "") {
+                                $budgetConsumeData[] = array(
+                                    "companySystemID" => $value->companySystemID,
+                                    "companyID" => $value->companyID,
+                                    "serviceLineSystemID" => $value->serviceLineSystemID,
+                                    "serviceLineCode" => $value->serviceLineCode,
+                                    "documentSystemID" => $poMaster["documentSystemID"],
+                                    "documentID" => $poMaster["documentID"],
+                                    "documentSystemCode" => $procumentOrder->purchaseOrderID,
+                                    "documentCode" => $poMaster["purchaseOrderCode"],
+                                    "chartOfAccountID" => $value->financeGLcodePLSystemID,
+                                    "GLCode" => $value->financeGLcodePL,
+                                    "year" => $value->budgetYear,
+                                    "month" => $poMaster["month"],
+                                    "consumedLocalCurrencyID" => $value->localCurrencyID,
+                                    "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
+                                    "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
+                                    "consumedRptAmount" => $value->GRVcostPerUnitComRptCur,
+                                    "timestamp" => date('d/m/Y H:i:s A')
+                                );
+                            }
+                        }
+                        $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
+                    }
+                }
             }
 
         }

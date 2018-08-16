@@ -248,6 +248,17 @@ class Helper
                     $docInforArr["modelName"] = 'StockReceive';
                     $docInforArr["primarykey"] = 'stockReceiveAutoID';
                     break;
+                case 61:
+                    $docInforArr["documentCodeColumnName"] = 'documentCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_inventoryreclassification';
+                    $docInforArr["modelName"] = 'InventoryReclassification';
+                    $docInforArr["primarykey"] = 'inventoryreclassificationID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -769,6 +780,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 61:
+                $docInforArr["tableName"] = 'erp_inventoryreclassification';
+                $docInforArr["modelName"] = 'InventoryReclassification';
+                $docInforArr["primarykey"] = 'inventoryreclassificationID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1116,12 +1139,16 @@ class Helper
      * @param $companySystemID - current company id
      * @return array
      */
-    public static function companyFinanceYear($companySystemID)
+    public static function companyFinanceYear($companySystemID, $isAllowBackDate = 0)
     {
         $companyFinanceYear = Models\CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))
             ->where('companySystemID', '=', $companySystemID)
-            ->where('isActive', -1)
-            ->get();
+            ->where('isActive', -1);
+
+        if (!$isAllowBackDate) {
+            $companyFinanceYear->where('isCurrent', -1);
+        }
+        $companyFinanceYear = $companyFinanceYear->get();
         return $companyFinanceYear;
     }
 
@@ -1227,14 +1254,14 @@ class Helper
         $companyFinanceYear = Models\CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
         if ($companyFinanceYear) {
             if ($companyFinanceYear->isActive != -1 && $companyFinanceYear->isCurrent != -1) {
-                return ['success' => false, 'message' => 'Selected finance year is not active'];
+                return ['success' => false, 'message' => 'Selected financial year is not active'];
             } else {
                 return ['success' => true, 'message' => $companyFinanceYear];
             }
         } else {
-            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $input['companySystemID'])->where('isActive', -1)->where('isCurrent', -1)->where('isCurrent', -1)->first();
-            if (!$companyFinanceYear) {
-                return ['success' => false, 'message' => 'Company has no active finance year'];
+            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $input['companySystemID'])->where('isActive', -1)->where('isCurrent', -1)->first();
+            if (empty($companyFinanceYear)) {
+                return ['success' => false, 'message' => 'Financial year not selected/not active'];
             } else {
                 return ['success' => false, 'message' => 'Please select a finance year'];
             }
@@ -1246,14 +1273,14 @@ class Helper
         $companyFinancePeriod = Models\CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         if ($companyFinancePeriod) {
             if ($companyFinancePeriod->isActive != -1 && $companyFinancePeriod->isCurrent != -1) {
-                return ['success' => false, 'message' => 'Selected finance period is not active'];
+                return ['success' => false, 'message' => 'Selected financial period is not active'];
             } else {
                 return ['success' => true, 'message' => $companyFinancePeriod];
             }
         } else {
             $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $input['companySystemID'])->where('isActive', -1)->where('isCurrent', -1)->where('departmentSystemID', $input['departmentSystemID'])->where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
             if (!$companyFinancePeriod) {
-                return ['success' => false, 'message' => 'Company has no active finance period'];
+                return ['success' => false, 'message' => 'Financial period not selected/not active'];
             } else {
                 return ['success' => false, 'message' => 'Please select a finance period'];
             }

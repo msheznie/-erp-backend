@@ -19,6 +19,7 @@ use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\GRVMaster;
+use App\Models\InventoryReclassification;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\ItemReturnMaster;
@@ -167,6 +168,13 @@ class email
                     if (!empty($stockReceive)) {
                         $data['docApprovedYN'] = $stockReceive->approved;
                         $data['docCode']       = $stockReceive->stockReceiveCode;
+                    }
+                    break;
+                case 61:
+                    $inventoryReclassification = InventoryReclassification::where('inventoryreclassificationID', $data['docSystemCode'])->first();
+                    if (!empty($stockReceive)) {
+                        $data['docApprovedYN'] = $inventoryReclassification->approved;
+                        $data['docCode']       = $inventoryReclassification->documentCode;
                     }
                     break;
                 default:
