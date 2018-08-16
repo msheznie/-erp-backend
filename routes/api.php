@@ -347,6 +347,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('po_advance_payments', 'PoAdvancePaymentAPIController');
     Route::resource('procumentOrderPaymentTermsCRUD', 'PoPaymentTermsAPIController');
     Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
+    Route::post('updateAllPaymentTerms', 'PoPaymentTermsAPIController@updateAllPaymentTerms');
     Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel');
     Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack');
     Route::post('manualCloseProcurementOrder', 'ProcumentOrderAPIController@manualCloseProcurementOrder');
@@ -663,9 +664,41 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail');
     Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails');
 
+    Route::resource('performa_details', 'PerformaDetailsAPIController');
+    Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
+    Route::resource('ticket_masters', 'TicketMasterAPIController');
+    Route::resource('field_masters', 'FieldMasterAPIController');
+    Route::resource('taxdetails', 'TaxdetailAPIController');
+    Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
+    Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
+    Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification');
+    Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification');
+    Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
+    Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+    Route::resource('performa_details', 'PerformaDetailsAPIController');
+
+    Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
+
+    Route::resource('ticket_masters', 'TicketMasterAPIController');
+
+    Route::resource('field_masters', 'FieldMasterAPIController');
+
+    Route::resource('taxdetails', 'TaxdetailAPIController');
+
+    Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
+
+    Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
+
+
+
+    Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
+
+    Route::resource('performa_masters', 'PerformaMasterAPIController');
+
+    Route::resource('rig_masters', 'RigMasterAPIController');
 
 });
-Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
@@ -693,28 +726,12 @@ Route::get('runQueueSR', function () {
     $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
     // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
+
 });
 
 
 
-Route::resource('performa_details', 'PerformaDetailsAPIController');
-
-Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
-
-Route::resource('ticket_masters', 'TicketMasterAPIController');
-
-Route::resource('field_masters', 'FieldMasterAPIController');
-
-Route::resource('taxdetails', 'TaxdetailAPIController');
-
-Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
-
-Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
 
 
 
-Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
 
-Route::resource('performa_masters', 'PerformaMasterAPIController');
-
-Route::resource('rig_masters', 'RigMasterAPIController');

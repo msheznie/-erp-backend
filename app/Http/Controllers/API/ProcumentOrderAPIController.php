@@ -58,6 +58,7 @@ use App\Models\Months;
 use App\Models\Company;
 use App\Models\PoAddons;
 use App\Models\PoAddonsRefferedBack;
+use App\Models\PoAdvancePayment;
 use App\Models\PoPaymentTermsRefferedback;
 use App\Models\PurchaseOrderAdvPaymentRefferedback;
 use App\Models\PurchaseOrderDetailsRefferedHistory;
@@ -404,7 +405,7 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($procumentOrder->poCancelledYN == -1) {
             return $this->sendError('This Purchase Order closed. You cannot edit.', 500);
         }
-        
+
         if ($procumentOrder->approved == -1 && $procumentOrder->WO_amendYN != -1 && $isAmendAccess != 1) {
             return $this->sendError('This Purchase Order fully approved. You cannot edit.', 500);
         }
@@ -642,51 +643,54 @@ class ProcumentOrderAPIController extends AppBaseController
         $getPoAllAddons = PoAddons::where('poId', $purchaseOrderID)
             ->get();
 
-        if (!empty($getPoAllAddons)) {
+        if ($poMasterSumRounded > 0) {
 
-            if (!empty($getPoDetailForAddon)) {
-                foreach ($getPoDetailForAddon as $AddonDeta) {
+            if (!empty($getPoAllAddons)) {
 
-                    $calculateAddonLineAmount = (($poAddonMasterSumRounded / $poMasterSumRounded) * $AddonDeta['netAmount']) / $AddonDeta['noQty'];
+                if (!empty($getPoDetailForAddon)) {
+                    foreach ($getPoDetailForAddon as $AddonDeta) {
 
-                    $currencyConversionForLineAmountAddon = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateAddonLineAmount);
+                        $calculateAddonLineAmount = (($poAddonMasterSumRounded / $poMasterSumRounded) * $AddonDeta['netAmount']) / $AddonDeta['noQty'];
 
-                    $currencyConversionLineAmountAddonDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierDefaultCurrencyID'], $calculateAddonLineAmount);
+                        $currencyConversionForLineAmountAddon = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateAddonLineAmount);
 
-                    $updatePoDetailAddonDetail = PurchaseOrderDetails::find($AddonDeta['purchaseOrderDetailsID']);
+                        $currencyConversionLineAmountAddonDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierDefaultCurrencyID'], $calculateAddonLineAmount);
 
-                    $GRVcostPerUnitLocalCurAddon = ($AddonDeta['GRVcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitLocalCur = \Helper::roundValue($GRVcostPerUnitLocalCurAddon);
+                        $updatePoDetailAddonDetail = PurchaseOrderDetails::find($AddonDeta['purchaseOrderDetailsID']);
 
-                    $GRVcostPerUnitSupDefaultCurAddon = ($AddonDeta['GRVcostPerUnitSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitSupDefaultCur = \Helper::roundValue($GRVcostPerUnitSupDefaultCurAddon);
+                        $GRVcostPerUnitLocalCurAddon = ($AddonDeta['GRVcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
+                        $updatePoDetailAddonDetail->GRVcostPerUnitLocalCur = \Helper::roundValue($GRVcostPerUnitLocalCurAddon);
 
-                    $GRVcostPerUnitSupTransCurAddon = ($AddonDeta['GRVcostPerUnitSupTransCur'] + $calculateAddonLineAmount);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitSupTransCur = \Helper::roundValue($GRVcostPerUnitSupTransCurAddon);
+                        $GRVcostPerUnitSupDefaultCurAddon = ($AddonDeta['GRVcostPerUnitSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
+                        $updatePoDetailAddonDetail->GRVcostPerUnitSupDefaultCur = \Helper::roundValue($GRVcostPerUnitSupDefaultCurAddon);
 
-                    $GRVcostPerUnitComRptCurAddon = ($AddonDeta['GRVcostPerUnitComRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
-                    $updatePoDetailAddonDetail->GRVcostPerUnitComRptCur = \Helper::roundValue($GRVcostPerUnitComRptCurAddon);
+                        $GRVcostPerUnitSupTransCurAddon = ($AddonDeta['GRVcostPerUnitSupTransCur'] + $calculateAddonLineAmount);
+                        $updatePoDetailAddonDetail->GRVcostPerUnitSupTransCur = \Helper::roundValue($GRVcostPerUnitSupTransCurAddon);
 
-                    $purchaseRetcostPerUniSupDefaultCurAddon = ($AddonDeta['purchaseRetcostPerUniSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUniSupDefaultCur = \Helper::roundValue($purchaseRetcostPerUniSupDefaultCurAddon);
+                        $GRVcostPerUnitComRptCurAddon = ($AddonDeta['GRVcostPerUnitComRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
+                        $updatePoDetailAddonDetail->GRVcostPerUnitComRptCur = \Helper::roundValue($GRVcostPerUnitComRptCurAddon);
 
-                    $purchaseRetcostPerUnitLocalCurAddon = ($AddonDeta['purchaseRetcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitLocalCur = \Helper::roundValue($purchaseRetcostPerUnitLocalCurAddon);
+                        $purchaseRetcostPerUniSupDefaultCurAddon = ($AddonDeta['purchaseRetcostPerUniSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
+                        $updatePoDetailAddonDetail->purchaseRetcostPerUniSupDefaultCur = \Helper::roundValue($purchaseRetcostPerUniSupDefaultCurAddon);
 
-                    $purchaseRetcostPerUnitTranCurAddon = ($AddonDeta['purchaseRetcostPerUnitTranCur'] + $calculateAddonLineAmount);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitTranCur = \Helper::roundValue($purchaseRetcostPerUnitTranCurAddon);
+                        $purchaseRetcostPerUnitLocalCurAddon = ($AddonDeta['purchaseRetcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
+                        $updatePoDetailAddonDetail->purchaseRetcostPerUnitLocalCur = \Helper::roundValue($purchaseRetcostPerUnitLocalCurAddon);
 
-                    $purchaseRetcostPerUnitRptCur = ($AddonDeta['purchaseRetcostPerUnitRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
-                    $updatePoDetailAddonDetail->purchaseRetcostPerUnitRptCur = \Helper::roundValue($purchaseRetcostPerUnitRptCur);
+                        $purchaseRetcostPerUnitTranCurAddon = ($AddonDeta['purchaseRetcostPerUnitTranCur'] + $calculateAddonLineAmount);
+                        $updatePoDetailAddonDetail->purchaseRetcostPerUnitTranCur = \Helper::roundValue($purchaseRetcostPerUnitTranCurAddon);
 
-                    $updatePoDetailAddonDetail->addonDistCost = \Helper::roundValue($calculateAddonLineAmount);
-                    $updatePoDetailAddonDetail->addonPurchaseReturnCost = \Helper::roundValue($calculateAddonLineAmount);
-                    $updatePoDetailAddonDetail->save();
+                        $purchaseRetcostPerUnitRptCur = ($AddonDeta['purchaseRetcostPerUnitRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
+                        $updatePoDetailAddonDetail->purchaseRetcostPerUnitRptCur = \Helper::roundValue($purchaseRetcostPerUnitRptCur);
+
+                        $updatePoDetailAddonDetail->addonDistCost = \Helper::roundValue($calculateAddonLineAmount);
+                        $updatePoDetailAddonDetail->addonPurchaseReturnCost = \Helper::roundValue($calculateAddonLineAmount);
+                        $updatePoDetailAddonDetail->save();
+
+                    }
 
                 }
 
             }
-
         }
 
         if ($input['supplierVATEligible'] == 1) {
@@ -726,7 +730,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $currencyConversionVatAmount = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $input['VATAmount']);
 
-            $procumentOrderUpdate->VATAmount = \Helper::roundValue($calculatVatAmount);
+            $procumentOrderUpdate->VATAmount = $input['VATAmount'];
             $procumentOrderUpdate->VATAmountLocal = \Helper::roundValue($currencyConversionVatAmount['localAmount']);
             $procumentOrderUpdate->VATAmountRpt = \Helper::roundValue($currencyConversionVatAmount['reportingAmount']);
 
@@ -782,6 +786,19 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('Advance payment request is pending');
             }
 
+            //getting total sum of Po Payment Terms
+            $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum'))
+                ->where('poID', $input['purchaseOrderID'])
+                ->first();
+
+            //return floatval($poMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
+
+            if (abs(($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
+
+            } else {
+                return $this->sendError('Payment terms total is not matching with the PO total');
+            }
+
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
 
@@ -793,7 +810,10 @@ class ProcumentOrderAPIController extends AppBaseController
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
                     $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']) + $input['VATAmount']);
-                    if ($payment['comAmount'] != round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) {
+
+                    if (abs(($payment['comAmount'] - round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) / round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) < 0.00001) {
+
+                    } else {
                         return $this->sendError('Payment terms is not matching with the PO total');
                     }
                 }
@@ -833,7 +853,6 @@ class ProcumentOrderAPIController extends AppBaseController
             $procumentOrderUpdate->WO_confirmedByEmpID = $employee->empID;
 
             $procumentOrderUpdate->save();
-
 
             if ($procumentOrderUpdate->poTotalSupplierTransactionCurrency != $oldPoTotalSupplierTransactionCurrency) {
                 $emails = array();
@@ -876,6 +895,83 @@ class ProcumentOrderAPIController extends AppBaseController
                     return $this->sendError($sendEmail["message"], 500);
                 }
 
+                //adding budget consume table
+                $idsDeleted = array();
+                if ($procumentOrder->approved == -1) {
+
+                    $budgetDetail = BudgetConsumedData::where('companySystemID', $procumentOrder->companySystemID)
+                        ->where('documentSystemCode', $procumentOrder->purchaseOrderID)
+                        ->where('documentSystemID', $procumentOrder->documentSystemID)
+                        ->get();
+
+                    if (!empty($budgetDetail)) {
+                        foreach ($budgetDetail as $bd) {
+                            array_push($idsDeleted, $bd->budgetConsumedDataAutoID);
+                        }
+                        BudgetConsumedData::destroy($idsDeleted);
+                    }
+
+                }
+
+                // insert the record to budget consumed data
+                $budgetConsumeData = array();
+                $poMaster = ProcumentOrder::selectRaw('MONTH(createdDateTime) as month, purchaseOrderCode,documentID,documentSystemID, financeCategory')->find($procumentOrder->purchaseOrderID);
+
+                if ($poMaster->financeCategory == 3) {
+                    $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.serviceLineCode,erp_purchaseorderdetails.budgetYear,erp_purchaseorderdetails.localCurrencyID FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $procumentOrder->purchaseOrderID . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.budgetYear');
+                    if (!empty($poDetail)) {
+                        foreach ($poDetail as $value) {
+                            $budgetConsumeData[] = array(
+                                "companySystemID" => $value->companySystemID,
+                                "companyID" => $value->companyID,
+                                "serviceLineSystemID" => $value->serviceLineSystemID,
+                                "serviceLineCode" => $value->serviceLineCode,
+                                "documentSystemID" => $poMaster["documentSystemID"],
+                                "documentID" => $poMaster["documentID"],
+                                "documentSystemCode" => $procumentOrder->purchaseOrderID,
+                                "documentCode" => $poMaster["purchaseOrderCode"],
+                                "chartOfAccountID" => 9,
+                                "GLCode" => 10000,
+                                "year" => $value->budgetYear,
+                                "month" => $poMaster["month"],
+                                "consumedLocalCurrencyID" => $value->localCurrencyID,
+                                "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
+                                "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
+                                "consumedRptAmount" => $value->GRVcostPerUnitComRptCur,
+                                "timestamp" => date('d/m/Y H:i:s A')
+                            );
+                        }
+                        $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
+                    }
+                } else {
+                    $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.serviceLineCode,erp_purchaseorderdetails.budgetYear,erp_purchaseorderdetails.localCurrencyID FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $procumentOrder->purchaseOrderID . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,erp_purchaseorderdetails.serviceLineSystemID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.budgetYear');
+                    if (!empty($poDetail)) {
+                        foreach ($poDetail as $value) {
+                            if ($value->financeGLcodePLSystemID != "") {
+                                $budgetConsumeData[] = array(
+                                    "companySystemID" => $value->companySystemID,
+                                    "companyID" => $value->companyID,
+                                    "serviceLineSystemID" => $value->serviceLineSystemID,
+                                    "serviceLineCode" => $value->serviceLineCode,
+                                    "documentSystemID" => $poMaster["documentSystemID"],
+                                    "documentID" => $poMaster["documentID"],
+                                    "documentSystemCode" => $procumentOrder->purchaseOrderID,
+                                    "documentCode" => $poMaster["purchaseOrderCode"],
+                                    "chartOfAccountID" => $value->financeGLcodePLSystemID,
+                                    "GLCode" => $value->financeGLcodePL,
+                                    "year" => $value->budgetYear,
+                                    "month" => $poMaster["month"],
+                                    "consumedLocalCurrencyID" => $value->localCurrencyID,
+                                    "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
+                                    "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
+                                    "consumedRptAmount" => $value->GRVcostPerUnitComRptCur,
+                                    "timestamp" => date('d/m/Y H:i:s A')
+                                );
+                            }
+                        }
+                        $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
+                    }
+                }
             }
 
         }
@@ -1017,6 +1113,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 'erp_purchaseordermaster.financeCategory',
                 'erp_purchaseordermaster.grvRecieved',
                 'erp_purchaseordermaster.invoicedBooked',
+                'erp_purchaseordermaster.sentToSupplier'
             ]);
 
         $search = $request->input('search.value');
@@ -1542,7 +1639,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'erp_purchaseordermaster.grvRecieved',
                 'erp_purchaseordermaster.invoicedBooked',
                 'erp_purchaseordermaster.documentSystemID',
-                'erp_purchaseordermaster.poType_N',
+                'erp_purchaseordermaster.sentToSupplier',
+                'erp_purchaseordermaster.poType_N'
             ]);
 
         $search = $request->input('search.value');
@@ -3530,12 +3628,32 @@ WHERE
 
             $updatePOMaster = ProcumentOrder::find($purchaseOrder->purchaseOrderID)
                 ->update([
-                    'VATAmount' => \Helper::roundValue($calculatVatAmount),
+                    'VATAmount' => round($calculatVatAmount, $supplierCurrencyDecimalPlace),
                     'VATAmountLocal' => \Helper::roundValue($currencyConversionVatAmount['localAmount']),
                     'VATAmountRpt' => \Helper::roundValue($currencyConversionVatAmount['reportingAmount'])
                 ]);
         }
 
+        //Update request payment
+        $PoAdvancePaymentFetch = PoAdvancePayment::where('poID', $purchaseOrder->purchaseOrderID)
+            ->get();
+
+        if (!empty($PoAdvancePaymentFetch)) {
+            foreach ($PoAdvancePaymentFetch as $advance) {
+                $advancePaymentTermUpdate = PoAdvancePayment::find($advance->poAdvPaymentID);
+
+                $advancePaymentTermUpdate->supplierID = $purchaseOrder->supplierID;
+                $advancePaymentTermUpdate->SupplierPrimaryCode = $purchaseOrder->supplierPrimaryCode;
+                $advancePaymentTermUpdate->currencyID = $purchaseOrder->supplierTransactionCurrencyID;
+
+                $companyCurrencyConversionAD = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $advance['reqAmount']);
+
+                $advancePaymentTermUpdate->reqAmountInPOLocalCur = $companyCurrencyConversionAD['localAmount'];
+                $advancePaymentTermUpdate->reqAmountInPORptCur = $companyCurrencyConversionAD['reportingAmount'];
+
+                $advancePaymentTermUpdate->save();
+            }
+        }
 
         return $this->sendResponse($purchaseOrder->toArray(), 'Procurement Order retrieved successfully');
     }
@@ -3625,7 +3743,7 @@ ORDER BY
             ->where('grvRecieved', '<>', 2)
             ->where('WO_confirmedYN', 1)
             ->where('manuallyClosed', 0)
-            ->where('poType_N','<>', 5)
+            ->where('poType_N', '<>', 5)
             ->orderBy('purchaseOrderID', 'DESC')
             ->get();
 
@@ -3984,7 +4102,7 @@ FROM
             $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
             $location = \DB::table('systemmanualfolder')->first();
-            $pdfName = $location->folderDes."emailAttachment\\po_print_" . $nowTime . ".pdf";
+            $pdfName = $location->folderDes . "emailAttachment\\po_print_" . $nowTime . ".pdf";
 
             $dataEmail['isEmailSend'] = 0;
             $dataEmail['attachmentFileName'] = $pdfName;
