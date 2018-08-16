@@ -1,21 +1,21 @@
 <?php
 /**
  * =============================================
- * -- File Name : BookInvSuppMasterAPIController.php
+ * -- File Name : DebitNoteAPIController.php
  * -- Project Name : ERP
- * -- Module Name :  BookInvSuppMaster
+ * -- Module Name :  DebitNote
  * -- Author : Mohamed Nazir
- * -- Create date : 08 - August 2018
- * -- Description : This file contains the all CRUD for Purchase Order
+ * -- Create date : 16 - August 2018
+ * -- Description : This file contains the all CRUD for Debit Note
  * -- REVISION HISTORY
- * -- Date: 08-August 2018 By: Nazir Description: Added new function getInvoiceMasterRecord(),
+ * -- Date: 08-August 2018 By: Nazir Description: Added new function getDebitNoteMasterRecord(),
  */
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
-use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
-use App\Models\BookInvSuppMaster;
-use App\Repositories\BookInvSuppMasterRepository;
+use App\Http\Requests\API\CreateDebitNoteAPIRequest;
+use App\Http\Requests\API\UpdateDebitNoteAPIRequest;
+use App\Models\DebitNote;
+use App\Repositories\DebitNoteRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -23,17 +23,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class BookInvSuppMasterController
+ * Class DebitNoteController
  * @package App\Http\Controllers\API
  */
-class BookInvSuppMasterAPIController extends AppBaseController
-{
-    /** @var  BookInvSuppMasterRepository */
-    private $bookInvSuppMasterRepository;
 
-    public function __construct(BookInvSuppMasterRepository $bookInvSuppMasterRepo)
+class DebitNoteAPIController extends AppBaseController
+{
+    /** @var  DebitNoteRepository */
+    private $debitNoteRepository;
+
+    public function __construct(DebitNoteRepository $debitNoteRepo)
     {
-        $this->bookInvSuppMasterRepository = $bookInvSuppMasterRepo;
+        $this->debitNoteRepository = $debitNoteRepo;
     }
 
     /**
@@ -41,10 +42,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/bookInvSuppMasters",
-     *      summary="Get a listing of the BookInvSuppMasters.",
-     *      tags={"BookInvSuppMaster"},
-     *      description="Get all BookInvSuppMasters",
+     *      path="/debitNotes",
+     *      summary="Get a listing of the DebitNotes.",
+     *      tags={"DebitNote"},
+     *      description="Get all DebitNotes",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -58,7 +59,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/BookInvSuppMaster")
+     *                  @SWG\Items(ref="#/definitions/DebitNote")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -70,29 +71,29 @@ class BookInvSuppMasterAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->bookInvSuppMasterRepository->pushCriteria(new RequestCriteria($request));
-        $this->bookInvSuppMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $bookInvSuppMasters = $this->bookInvSuppMasterRepository->all();
+        $this->debitNoteRepository->pushCriteria(new RequestCriteria($request));
+        $this->debitNoteRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $debitNotes = $this->debitNoteRepository->all();
 
-        return $this->sendResponse($bookInvSuppMasters->toArray(), 'Book Inv Supp Masters retrieved successfully');
+        return $this->sendResponse($debitNotes->toArray(), 'Debit Notes retrieved successfully');
     }
 
     /**
-     * @param CreateBookInvSuppMasterAPIRequest $request
+     * @param CreateDebitNoteAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/bookInvSuppMasters",
-     *      summary="Store a newly created BookInvSuppMaster in storage",
-     *      tags={"BookInvSuppMaster"},
-     *      description="Store BookInvSuppMaster",
+     *      path="/debitNotes",
+     *      summary="Store a newly created DebitNote in storage",
+     *      tags={"DebitNote"},
+     *      description="Store DebitNote",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="BookInvSuppMaster that should be stored",
+     *          description="DebitNote that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/BookInvSuppMaster")
+     *          @SWG\Schema(ref="#/definitions/DebitNote")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -105,7 +106,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/BookInvSuppMaster"
+     *                  ref="#/definitions/DebitNote"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -115,13 +116,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateBookInvSuppMasterAPIRequest $request)
+    public function store(CreateDebitNoteAPIRequest $request)
     {
         $input = $request->all();
 
-        $bookInvSuppMasters = $this->bookInvSuppMasterRepository->create($input);
+        $debitNotes = $this->debitNoteRepository->create($input);
 
-        return $this->sendResponse($bookInvSuppMasters->toArray(), 'Book Inv Supp Master saved successfully');
+        return $this->sendResponse($debitNotes->toArray(), 'Debit Note saved successfully');
     }
 
     /**
@@ -129,14 +130,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/bookInvSuppMasters/{id}",
-     *      summary="Display the specified BookInvSuppMaster",
-     *      tags={"BookInvSuppMaster"},
-     *      description="Get BookInvSuppMaster",
+     *      path="/debitNotes/{id}",
+     *      summary="Display the specified DebitNote",
+     *      tags={"DebitNote"},
+     *      description="Get DebitNote",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of BookInvSuppMaster",
+     *          description="id of DebitNote",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -152,7 +153,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/BookInvSuppMaster"
+     *                  ref="#/definitions/DebitNote"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -164,30 +165,30 @@ class BookInvSuppMasterAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var BookInvSuppMaster $bookInvSuppMaster */
-        $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
+        /** @var DebitNote $debitNote */
+        $debitNote = $this->debitNoteRepository->findWithoutFail($id);
 
-        if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Book Inv Supp Master not found');
+        if (empty($debitNote)) {
+            return $this->sendError('Debit Note not found');
         }
 
-        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Book Inv Supp Master retrieved successfully');
+        return $this->sendResponse($debitNote->toArray(), 'Debit Note retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateBookInvSuppMasterAPIRequest $request
+     * @param UpdateDebitNoteAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/bookInvSuppMasters/{id}",
-     *      summary="Update the specified BookInvSuppMaster in storage",
-     *      tags={"BookInvSuppMaster"},
-     *      description="Update BookInvSuppMaster",
+     *      path="/debitNotes/{id}",
+     *      summary="Update the specified DebitNote in storage",
+     *      tags={"DebitNote"},
+     *      description="Update DebitNote",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of BookInvSuppMaster",
+     *          description="id of DebitNote",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -195,9 +196,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="BookInvSuppMaster that should be updated",
+     *          description="DebitNote that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/BookInvSuppMaster")
+     *          @SWG\Schema(ref="#/definitions/DebitNote")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -210,7 +211,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/BookInvSuppMaster"
+     *                  ref="#/definitions/DebitNote"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -220,20 +221,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateBookInvSuppMasterAPIRequest $request)
+    public function update($id, UpdateDebitNoteAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var BookInvSuppMaster $bookInvSuppMaster */
-        $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
+        /** @var DebitNote $debitNote */
+        $debitNote = $this->debitNoteRepository->findWithoutFail($id);
 
-        if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Book Inv Supp Master not found');
+        if (empty($debitNote)) {
+            return $this->sendError('Debit Note not found');
         }
 
-        $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
+        $debitNote = $this->debitNoteRepository->update($input, $id);
 
-        return $this->sendResponse($bookInvSuppMaster->toArray(), 'BookInvSuppMaster updated successfully');
+        return $this->sendResponse($debitNote->toArray(), 'DebitNote updated successfully');
     }
 
     /**
@@ -241,14 +242,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/bookInvSuppMasters/{id}",
-     *      summary="Remove the specified BookInvSuppMaster from storage",
-     *      tags={"BookInvSuppMaster"},
-     *      description="Delete BookInvSuppMaster",
+     *      path="/debitNotes/{id}",
+     *      summary="Remove the specified DebitNote from storage",
+     *      tags={"DebitNote"},
+     *      description="Delete DebitNote",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of BookInvSuppMaster",
+     *          description="id of DebitNote",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -276,32 +277,29 @@ class BookInvSuppMasterAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var BookInvSuppMaster $bookInvSuppMaster */
-        $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
+        /** @var DebitNote $debitNote */
+        $debitNote = $this->debitNoteRepository->findWithoutFail($id);
 
-        if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Book Inv Supp Master not found');
+        if (empty($debitNote)) {
+            return $this->sendError('Debit Note not found');
         }
 
-        $bookInvSuppMaster->delete();
+        $debitNote->delete();
 
-        return $this->sendResponse($id, 'Book Inv Supp Master deleted successfully');
+        return $this->sendResponse($id, 'Debit Note deleted successfully');
     }
 
-    public function getInvoiceMasterRecord(Request $request)
+
+    public function getDebitNoteMasterRecord(Request $request)
     {
         $input = $request->all();
 
-        $output = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])->with(['grvdetail' => function ($query) {
-            $query->with('grv');
-        }, 'directdetail' => function ($query) {
+        $output = DebitNote::where('debitNoteAutoID', $input['debitNoteAutoID'])->with(['detail' => function ($query) {
             $query->with('segment');
-        }, 'detail' => function ($query) {
-            $query->with('grv');
-        }, 'approved_by' => function ($query) {
+        },'approved_by' => function ($query) {
             $query->with('employee');
-            $query->where('documentSystemID', 11);
-        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv','confirmed_by'])->first();
+            $query->where('documentSystemID', 15);
+        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier','confirmed_by'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
