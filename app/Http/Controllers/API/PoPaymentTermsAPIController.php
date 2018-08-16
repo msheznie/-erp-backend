@@ -277,8 +277,8 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         $orderAmount = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'];
         $orderAmountRounded = round($orderAmount, $supplierCurrencyDecimalPlace);
-        $discountAmount = $purchaseOrder->poDiscountAmount;
-        $vatAmount = $purchaseOrder->VATAmount;
+        $discountAmount = $input['discount'];
+        $vatAmount = $input['vat'];
 
         if (!empty($poAdvancePaymentType)) {
             foreach ($poAdvancePaymentType as $advance) {
@@ -289,7 +289,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
                 //update payment terms table
                 $paymentTermUpdate = PoPaymentTerms::find($advance['paymentTermID']);
-                $paymentTermUpdate->comAmount = round($calculatePer, $supplierCurrencyDecimalPlace);;
+                $paymentTermUpdate->comAmount = $roundedCalculatePer;
                 $paymentTermUpdate->save();
 
                 $PoAdvancePaymentFetch = PoAdvancePayment::where('poTermID', $advance['paymentTermID'])

@@ -786,6 +786,19 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('Advance payment request is pending');
             }
 
+            //getting total sum of Po Payment Terms
+            $paymentTotalSum = PoPaymentTerms::select(DB::raw('IFNULL(SUM(comAmount),0) as paymentTotalSum'))
+                ->where('poID', $input['purchaseOrderID'])
+                ->first();
+
+            //return floatval($poMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
+
+            if (abs(($poMasterSumDeducted-$paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
+
+            }else{
+                return $this->sendError('Payment terms total is not matching with the PO total');
+            }
+
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
 
@@ -797,7 +810,10 @@ class ProcumentOrderAPIController extends AppBaseController
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
                     $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']) + $input['VATAmount']);
-                    if ($payment['comAmount'] != round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) {
+
+                    if (abs(($payment['comAmount']-round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) / round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) < 0.00001) {
+
+                    }else{
                         return $this->sendError('Payment terms is not matching with the PO total');
                     }
                 }
