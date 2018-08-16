@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateTaxdetailAPIRequest;
 use App\Http\Requests\API\UpdateTaxdetailAPIRequest;
 use App\Models\Taxdetail;
+use App\Models\CustomerInvoiceDirect;
 use App\Repositories\TaxdetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -267,15 +268,31 @@ class TaxdetailAPIController extends AppBaseController
      */
     public function destroy($id)
     {
+
         /** @var Taxdetail $taxdetail */
         $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
 
         if (empty($taxdetail)) {
-            return $this->sendError('Taxdetail not found');
+            return $this->sendError('e','Taxdetail not found');
         }
+
+        $master['vatOutputGLCodeSystemID'] = NULL;
+        $master['vatOutputGLCode'] = NULL;
+        $master['VATPercentage'] = NULL;
+        $master['VATAmount'] = 0;
+        $master['VATAmountLocal'] = 0;
+        $master['VATAmountRpt'] = 0;
+
+        CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$taxdetail->documentSystemCode)->update($master);
 
         $taxdetail->delete();
 
-        return $this->sendResponse($id, 'Taxdetail deleted successfully');
+        return $this->sendResponse('s', 'Taxdetail deleted successfully');
+    }
+
+    public function customerInvoiceTaxDetail(Request $request){
+        $id=$request['id'];
+        $tax=Taxdetail::select('*')->where('documentSystemCode',$id)->get();
+        return $this->sendResponse($tax, 'Taxdetail deleted successfully');
     }
 }

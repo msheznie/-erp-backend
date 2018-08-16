@@ -147,8 +147,12 @@ class ItemReturnMasterAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
         $inputParam = $input;
-        $inputParam["departmentSystmeID"] = 10;
+        $inputParam["departmentSystemID"] = 10;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
@@ -169,7 +173,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $monthEnd = $input['FYEnd'];
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Return Date not between Financial period !', 500);
+            return $this->sendError('Return date is not within the selected financial period !', 500);
         }
 
         $input['documentSystemID'] = 12;
@@ -327,39 +331,16 @@ class ItemReturnMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by','confirmedByName',
-            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID','finance_period_by']);
+            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID','finance_period_by','finance_year_by']);
 
         $input = $this->convertArrayToValue($input);
         $wareHouseError = array('type' => 'wareHouse');
-
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYear["success"]) {
-            return $this->sendError($companyFinanceYear["message"], 500);
-        }
-
-        $inputParam = $input;
-        $inputParam["departmentSystmeID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-        if (!$companyFinancePeriod["success"]) {
-            return $this->sendError($companyFinancePeriod["message"], 500);
-        } else{
-            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
-        }
-        unset($inputParam);
+        $serviceLineError = array('type' => 'serviceLine');
 
         if (isset($input['ReturnDate'])) {
             if ($input['ReturnDate']) {
                 $input['ReturnDate'] = new Carbon($input['ReturnDate']);
             }
-        }
-
-        $documentDate = $input['ReturnDate'];
-        $monthBegin = $input['FYBiggin'];
-        $monthEnd = $input['FYEnd'];
-        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-        } else {
-            return $this->sendError('Return Date not between Financial period !', 500);
         }
 
         /** @var ItemReturnMaster $itemReturnMaster */
@@ -368,34 +349,74 @@ class ItemReturnMasterAPIController extends AppBaseController
         if (empty($itemReturnMaster)) {
             return $this->sendError('Item Return Master not found');
         }
+        if (isset($input['serviceLineSystemID'])) {
+            if ($itemReturnMaster->serviceLineSystemID != $input['serviceLineSystemID']) {
+                $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
+                if (empty($checkDepartmentActive)) {
+                    return $this->sendError('Department not found');
+                }
 
-        if($itemReturnMaster->serviceLineSystemID != $input['serviceLineSystemID']){
-            $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
-            if (empty($checkDepartmentActive)) {
-                return $this->sendError('Department not found');
-            }
-
-            if($checkDepartmentActive->isActive == 0){
-                return $this->sendError('Please select a active department.',500);
-            }
-        }
-
-        if($itemReturnMaster->wareHouseLocation != $input['wareHouseLocation']){
-            $checkWareHouseActive = WarehouseMaster::find($input['wareHouseLocation']);
-            if (empty($checkWareHouseActive)) {
-                return $this->sendError('WareHouse not found',500,$wareHouseError);
-            }
-
-            if($checkWareHouseActive->isActive == 0){
-                $itemReturnUpdate = ItemReturnMaster::find($id);
-                $itemReturnUpdate->wareHouseLocation = null;
-                $itemReturnUpdate->save();
-                return $this->sendError('Please select a active warehouse.',500,$wareHouseError);
+                if ($checkDepartmentActive->isActive == 0) {
+                    $itemReturnUpdate = ItemReturnMaster::find($id);
+                    $itemReturnUpdate->serviceLineSystemID = null;
+                    $itemReturnUpdate->save();
+                    return $this->sendError('Please select a active department.', 500, $serviceLineError);
+                }
             }
         }
+        if (isset($input['wareHouseLocation'])) {
+            if ($itemReturnMaster->wareHouseLocation != $input['wareHouseLocation']) {
+                $checkWareHouseActive = WarehouseMaster::find($input['wareHouseLocation']);
+                if (empty($checkWareHouseActive)) {
+                    return $this->sendError('WareHouse not found', 500, $wareHouseError);
+                }
 
+                if ($checkWareHouseActive->isActive == 0) {
+                    $itemReturnUpdate = ItemReturnMaster::find($id);
+                    $itemReturnUpdate->wareHouseLocation = null;
+                    $itemReturnUpdate->save();
+                    return $this->sendError('Please select a active warehouse.', 500, $wareHouseError);
+                }
+            }
+        }
 
         if ($itemReturnMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 10;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else{
+                $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            }
+            unset($inputParam);
+
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'ReturnDate' => 'required',
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'wareHouseLocation' => 'required|numeric|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $documentDate = $input['ReturnDate'];
+            $monthBegin = $input['FYBiggin'];
+            $monthEnd = $input['FYEnd'];
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Return date is not within the selected financial period !', 500);
+            }
 
             $checkItems = ItemReturnDetails::where('itemReturnAutoID', $id)
                                             ->count();

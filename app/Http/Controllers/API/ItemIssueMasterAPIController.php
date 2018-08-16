@@ -154,12 +154,17 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
+
         $inputParam = $input;
-        $inputParam["departmentSystmeID"] = 10;
+        $inputParam["departmentSystemID"] = 10;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
-        } else{
+        } else {
             $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
@@ -176,16 +181,16 @@ class ItemIssueMasterAPIController extends AppBaseController
         $monthEnd = $input['FYEnd'];
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Issue Date not between Financial period !', 500);
+            return $this->sendError('Issue date is not within the selected financial period !', 500);
         }
 
         $input['documentSystemID'] = 8;
         $input['documentID'] = 'MI';
 
         $lastSerial = ItemIssueMaster::where('companySystemID', $input['companySystemID'])
-                                    ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-                                    ->orderBy('itemIssueAutoID', 'desc')
-                                    ->first();
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->orderBy('itemIssueAutoID', 'desc')
+            ->first();
 
         $lastSerialNumber = 1;
         if ($lastSerial) {
@@ -225,9 +230,9 @@ class ItemIssueMasterAPIController extends AppBaseController
             $finYear = date("Y");
         }
 
-        $customer = CustomerMaster::where("customerCodeSystem",$input["customerSystemID"])->first();
+        $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
 
-        if(!empty($customer)){
+        if (!empty($customer)) {
             $input["customerID"] = $customer->CutomerCode;
         }
 
@@ -282,9 +287,9 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ItemIssueMaster $itemIssueMaster */
-        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by','created_by','finance_period_by'=> function($query){
+        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by', 'created_by', 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        },'finance_year_by'=> function($query){
+        }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }])->findWithoutFail($id);
 
@@ -344,11 +349,12 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function update($id, UpdateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by','confirmedByName','finance_period_by','finance_year_by',
-            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID']);
+        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by',
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
 
         $input = $this->convertArrayToValue($input);
         $wareHouseError = array('type' => 'wareHouse');
+        $serviceLineError = array('type' => 'serviceLine');
 
         /** @var ItemIssueMaster $itemIssueMaster */
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
@@ -357,47 +363,33 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError('Item Issue Master not found');
         }
 
-        if($input['serviceLineSystemID']){
+        if ($input['serviceLineSystemID']) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
                 return $this->sendError('Department not found');
             }
 
-            if($checkDepartmentActive->isActive == 0){
-                return $this->sendError('Please select a active department',500);
+            if ($checkDepartmentActive->isActive == 0) {
+                $itemIssueUpdate = ItemIssueMaster::find($id);
+                $itemIssueUpdate->serviceLineSystemID = null;
+                $itemIssueUpdate->save();
+                return $this->sendError('Please select a active department', 500,$serviceLineError);
             }
         }
 
-        if($input['wareHouseFrom']){
+        if ($input['wareHouseFrom']) {
             $checkWareHouseActive = WarehouseMaster::find($input['wareHouseFrom']);
             if (empty($checkWareHouseActive)) {
-                return $this->sendError('WareHouse not found',500,$wareHouseError);
+                return $this->sendError('WareHouse not found', 500, $wareHouseError);
             }
 
-            if($checkWareHouseActive->isActive == 0){
+            if ($checkWareHouseActive->isActive == 0) {
                 $itemIssueUpdate = ItemIssueMaster::find($id);
                 $itemIssueUpdate->wareHouseFrom = null;
                 $itemIssueUpdate->save();
-                return $this->sendError('Please select a active warehouse',500,$wareHouseError);
+                return $this->sendError('Please select a active warehouse', 500, $wareHouseError);
             }
         }
-
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYear["success"]) {
-            return $this->sendError($companyFinanceYear["message"], 500);
-        }
-
-        $inputParam = $input;
-        $inputParam["departmentSystmeID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-        if (!$companyFinancePeriod["success"]) {
-            return $this->sendError($companyFinancePeriod["message"], 500);
-        } else{
-            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
-        }
-
-        unset($inputParam);
 
         if (isset($input['issueDate'])) {
             if ($input['issueDate']) {
@@ -405,9 +397,9 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
         }
 
-        $customer = CustomerMaster::where("customerCodeSystem",$input["customerSystemID"])->first();
+        $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
 
-        if(!empty($customer)){
+        if (!empty($customer)) {
             $input["customerID"] = $customer->CutomerCode;
         }
 
@@ -418,16 +410,9 @@ class ItemIssueMasterAPIController extends AppBaseController
             if (!empty($contract)) {
                 $input["contractID"] = $contract->ContractNumber;
             }
-        }else{
+        } else {
             $input['contractUID'] = null;
             $input['contractID'] = null;
-        }
-        $documentDate = $input['issueDate'];
-        $monthBegin = $input['FYBiggin'];
-        $monthEnd = $input['FYEnd'];
-        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-        } else {
-            return $this->sendError('Issue Date not between Financial period !', 500);
         }
 
         if ($input['issueType'] == 2) {
@@ -438,11 +423,11 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                     if (!empty($materielRequest)) {
 
-                       if($input['reqDocID'] != $itemIssueMaster->reqDocID){
-                            if($materielRequest->selectedForIssue == -1){
+                        if ($input['reqDocID'] != $itemIssueMaster->reqDocID) {
+                            if ($materielRequest->selectedForIssue == -1) {
                                 return $this->sendError('This Request already selected. Please check again!', 500);
                             }
-                       }
+                        }
 
                         $input['reqByID'] = $materielRequest->createdUserID;
                         $input['reqDate'] = $materielRequest->RequestedDate;
@@ -465,26 +450,116 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         if ($itemIssueMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 10;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            unset($inputParam);
+
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'issueDate' => 'required',
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'wareHouseFrom' => 'required|numeric|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $documentDate = $input['issueDate'];
+            $monthBegin = $input['FYBiggin'];
+            $monthEnd = $input['FYEnd'];
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Issue date is not within the selected financial period !', 500);
+            }
 
             $checkItems = ItemIssueDetails::where('itemIssueAutoID', $id)
-                                                ->count();
+                ->count();
             if ($checkItems == 0) {
                 return $this->sendError('Every issue should have at least one item', 500);
             }
 
             $checkQuantity = ItemIssueDetails::where('itemIssueAutoID', $id)
-                                    ->where(function ($q){
-                                        $q->where('qtyIssued', '<=', 0)
-                                           ->orWhereNull('qtyIssued');
-                                    })
-                                    ->count();
+                ->where(function ($q) {
+                    $q->where('qtyIssued', '<=', 0)
+                        ->orWhereNull('qtyIssued');
+                })
+                ->count();
             if ($checkQuantity > 0) {
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
             }
 
+            $itemIssueDetails = ItemIssueDetails::where('itemIssueAutoID', $id)->get();
+
+            $finalError = array('cost_zero' => array(),
+                'cost_neg' => array(),
+                'currentStockQty_zero' => array(),
+                'currentWareHouseStockQty_zero' => array(),
+                'currentStockQty_more' => array(),
+                'currentWareHouseStockQty_more' => array());
+            $error_count = 0;
+
+            foreach ($itemIssueDetails as $item) {
+                $updateItem = ItemIssueDetails::find($item['itemIssueDetailID']);
+                $data = array('companySystemID' => $itemIssueMaster->companySystemID,
+                    'itemCodeSystem' => $updateItem->itemCodeSystem,
+                    'wareHouseId' => $itemIssueMaster->wareHouseFrom);
+                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
+                $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+                $updateItem->issueCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                $updateItem->issueCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
+                $updateItem->save();
+
+                if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
+                    array_push($finalError['cost_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
+                    array_push($finalError['cost_neg'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->currentWareHouseStockQty <= 0) {
+                    array_push($finalError['currentStockQty_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->currentStockQty <= 0) {
+                    array_push($finalError['currentWareHouseStockQty_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                    array_push($finalError['currentStockQty_more'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+
+                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                    array_push($finalError['currentWareHouseStockQty_more'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
 
             $amount = ItemIssueDetails::where('itemIssueAutoID', $id)
-                                        ->sum('issueCostRptTotal');
+                ->sum('issueCostRptTotal');
             $input['RollLevForApp_curr'] = 1;
             $params = array('autoID' => $id,
                 'company' => $itemIssueMaster->companySystemID,
@@ -494,10 +569,10 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'amount' => $amount
             );
 
-            $confirm = \Helper::confirmDocument($params);
-            if (!$confirm["success"]) {
-                return $this->sendError($confirm["message"], 500);
-            }
+             $confirm = \Helper::confirmDocument($params);
+             if (!$confirm["success"]) {
+                 return $this->sendError($confirm["message"], 500);
+             }
         }
 
         $employee = \Helper::getEmployeeInfo();
@@ -816,8 +891,8 @@ class ItemIssueMasterAPIController extends AppBaseController
                     ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
 
                 $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
-                                                                ->where('documentSystemID', 1)
-                                                                ->first();
+                    ->where('documentSystemID', 1)
+                    ->first();
 
                 if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
                     //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
@@ -930,21 +1005,21 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $companyPolicy = CompanyPolicyMaster::where('companySystemID',$companyId)
-                                            ->where('companyPolicyCategoryID',22)
-                                            ->first();
+        $companyPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 22)
+            ->first();
 
         $typeId = [];
 
-        if(!empty($companyPolicy)){
-            if($companyPolicy->isYesNO == 0){
+        if (!empty($companyPolicy)) {
+            if ($companyPolicy->isYesNO == 0) {
                 $typeId = [2];
-            }else if($companyPolicy->isYesNO == 1){
+            } else if ($companyPolicy->isYesNO == 1) {
                 $typeId = [1];
             }
         }
 
-        $types = ItemIssueType::whereIn('itemIssueTypeID',$typeId)->get();
+        $types = ItemIssueType::whereIn('itemIssueTypeID', $typeId)->get();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
@@ -998,7 +1073,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
             //->where("selectedForIssue", 0);
             ->where("approved", -1)
-            ->where("serviceLineSystemID",$request['serviceLineSystemID'])
+            ->where("serviceLineSystemID", $request['serviceLineSystemID'])
             ->where("location", $request['wareHouseFrom']);
 
         $search = $input['search'];
@@ -1032,7 +1107,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError('Materiel Issue not found');
         }
 
-        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID,$materielRequest->documentSystemID);
+        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
 
         return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
     }
@@ -1046,7 +1121,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError('Materiel Issue not found');
         }
 
-        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID,$materielRequest->documentSystemID);
+        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
 
         $array = array('entity' => $materielRequest);
         $time = strtotime("now");

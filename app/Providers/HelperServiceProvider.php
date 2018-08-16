@@ -27,5 +27,6 @@ class HelperServiceProvider extends ServiceProvider
         require_once app_path('helper/general_helper.php');
         require_once app_path('helper/Formula.php');
         require_once app_path('helper/email.php');
+        require_once app_path('helper/inventory.php');
     }
 }

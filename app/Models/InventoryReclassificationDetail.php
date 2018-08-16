@@ -164,5 +164,13 @@ class InventoryReclassificationDetail extends Model
         
     ];
 
+    public function unit(){
+        return $this->belongsTo('App\Models\Unit','unitOfMeasure','UnitID');
+    }
+
+    public function itemmaster(){
+        return $this->belongsTo('App\Models\ItemMaster','itemSystemCode','itemCodeSystem');
+    }
+
     
 }

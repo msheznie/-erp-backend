@@ -773,5 +773,10 @@ class TicketMaster extends Model
     {
         return $this->belongsTo('App\Models\FieldMaster','fieldName','FieldID');
     }
+
+    public function rig()
+    {
+        return $this->belongsTo('App\Models\RigMaster','regName','idrigmaster');
+    }
     
 }
