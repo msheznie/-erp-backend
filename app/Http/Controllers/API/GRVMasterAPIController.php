@@ -103,12 +103,30 @@ class GRVMasterAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else{
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+        }
+
+        unset($inputParam);
+
+        /*$companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
 
         if ($companyFinancePeriod) {
             $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod->dateTo;
-        }
+        }*/
 
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
@@ -293,36 +311,10 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYear["success"]) {
-            return $this->sendError($companyFinanceYear["message"], 500);
-        }
-
-        $inputParam = $input;
-        $inputParam["departmentSystmeID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-        if (!$companyFinancePeriod["success"]) {
-            return $this->sendError($companyFinancePeriod["message"], 500);
-        } else{
-            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
-        }
-
-        unset($inputParam);
-
         if (isset($input['stampDate'])) {
             if ($input['stampDate']) {
                 $input['stampDate'] = new Carbon($input['stampDate']);
             }
-        }
-
-        $documentDate = $input['grvDate'];
-        $monthBegin = $input['FYBiggin'];
-        $monthEnd = $input['FYEnd'];
-
-        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-        } else {
-            return $this->sendError('GRV Date not between Financial period !');
         }
 
         $grvType = GRVTypes::where('grvTypeID', $input['grvTypeID'])->first();
@@ -413,6 +405,32 @@ class GRVMasterAPIController extends AppBaseController
 
 
         if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 10;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else{
+                $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            unset($inputParam);
+
+            $documentDate = $input['grvDate'];
+            $monthBegin = $input['FYBiggin'];
+            $monthEnd = $input['FYEnd'];
+
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('GRV Date not between Financial period !');
+            }
 
             //getting total sum of PO detail Amount
             $grvMasterSum = GRVDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
@@ -721,8 +739,9 @@ class GRVMasterAPIController extends AppBaseController
 
         $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
         $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
-        if (isset($request['type']) && $request['type'] == 'add') {
+        if (isset($request['type']) && ($request['type'] == 'add' || $request['type'] == 'edit')) {
             $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
+            $companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
