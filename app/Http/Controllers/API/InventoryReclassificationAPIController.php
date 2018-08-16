@@ -86,7 +86,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $this->inventoryReclassificationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $inventoryReclassifications = $this->inventoryReclassificationRepository->all();
 
-        return $this->sendResponse($inventoryReclassifications->toArray(), 'Inventory Reclassifications retrieved successfully');
+        return $this->sendResponse($inventoryReclassifications->toArray(), 'Inventory reclassifications retrieved successfully');
     }
 
     /**
@@ -148,7 +148,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         }
 
         $inputParam = $input;
-        $inputParam["departmentSystmeID"] = 10;
+        $inputParam["departmentSystemID"] = 10;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
@@ -158,6 +158,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         }
 
         unset($inputParam);
+
         $input['inventoryReclassificationDate'] = new Carbon($input['inventoryReclassificationDate']);
 
         $monthBegin = $input['FYBiggin'];
@@ -165,7 +166,7 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         if (($input['inventoryReclassificationDate'] >= $monthBegin) && ($input['inventoryReclassificationDate'] <= $monthEnd)) {
         } else {
-            return $this->sendError('Reclassification date not between financial period!', 500);
+            return $this->sendError('Reclassification date is not within financial period!', 500);
         }
 
         $segment = SegmentMaster::find($input['serviceLineSystemID']);
@@ -346,7 +347,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                 return $this->sendError('Department not found');
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select a active department', 500);
+                return $this->sendError('Please select an active department', 500);
             }
             $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
         }
@@ -359,7 +360,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             }
 
             $inputParam = $input;
-            $inputParam["departmentSystmeID"] = 10;
+            $inputParam["departmentSystemID"] = 10;
             $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
@@ -375,7 +376,7 @@ class InventoryReclassificationAPIController extends AppBaseController
 
             if (($input['inventoryReclassificationDate'] >= $monthBegin) && ($input['inventoryReclassificationDate'] <= $monthEnd)) {
             } else {
-                return $this->sendError('Reclassification date not between financial period!', 500);
+                return $this->sendError('Reclassification date is not within financial period!', 500);
             }
 
             $checkItems = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
@@ -391,7 +392,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                 })
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty', 500);
+                return $this->sendError('Every item should have at least one minimum Qty', 500);
             }
 
             $amount = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
