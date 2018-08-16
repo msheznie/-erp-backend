@@ -59,7 +59,7 @@ return [
     'mimes'                => 'The :attribute must be a file of type: :values.',
     'mimetypes'            => 'The :attribute must be a file of type: :values.',
     'min'                  => [
-        'numeric' => 'The :attribute must be at least :min.',
+        'numeric' => 'The :attribute field is required.',
         'file'    => 'The :attribute must be at least :min kilobytes.',
         'string'  => 'The :attribute must be at least :min characters.',
         'array'   => 'The :attribute must have at least :min items.',
@@ -103,6 +103,9 @@ return [
         'attribute-name' => [
             'rule-name' => 'custom-message',
         ],
+        'select' => [
+                  'select' => 'The :attribute field is required.'
+            ]
     ],
 
     /*
@@ -116,6 +119,19 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'locationFrom' => 'Location from',
+        'locationTo' => 'Location to',
+        'companyFinanceYearID' => 'Finance year',
+        'companyFinancePeriodID' => 'Finance period',
+        'tranferDate' => 'Transfer Date',
+        'companyToSystemID' => 'Company to',
+        'companyFromSystemID' => 'Company from',
+        'wareHouseFrom' => 'WareHouse',
+        'wareHouseLocation' => 'WareHouse',
+        'serviceLineSystemID' => 'Department',
+        'ReturnDate' => 'Return Date',
+        'issueDate' => 'Issue Date',
+    ],
 
 ];

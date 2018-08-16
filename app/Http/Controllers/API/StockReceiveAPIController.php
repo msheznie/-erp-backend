@@ -142,8 +142,13 @@ class StockReceiveAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
+
         $inputParam = $input;
-        $inputParam["departmentSystmeID"] = 10;
+        $inputParam["departmentSystemID"] = 10;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
@@ -364,59 +369,37 @@ class StockReceiveAPIController extends AppBaseController
         $item['modifiedUser'] = $employee->empID;
         $item['modifiedUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYear["success"]) {
-            return $this->sendError($companyFinanceYear["message"], 500);
-        }
-
-        $inputParam = $input;
-        $inputParam["departmentSystmeID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-        if (!$companyFinancePeriod["success"]) {
-            return $this->sendError($companyFinancePeriod["message"], 500);
-        } else{
-            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
-        }
-
         if (isset($input['receivedDate'])) {
             if ($input['receivedDate']) {
                 $input['receivedDate'] = new Carbon($input['receivedDate']);
             }
         }
+        if (isset($input['serviceLineSystemID'])) {
+            //checking selected segment is active
+            $segment = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->where('isActive', 1)
+                ->first();
 
-        $documentDate = $input['receivedDate'];
-        $monthBegin = $input['FYBiggin'];
-        $monthEnd = $input['FYEnd'];
+            if (empty($segment)) {
+                return $this->sendError('Selected segment is not active. Please select an active segment');
+            }
 
-        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-        } else {
-            return $this->sendError('Received Date not between Financial period !');
+            if ($input['locationFrom'] == $input['locationTo']) {
+                return $this->sendError('Location From and Location To  cannot be same');
+            }
+
+            if ($segment) {
+                $input['serviceLineCode'] = $segment->ServiceLineCode;
+            }
         }
 
-        //checking selected segment is active
-        $segment = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
-            ->where('companySystemID', $input['companySystemID'])
-            ->where('isActive', 1)
-            ->first();
-
-        if (empty($segment)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+        if (isset($input['companyFromSystemID'])) {
+            $companyFrom = Company::where('companySystemID', $input['companyFromSystemID'])->first();
+            if ($companyFrom) {
+                $input['companyFrom'] = $companyFrom->CompanyID;
+            }
         }
-
-        if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot be same');
-        }
-
-        if ($segment) {
-            $input['serviceLineCode'] = $segment->ServiceLineCode;
-        }
-
-        $companyFrom = Company::where('companySystemID', $input['companyFromSystemID'])->first();
-        if ($companyFrom) {
-            $input['companyFrom'] = $companyFrom->CompanyID;
-        }
-
         if ($input['interCompanyTransferYN']) {
             $input['interCompanyTransferYN'] = -1;
         } else {
@@ -424,6 +407,32 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         if ($stockReceive->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 10;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else{
+                $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            unset($inputParam);
+            $documentDate = $input['receivedDate'];
+            $monthBegin = $input['FYBiggin'];
+            $monthEnd = $input['FYEnd'];
+
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Received Date not between Financial period !');
+            }
 
             $stockReceiveDetailExist = StockReceiveDetails::where('stockReceiveAutoID', $id)
                 ->count();

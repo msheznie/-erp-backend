@@ -316,7 +316,10 @@ class SupplierMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $supplierMasters = DB::table('erp_documentapproved')->select('suppliermaster.*', 'erp_documentapproved.documentApprovedID', 'rollLevelOrder', 'currencymaster.CurrencyCode', 'suppliercategorymaster.categoryDescription', 'approvalLevelID', 'documentSystemCode')
+        $supplierMasters = DB::table('erp_documentapproved')
+            ->select('suppliermaster.*', 'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder', 'currencymaster.CurrencyCode',
+                'suppliercategorymaster.categoryDescription', 'approvalLevelID', 'documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')->
                 on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')->
@@ -398,13 +401,11 @@ class SupplierMasterAPIController extends AppBaseController
     public function store(CreateSupplierMasterAPIRequest $request)
     {
         $input = $this->convertArrayToValue($request->all());
+        $employee = \Helper::getEmployeeInfo();
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-
-        $empId = $user->employee['empID'];
         $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = $empId;
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
 
         $input['uniqueTextcode'] = 'S';
 
@@ -447,16 +448,12 @@ class SupplierMasterAPIController extends AppBaseController
     public function updateSupplierMaster(Request $request)
     {
         $input = $this->convertArrayToValue($request->all());
-        $userId = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
-        $empId = $user->employee['empID'];
-        $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = $empId;
-        $empName = $user->employee['empName'];
-
+        $employee = \Helper::getEmployeeInfo();
+        $input['modifiedPc']   = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] =  $employee->employeeSystemID;
 
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
-
 
         if ($company) {
             $input['primaryCompanyID'] = $company->CompanyID;
