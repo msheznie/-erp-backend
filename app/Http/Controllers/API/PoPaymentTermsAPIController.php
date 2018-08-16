@@ -277,14 +277,14 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         $orderAmount = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'];
         $orderAmountRounded = round($orderAmount, $supplierCurrencyDecimalPlace);
-        $discountAmount = $purchaseOrder->poDiscountAmount;
-        $vatAmount = $purchaseOrder->VATAmount;
+        $discountAmount = $input['discount'];
+        $vatAmount = $input['vat'];
 
         if (!empty($poAdvancePaymentType)) {
             foreach ($poAdvancePaymentType as $advance) {
 
                 //calculation advance amount
-                $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmountRounded - $discountAmount) + $vatAmount);
+                $calculatePer = ($advance['comPercentage'] / 100) * (($orderAmount - $discountAmount) + $vatAmount);
                 $roundedCalculatePer = round($calculatePer, $supplierCurrencyDecimalPlace);
 
                 //update payment terms table
