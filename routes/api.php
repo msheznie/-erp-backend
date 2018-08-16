@@ -668,6 +668,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('taxdetails', 'TaxdetailAPIController');
     Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
     Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
+    Route::get('getInvReclassificationAudit', 'InventoryReclassificationAPIController@getInvReclassificationAudit');
+    Route::post('getInvReclassificationApprovedByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovedByUser');
+    Route::post('getInvReclassificationApprovalByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovalByUser');
     Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification');
     Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification');
     Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
