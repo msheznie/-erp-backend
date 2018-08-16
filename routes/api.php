@@ -670,6 +670,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
     Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
 
+    Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
+    Route::resource('debit_notes', 'DebitNoteAPIController');
+    Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -700,3 +704,4 @@ Route::get('runQueueSR', function () {
     // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
+
