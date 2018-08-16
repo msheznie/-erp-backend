@@ -18,8 +18,11 @@ use App\Http\Requests\API\UpdateInventoryReclassificationAPIRequest;
 use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\InventoryReclassification;
+use App\Models\InventoryReclassificationDetail;
+use App\Models\ItemAssigned;
 use App\Models\SegmentMaster;
 use App\Models\WarehouseMaster;
+use App\Models\YesNoSelection;
 use App\Repositories\InventoryReclassificationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -160,24 +163,46 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         if (($input['inventoryReclassificationDate'] >= $monthBegin) && ($input['inventoryReclassificationDate'] <= $monthEnd)) {
         } else {
-            return $this->sendError('Reclassification Date not between Financial period !');
+            return $this->sendError('Reclassification date not between financial period!',500);
         }
 
-        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+        $segment = SegmentMaster::find($input['serviceLineSystemID']);
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        $company = Company::find($input['companySystemID']);
         if ($company) {
-            $input['companyID'] = $company->companyID;
+            $input['companyID'] = $company->CompanyID;
         }
 
-        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+        $documentMaster = DocumentMaster::find($input['documentSystemID']);
         if ($documentMaster) {
-            $input['documentID'] = $company->documentID;
+            $input['documentID'] = $documentMaster->documentID;
         }
 
+        $lastSerial = InventoryReclassification::where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->orderBy('inventoryreclassificationID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
+        if ($companyFinanceYear["message"]) {
+            $startYear = $companyFinanceYear["message"]['bigginingDate'];
+            $finYearExp = explode('-', $startYear);
+            $finYear = $finYearExp[0];
+        } else {
+            $finYear = date("Y");
+        }
+        if ($documentMaster) {
+            $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['documentCode'] = $documentCode;
+        }
+        $input['serialNo'] = $lastSerialNumber;
         $input['createdPCid'] = gethostname();
         $input['createdUserID'] = \Helper::getEmployeeID();
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
@@ -286,6 +311,17 @@ class InventoryReclassificationAPIController extends AppBaseController
     public function update($id, UpdateInventoryReclassificationAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $validator = \Validator::make($request->all(), [
+            'serviceLineSystemID' => 'required',
+            'narration' => 'required',
+            'inventoryReclassificationDate' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
 
         /** @var InventoryReclassification $inventoryReclassification */
         $inventoryReclassification = $this->inventoryReclassificationRepository->findWithoutFail($id);
@@ -294,9 +330,92 @@ class InventoryReclassificationAPIController extends AppBaseController
             return $this->sendError('Inventory Reclassification not found');
         }
 
+        $input['inventoryReclassificationDate'] = new Carbon($input['inventoryReclassificationDate']);
+
+        if ($input['serviceLineSystemID']) {
+            $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Department not found');
+            }
+            if ($checkDepartmentActive->isActive == 0) {
+                return $this->sendError('Please select a active department', 500);
+            }
+            $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
+        }
+
+        if ($inventoryReclassification->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystmeID"] = 10;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else{
+                $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            unset($inputParam);
+
+            $monthBegin = $input['FYBiggin'];
+            $monthEnd = $input['FYEnd'];
+
+            if (($input['inventoryReclassificationDate'] >= $monthBegin) && ($input['inventoryReclassificationDate'] <= $monthEnd)) {
+            } else {
+                return $this->sendError('Reclassification date not between financial period!',500);
+            }
+
+            $checkItems = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
+                ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every recalssification should have at least one item', 500);
+            }
+
+            $checkQuantity = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
+                ->where(function ($q){
+                    $q->where('currentStockQty', '<=', 0)
+                        ->orWhereNull('currentStockQty');
+                })
+                ->count();
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every Item should have at least one minimum Qty', 500);
+            }
+
+            $amount = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
+                ->sum('unitCostRpt');
+            $input['RollLevForApp_curr'] = 1;
+            $params = array('autoID' => $id,
+                'company' => $inventoryReclassification->companySystemID,
+                'document' => $inventoryReclassification->documentSystemID,
+                'segment' => $input['serviceLineSystemID'],
+                'category' => 0,
+                'amount' => $amount
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
+        unset($input['confirmedYN']);
+        unset($input['confirmedByEmpSystemID']);
+        unset($input['confirmedByEmpID']);
+        unset($input['confirmedByName']);
+        unset($input['confirmedDate']);
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+
         $inventoryReclassification = $this->inventoryReclassificationRepository->update($input, $id);
 
-        return $this->sendResponse($inventoryReclassification->toArray(), 'InventoryReclassification updated successfully');
+        return $this->sendResponse($inventoryReclassification->toArray(), 'Inventory reclassification updated successfully');
     }
 
     /**
@@ -419,15 +538,36 @@ class InventoryReclassificationAPIController extends AppBaseController
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
         $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
 
         $output = array(
             'segments' => $segments,
             'wareHouseLocation' => $wareHouseLocation,
             'financialYears' => $financialYears,
-            'companyFinanceYear' => $companyFinanceYear
+            'companyFinanceYear' => $companyFinanceYear,
+            'yesNoSelection' => $yesNoSelection
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+
+    public function getItemsOptionForReclassification(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $items = ItemAssigned::where('companySystemID', $companyID)->where('financeCategoryMaster',1);
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
 }
