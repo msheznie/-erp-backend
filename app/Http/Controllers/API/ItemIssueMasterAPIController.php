@@ -524,6 +524,8 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
                 $updateItem->issueCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
                 $updateItem->issueCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
+                $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
+                $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
                 $updateItem->save();
 
                 if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
