@@ -16,13 +16,16 @@
  * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as getApprovedGRVForCurrentUser() For load Master View
  * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as approveGoodReceiptVoucher() For Approve GRV Master
  * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as rejectGoodReceiptVoucher() For Reject GRV Master
+ * -- Date: 17-august 2018 By: Nazir Description: Added new functions named as getGoodReceiptVoucherReopen() For Reopen GRV Master
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
+use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
+use App\Models\EmployeesDepartment;
 use App\Models\GRVMaster;
 use App\Models\CompanyPolicyMaster;
 use App\Models\PoAdvancePayment;
@@ -1088,6 +1091,105 @@ class GRVMasterAPIController extends AppBaseController
         }
 
 
+    }
+
+    public function getGoodReceiptVoucherReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $grvAutoID = $input['grvAutoID'];
+
+        $grvMasterData = GRVMaster::find($grvAutoID);
+        $emails = array();
+        if (empty($grvMasterData)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        if ($grvMasterData->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this GRV it is already partially approved');
+        }
+
+        if ($grvMasterData->approved == -1) {
+            return $this->sendError('You cannot reopen this GRV it is already fully approved');
+        }
+
+        if ($grvMasterData->grvConfirmedYN == 0) {
+            return $this->sendError('You cannot reopen this GRV, it is not confirmed');
+        }
+
+        // updating fields
+        $grvMasterData->grvConfirmedYN = 0;
+        $grvMasterData->grvConfirmedByEmpSystemID = null;
+        $grvMasterData->grvConfirmedByEmpID = null;
+        $grvMasterData->grvConfirmedByName = null;
+        $grvMasterData->grvConfirmedDate = null;
+        $grvMasterData->RollLevForApp_curr = 1;
+        $grvMasterData->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $grvMasterData->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $grvMasterData->grvPrimaryCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $grvMasterData->grvPrimaryCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $grvMasterData->companySystemID)
+            ->where('documentSystemCode', $grvMasterData->grvAutoID)
+            ->where('documentSystemID', $grvMasterData->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $grvMasterData->companySystemID)
+                    ->where('documentSystemID', $grvMasterData->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $grvAutoID)
+            ->where('companySystemID', $grvMasterData->companySystemID)
+            ->where('documentSystemID', $grvMasterData->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($grvMasterData->toArray(), 'Good Receipt Voucher reopened successfully');
     }
 
 }

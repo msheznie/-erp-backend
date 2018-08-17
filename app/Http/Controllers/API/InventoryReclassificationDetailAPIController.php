@@ -172,6 +172,9 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $input['unitCostLocal'] = $item->wacValueLocal;
         $input['unitCostRpt'] = $item->wacValueReporting;
 
+        $input['localCurrencyID'] = $item->wacValueLocalCurrencyID;
+        $input['reportingCurrencyID'] = $item->wacValueReportingCurrencyID;
+
         if ($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0) {
             return $this->sendError("Cost is 0. You cannot reclassify.", 500);
         }
@@ -443,7 +446,7 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
     public function getItemsByReclassification(Request $request)
     {
         $input = $request->all();
-        $items = InventoryReclassificationDetail::with(['unit', 'itemmaster'])->where('inventoryreclassificationID', $input["inventoryreclassificationID"])->get();
+        $items = InventoryReclassificationDetail::with(['unit', 'itemmaster','localcurrency','reportingcurrency'])->where('inventoryreclassificationID', $input["inventoryreclassificationID"])->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 }

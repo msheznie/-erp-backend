@@ -259,6 +259,28 @@ class Helper
                     $docInforArr["modelName"] = 'InventoryReclassification';
                     $docInforArr["primarykey"] = 'inventoryreclassificationID';
                     break;
+                case 24:
+                    $docInforArr["documentCodeColumnName"] = 'purchaseReturnCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_purchasereturnmaster';
+                    $docInforArr["modelName"] = 'PurchaseReturn';
+                    $docInforArr["primarykey"] = 'purhaseReturnAutoID';
+                    break;
+                case 20:
+                    $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_custinvoicedirect';
+                    $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                    $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -814,8 +836,8 @@ class Helper
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
 
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
-                                $itemMaster = $namespacedModel::selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
-                                $itemAssign = Models\ItemAssigned::insert($itemMaster->toArray());
+                                $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp')->join('companymaster','companySystemID','=','primaryCompanySystemID')->where('itemCodeSystem',$input["documentSystemCode"])->first();
+                                $itemAssign = Models\ItemAssigned::insert(collect($itemMaster)->toArray());
                             }
 
                             if ($input["documentSystemID"] == 56) { //Auto assign item to supplier table
