@@ -247,26 +247,19 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
         $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
 
-        $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
-            ->where('companySystemID', $companySystemID)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
+        $data = array('companySystemID' => $stockTransferMaster->companySystemID,
+                    'itemCodeSystem' => $input['itemCode'],
+                    'wareHouseId' => $stockTransferMaster->locationFrom);
 
-        $currentWareHouseStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
-                                                ->where('companySystemID', $companySystemID)
-                                                ->where('wareHouseSystemCode', $stockTransferMaster->locationFrom)
-                                                ->groupBy('itemSystemCode')
-                                                ->sum('inOutQty');
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+        $input['warehouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
 
-        $input['currentStockQty']   = $currentStockQty;
-        $input['warehouseStockQty'] = $currentWareHouseStockQty;
-
-
-        if ($currentWareHouseStockQty <= 0) {
+        if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
             return $this->sendError("Warehouse stock Qty is 0. You cannot issue", 500);
         }
 
-        if ($currentStockQty <= 0) {
+        if ($itemCurrentCostAndQty['currentStockQty'] <= 0) {
             return $this->sendError("Stock Qty is 0. You cannot issue", 500);
         }
 

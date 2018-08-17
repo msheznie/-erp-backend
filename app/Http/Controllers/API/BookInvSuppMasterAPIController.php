@@ -8,6 +8,7 @@
  * -- Create date : 08 - August 2018
  * -- Description : This file contains the all CRUD for Purchase Order
  * -- REVISION HISTORY
+ * -- Date: 08-August 2018 By: Nazir Description: Added new function getInvoiceMasterRecord(),
  */
 namespace App\Http\Controllers\API;
 
@@ -287,7 +288,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $this->sendResponse($id, 'Book Inv Supp Master deleted successfully');
     }
 
-
     public function getInvoiceMasterRecord(Request $request)
     {
         $input = $request->all();
@@ -304,6 +304,5 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv','confirmed_by'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
-
     }
 }

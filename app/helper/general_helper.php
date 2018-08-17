@@ -825,8 +825,8 @@ class Helper
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
 
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
-                                $itemMaster = $namespacedModel::selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
-                                $itemAssign = Models\ItemAssigned::insert($itemMaster->toArray());
+                                $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
+                                $itemAssign = Models\ItemAssigned::insert(collect($itemMaster)->toArray());
                             }
 
                             if ($input["documentSystemID"] == 56) { //Auto assign item to supplier table
@@ -834,10 +834,25 @@ class Helper
                                 $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
                             }
 
+                            /*if ($input["documentSystemID"] == 61) { //create fixed asset
+                                $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
+                                $qtyRangeArr= [];
+                                if ($fixeAssetDetail) {
+                                    foreach ($fixeAssetDetail as $val) {
+                                        if ($val["currentStockQty"]) {
+                                            $qtyRange = range(1, $val["currentStockQty"]);
+                                            if ($qtyRange) {
+                                                $data["departmentSystemID"] = 10;
+                                            }
+                                        }
+                                    }
+                                }
+                            }*/
+
                             // insert the record to item ledger
                             $jobIL = ItemLedgerInsert::dispatch($masterData);
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10) {
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 61) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);

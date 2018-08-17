@@ -460,7 +460,6 @@ class StockTransferAPIController extends AppBaseController
         }
 
 
-
         $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
         if ($companyTo) {
             $input['companyTo'] = $companyTo->CompanyID;
@@ -548,40 +547,39 @@ class StockTransferAPIController extends AppBaseController
             $error_count = 0;
 
             foreach ($itemTransferDetails as $item) {
-                $updateItem = StockTransferDetails::find($item['itemIssueDetailID']);
+                $updateItem = StockTransferDetails::find($item['stockTransferDetailsID']);
                 $data = array('companySystemID' => $stockTransfer->companySystemID,
-                    'itemCodeSystem' => $updateItem->itemCodeSystem,
-                    'wareHouseId' => $stockTransfer->wareHouseFrom);
+                               'itemCodeSystem' => $updateItem->itemCodeSystem,
+                               'wareHouseId' => $stockTransfer->locationFrom);
                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
                 $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
-                $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-                $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
-                $updateItem->issueCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
-                $updateItem->issueCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
+                $updateItem->warehouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                $updateItem->unitCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                $updateItem->unitCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
                 $updateItem->save();
 
-                if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
+                if ($updateItem->unitCostLocal == 0 || $updateItem->unitCostRpt == 0) {
                     array_push($finalError['cost_zero'], $updateItem->itemPrimaryCode);
                     $error_count++;
                 }
-                if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
+                if ($updateItem->unitCostLocal < 0 || $updateItem->unitCostRpt < 0) {
                     array_push($finalError['cost_neg'], $updateItem->itemPrimaryCode);
                     $error_count++;
                 }
-                if ($updateItem->currentWareHouseStockQty <= 0) {
+                if ($updateItem->currentStockQty <= 0) {
                     array_push($finalError['currentStockQty_zero'], $updateItem->itemPrimaryCode);
                     $error_count++;
                 }
-                if ($updateItem->currentStockQty <= 0) {
+                if ($updateItem->warehouseStockQty <= 0) {
                     array_push($finalError['currentWareHouseStockQty_zero'], $updateItem->itemPrimaryCode);
                     $error_count++;
                 }
-                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                if ($updateItem->qty > $updateItem->currentStockQty) {
                     array_push($finalError['currentStockQty_more'], $updateItem->itemPrimaryCode);
                     $error_count++;
                 }
 
-                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                if ($updateItem->qty > $updateItem->warehouseStockQty) {
                     array_push($finalError['currentWareHouseStockQty_more'], $updateItem->itemPrimaryCode);
                     $error_count++;
                 }
@@ -591,8 +589,6 @@ class StockTransferAPIController extends AppBaseController
             if ($error_count > 0) {
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
-
-
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => 0);
             $confirm = \Helper::confirmDocument($params);
