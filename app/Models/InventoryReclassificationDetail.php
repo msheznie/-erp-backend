@@ -126,7 +126,9 @@ class InventoryReclassificationDetail extends Model
         'financeGLcodePL',
         'includePLForGRVYN',
         'currentStockQty',
+        'localCurrencyID',
         'unitCostLocal',
+        'reportingCurrencyID',
         'unitCostRpt',
         'timestamp'
     ];
@@ -151,7 +153,9 @@ class InventoryReclassificationDetail extends Model
         'financeGLcodePL' => 'string',
         'includePLForGRVYN' => 'integer',
         'currentStockQty' => 'float',
+        'localCurrencyID' => 'integer',
         'unitCostLocal' => 'float',
+        'reportingCurrencyID' => 'integer',
         'unitCostRpt' => 'float'
     ];
 
@@ -170,6 +174,20 @@ class InventoryReclassificationDetail extends Model
 
     public function itemmaster(){
         return $this->belongsTo('App\Models\ItemMaster','itemSystemCode','itemCodeSystem');
+    }
+
+    public function localcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID','currencyID');
+    }
+
+    public function reportingcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'reportingCurrencyID','currencyID');
+    }
+
+    public function master(){
+        return $this->belongsTo('App\Models\InventoryReclassification','inventoryreclassificationID','inventoryreclassificationID');
     }
 
     

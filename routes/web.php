@@ -1,1 +1,4 @@
 
+
+
+Route::resource('fixedAssetMasters', 'FixedAssetMasterController');

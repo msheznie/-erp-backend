@@ -482,6 +482,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
     Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV');
     Route::post('GRVSegmentChkActive', 'GRVMasterAPIController@GRVSegmentChkActive');
+    Route::post('getGoodReceiptVoucherReopen', 'GRVMasterAPIController@getGoodReceiptVoucherReopen');
     Route::get('purchaseOrderForGRV', 'ProcumentOrderAPIController@purchaseOrderForGRV');
     Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV');
     Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO');
@@ -705,6 +706,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('rig_masters', 'RigMasterAPIController');
 
 
+    Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails');
+
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -744,3 +748,6 @@ Route::get('runQueueSR', function () {
 
 
 
+
+
+Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
