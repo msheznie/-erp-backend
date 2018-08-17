@@ -20,6 +20,7 @@ use App\Models\DocumentMaster;
 use App\Models\InventoryReclassification;
 use App\Models\InventoryReclassificationDetail;
 use App\Models\ItemAssigned;
+use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
@@ -27,6 +28,7 @@ use App\Repositories\InventoryReclassificationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -84,7 +86,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $this->inventoryReclassificationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $inventoryReclassifications = $this->inventoryReclassificationRepository->all();
 
-        return $this->sendResponse($inventoryReclassifications->toArray(), 'Inventory Reclassifications retrieved successfully');
+        return $this->sendResponse($inventoryReclassifications->toArray(), 'Inventory reclassifications retrieved successfully');
     }
 
     /**
@@ -146,16 +148,17 @@ class InventoryReclassificationAPIController extends AppBaseController
         }
 
         $inputParam = $input;
-        $inputParam["departmentSystmeID"] = 10;
+        $inputParam["departmentSystemID"] = 10;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
-        } else{
+        } else {
             $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
 
         unset($inputParam);
+
         $input['inventoryReclassificationDate'] = new Carbon($input['inventoryReclassificationDate']);
 
         $monthBegin = $input['FYBiggin'];
@@ -163,7 +166,7 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         if (($input['inventoryReclassificationDate'] >= $monthBegin) && ($input['inventoryReclassificationDate'] <= $monthEnd)) {
         } else {
-            return $this->sendError('Reclassification date not between financial period!',500);
+            return $this->sendError('Reclassification date is not within financial period!', 500);
         }
 
         $segment = SegmentMaster::find($input['serviceLineSystemID']);
@@ -253,7 +256,11 @@ class InventoryReclassificationAPIController extends AppBaseController
     public function show($id)
     {
         /** @var InventoryReclassification $inventoryReclassification */
-        $inventoryReclassification = $this->inventoryReclassificationRepository->findWithoutFail($id);
+        $inventoryReclassification = $this->inventoryReclassificationRepository->with(['confirmed_by','created_by','financeperiod_by'=> function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        },'financeyear_by'=> function($query){
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($inventoryReclassification)) {
             return $this->sendError('Inventory Reclassification not found');
@@ -311,6 +318,8 @@ class InventoryReclassificationAPIController extends AppBaseController
     public function update($id, UpdateInventoryReclassificationAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['created_by','confirmedByName','financeperiod_by','financeyear_by',
+            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID']);
         $input = $this->convertArrayToValue($input);
 
         $validator = \Validator::make($request->all(), [
@@ -338,7 +347,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                 return $this->sendError('Department not found');
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select a active department', 500);
+                return $this->sendError('Please select an active department', 500);
             }
             $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
         }
@@ -351,11 +360,11 @@ class InventoryReclassificationAPIController extends AppBaseController
             }
 
             $inputParam = $input;
-            $inputParam["departmentSystmeID"] = 10;
+            $inputParam["departmentSystemID"] = 10;
             $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
-            } else{
+            } else {
                 $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
                 $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
             }
@@ -367,7 +376,7 @@ class InventoryReclassificationAPIController extends AppBaseController
 
             if (($input['inventoryReclassificationDate'] >= $monthBegin) && ($input['inventoryReclassificationDate'] <= $monthEnd)) {
             } else {
-                return $this->sendError('Reclassification date not between financial period!',500);
+                return $this->sendError('Reclassification date is not within financial period!', 500);
             }
 
             $checkItems = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
@@ -377,13 +386,13 @@ class InventoryReclassificationAPIController extends AppBaseController
             }
 
             $checkQuantity = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
-                ->where(function ($q){
+                ->where(function ($q) {
                     $q->where('currentStockQty', '<=', 0)
                         ->orWhereNull('currentStockQty');
                 })
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty', 500);
+                return $this->sendError('Every item should have at least one minimum Qty', 500);
             }
 
             $amount = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
@@ -402,12 +411,6 @@ class InventoryReclassificationAPIController extends AppBaseController
                 return $this->sendError($confirm["message"], 500);
             }
         }
-
-        unset($input['confirmedYN']);
-        unset($input['confirmedByEmpSystemID']);
-        unset($input['confirmedByEmpID']);
-        unset($input['confirmedByName']);
-        unset($input['confirmedDate']);
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = \Helper::getEmployeeID();
@@ -518,7 +521,8 @@ class InventoryReclassificationAPIController extends AppBaseController
             ->make(true);
     }
 
-    public function getInvReclassificationFormData(Request $request){
+    public function getInvReclassificationFormData(Request $request)
+    {
 
         $companyId = $request['companyId'];
 
@@ -528,12 +532,6 @@ class InventoryReclassificationAPIController extends AppBaseController
         }
         $segments = $segments->get();
 
-        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
-        if (isset($request['type']) && $request['type'] != 'filter') {
-            $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
-        }
-        $wareHouseLocation = $wareHouseLocation->get();
-
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
@@ -541,12 +539,21 @@ class InventoryReclassificationAPIController extends AppBaseController
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
+        $month = Months::all();
+
+        $years = InventoryReclassification::select(DB::raw("YEAR(createdDateTime) as year"))
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get();
+
         $output = array(
             'segments' => $segments,
-            'wareHouseLocation' => $wareHouseLocation,
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
-            'yesNoSelection' => $yesNoSelection
+            'yesNoSelection' => $yesNoSelection,
+            'month' => $month,
+            'years' => $years,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -557,7 +564,7 @@ class InventoryReclassificationAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyID = $input['companyID'];
-        $items = ItemAssigned::where('companySystemID', $companyID)->where('financeCategoryMaster',1);
+        $items = ItemAssigned::where('companySystemID', $companyID)->where('financeCategoryMaster', 1);
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
             $items = $items->where(function ($query) use ($search) {
@@ -570,4 +577,193 @@ class InventoryReclassificationAPIController extends AppBaseController
         $items = $items->take(20)->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
+
+
+    public function getInvReclassificationAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $invReclassification = $this->inventoryReclassificationRepository->getAudit($id);
+
+        if (empty($invReclassification)) {
+            return $this->sendError('Inventory Reclassification not found');
+        }
+
+        $invReclassification->docRefNo = \Helper::getCompanyDocRefNo($invReclassification->companySystemID,$invReclassification->documentSystemID);
+
+        return $this->sendResponse($invReclassification->toArray(), 'Inventory reclassification retrieved successfully');
+    }
+
+
+    public function getInvReclassificationApprovalByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $itemIssueMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_inventoryreclassification.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As ServiceLineDes',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $query->whereIn('employeesdepartments.documentSystemID', [61])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_inventoryreclassification', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'inventoryreclassificationID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_inventoryreclassification.companySystemID', $companyId)
+                    ->where('erp_inventoryreclassification.approved', 0)
+                    ->where('erp_inventoryreclassification.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('serviceline', 'erp_inventoryreclassification.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [61])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemIssueMaster->where('erp_inventoryreclassification.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemIssueMaster->whereMonth('erp_inventoryreclassification.issueDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemIssueMaster->whereYear('erp_inventoryreclassification.issueDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
+                $query->where('documentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($itemIssueMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('inventoryreclassificationID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+    public function getInvReclassificationApprovedByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $itemIssueMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_inventoryreclassification.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As ServiceLineDes',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_inventoryreclassification', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'inventoryreclassificationID')
+                    ->where('erp_inventoryreclassification.companySystemID', $companyId)
+                    ->where('erp_inventoryreclassification.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('serviceline', 'erp_inventoryreclassification.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [61])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemIssueMaster->where('erp_inventoryreclassification.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemIssueMaster->whereMonth('erp_inventoryreclassification.issueDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemIssueMaster->whereYear('erp_inventoryreclassification.issueDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
+                $query->where('documentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($itemIssueMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('inventoryreclassificationID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
 }

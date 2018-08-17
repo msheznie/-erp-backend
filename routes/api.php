@@ -627,7 +627,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('contracts', 'ContractAPIController');
     Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
 
-    Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+
     Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 
     Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
@@ -658,8 +658,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
     Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView');
     Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData');
-
+    Route::post('getCustomerInvoicePerformaDetails', 'CustomerInvoiceDirectAPIController@getCustomerInvoicePerformaDetails');
     Route::get('getContractByCustomer', 'CustomerMasterAPIController@getContractByCustomer');
+    Route::post('saveCustomerinvoicePerforma', 'CustomerInvoiceDirectAPIController@saveCustomerinvoicePerforma');
+    Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail');
+    Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails');
 
     Route::resource('performa_details', 'PerformaDetailsAPIController');
     Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
@@ -668,9 +671,36 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('taxdetails', 'TaxdetailAPIController');
     Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
     Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
+    Route::get('getInvReclassificationAudit', 'InventoryReclassificationAPIController@getInvReclassificationAudit');
+    Route::post('getInvReclassificationApprovedByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovedByUser');
+    Route::post('getInvReclassificationApprovalByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovalByUser');
     Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification');
     Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification');
     Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
+    Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+    Route::resource('performa_details', 'PerformaDetailsAPIController');
+
+    Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
+
+    Route::resource('ticket_masters', 'TicketMasterAPIController');
+
+    Route::resource('field_masters', 'FieldMasterAPIController');
+
+    Route::resource('taxdetails', 'TaxdetailAPIController');
+
+    Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
+
+    Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
+
+
+
+    Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
+    Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
+    Route::resource('debit_notes', 'DebitNoteAPIController');
+    Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
+    Route::resource('performa_masters', 'PerformaMasterAPIController');
+    Route::resource('rig_masters', 'RigMasterAPIController');
+
 
 });
 
@@ -702,3 +732,12 @@ Route::get('runQueueSR', function () {
     // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
+
+
+
+
+
+
+
+
+
