@@ -260,7 +260,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         },'financeyear_by'=> function($query){
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        },'segment_by'])->findWithoutFail($id);
 
         if (empty($inventoryReclassification)) {
             return $this->sendError('Inventory Reclassification not found');
@@ -319,7 +319,7 @@ class InventoryReclassificationAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by','confirmedByName','financeperiod_by','financeyear_by',
-            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID']);
+            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID','segment_by']);
         $input = $this->convertArrayToValue($input);
 
         $validator = \Validator::make($request->all(), [
@@ -609,7 +609,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $empID = \Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
-        $itemIssueMaster = DB::table('erp_documentapproved')
+        $reclassifyMaster = DB::table('erp_documentapproved')
             ->select(
                 'erp_inventoryreclassification.*',
                 'employees.empName As created_emp',
@@ -644,20 +644,20 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $itemIssueMaster->where('erp_inventoryreclassification.serviceLineSystemID', $input['serviceLineSystemID']);
+                $reclassifyMaster->where('erp_inventoryreclassification.serviceLineSystemID', $input['serviceLineSystemID']);
             }
         }
 
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $itemIssueMaster->whereMonth('erp_inventoryreclassification.issueDate', '=', $input['month']);
+                $reclassifyMaster->whereMonth('erp_inventoryreclassification.issueDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $itemIssueMaster->whereYear('erp_inventoryreclassification.issueDate', '=', $input['year']);
+                $reclassifyMaster->whereYear('erp_inventoryreclassification.issueDate', '=', $input['year']);
             }
         }
 
@@ -665,13 +665,13 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
+            $reclassifyMaster = $reclassifyMaster->where(function ($query) use ($search) {
                 $query->where('documentCode', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%");
             });
         }
 
-        return \DataTables::of($itemIssueMaster)
+        return \DataTables::of($reclassifyMaster)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -702,7 +702,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $empID = \Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
-        $itemIssueMaster = DB::table('erp_documentapproved')
+        $reclassifyMaster = DB::table('erp_documentapproved')
             ->select(
                 'erp_inventoryreclassification.*',
                 'employees.empName As created_emp',
@@ -726,19 +726,19 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $itemIssueMaster->where('erp_inventoryreclassification.serviceLineSystemID', $input['serviceLineSystemID']);
+                $reclassifyMaster->where('erp_inventoryreclassification.serviceLineSystemID', $input['serviceLineSystemID']);
             }
         }
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $itemIssueMaster->whereMonth('erp_inventoryreclassification.issueDate', '=', $input['month']);
+                $reclassifyMaster->whereMonth('erp_inventoryreclassification.issueDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $itemIssueMaster->whereYear('erp_inventoryreclassification.issueDate', '=', $input['year']);
+                $reclassifyMaster->whereYear('erp_inventoryreclassification.issueDate', '=', $input['year']);
             }
         }
 
@@ -746,13 +746,13 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
+            $reclassifyMaster = $reclassifyMaster->where(function ($query) use ($search) {
                 $query->where('documentCode', 'LIKE', "%{$search}%")
                     ->orWhere('narration', 'LIKE', "%{$search}%");
             });
         }
 
-        return \DataTables::of($itemIssueMaster)
+        return \DataTables::of($reclassifyMaster)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {

@@ -741,3 +741,6 @@ Route::get('runQueueSR', function () {
 
 
 
+
+
+Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');

@@ -212,6 +212,32 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRpt' => 'unitCostRpt',
                             'comments' => 'comments');
                         break;
+                    case 61: //Inventory Reclassification
+                        $docInforArr["approvedColumnName"] = 'approved';
+                        $docInforArr["modelName"] = 'InventoryReclassification';
+                        $docInforArr["childRelation"] = 'details';
+                        $docInforArr["autoID"] = 'inventoryreclassificationID';
+                        $docInforArr["approvedYN"] = -1;
+                        $masterColumnArray = array(
+                            'companySystemID' => 'companySystemID',
+                            'companyID' => 'companyID',
+                            'serviceLineSystemID' => 'serviceLineSystemID',
+                            'serviceLineCode' => 'serviceLineCode',
+                            'documentSystemID' => 'documentSystemID',
+                            'documentID' => 'documentID',
+                            'documentCode' => 'documentCode');
+
+                        $detailColumnArray = array(
+                            'itemSystemCode' => 'itemSystemCode',
+                            'itemPrimaryCode' => 'itemPrimaryCode',
+                            'itemDescription' => 'itemDescription',
+                            'unitOfMeasure' => 'unitOfMeasure',
+                            'inOutQty' => 'currentStockQty',
+                            'wacLocalCurrencyID' => 'localCurrencyID',
+                            'wacLocal' => 'unitCostLocal',
+                            'wacRptCurrencyID' => 'reportingCurrencyID',
+                            'wacRpt' => 'unitCostRpt');
+                        break;
                     default:
                         Log::error('Document ID Not Found' . date('H:i:s'));
                         exit;
