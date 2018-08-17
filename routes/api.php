@@ -697,6 +697,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('rig_masters', 'RigMasterAPIController');
 
+    Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

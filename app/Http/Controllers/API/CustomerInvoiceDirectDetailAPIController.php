@@ -266,6 +266,8 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
      */
     public function destroy($id)
     {
+
+
         /** @var CustomerInvoiceDirectDetail $customerInvoiceDirectDetail */
         $customerInvoiceDirectDetail = $this->customerInvoiceDirectDetailRepository->findWithoutFail($id);
 
@@ -276,6 +278,27 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         $customerInvoiceDirectDetail->delete();
 
         return $this->sendResponse($id, 'Customer Invoice Direct Detail deleted successfully');
+    }
+
+    public function AllDeleteCustomerInvoiceDetails(Request $request)
+    {
+        $id = $request['id'];
+
+
+
+  /*      $PerformaInvoiceNo = $_POST['PerformaInvoiceNo'];
+        $custInvoiceDirectAutoID = $_POST['custInvoiceDirectAutoID'];
+        $tax = $database->query("SELECT * FROM `erp_taxdetail` WHERE `documentSystemCode` = $custInvoiceDirectAutoID ")->fetch();
+        if ($tax) {
+            echo json_encode(array('e', 'Please delete tax details to continue'));
+            exit;
+        }
+
+        $database->query("UPDATE performamaster SET performaStatus=0,timeStamp=NOW()   WHERE companyID='{$companyID}' AND PerformaInvoiceNo={$PerformaInvoiceNo}");
+        $database->query("UPDATE erp_performadetails SET invoiceSsytemCode=0,timestamp=NOW()  WHERE companyID='{$companyID}' AND PerformaMasterID='{$PerformaInvoiceNo}' ");
+
+        $delete = $database->delete('erp_custinvoicedirectdet', array('performaMasterID' => $PerformaInvoiceNo));*/
+
     }
 
 

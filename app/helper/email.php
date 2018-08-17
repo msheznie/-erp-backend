@@ -29,6 +29,7 @@ use App\Models\PurchaseRequest;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
+use App\Models\CustomerInvoiceDirect;
 use Response;
 
 class email
@@ -175,6 +176,13 @@ class email
                     if (!empty($stockReceive)) {
                         $data['docApprovedYN'] = $inventoryReclassification->approved;
                         $data['docCode']       = $inventoryReclassification->documentCode;
+                    }
+                    break;
+                case 20:
+                    $inventoryReclassification = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $data['docSystemCode'])->first();
+                    if (!empty($stockReceive)) {
+                        $data['docApprovedYN'] = $inventoryReclassification->approved;
+                        $data['docCode']       = $inventoryReclassification->bookingInvCode;
                     }
                     break;
                 default:

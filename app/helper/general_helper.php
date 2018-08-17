@@ -259,6 +259,17 @@ class Helper
                     $docInforArr["modelName"] = 'InventoryReclassification';
                     $docInforArr["primarykey"] = 'inventoryreclassificationID';
                     break;
+                case 20:
+                    $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_custinvoicedirect';
+                    $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                    $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }

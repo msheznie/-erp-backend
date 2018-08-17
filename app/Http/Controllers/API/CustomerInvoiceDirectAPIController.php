@@ -286,18 +286,94 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     public function update($id, UpdateCustomerInvoiceDirectAPIRequest $request)
     {
         $input = $request->all();
-
-        dd($input);
-        exit;
-
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
-
+        $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
+        $input = $this->convertArrayToSelectedValue($input, array('customerID','secondaryLogoCompanySystemID'));
         if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found');
+            return $this->sendError('e','Customer Invoice Direct not found');
         }
 
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($input, $id);
+        $_post['wanNO'] = $input['wanNO'];
+        $_post['secondaryLogoCompanySystemID'] = $input['secondaryLogoCompanySystemID'];
+        $_post['servicePeriod'] = $input['servicePeriod'];
+        $_post['comments'] = $input['comments'];
+        $_post['customerID'] = $input['customerID'];
+
+        if($input['secondaryLogoCompanySystemID'] !=$customerInvoiceDirect->secondaryLogoCompanySystemID ){
+            if($input['secondaryLogoCompID'] !=''){
+                $company=Company::select('companyLogo','CompanyID')->where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
+                $_post['secondaryLogoCompID']=$company->CompanyID;
+                $_post['secondaryLogo']=$company->companyLogo;
+            }else{
+                $_post['secondaryLogoCompID']=NULL;
+                $_post['secondaryLogo']=NULL;
+            }
+
+        }
+
+
+
+
+
+        if ($input['customerID'] != $customerInvoiceDirect->customerID) {
+
+            if (!empty($detail)) {
+                return $this->sendError('e','Invoice details exist. You can not change the customer.');
+            }
+        }
+
+        $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
+        $_post['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
+
+
+        if ($input['confirmedYN'] == 1) {
+            if ($customerInvoiceDirect->confirmedYN == 0) {
+
+                if (empty($detail)) {
+                    return $this->sendError('e','You can not confirm. Invoice Details not found.');
+                } else {
+
+
+                    $employee=\Helper::getEmployeeInfo();
+                    $input['createdPcID'] = getenv('COMPUTERNAME');
+                    $input['confirmedByEmpID'] =  \Helper::getEmployeeID();
+                    $input['confirmedByName'] = $employee->empName;
+                    $input['confirmedDate'] = Carbon::now();
+                    $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+
+
+                   $groupby  = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
+
+
+                    if (count($groupby) != 0) {
+
+                        if (count($groupby) > 1) {
+                            return $this->sendError('e','You can not continue . multiple service line exist in details.');
+                        }else{
+                            $params = array('autoID' => $id,
+                                'company' => $customerInvoiceDirect->companySystemID,
+                                'document' => $customerInvoiceDirect->documentSystemiD,
+                                'segment' => '',
+                                'category' => '',
+                                'amount' => ''
+                            );
+
+                            $confirm = \Helper::confirmDocument($params);
+                            if (!$confirm["success"]) {
+                                return $this->sendError($confirm["message"], 500);
+                            }
+                        }
+                    } else {
+                        return $this->sendError('e','No invoice details found.');
+                    }
+
+                }
+            }
+        }
+
+
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
 
         return $this->sendResponse($customerInvoiceDirect->toArray(), 'CustomerInvoiceDirect updated successfully');
     }
@@ -524,7 +600,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId);
         $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companyId)->first();
         $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
-
+        $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
+        $output['yesNoSelection'] = YesNoSelection::all();
         $output['tax'] = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$output['company']['CompanyID']}'");
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -732,10 +809,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         PerformaDetails::where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->where('idperformaDetails', $peformaDet->idperformaDetails)->update($invNo);
                     }
                 }
-              $details =  CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as bookingAmountTrans"),DB::raw("SUM(localAmount) as bookingAmountLocal"),DB::raw("SUM(comRptAmount) as bookingAmountRpt"))->where('custInvoiceDirectID',$custInvoiceDirectAutoID)->first()->toArray();
+                $details = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as bookingAmountTrans"), DB::raw("SUM(localAmount) as bookingAmountLocal"), DB::raw("SUM(comRptAmount) as bookingAmountRpt"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first()->toArray();
 
                 CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($details);
-
 
 
                 DB::commit();
@@ -849,8 +925,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
 
 
-
-
         DB::beginTransaction();
         try {
             Taxdetail::create($_post);
@@ -867,10 +941,45 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
             DB::commit();
             return $this->sendResponse('s', 'Successfully Added');
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError('e', 'Error Occurred');
         }
+    }
+
+    public function AllDeleteCustomerInvoiceDetails(Request $request)
+    {
+        $id = $request['id'];
+        $getPerformaMasterID = CustomerInvoiceDirectDetail::select('performaMasterID', 'companyID', 'custInvoiceDirectID')->where('custInvoiceDirectID', $id)->first();
+        if (empty($getPerformaMasterID)) {
+            return $this->sendResponse('e', 'No details found');
+        }
+
+        $peformaMasterID = $getPerformaMasterID->performaMasterID;
+
+
+        $Taxdetail = Taxdetail::where('documentSystemCode', $id)->first();
+        if (!empty($Taxdetail)) {
+            return $this->sendResponse('e', 'Please delete tax details to continue');
+        }
+
+        DB::beginTransaction();
+        try {
+            PerformaMaster::where('companyID', $getPerformaMasterID->companyID)->where('PerformaInvoiceNo', $peformaMasterID)->update(array('performaStatus' => 0));
+
+            PerformaDetails::where('companyID', $getPerformaMasterID->companyID)->where('PerformaMasterID', $peformaMasterID)->update(array('invoiceSsytemCode' => 0));
+            CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->delete();
+
+            $details = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first()->toArray();
+            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->update($details);
+            DB::commit();
+            return $this->sendResponse('s', 'Successfully Deleted');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError('e', 'Error Occurred');
+        }
+
+
     }
 
 }
