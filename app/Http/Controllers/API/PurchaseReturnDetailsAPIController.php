@@ -343,7 +343,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         foreach ($input['detailTable'] as $new) {
 
-            if ($new['isChecked'] && $new['rQty'] > 0) {
+            if ($new['isChecked']) {
                 $detailExistSameItem = PurchaseReturnDetails::where('purhaseReturnAutoID', $input['purhaseReturnAutoID'])
                     ->where('itemCode', $new['itemCode'])
                     ->where('grvAutoID', $new['grvAutoID'])
@@ -351,6 +351,10 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
                 if ($detailExistSameItem > 0) {
                     return $this->sendError('Same inventory item cannot be added more than once', 500);
+                }
+
+                if($new['rnoQty'] <= 0){
+                    return $this->sendError('Cannot add item without qty', 500);
                 }
 
                 /*if ($new['unitCost'] == 0 || $new['unitCost'] == 0) {
@@ -381,27 +385,27 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $item['supplierDefaultCurrencyID'] = $new['supplierDefaultCurrencyID'];
                 $item['supplierDefaultER'] = $new['supplierDefaultER'];
 
-                $item['supplierTransactionCurrencyID'] = $new['grvDetailsID'];
-                $item['supplierTransactionER'] = $new['grvDetailsID'];
+                $item['supplierTransactionCurrencyID'] = $new['supplierDefaultCurrencyID'];
+                $item['supplierTransactionER'] = $new['supplierDefaultER'];
 
                 $item['companyReportingCurrencyID'] = $new['companyReportingCurrencyID'];
                 $item['companyReportingER'] = $new['companyReportingER'];
                 $item['localCurrencyID'] = $new['localCurrencyID'];
                 $item['localCurrencyER'] = $new['localCurrencyER'];
                 $item['GRVcostPerUnitLocalCur'] = $new['GRVcostPerUnitLocalCur'];
-                $item['GRVcostPerUnitSupDefaultCur'] = $new['GRVcostPerUnitSupDefaultCur '];
+                $item['GRVcostPerUnitSupDefaultCur'] = $new['GRVcostPerUnitSupDefaultCur'];
                 $item['GRVcostPerUnitSupTransCur'] = $new['GRVcostPerUnitSupTransCur'];
                 $item['GRVcostPerUnitComRptCur'] = $new['GRVcostPerUnitComRptCur'];
                 $item['netAmount'] = $new['netAmount'];
 
-                $item['netAmountLocal'] = $new['grvDetailsID'];
-                $item['netAmountRpt'] = $new['grvDetailsID'];
+                $item['netAmountLocal'] =  $new['rnoQty'] * $new['GRVcostPerUnitLocalCur'];
+                $item['netAmountRpt'] = $new['rnoQty'] * $new['GRVcostPerUnitComRptCur'];
 
-                $prndItem = $this->stockReceiveDetailsRepository->create($item);
+                $prndItem = $this->purchaseReturnDetailsRepository->create($item);
             }
         }
 
-        return $this->sendResponse($purchaseReturn, 'Purchase Return Details retrieved successfully');
+        return $this->sendResponse($purchaseReturn, 'Purchase Return Details added successfully');
     }
 
 

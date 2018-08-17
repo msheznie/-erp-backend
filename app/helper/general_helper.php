@@ -259,6 +259,17 @@ class Helper
                     $docInforArr["modelName"] = 'InventoryReclassification';
                     $docInforArr["primarykey"] = 'inventoryreclassificationID';
                     break;
+                case 24:
+                    $docInforArr["documentCodeColumnName"] = 'purchaseReturnCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_purchasereturnmaster';
+                    $docInforArr["modelName"] = 'PurchaseReturn';
+                    $docInforArr["primarykey"] = 'purhaseReturnAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }

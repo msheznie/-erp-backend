@@ -129,9 +129,11 @@ return [
         'companyFromSystemID' => 'Company from',
         'wareHouseFrom' => 'WareHouse',
         'wareHouseLocation' => 'WareHouse',
+        'purchaseReturnLocation' => 'Location',
         'serviceLineSystemID' => 'Department',
-        'ReturnDate' => 'Return Date',
-        'issueDate' => 'Issue Date',
+        'ReturnDate' => 'Return date',
+        'purchaseReturnDate' => 'Purchase return date',
+        'issueDate' => 'Issue date',
     ],
 
 ];

@@ -177,6 +177,13 @@ class email
                         $data['docCode']       = $inventoryReclassification->documentCode;
                     }
                     break;
+                case 24:
+                    $purchaseReturn = InventoryReclassification::find($data['docSystemCode']);
+                    if (!empty($purchaseReturn)) {
+                        $data['docApprovedYN'] = $purchaseReturn->approved;
+                        $data['docCode']       = $purchaseReturn->purchaseReturnCode;
+                    }
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
 

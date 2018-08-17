@@ -31,7 +31,7 @@ class Handler extends ExceptionHandler
      *
      * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
      *
-     * @param  \Exception  $exception
+     * @param  \Exception $exception
      * @return void
      */
     public function report(Exception $exception)
@@ -42,28 +42,28 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
+     * @param  \Illuminate\Http\Request $request
+     * @param  \Exception $exception
      * @return \Illuminate\Http\Response
      */
-    /*public function render($request, Exception $exception)
+    public function render($request, Exception $exception)
     {
         return parent::render($request, $exception);
-    }*/
+    }
 
-    public function render($request, Exception $e)
-   {
-   	$error = $this->convertExceptionToResponse($e);
-   	$response = [];
-   	if($error->getStatusCode() == 500) {
-   	       $response['error'] = $e->getMessage();
-   		if(env('APP_DEBUG', true)) {
-   			$response['trace'] = $e->getTraceAsString();
-  			$response['code'] = $e->getCode();
-  		}
-   	}
-   	return response()->json($response, $error->getStatusCode());
-   }
+    /*public function render($request, Exception $e)
+    {
+        $error = $this->convertExceptionToResponse($e);
+        $response = [];
+        if ($error->getStatusCode() == 500) {
+            $response['error'] = $e->getMessage();
+            if (env('APP_DEBUG', true)) {
+                $response['trace'] = $e->getTraceAsString();
+                $response['code'] = $e->getCode();
+            }
+        }
+        return response()->json($response, $error->getStatusCode());
+    }*/
     /**
      * Convert an authentication exception into an unauthenticated response.
      *
@@ -79,18 +79,18 @@ class Handler extends ExceptionHandler
         return redirect()->guest('login');
     }*/
 
-   /* public function render($request, Exception $exception)
-    {
-        if ($exception instanceof Tymon\JWTAuth\Exceptions\TokenExpiredException) {
-            return response()->json(['error' => 'Token has expired'], $exception->getStatusCode());
-        } elseif ($exception instanceof Tymon\JWTAuth\Exceptions\TokenInvalidException) {
-            return response()->json(['error' => 'Token is invalid'], $exception->getStatusCode());
-        } elseif ($exception instanceof \Illuminate\Auth\AuthenticationException) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        } elseif ($exception instanceof WebsiteTokenMissingException) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+    /* public function render($request, Exception $exception)
+     {
+         if ($exception instanceof Tymon\JWTAuth\Exceptions\TokenExpiredException) {
+             return response()->json(['error' => 'Token has expired'], $exception->getStatusCode());
+         } elseif ($exception instanceof Tymon\JWTAuth\Exceptions\TokenInvalidException) {
+             return response()->json(['error' => 'Token is invalid'], $exception->getStatusCode());
+         } elseif ($exception instanceof \Illuminate\Auth\AuthenticationException) {
+             return response()->json(['error' => 'Unauthorized'], 401);
+         } elseif ($exception instanceof WebsiteTokenMissingException) {
+             return response()->json(['error' => 'Unauthorized'], 401);
+         }
 
-        return parent::render($request, $exception);
-    }*/
+         return parent::render($request, $exception);
+     }*/
 }
