@@ -346,19 +346,19 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $prDetail_arr = array();
-        $item = array();
+        $validator = array();
         $purchaseOrderID = $input['purchaseOrderID'];
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
         $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
-        if(!in_array(true,$isCheckArr)){
+        if (!in_array(true, $isCheckArr)) {
             return $this->sendError("No items selected to add.");
         }
 
         foreach ($input['detailTable'] as $newValidation) {
-            if (($newValidation['isChecked'] && $newValidation['poQty'] == "") || ($newValidation['isChecked'] == '' && $newValidation['poQty'] > 0) ) {
+            if (($newValidation['isChecked'] && $newValidation['poQty'] == "") || ($newValidation['isChecked'] && $newValidation['poQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['poQty'] > 0)) {
 
                 $messages = [
                     'required' => 'PO quantity field is required.',
@@ -367,15 +367,36 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $validator = \Validator::make($newValidation, [
                     'poQty' => 'required',
                     'isChecked' => 'required',
-                ],$messages);
-            }else {
-                $validator = \Validator::make($newValidation, [
-                ]);
+                ], $messages);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
             }
         }
 
-        if ($validator->fails()) {
-            return $this->sendError($validator->messages(), 422);
+        $itemExistArray = array();
+        //check added item exist
+        foreach ($input['detailTable'] as $itemExist) {
+
+            if ($itemExist['isChecked'] && $itemExist['poQty'] > 0) {
+                $prDetailExist = PurchaseOrderDetails::select(DB::raw('purchaseOrderDetailsID,itemPrimaryCode'))
+                    ->where('purchaseOrderMasterID', $purchaseOrderID)
+                    ->where('purchaseRequestDetailsID', $itemExist['purchaseRequestDetailsID'])
+                    ->get();
+
+                if (!empty($prDetailExist)) {
+                    foreach ($prDetailExist as $row) {
+                        $itemDrt = $row['itemPrimaryCode'] . " all ready exist";
+                        $itemExistArray[] = [$itemDrt];
+                    }
+                }
+            }
+
+        }
+
+        if (!empty($itemExistArray)) {
+            return $this->sendError($itemExistArray, 422);
         }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
@@ -588,7 +609,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendError('Purchase Order Details not found');
         }
 
-        return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order Details retrieved successfully');
+        return $this->sendResponse($purchaseOrderDetails->toArray(), 'Purchase Order details retrieved successfully');
     }
 
     /**
@@ -895,17 +916,17 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             foreach ($updateDetailDiscount as $itemDiscont) {
 
-                $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['poDiscountAmount'] / $purchaseOrder->poTotalSupplierTransactionCurrency) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
+                $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['discount'] / $input['netTotal']) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
 
                 $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateItemDiscount);
 
-                $detail['GRVcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                $detail['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                 $detail['GRVcostPerUnitSupTransCur'] = $calculateItemDiscount;
-                $detail['GRVcostPerUnitComRptCur'] = $currencyConversion['reportingAmount'];
+                $detail['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
 
-                $detail['purchaseRetcostPerUnitLocalCur'] = $currencyConversion['localAmount'];
+                $detail['purchaseRetcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                 $detail['purchaseRetcostPerUnitTranCur'] = $calculateItemDiscount;
-                $detail['purchaseRetcostPerUnitRptCur'] = $currencyConversion['reportingAmount'];
+                $detail['purchaseRetcostPerUnitRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
 
                 //$detail['netAmount'] = $calculateItemDiscount * $itemDiscont['noQty'];
 
