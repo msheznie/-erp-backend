@@ -469,6 +469,7 @@ class CustomerInvoiceDirect extends Model
         'serviceEndDate',
         'isPerforma',
         'documentType',
+        'secondaryLogoCompanySystemID',
         'secondaryLogoCompID',
         'secondaryLogo',
         'timesReferred',
@@ -550,6 +551,7 @@ class CustomerInvoiceDirect extends Model
         'paymentInDaysForJob' => 'integer',
         'isPerforma' => 'integer',
         'documentType' => 'integer',
+        '`secondaryLogoCompanySystemID`' => 'integer',
         'secondaryLogoCompID' => 'string',
         'secondaryLogo' => 'string',
         'timesReferred' => 'integer',
@@ -626,6 +628,7 @@ class CustomerInvoiceDirect extends Model
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'custTransactionCurrencyID', 'currencyID');
     }
+
 
 
 

@@ -1,3 +1,4 @@
 
 
-Route::resource('itemClientReferenceNumberMasters', 'ItemClientReferenceNumberMasterController');
+
+Route::resource('fixedAssetMasters', 'FixedAssetMasterController');

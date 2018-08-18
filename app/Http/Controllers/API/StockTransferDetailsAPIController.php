@@ -148,7 +148,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         if (!empty($itemExist)) {
-            return $this->sendError('Added Item All Ready Exist');
+            return $this->sendError('Selected item all ready exist',500);
         }
 
         if (empty($item)) {
@@ -159,7 +159,20 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         if (empty($stockTransferMaster)) {
-            return $this->sendError('Stock Transfer not found');
+            return $this->sendError('Stock Transfer not found',500);
+        }
+
+        $validator = \Validator::make($stockTransferMaster->toArray(), [
+            'locationFrom' => 'required|numeric|min:1',
+            'locationTo' => 'required|numeric|min:1',
+            //'companyFinancePeriodID' => 'required|numeric|min:1',
+            //'companyFinanceYearID' => 'required|numeric|min:1',
+            'companyToSystemID' => 'required|numeric|min:1',
+            'companyFromSystemID' => 'required|numeric|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
         }
 
 
@@ -234,26 +247,19 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
         $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
 
-        $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
-            ->where('companySystemID', $companySystemID)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
+        $data = array('companySystemID' => $stockTransferMaster->companySystemID,
+                    'itemCodeSystem' => $input['itemCode'],
+                    'wareHouseId' => $stockTransferMaster->locationFrom);
 
-        $currentWareHouseStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCode'])
-                                                ->where('companySystemID', $companySystemID)
-                                                ->where('wareHouseSystemCode', $stockTransferMaster->locationFrom)
-                                                ->groupBy('itemSystemCode')
-                                                ->sum('inOutQty');
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+        $input['warehouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
 
-        $input['currentStockQty']   = $currentStockQty;
-        $input['warehouseStockQty'] = $currentWareHouseStockQty;
-
-
-        if ($currentWareHouseStockQty <= 0) {
+        if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
             return $this->sendError("Warehouse stock Qty is 0. You cannot issue", 500);
         }
 
-        if ($currentStockQty <= 0) {
+        if ($itemCurrentCostAndQty['currentStockQty'] <= 0) {
             return $this->sendError("Stock Qty is 0. You cannot issue", 500);
         }
 

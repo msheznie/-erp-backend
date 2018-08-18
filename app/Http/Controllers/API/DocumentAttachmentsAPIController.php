@@ -159,8 +159,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
 
         if(isset($input['size'])){
-            if ($input['size'] > 20971520) {
-                return $this->sendError("Maximum allowed file size is 20 MB. Please upload lesser than 20 MB.");
+            if ($input['size'] > 31457280) {
+                return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.");
             }
         }
 

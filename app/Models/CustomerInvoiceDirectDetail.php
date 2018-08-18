@@ -256,8 +256,15 @@ class CustomerInvoiceDirectDetail extends Model
     public static $rules = [
         
     ];
-
+    public function unit()
+    {
+        return $this->belongsTo('App\Models\Unit', 'unitOfMeasure', 'UnitID');
+    }
     public function performadetails(){
         return $this->belongsTo('App\Models\PerformaDetails','custInvoiceDirectID','invoiceSsytemCode');
+    }
+
+    public function department(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineCode','ServiceLineCode');
     }
 }

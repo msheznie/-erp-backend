@@ -181,6 +181,7 @@ class InventoryReclassification extends Model
         'FYEnd',
         'documentSystemID',
         'documentID',
+        'serialNo',
         'documentCode',
         'inventoryReclassificationDate',
         'narration',
@@ -223,6 +224,7 @@ class InventoryReclassification extends Model
         'companyFinancePeriodID' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
+        'serialNo' => 'integer',
         'documentCode' => 'string',
         'narration' => 'string',
         'confirmedYN' => 'integer',
@@ -287,5 +289,15 @@ class InventoryReclassification extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
     }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
 
 }

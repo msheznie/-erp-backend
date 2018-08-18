@@ -142,7 +142,9 @@ class SupplierMaster extends Model
         'documentID',
         'vatEligible',
         'vatNumber',
-        'vatPercentage'
+        'vatPercentage',
+        'createdUserSystemID',
+        'modifiedUserSystemID'
     ];
 
     /**
@@ -192,10 +194,12 @@ class SupplierMaster extends Model
         'companyLinkedToSystemID' => 'integer',
         'companyLinkedTo' => 'string',
         'createdUserGroup' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
+        'modifiedUserSystemID' => 'integer',
         'isDirect' => 'integer',
         'supplierImportanceID' => 'integer',
         'supplierNatureID' => 'integer',

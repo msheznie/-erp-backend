@@ -19,15 +19,18 @@ use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\GRVMaster;
+use App\Models\InventoryReclassification;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\ItemReturnMaster;
 use App\Models\MaterielRequest;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
+use App\Models\PurchaseReturn;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
+use App\Models\CustomerInvoiceDirect;
 use Response;
 
 class email
@@ -47,9 +50,9 @@ class email
     public static function sendEmail($array)
     {
 
-        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!".
-                    "<br>This is an auto generated email. Please do not reply to this email because we are not".
-                    "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
+        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
+            "<br>This is an auto generated email. Please do not reply to this email because we are not" .
+            "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
 
 
         foreach ($array as $data) {
@@ -60,7 +63,7 @@ class email
                 $data['empID'] = $employee->empID;
                 $data['empName'] = $employee->empName;
                 $data['empEmail'] = $employee->empEmail;
-            }else{
+            } else {
                 return ['success' => false, 'message' => 'Employee Not Found'];
             }
 
@@ -68,7 +71,7 @@ class email
 
             if (!empty($company)) {
                 $data['companyID'] = $company->CompanyID;
-            }else{
+            } else {
                 return ['success' => false, 'message' => 'Company Not Found'];
             }
 
@@ -76,7 +79,7 @@ class email
 
             if (!empty($document)) {
                 $data['docID'] = $document->documentID;
-            }else{
+            } else {
                 return ['success' => false, 'message' => 'Document Not Found'];
             }
 
@@ -96,56 +99,56 @@ class email
                     $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $data['docSystemCode'])->first();
                     if (!empty($purchaseOrder)) {
                         $data['docApprovedYN'] = $purchaseOrder->approved;
-                        $data['docCode']       = $purchaseOrder->purchaseOrderCode;
+                        $data['docCode'] = $purchaseOrder->purchaseOrderCode;
                     }
                     break;
                 case 56:
                     $supplier = SupplierMaster::where('supplierCodeSystem', $data['docSystemCode'])->first();
                     if (!empty($supplier)) {
                         $data['docApprovedYN'] = $supplier->approvedYN;
-                        $data['docCode']       = $supplier->primarySupplierCode;
+                        $data['docCode'] = $supplier->primarySupplierCode;
                     }
                     break;
                 case 57:
                     $item = ItemMaster::where('itemCodeSystem', $data['docSystemCode'])->first();
                     if (!empty($item)) {
                         $data['docApprovedYN'] = $item->itemApprovedYN;
-                        $data['docCode']       = $item->primaryCode;
+                        $data['docCode'] = $item->primaryCode;
                     }
                     break;
                 case 58:
                     $customer = CustomerMaster::where('customerCodeSystem', $data['docSystemCode'])->first();
                     if (!empty($customer)) {
                         $data['docApprovedYN'] = $customer->approvedYN;
-                        $data['docCode']       = $customer->CutomerCode;
+                        $data['docCode'] = $customer->CutomerCode;
                     }
                     break;
                 case 59:
                     $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $data['docSystemCode'])->first();
                     if (!empty($chartOfAccount)) {
                         $data['docApprovedYN'] = $chartOfAccount->isApproved;
-                        $data['docCode']       = $chartOfAccount->AccountCode;
+                        $data['docCode'] = $chartOfAccount->AccountCode;
                     }
                     break;
                 case 9:
                     $materielRequest = MaterielRequest::where('RequestID', $data['docSystemCode'])->first();
                     if (!empty($materielRequest)) {
                         $data['docApprovedYN'] = $materielRequest->approved;
-                        $data['docCode']       = $materielRequest->RequestCode;
+                        $data['docCode'] = $materielRequest->RequestCode;
                     }
                     break;
                 case 3:
                     $grvMaster = GRVMaster::where('grvAutoID', $data['docSystemCode'])->first();
                     if (!empty($grvMaster)) {
                         $data['docApprovedYN'] = $grvMaster->approved;
-                        $data['docCode']       = $grvMaster->grvPrimaryCode;
+                        $data['docCode'] = $grvMaster->grvPrimaryCode;
                     }
                     break;
                 case 8:
                     $materielIssue = ItemIssueMaster::where('itemIssueAutoID', $data['docSystemCode'])->first();
                     if (!empty($materielIssue)) {
                         $data['docApprovedYN'] = $materielIssue->approved;
-                        $data['docCode']       = $materielIssue->itemIssueCode;
+                        $data['docCode'] = $materielIssue->itemIssueCode;
                     }
                     break;
                 case 13:
@@ -159,14 +162,35 @@ class email
                     $materielReturn = ItemReturnMaster::where('itemReturnAutoID', $data['docSystemCode'])->first();
                     if (!empty($materielReturn)) {
                         $data['docApprovedYN'] = $materielReturn->approved;
-                        $data['docCode']       = $materielReturn->itemReturnCode;
+                        $data['docCode'] = $materielReturn->itemReturnCode;
                     }
                     break;
                 case 10:
                     $stockReceive = StockReceive::where('stockReceiveAutoID', $data['docSystemCode'])->first();
                     if (!empty($stockReceive)) {
                         $data['docApprovedYN'] = $stockReceive->approved;
-                        $data['docCode']       = $stockReceive->stockReceiveCode;
+                        $data['docCode'] = $stockReceive->stockReceiveCode;
+                    }
+                    break;
+                case 61:
+                    $inventoryReclassification = InventoryReclassification::where('inventoryreclassificationID', $data['docSystemCode'])->first();
+                    if (!empty($stockReceive)) {
+                        $data['docApprovedYN'] = $inventoryReclassification->approved;
+                        $data['docCode'] = $inventoryReclassification->documentCode;
+                    }
+                    break;
+                case 24:
+                    $purchaseReturn = PurchaseReturn::find($data['docSystemCode']);
+                    if (!empty($purchaseReturn)) {
+                        $data['docApprovedYN'] = $purchaseReturn->approved;
+                        $data['docCode'] = $purchaseReturn->purchaseReturnCode;
+                    }
+                    break;
+                case 20:
+                    $inventoryReclassification = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $data['docSystemCode'])->first();
+                    if (!empty($stockReceive)) {
+                        $data['docApprovedYN'] = $inventoryReclassification->approved;
+                        $data['docCode'] = $inventoryReclassification->bookingInvCode;
                     }
                     break;
                 default:
@@ -176,7 +200,7 @@ class email
 
             $data['isEmailSend'] = 0;
 
-            $temp = "Hi ".$data['empName'].','.$data['emailAlertMessage'].$footer;
+            $temp = "Hi " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
 
             $data['emailAlertMessage'] = $temp;
             Alert::create($data);

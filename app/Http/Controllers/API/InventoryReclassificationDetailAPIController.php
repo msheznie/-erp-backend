@@ -1,20 +1,29 @@
 <?php
 /**
-=============================================
--- File Name : InventoryReclassificationDetailAPIController.php
--- Project Name : ERP
--- Module Name :  Inventory
--- Author : Mohamed Mubashir
--- Create date : 10 - August 2018
--- Description : This file contains the all CRUD for Inventory Reclassification Detail
--- REVISION HISTORY
--- Date: 14-March 2018 By: Description: Added new functions named as checkUser(),userCompanies()
+ * =============================================
+ * -- File Name : InventoryReclassificationDetailAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Inventory
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 10 - August 2018
+ * -- Description : This file contains the all CRUD for Inventory Reclassification Detail
+ * -- REVISION HISTORY
+ * -- Date: 14-March 2018 By: Description: Added new functions named as checkUser(),userCompanies()
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateInventoryReclassificationDetailAPIRequest;
 use App\Http\Requests\API\UpdateInventoryReclassificationDetailAPIRequest;
+use App\Models\Company;
+use App\Models\ErpItemLedger;
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\InventoryReclassification;
 use App\Models\InventoryReclassificationDetail;
+use App\Models\ItemAssigned;
+use App\Models\ItemIssueMaster;
+use App\Models\SegmentMaster;
+use App\Models\StockTransfer;
 use App\Repositories\InventoryReclassificationDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -26,7 +35,6 @@ use Response;
  * Class InventoryReclassificationDetailController
  * @package App\Http\Controllers\API
  */
-
 class InventoryReclassificationDetailAPIController extends AppBaseController
 {
     /** @var  InventoryReclassificationDetailRepository */
@@ -119,6 +127,151 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
     public function store(CreateInventoryReclassificationDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $companySystemID = $input['companySystemID'];
+        $itemIssue = InventoryReclassification::find($input['inventoryreclassificationID']);
+
+        if (empty($itemIssue)) {
+            return $this->sendError('Reclassification not found', 500);
+        }
+
+        if ($itemIssue->serviceLineSystemID) {
+            $checkDepartmentActive = SegmentMaster::find($itemIssue->serviceLineSystemID);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Department not found');
+            }
+            if ($checkDepartmentActive->isActive == 0) {
+                return $this->sendError('Please select a active department', 500);
+            }
+        } else {
+            return $this->sendError('Please select a department.', 500);
+        }
+
+        $item = ItemAssigned::where('idItemAssigned', $input['itemCode'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        if (empty($item)) {
+            return $this->sendError('Item not found');
+        }
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
+
+        $input['itemSystemCode'] = $item->itemCodeSystem;
+        $input['itemPrimaryCode'] = $item->itemPrimaryCode;
+        $input['itemDescription'] = $item->itemDescription;
+        $input['unitOfMeasure'] = $item->itemUnitOfMeasure;
+
+        $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
+        $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+
+        $input['unitCostLocal'] = $item->wacValueLocal;
+        $input['unitCostRpt'] = $item->wacValueReporting;
+
+        $input['localCurrencyID'] = $item->wacValueLocalCurrencyID;
+        $input['reportingCurrencyID'] = $item->wacValueReportingCurrencyID;
+
+        if ($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0) {
+            return $this->sendError("Cost is 0. You cannot reclassify.", 500);
+        }
+
+        if ($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0) {
+            return $this->sendError("Cost is negative. You cannot reclassify.", 500);
+        }
+
+        $checkWhether = ItemIssueMaster::where('companySystemID', $companySystemID)
+            ->select([
+                'erp_itemissuemaster.itemIssueAutoID',
+                'erp_itemissuemaster.companySystemID',
+                'erp_itemissuemaster.wareHouseFromCode',
+                'erp_itemissuemaster.itemIssueCode',
+                'erp_itemissuemaster.approved'
+            ])
+            ->groupBy(
+                'erp_itemissuemaster.itemIssueAutoID',
+                'erp_itemissuemaster.companySystemID',
+                'erp_itemissuemaster.wareHouseFromCode',
+                'erp_itemissuemaster.itemIssueCode',
+                'erp_itemissuemaster.approved'
+            )
+            ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemSystemCode']);
+            })
+            ->where('approved', 0)
+            ->first();
+        /* approved=0*/
+
+        if (!empty($checkWhether)) {
+            return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
+            ->select([
+                'erp_stocktransfer.stockTransferAutoID',
+                'erp_stocktransfer.companySystemID',
+                'erp_stocktransfer.locationFrom',
+                'erp_stocktransfer.stockTransferCode',
+                'erp_stocktransfer.approved'
+            ])
+            ->groupBy(
+                'erp_stocktransfer.stockTransferAutoID',
+                'erp_stocktransfer.companySystemID',
+                'erp_stocktransfer.locationFrom',
+                'erp_stocktransfer.stockTransferCode',
+                'erp_stocktransfer.approved'
+            )
+            ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemSystemCode']);
+            })
+            ->where('approved', 0)
+            ->first();
+        /* approved=0*/
+
+        if (!empty($checkWhetherStockTransfer)) {
+            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemSystemCode'])
+            ->where('companySystemID', $companySystemID)
+            ->groupBy('itemSystemCode')
+            ->sum('inOutQty');
+
+        $input['currentStockQty'] = $currentStockQty;
+
+        if ($currentStockQty <= 0) {
+            return $this->sendError("Stock Qty is 0. You cannot reclassify.", 500);
+        }
+
+        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
+            ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
+            ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
+            ->first();
+
+        if (!empty($financeItemCategorySubAssigned)) {
+            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+        } else {
+            return $this->sendError("Account code not updated.", 500);
+        }
+
+        if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
+            return $this->sendError("Account code not updated.", 500);
+        }
+
+        if ($input['itemFinanceCategoryID'] == 1) {
+            $alreadyAdded = InventoryReclassificationDetail::where('inventoryreclassificationID', $input['inventoryreclassificationID'])->where('itemSystemCode', $input['itemSystemCode'])->exists();
+
+            if ($alreadyAdded) {
+                return $this->sendError("Selected item is already added. Please check again", 500);
+            }
+        }
 
         $inventoryReclassificationDetails = $this->inventoryReclassificationDetailRepository->create($input);
 
@@ -287,5 +440,13 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $inventoryReclassificationDetail->delete();
 
         return $this->sendResponse($id, 'Inventory Reclassification Detail deleted successfully');
+    }
+
+
+    public function getItemsByReclassification(Request $request)
+    {
+        $input = $request->all();
+        $items = InventoryReclassificationDetail::with(['unit', 'itemmaster','localcurrency','reportingcurrency'])->where('inventoryreclassificationID', $input["inventoryreclassificationID"])->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 }

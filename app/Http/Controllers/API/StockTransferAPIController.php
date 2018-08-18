@@ -142,18 +142,28 @@ class StockTransferAPIController extends AppBaseController
     public function store(CreateStockTransferAPIRequest $request)
     {
         $input = $request->all();
-
         $input = $this->convertArrayToValue($input);
+        $employee = \Helper::getEmployeeInfo();
 
-        $id = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $input['createdPCID'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
         }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+        }
+        unset($inputParam);
 
         if (isset($input['tranferDate'])) {
             if ($input['tranferDate']) {
@@ -167,7 +177,7 @@ class StockTransferAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Transfer Date not between Financial period !', 500);
+            return $this->sendError('Transfer date is not within the selected financial period !', 500);
         }
 
 
@@ -176,22 +186,22 @@ class StockTransferAPIController extends AppBaseController
             $checkCustomer = CustomerMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->count();
             if ($checkCustomer == 0) {
                 $cusError = array('type' => 'cus_not');
-                return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500,$cusError);
+                return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500, $cusError);
             }
 
             $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyFromSystemID'])->count();
             if ($checkSupplier == 0) {
                 $supError = array('type' => 'sup_not');
-                return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500,$supError);
+                return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500, $supError);
             }
 
             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
-                                                            ->where('departmentSystemID', 10)
-                                                            ->where('isActive', -1)
-                                                            ->where('dateFrom', '<', $documentDate)
-                                                            ->where('dateTo', '>', $documentDate)
-                                                            ->where('isCurrent', -1)
-                                                            ->count();
+                ->where('departmentSystemID', 10)
+                ->where('isActive', -1)
+                ->where('dateFrom', '<', $documentDate)
+                ->where('dateTo', '>', $documentDate)
+                ->where('isCurrent', -1)
+                ->count();
 
             $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
 
@@ -199,10 +209,6 @@ class StockTransferAPIController extends AppBaseController
                 return $this->sendError('Financial year and period is not activated in ' . $companyTo->CompanyName, 500);
             }
         }
-
-        $input['createdPCID'] = gethostname();
-        $input['createdUserID'] = $user->employee['empID'];
-        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
         $lastSerial = StockTransfer::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
@@ -324,7 +330,11 @@ class StockTransferAPIController extends AppBaseController
     public function show($id)
     {
         /** @var StockTransfer $stockTransfer */
-        $stockTransfer = $this->stockTransferRepository->with(['created_by', 'confirmed_by', 'segment_by'])->findWithoutFail($id);
+        $stockTransfer = $this->stockTransferRepository->with(['created_by', 'confirmed_by', 'segment_by', 'finance_period_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'finance_year_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($stockTransfer)) {
             return $this->sendError('Stock Transfer not found');
@@ -381,12 +391,10 @@ class StockTransferAPIController extends AppBaseController
      */
     public function update($id, UpdateStockTransferAPIRequest $request)
     {
-        $userId = Auth::id();
-        $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
         $input = $request->all();
-
-        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by']);
+        $serviceLineError = array('type' => 'serviceLine');
+        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by', 'finance_period_by', 'finance_year_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var StockTransfer $stockTransfer */
@@ -396,26 +404,10 @@ class StockTransferAPIController extends AppBaseController
             return $this->sendError('Stock Transfer not found');
         }
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
-        }
-
         if (isset($input['tranferDate'])) {
             if ($input['tranferDate']) {
                 $input['tranferDate'] = new Carbon($input['tranferDate']);
             }
-        }
-
-        $documentDate = $input['tranferDate'];
-        $monthBegin = $input['FYBiggin'];
-        $monthEnd = $input['FYEnd'];
-
-        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-        } else {
-            return $this->sendError('Transfer Date not between Financial period !');
         }
 
         if ($input['interCompanyTransferYN']) {
@@ -433,8 +425,8 @@ class StockTransferAPIController extends AppBaseController
             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
                                                             ->where('departmentSystemID', 10)
                                                             ->where('isActive', -1)
-                                                            ->where('dateFrom', '<', $documentDate)
-                                                            ->where('dateTo', '>', $documentDate)
+                                                            ->where('dateFrom', '<', $input['tranferDate'])
+                                                            ->where('dateTo', '>', $input['tranferDate'])
                                                             ->where('isCurrent', -1)
                                                             ->count();
 
@@ -445,24 +437,28 @@ class StockTransferAPIController extends AppBaseController
             }
         }
 
-        //checking selected segment is active
-        $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
-            ->where('companySystemID', $input['companySystemID'])
-            ->where('isActive', 1)
-            ->first();
+        if (isset($input['serviceLineSystemID'])) {
+            $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->where('isActive', 1)
+                ->first();
 
-        if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+            if (empty($segments)) {
+                $stockTransferUpdate = StockTransfer::find($id);
+                $stockTransferUpdate->serviceLineSystemID = null;
+                $stockTransferUpdate->save();
+                return $this->sendError('Selected segment is not active. Please select an active segment', 500, $serviceLineError);
+            }
+
+            if ($segments) {
+                $input['serviceLineCode'] = $segments->ServiceLineCode;
+            }
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot be same');
+            return $this->sendError('Location From and Location To  cannot be same', 500);
         }
 
-        $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
-        if ($segment) {
-            $input['serviceLineCode'] = $segment->ServiceLineCode;
-        }
 
         $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
         if ($companyTo) {
@@ -476,6 +472,47 @@ class StockTransferAPIController extends AppBaseController
         }
 
         if ($stockTransfer->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 10;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            unset($inputParam);
+
+            $documentDate = $input['tranferDate'];
+            $monthBegin = $input['FYBiggin'];
+            $monthEnd = $input['FYEnd'];
+
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Transfer date is not within the selected financial period !', 500);
+            }
+
+            $validator = \Validator::make($input, [
+                'locationFrom' => 'required|numeric|min:1',
+                'locationTo' => 'required|numeric|min:1',
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'tranferDate' => 'required',
+                'companyToSystemID' => 'required|numeric|min:1',
+                'companyFromSystemID' => 'required|numeric|min:1',
+                'serviceLineSystemID' => 'required|numeric|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
 
             $stockTransDetailExist = StockTransferDetails::select(DB::raw('stockTransferDetailsID'))
                 ->where('stockTransferAutoID', $input['stockTransferAutoID'])
@@ -499,16 +536,70 @@ class StockTransferAPIController extends AppBaseController
             unset($input['confirmedByName']);
             unset($input['confirmedDate']);
 
+            $itemTransferDetails = StockTransferDetails::where('stockTransferAutoID', $id)->get();
+
+            $finalError = array('cost_zero' => array(),
+                'cost_neg' => array(),
+                'currentStockQty_zero' => array(),
+                'currentWareHouseStockQty_zero' => array(),
+                'currentStockQty_more' => array(),
+                'currentWareHouseStockQty_more' => array());
+            $error_count = 0;
+
+            foreach ($itemTransferDetails as $item) {
+                $updateItem = StockTransferDetails::find($item['stockTransferDetailsID']);
+                $data = array('companySystemID' => $stockTransfer->companySystemID,
+                               'itemCodeSystem' => $updateItem->itemCodeSystem,
+                               'wareHouseId' => $stockTransfer->locationFrom);
+                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
+                $updateItem->warehouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                $updateItem->unitCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                $updateItem->unitCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
+                $updateItem->save();
+
+                if ($updateItem->unitCostLocal == 0 || $updateItem->unitCostRpt == 0) {
+                    array_push($finalError['cost_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->unitCostLocal < 0 || $updateItem->unitCostRpt < 0) {
+                    array_push($finalError['cost_neg'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->currentStockQty <= 0) {
+                    array_push($finalError['currentStockQty_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->warehouseStockQty <= 0) {
+                    array_push($finalError['currentWareHouseStockQty_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->qty > $updateItem->currentStockQty) {
+                    array_push($finalError['currentStockQty_more'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+
+                if ($updateItem->qty > $updateItem->warehouseStockQty) {
+                    array_push($finalError['currentWareHouseStockQty_more'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
+
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => 0);
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
         }
-
+        $employee = \Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = $user->employee['empID'];
-        $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
 
         $stockTransfer = $this->stockTransferRepository->update($input, $id);
@@ -698,12 +789,7 @@ class StockTransferAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
-        $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
-        if (isset($request['type']) && $request['type'] == 'add') {
-            $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
-        }
-        $companyFinanceYear = $companyFinanceYear->get();
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
         $companies = \Helper::allCompanies();
 
@@ -743,7 +829,7 @@ class StockTransferAPIController extends AppBaseController
 
         $items = $items
             ->take(20)
-            ->get(['itemPrimaryCode','itemDescription','itemCodeSystem','secondaryItemCode']);
+            ->get(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'secondaryItemCode']);
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }

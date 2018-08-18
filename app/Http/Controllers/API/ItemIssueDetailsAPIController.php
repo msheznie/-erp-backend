@@ -144,19 +144,19 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError('Item Issue not found', 500);
         }
 
-        if($itemIssue->wareHouseFrom){
-            $wareHouse = WarehouseMaster::where("wareHouseSystemCode",$itemIssue->wareHouseFrom)->first();
+        if ($itemIssue->wareHouseFrom) {
+            $wareHouse = WarehouseMaster::where("wareHouseSystemCode", $itemIssue->wareHouseFrom)->first();
             if (empty($wareHouse)) {
                 return $this->sendError('Warehouse not found', 500);
             }
-            if($wareHouse->isActive == 0){
-                return $this->sendError('Please select a active warehouse.',500);
+            if ($wareHouse->isActive == 0) {
+                return $this->sendError('Please select a active warehouse.', 500);
             }
-        }else{
+        } else {
             return $this->sendError('Please select a warehouse.', 500);
         }
 
-        if($itemIssue->serviceLineSystemID) {
+        if ($itemIssue->serviceLineSystemID) {
             $checkDepartmentActive = SegmentMaster::find($itemIssue->serviceLineSystemID);
             if (empty($checkDepartmentActive)) {
                 return $this->sendError('Department not found');
@@ -164,7 +164,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             if ($checkDepartmentActive->isActive == 0) {
                 return $this->sendError('Please select a active department', 500);
             }
-        }else{
+        } else {
             return $this->sendError('Please select a department.', 500);
         }
 
@@ -282,8 +282,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['itemPrimaryCode'] = $item->item_by->primaryCode;
 
             $itemAssigned = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
-                                        ->where('companySystemID', $companySystemID)
-                                        ->first();
+                ->where('companySystemID', $companySystemID)
+                ->first();
 
             $input['issueCostLocal'] = $itemAssigned->wacValueLocal;
             $input['issueCostLocalTotal'] = $itemAssigned->wacValueLocal * $input['qtyIssuedDefaultMeasure'];
@@ -362,34 +362,22 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
+        $data = array('companySystemID' => $companySystemID,
+                      'itemCodeSystem' => $input['itemCodeSystem'],
+                      'wareHouseId' => $itemIssue->wareHouseFrom);
 
-        $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
-            ->where('companySystemID', $companySystemID)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
-        $currentWareHouseStockQty = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
-            ->where('companySystemID', $companySystemID)
-            ->where('wareHouseSystemCode', $itemIssue->wareHouseFrom)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
-
-        $currentStockQtyInDamageReturn = ErpItemLedger::where('itemSystemCode', $input['itemCodeSystem'])
-            ->where('companySystemID', $companySystemID)
-            ->where('fromDamagedTransactionYN', 1)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
+        $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+        $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+        $input['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
 
 
-        $input['currentStockQty'] = $currentStockQty;
-        $input['currentWareHouseStockQty'] = $currentWareHouseStockQty;
-        $input['currentStockQtyInDamageReturn'] = $currentStockQtyInDamageReturn;
-
-        if ($currentWareHouseStockQty <= 0) {
+        if ($input['currentWareHouseStockQty'] <= 0) {
             return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
         }
 
-        if ($currentStockQty <= 0) {
+        if ($input['currentStockQty'] <= 0) {
             return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
         }
 
@@ -425,15 +413,15 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
 
-        if($itemIssue->customerSystemID && $itemIssue->companySystemID && $itemIssue->contractUIID){
+        if ($itemIssue->customerSystemID && $itemIssue->companySystemID && $itemIssue->contractUIID) {
 
-            $clientReferenceNumber = ItemClientReferenceNumberMaster::where('companySystemID',$itemIssue->companySystemID)
-                                                                       ->where('itemSystemCode',$input['itemCodeSystem'])
-                                                                       ->where('customerID',$itemIssue->customerSystemID)
-                                                                       ->where('contractUIID',$itemIssue->contractUIID)
-                                                                       ->first();
+            $clientReferenceNumber = ItemClientReferenceNumberMaster::where('companySystemID', $itemIssue->companySystemID)
+                ->where('itemSystemCode', $input['itemCodeSystem'])
+                ->where('customerID', $itemIssue->customerSystemID)
+                ->where('contractUIID', $itemIssue->contractUIID)
+                ->first();
 
-            if(!empty($clientReferenceNumber)){
+            if (!empty($clientReferenceNumber)) {
                 $input['clientReferenceNumber'] = $clientReferenceNumber->clientReferenceNumber;
             }
 
@@ -671,9 +659,9 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $input['issueCostRptTotal'] = $itemIssueDetails->issueCostRpt * $input['qtyIssuedDefaultMeasure'];
 
 
-        if($input['qtyIssued'] == '' || is_null($input['qtyIssued'])){
+        if ($input['qtyIssued'] == '' || is_null($input['qtyIssued'])) {
             $input['qtyIssued'] = 0;
-            $input['qtyIssuedDefaultMeasure']  = 0;
+            $input['qtyIssuedDefaultMeasure'] = 0;
         }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
@@ -890,7 +878,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                                 $query->whereHas('item_by', function ($q) use ($search) {
                                     $q->where(function ($query) use ($search) {
                                         $query->where('primaryCode', 'LIKE', "%{$search}%")
-                                              ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+                                            ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
                                     });
                                 })->orWhere('itemDescription', 'LIKE', "%{$search}%");
                             });

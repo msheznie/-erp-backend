@@ -10,12 +10,15 @@
  * -- REVISION HISTORY
  * -- Date: 10 - August 2018 By: Fayas Description: Added new functions named as getPurchaseReturnByCompany(),getPurchaseReturnFormData()
  * -- Date: 10 - August 2018 By: Fayas Description: Added new functions named as purchaseReturnSegmentChkActive(),grvForPurchaseReturn()
+ * -- Date: 17 - August 2018 By: Fayas Description: Added new functions named as getPurchaseReturnAudit(),getPurchaseReturnApprovedByUser(),
+ *                          getPurchaseReturnApprovalByUser()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseReturnAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseReturnAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
@@ -24,9 +27,11 @@ use App\Models\DocumentMaster;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\GRVTypes;
+use App\Models\ItemIssueMaster;
 use App\Models\Location;
 use App\Models\Months;
 use App\Models\PurchaseReturn;
+use App\Models\PurchaseReturnDetails;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
@@ -53,10 +58,12 @@ class PurchaseReturnAPIController extends AppBaseController
 {
     /** @var  PurchaseReturnRepository */
     private $purchaseReturnRepository;
+    private $purchaseReturnDetailsRepository;
 
-    public function __construct(PurchaseReturnRepository $purchaseReturnRepo)
+    public function __construct(PurchaseReturnRepository $purchaseReturnRepo,PurchaseReturnDetails $purchaseReturnDetailsRepo)
     {
         $this->purchaseReturnRepository = $purchaseReturnRepo;
+        $this->purchaseReturnDetailsRepository = $purchaseReturnDetailsRepo;
     }
 
     /**
@@ -158,11 +165,32 @@ class PurchaseReturnAPIController extends AppBaseController
         $input['documentSystemID'] = 24;
         $input['documentID'] = 'PRN';
 
-        $companyFinancePeriod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
 
-        if ($companyFinancePeriod) {
-            $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod->dateTo;
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 10;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+        }
+        unset($inputParam);
+
+        $validator = \Validator::make($input, [
+            'purchaseReturnLocation' => 'required|numeric|min:1',
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'purchaseReturnDate' => 'required',
+            'serviceLineSystemID' => 'required|numeric|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            //return $this->sendError($validator->messages(), 422);
         }
 
         if (isset($input['purchaseReturnDate'])) {
@@ -296,7 +324,11 @@ class PurchaseReturnAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PurchaseReturn $purchaseReturn */
-        $purchaseReturn = $this->purchaseReturnRepository->with(['segment_by','location_by','financeperiod_by'])->findWithoutFail($id);
+        $purchaseReturn = $this->purchaseReturnRepository->with(['confirmed_by','segment_by','location_by','finance_period_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'finance_year_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($purchaseReturn)) {
             return $this->sendError('Purchase Return not found');
@@ -354,13 +386,197 @@ class PurchaseReturnAPIController extends AppBaseController
     public function update($id, UpdatePurchaseReturnAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['confirmed_by','segment_by','location_by','finance_period_by','finance_year_by']);
+        $wareHouseError = array('type' => 'wareHouse');
+        $serviceLineError = array('type' => 'serviceLine');
 
+        $input = $this->convertArrayToValue($input);
         /** @var PurchaseReturn $purchaseReturn */
         $purchaseReturn = $this->purchaseReturnRepository->findWithoutFail($id);
 
         if (empty($purchaseReturn)) {
             return $this->sendError('Purchase Return not found');
         }
+
+        if ($input['serviceLineSystemID']) {
+            $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Segment not found');
+            }
+
+            if ($checkDepartmentActive->isActive == 0) {
+                $this->purchaseReturnRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
+                return $this->sendError('Please select a active segment ', 500,$serviceLineError);
+            }
+        }
+
+        if ($input['purchaseReturnLocation']) {
+            $checkWareHouseActive = WarehouseMaster::find($input['purchaseReturnLocation']);
+            if (empty($checkWareHouseActive)) {
+                return $this->sendError('Location not found', 500, $wareHouseError);
+            }
+
+            if ($checkWareHouseActive->isActive == 0) {
+                $this->purchaseReturnRepository->update(['purchaseReturnLocation' => null],$id);
+                return $this->sendError('Please select a active location', 500, $wareHouseError);
+            }
+        }
+
+        if (isset($input['purchaseReturnDate'])) {
+            if ($input['purchaseReturnDate']) {
+                $input['purchaseReturnDate'] = new Carbon($input['purchaseReturnDate']);
+            }
+        }
+
+        if (isset($input['supplierID'])) {
+            $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
+
+            if (!empty($supplier)) {
+                $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
+                $input['supplierName'] = $supplier->supplierName;
+            }
+        }
+
+        if ($purchaseReturn->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 10;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            unset($inputParam);
+
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'purchaseReturnDate' => 'required',
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'purchaseReturnLocation' => 'required|numeric|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $documentDate = $input['purchaseReturnDate'];
+            $monthBegin = $input['FYBiggin'];
+            $monthEnd = $input['FYEnd'];
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Return date is not within the selected financial period !', 500);
+            }
+
+            $checkItems = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
+                                              ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every return should have at least one item', 500);
+            }
+
+            $checkQuantity = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
+                ->where(function ($q) {
+                    $q->where('noQty', '<=', 0)
+                        ->orWhereNull('noQty');
+                })
+                ->count();
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+            }
+
+            $itemIssueDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)->get();
+
+            $finalError = array('cost_zero' => array(),
+                'cost_neg' => array(),
+                'currentStockQty_zero' => array(),
+                'currentWareHouseStockQty_zero' => array(),
+                'currentStockQty_more' => array(),
+                'currentWareHouseStockQty_more' => array());
+            $error_count = 0;
+
+            foreach ($itemIssueDetails as $item) {
+                $updateItem = $this->purchaseReturnDetailsRepository->find($item['purhasereturnDetailID']);
+                $data = array('companySystemID' => $purchaseReturn->companySystemID,
+                    'itemCodeSystem' => $updateItem->itemCode,
+                    'wareHouseId' => $purchaseReturn->wareHouseFrom);
+                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+                /*$updateData = [ '' => $itemCurrentCostAndQty['currentStockQty'],
+                                '' => $itemCurrentCostAndQty['currentStockQtyInDamageReturn']];
+
+                /*$updateItem->currentStockQty = ;
+                $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                $updateItem->currentStockQtyInDamageReturn = ;
+                $updateItem->issueCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                $updateItem->issueCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
+                $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
+                $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
+                $updateItem->save();*/
+
+               /* if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
+                    array_push($finalError['cost_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
+                    array_push($finalError['cost_neg'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->currentWareHouseStockQty <= 0) {
+                    array_push($finalError['currentStockQty_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->currentStockQty <= 0) {
+                    array_push($finalError['currentWareHouseStockQty_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
+                    array_push($finalError['currentStockQty_more'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+
+                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
+                    array_push($finalError['currentWareHouseStockQty_more'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }*/
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
+
+            $amount = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
+                                            ->sum('netAmount');
+
+            $input['RollLevForApp_curr'] = 1;
+            $params = array('autoID' => $id,
+                'company' => $purchaseReturn->companySystemID,
+                'document' => $purchaseReturn->documentSystemID,
+                'segment' => $input['serviceLineSystemID'],
+                'category' => 0,
+                'amount' => $amount
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
 
         $purchaseReturn = $this->purchaseReturnRepository->update($input, $id);
 
@@ -568,12 +784,8 @@ class PurchaseReturnAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"));
-        $companyFinanceYear = $companyFinanceYear->where('companySystemID', $companyId);
-        if (isset($request['type']) && $request['type'] == 'add') {
-            $companyFinanceYear = $companyFinanceYear->where('isActive', -1);
-        }
-        $companyFinanceYear = $companyFinanceYear->get();
+
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
 
         $output = array('segments' => $segments,
@@ -659,6 +871,223 @@ class PurchaseReturnAPIController extends AppBaseController
         $grvDetails = GRVDetails::where('grvAutoID',$grvMaster->grvAutoID)->with(['unit'])->get();
 
         return $this->sendResponse($grvDetails, 'success');
+    }
+
+    /**
+     * Display the specified Purchase Return Audit.
+     * GET|HEAD /getPurchaseReturnAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getPurchaseReturnAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $purchaseReturn = $this->purchaseReturnRepository->getAudit($id);
+
+        if (empty($purchaseReturn)) {
+            return $this->sendError('Purchase Return not found');
+        }
+
+        $purchaseReturn->docRefNo = \Helper::getCompanyDocRefNo($purchaseReturn->companySystemID, $purchaseReturn->documentSystemID);
+
+        return $this->sendResponse($purchaseReturn->toArray(), 'Purchase Return retrieved successfully');
+    }
+
+    public function getPurchaseReturnApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $itemIssueMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_itemissuemaster.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As MIServiceLineDes',
+                'warehousemaster.wareHouseDescription As MIWareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+                    ->where('documentSystemID', 1)
+                    ->first();
+
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
+
+                $query->whereIn('employeesdepartments.documentSystemID', [8])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_itemissuemaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'itemIssueAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_itemissuemaster.companySystemID', $companyId)
+                    ->where('erp_itemissuemaster.approved', 0)
+                    ->where('erp_itemissuemaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'wareHouseFrom', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_itemissuemaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [8])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemIssueMaster->where('erp_itemissuemaster.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('wareHouseFrom', $input)) {
+            if ($input['wareHouseFrom'] && !is_null($input['wareHouseFrom'])) {
+                $itemIssueMaster->where('erp_itemissuemaster.wareHouseFrom', $input['wareHouseFrom']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemIssueMaster->whereMonth('erp_itemissuemaster.issueDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemIssueMaster->whereYear('erp_itemissuemaster.issueDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
+                $query->where('itemIssueCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($itemIssueMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemIssueAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+    public function getPurchaseReturnApprovedByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $itemIssueMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_itemissuemaster.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As MIServiceLineDes',
+                'warehousemaster.wareHouseDescription As MIWareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_itemissuemaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'itemIssueAutoID')
+                    ->where('erp_itemissuemaster.companySystemID', $companyId)
+                    ->where('erp_itemissuemaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'wareHouseFrom', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_itemissuemaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [8])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $itemIssueMaster->where('erp_itemissuemaster.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('wareHouseFrom', $input)) {
+            if ($input['wareHouseFrom'] && !is_null($input['wareHouseFrom'])) {
+                $itemIssueMaster->where('erp_itemissuemaster.wareHouseFrom', $input['wareHouseFrom']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $itemIssueMaster->whereMonth('erp_itemissuemaster.issueDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $itemIssueMaster->whereYear('erp_itemissuemaster.issueDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
+                $query->where('itemIssueCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($itemIssueMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemIssueAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
 }
