@@ -297,6 +297,5 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Document Attachments deleted successfully');
 
-
     }
 }
