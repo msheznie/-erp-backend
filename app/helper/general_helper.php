@@ -902,7 +902,9 @@ class Helper
                             }
 
                             // insert the record to item ledger
-                            $jobIL = ItemLedgerInsert::dispatch($masterData);
+                            if($input["documentSystemID"] != 20) {
+                                $jobIL = ItemLedgerInsert::dispatch($masterData);
+                            }
                             // insert the record to general ledger
                             if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
