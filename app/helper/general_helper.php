@@ -850,7 +850,7 @@ class Helper
                                 $qtyRangeArr= [];
                                 if ($fixeAssetDetail) {
                                     $lastSerialNumber = 1;
-                                    $lastSerial = Models\FixedAssetMaster::max('serialNo')->where('companySystemID')->first();
+                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID',$docApproved->companySystemID)->first();
                                     if ($lastSerial) {
                                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                                     }
@@ -859,13 +859,13 @@ class Helper
                                             $qtyRange = range(1, $val["currentStockQty"]);
                                             if ($qtyRange) {
                                                 foreach($qtyRange as $qty){
-                                                    $documentCode = ($val["master"]["companyID"] .'\\FA' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                                                    $documentCode = ($val["master"]["companyID"] .'\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
                                                     $data["departmentID"] = 'AM';
                                                     $data["departmentSystemID"] = null;
                                                     $data["serviceLineSystemID"] =  $val["master"]["serviceLineSystemID"];
                                                     $data["serviceLineCode"] = $val["master"]["serviceLineSystemID"];
-                                                    $data["docOriginSystemCode"] = $val["master"]["documentCode"];
-                                                    $data["docOrigin"] = $val["inventoryreclassificationID"];
+                                                    $data["docOriginSystemCode"] = $val["inventoryreclassificationID"];
+                                                    $data["docOrigin"] = $val["master"]["documentCode"];
                                                     $data["docOriginDetailID"] = $val["inventoryReclassificationDetailID"];
                                                     $data["companySystemID"] = $val["master"]["companySystemID"];
                                                     $data["companyID"] = $val["master"]["companyID"];
@@ -875,9 +875,9 @@ class Helper
                                                     $data["itemCode"] = $val["itemSystemCode"];
                                                     $data["faCode"] = $documentCode;
                                                     $data["assetDescription"] = $val["itemDescription"];
-                                                    $input['createdPcID'] = gethostname();
-                                                    $input['createdUserID'] = \Helper::getEmployeeID();
-                                                    $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                                    $data['createdPcID'] = gethostname();
+                                                    $data['createdUserID'] = \Helper::getEmployeeID();
+                                                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                                                     $data["timestamp"] = date('Y-m-d H:i:s');
                                                     $qtyRangeArr[] = $data;
                                                     $lastSerialNumber++;
