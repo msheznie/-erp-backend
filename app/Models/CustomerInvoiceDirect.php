@@ -501,7 +501,9 @@ class CustomerInvoiceDirect extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
-        'createdDateAndTime'
+        'createdDateAndTime',
+        'approvedByUserSystemID',
+        'approvedByUserID'
     ];
 
     /**
@@ -581,7 +583,9 @@ class CustomerInvoiceDirect extends Model
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
         'createdDateTime' => 'string',
-        'createdDateAndTime' => 'string'
+        'createdDateAndTime' => 'string',
+        'approvedByUserSystemID' => 'integer' ,
+        'approvedByUserID' => 'integer'
     ];
 
     /**

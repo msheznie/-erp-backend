@@ -441,7 +441,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	employees.empName AS confirmedEmployee,
 	customermaster.CustomerName AS SupplierOrCustomer,
 	currencymaster.CurrencyCode AS DocumentCurrency,
-	erp_custinvoicedirect.bookingAmountTrans AS DocumentValue,
+	erp_custinvoicedirect.bookingAmountTrans + IFNULL(VATAmount,0) AS DocumentValue,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
 	erp_custinvoicedirect.documentType AS documentType 

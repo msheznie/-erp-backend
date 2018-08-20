@@ -209,7 +209,9 @@ class CustomerInvoiceDirectDetail extends Model
         'performaMasterID',
         'clientContractID',
         'timesReferred',
-        'timeStamp'
+        'timeStamp',
+        'serviceLineSystemID',
+        'glSystemID'
     ];
 
     /**
@@ -245,7 +247,9 @@ class CustomerInvoiceDirectDetail extends Model
         'discountRate' => 'integer',
         'performaMasterID' => 'integer',
         'clientContractID' => 'string',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'serviceLineSystemID'=>'integer',
+        'glSystemID' => 'integer'
     ];
 
     /**
