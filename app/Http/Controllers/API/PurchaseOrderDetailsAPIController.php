@@ -916,17 +916,19 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
             foreach ($updateDetailDiscount as $itemDiscont) {
 
-                $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['discount'] / $input['netTotal']) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
+                if($itemDiscont['noQty'] != 0){
+                    $calculateItemDiscount = (($itemDiscont['netAmount'] - (($input['discount'] / $input['netTotal']) * $itemDiscont['netAmount'])) / $itemDiscont['noQty']);
 
-                $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateItemDiscount);
+                    $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $calculateItemDiscount);
 
-                $detail['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
-                $detail['GRVcostPerUnitSupTransCur'] = $calculateItemDiscount;
-                $detail['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+                    $detail['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
+                    $detail['GRVcostPerUnitSupTransCur'] = $calculateItemDiscount;
+                    $detail['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
 
-                $detail['purchaseRetcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
-                $detail['purchaseRetcostPerUnitTranCur'] = $calculateItemDiscount;
-                $detail['purchaseRetcostPerUnitRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+                    $detail['purchaseRetcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
+                    $detail['purchaseRetcostPerUnitTranCur'] = $calculateItemDiscount;
+                    $detail['purchaseRetcostPerUnitRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+                }
 
                 //$detail['netAmount'] = $calculateItemDiscount * $itemDiscont['noQty'];
 
