@@ -857,6 +857,50 @@ class Helper
                                 $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
                             }
 
+                            if ($input["documentSystemID"] == 61) { //create fixed asset
+                                $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
+                                $qtyRangeArr= [];
+                                if ($fixeAssetDetail) {
+                                    $lastSerialNumber = 1;
+                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID',$docApproved->companySystemID)->first();
+                                    if ($lastSerial) {
+                                        $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                                    }
+                                    foreach ($fixeAssetDetail as $val) {
+                                        if ($val["currentStockQty"]) {
+                                            $qtyRange = range(1, $val["currentStockQty"]);
+                                            if ($qtyRange) {
+                                                foreach($qtyRange as $qty){
+                                                    $documentCode = ($val["master"]["companyID"] .'\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                                                    $data["departmentID"] = 'AM';
+                                                    $data["departmentSystemID"] = null;
+                                                    $data["serviceLineSystemID"] =  $val["master"]["serviceLineSystemID"];
+                                                    $data["serviceLineCode"] = $val["master"]["serviceLineSystemID"];
+                                                    $data["docOriginSystemCode"] = $val["inventoryreclassificationID"];
+                                                    $data["docOrigin"] = $val["master"]["documentCode"];
+                                                    $data["docOriginDetailID"] = $val["inventoryReclassificationDetailID"];
+                                                    $data["companySystemID"] = $val["master"]["companySystemID"];
+                                                    $data["companyID"] = $val["master"]["companyID"];
+                                                    $data["documentSystemID"] = $val["master"]["documentSystemID"];
+                                                    $data["documentID"] = $val["master"]["documentID"];
+                                                    $data["serialNo"] = $lastSerialNumber;
+                                                    $data["itemCode"] = $val["itemSystemCode"];
+                                                    $data["faCode"] = $documentCode;
+                                                    $data["assetDescription"] = $val["itemDescription"];
+                                                    $data['createdPcID'] = gethostname();
+                                                    $data['createdUserID'] = \Helper::getEmployeeID();
+                                                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                                    $data["timestamp"] = date('Y-m-d H:i:s');
+                                                    $qtyRangeArr[] = $data;
+                                                    $lastSerialNumber++;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    $fixedAsset = Models\FixedAssetMaster::insert($qtyRangeArr);
+                                }
+                            }
+
                             // insert the record to item ledger
                             $jobIL = ItemLedgerInsert::dispatch($masterData);
                             // insert the record to general ledger
@@ -940,6 +984,8 @@ class Helper
                         } else {
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
+
+
                         }
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
