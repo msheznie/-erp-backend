@@ -220,7 +220,14 @@ class PurchaseReturnDetails extends Model
         'netAmount',
         'netAmountLocal',
         'netAmountRpt',
-        'timeStamp'
+        'timeStamp',
+        'itemFinanceCategoryID',
+        'itemFinanceCategorySubID',
+        'financeGLcodebBSSystemID',
+        'financeGLcodebBS',
+        'financeGLcodePLSystemID',
+        'financeGLcodePL',
+        'includePLForGRVYN'
     ];
 
     /**
@@ -256,7 +263,14 @@ class PurchaseReturnDetails extends Model
         'GRVcostPerUnitComRptCur' => 'float',
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
-        'netAmountRpt' => 'float'
+        'netAmountRpt' => 'float',
+        'itemFinanceCategoryID'  => 'integer',
+        'itemFinanceCategorySubID' => 'integer',
+        'financeGLcodebBSSystemID' => 'integer',
+        'financeGLcodebBS' => 'string',
+        'financeGLcodePLSystemID' => 'integer',
+        'financeGLcodePL' => 'string',
+        'includePLForGRVYN' => 'integer',
     ];
 
     /**

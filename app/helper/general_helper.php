@@ -814,22 +814,27 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-
-            case 20 :
+            case 20:
+                $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
                 $docInforArr["tableName"] = 'erp_custinvoicedirect';
                 $docInforArr["modelName"] = 'CustomerInvoiceDirect';
                 $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
-                $docInforArr["approvedColumnName"] = 'approved';
-                $docInforArr["approvedBy"] = 'approvedByUserID';
-                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
-                $docInforArr["approvedDate"] = 'approvedDate';
-                $docInforArr["approveValue"] = -1;
-                $docInforArr["confirmedYN"] = "confirmedYN";
+                break;
+            case 24:
+                $docInforArr["documentCodeColumnName"] = 'purchaseReturnCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
                 $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
-
-
-
-
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_purchasereturnmaster';
+                $docInforArr["modelName"] = 'PurchaseReturn';
+                $docInforArr["primarykey"] = 'purhaseReturnAutoID';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -867,6 +872,50 @@ class Helper
                             if ($input["documentSystemID"] == 56) { //Auto assign item to supplier table
                                 $supplierMaster = $namespacedModel::selectRaw('supplierCodeSystem as supplierCodeSytem,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,uniqueTextcode,primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
                                 $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
+                            }
+
+                            if ($input["documentSystemID"] == 61) { //create fixed asset
+                                $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
+                                $qtyRangeArr= [];
+                                if ($fixeAssetDetail) {
+                                    $lastSerialNumber = 1;
+                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID',$docApproved->companySystemID)->first();
+                                    if ($lastSerial) {
+                                        $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                                    }
+                                    foreach ($fixeAssetDetail as $val) {
+                                        if ($val["currentStockQty"]) {
+                                            $qtyRange = range(1, $val["currentStockQty"]);
+                                            if ($qtyRange) {
+                                                foreach($qtyRange as $qty){
+                                                    $documentCode = ($val["master"]["companyID"] .'\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                                                    $data["departmentID"] = 'AM';
+                                                    $data["departmentSystemID"] = null;
+                                                    $data["serviceLineSystemID"] =  $val["master"]["serviceLineSystemID"];
+                                                    $data["serviceLineCode"] = $val["master"]["serviceLineSystemID"];
+                                                    $data["docOriginSystemCode"] = $val["inventoryreclassificationID"];
+                                                    $data["docOrigin"] = $val["master"]["documentCode"];
+                                                    $data["docOriginDetailID"] = $val["inventoryReclassificationDetailID"];
+                                                    $data["companySystemID"] = $val["master"]["companySystemID"];
+                                                    $data["companyID"] = $val["master"]["companyID"];
+                                                    $data["documentSystemID"] = $val["master"]["documentSystemID"];
+                                                    $data["documentID"] = $val["master"]["documentID"];
+                                                    $data["serialNo"] = $lastSerialNumber;
+                                                    $data["itemCode"] = $val["itemSystemCode"];
+                                                    $data["faCode"] = $documentCode;
+                                                    $data["assetDescription"] = $val["itemDescription"];
+                                                    $data['createdPcID'] = gethostname();
+                                                    $data['createdUserID'] = \Helper::getEmployeeID();
+                                                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                                    $data["timestamp"] = date('Y-m-d H:i:s');
+                                                    $qtyRangeArr[] = $data;
+                                                    $lastSerialNumber++;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    $fixedAsset = Models\FixedAssetMaster::insert($qtyRangeArr);
+                                }
                             }
 
                             // insert the record to item ledger
@@ -953,6 +1002,8 @@ class Helper
 
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
+
+
                         }
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);

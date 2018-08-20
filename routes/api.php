@@ -720,6 +720,7 @@ Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
 Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
 Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
 Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
+Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
