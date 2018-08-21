@@ -1,9 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
-use App\Models\Employee;
-
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -708,6 +704,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails');
 
+    Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
+    Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
 
 });
 
@@ -752,3 +750,5 @@ Route::get('runQueueSR', function () {
 
 
 Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+
+

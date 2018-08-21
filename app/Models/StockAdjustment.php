@@ -1,0 +1,254 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : StockAdjustment.php
+ * -- Project Name : ERP
+ * -- Module Name : Stock Adjustment
+ * -- Author : Mohamed Fayas
+ * -- Create date : 20- August 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="StockAdjustment",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="stockAdjustmentAutoID",
+ *          description="stockAdjustmentAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="serviceLineSystemID",
+ *          description="serviceLineSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="serviceLineCode",
+ *          description="serviceLineCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentSystemID",
+ *          description="documentSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentID",
+ *          description="documentID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyFinanceYearID",
+ *          description="companyFinanceYearID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyFinancePeriodID",
+ *          description="companyFinancePeriodID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="serialNo",
+ *          description="serialNo",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="stockAdjustmentCode",
+ *          description="stockAdjustmentCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="refNo",
+ *          description="refNo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="location",
+ *          description="location",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="comment",
+ *          description="comment",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedYN",
+ *          description="confirmedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByEmpSystemID",
+ *          description="confirmedByEmpSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByEmpID",
+ *          description="confirmedByEmpID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByName",
+ *          description="confirmedByName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approved",
+ *          description="approved",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserGroup",
+ *          description="createdUserGroup",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdPCid",
+ *          description="createdPCid",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserSystemID",
+ *          description="createdUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserSystemID",
+ *          description="modifiedUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUser",
+ *          description="modifiedUser",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPc",
+ *          description="modifiedPc",
+ *          type="string"
+ *      )
+ * )
+ */
+class StockAdjustment extends Model
+{
+
+    public $table = 'erp_stockadjustment';
+    
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
+    protected $primaryKey  = 'stockAdjustmentAutoID';
+
+
+
+    public $fillable = [
+        'companySystemID',
+        'companyID',
+        'serviceLineSystemID',
+        'serviceLineCode',
+        'documentSystemID',
+        'documentID',
+        'companyFinanceYearID',
+        'companyFinancePeriodID',
+        'FYBiggin',
+        'FYEnd',
+        'serialNo',
+        'stockAdjustmentCode',
+        'refNo',
+        'stockAdjustmentDate',
+        'location',
+        'comment',
+        'confirmedYN',
+        'confirmedByEmpSystemID',
+        'confirmedByEmpID',
+        'confirmedByName',
+        'confirmedDate',
+        'approved',
+        'createdDateTime',
+        'createdUserGroup',
+        'createdPCid',
+        'createdUserSystemID',
+        'createdUserID',
+        'modifiedUserSystemID',
+        'modifiedUser',
+        'modifiedPc',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'stockAdjustmentAutoID' => 'integer',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
+        'serviceLineSystemID' => 'integer',
+        'serviceLineCode' => 'string',
+        'documentSystemID' => 'integer',
+        'documentID' => 'string',
+        'companyFinanceYearID' => 'integer',
+        'companyFinancePeriodID' => 'integer',
+        'serialNo' => 'integer',
+        'stockAdjustmentCode' => 'string',
+        'refNo' => 'string',
+        'location' => 'integer',
+        'comment' => 'string',
+        'confirmedYN' => 'integer',
+        'confirmedByEmpSystemID' => 'integer',
+        'confirmedByEmpID' => 'string',
+        'confirmedByName' => 'string',
+        'approved' => 'integer',
+        'createdUserGroup' => 'string',
+        'createdPCid' => 'string',
+        'createdUserSystemID' => 'integer',
+        'createdUserID' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUser' => 'string',
+        'modifiedPc' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}
