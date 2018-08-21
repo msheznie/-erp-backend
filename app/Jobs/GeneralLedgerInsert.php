@@ -555,107 +555,131 @@ class GeneralLedgerInsert implements ShouldQueue
                         break;
                     case 20:
                         /*customerInvoice*/
-                        $masterData = CustomerInvoiceDirect::find($masterModel["autoID"]);
-                        $det=CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$masterModel["autoID"]);
+                        $masterData = CustomerInvoiceDirect::with(['customer'])->find($masterModel["autoID"]);
+
+
+                        $det=CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID',$masterModel["autoID"]);
+
                         $detOne = $det->first();
-                        $detail = $det->get();
+
+                        $det=CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$masterModel["autoID"])->groupBy('glCode','serviceLineCode');
+
+                        $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode")->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode','serviceLineCode')->get();
+
+
+
                         $company = Company::select('masterComapanyID')->where('companySystemID',$masterData->companySystemID)->first();
-                        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','chartOfAccountSystemID')->where('chartOfAccountSystemID', $detOne->glSystemID)->first();
-                        $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
+                        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customer->custGLAccountSystemID)->first();
+
+                            $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
+
                         $date = new Carbon( $masterData->bookingDate );
                         $getEmployeeSystemID = \Helper::getEmployeeSystemID();
                        $time= Carbon::now();
                        $getEmployeeID=\Helper::getEmployeeID();
 
-                        $generalfi['companySystemID'] = $masterData->companySystemID;
-                        $generalfi['companyID'] = $masterData->companyID;
-                        $generalfi['serviceLineSystemID'] = $detOne->serviceLineSystemID;
-                        $generalfi['serviceLineCode'] = $detOne->serviceLineCode;
-                        $generalfi['masterCompanyID'] = $company->masterComapanyID;
-                        $generalfi['documentID'] = "INV";
-                        $generalfi['documentSystemID'] = $masterData->documentSystemiD;
-                        $generalfi['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
-                        $generalfi['documentCode'] = $masterData->bookingInvCode;
-                        $generalfi['documentDate'] = $masterData->bookingDate;
-                        $generalfi['documentYear'] = $date->year;
-                        $generalfi['documentMonth'] = $date->month;
-                        $generalfi['invoiceNumber'] = $masterData->customerInvoiceNo;
-                        $generalfi['invoiceDate'] = $masterData->customerInvoiceDate;
+                        $data['companySystemID'] = $masterData->companySystemID;
+                        $data['companyID'] = $masterData->companyID;
+                        $data['masterCompanyID'] = $company->masterComapanyID;
+                        $data['documentID'] = "INV";
+                        $data['documentSystemID'] = $masterData->documentSystemiD;
+                        $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
+                        $data['documentCode'] = $masterData->bookingInvCode;
+                        $data['documentDate'] = $masterData->bookingDate;
+                        $data['documentYear'] = $date->year;
+                        $data['documentMonth'] = $date->month;
+                        $data['invoiceNumber'] = $masterData->customerInvoiceNo;
+                        $data['invoiceDate'] = $masterData->customerInvoiceDate;
+
+                        $data['serviceLineSystemID'] = $detOne->serviceLineSystemID;
+                        $data['serviceLineCode'] = $detOne->serviceLineCode;
+
+
+
 
                         // from customer invoice master table
-                        $generalfi['chartOfAccountSystemID'] = $detOne->glSystemID;
-                        $generalfi['glCode'] = $chartOfAccount->AccountCode;
-                        $generalfi['glAccountType'] = $chartOfAccount->catogaryBLorPL;
-                        $generalfi['documentConfirmedDate'] = $masterData->confirmedDate;
-                        $generalfi['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                        $data['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+                        $data['glCode'] = $chartOfAccount->chartOfAccountSystemID;
+                        $data['glAccountType'] = $chartOfAccount->catogaryBLorPL;
+                        $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                        $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
 
-                        $generalfi['documentNarration'] = $masterData->comments;
-                        $generalfi['clientContractID'] = $detOne->clientContractID;
-                        $generalfi['supplierCodeSystem'] = $masterData->customerID;
 
-                        $generalfi['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                        $generalfi['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                        $generalfi['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
-                        $generalfi['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                        $generalfi['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                        $generalfi['documentLocalAmount'] = $masterData->bookingAmountLocal + $masterData->VATAmountLocal;
-                        $generalfi['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
-                        $generalfi['documentRptCurrencyER'] = $masterData->companyReportingER;
-                        $generalfi['documentRptAmount'] = $masterData->bookingAmountRpt + $masterData->VATAmountRpt;
+                        $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+                        $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                        $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                        $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
 
-                        /*$generalfi['isCustomer'] = 1;*/
-                       // $generalfi['documentType'] = 11;
-                        $generalfi['createdUserSystemID'] =$getEmployeeSystemID;
-                        $generalfi['createdDateTime'] =$time;
-                        $generalfi['createdUserID'] =$getEmployeeID;
-                        $generalfi['createdUserPC'] =getenv('COMPUTERNAME');
+                        $data['documentNarration'] = $masterData->comments;
+                        $data['clientContractID'] = $detOne->clientContractID;
+                        $data['contractUID']=$detOne->contract->contractUID;
+                        $data['supplierCodeSystem'] = $masterData->customerID;
 
-                        array_push($finalData, $generalfi);
+                        $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                        $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                        $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
+                        $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                        $data['documentLocalAmount'] = $masterData->bookingAmountLocal + $masterData->VATAmountLocal;
+                        $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
+                        $data['documentRptCurrencyER'] = $masterData->companyReportingER;
+                        $data['documentRptAmount'] = $masterData->bookingAmountRpt + $masterData->VATAmountRpt;
+
+                        $data['documentType']=11;
+
+                        $data['createdUserSystemID'] =$getEmployeeSystemID;
+                        $data['createdDateTime'] =$time;
+                        $data['createdUserID'] =$getEmployeeID;
+                        $data['createdUserPC'] =getenv('COMPUTERNAME');
+                        $data['timestamp'] =$time;
+                        array_push($finalData, $data);
 
                         if(!empty($detail)){
                             foreach ($detail as $item){
-                                $generalfi['companySystemID'] = $masterData->companySystemID;
-                                $generalfi['companyID'] = $masterData->companyID;
-                                $generalfi['serviceLineSystemID'] = $item->serviceLineSystemID;
-                                $generalfi['serviceLineCode'] = $item->serviceLineCode;
-                                $generalfi['masterCompanyID'] = $company->masterComapanyID;
-                                $generalfi['documentSystemID'] = $masterData->documentSystemiD;
-                                $generalfi['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
-                                $generalfi['documentCode'] = $masterData->bookingInvCode;
-                                $generalfi['documentDate'] = $masterData->bookingDate;
-                                $generalfi['documentYear'] = $date->year;
-                                $generalfi['documentMonth'] = $date->month;
-                                $generalfi['invoiceNumber'] = $masterData->customerInvoiceNo;
-                                $generalfi['invoiceDate'] = $masterData->customerInvoiceDate;
+                                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->glSystemID)->first();
+                                $data['companySystemID'] = $masterData->companySystemID;
+                                $data['companyID'] = $masterData->companyID;
+                                $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                                $data['serviceLineCode'] = $item->serviceLineCode;
+                                $data['masterCompanyID'] = $company->masterComapanyID;
+                                $data['documentSystemID'] = $masterData->documentSystemiD;
+                                $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
+                                $data['documentCode'] = $masterData->bookingInvCode;
+                                $data['documentDate'] = $masterData->bookingDate;
+                                $data['documentYear'] = $date->year;
+                                $data['documentMonth'] = $date->month;
+                                $data['invoiceNumber'] = $masterData->customerInvoiceNo;
+                                $data['invoiceDate'] = $masterData->customerInvoiceDate;
 
                                 // from customer invoice master table
-                                $generalfi['chartOfAccountSystemID'] = $chartOfAccount->glSystemID;
-                                $generalfi['glCode'] = $chartOfAccount->AccountCode;
-                                $generalfi['glAccountType'] = $chartOfAccount->catogaryBLorPL;
-                                $generalfi['documentConfirmedDate'] = $masterData->confirmedDate;
-                                $generalfi['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                                $data['chartOfAccountSystemID'] = $item->glSystemID;
+                                $data['glCode'] = $chartOfAccount->AccountCode;
+                                $data['glAccountType'] = $chartOfAccount->catogaryBLorPL;
+                                $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                                $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
 
-                                $generalfi['documentNarration'] = $item->comments;
-                                $generalfi['clientContractID'] = $item->clientContractID;
-                                $generalfi['supplierCodeSystem'] = $item->customerID;
+                                $data['documentNarration'] = $item->comments;
+                                $data['clientContractID'] = $item->clientContractID;
+                                $data['supplierCodeSystem'] = $item->customerID;
 
-                                $generalfi['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
-                                $generalfi['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                                $generalfi['documentTransAmount'] = $item->invoiceAmount * -1;
-                                $generalfi['documentLocalCurrencyID'] = $item->localCurrency;
-                                $generalfi['documentLocalCurrencyER'] = $item->localCurrencyER;
-                                $generalfi['documentLocalAmount'] = $item->localAmount * -1;
-                                $generalfi['documentRptCurrencyID'] = $item->comRptCurrency;
-                                $generalfi['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                                $generalfi['documentRptAmount'] = $item->comRptAmount * -1;
+                                $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
+                                $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
+                                $data['documentTransAmount'] = $item->invoiceAmount * -1;
+                                $data['documentLocalCurrencyID'] = $item->localCurrency;
 
-                              /*  $generalfi['isCustomer'] = 1;*/
-                               // $generalfi['documentType'] = 11;
-                                $generalfi['createdUserSystemID'] =$getEmployeeSystemID;
-                                $generalfi['createdDateTime'] =$time;
-                                $generalfi['createdUserID'] =$getEmployeeID;
-                                $generalfi['createdUserPC'] =getenv('COMPUTERNAME');
-                                array_push($finalData, $generalfi);
+                                $data['documentLocalCurrencyER'] = $item->localCurrencyER;
+                                $data['documentLocalAmount'] = $item->localAmount * -1;
+                                $data['documentRptCurrencyID'] = $item->comRptCurrency;
+                                $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
+                                $data['documentRptAmount'] = $item->comRptAmount * -1;
+
+                              /*  $data['isCustomer'] = 1;*/
+                               // $data['documentType'] = 11;
+                                $data['createdUserSystemID'] =$getEmployeeSystemID;
+                                $data['createdDateTime'] =$time;
+                                $data['createdUserID'] =$getEmployeeID;
+                                $data['createdUserPC'] =getenv('COMPUTERNAME');
+                                array_push($finalData, $data);
                             }
                         }
                         $erp_taxdetail=  Taxdetail::where('companyID',$masterData->companyID)->where('documentSystemCode',$masterData->custInvoiceDirectAutoID)->get();
@@ -663,48 +687,48 @@ class GeneralLedgerInsert implements ShouldQueue
                         if (!empty($erp_taxdetail)) {
                             foreach ($erp_taxdetail as $tax) {
 
-                                $generalfi['companySystemID'] = $masterData->companySystemID;
-                                $generalfi['companyID'] = $masterData->companyID;
-                                $generalfi['serviceLineSystemID'] = $item->serviceLineSystemID;
-                                $generalfi['serviceLineCode'] = $item->serviceLineCode;
-                                $generalfi['masterCompanyID'] = $company->masterComapanyID;
-                                $generalfi['documentSystemID'] = $masterData->documentSystemiD;
-                                $generalfi['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
-                                $generalfi['documentCode'] = $masterData->bookingInvCode;
-                                $generalfi['documentDate'] = $masterData->bookingDate;
-                                $generalfi['documentYear'] = $date->year;
-                                $generalfi['documentMonth'] = $date->month;
-                                $generalfi['invoiceNumber'] = $masterData->customerInvoiceNo;
-                                $generalfi['invoiceDate'] = $masterData->customerInvoiceDate;
+                                $data['companySystemID'] = $masterData->companySystemID;
+                                $data['companyID'] = $masterData->companyID;
+                                $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                                $data['serviceLineCode'] = $item->serviceLineCode;
+                                $data['masterCompanyID'] = $company->masterComapanyID;
+                                $data['documentSystemID'] = $masterData->documentSystemiD;
+                                $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
+                                $data['documentCode'] = $masterData->bookingInvCode;
+                                $data['documentDate'] = $masterData->bookingDate;
+                                $data['documentYear'] = $date->year;
+                                $data['documentMonth'] = $date->month;
+                                $data['invoiceNumber'] = $masterData->customerInvoiceNo;
+                                $data['invoiceDate'] = $masterData->customerInvoiceDate;
 
                                 // from customer invoice master table
-                                $generalfi['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
-                                $generalfi['glCode'] = $taxGL->AccountCode;
-                                $generalfi['glAccountType'] = $taxGL->catogaryBLorPL;
-                                $generalfi['documentConfirmedDate'] = $masterData->confirmedDate;
-                                $generalfi['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                                $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
+                                $data['glCode'] = $taxGL->AccountCode;
+                                $data['glAccountType'] = $taxGL->catogaryBLorPL;
+                                $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                                $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
 
-                                $generalfi['documentNarration'] = $tax->taxDescription;
-                                $generalfi['clientContractID'] =  $detOne->clientContractID;
-                                $generalfi['supplierCodeSystem'] = $masterData->customerID;
+                                $data['documentNarration'] = $tax->taxDescription;
+                                $data['clientContractID'] =  $detOne->clientContractID;
+                                $data['supplierCodeSystem'] = $masterData->customerID;
 
-                                $generalfi['documentTransCurrencyID'] = $tax->currency;
-                                $generalfi['documentTransCurrencyER'] = $tax->currencyER;
-                                $generalfi['documentTransAmount'] = $tax->amount * -1;
-                                $generalfi['documentLocalCurrencyID'] = $tax->localCurrencyID;
-                                $generalfi['documentLocalCurrencyER'] = $tax->localCurrencyER;
-                                $generalfi['documentLocalAmount'] = $tax->localAmount * -1;
-                                $generalfi['documentRptCurrencyID'] = $tax->rptCurrencyID;
-                                $generalfi['documentRptCurrencyER'] = $tax->rptCurrencyER;
-                                $generalfi['documentRptAmount'] = $tax->rptAmount * -1;
+                                $data['documentTransCurrencyID'] = $tax->currency;
+                                $data['documentTransCurrencyER'] = $tax->currencyER;
+                                $data['documentTransAmount'] = $tax->amount * -1;
+                                $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
+                                $data['documentLocalAmount'] = $tax->localAmount * -1;
+                                $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
+                                $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
+                                $data['documentRptAmount'] = $tax->rptAmount * -1;
 
-                                /*$generalfi['isCustomer'] = 1;*/
-                               // $generalfi['documentType'] = 11;
-                                $generalfi['createdUserSystemID'] =$getEmployeeSystemID;
-                                $generalfi['createdDateTime'] =$time;
-                                $generalfi['createdUserID'] =$getEmployeeID;
-                                $generalfi['createdUserPC'] =getenv('COMPUTERNAME');
-                                array_push($finalData, $generalfi);
+                                /*$data['isCustomer'] = 1;*/
+                               // $data['documentType'] = 11;
+                                $data['createdUserSystemID'] =$getEmployeeSystemID;
+                                $data['createdDateTime'] =$time;
+                                $data['createdUserID'] =$getEmployeeID;
+                                $data['createdUserPC'] =getenv('COMPUTERNAME');
+                                array_push($finalData, $data);
                             }
                         }
 

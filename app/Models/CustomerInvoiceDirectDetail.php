@@ -271,4 +271,8 @@ class CustomerInvoiceDirectDetail extends Model
     public function department(){
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineCode','ServiceLineCode');
     }
+
+    public function contract(){
+        return $this->belongsTo('App\Models\Contract','clientContractID','ContractNumber');
+    }
 }
