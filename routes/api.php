@@ -732,7 +732,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 
 Route::get('runQueue', function () {
     //$master = ['documentSystemID' => 24, 'autoID' => 105, 'companySystemID' => 11, 'employeeSystemID' => 2664];
-    $master = ['documentSystemID' => 7, 'autoID' => 253, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 19, 'autoID' => 3305, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 
@@ -756,3 +756,8 @@ Route::get('runQueueSR', function () {
 Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
 
 
+
+
+Route::resource('credit_notes', 'CreditNoteAPIController');
+
+Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');

@@ -1,26 +1,16 @@
 <?php
-/**
- * =============================================
- * -- File Name : DebitNote.php
- * -- Project Name : ERP
- * -- Module Name :  DebitNote
- * -- Author : Nazir
- * -- Create date : 16 - August 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- * --
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="DebitNote",
+ *      definition="CreditNote",
  *      required={""},
  *      @SWG\Property(
- *          property="debitNoteAutoID",
- *          description="debitNoteAutoID",
+ *          property="creditNoteAutoID",
+ *          description="creditNoteAutoID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -36,8 +26,8 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="documentSystemID",
- *          description="documentSystemID",
+ *          property="documentSystemiD",
+ *          description="documentSystemiD",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -65,8 +55,8 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="debitNoteCode",
- *          description="debitNoteCode",
+ *          property="creditNoteCode",
+ *          description="creditNoteCode",
  *          type="string"
  *      ),
  *      @SWG\Property(
@@ -75,25 +65,31 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="supplierID",
- *          description="supplierID",
+ *          property="customerID",
+ *          description="customerID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="supplierGLCode",
- *          description="supplierGLCode",
+ *          property="customerGLCodeSystemID",
+ *          description="customerGLCodeSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerGLCode",
+ *          description="customerGLCode",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="supplierTransactionCurrencyID",
- *          description="supplierTransactionCurrencyID",
+ *          property="customerCurrencyID",
+ *          description="customerCurrencyID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="supplierTransactionCurrencyER",
- *          description="supplierTransactionCurrencyER",
+ *          property="customerCurrencyER",
+ *          description="customerCurrencyER",
  *          type="number",
  *          format="float"
  *      ),
@@ -122,20 +118,20 @@ use Eloquent as Model;
  *          format="float"
  *      ),
  *      @SWG\Property(
- *          property="debitAmountTrans",
- *          description="debitAmountTrans",
+ *          property="creditAmountTrans",
+ *          description="creditAmountTrans",
  *          type="number",
  *          format="float"
  *      ),
  *      @SWG\Property(
- *          property="debitAmountLocal",
- *          description="debitAmountLocal",
+ *          property="creditAmountLocal",
+ *          description="creditAmountLocal",
  *          type="number",
  *          format="float"
  *      ),
  *      @SWG\Property(
- *          property="debitAmountRpt",
- *          description="debitAmountRpt",
+ *          property="creditAmountRpt",
+ *          description="creditAmountRpt",
  *          type="number",
  *          format="float"
  *      ),
@@ -168,22 +164,14 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="documentType",
- *          description="documentType",
- *          type="integer",
- *          format="int32"
+ *          property="secondaryLogoCompID",
+ *          description="secondaryLogoCompID",
+ *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="timesReferred",
- *          description="timesReferred",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="RollLevForApp_curr",
- *          description="RollLevForApp_curr",
- *          type="integer",
- *          format="int32"
+ *          property="secondaryLogo",
+ *          description="secondaryLogo",
+ *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="matchInvoice",
@@ -212,6 +200,24 @@ use Eloquent as Model;
  *          property="matchingConfirmedByName",
  *          description="matchingConfirmedByName",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentType",
+ *          description="documentType",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="RollLevForApp_curr",
+ *          description="RollLevForApp_curr",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="createdUserGroup",
@@ -257,20 +263,20 @@ use Eloquent as Model;
  *      )
  * )
  */
-class DebitNote extends Model
+class CreditNote extends Model
 {
 
-    public $table = 'erp_debitnote';
-
-    const CREATED_AT = 'createdDateAndTime';
+    public $table = 'erp_creditnote';
+    
+    const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'debitNoteAutoID';
+    protected $primaryKey = "creditNoteAutoID";
 
     public $fillable = [
         'companySystemID',
         'companyID',
-        'documentSystemID',
+        'documentSystemiD',
         'documentID',
         'serialNo',
         'companyFinanceYearID',
@@ -279,21 +285,21 @@ class DebitNote extends Model
         'companyFinancePeriodID',
         'FYPeriodDateFrom',
         'FYPeriodDateTo',
-        'debitNoteCode',
-        'debitNoteDate',
+        'creditNoteCode',
+        'creditNoteDate',
         'comments',
-        'supplierID',
-        'supplierGLCode',
-        'supplierGLCodeSystemID',
-        'supplierTransactionCurrencyID',
-        'supplierTransactionCurrencyER',
+        'customerID',
+        'customerGLCodeSystemID',
+        'customerGLCode',
+        'customerCurrencyID',
+        'customerCurrencyER',
         'companyReportingCurrencyID',
         'companyReportingER',
         'localCurrencyID',
         'localCurrencyER',
-        'debitAmountTrans',
-        'debitAmountLocal',
-        'debitAmountRpt',
+        'creditAmountTrans',
+        'creditAmountLocal',
+        'creditAmountRpt',
         'confirmedYN',
         'confirmedByEmpSystemID',
         'confirmedByEmpID',
@@ -302,15 +308,17 @@ class DebitNote extends Model
         'approved',
         'approvedDate',
         'postedDate',
-        'documentType',
-        'timesReferred',
-        'RollLevForApp_curr',
+        'secondaryLogoCompID',
+        'secondaryLogo',
         'matchInvoice',
         'matchingConfirmedYN',
         'matchingConfirmedByEmpSystemID',
         'matchingConfirmedByEmpID',
         'matchingConfirmedByName',
         'matchingConfirmedDate',
+        'documentType',
+        'timesReferred',
+        'RollLevForApp_curr',
         'createdUserGroup',
         'createdUserSystemID',
         'createdUserID',
@@ -319,7 +327,6 @@ class DebitNote extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'createdDateAndTime',
         'timestamp'
     ];
 
@@ -329,41 +336,43 @@ class DebitNote extends Model
      * @var array
      */
     protected $casts = [
-        'debitNoteAutoID' => 'integer',
+        'creditNoteAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
-        'documentSystemID' => 'integer',
+        'documentSystemiD' => 'integer',
         'documentID' => 'string',
         'serialNo' => 'integer',
         'companyFinanceYearID' => 'integer',
         'companyFinancePeriodID' => 'integer',
-        'debitNoteCode' => 'string',
+        'creditNoteCode' => 'string',
         'comments' => 'string',
-        'supplierID' => 'integer',
-        'supplierGLCode' => 'string',
-        'supplierGLCodeSystemID' => 'integer',
-        'supplierTransactionCurrencyID' => 'integer',
-        'supplierTransactionCurrencyER' => 'float',
+        'customerID' => 'integer',
+        'customerGLCodeSystemID' => 'integer',
+        'customerGLCode' => 'string',
+        'customerCurrencyID' => 'integer',
+        'customerCurrencyER' => 'float',
         'companyReportingCurrencyID' => 'integer',
         'companyReportingER' => 'float',
         'localCurrencyID' => 'integer',
         'localCurrencyER' => 'float',
-        'debitAmountTrans' => 'float',
-        'debitAmountLocal' => 'float',
-        'debitAmountRpt' => 'float',
+        'creditAmountTrans' => 'float',
+        'creditAmountLocal' => 'float',
+        'creditAmountRpt' => 'float',
         'confirmedYN' => 'integer',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approved' => 'integer',
-        'documentType' => 'integer',
-        'timesReferred' => 'integer',
-        'RollLevForApp_curr' => 'integer',
+        'secondaryLogoCompID' => 'string',
+        'secondaryLogo' => 'string',
         'matchInvoice' => 'integer',
         'matchingConfirmedYN' => 'integer',
         'matchingConfirmedByEmpSystemID' => 'integer',
         'matchingConfirmedByEmpID' => 'string',
         'matchingConfirmedByName' => 'string',
+        'documentType' => 'integer',
+        'timesReferred' => 'integer',
+        'RollLevForApp_curr' => 'integer',
         'createdUserGroup' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
@@ -383,50 +392,8 @@ class DebitNote extends Model
         
     ];
 
-    public function created_by()
+    public function details()
     {
-        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+        return $this->hasMany('App\Models\CreditNoteDetails','creditNoteAutoID','creditNoteAutoID');
     }
-
-    public function confirmed_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
-    }
-
-    public function supplier()
-    {
-        return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
-    }
-
-    public function approved_by()
-    {
-        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'debitNoteAutoID');
-    }
-
-    public function company()
-    {
-        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
-    }
-
-    public function transactioncurrency()
-    {
-        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
-    }
-
-    public function localcurrency()
-    {
-        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
-    }
-
-    public function rptcurrency()
-    {
-        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
-    }
-
-    public function detail()
-    {
-        return $this->hasMany('App\Models\DebitNoteDetails', 'debitNoteAutoID', 'debitNoteAutoID');
-    }
-
-    
 }
