@@ -547,6 +547,8 @@ class ItemReturnDetailsAPIController extends AppBaseController
                                                      $q->where('itemCodeSystem',$item['itemCodeSystem']);
                                                   })
                                                   ->where('companySystemID',$itemReturnMaster->companySystemID)
+                                                  ->where('serviceLineSystemID',$itemReturnMaster->serviceLineSystemID)
+                                                  ->where('wareHouseFrom',$itemReturnMaster->wareHouseLocation)
                                                   ->where('approved',-1)
                                                   ->select('itemIssueAutoID AS value','itemIssueCode AS label')
                                                   ->get();

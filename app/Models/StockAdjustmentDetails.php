@@ -244,5 +244,15 @@ class StockAdjustmentDetails extends Model
         
     ];
 
-    
+    public function uom(){
+        return $this->belongsTo('App\Models\Unit','itemUnitOfMeasure','UnitID');
+    }
+
+    public function local_currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster','currentWacLocalCurrencyID','currencyID');
+    }
+
+    public function rpt_currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster','currentWacRptCurrencyID','currencyID');
+    }
 }

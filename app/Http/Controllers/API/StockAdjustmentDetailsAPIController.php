@@ -8,13 +8,14 @@
  * -- Create date : 20 - August 2018
  * -- Description : This file contains the all CRUD for Stock Adjustment Details
  * -- REVISION HISTORY
- * -- Date: 20 - August 2018 By: Fayas Description: Added new functions named as
+ * -- Date: 21 - August 2018 By: Fayas Description: Added new functions named as getItemsByStockAdjustment()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateStockAdjustmentDetailsAPIRequest;
 use App\Http\Requests\API\UpdateStockAdjustmentDetailsAPIRequest;
 use App\Models\StockAdjustmentDetails;
+use App\Models\Unit;
 use App\Repositories\StockAdjustmentDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -287,5 +288,24 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         $stockAdjustmentDetails->delete();
 
         return $this->sendResponse($id, 'Stock Adjustment Details deleted successfully');
+    }
+
+    /**
+     * get Items By Stock Adjustment
+     * GET|HEAD /getItemsByStockAdjustment
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getItemsByStockAdjustment(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['stockAdjustmentAutoID'];
+
+        $items = StockAdjustmentDetails::where('stockAdjustmentAutoID', $id)
+                                    ->with(['uom','local_currency','rpt_currency'])
+                                    ->get();
+
+        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }
 }

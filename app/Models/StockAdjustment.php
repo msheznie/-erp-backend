@@ -240,7 +240,9 @@ class StockAdjustment extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'RollLevForApp_curr' => 'integer'
+        'RollLevForApp_curr' => 'integer',
+        'stockAdjustmentDate' => 'string',
+        'createdDateTime' => 'string'
     ];
 
     /**
