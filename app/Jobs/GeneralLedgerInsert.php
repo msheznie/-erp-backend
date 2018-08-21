@@ -630,14 +630,14 @@ class GeneralLedgerInsert implements ShouldQueue
                         break;
                     case 20:
                         /*customerInvoice*/
-                        $masterData = CustomerInvoiceDirect::with(['customer'])->find($masterModel["autoID"]);
+                        $masterData = CustomerInvoiceDirect::find($masterModel["autoID"]);
                         $det=CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID',$masterModel["autoID"]);
                         $detOne = $det->first();
                         $det=CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$masterModel["autoID"])->groupBy('glCode','serviceLineCode');
-                        $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode")->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode','serviceLineCode')->get();
+                        $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode")->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode','serviceLineCode','comments')->get();
 
                         $company = Company::select('masterComapanyID')->where('companySystemID',$masterData->companySystemID)->first();
-                        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customer->custGLAccountSystemID)->first();
+                        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
 
                         $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
 

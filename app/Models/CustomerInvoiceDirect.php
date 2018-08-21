@@ -409,10 +409,10 @@ class CustomerInvoiceDirect extends Model
 {
 
     public $table = 'erp_custinvoicedirect';
-    
+
     const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey  = 'custInvoiceDirectAutoID';
+    protected $primaryKey = 'custInvoiceDirectAutoID';
 
 
     public $fillable = [
@@ -443,6 +443,7 @@ class CustomerInvoiceDirect extends Model
         'PONumber',
         'rigNo',
         'customerID',
+        'customerGLSystemID',
         'customerGLCode',
         'customerInvoiceNo',
         'customerInvoiceDate',
@@ -533,6 +534,7 @@ class CustomerInvoiceDirect extends Model
         'PONumber' => 'string',
         'rigNo' => 'string',
         'customerID' => 'integer',
+        'customerGLSystemID' => 'integer',
         'customerGLCode' => 'string',
         'customerInvoiceNo' => 'string',
         'custTransactionCurrencyID' => 'integer',
@@ -584,7 +586,7 @@ class CustomerInvoiceDirect extends Model
         'modifiedPc' => 'string',
         'createdDateTime' => 'string',
         'createdDateAndTime' => 'string',
-        'approvedByUserSystemID' => 'integer' ,
+        'approvedByUserSystemID' => 'integer',
         'approvedByUserID' => 'integer'
     ];
 
@@ -594,7 +596,7 @@ class CustomerInvoiceDirect extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
 
@@ -605,22 +607,26 @@ class CustomerInvoiceDirect extends Model
 
     public function customer()
     {
-        return $this->belongsTo('App\Models\CustomerMaster','customerID',  'customerCodeSystem');
+        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
     }
 
-   public function invoicedetails()
+    public function invoicedetails()
     {
-        return $this->hasMany('App\Models\CustomerInvoiceDirectDetail','custInvoiceDirectID','custInvoiceDirectAutoID');
+        return $this->hasMany('App\Models\CustomerInvoiceDirectDetail', 'custInvoiceDirectID', 'custInvoiceDirectAutoID');
     }
 
-    public function tax(){
-        return $this->belongsTo('App\Models\TaxDetail','custInvoiceDirectAutoID','documentSystemCode');
+    public function tax()
+    {
+        return $this->belongsTo('App\Models\TaxDetail', 'custInvoiceDirectAutoID', 'documentSystemCode');
     }
 
-    public function createduser(){
+    public function createduser()
+    {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
-    public function bankaccount(){
+
+    public function bankaccount()
+    {
         return $this->belongsTo('App\Models\BankAccount', 'bankAccountID', 'bankAccountAutoID');
     }
 
@@ -628,6 +634,7 @@ class CustomerInvoiceDirect extends Model
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'custInvoiceDirectAutoID');
     }
+
     public function currency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'custTransactionCurrencyID', 'currencyID');
