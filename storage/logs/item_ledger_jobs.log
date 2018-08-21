@@ -1,0 +1,1346 @@
+[2018-08-03 12:30:11] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 1194,
+    'itemPrimaryCode' => 'INV001194',
+    'itemDescription' => '5" STRAIGHT GRINDER - 100 V',
+    'unitOfMeasure' => 7,
+    'inOutQty' => -1.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 123.5,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 320.779220779,
+    'comments' => NULL,
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'THU',
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentCode' => 'FREE\\2018\\ST000046',
+    'wareHouseSystemCode' => 119,
+    'referenceNumber' => 'Repellendus Ad veritatis eu aute quo omnis sed cillum atque quasi est illum quos eum sint cupiditate',
+    'documentSystemCode' => 2913,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-03 12:30:11',
+    'timestamp' => '2018-08-03 12:30:11',
+  ),
+)  
+[2018-08-03 12:30:11] local.INFO: array (
+  0 => 1194,
+)  
+[2018-08-03 12:30:11] local.INFO: Item successfully added to item ledger12:30:11  
+[2018-08-03 12:30:11] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'THU',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2913,
+    'documentCode' => 'FREE\\2018\\ST000046',
+    'documentDate' => '2018-08-03 12:30:11',
+    'documentYear' => '2018',
+    'documentMonth' => '07',
+    'documentConfirmedDate' => '2018-08-03 12:29:06',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-03 12:30:08',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Et harum quo iste odit id',
+    'clientContractID' => 'X',
+    'supplierCodeSystem' => NULL,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-03 12:30:11',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-03 12:30:11',
+    'chartOfAccountSystemID' => 612,
+    'glCode' => '9999995',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => -123.5,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => -320.779220779,
+  ),
+  1 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'THU',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2913,
+    'documentCode' => 'FREE\\2018\\ST000046',
+    'documentDate' => '2018-08-03 12:30:11',
+    'documentYear' => '2018',
+    'documentMonth' => '07',
+    'documentConfirmedDate' => '2018-08-03 12:29:06',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-03 12:30:08',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Et harum quo iste odit id',
+    'clientContractID' => 'X',
+    'supplierCodeSystem' => NULL,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-03 12:30:11',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-03 12:30:11',
+    'chartOfAccountSystemID' => 605,
+    'glCode' => '9999988',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => 123.5,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => 320.779220779,
+  ),
+)  
+[2018-08-03 12:30:11] local.INFO: Successfully inserted to GL table 12:30:11  
+[2018-08-03 12:30:12] local.INFO: Successfully start  stock_receive12:30:12  
+[2018-08-03 12:30:12] local.INFO: {"documentSystemID":10,"documentID":"RS","companySystemID":52,"companyID":"SGEE","serviceLineSystemID":null,"serviceLineCode":null,"companyFinanceYearID":241,"companyFinancePeriodID":241,"FYBiggin":"2018-07-01 00:00:00","FYEnd":"2018-07-31 00:00:00","serialNo":2,"refNo":"Repellendus Ad veritatis eu aute quo omnis sed cillum atque quasi est illum quos eum sint cupiditate","receivedDate":"2018-07-17 00:00:00","comment":"Et harum quo iste odit id","companyFromSystemID":11,"companyFrom":"FREE","companyToSystemID":52,"companyTo":"SGEE","locationTo":40,"locationFrom":119,"confirmedYN":0,"approved":0,"interCompanyTransferYN":-1,"RollLevForApp_curr":1,"createdDateTime":"2018-08-03 12:20:43","createdUserGroup":null,"createdPCID":"Fayas-PC","createdUserSystemID":11,"createdUserID":"8888","stockReceiveCode":"SGEE\\2018\\RS000002","timestamp":"2018-08-03 12:30:12","stockReceiveAutoID":2875}  
+[2018-08-03 12:30:12] local.INFO: Successfully created  stock_receive12:30:12  
+[2018-08-03 12:30:12] local.INFO: [{"companySystemID":11,"itemSystemCode":1194,"inOutQty":0,"wacCostLocal":0,"wacCostRpt":0,"TotalwacCostLocal":0,"TotalwacCostRpt":0}]  
+[2018-08-03 12:30:12] local.INFO: Successfully updated to item assign table 12:30:12  
+[2018-08-06 04:19:15] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 40,
+    'itemPrimaryCode' => 'INV000040',
+    'itemDescription' => '4-3/8" BASKET GRAPPLE',
+    'unitOfMeasure' => 7,
+    'inOutQty' => -2.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 210.261927499,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 546.13487619,
+    'comments' => NULL,
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 51,
+    'serviceLineCode' => 'FREEGEN',
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentCode' => 'FREE\\2018\\ST000047',
+    'wareHouseSystemCode' => 118,
+    'referenceNumber' => 'Irure pariatur Suscipit cillum laboriosam est elit blanditiis fugiat',
+    'documentSystemCode' => 2914,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-06 04:19:15',
+    'timestamp' => '2018-08-06 04:19:15',
+  ),
+)  
+[2018-08-06 04:19:15] local.INFO: array (
+  0 => 40,
+)  
+[2018-08-06 04:19:15] local.INFO: Item successfully added to item ledger04:19:15  
+[2018-08-06 04:19:15] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 51,
+    'serviceLineCode' => 'FREEGEN',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2914,
+    'documentCode' => 'FREE\\2018\\ST000047',
+    'documentDate' => '2018-08-06 04:19:15',
+    'documentYear' => '2018',
+    'documentMonth' => '07',
+    'documentConfirmedDate' => '2018-08-06 04:17:49',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-06 04:18:50',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Voluptates Nam laboris incididunt eum culpa et nobis ut est dolorum est et excepteur ipsum labore',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => NULL,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-06 04:19:15',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-06 04:19:15',
+    'chartOfAccountSystemID' => 612,
+    'glCode' => '9999995',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => -420.523854998,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => -1092.26975238,
+  ),
+  1 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 51,
+    'serviceLineCode' => 'FREEGEN',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2914,
+    'documentCode' => 'FREE\\2018\\ST000047',
+    'documentDate' => '2018-08-06 04:19:15',
+    'documentYear' => '2018',
+    'documentMonth' => '07',
+    'documentConfirmedDate' => '2018-08-06 04:17:49',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-06 04:18:50',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Voluptates Nam laboris incididunt eum culpa et nobis ut est dolorum est et excepteur ipsum labore',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => NULL,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-06 04:19:15',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-06 04:19:15',
+    'chartOfAccountSystemID' => 605,
+    'glCode' => '9999988',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => 420.523854998,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => 1092.26975238,
+  ),
+)  
+[2018-08-06 04:19:15] local.INFO: Successfully inserted to GL table 04:19:15  
+[2018-08-06 04:19:15] local.INFO: [{"companySystemID":11,"itemSystemCode":40,"inOutQty":12,"wacCostLocal":210.261927499,"wacCostRpt":546.134876191,"TotalwacCostLocal":2523.143129988,"TotalwacCostRpt":6553.618514292}]  
+[2018-08-06 04:19:15] local.INFO: Successfully updated to item assign table 04:19:15  
+[2018-08-06 04:22:59] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 40,
+    'itemPrimaryCode' => 'INV000040',
+    'itemDescription' => '4-3/8" BASKET GRAPPLE',
+    'unitOfMeasure' => 7,
+    'inOutQty' => -2.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 210.261927499,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 546.134876191,
+    'comments' => NULL,
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentCode' => 'FREE\\2018\\ST000048',
+    'wareHouseSystemCode' => 118,
+    'referenceNumber' => 'Quis doloremque impedit praesentium esse proident eligendi praesentium aut atque',
+    'documentSystemCode' => 2915,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-06 04:22:59',
+    'timestamp' => '2018-08-06 04:22:59',
+  ),
+)  
+[2018-08-06 04:22:59] local.INFO: array (
+  0 => 40,
+)  
+[2018-08-06 04:22:59] local.INFO: Item successfully added to item ledger04:22:59  
+[2018-08-06 04:22:59] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2915,
+    'documentCode' => 'FREE\\2018\\ST000048',
+    'documentDate' => '2018-08-06 04:22:59',
+    'documentYear' => '2018',
+    'documentMonth' => '07',
+    'documentConfirmedDate' => '2018-08-06 04:22:19',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-06 04:22:52',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Et pariatur Magna duis aliquam reprehenderit asperiores vel mollitia assumenda dolores consequatur ea harum aut amet rerum impedit similique laboris',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => NULL,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-06 04:22:59',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-06 04:22:59',
+    'chartOfAccountSystemID' => 612,
+    'glCode' => '9999995',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => -420.523854998,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => -1092.269752382,
+  ),
+  1 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2915,
+    'documentCode' => 'FREE\\2018\\ST000048',
+    'documentDate' => '2018-08-06 04:22:59',
+    'documentYear' => '2018',
+    'documentMonth' => '07',
+    'documentConfirmedDate' => '2018-08-06 04:22:19',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-06 04:22:52',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Et pariatur Magna duis aliquam reprehenderit asperiores vel mollitia assumenda dolores consequatur ea harum aut amet rerum impedit similique laboris',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => NULL,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-06 04:22:59',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-06 04:22:59',
+    'chartOfAccountSystemID' => 605,
+    'glCode' => '9999988',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => 420.523854998,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => 1092.269752382,
+  ),
+)  
+[2018-08-06 04:22:59] local.INFO: Successfully inserted to GL table 04:22:59  
+[2018-08-06 04:23:00] local.INFO: Successfully start  stock_receive04:23:00  
+[2018-08-06 04:23:00] local.INFO: {"documentSystemID":10,"documentID":"RS","companySystemID":52,"companyID":"SGEE","serviceLineSystemID":null,"serviceLineCode":null,"companyFinanceYearID":241,"companyFinancePeriodID":241,"FYBiggin":"2018-07-01 00:00:00","FYEnd":"2018-07-31 00:00:00","serialNo":3,"refNo":"Quis doloremque impedit praesentium esse proident eligendi praesentium aut atque","receivedDate":"2018-07-11 00:00:00","comment":"Et pariatur Magna duis aliquam reprehenderit asperiores vel mollitia assumenda dolores consequatur ea harum aut amet rerum impedit similique laboris","companyFromSystemID":11,"companyFrom":"FREE","companyToSystemID":52,"companyTo":"SGEE","locationTo":29,"locationFrom":118,"confirmedYN":0,"approved":0,"interCompanyTransferYN":-1,"RollLevForApp_curr":1,"createdDateTime":"2018-08-06 04:21:40","createdUserGroup":null,"createdPCID":"Fayas-PC","createdUserSystemID":11,"createdUserID":"8888","stockReceiveCode":"SGEE\\2018\\RS000003","timestamp":"2018-08-06 04:23:00","stockReceiveAutoID":2876}  
+[2018-08-06 04:23:00] local.INFO: Successfully created  stock_receive04:23:00  
+[2018-08-06 04:23:00] local.INFO: [{"companySystemID":11,"itemSystemCode":40,"inOutQty":10,"wacCostLocal":210.261927499,"wacCostRpt":546.13487619,"TotalwacCostLocal":2102.61927499,"TotalwacCostRpt":5461.3487619}]  
+[2018-08-06 04:23:00] local.INFO: Successfully updated to item assign table 04:23:00  
+[2018-08-06 04:33:04] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 40,
+    'itemPrimaryCode' => 'INV000040',
+    'itemDescription' => '4-3/8" BASKET GRAPPLE',
+    'unitOfMeasure' => 7,
+    'inOutQty' => -1.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 210.261927499,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 546.13487619,
+    'comments' => NULL,
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentCode' => 'FREE\\2018\\ST000049',
+    'wareHouseSystemCode' => 118,
+    'referenceNumber' => 'Et odio non adipisci consectetur perspiciatis et Nam',
+    'documentSystemCode' => 2916,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-06 04:33:04',
+    'timestamp' => '2018-08-06 04:33:04',
+  ),
+)  
+[2018-08-06 04:33:04] local.INFO: array (
+  0 => 40,
+)  
+[2018-08-06 04:33:04] local.INFO: Item successfully added to item ledger04:33:04  
+[2018-08-06 04:33:04] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2916,
+    'documentCode' => 'FREE\\2018\\ST000049',
+    'documentDate' => '2018-08-06 04:33:04',
+    'documentYear' => '2018',
+    'documentMonth' => '07',
+    'documentConfirmedDate' => '2018-08-06 04:31:29',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-06 04:32:48',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Eligendi sit id eum occaecat debitis dolore voluptatem nostrum ut pariatur Aspernatur duis veniam ut porro optio dicta ea libero',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => NULL,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-06 04:33:04',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-06 04:33:04',
+    'chartOfAccountSystemID' => 612,
+    'glCode' => '9999995',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => -210.261927499,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => -546.13487619,
+  ),
+  1 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2916,
+    'documentCode' => 'FREE\\2018\\ST000049',
+    'documentDate' => '2018-08-06 04:33:04',
+    'documentYear' => '2018',
+    'documentMonth' => '07',
+    'documentConfirmedDate' => '2018-08-06 04:31:29',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-06 04:32:48',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Eligendi sit id eum occaecat debitis dolore voluptatem nostrum ut pariatur Aspernatur duis veniam ut porro optio dicta ea libero',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => NULL,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-06 04:33:04',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-06 04:33:04',
+    'chartOfAccountSystemID' => 605,
+    'glCode' => '9999988',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => 210.261927499,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => 546.13487619,
+  ),
+)  
+[2018-08-06 04:33:04] local.INFO: Successfully inserted to GL table 04:33:04  
+[2018-08-06 04:33:04] local.INFO: Successfully start  stock_receive04:33:04  
+[2018-08-06 04:33:05] local.INFO: {"documentSystemID":10,"documentID":"RS","companySystemID":52,"companyID":"SGEE","serviceLineSystemID":null,"serviceLineCode":null,"FYBiggin":"2018-07-01 00:00:00","FYEnd":"2018-07-31 00:00:00","serialNo":4,"refNo":"Et odio non adipisci consectetur perspiciatis et Nam","comment":"Eligendi sit id eum occaecat debitis dolore voluptatem nostrum ut pariatur Aspernatur duis veniam ut porro optio dicta ea libero","companyFromSystemID":11,"companyFrom":"FREE","companyToSystemID":52,"companyTo":"SGEE","locationTo":40,"locationFrom":118,"confirmedYN":0,"approved":0,"interCompanyTransferYN":-1,"RollLevForApp_curr":1,"createdDateTime":"2018-08-06 04:30:45","createdUserGroup":null,"createdPCID":"Fayas-PC","createdUserSystemID":11,"createdUserID":"8888","companyFinanceYearID":237,"companyFinancePeriodID":71398,"receivedDate":"2018-07-09 00:00:00","stockReceiveCode":"SGEE\\2018\\RS000004","timestamp":"2018-08-06 04:33:05","stockReceiveAutoID":2877}  
+[2018-08-06 04:33:05] local.INFO: Successfully created  stock_receive04:33:05  
+[2018-08-06 04:33:05] local.INFO: [{"companySystemID":11,"itemSystemCode":40,"inOutQty":9,"wacCostLocal":210.261927499,"wacCostRpt":546.134876191,"TotalwacCostLocal":1892.357347491,"TotalwacCostRpt":4915.213885719}]  
+[2018-08-06 04:33:05] local.INFO: Successfully updated to item assign table 04:33:05  
+[2018-08-07 07:35:42] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 486,
+    'itemPrimaryCode' => 'INV000486',
+    'itemDescription' => 'SEAL KIT',
+    'unitOfMeasure' => 7,
+    'inOutQty' => -4.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 137.6209043,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 357.992245174,
+    'comments' => 'trt',
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentCode' => 'FREE\\2018\\ST000052',
+    'wareHouseSystemCode' => 117,
+    'referenceNumber' => 'Quam quas proident nisi',
+    'documentSystemCode' => 2919,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-07 07:35:42',
+    'timestamp' => '2018-08-07 07:35:42',
+  ),
+)  
+[2018-08-07 07:35:42] local.INFO: array (
+  0 => 486,
+)  
+[2018-08-07 07:35:42] local.INFO: Item successfully added to item ledger07:35:42  
+[2018-08-07 07:35:42] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2919,
+    'documentCode' => 'FREE\\2018\\ST000052',
+    'documentDate' => '2018-08-07 07:35:42',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'documentConfirmedDate' => '2018-08-07 07:34:22',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-07 07:35:38',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Et ut sit nisi iure',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => NULL,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-07 07:35:42',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-07 07:35:42',
+    'chartOfAccountSystemID' => 612,
+    'glCode' => '9999995',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => -550.4836172,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => -1431.968980696,
+  ),
+  1 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2919,
+    'documentCode' => 'FREE\\2018\\ST000052',
+    'documentDate' => '2018-08-07 07:35:42',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'documentConfirmedDate' => '2018-08-07 07:34:22',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-07 07:35:38',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Et ut sit nisi iure',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => NULL,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-07 07:35:42',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-07 07:35:42',
+    'chartOfAccountSystemID' => 605,
+    'glCode' => '9999988',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => 550.4836172,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => 1431.968980696,
+  ),
+)  
+[2018-08-07 07:35:42] local.INFO: Successfully inserted to GL table 07:35:42  
+[2018-08-07 07:35:42] local.INFO: Successfully start  stock_receive07:35:42  
+[2018-08-07 07:35:43] local.INFO: {"transactionMode":null,"companySystemID":11,"companyID":"FREE","documentSystemiD":20,"documentID":"INV","FYBiggin":"2018-01-01 00:00:00","FYEnd":"2018-12-31 00:00:00","companyFinanceYearID":241,"companyFinancePeriodID":69647,"FYPeriodDateFrom":"2018-08-01 00:00:00","FYPeriodDateTo":"2018-08-31 00:00:00","serialNo":746,"serviceLineSystemID":26,"serviceLineCode":"FML","wareHouseSystemCode":117,"bookingInvCode":"FREE\\2018\\INV000746","bookingDate":"2018-08-07","comments":"Inter Company Stock Transfer from FREE to SGEE FREE\\2018\\ST000052","customerID":92,"customerGLCode":"9999983","customerInvoiceNo":"FREE\\2018\\ST000052","customerInvoiceDate":"2018-08-07","invoiceDueDate":"2018-08-07","serviceStartDate":"2018-08-07","serviceEndDate":"2018-08-07","performaDate":"2018-08-07","companyReportingCurrencyID":2,"companyReportingER":1,"localCurrencyID":1,"localCurrencyER":1,"custTransactionCurrencyID":2,"custTransactionCurrencyER":1,"bookingAmountTrans":1474.92805011688,"bookingAmountLocal":566.998125716,"bookingAmountRpt":1474.92805011688,"confirmedYN":1,"confirmedByEmpSystemID":11,"confirmedByEmpID":"8888","confirmedByName":"Administrator","confirmedDate":"2018-08-07 07:34:22","approved":-1,"approvedDate":"2018-08-07 07:35:38","documentType":11,"interCompanyTransferYN":-1,"createdUserSystemID":11,"createdUserID":"8888","createdPcID":"Fayas-PC","timestamp":"2018-08-07 07:35:43","createdDateTime":"2018-08-07 07:35:43","custInvoiceDirectAutoID":53933}  
+[2018-08-07 07:35:43] local.INFO: {"custInvoiceDirectID":53933,"companyID":"FREE","serviceLineCode":"FML","customerID":92,"comments":"Inter Company Stock Transfer from FREE to SGEE FREE\\2018\\ST000052","unitOfMeasure":7,"invoiceQty":1,"invoiceAmountCurrency":2,"invoiceAmountCurrencyER":1,"localCurrency":1,"localCurrencyER":1,"comRptCurrency":2,"comRptCurrencyER":1,"glCode":"20023","glCodeDes":"Intercompany stock transfer","accountType":"BS","invoiceAmount":1431.968980696,"unitCost":1431.968980696,"localAmount":550.4836172,"comRptAmount":1431.968980696,"timeStamp":"2018-08-07 07:35:43","custInvDirDetAutoID":99611}  
+[2018-08-07 07:35:43] local.INFO: {"custInvoiceDirectID":53933,"companyID":"FREE","serviceLineCode":"FML","customerID":92,"comments":"Inter Company Stock Transfer from FREE to SGEE FREE\\2018\\ST000052","unitOfMeasure":7,"invoiceQty":1,"invoiceAmountCurrency":2,"invoiceAmountCurrencyER":1,"localCurrency":1,"localCurrencyER":1,"comRptCurrency":2,"comRptCurrencyER":1,"glCode":"91582","glCodeDes":"Product Revenue -Intercompany","accountType":"PL","invoiceAmount":42.95906942088,"unitCost":42.95906942088,"localAmount":16.514508516,"comRptAmount":42.95906942088,"timeStamp":"2018-08-07 07:35:43","custInvDirDetAutoID":99612}  
+[2018-08-07 07:35:43] local.INFO: 1  
+[2018-08-07 07:35:43] local.INFO: Successfully created  stock_receive07:35:43  
+[2018-08-07 07:35:43] local.INFO: [{"companySystemID":11,"itemSystemCode":486,"inOutQty":74,"wacCostLocal":137.6209043,"wacCostRpt":357.992245174,"TotalwacCostLocal":10183.946918200001,"TotalwacCostRpt":26491.426142876}]  
+[2018-08-07 07:35:44] local.INFO: Successfully updated to item assign table 07:35:44  
+[2018-08-07 07:38:21] local.ERROR: Document ID Not Found07:38:21  
+[2018-08-07 07:38:21] local.ERROR: Document ID Not Found07:38:21  
+[2018-08-07 08:58:12] local.ERROR: Document ID Not Found08:58:12  
+[2018-08-07 11:08:50] local.ERROR: Document ID Not Found11:08:50  
+[2018-08-07 11:35:51] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 1936,
+    'itemPrimaryCode' => 'INV001936',
+    'itemDescription' => 'PACKING CUP - 7" OD 22-24 LB CASING',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 1.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 11.8259807,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 30.716833,
+    'comments' => 'tested hhg',
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 3,
+    'documentID' => 'GRV',
+    'documentCode' => 'FREE\\2018\\GRV000227',
+    'wareHouseSystemCode' => 118,
+    'referenceNumber' => '---',
+    'documentSystemCode' => 44058,
+    'createdUserSystemID' => 2664,
+    'createdUserID' => '5555',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-07 11:35:51',
+    'timestamp' => '2018-08-07 11:35:51',
+  ),
+  1 => 
+  array (
+    'itemSystemCode' => 1681,
+    'itemPrimaryCode' => 'INV001681',
+    'itemDescription' => 'SPIRAL GARPPLE CONTROL',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 5.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 28.5597434,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 74.1811516,
+    'comments' => 'comment updated',
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 3,
+    'documentID' => 'GRV',
+    'documentCode' => 'FREE\\2018\\GRV000227',
+    'wareHouseSystemCode' => 118,
+    'referenceNumber' => '---',
+    'documentSystemCode' => 44058,
+    'createdUserSystemID' => 2664,
+    'createdUserID' => '5555',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-07 11:35:51',
+    'timestamp' => '2018-08-07 11:35:51',
+  ),
+  2 => 
+  array (
+    'itemSystemCode' => 23748,
+    'itemPrimaryCode' => 'INV022901',
+    'itemDescription' => '2-3/8" BASKET GRAPPLE',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 2.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 109.8042306,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 285.2057941,
+    'comments' => 'tested',
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 3,
+    'documentID' => 'GRV',
+    'documentCode' => 'FREE\\2018\\GRV000227',
+    'wareHouseSystemCode' => 118,
+    'referenceNumber' => '---',
+    'documentSystemCode' => 44058,
+    'createdUserSystemID' => 2664,
+    'createdUserID' => '5555',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-07 11:35:51',
+    'timestamp' => '2018-08-07 11:35:51',
+  ),
+  3 => 
+  array (
+    'itemSystemCode' => 426,
+    'itemPrimaryCode' => 'INV000426',
+    'itemDescription' => '4.010" NOMINAL CATCH SIZE GRAPPLE',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 5.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 344.4908172,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 894.7813441999999,
+    'comments' => 'be ware of no comment',
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 3,
+    'documentID' => 'GRV',
+    'documentCode' => 'FREE\\2018\\GRV000227',
+    'wareHouseSystemCode' => 118,
+    'referenceNumber' => '---',
+    'documentSystemCode' => 44058,
+    'createdUserSystemID' => 2664,
+    'createdUserID' => '5555',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-07 11:35:51',
+    'timestamp' => '2018-08-07 11:35:51',
+  ),
+)  
+[2018-08-07 11:35:51] local.INFO: array (
+  0 => 1936,
+  1 => 1681,
+  2 => 23748,
+  3 => 426,
+)  
+[2018-08-07 11:35:51] local.INFO: Item successfully added to item ledger11:35:51  
+[2018-08-07 11:35:51] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 3,
+    'documentID' => 'GRV',
+    'documentSystemCode' => 44058,
+    'documentCode' => 'FREE\\2018\\GRV000227',
+    'documentDate' => '2018-08-07 11:35:51',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'chartOfAccountSystemID' => 551,
+    'glCode' => '9000007',
+    'glAccountType' => 'BS',
+    'documentConfirmedDate' => '2018-08-07 11:35:07',
+    'documentConfirmedBy' => '5555',
+    'documentConfirmedByEmpSystemID' => 2664,
+    'documentFinalApprovedDate' => '2018-08-07 11:35:50',
+    'documentFinalApprovedBy' => '5555',
+    'documentFinalApprovedByEmpSystemID' => 2664,
+    'documentNarration' => '---',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => 6,
+    'documentTransCurrencyID' => 2,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => -5318.85,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 2.5974026,
+    'documentLocalAmount' => -2047.7572483000001,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1.0,
+    'documentRptAmount' => -5318.85,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-07 11:35:51',
+    'createdUserID' => '5555',
+    'createdUserSystemID' => 2664,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-07 11:35:51',
+  ),
+  1 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 3,
+    'documentID' => 'GRV',
+    'documentSystemCode' => 44058,
+    'documentCode' => 'FREE\\2018\\GRV000227',
+    'documentDate' => '2018-08-07 11:35:51',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'chartOfAccountSystemID' => 612,
+    'glCode' => '9999995',
+    'glAccountType' => 'BS',
+    'documentConfirmedDate' => '2018-08-07 11:35:07',
+    'documentConfirmedBy' => '5555',
+    'documentConfirmedByEmpSystemID' => 2664,
+    'documentFinalApprovedDate' => '2018-08-07 11:35:50',
+    'documentFinalApprovedBy' => '5555',
+    'documentFinalApprovedByEmpSystemID' => 2664,
+    'documentNarration' => '---',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => 6,
+    'documentTransCurrencyID' => 2,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => 5445.940900199999,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 2.5974026,
+    'documentLocalAmount' => 2096.6872448999998,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1.0,
+    'documentRptAmount' => 5445.940900199999,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-07 11:35:51',
+    'createdUserID' => '5555',
+    'createdUserSystemID' => 2664,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-07 11:35:51',
+  ),
+  2 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 3,
+    'documentID' => 'GRV',
+    'documentSystemCode' => 44058,
+    'documentCode' => 'FREE\\2018\\GRV000227',
+    'documentDate' => '2018-08-07 11:35:51',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'chartOfAccountSystemID' => 551,
+    'glCode' => '9000007',
+    'glAccountType' => 'BS',
+    'documentConfirmedDate' => '2018-08-07 11:35:07',
+    'documentConfirmedBy' => '5555',
+    'documentConfirmedByEmpSystemID' => 2664,
+    'documentFinalApprovedDate' => '2018-08-07 11:35:50',
+    'documentFinalApprovedBy' => '5555',
+    'documentFinalApprovedByEmpSystemID' => 2664,
+    'documentNarration' => '---',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => 6,
+    'documentTransCurrencyID' => 2,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => -100.0,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 2.5974026,
+    'documentLocalAmount' => -38.499999961499995,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1.0,
+    'documentRptAmount' => -100.0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-07 11:35:51',
+    'createdUserID' => '5555',
+    'createdUserSystemID' => 2664,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-07 11:35:51',
+  ),
+  3 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 26,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 3,
+    'documentID' => 'GRV',
+    'documentSystemCode' => 44058,
+    'documentCode' => 'FREE\\2018\\GRV000227',
+    'documentDate' => '2018-08-07 11:35:51',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'chartOfAccountSystemID' => 551,
+    'glCode' => '9000007',
+    'glAccountType' => 'BS',
+    'documentConfirmedDate' => '2018-08-07 11:35:07',
+    'documentConfirmedBy' => '5555',
+    'documentConfirmedByEmpSystemID' => 2664,
+    'documentFinalApprovedDate' => '2018-08-07 11:35:50',
+    'documentFinalApprovedBy' => '5555',
+    'documentFinalApprovedByEmpSystemID' => 2664,
+    'documentNarration' => '---',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => 13,
+    'documentTransCurrencyID' => 2,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => -27.090899974082408,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 2.5974026,
+    'documentLocalAmount' => -10.429996484653124,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1.0,
+    'documentRptAmount' => -27.090899974082408,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-07 11:35:51',
+    'createdUserID' => '5555',
+    'createdUserSystemID' => 2664,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-07 11:35:51',
+  ),
+)  
+[2018-08-07 11:35:51] local.INFO: Successfully inserted to GL table 11:35:51  
+[2018-08-07 11:35:51] local.INFO: [{"companySystemID":11,"companyID":"FREE","supplierID":6,"purchaseOrderID":31844,"grvAutoID":44058,"grvDate":"2018-08-07 00:00:00","supplierTransactionCurrencyID":2,"supplierTransactionCurrencyER":1,"companyReportingCurrencyID":2,"companyReportingER":1,"localCurrencyID":1,"localCurrencyER":2.5974026,"totTransactionAmount":5445.940900199999,"totLocalAmount":2096.6872448999998,"totRptAmount":5445.940900199999,"grvType":"POG","timeStamp":"2018-08-07 17:03:32"}]  
+[2018-08-07 11:35:51] local.INFO: Successfully updated to unbilled grv table11:35:51  
+[2018-08-07 11:35:52] local.INFO: [{"companySystemID":11,"itemSystemCode":426,"inOutQty":28,"wacCostLocal":340.157438544,"wacCostRpt":883.525815246,"TotalwacCostLocal":9524.408279232,"TotalwacCostRpt":24738.722826888},{"companySystemID":11,"itemSystemCode":1681,"inOutQty":49,"wacCostLocal":27.48182093,"wacCostRpt":71.416258703,"TotalwacCostLocal":1346.60922557,"TotalwacCostRpt":3499.3966764469997},{"companySystemID":11,"itemSystemCode":1936,"inOutQty":3,"wacCostLocal":11.8259807,"wacCostRpt":30.716833,"TotalwacCostLocal":35.4779421,"TotalwacCostRpt":92.150499},{"companySystemID":11,"itemSystemCode":23748,"inOutQty":10,"wacCostLocal":118.378566644,"wacCostRpt":307.47679646,"TotalwacCostLocal":1183.78566644,"TotalwacCostRpt":3074.7679646}]  
+[2018-08-07 11:35:52] local.INFO: Successfully updated to item assign table 11:35:52  
+[2018-08-08 03:23:31] local.ERROR: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ {"exception":"[object] (Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:47, PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:43)
+[stacktrace]
+#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(64): Doctrine\\DBAL\\Driver\\PDOConnection->__construct('mysql:host=192....', 'gearsdev', 'gearsdev@123', Array)
+#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(43): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=192....', 'gearsdev', 'gearsdev@123', Array)
+#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=192....', Array, Array)
+#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\ConnectionFactory.php(183): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
+#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(915): call_user_func(Object(Closure))
+#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(248): Illuminate\\Database\\Connection->getPdo()
+#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(234): Illuminate\\Database\\DatabaseManager->refreshPdoConnections('mysql')
+#8 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(168): Illuminate\\Database\\DatabaseManager->reconnect('mysql')
+#9 [internal function]: Illuminate\\Database\\DatabaseManager->Illuminate\\Database\\{closure}(Object(Illuminate\\Database\\MySqlConnection))
+#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(753): call_user_func(Object(Closure), Object(Illuminate\\Database\\MySqlConnection))
+#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(140): Illuminate\\Database\\Connection->reconnect()
+#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(110): Illuminate\\Database\\Connection->handleBeginTransactionException(Object(ErrorException))
+#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(92): Illuminate\\Database\\Connection->createTransaction()
+#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\DatabaseQueue.php(195): Illuminate\\Database\\Connection->beginTransaction()
+#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(244): Illuminate\\Queue\\DatabaseQueue->pop('default')
+#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(105): Illuminate\\Queue\\Worker->getNextJob(Object(Illuminate\\Queue\\DatabaseQueue), 'default')
+#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(101): Illuminate\\Queue\\Worker->daemon('database', 'default', Object(Illuminate\\Queue\\WorkerOptions))
+#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(85): Illuminate\\Queue\\Console\\WorkCommand->runWorker('database', 'default')
+#19 [internal function]: Illuminate\\Queue\\Console\\WorkCommand->handle()
+#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(29): call_user_func_array(Array, Array)
+#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(87): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(31): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(549): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(183): Illuminate\\Container\\Container->call(Array)
+#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Command\\Command.php(252): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(170): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(946): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(248): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Queue\\Console\\WorkCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(148): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Application.php(88): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(121): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\artisan(37): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#33 {main}
+"} 
+[2018-08-08 03:23:31] local.ERROR: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ {"exception":"[object] (Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:47, PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:43)
+[stacktrace]
+#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(64): Doctrine\\DBAL\\Driver\\PDOConnection->__construct('mysql:host=192....', 'gearsdev', 'gearsdev@123', Array)
+#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(43): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=192....', 'gearsdev', 'gearsdev@123', Array)
+#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=192....', Array, Array)
+#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\ConnectionFactory.php(183): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
+#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(915): call_user_func(Object(Closure))
+#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(248): Illuminate\\Database\\Connection->getPdo()
+#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(234): Illuminate\\Database\\DatabaseManager->refreshPdoConnections('mysql')
+#8 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(168): Illuminate\\Database\\DatabaseManager->reconnect('mysql')
+#9 [internal function]: Illuminate\\Database\\DatabaseManager->Illuminate\\Database\\{closure}(Object(Illuminate\\Database\\MySqlConnection))
+#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(753): call_user_func(Object(Closure), Object(Illuminate\\Database\\MySqlConnection))
+#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(140): Illuminate\\Database\\Connection->reconnect()
+#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(110): Illuminate\\Database\\Connection->handleBeginTransactionException(Object(ErrorException))
+#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(92): Illuminate\\Database\\Connection->createTransaction()
+#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\DatabaseQueue.php(195): Illuminate\\Database\\Connection->beginTransaction()
+#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(244): Illuminate\\Queue\\DatabaseQueue->pop('default')
+#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(105): Illuminate\\Queue\\Worker->getNextJob(Object(Illuminate\\Queue\\DatabaseQueue), 'default')
+#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(101): Illuminate\\Queue\\Worker->daemon('database', 'default', Object(Illuminate\\Queue\\WorkerOptions))
+#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(85): Illuminate\\Queue\\Console\\WorkCommand->runWorker('database', 'default')
+#19 [internal function]: Illuminate\\Queue\\Console\\WorkCommand->handle()
+#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(29): call_user_func_array(Array, Array)
+#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(87): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(31): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(549): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(183): Illuminate\\Container\\Container->call(Array)
+#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Command\\Command.php(252): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(170): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(946): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(248): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Queue\\Console\\WorkCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(148): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Application.php(88): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(121): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\artisan(37): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#33 {main}
+"} 
+[2018-08-08 03:23:34] local.ERROR: Call to a member function beginTransaction() on null {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalThrowableError(code: 0): Call to a member function beginTransaction() on null at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php:108)
+[stacktrace]
+#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(92): Illuminate\\Database\\Connection->createTransaction()
+#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\DatabaseQueue.php(195): Illuminate\\Database\\Connection->beginTransaction()
+#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(244): Illuminate\\Queue\\DatabaseQueue->pop('default')
+#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(105): Illuminate\\Queue\\Worker->getNextJob(Object(Illuminate\\Queue\\DatabaseQueue), 'default')
+#4 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(101): Illuminate\\Queue\\Worker->daemon('database', 'default', Object(Illuminate\\Queue\\WorkerOptions))
+#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(85): Illuminate\\Queue\\Console\\WorkCommand->runWorker('database', 'default')
+#6 [internal function]: Illuminate\\Queue\\Console\\WorkCommand->handle()
+#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(29): call_user_func_array(Array, Array)
+#8 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(87): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#9 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(31): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(549): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(183): Illuminate\\Container\\Container->call(Array)
+#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Command\\Command.php(252): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(170): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(946): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(248): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Queue\\Console\\WorkCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(148): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Application.php(88): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(121): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#19 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\artisan(37): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#20 {main}
+"} 
+[2018-08-09 05:58:41] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 486,
+    'itemPrimaryCode' => 'INV000486',
+    'itemDescription' => 'SEAL KIT',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 4.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 141.749531429,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 368.73201252922,
+    'comments' => NULL,
+    'companySystemID' => 52,
+    'companyID' => 'SGEE',
+    'serviceLineSystemID' => 5,
+    'serviceLineCode' => 'MS',
+    'documentSystemID' => 10,
+    'documentID' => 'RS',
+    'documentCode' => 'SGEE\\2018\\RS000004',
+    'wareHouseSystemCode' => 29,
+    'referenceNumber' => 'FREE\\2018\\INV000755',
+    'documentSystemCode' => 2887,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-09 05:58:41',
+    'timestamp' => '2018-08-09 05:58:41',
+  ),
+)  
+[2018-08-09 05:58:42] local.INFO: array (
+  0 => 486,
+)  
+[2018-08-09 05:58:42] local.INFO: Item successfully added to item ledger05:58:42  
+[2018-08-09 05:58:42] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 52,
+    'companyID' => 'SGEE',
+    'serviceLineSystemID' => 5,
+    'serviceLineCode' => 'MS',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 10,
+    'documentID' => 'RS',
+    'documentSystemCode' => 2887,
+    'documentCode' => 'SGEE\\2018\\RS000004',
+    'documentDate' => '2018-08-09 05:58:42',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'documentConfirmedDate' => '2018-08-09 05:57:43',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-09 05:58:40',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Inter Company Stock Transfer from FREE to SGEE FREE\\2018\\ST000052 ,FREE\\2018\\INV000755',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => 0,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-09 05:58:42',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-09 05:58:42',
+    'chartOfAccountSystemID' => 612,
+    'glCode' => '9999995',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => 566.998125716,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => 1474.92805011688,
+  ),
+  1 => 
+  array (
+    'companySystemID' => 52,
+    'companyID' => 'SGEE',
+    'serviceLineSystemID' => 5,
+    'serviceLineCode' => 'MS',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 10,
+    'documentID' => 'RS',
+    'documentSystemCode' => 2887,
+    'documentCode' => 'SGEE\\2018\\RS000004',
+    'documentDate' => '2018-08-09 05:58:42',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'documentConfirmedDate' => '2018-08-09 05:57:43',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-09 05:58:40',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Inter Company Stock Transfer from FREE to SGEE FREE\\2018\\ST000052 ,FREE\\2018\\INV000755',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => 0,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-09 05:58:42',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-09 05:58:42',
+    'chartOfAccountSystemID' => 605,
+    'glCode' => '9999988',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => -566.998125716,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => -1474.92805011688,
+  ),
+)  
+[2018-08-09 05:58:42] local.INFO: Successfully inserted to GL table 05:58:42  
+[2018-08-09 05:58:42] local.INFO: Successfully start  supplier_invoice05:58:42  
+[2018-08-09 05:58:43] local.INFO: {"serialNo":464,"companySystemID":52,"companyID":"SGEE","documentSystemID":11,"documentID":"SI","companyFinanceYearID":237,"FYBiggin":"2018-01-01 00:00:00","FYEnd":"2018-12-31 00:00:00","companyFinancePeriodID":71286,"FYPeriodDateFrom":"2018-03-01 00:00:00","FYPeriodDateTo":"2018-03-31 00:00:00","bookingInvCode":"SGEE\\2018\\BSI000464","bookingDate":"2018-08-09","comments":"Inter Company Stock Transfer from FREE to SGEE FREE\\2018\\ST000052 ,FREE\\2018\\INV000755, SGEE\\2018\\RS000004","secondaryRefNo":null,"supplierID":570,"supplierGLCode":"9999963","supplierInvoiceNo":"FREE\\2018\\INV000755","supplierInvoiceDate":"2018-08-09","supplierTransactionCurrencyID":2,"supplierTransactionCurrencyER":1,"companyReportingCurrencyID":2,"companyReportingER":1,"localCurrencyID":1,"localCurrencyER":2.5974026,"bookingAmountTrans":1474.92805011688,"bookingAmountLocal":566.998125716,"bookingAmountRpt":1474.92805011688,"confirmedYN":1,"confirmedByEmpSystemID":11,"confirmedByEmpID":"8888","confirmedByName":"Administrator","confirmedDate":"2018-08-09","approved":-1,"approvedDate":"2018-08-09","postedDate":"2018-08-09","documentType":0,"RollLevForApp_curr":1,"interCompanyTransferYN":-1,"createdUserSystemID":11,"createdUserID":"8888","createdPcID":null,"timestamp":"2018-08-09 05:58:43","createdDateTime":"2018-08-09 05:58:43","bookingSuppMasInvAutoID":92523}  
+[2018-08-09 05:58:43] local.INFO: {"bookingSuppMasInvAutoID":92523,"unbilledgrvAutoID":0,"companySystemID":52,"companyID":"SGEE","supplierID":570,"purchaseOrderID":0,"grvAutoID":0,"grvType":"0","supplierTransactionCurrencyID":2,"supplierTransactionCurrencyER":1,"companyReportingCurrencyID":2,"companyReportingER":1,"localCurrencyID":1,"localCurrencyER":2.5974026,"supplierInvoOrderedAmount":1474.92805011688,"supplierInvoAmount":1474.92805011688,"transSupplierInvoAmount":1474.92805011688,"localSupplierInvoAmount":566.998125716,"rptSupplierInvoAmount":1474.92805011688,"totTransactionAmount":1474.92805011688,"totLocalAmount":566.998125716,"totRptAmount":1474.92805011688,"isAddon":0,"invoiceBeforeGRVYN":0,"timesReferred":0,"timeStamp":"2018-08-09 00:00:00","bookingSupInvoiceDetAutoID":63964}  
+[2018-08-09 05:58:43] local.INFO: {"companySystemID":52,"companyID":"SGEE","serviceLineSystemID":5,"serviceLineCode":"MS","masterCompanyID":"GE","documentSystemID":11,"documentID":"SI","documentSystemCode":92523,"documentCode":"SGEE\\2018\\BSI000464","documentDate":"2018-08-09","documentYear":2018,"documentMonth":8,"invoiceNumber":"SGEE\\2018\\RS000004","invoiceDate":"2018-08-09","documentConfirmedDate":"2018-08-09","documentConfirmedBy":"8888","documentConfirmedByEmpSystemID":11,"documentFinalApprovedDate":"2018-08-09","documentFinalApprovedBy":"8888","documentFinalApprovedByEmpSystemID":11,"documentNarration":"Inter Company Stock Transfer from FREE to SGEE FREE\\2018\\ST000052 ,FREE\\2018\\INV000755, SGEE\\2018\\RS000004","clientContractID":"X","contractUID":159,"supplierCodeSystem":570,"holdingShareholder":null,"holdingPercentage":0,"nonHoldingPercentage":0,"createdUserID":"8888","createdUserSystemID":11,"createdUserPC":"Fayas-PC","documentRptCurrencyID":2,"documentRptCurrencyER":1,"documentTransCurrencyID":2,"documentTransCurrencyER":1,"documentLocalCurrencyID":1,"documentLocalCurrencyER":2.5974026,"chartOfAccountSystemID":799,"glCode":"9999963","glAccountType":"BS","documentLocalAmount":-566.998125716,"documentRptAmount":-1474.92805011688,"documentTransAmount":-1474.92805011688,"timeStamp":"2018-08-09 05:58:43","createdDateTime":"2018-08-09 05:58:43","GeneralLedgerID":1281649}  
+[2018-08-09 05:58:43] local.INFO: {"companySystemID":52,"companyID":"SGEE","serviceLineSystemID":5,"serviceLineCode":"MS","masterCompanyID":"GE","documentSystemID":11,"documentID":"SI","documentSystemCode":92523,"documentCode":"SGEE\\2018\\BSI000464","documentDate":"2018-08-09","documentYear":2018,"documentMonth":8,"invoiceNumber":"SGEE\\2018\\RS000004","invoiceDate":"2018-08-09","documentConfirmedDate":"2018-08-09","documentConfirmedBy":"8888","documentConfirmedByEmpSystemID":11,"documentFinalApprovedDate":"2018-08-09","documentFinalApprovedBy":"8888","documentFinalApprovedByEmpSystemID":11,"documentNarration":"Inter Company Stock Transfer from FREE to SGEE FREE\\2018\\ST000052 ,FREE\\2018\\INV000755, SGEE\\2018\\RS000004","clientContractID":"X","contractUID":159,"supplierCodeSystem":570,"holdingShareholder":null,"holdingPercentage":0,"nonHoldingPercentage":0,"createdUserID":"8888","createdUserSystemID":11,"createdUserPC":"Fayas-PC","documentRptCurrencyID":2,"documentRptCurrencyER":1,"documentTransCurrencyID":2,"documentTransCurrencyER":1,"documentLocalCurrencyID":1,"documentLocalCurrencyER":2.5974026,"chartOfAccountSystemID":747,"glCode":"20023","glAccountType":"BS","documentLocalAmount":566.998125716,"documentRptAmount":1474.92805011688,"documentTransAmount":1474.92805011688,"timeStamp":"2018-08-09 05:58:43","createdDateTime":"2018-08-09 05:58:43","GeneralLedgerID":1281650}  
+[2018-08-09 05:58:43] local.INFO: {"companySystemID":52,"companyID":"SGEE","documentSystemID":11,"documentID":"SI","documentSystemCode":92523,"documentCode":"SGEE\\2018\\BSI000464","documentDate":"2018-08-09","supplierCodeSystem":570,"supplierInvoiceNo":"FREE\\2018\\INV000755","supplierInvoiceDate":"2018-08-09","supplierTransCurrencyID":2,"supplierTransER":1,"supplierInvoiceAmount":1474.92805011688,"supplierDefaultCurrencyID":2,"supplierDefaultCurrencyER":1,"supplierDefaultAmount":1474.92805011688,"localCurrencyID":1,"localER":2.5974026,"localAmount":566.998125716,"comRptCurrencyID":2,"comRptER":1,"comRptAmount":1474.92805011688,"isInvoiceLockedYN":0,"invoiceType":0,"selectedToPaymentInv":0,"fullyInvoice":0,"createdUserID":"8888","createdPcID":"Fayas-PC","timeStamp":"2018-08-09 05:58:43","createdDateTime":"2018-08-09 05:58:43","apAutoID":87552}  
+[2018-08-09 05:58:43] local.INFO: Successfully end  supplier_invoice05:58:43  
+[2018-08-09 05:58:43] local.INFO: [{"companySystemID":52,"itemSystemCode":486,"inOutQty":4,"wacCostLocal":141.749531429,"wacCostRpt":368.732012529,"TotalwacCostLocal":566.998125716,"TotalwacCostRpt":1474.928050116}]  
+[2018-08-09 05:58:43] local.INFO: Successfully updated to item assign table 05:58:43  
+[2018-08-09 07:23:49] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 494,
+    'itemPrimaryCode' => 'INV000494',
+    'itemDescription' => 'FISH NECK / BODY 1 11/16 Motor Head Assambl',
+    'unitOfMeasure' => 7,
+    'inOutQty' => -1.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 139.324,
+    'wacRptCurrencyID' => 2,
+    'wacRpt' => 361.88051948,
+    'comments' => NULL,
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'THU',
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentCode' => 'FREE\\2018\\ST000053',
+    'wareHouseSystemCode' => 117,
+    'referenceNumber' => 'Ut est blanditiis consequuntur',
+    'documentSystemCode' => 2920,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-09 07:23:49',
+    'timestamp' => '2018-08-09 07:23:49',
+  ),
+)  
+[2018-08-09 07:23:49] local.INFO: array (
+  0 => 494,
+)  
+[2018-08-09 07:23:49] local.INFO: Item successfully added to item ledger07:23:49  
+[2018-08-09 07:23:49] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'THU',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2920,
+    'documentCode' => 'FREE\\2018\\ST000053',
+    'documentDate' => '2018-08-09 07:23:49',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'documentConfirmedDate' => '2018-08-09 07:18:21',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-09 07:23:47',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Aut nostrum vero quia magnam voluptate molestias cupidatat illo vel provident officiis delectus velit',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => 0,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-09 07:23:49',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-09 07:23:49',
+    'chartOfAccountSystemID' => 612,
+    'glCode' => '9999995',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => -139.324,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => -361.88051948,
+  ),
+  1 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'THU',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 13,
+    'documentID' => 'ST',
+    'documentSystemCode' => 2920,
+    'documentCode' => 'FREE\\2018\\ST000053',
+    'documentDate' => '2018-08-09 07:23:49',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'documentConfirmedDate' => '2018-08-09 07:18:21',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-09 07:23:47',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Aut nostrum vero quia magnam voluptate molestias cupidatat illo vel provident officiis delectus velit',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'supplierCodeSystem' => 0,
+    'documentTransCurrencyID' => 0,
+    'documentTransCurrencyER' => 0,
+    'documentTransAmount' => 0,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => NULL,
+    'nonHoldingPercentage' => NULL,
+    'createdDateTime' => '2018-08-09 07:23:49',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-09 07:23:49',
+    'chartOfAccountSystemID' => 605,
+    'glCode' => '9999988',
+    'glAccountType' => 'BS',
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1,
+    'documentLocalAmount' => 139.324,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1,
+    'documentRptAmount' => 361.88051948,
+  ),
+)  
+[2018-08-09 07:23:49] local.INFO: Successfully inserted to GL table 07:23:49  
+[2018-08-09 07:23:49] local.INFO: Successfully start  stock_receive07:23:49  
+[2018-08-09 07:23:49] local.INFO: {"transactionMode":null,"companySystemID":11,"companyID":"FREE","documentSystemiD":20,"documentID":"INV","FYBiggin":"2018-01-01 00:00:00","FYEnd":"2018-12-31 00:00:00","companyFinanceYearID":241,"companyFinancePeriodID":69647,"FYPeriodDateFrom":"2018-08-01 00:00:00","FYPeriodDateTo":"2018-08-31 00:00:00","serialNo":756,"serviceLineSystemID":35,"serviceLineCode":"THU","wareHouseSystemCode":117,"bookingInvCode":"FREE\\2018\\INV000756","bookingDate":"2018-08-09","comments":"Inter Company Stock Transfer from FREE to KGP FREE\\2018\\ST000053","customerID":398,"customerGLCode":"9999998","customerInvoiceNo":"FREE\\2018\\ST000053","customerInvoiceDate":"2018-08-09","invoiceDueDate":"2018-08-09","serviceStartDate":"2018-08-09","serviceEndDate":"2018-08-09","performaDate":"2018-08-09","companyReportingCurrencyID":2,"companyReportingER":1,"localCurrencyID":1,"localCurrencyER":2.5974026,"custTransactionCurrencyID":2,"custTransactionCurrencyER":1,"bookingAmountTrans":372.7369350644,"bookingAmountLocal":143.50372000000002,"bookingAmountRpt":372.7369350644,"confirmedYN":1,"confirmedByEmpSystemID":11,"confirmedByEmpID":"8888","confirmedByName":"Administrator","confirmedDate":"2018-08-09 07:18:21","approved":-1,"approvedDate":"2018-08-09 07:23:47","documentType":11,"interCompanyTransferYN":-1,"createdUserSystemID":11,"createdUserID":"8888","createdPcID":"Fayas-PC","timestamp":"2018-08-09 07:23:49","createdDateTime":"2018-08-09 07:23:49","custInvoiceDirectAutoID":53943}  
+[2018-08-09 07:23:49] local.INFO: {"custInvoiceDirectID":53943,"companyID":"FREE","serviceLineCode":"THU","customerID":398,"comments":"Inter Company Stock Transfer from FREE to KGP FREE\\2018\\ST000053","unitOfMeasure":7,"invoiceQty":1,"invoiceAmountCurrency":2,"invoiceAmountCurrencyER":1,"localCurrency":1,"localCurrencyER":2.5974026,"comRptCurrency":2,"comRptCurrencyER":1,"glCode":"91582","glCodeDes":"Product Revenue -Intercompany","accountType":"PL","invoiceAmount":10.856415584399999,"unitCost":10.856415584399999,"localAmount":4.1797200000000005,"comRptAmount":10.856415584399999,"timeStamp":"2018-08-09 07:23:49","custInvDirDetAutoID":99631}  
+[2018-08-09 07:23:49] local.INFO: {"custInvoiceDirectID":53943,"companyID":"FREE","serviceLineCode":"THU","customerID":398,"comments":"Inter Company Stock Transfer from FREE to KGP FREE\\2018\\ST000053","unitOfMeasure":7,"invoiceQty":1,"invoiceAmountCurrency":2,"invoiceAmountCurrencyER":1,"localCurrency":1,"localCurrencyER":2.5974026,"comRptCurrency":2,"comRptCurrencyER":1,"glCode":"20023","glCodeDes":"Intercompany stock transfer","accountType":"BS","invoiceAmount":361.88051948,"unitCost":361.88051948,"localAmount":139.324,"comRptAmount":361.88051948,"timeStamp":"2018-08-09 07:23:49","custInvDirDetAutoID":99632}  
+[2018-08-09 07:23:49] local.INFO: {"companySystemID":11,"companyID":"FREE","documentSystemID":20,"documentID":"INV","documentCodeSystem":53943,"documentCode":"FREE\\2018\\INV000756","customerID":398,"documentDate":"2018-08-09","InvoiceNo":"FREE\\2018\\ST000053","InvoiceDate":"2018-08-09","custTransCurrencyID":2,"custTransER":1,"custInvoiceAmount":372.7369350644,"custDefaultCurrencyID":0,"custDefaultCurrencyER":0,"custDefaultAmount":0,"localCurrencyID":1,"localER":2.5974026,"localAmount":143.50372000000002,"comRptCurrencyID":2,"comRptER":1,"comRptAmount":372.7369350644,"isInvoiceLockedYN":0,"selectedToPaymentInv":0,"fullyInvoiced":0,"createdUserID":"8888","createdPcID":"Fayas-PC","documentType":11,"timeStamp":"2018-08-09 07:23:49","createdDateTime":"2018-08-09 07:23:49","arAutoID":48222}  
+[2018-08-09 07:23:50] local.INFO: {"stockReceiveAutoID":2888,"stockReceiveCode":"KGP\\2018\\RS000001","stockTransferAutoID":2920,"stockTransferCode":"FREE\\2018\\ST000053","stockTransferDate":"2018-08-09","itemCodeSystem":494,"itemPrimaryCode":"INV000494","itemDescription":"FISH NECK \/ BODY 1 11\/16 Motor Head Assambl","unitOfMeasure":7,"itemFinanceCategoryID":1,"itemFinanceCategorySubID":4,"financeGLcodebBS":"9999995","financeGLcodebBSSystemID":612,"localCurrencyID":12,"unitCostLocal":112.47254398861082,"reportingCurrencyID":2,"unitCostRpt":372.7369350644,"qty":1,"timeStamp":"2018-08-09 07:23:50","stockReceiveDetailsID":11446}  
+[2018-08-09 07:23:50] local.INFO: Successfully created  stock_receive07:23:50  
+[2018-08-09 07:23:50] local.INFO: [{"companySystemID":11,"itemSystemCode":494,"inOutQty":0,"wacCostLocal":0,"wacCostRpt":0,"TotalwacCostLocal":0,"TotalwacCostRpt":0}]  
+[2018-08-09 07:23:50] local.INFO: Successfully updated to item assign table 07:23:50  

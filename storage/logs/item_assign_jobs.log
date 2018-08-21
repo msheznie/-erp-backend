@@ -1,0 +1,121 @@
+[2018-08-03 12:30:12] local.INFO: [{"companySystemID":11,"itemSystemCode":1194,"inOutQty":0,"wacCostLocal":0,"wacCostRpt":0,"TotalwacCostLocal":0,"TotalwacCostRpt":0}]  
+[2018-08-03 12:30:12] local.INFO: Successfully updated to item assign table 12:30:12  
+[2018-08-06 04:19:15] local.INFO: [{"companySystemID":11,"itemSystemCode":40,"inOutQty":12,"wacCostLocal":210.261927499,"wacCostRpt":546.134876191,"TotalwacCostLocal":2523.143129988,"TotalwacCostRpt":6553.618514292}]  
+[2018-08-06 04:19:15] local.INFO: Successfully updated to item assign table 04:19:15  
+[2018-08-06 04:23:00] local.INFO: [{"companySystemID":11,"itemSystemCode":40,"inOutQty":10,"wacCostLocal":210.261927499,"wacCostRpt":546.13487619,"TotalwacCostLocal":2102.61927499,"TotalwacCostRpt":5461.3487619}]  
+[2018-08-06 04:23:00] local.INFO: Successfully updated to item assign table 04:23:00  
+[2018-08-06 04:33:05] local.INFO: [{"companySystemID":11,"itemSystemCode":40,"inOutQty":9,"wacCostLocal":210.261927499,"wacCostRpt":546.134876191,"TotalwacCostLocal":1892.357347491,"TotalwacCostRpt":4915.213885719}]  
+[2018-08-06 04:33:05] local.INFO: Successfully updated to item assign table 04:33:05  
+[2018-08-07 07:35:43] local.INFO: [{"companySystemID":11,"itemSystemCode":486,"inOutQty":74,"wacCostLocal":137.6209043,"wacCostRpt":357.992245174,"TotalwacCostLocal":10183.946918200001,"TotalwacCostRpt":26491.426142876}]  
+[2018-08-07 07:35:44] local.INFO: Successfully updated to item assign table 07:35:44  
+[2018-08-07 07:38:21] local.ERROR: Document ID Not Found07:38:21  
+[2018-08-07 11:35:52] local.INFO: [{"companySystemID":11,"itemSystemCode":426,"inOutQty":28,"wacCostLocal":340.157438544,"wacCostRpt":883.525815246,"TotalwacCostLocal":9524.408279232,"TotalwacCostRpt":24738.722826888},{"companySystemID":11,"itemSystemCode":1681,"inOutQty":49,"wacCostLocal":27.48182093,"wacCostRpt":71.416258703,"TotalwacCostLocal":1346.60922557,"TotalwacCostRpt":3499.3966764469997},{"companySystemID":11,"itemSystemCode":1936,"inOutQty":3,"wacCostLocal":11.8259807,"wacCostRpt":30.716833,"TotalwacCostLocal":35.4779421,"TotalwacCostRpt":92.150499},{"companySystemID":11,"itemSystemCode":23748,"inOutQty":10,"wacCostLocal":118.378566644,"wacCostRpt":307.47679646,"TotalwacCostLocal":1183.78566644,"TotalwacCostRpt":3074.7679646}]  
+[2018-08-07 11:35:52] local.INFO: Successfully updated to item assign table 11:35:52  
+[2018-08-08 03:23:31] local.ERROR: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ {"exception":"[object] (Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:47, PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:43)
+[stacktrace]
+#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(64): Doctrine\\DBAL\\Driver\\PDOConnection->__construct('mysql:host=192....', 'gearsdev', 'gearsdev@123', Array)
+#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(43): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=192....', 'gearsdev', 'gearsdev@123', Array)
+#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=192....', Array, Array)
+#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\ConnectionFactory.php(183): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
+#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(915): call_user_func(Object(Closure))
+#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(248): Illuminate\\Database\\Connection->getPdo()
+#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(234): Illuminate\\Database\\DatabaseManager->refreshPdoConnections('mysql')
+#8 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(168): Illuminate\\Database\\DatabaseManager->reconnect('mysql')
+#9 [internal function]: Illuminate\\Database\\DatabaseManager->Illuminate\\Database\\{closure}(Object(Illuminate\\Database\\MySqlConnection))
+#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(753): call_user_func(Object(Closure), Object(Illuminate\\Database\\MySqlConnection))
+#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(140): Illuminate\\Database\\Connection->reconnect()
+#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(110): Illuminate\\Database\\Connection->handleBeginTransactionException(Object(ErrorException))
+#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(92): Illuminate\\Database\\Connection->createTransaction()
+#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\DatabaseQueue.php(195): Illuminate\\Database\\Connection->beginTransaction()
+#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(244): Illuminate\\Queue\\DatabaseQueue->pop('default')
+#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(105): Illuminate\\Queue\\Worker->getNextJob(Object(Illuminate\\Queue\\DatabaseQueue), 'default')
+#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(101): Illuminate\\Queue\\Worker->daemon('database', 'default', Object(Illuminate\\Queue\\WorkerOptions))
+#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(85): Illuminate\\Queue\\Console\\WorkCommand->runWorker('database', 'default')
+#19 [internal function]: Illuminate\\Queue\\Console\\WorkCommand->handle()
+#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(29): call_user_func_array(Array, Array)
+#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(87): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(31): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(549): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(183): Illuminate\\Container\\Container->call(Array)
+#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Command\\Command.php(252): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(170): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(946): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(248): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Queue\\Console\\WorkCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(148): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Application.php(88): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(121): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\artisan(37): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#33 {main}
+"} 
+[2018-08-08 03:23:31] local.ERROR: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ {"exception":"[object] (Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:47, PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:43)
+[stacktrace]
+#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(64): Doctrine\\DBAL\\Driver\\PDOConnection->__construct('mysql:host=192....', 'gearsdev', 'gearsdev@123', Array)
+#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(43): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=192....', 'gearsdev', 'gearsdev@123', Array)
+#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=192....', Array, Array)
+#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\ConnectionFactory.php(183): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
+#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(915): call_user_func(Object(Closure))
+#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(248): Illuminate\\Database\\Connection->getPdo()
+#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(234): Illuminate\\Database\\DatabaseManager->refreshPdoConnections('mysql')
+#8 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\DatabaseManager.php(168): Illuminate\\Database\\DatabaseManager->reconnect('mysql')
+#9 [internal function]: Illuminate\\Database\\DatabaseManager->Illuminate\\Database\\{closure}(Object(Illuminate\\Database\\MySqlConnection))
+#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(753): call_user_func(Object(Closure), Object(Illuminate\\Database\\MySqlConnection))
+#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(140): Illuminate\\Database\\Connection->reconnect()
+#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(110): Illuminate\\Database\\Connection->handleBeginTransactionException(Object(ErrorException))
+#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(92): Illuminate\\Database\\Connection->createTransaction()
+#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\DatabaseQueue.php(195): Illuminate\\Database\\Connection->beginTransaction()
+#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(244): Illuminate\\Queue\\DatabaseQueue->pop('default')
+#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(105): Illuminate\\Queue\\Worker->getNextJob(Object(Illuminate\\Queue\\DatabaseQueue), 'default')
+#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(101): Illuminate\\Queue\\Worker->daemon('database', 'default', Object(Illuminate\\Queue\\WorkerOptions))
+#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(85): Illuminate\\Queue\\Console\\WorkCommand->runWorker('database', 'default')
+#19 [internal function]: Illuminate\\Queue\\Console\\WorkCommand->handle()
+#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(29): call_user_func_array(Array, Array)
+#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(87): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(31): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(549): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(183): Illuminate\\Container\\Container->call(Array)
+#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Command\\Command.php(252): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(170): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(946): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(248): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Queue\\Console\\WorkCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(148): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Application.php(88): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(121): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\artisan(37): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#33 {main}
+"} 
+[2018-08-08 03:23:34] local.ERROR: Call to a member function beginTransaction() on null {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalThrowableError(code: 0): Call to a member function beginTransaction() on null at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php:108)
+[stacktrace]
+#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\ManagesTransactions.php(92): Illuminate\\Database\\Connection->createTransaction()
+#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\DatabaseQueue.php(195): Illuminate\\Database\\Connection->beginTransaction()
+#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(244): Illuminate\\Queue\\DatabaseQueue->pop('default')
+#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Worker.php(105): Illuminate\\Queue\\Worker->getNextJob(Object(Illuminate\\Queue\\DatabaseQueue), 'default')
+#4 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(101): Illuminate\\Queue\\Worker->daemon('database', 'default', Object(Illuminate\\Queue\\WorkerOptions))
+#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Queue\\Console\\WorkCommand.php(85): Illuminate\\Queue\\Console\\WorkCommand->runWorker('database', 'default')
+#6 [internal function]: Illuminate\\Queue\\Console\\WorkCommand->handle()
+#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(29): call_user_func_array(Array, Array)
+#8 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(87): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#9 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(31): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(549): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(183): Illuminate\\Container\\Container->call(Array)
+#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Command\\Command.php(252): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Command.php(170): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(946): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(248): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Queue\\Console\\WorkCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(148): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Application.php(88): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(121): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#19 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\artisan(37): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#20 {main}
+"} 
+[2018-08-09 05:58:43] local.INFO: [{"companySystemID":52,"itemSystemCode":486,"inOutQty":4,"wacCostLocal":141.749531429,"wacCostRpt":368.732012529,"TotalwacCostLocal":566.998125716,"TotalwacCostRpt":1474.928050116}]  
+[2018-08-09 05:58:43] local.INFO: Successfully updated to item assign table 05:58:43  
+[2018-08-09 07:23:50] local.INFO: [{"companySystemID":11,"itemSystemCode":494,"inOutQty":0,"wacCostLocal":0,"wacCostRpt":0,"TotalwacCostLocal":0,"TotalwacCostRpt":0}]  
+[2018-08-09 07:23:50] local.INFO: Successfully updated to item assign table 07:23:50  

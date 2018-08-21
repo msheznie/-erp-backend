@@ -815,7 +815,6 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
             case 20:
-
                 $docInforArr["tableName"] = 'erp_custinvoicedirect';
                 $docInforArr["modelName"] = 'CustomerInvoiceDirect';
                 $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
@@ -826,18 +825,18 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
-
                 break;
             case 24:
-                $docInforArr["documentCodeColumnName"] = 'purchaseReturnCode';
-                $docInforArr["confirmColumnName"] = 'confirmedYN';
-                $docInforArr["confirmedBy"] = 'confirmedByName';
-                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
-                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
-                $docInforArr["confirmedDate"] = 'confirmedDate';
                 $docInforArr["tableName"] = 'erp_purchasereturnmaster';
                 $docInforArr["modelName"] = 'PurchaseReturn';
                 $docInforArr["primarykey"] = 'purhaseReturnAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
