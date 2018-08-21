@@ -12,6 +12,8 @@
  * -- Date: 10 - August 2018 By: Fayas Description: Added new functions named as purchaseReturnSegmentChkActive(),grvForPurchaseReturn()
  * -- Date: 17 - August 2018 By: Fayas Description: Added new functions named as getPurchaseReturnAudit(),getPurchaseReturnApprovedByUser(),
  *                          getPurchaseReturnApprovalByUser()
+ * Date: 20 - August 2018 By: Fayas Description: Added new functions named as printPurchaseReturn()
+ *
  */
 namespace App\Http\Controllers\API;
 
@@ -243,6 +245,10 @@ class PurchaseReturnAPIController extends AppBaseController
         if ($supplier) {
             $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
             $input['supplierName'] = $supplier->supplierName;
+            $input['liabilityAccountSysemID'] = $supplier->liabilityAccountSysemID;
+            $input['liabilityAccount'] = $supplier->liabilityAccount;
+            $input['UnbilledGRVAccountSystemID'] = $supplier->UnbilledGRVAccountSystemID;
+            $input['UnbilledGRVAccount'] = $supplier->UnbilledGRVAccount;
         }
 
         $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
@@ -386,7 +392,8 @@ class PurchaseReturnAPIController extends AppBaseController
     public function update($id, UpdatePurchaseReturnAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['confirmed_by','segment_by','location_by','finance_period_by','finance_year_by']);
+        $input = array_except($input, ['confirmed_by','segment_by','location_by','finance_period_by','finance_year_by',
+            'confirmedByEmpSystemID','confirmedByEmpID', 'confirmedDate','confirmedByName']);
         $wareHouseError = array('type' => 'wareHouse');
         $serviceLineError = array('type' => 'serviceLine');
 
@@ -434,6 +441,10 @@ class PurchaseReturnAPIController extends AppBaseController
             if (!empty($supplier)) {
                 $input['supplierPrimaryCode'] = $supplier->primarySupplierCode;
                 $input['supplierName'] = $supplier->supplierName;
+                $input['liabilityAccountSysemID'] = $supplier->liabilityAccountSysemID;
+                $input['liabilityAccount'] = $supplier->liabilityAccount;
+                $input['UnbilledGRVAccountSystemID'] = $supplier->UnbilledGRVAccountSystemID;
+                $input['UnbilledGRVAccount'] = $supplier->UnbilledGRVAccount;
             }
         }
 
@@ -496,6 +507,9 @@ class PurchaseReturnAPIController extends AppBaseController
 
             $finalError = array('cost_zero' => array(),
                 'cost_neg' => array(),
+                'same_item' => array(),
+                'qty_zero' => array(),
+                'more_then_grv_qty' => array(),
                 'currentStockQty_zero' => array(),
                 'currentWareHouseStockQty_zero' => array(),
                 'currentStockQty_more' => array(),
@@ -506,46 +520,31 @@ class PurchaseReturnAPIController extends AppBaseController
                 $updateItem = $this->purchaseReturnDetailsRepository->find($item['purhasereturnDetailID']);
                 $data = array('companySystemID' => $purchaseReturn->companySystemID,
                     'itemCodeSystem' => $updateItem->itemCode,
-                    'wareHouseId' => $purchaseReturn->wareHouseFrom);
+                    'wareHouseId' => $purchaseReturn->purchaseReturnLocation);
                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
-                /*$updateData = [ '' => $itemCurrentCostAndQty['currentStockQty'],
-                                '' => $itemCurrentCostAndQty['currentStockQtyInDamageReturn']];
-
-                /*$updateItem->currentStockQty = ;
-                $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-                $updateItem->currentStockQtyInDamageReturn = ;
-                $updateItem->issueCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
-                $updateItem->issueCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
-                $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
-                $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
-                $updateItem->save();*/
-
-               /* if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
-                    array_push($finalError['cost_zero'], $updateItem->itemPrimaryCode);
+                if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
+                    array_push($finalError['currentStockQty_zero'], $item['itemPrimaryCode']);
                     $error_count++;
                 }
-                if ($updateItem->issueCostLocal < 0 || $updateItem->issueCostRpt < 0) {
-                    array_push($finalError['cost_neg'], $updateItem->itemPrimaryCode);
+                if ($itemCurrentCostAndQty['currentStockQty'] <= 0) {
+                    array_push($finalError['currentWareHouseStockQty_zero'], $item['itemPrimaryCode']);
                     $error_count++;
                 }
-                if ($updateItem->currentWareHouseStockQty <= 0) {
-                    array_push($finalError['currentStockQty_zero'], $updateItem->itemPrimaryCode);
-                    $error_count++;
-                }
-                if ($updateItem->currentStockQty <= 0) {
-                    array_push($finalError['currentWareHouseStockQty_zero'], $updateItem->itemPrimaryCode);
-                    $error_count++;
-                }
-                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentStockQty) {
-                    array_push($finalError['currentStockQty_more'], $updateItem->itemPrimaryCode);
+                if ($item['noQty'] > $itemCurrentCostAndQty['currentStockQty']) {
+                    array_push($finalError['currentStockQty_more'], $item['itemPrimaryCode']);
                     $error_count++;
                 }
 
-                if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
-                    array_push($finalError['currentWareHouseStockQty_more'], $updateItem->itemPrimaryCode);
+                if ($item['noQty'] > $itemCurrentCostAndQty['currentWareHouseStockQty']) {
+                    array_push($finalError['currentWareHouseStockQty_more'], $item['itemPrimaryCode']);
                     $error_count++;
-                }*/
+                }
+
+                if ($item['noQty'] > $item['GRVQty']) {
+                    array_push($finalError['more_then_grv_qty'], $item['itemPrimaryCode']);
+                    $error_count++;
+                }
             }
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
@@ -899,7 +898,7 @@ class PurchaseReturnAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'purchaseReturnLocation', 'month', 'year'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -911,12 +910,12 @@ class PurchaseReturnAPIController extends AppBaseController
         $empID = \Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
-        $itemIssueMaster = DB::table('erp_documentapproved')
+        $purchaseReturnMaster = DB::table('erp_documentapproved')
             ->select(
-                'erp_itemissuemaster.*',
+                'erp_purchasereturnmaster.*',
                 'employees.empName As created_emp',
-                'serviceline.ServiceLineDes As MIServiceLineDes',
-                'warehousemaster.wareHouseDescription As MIWareHouseDescription',
+                'serviceline.ServiceLineDes As serviceLineDes',
+                'warehousemaster.wareHouseDescription As wareHouseDescription',
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
@@ -934,47 +933,47 @@ class PurchaseReturnAPIController extends AppBaseController
                     //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
                 }
 
-                $query->whereIn('employeesdepartments.documentSystemID', [8])
+                $query->whereIn('employeesdepartments.documentSystemID', [24])
                     ->where('employeesdepartments.companySystemID', $companyId)
                     ->where('employeesdepartments.employeeSystemID', $empID);
             })
-            ->join('erp_itemissuemaster', function ($query) use ($companyId, $search) {
-                $query->on('erp_documentapproved.documentSystemCode', '=', 'itemIssueAutoID')
+            ->join('erp_purchasereturnmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'purhaseReturnAutoID')
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
-                    ->where('erp_itemissuemaster.companySystemID', $companyId)
-                    ->where('erp_itemissuemaster.approved', 0)
-                    ->where('erp_itemissuemaster.confirmedYN', 1);
+                    ->where('erp_purchasereturnmaster.companySystemID', $companyId)
+                    ->where('erp_purchasereturnmaster.approved', 0)
+                    ->where('erp_purchasereturnmaster.confirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
-            ->leftJoin('warehousemaster', 'wareHouseFrom', 'warehousemaster.wareHouseSystemCode')
-            ->leftJoin('serviceline', 'erp_itemissuemaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('warehousemaster', 'purchaseReturnLocation', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_purchasereturnmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
-            ->whereIn('erp_documentapproved.documentSystemID', [8])
+            ->whereIn('erp_documentapproved.documentSystemID', [24])
             ->where('erp_documentapproved.companySystemID', $companyId);
 
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $itemIssueMaster->where('erp_itemissuemaster.serviceLineSystemID', $input['serviceLineSystemID']);
+                $purchaseReturnMaster->where('erp_purchasereturnmaster.serviceLineSystemID', $input['serviceLineSystemID']);
             }
         }
 
-        if (array_key_exists('wareHouseFrom', $input)) {
-            if ($input['wareHouseFrom'] && !is_null($input['wareHouseFrom'])) {
-                $itemIssueMaster->where('erp_itemissuemaster.wareHouseFrom', $input['wareHouseFrom']);
+        if (array_key_exists('purchaseReturnLocation', $input)) {
+            if ($input['purchaseReturnLocation'] && !is_null($input['purchaseReturnLocation'])) {
+                $purchaseReturnMaster->where('erp_purchasereturnmaster.purchaseReturnLocation', $input['purchaseReturnLocation']);
             }
         }
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $itemIssueMaster->whereMonth('erp_itemissuemaster.issueDate', '=', $input['month']);
+                $purchaseReturnMaster->whereMonth('erp_purchasereturnmaster.purchaseReturnDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $itemIssueMaster->whereYear('erp_itemissuemaster.issueDate', '=', $input['year']);
+                $purchaseReturnMaster->whereYear('erp_purchasereturnmaster.purchaseReturnDate', '=', $input['year']);
             }
         }
 
@@ -982,18 +981,18 @@ class PurchaseReturnAPIController extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
-                $query->where('itemIssueCode', 'LIKE', "%{$search}%")
+            $purchaseReturnMaster = $purchaseReturnMaster->where(function ($query) use ($search) {
+                $query->where('purchaseReturnCode', 'LIKE', "%{$search}%")
                     ->orWhere('comment', 'LIKE', "%{$search}%");
             });
         }
 
-        return \DataTables::of($itemIssueMaster)
+        return \DataTables::of($purchaseReturnMaster)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('itemIssueAutoID', $input['order'][0]['dir']);
+                        $query->orderBy('purhaseReturnAutoID', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -1006,7 +1005,7 @@ class PurchaseReturnAPIController extends AppBaseController
     public function getPurchaseReturnApprovedByUser(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'purchaseReturnLocation', 'month', 'year'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1018,51 +1017,51 @@ class PurchaseReturnAPIController extends AppBaseController
         $empID = \Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
-        $itemIssueMaster = DB::table('erp_documentapproved')
+        $purchaseReturnMaster = DB::table('erp_documentapproved')
             ->select(
-                'erp_itemissuemaster.*',
+                'erp_purchasereturnmaster.*',
                 'employees.empName As created_emp',
-                'serviceline.ServiceLineDes As MIServiceLineDes',
-                'warehousemaster.wareHouseDescription As MIWareHouseDescription',
+                'serviceline.ServiceLineDes As serviceLineDes',
+                'warehousemaster.wareHouseDescription As wareHouseDescription',
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
                 'documentSystemCode')
-            ->join('erp_itemissuemaster', function ($query) use ($companyId, $search) {
-                $query->on('erp_documentapproved.documentSystemCode', '=', 'itemIssueAutoID')
-                    ->where('erp_itemissuemaster.companySystemID', $companyId)
-                    ->where('erp_itemissuemaster.confirmedYN', 1);
+            ->join('erp_purchasereturnmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'purhaseReturnAutoID')
+                    ->where('erp_purchasereturnmaster.companySystemID', $companyId)
+                    ->where('erp_purchasereturnmaster.confirmedYN', 1);
             })
             ->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
-            ->leftJoin('warehousemaster', 'wareHouseFrom', 'warehousemaster.wareHouseSystemCode')
-            ->leftJoin('serviceline', 'erp_itemissuemaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('warehousemaster', 'purchaseReturnLocation', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_purchasereturnmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
-            ->whereIn('erp_documentapproved.documentSystemID', [8])
+            ->whereIn('erp_documentapproved.documentSystemID', [24])
             ->where('erp_documentapproved.companySystemID', $companyId)
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $itemIssueMaster->where('erp_itemissuemaster.serviceLineSystemID', $input['serviceLineSystemID']);
+                $purchaseReturnMaster->where('erp_purchasereturnmaster.serviceLineSystemID', $input['serviceLineSystemID']);
             }
         }
 
-        if (array_key_exists('wareHouseFrom', $input)) {
-            if ($input['wareHouseFrom'] && !is_null($input['wareHouseFrom'])) {
-                $itemIssueMaster->where('erp_itemissuemaster.wareHouseFrom', $input['wareHouseFrom']);
+        if (array_key_exists('purchaseReturnLocation', $input)) {
+            if ($input['purchaseReturnLocation'] && !is_null($input['purchaseReturnLocation'])) {
+                $purchaseReturnMaster->where('erp_purchasereturnmaster.purchaseReturnLocation', $input['purchaseReturnLocation']);
             }
         }
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $itemIssueMaster->whereMonth('erp_itemissuemaster.issueDate', '=', $input['month']);
+                $purchaseReturnMaster->whereMonth('erp_purchasereturnmaster.purchaseReturnDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $itemIssueMaster->whereYear('erp_itemissuemaster.issueDate', '=', $input['year']);
+                $purchaseReturnMaster->whereYear('erp_purchasereturnmaster.purchaseReturnDate', '=', $input['year']);
             }
         }
 
@@ -1070,18 +1069,18 @@ class PurchaseReturnAPIController extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
-                $query->where('itemIssueCode', 'LIKE', "%{$search}%")
+            $purchaseReturnMaster = $purchaseReturnMaster->where(function ($query) use ($search) {
+                $query->where('purchaseReturnCode', 'LIKE', "%{$search}%")
                     ->orWhere('comment', 'LIKE', "%{$search}%");
             });
         }
 
-        return \DataTables::of($itemIssueMaster)
+        return \DataTables::of($purchaseReturnMaster)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('itemIssueAutoID', $input['order'][0]['dir']);
+                        $query->orderBy('purhaseReturnAutoID', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -1089,5 +1088,28 @@ class PurchaseReturnAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+    public function printPurchaseReturn(Request $request)
+    {
+        $id = $request->get('id');
+        $purchaseReturn = $this->purchaseReturnRepository->getAudit($id);
+
+        if (empty($purchaseReturn)) {
+            return $this->sendError('Purchase Return not found');
+        }
+
+        $purchaseReturn->docRefNo = \Helper::getCompanyDocRefNo($purchaseReturn->companySystemID, $purchaseReturn->documentSystemID);
+
+        $array = array('entity' => $purchaseReturn);
+        $time = strtotime("now");
+        $fileName = 'purchase_return' . $id . '_' . $time . '.pdf';
+        $html = view('print.purchase_return', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+
 
 }

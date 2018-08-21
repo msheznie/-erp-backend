@@ -18,12 +18,14 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePoAdvancePaymentAPIRequest;
 use App\Http\Requests\API\UpdatePoAdvancePaymentAPIRequest;
+use App\Models\DocumentAttachments;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\PoAdvancePayment;
 use App\Repositories\PoAdvancePaymentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Models\ProcumentOrder;
@@ -211,9 +213,28 @@ class PoAdvancePaymentAPIController extends AppBaseController
             if ($poAdvancePayment) {
                 $grvDetail = GRVDetails::where('grvAutoID', $poAdvancePayment["grvAutoID"])->update(['logisticsCharges_TransCur' => 0, 'logisticsCharges_LocalCur' => 0, 'logisticsChargest_RptCur' => 0, 'landingCost_TransCur' => DB::raw('GRVcostPerUnitSupTransCur'), 'landingCost_LocalCur' => DB::raw('GRVcostPerUnitLocalCur'), 'landingCost_RptCur' => DB::raw('GRVcostPerUnitComRptCur')]);
             }
+
+            $attachment = DocumentAttachments::where('documentSystemID', 60)
+                ->where('companySystemID', $poAdvancePayment->companySystemID)
+                ->where('documentSystemCode', $poAdvancePayment->poAdvPaymentID)
+                ->get();
+
+            if (!empty($attachment)) {
+                foreach ($attachment as $das) {
+                    $path = $das->path;
+                    $attachmentDel = DocumentAttachments::find($das->attachmentID);
+                    if ($exists = Storage::disk('public')->exists($path)) {
+                        $attachmentDel->delete();
+                        Storage::disk('public')->delete($path);
+                    } else {
+                        $attachmentDel->delete();
+                    }
+                }
+
+            }
             DB::commit();
             return $this->sendResponse($id, 'Po advance payment deleted successfully');
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($id, 'Error Occurred');
         }
@@ -255,7 +276,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
             ->where('confirmedYN', 1)
             ->where('isAdvancePaymentYN', 1)
             ->where('approvedYN', -1)
-            ->with(['category_by','grv_by','currency', 'supplier_by' => function ($query) {
+            ->with(['category_by', 'grv_by', 'currency', 'supplier_by' => function ($query) {
             }])->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
@@ -304,16 +325,16 @@ HAVING
 ORDER BY
 	erp_grvmaster.grvAutoID DESC');
 
-        if($purchaseOrder->grvRecieved == 1){
-            if(empty($input['detail']['grvAutoID'])) {
+        if ($purchaseOrder->grvRecieved == 1) {
+            if (empty($input['detail']['grvAutoID'])) {
                 return $this->sendError('Please select a GRV as there is a GRV done for this PO');
             }
         }
 
-        if($purchaseOrder->grvRecieved == 2){
-            if(!empty($detail) && empty($input['detail']['grvAutoID'])) {
+        if ($purchaseOrder->grvRecieved == 2) {
+            if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
                 return $this->sendError('Please select a GRV as there is a GRV done for this PO');
-            }else if(empty($detail)){
+            } else if (empty($detail)) {
                 return $this->sendError('PO is fully received you cannot add logistic');
             }
         }
@@ -342,9 +363,9 @@ ORDER BY
 
         $currencyID = null;
 
-        if(is_array($input['detail']['currencyID'])){
+        if (is_array($input['detail']['currencyID'])) {
             $currencyID = $input['detail']['currencyID'][0];
-        }else{
+        } else {
             $currencyID = $input['detail']['currencyID'];
         }
         $input['currencyID'] = $currencyID;
@@ -352,7 +373,7 @@ ORDER BY
         $input['reqAmountTransCur_amount'] = \Helper::roundValue($input['detail']['reqAmount']);
         $input['logisticCategoryID'] = $input['detail']['logisticCategoryID'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID,  $currencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
+        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $currencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
         //$input['detail']['reqAmount'];
         $input['reqAmountInPOTransCur'] = \Helper::roundValue($companyCurrencyConversion['documentAmount']);
@@ -400,12 +421,12 @@ ORDER BY
     public function loadPoPaymentTermsLogisticForGRV(Request $request)
     {
         $input = $request->all();
-        $grvAutoID= $input['grvAutoID'];
+        $grvAutoID = $input['grvAutoID'];
 
         $items = PoAdvancePayment::where('grvAutoID', $grvAutoID)
             ->where('confirmedYN', 1)
             ->where('approvedYN', -1)
-            ->with(['category_by','grv_by','currency', 'supplier_by' => function ($query) {
+            ->with(['category_by', 'grv_by', 'currency', 'supplier_by' => function ($query) {
             }])->get();
 
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
@@ -420,11 +441,11 @@ ORDER BY
             return $this->sendError('Po Advance Payment not found');
         }
 
-        if($poAdvancePayment["grvAutoID"]){
+        if ($poAdvancePayment["grvAutoID"]) {
             $grv = GRVMaster::find($poAdvancePayment["grvAutoID"]);
-            if($grv){
-                if($grv["grvConfirmedYN"]){
-                    return $this->sendError('Selected logistic charge is linked to GRV '.$grv["grvPrimaryCode"]);
+            if ($grv) {
+                if ($grv["grvConfirmedYN"]) {
+                    return $this->sendError('Selected logistic charge is linked to GRV ' . $grv["grvPrimaryCode"]);
                 }
             }
         }

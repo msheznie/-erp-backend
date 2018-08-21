@@ -30,6 +30,7 @@ use App\Models\Company;
 use App\Models\CompanyFinanceYear;
 use App\Models\Contract;
 use App\Models\chartOfAccount;
+use App\Models\SegmentMaster;
 use App\Models\FreeBillingMasterPerforma;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use Carbon\Carbon;
@@ -162,9 +163,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['FYPeriodDateTo'] = $FYPeriodDateTo;
         $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
         $input['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
+        $input['customerInvoiceDate'] = $input['bookingDate'];
         $input['companySystemID'] = $input['companyID'];
         $input['companyID'] = $company['CompanyID'];
         $input['customerGLCode'] = $customer->custGLaccount;
+        $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
         $input['documentType'] = 11;
         $input['createdUserID'] = \Helper::getEmployeeID();
         $input['createdPcID'] = getenv('COMPUTERNAME');
@@ -174,7 +177,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
 
-        if (($input['bookingDate'] > $FYPeriodDateFrom) && ($input['bookingDate'] < $FYPeriodDateTo)) {
+
+
+        if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
             return $this->sendResponse($customerInvoiceDirects->toArray(), 'Customer Invoice Direct saved successfully');
         } else {
@@ -291,7 +296,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
         $input = $this->convertArrayToSelectedValue($input, array('customerID','secondaryLogoCompanySystemID'));
         if (empty($customerInvoiceDirect)) {
-            return $this->sendError('e','Customer Invoice Direct not found');
+            return $this->sendError('Customer Invoice Direct not found',500);
+        }
+
+        /*financial Year check*/
+        $companyFinanceYearCheck=\Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYearCheck["success"]) {
+            return $this->sendError($companyFinanceYearCheck["message"], 500);
+        }
+        /*financial Period check*/
+        $companyFinancePeriodCheck=\Helper::companyFinancePeriodCheck($input);
+        if (!$companyFinancePeriodCheck["success"]) {
+            return $this->sendError($companyFinancePeriodCheck["message"], 500);
         }
 
         $_post['wanNO'] = $input['wanNO'];
@@ -299,6 +315,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post['servicePeriod'] = $input['servicePeriod'];
         $_post['comments'] = $input['comments'];
         $_post['customerID'] = $input['customerID'];
+
+
 
         if($input['secondaryLogoCompanySystemID'] !=$customerInvoiceDirect->secondaryLogoCompanySystemID ){
             if($input['secondaryLogoCompID'] !=''){
@@ -318,29 +336,36 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($input['customerID'] != $customerInvoiceDirect->customerID) {
 
-            if (!empty($detail)) {
-                return $this->sendError('e','Invoice details exist. You can not change the customer.');
+
+            if (count($detail) > 0) {
+                return $this->sendError('Invoice details exist. You can not change the customer.',500);
             }
         }
 
         $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
         $_post['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
 
+        if (($_post['bookingDate'] >= $input['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $input['FYPeriodDateTo'])) {
+
+        } else {
+            return $this->sendError('Document Date should be between financial period start date and end date.',500);
+
+        }
 
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
 
-                if (empty($detail)) {
-                    return $this->sendError('e','You can not confirm. Invoice Details not found.');
+                if (count($detail) >! 0) {
+                    return $this->sendError('You can not confirm. Invoice Details not found.',500);
                 } else {
 
 
-                    $employee=\Helper::getEmployeeInfo();
+                  /*  $employee=\Helper::getEmployeeInfo();
                     $input['createdPcID'] = getenv('COMPUTERNAME');
                     $input['confirmedByEmpID'] =  \Helper::getEmployeeID();
                     $input['confirmedByName'] = $employee->empName;
                     $input['confirmedDate'] = Carbon::now();
-                    $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+                    $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();*/
 
 
                    $groupby  = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
@@ -349,7 +374,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     if (count($groupby) != 0) {
 
                         if (count($groupby) > 1) {
-                            return $this->sendError('e','You can not continue . multiple service line exist in details.');
+                            return $this->sendError('You can not continue . multiple service line exist in details.',500);
                         }else{
                             $params = array('autoID' => $id,
                                 'company' => $customerInvoiceDirect->companySystemID,
@@ -358,24 +383,31 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                 'category' => '',
                                 'amount' => ''
                             );
-
+                            $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
                             $confirm = \Helper::confirmDocument($params);
                             if (!$confirm["success"]) {
+
                                 return $this->sendError($confirm["message"], 500);
+                            }else{
+                                return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
                             }
                         }
                     } else {
-                        return $this->sendError('e','No invoice details found.');
+                        return $this->sendError('No invoice details found.',500);
                     }
 
                 }
             }
+        }else{
+            $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
+
+            return $this->sendResponse($customerInvoiceDirect->toArray(), 'Invoice Updated Successfully ');
         }
 
 
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
 
-        return $this->sendResponse($customerInvoiceDirect->toArray(), 'CustomerInvoiceDirect updated successfully');
+
+
     }
 
     /**
@@ -728,7 +760,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $x = 0;
         if (!empty($updatedInvoiceNo)) {
             foreach ($updatedInvoiceNo as $updateInvoice) {
-                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL')->where('AccountCode', $updateInvoice->financeGLcode)->first();
+                $serviceLine = SegmentMaster::select('serviceLineSystemID')->where('ServiceLineCode',$updateInvoice->serviceLine)->first();
+                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
 
                 $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totAmount);
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
@@ -736,8 +769,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 $addToCusInvDetails[$x]['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
                 $addToCusInvDetails[$x]['companyID'] = $master->companyID;
+                $addToCusInvDetails[$x]['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
                 $addToCusInvDetails[$x]['serviceLineCode'] = $updateInvoice->serviceLine;
                 $addToCusInvDetails[$x]['customerID'] = $updateInvoice->customerID;
+                $addToCusInvDetails[$x]['glSystemID'] = $chartOfAccount->chartOfAccountSystemID;
                 $addToCusInvDetails[$x]['glCode'] = $updateInvoice->financeGLcode;
                 $addToCusInvDetails[$x]['glCodeDes'] = $chartOfAccount->AccountDescription;
                 $addToCusInvDetails[$x]['accountType'] = $chartOfAccount->catogaryBLorPL;
@@ -759,6 +794,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['performaMasterID'] = $performaMasterID;
                 $x++;
             }
+
+
 
             $invNo['invoiceSsytemCode'] = $custInvoiceDirectAutoID; /*update in custinvoice*/
             $performaStatus['performaStatus'] = 1; /*performa master update*/
@@ -806,7 +843,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 if (!empty($updatedInvoiceNo)) {
                     foreach ($updatedInvoiceNo as $peformaDet) {
-                        PerformaDetails::where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->where('idperformaDetails', $peformaDet->idperformaDetails)->update($invNo);
+                       PerformaDetails::where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->where('idperformaDetails', $peformaDet->idperformaDetails)->update($invNo);
                     }
                 }
                 $details = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as bookingAmountTrans"), DB::raw("SUM(localAmount) as bookingAmountLocal"), DB::raw("SUM(comRptAmount) as bookingAmountRpt"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first()->toArray();
@@ -818,7 +855,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return $this->sendResponse('s', 'successfully created');
             } catch (\Exception $exception) {
                 DB::rollback();
-                return $this->sendResponse('e', 'Error Occured');
+                return $this->sendResponse('e', 'Error Occured !');
             }
 
         }
@@ -930,8 +967,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             Taxdetail::create($_post);
             $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
 
-            $vatAmount['vatOutputGLCodeSystemID'] = $company->vatOutputGLCode;
-            $vatAmount['vatOutputGLCode'] = $company->vatOutputGLCodeSystemID;
+            $vatAmount['vatOutputGLCodeSystemID'] = $company->vatOutputGLCodeSystemID;
+            $vatAmount['vatOutputGLCode'] = $company->vatOutputGLCode;
             $vatAmount['VATPercentage'] = $percentage;
             $vatAmount['VATAmount'] = $_post['amount'];
             $vatAmount['VATAmountLocal'] = $_post["localAmount"];
@@ -980,6 +1017,28 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
+    }
+
+    public function printCustomerInvoice(Request $request){
+
+        $id = $request->get('id');
+        $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
+
+
+        if (empty($customerInvoice)) {
+            return $this->sendError('Customer Invoice not found.');
+        }
+
+        $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
+
+        $array = array('entity' => $customerInvoice);
+        $time = strtotime("now");
+        $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
+        $html = view('print.customer_invoice', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
 }

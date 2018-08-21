@@ -814,23 +814,54 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 20:
+                $docInforArr["tableName"] = 'erp_custinvoicedirect';
+                $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 24:
+                $docInforArr["tableName"] = 'erp_purchasereturnmaster';
+                $docInforArr["modelName"] = 'PurchaseReturn';
+                $docInforArr["primarykey"] = 'purhaseReturnAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
+
         //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
+
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
+
             if ($docApproved) {
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 //check document is already approved
                 $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
                     $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
+
                     if ($approvalLevel) {
+
                         // get current employee detail
                         $empInfo = self::getEmployeeInfo();
+
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
+
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
@@ -845,10 +876,58 @@ class Helper
                                 $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
                             }
 
+                            if ($input["documentSystemID"] == 61) { //create fixed asset
+                                $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
+                                $qtyRangeArr= [];
+                                if ($fixeAssetDetail) {
+                                    $lastSerialNumber = 1;
+                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID',$docApproved->companySystemID)->first();
+                                    if ($lastSerial) {
+                                        $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                                    }
+                                    foreach ($fixeAssetDetail as $val) {
+                                        if ($val["currentStockQty"]) {
+                                            $qtyRange = range(1, $val["currentStockQty"]);
+                                            if ($qtyRange) {
+                                                foreach($qtyRange as $qty){
+                                                    $documentCode = ($val["master"]["companyID"] .'\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                                                    $data["departmentID"] = 'AM';
+                                                    $data["departmentSystemID"] = null;
+                                                    $data["serviceLineSystemID"] =  $val["master"]["serviceLineSystemID"];
+                                                    $data["serviceLineCode"] = $val["master"]["serviceLineSystemID"];
+                                                    $data["docOriginSystemCode"] = $val["inventoryreclassificationID"];
+                                                    $data["docOrigin"] = $val["master"]["documentCode"];
+                                                    $data["docOriginDetailID"] = $val["inventoryReclassificationDetailID"];
+                                                    $data["companySystemID"] = $val["master"]["companySystemID"];
+                                                    $data["companyID"] = $val["master"]["companyID"];
+                                                    $data["documentSystemID"] = $val["master"]["documentSystemID"];
+                                                    $data["documentID"] = $val["master"]["documentID"];
+                                                    $data["serialNo"] = $lastSerialNumber;
+                                                    $data["itemCode"] = $val["itemSystemCode"];
+                                                    $data["faCode"] = $documentCode;
+                                                    $data["assetDescription"] = $val["itemDescription"];
+                                                    $data['createdPcID'] = gethostname();
+                                                    $data['createdUserID'] = \Helper::getEmployeeID();
+                                                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                                    $data["timestamp"] = date('Y-m-d H:i:s');
+                                                    $qtyRangeArr[] = $data;
+                                                    $lastSerialNumber++;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    $fixedAsset = Models\FixedAssetMaster::insert($qtyRangeArr);
+                                }
+                            }
+
                             // insert the record to item ledger
-                            $jobIL = ItemLedgerInsert::dispatch($masterData);
+
+                            if($input["documentSystemID"] != 20) {
+                                $jobIL = ItemLedgerInsert::dispatch($masterData);
+                            }
+
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10) {
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"]==20 ) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
@@ -926,8 +1005,11 @@ class Helper
                             }
 
                         } else {
+
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
+
+
                         }
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
@@ -1057,6 +1139,12 @@ class Helper
                     $docInforArr["tableName"] = 'erp_purchaserequest';
                     $docInforArr["modelName"] = 'PurchaseRequest';
                     $docInforArr["primarykey"] = 'purchaseRequestID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 20:
+                    $docInforArr["tableName"] = 'erp_custinvoicedirect';
+                    $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                    $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
             }

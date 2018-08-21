@@ -894,24 +894,24 @@ class ProcumentOrderAPIController extends AppBaseController
                 if (!$sendEmail["success"]) {
                     return $this->sendError($sendEmail["message"], 500);
                 }
+            }
 
-                //adding budget consume table
-                $idsDeleted = array();
-                if ($procumentOrder->approved == -1) {
+            //adding budget consume table
+            $idsDeleted = array();
+            if ($procumentOrder->approved == -1) {
 
-                    $budgetDetail = BudgetConsumedData::where('companySystemID', $procumentOrder->companySystemID)
-                        ->where('documentSystemCode', $procumentOrder->purchaseOrderID)
-                        ->where('documentSystemID', $procumentOrder->documentSystemID)
-                        ->get();
+                $budgetDetail = BudgetConsumedData::where('companySystemID', $procumentOrder->companySystemID)
+                    ->where('documentSystemCode', $procumentOrder->purchaseOrderID)
+                    ->where('documentSystemID', $procumentOrder->documentSystemID)
+                    ->get();
 
-                    if (!empty($budgetDetail)) {
-                        foreach ($budgetDetail as $bd) {
-                            array_push($idsDeleted, $bd->budgetConsumedDataAutoID);
-                        }
-                        BudgetConsumedData::destroy($idsDeleted);
+                if (!empty($budgetDetail)) {
+                    foreach ($budgetDetail as $bd) {
+                        array_push($idsDeleted, $bd->budgetConsumedDataAutoID);
                     }
-
+                    BudgetConsumedData::destroy($idsDeleted);
                 }
+
 
                 // insert the record to budget consumed data
                 $budgetConsumeData = array();
@@ -972,9 +972,9 @@ class ProcumentOrderAPIController extends AppBaseController
                         $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
                     }
                 }
-            }
+            }// closing budget consume if condition
 
-        }
+        }// closing amend if condition
 
 
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order updated successfully');

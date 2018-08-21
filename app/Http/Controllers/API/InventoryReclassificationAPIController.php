@@ -8,7 +8,8 @@
  * -- Create date : 10 - August 2018
  * -- Description : This file contains the all CRUD for Inventory Reclassification
  * -- REVISION HISTORY
- * -- Date: 14-March 2018 By: Description: Added new functions named as checkUser(),userCompanies()
+ * -- Date: 14-August 2018 By:Mubashir Description: Added new functions named as getAllInvReclassificationByCompany(),getInvReclassificationFormData(),getItemsOptionForReclassification()
+ * -- Date: 17-August 2018 By:Mubashir Description: Added new functions named as getInvReclassificationAudit(),getInvReclassificationApprovalByUser(),getInvReclassificationApprovedByUser()
  */
 
 namespace App\Http\Controllers\API;
