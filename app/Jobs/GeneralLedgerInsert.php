@@ -623,6 +623,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 array_push($finalData, $data);
                             }
                         }
+                        break;
                     case 20:
                         /*customerInvoice*/
                         $masterData = CustomerInvoiceDirect::find($masterModel["autoID"]);
