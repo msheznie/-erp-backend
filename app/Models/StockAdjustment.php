@@ -204,7 +204,8 @@ class StockAdjustment extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
-        'timestamp'
+        'timestamp',
+        'RollLevForApp_curr'
     ];
 
     /**
@@ -238,7 +239,8 @@ class StockAdjustment extends Model
         'createdUserID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'RollLevForApp_curr' => 'integer'
     ];
 
     /**
@@ -250,5 +252,52 @@ class StockAdjustment extends Model
         
     ];
 
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+
+    public function segment_by()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function warehouse_by()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','location','wareHouseSystemCode');
+    }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\StockAdjustmentDetails','stockAdjustmentAutoID','stockAdjustmentAutoID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','stockAdjustmentAutoID');
+    }
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
+    public function finance_period_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function finance_year_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
     
 }
