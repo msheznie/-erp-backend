@@ -167,6 +167,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['companySystemID'] = $input['companyID'];
         $input['companyID'] = $company['CompanyID'];
         $input['customerGLCode'] = $customer->custGLaccount;
+        $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
         $input['documentType'] = 11;
         $input['createdUserID'] = \Helper::getEmployeeID();
         $input['createdPcID'] = getenv('COMPUTERNAME');
@@ -336,7 +337,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($input['customerID'] != $customerInvoiceDirect->customerID) {
 
 
-            if (count($detail) >! 0) {
+            if (count($detail) > 0) {
                 return $this->sendError('Invoice details exist. You can not change the customer.',500);
             }
         }
@@ -1016,6 +1017,28 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
+    }
+
+    public function printCustomerInvoice(Request $request){
+
+        $id = $request->get('id');
+        $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
+
+
+        if (empty($customerInvoice)) {
+            return $this->sendError('Customer Invoice not found.');
+        }
+
+        $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
+
+        $array = array('entity' => $customerInvoice);
+        $time = strtotime("now");
+        $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
+        $html = view('print.customer_invoice', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
 }

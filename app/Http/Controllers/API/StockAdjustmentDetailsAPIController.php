@@ -8,13 +8,21 @@
  * -- Create date : 20 - August 2018
  * -- Description : This file contains the all CRUD for Stock Adjustment Details
  * -- REVISION HISTORY
- * -- Date: 20 - August 2018 By: Fayas Description: Added new functions named as
+ * -- Date: 21 - August 2018 By: Fayas Description: Added new functions named as getItemsByStockAdjustment(),getItemsOptionsStockAdjustment()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateStockAdjustmentDetailsAPIRequest;
 use App\Http\Requests\API\UpdateStockAdjustmentDetailsAPIRequest;
+use App\Models\Company;
+use App\Models\CompanyPolicyMaster;
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\ItemAssigned;
+use App\Models\SegmentMaster;
+use App\Models\StockAdjustment;
 use App\Models\StockAdjustmentDetails;
+use App\Models\Unit;
+use App\Models\WarehouseMaster;
 use App\Repositories\StockAdjustmentDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -26,7 +34,6 @@ use Response;
  * Class StockAdjustmentDetailsController
  * @package App\Http\Controllers\API
  */
-
 class StockAdjustmentDetailsAPIController extends AppBaseController
 {
     /** @var  StockAdjustmentDetailsRepository */
@@ -119,6 +126,202 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
     public function store(CreateStockAdjustmentDetailsAPIRequest $request)
     {
         $input = $request->all();
+
+        $input = $this->convertArrayToValue($input);
+
+        $companySystemID = $input['companySystemID'];
+
+        $stockAdjustment = StockAdjustment::where('stockAdjustmentAutoID', $input['stockAdjustmentAutoID'])->first();
+
+        if (empty($stockAdjustment)) {
+            return $this->sendError('Stock Adjustment not found', 500);
+        }
+
+        if ($stockAdjustment->location) {
+            $wareHouse = WarehouseMaster::where("wareHouseSystemCode", $stockAdjustment->location)->first();
+            if (empty($wareHouse)) {
+                return $this->sendError('Location not found', 500);
+            }
+            if ($wareHouse->isActive == 0) {
+                return $this->sendError('Please select a active location.', 500);
+            }
+        } else {
+            return $this->sendError('Please select a location.', 500);
+        }
+
+        if ($stockAdjustment->serviceLineSystemID) {
+            $checkDepartmentActive = SegmentMaster::find($stockAdjustment->serviceLineSystemID);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Service Line not found');
+            }
+            if ($checkDepartmentActive->isActive == 0) {
+                return $this->sendError('Please select a active service line', 500);
+            }
+        } else {
+            return $this->sendError('Please select a service line.', 500);
+        }
+
+         $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
+                                    ->where('companySystemID', $companySystemID)
+                                    ->first();
+
+        if (empty($item)) {
+            return $this->sendError('Item not found');
+        }
+
+
+        $input['stockAdjustmentAutoIDCode'] = $stockAdjustment->stockAdjustmentCode;
+        $input['comments'] = null;
+        $input['noQty'] = 0;
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
+
+        //$input['localCurrencyID'] = $company->localCurrencyID;
+       // $input['reportingCurrencyID'] = $company->reportingCurrency;
+
+        $input['itemCodeSystem'] = $item->itemCodeSystem;
+        $input['itemPrimaryCode'] = $item->itemPrimaryCode;
+        $input['itemDescription'] = $item->itemDescription;
+        $input['itemUnitOfMeasure'] = $item->itemUnitOfMeasure;
+        $input['partNumber'] = $item->secondaryItemCode;
+        $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
+        $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
+
+       /* if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
+            return $this->sendError("Cost is 0. You cannot issue.", 500);
+        }
+
+        if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
+            return $this->sendError("Cost is negative. You cannot issue.", 500);
+        }*/
+
+        // check policy 18
+
+        $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
+                                                    ->where('companySystemID', $companySystemID)
+                                                    ->first();
+
+        $checkWhether = StockAdjustment::where('stockAdjustmentAutoID', '!=', $stockAdjustment->stockAdjustmentAutoID)
+                                        ->where('companySystemID', $companySystemID)
+                                        ->where('location', $stockAdjustment->location)
+                                        ->select([
+                                            'stockAdjustmentAutoID',
+                                            'companySystemID',
+                                            'location',
+                                            'stockAdjustmentCode',
+                                            'approved'
+                                        ])
+                                        ->groupBy(
+                                            'stockAdjustmentAutoID',
+                                            'companySystemID',
+                                            'location',
+                                            'stockAdjustmentCode',
+                                            'approved'
+                                        )
+                                        ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                                            $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                                        })
+                                        ->where('approved', 0)
+                                        ->first();
+        /* approved=0*/
+
+        if (!empty($checkWhether)) {
+            return $this->sendError("There is a Stock Adjustment (" . $checkWhether->stockAdjustmentCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        /*$checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
+            ->where('locationFrom', $stockAdjustment->wareHouseFrom)
+            ->select([
+                'erp_stocktransfer.stockTransferAutoID',
+                'erp_stocktransfer.companySystemID',
+                'erp_stocktransfer.locationFrom',
+                'erp_stocktransfer.stockTransferCode',
+                'erp_stocktransfer.approved'
+            ])
+            ->groupBy(
+                'erp_stocktransfer.stockTransferAutoID',
+                'erp_stocktransfer.companySystemID',
+                'erp_stocktransfer.locationFrom',
+                'erp_stocktransfer.stockTransferCode',
+                'erp_stocktransfer.approved'
+            )
+            ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+            })
+            ->where('approved', 0)
+            ->first();*/
+        /* approved=0*/
+
+        /*if (!empty($checkWhetherStockTransfer)) {
+            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }*/
+
+        $data = array('companySystemID' => $companySystemID,
+            'itemCodeSystem' => $input['itemCodeSystem'],
+            'wareHouseId' => $stockAdjustment->location);
+
+        $input['currentWacLocalCurrencyID'] = $item->wacValueLocalCurrencyID;
+        $input['currentWacRptCurrencyID']   = $item->wacValueReportingCurrencyID;
+
+        $itemCurrentCostAndQty     = \Inventory::itemCurrentCostAndQty($data);
+        $input['currenctStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+
+        $input['wacAdjRpt']        = $itemCurrentCostAndQty['wacValueReporting'];
+        $input['currentWacRpt']    = $itemCurrentCostAndQty['wacValueReporting'];
+
+        $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companyFromSystemID, $item->wacValueReportingCurrencyID, $item->wacValueReportingCurrencyID, $itemCurrentCostAndQty['wacValueReporting']);
+
+        $input['currentWaclocal']  =  $companyCurrencyConversion['localAmount'];
+        $input['wacAdjLocal']      =  $companyCurrencyConversion['localAmount'];
+
+        //$input['currentWaclocal']  = $itemCurrentCostAndQty['wacValueLocal'];
+        //$input['wacAdjLocal']      =  $itemCurrentCostAndQty['wacValueLocal'];
+
+        $input['wacAdjRptER']      = 1;
+        $input['wacAdjLocalER']    = $companyCurrencyConversion['trasToLocER'];
+
+       /* if ($input['currentWareHouseStockQty'] <= 0) {
+            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+        }
+
+        if ($input['currentStockQty'] <= 0) {
+            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+        }*/
+
+        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
+                                                                            ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
+                                                                            ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
+                                                                            ->first();
+
+        if (!empty($financeItemCategorySubAssigned)) {
+            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+        } else {
+            return $this->sendError("Account code not updated.", 500);
+        }
+
+        if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
+            return $this->sendError("Account code not updated.", 500);
+        }
+
+        if ($input['itemFinanceCategoryID'] == 1) {
+            $alreadyAdded = StockAdjustment::where('stockAdjustmentAutoID', $input['stockAdjustmentAutoID'])
+                ->whereHas('details', function ($query) use ($input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->first();
+
+            if ($alreadyAdded) {
+                return $this->sendError("Selected item is already added. Please check again", 500);
+            }
+        }
 
         $stockAdjustmentDetails = $this->stockAdjustmentDetailsRepository->create($input);
 
@@ -224,7 +427,8 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
     public function update($id, UpdateStockAdjustmentDetailsAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = array_except($input, ['uom', 'local_currency', 'rpt_currency']);
+        $input = $this->convertArrayToValue($input);
         /** @var StockAdjustmentDetails $stockAdjustmentDetails */
         $stockAdjustmentDetails = $this->stockAdjustmentDetailsRepository->findWithoutFail($id);
 
@@ -287,5 +491,53 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         $stockAdjustmentDetails->delete();
 
         return $this->sendResponse($id, 'Stock Adjustment Details deleted successfully');
+    }
+
+    /**
+     * get Items By Stock Adjustment
+     * GET|HEAD /getItemsByStockAdjustment
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getItemsByStockAdjustment(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['stockAdjustmentAutoID'];
+
+        $items = StockAdjustmentDetails::where('stockAdjustmentAutoID', $id)
+            ->with(['uom', 'local_currency', 'rpt_currency'])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
+    }
+
+    /**
+     * get Items Options Stock Adjustment
+     * GET|HEAD /getItemsOptionsStockAdjustment
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getItemsOptionsStockAdjustment(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $input['companyId'];
+
+        $items = ItemAssigned::where('companySystemID', $companyId)
+            ->where('financeCategoryMaster', 1)
+            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'secondaryItemCode']);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 }

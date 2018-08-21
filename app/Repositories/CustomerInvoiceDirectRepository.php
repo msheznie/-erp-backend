@@ -113,4 +113,23 @@ class CustomerInvoiceDirectRepository extends BaseRepository
     {
         return CustomerInvoiceDirect::class;
     }
+
+    function getAudit($id)
+    {
+        $customerInvoiceDirect = $this->with(['company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'approved_by' => function ($query) {
+            $query->with('employee.details.designation')
+                ->where('documentSystemID', 20);
+        }, 'invoicedetails'
+        => function ($query) {
+                $query->with(['unit', 'department', 'performadetails' => function ($query) {
+                    $query->with(['freebillingmaster' => function ($query) {
+                        $query->with(['ticketmaster' => function ($query) {
+                            $query->with(['field']);
+                        }]);
+                    }]);
+                }]);
+            }
+        ])->findWithoutFail($id);
+        return $customerInvoiceDirect;
+    }
 }

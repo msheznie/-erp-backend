@@ -8,7 +8,8 @@
  * -- Create date : 20 - August 2018
  * -- Description : This file contains the all CRUD for Stock Adjustment
  * -- REVISION HISTORY
- * -- Date: 21 - August 2018 By: Fayas Description: Added new functions named as getAllStockAdjustmentsByCompany(),getStockAdjustmentFormData()
+ * -- Date: 21 - August 2018 By: Fayas Description: Added new functions named as getAllStockAdjustmentsByCompany(),getStockAdjustmentFormData(),
+ *                        getStockAdjustmentAudit()
  */
 namespace App\Http\Controllers\API;
 
@@ -269,7 +270,11 @@ class StockAdjustmentAPIController extends AppBaseController
     public function show($id)
     {
         /** @var StockAdjustment $stockAdjustment */
-        $stockAdjustment = $this->stockAdjustmentRepository->findWithoutFail($id);
+        $stockAdjustment = $this->stockAdjustmentRepository->with(['confirmed_by', 'created_by', 'finance_period_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'finance_year_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($stockAdjustment)) {
             return $this->sendError('Stock Adjustment not found');
@@ -327,6 +332,13 @@ class StockAdjustmentAPIController extends AppBaseController
     public function update($id, UpdateStockAdjustmentAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by',
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
+
+        $input = $this->convertArrayToValue($input);
+        $wareHouseError = array('type' => 'wareHouse');
+        $serviceLineError = array('type' => 'serviceLine');
+
 
         /** @var StockAdjustment $stockAdjustment */
         $stockAdjustment = $this->stockAdjustmentRepository->findWithoutFail($id);
@@ -334,6 +346,42 @@ class StockAdjustmentAPIController extends AppBaseController
         if (empty($stockAdjustment)) {
             return $this->sendError('Stock Adjustment not found');
         }
+
+        if ($input['serviceLineSystemID']) {
+            $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Service Line not found');
+            }
+
+            if ($checkDepartmentActive->isActive == 0) {
+                $this->stockAdjustmentRepository->update(["serviceLineSystemID" => null,"serviceLineCode" => null],$id);
+                return $this->sendError('Please select a active service line', 500,$serviceLineError);
+            }
+        }
+
+        if ($input['location']) {
+            $checkWareHouseActive = WarehouseMaster::find($input['location']);
+            if (empty($checkWareHouseActive)) {
+                return $this->sendError('Location not found', 500, $wareHouseError);
+            }
+
+            if ($checkWareHouseActive->isActive == 0) {
+                $this->stockAdjustmentRepository->update(["location" => null],$id);
+                return $this->sendError('Please select a active location', 500, $wareHouseError);
+            }
+        }
+
+        if (isset($input['stockAdjustmentDate'])) {
+            if ($input['stockAdjustmentDate']) {
+                $input['stockAdjustmentDate'] = new Carbon($input['stockAdjustmentDate']);
+            }
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
         $stockAdjustment = $this->stockAdjustmentRepository->update($input, $id);
 
@@ -581,4 +629,27 @@ class StockAdjustmentAPIController extends AppBaseController
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
+
+    /**
+     * Display the specified Stock Adjustment Audit.
+     * GET|HEAD /getStockAdjustmentAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getStockAdjustmentAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $stockAdjustment = $this->stockAdjustmentRepository->getAudit($id);
+
+        if (empty($stockAdjustment)) {
+            return $this->sendError('Stock Adjustment not found');
+        }
+
+        $stockAdjustment->docRefNo = \Helper::getCompanyDocRefNo($stockAdjustment->companySystemID, $stockAdjustment->documentSystemID);
+
+        return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment retrieved successfully');
+    }
+
 }
