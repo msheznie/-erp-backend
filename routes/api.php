@@ -707,6 +707,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
     Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
 
+    Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany');
+    Route::get('getStockAdjustmentFormData', 'StockAdjustmentAPIController@getStockAdjustmentFormData');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
