@@ -1,9 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
-use App\Models\Employee;
-
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -708,6 +704,12 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails');
 
+    Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
+    Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
+
+    Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany');
+    Route::get('getStockAdjustmentFormData', 'StockAdjustmentAPIController@getStockAdjustmentFormData');
+    Route::get('getItemsByStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsByStockAdjustment');
 
 });
 
@@ -730,6 +732,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
+
     $master = ['documentSystemID' => 20,'autoID' => 46836, 'companySystemID' => 52, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
@@ -752,3 +755,5 @@ Route::get('runQueueSR', function () {
 
 
 Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+
+

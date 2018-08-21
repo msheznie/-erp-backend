@@ -1256,6 +1256,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data[$x]['End Date'] = \Helper::dateFormat($val->serviceEndDate);
                         $data[$x]['Invoice Number'] = $val->invoiceNumber;
                         $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
+                        $data[$x]['Type'] = $val->invoiceType;
                         $data[$x]['Narration'] = $val->documentNarration;
                         $data[$x]['Currency'] = $val->documentCurrency;
                         $data[$x]['Invoice Amount'] = $val->invoiceAmount;
@@ -4179,7 +4180,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 MainQuery.documentNarration,
                 InvoiceFromBRVAndMatching.ReceiptCode,
                 InvoiceFromBRVAndMatching.ReceiptDate,
-            ' . $balanceAmountQry . ',
+                ' . $balanceAmountQry . ',
                 ' . $receiptAmountQry . ',
                 ' . $invoiceAmountQry . ',
                 ' . $currencyQry . ',
@@ -4195,7 +4196,8 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 MainQuery.serviceEndDate,
                 MainQuery.wanNO,
                 MainQuery.invoiceNumber,
-                MainQuery.invoiceDate
+                MainQuery.invoiceDate,
+                MainQuery.invoiceType
             FROM
                 (
             SELECT
@@ -4237,7 +4239,8 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                 erp_custinvoicedirect.wanNO,
                 customermaster.CutomerCode,
                 customermaster.CustomerName,
-                CONCAT( customermaster.CutomerCode, " - ", customermaster.CustomerName ) AS concatCustomerName 
+                CONCAT( customermaster.CutomerCode, " - ", customermaster.CustomerName ) AS concatCustomerName,
+                 IF(erp_custinvoicedirect.isPerforma = 0,"PROFORMA","DIRECT") AS invoiceType
             FROM
                 erp_generalledger
                 INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
