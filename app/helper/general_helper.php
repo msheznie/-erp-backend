@@ -814,35 +814,52 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 20:
+                $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_custinvoicedirect';
+                $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                break;
             case 24:
+                $docInforArr["documentCodeColumnName"] = 'purchaseReturnCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
                 $docInforArr["tableName"] = 'erp_purchasereturnmaster';
                 $docInforArr["modelName"] = 'PurchaseReturn';
                 $docInforArr["primarykey"] = 'purhaseReturnAutoID';
-                $docInforArr["approvedColumnName"] = 'approved';
-                $docInforArr["approvedBy"] = 'approvedByUserID';
-                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
-                $docInforArr["approvedDate"] = 'approvedDate';
-                $docInforArr["approveValue"] = -1;
-                $docInforArr["confirmedYN"] = "confirmedYN";
-                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
+
         //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
+
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
+
             if ($docApproved) {
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 //check document is already approved
                 $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
                     $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
+
                     if ($approvalLevel) {
+
                         // get current employee detail
                         $empInfo = self::getEmployeeInfo();
+
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
+
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
@@ -902,9 +919,12 @@ class Helper
                             }
 
                             // insert the record to item ledger
-                            $jobIL = ItemLedgerInsert::dispatch($masterData);
+                            if($input["documentSystemID"] != 20) {
+                                $jobIL = ItemLedgerInsert::dispatch($masterData);
+                            }
+
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10) {
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"]==20 ) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
@@ -982,6 +1002,7 @@ class Helper
                             }
 
                         } else {
+
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
 
