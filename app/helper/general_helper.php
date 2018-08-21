@@ -815,15 +815,18 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
             case 20:
-                $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
-                $docInforArr["confirmColumnName"] = 'confirmedYN';
-                $docInforArr["confirmedBy"] = 'confirmedByName';
-                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
-                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
-                $docInforArr["confirmedDate"] = 'confirmedDate';
+
                 $docInforArr["tableName"] = 'erp_custinvoicedirect';
                 $docInforArr["modelName"] = 'CustomerInvoiceDirect';
                 $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+
                 break;
             case 24:
                 $docInforArr["documentCodeColumnName"] = 'purchaseReturnCode';
@@ -919,6 +922,7 @@ class Helper
                             }
 
                             // insert the record to item ledger
+
                             if($input["documentSystemID"] != 20) {
                                 $jobIL = ItemLedgerInsert::dispatch($masterData);
                             }
@@ -1136,6 +1140,12 @@ class Helper
                     $docInforArr["tableName"] = 'erp_purchaserequest';
                     $docInforArr["modelName"] = 'PurchaseRequest';
                     $docInforArr["primarykey"] = 'purchaseRequestID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 20:
+                    $docInforArr["tableName"] = 'erp_custinvoicedirect';
+                    $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                    $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
             }

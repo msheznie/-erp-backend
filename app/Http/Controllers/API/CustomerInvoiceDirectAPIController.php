@@ -336,7 +336,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($input['customerID'] != $customerInvoiceDirect->customerID) {
 
 
-            if (count($detail) >! 0) {
+            if (count($detail) > 0) {
                 return $this->sendError('Invoice details exist. You can not change the customer.',500);
             }
         }
