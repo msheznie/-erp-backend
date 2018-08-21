@@ -541,7 +541,6 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
             $item->issueUnits = $issueUnits;
 
-
             if($item['itemCodeSystem']){
                 $itemIssues = ItemIssueMaster::whereHas('details',function ($q) use($item){
                                                      $q->where('itemCodeSystem',$item['itemCodeSystem']);

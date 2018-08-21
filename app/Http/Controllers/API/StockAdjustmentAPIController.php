@@ -8,7 +8,8 @@
  * -- Create date : 20 - August 2018
  * -- Description : This file contains the all CRUD for Stock Adjustment
  * -- REVISION HISTORY
- * -- Date: 21 - August 2018 By: Fayas Description: Added new functions named as getAllStockAdjustmentsByCompany(),getStockAdjustmentFormData()
+ * -- Date: 21 - August 2018 By: Fayas Description: Added new functions named as getAllStockAdjustmentsByCompany(),getStockAdjustmentFormData(),
+ *                        getStockAdjustmentAudit()
  */
 namespace App\Http\Controllers\API;
 
@@ -628,4 +629,27 @@ class StockAdjustmentAPIController extends AppBaseController
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
+
+    /**
+     * Display the specified Stock Adjustment Audit.
+     * GET|HEAD /getStockAdjustmentAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getStockAdjustmentAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $stockAdjustment = $this->stockAdjustmentRepository->getAudit($id);
+
+        if (empty($stockAdjustment)) {
+            return $this->sendError('Stock Adjustment not found');
+        }
+
+        $stockAdjustment->docRefNo = \Helper::getCompanyDocRefNo($stockAdjustment->companySystemID, $stockAdjustment->documentSystemID);
+
+        return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment retrieved successfully');
+    }
+
 }
