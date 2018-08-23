@@ -949,17 +949,18 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
                         break;
                     case 15: // DN - Debit Note
-                        $masterData = DebitNote::with(['details' => function ($query) {
+                        $masterData = DebitNote::with(['detail' => function ($query) {
                             $query->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(debitAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,debitAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,debitAmountCurrencyER as transCurrencyER,debitNoteAutoID");
                         }])->find($masterModel["autoID"]);
 
                         //get pnl account
-                        $pl = DebitNoteDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(debitAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,debitAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,debitAmountCurrencyER as transCurrencyER")->WHERE('debitNoteAutoID', $masterModel["autoID"])->whereNotNull('chartOfAccountSystemID')->groupBy('chartOfAccountSystemID')->get();
+                        $pl = DebitNoteDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(debitAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,debitAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,debitAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")->WHERE('debitNoteAutoID', $masterModel["autoID"])->whereNotNull('chartOfAccountSystemID')->groupBy('chartOfAccountSystemID')->get();
+
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
-                            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
-                            $data['serviceLineCode'] = $masterData->serviceLineCode;
+                            $data['serviceLineSystemID'] = null;
+                            $data['serviceLineCode'] = null;
                             $data['masterCompanyID'] = null;
                             $data['documentSystemID'] = $masterData->documentSystemID;
                             $data['documentID'] = $masterData->documentID;
@@ -983,18 +984,19 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['glAccountType'] = 'BS';
 
                             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
-                            $data['documentTransCurrencyER'] = $masterData->supplierTransactionER;
-                            $data['documentTransAmount'] = \Helper::roundValue($masterData->details[0]->transAmount);
+                            $data['documentTransCurrencyER'] = $masterData->supplierTransactionCurrencyER;
+                            $data['documentTransAmount'] = \Helper::roundValue($masterData->detail[0]->transAmount);
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($masterData->details[0]->localAmount);
+                            $data['documentLocalAmount'] = \Helper::roundValue($masterData->detail[0]->localAmount);
                             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-                            $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptAmount);
+                            $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount);
 
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = null;
                             $data['nonHoldingPercentage'] = null;
+                            $data['documentType'] = $masterData->documentType;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -1004,6 +1006,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($pl) {
                                 foreach ($pl as $val) {
+                                    $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $val->serviceLineCode;
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
                                     $data['glCode'] = $val->financeGLcodePL;
                                     $data['glAccountType'] = 'PL';
@@ -1028,14 +1032,14 @@ class GeneralLedgerInsert implements ShouldQueue
                         }])->find($masterModel["autoID"]);
 
                         //get pnl account
-                        $pl = CreditNoteDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(creditAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,creditAmountCurrencyER as transCurrencyER")->WHERE('creditNoteAutoID', $masterModel["autoID"])->whereNotNull('chartOfAccountSystemID')->groupBy('chartOfAccountSystemID')->get();
+                        $pl = CreditNoteDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(creditAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,creditAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")->WHERE('creditNoteAutoID', $masterModel["autoID"])->whereNotNull('chartOfAccountSystemID')->groupBy('chartOfAccountSystemID')->get();
 
 
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
-                            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
-                            $data['serviceLineCode'] = $masterData->serviceLineCode;
+                            $data['serviceLineSystemID'] = null;
+                            $data['serviceLineCode'] = null;
                             $data['masterCompanyID'] = null;
                             $data['documentSystemID'] = $masterData->documentSystemiD;
                             $data['documentID'] = $masterData->documentID;
@@ -1071,6 +1075,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = null;
                             $data['nonHoldingPercentage'] = null;
+                            $data['documentType'] = $masterData->documentType;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -1080,6 +1085,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             array_push($finalData, $data);
                             if ($pl) {
                                 foreach ($pl as $val) {
+                                    $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $val->serviceLineCode;
                                     $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
                                     $data['glCode'] = $val->financeGLcodePL;
                                     $data['glAccountType'] = 'PL';
