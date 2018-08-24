@@ -850,7 +850,7 @@ class Helper
             if ($docApproved) {
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
-                if(!$isConfirmed->confirmedYN){ // check document is confirmed or not
+                if(!$isConfirmed->$docInforArr["confirmedYN"]){ // check document is confirmed or not
                     return ['success' => false, 'message' => 'Document is not confirmed'];
                 }
                 //check document is already approved
