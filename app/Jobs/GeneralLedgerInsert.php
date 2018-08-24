@@ -658,7 +658,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         $data['documentSystemID'] = $masterData->documentSystemiD;
                         $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
                         $data['documentCode'] = $masterData->bookingInvCode;
-                        $data['documentDate'] = $masterData->bookingDate;
+                        $data['documentDate'] = ($masterData->isPerforma==1)?$time:$masterData->bookingDate;
                         $data['documentYear'] = $date->year;
                         $data['documentMonth'] = $date->month;
                         $data['invoiceNumber'] = $masterData->customerInvoiceNo;
@@ -669,7 +669,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         // from customer invoice master table
                         $data['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
-                        $data['glCode'] = $chartOfAccount->chartOfAccountSystemID;
+                        $data['glCode'] = $chartOfAccount->AccountCode;
                         $data['glAccountType'] = $chartOfAccount->catogaryBLorPL;
                         $data['documentConfirmedDate'] = $masterData->confirmedDate;
                         $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
@@ -715,7 +715,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentSystemID'] = $masterData->documentSystemiD;
                                 $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
                                 $data['documentCode'] = $masterData->bookingInvCode;
-                                $data['documentDate'] = $masterData->bookingDate;
+                                $data['documentDate'] = ($masterData->isPerforma==1)?$time:$masterData->bookingDate;
                                 $data['documentYear'] = $date->year;
                                 $data['documentMonth'] = $date->month;
                                 $data['invoiceNumber'] = $masterData->customerInvoiceNo;
@@ -764,7 +764,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentSystemID'] = $masterData->documentSystemiD;
                                 $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
                                 $data['documentCode'] = $masterData->bookingInvCode;
-                                $data['documentDate'] = $masterData->bookingDate;
+                                $data['documentDate'] = ($masterData->isPerforma==1)?$time:$masterData->bookingDate;
                                 $data['documentYear'] = $date->year;
                                 $data['documentMonth'] = $date->month;
                                 $data['invoiceNumber'] = $masterData->customerInvoiceNo;

@@ -2633,3 +2633,499 @@ esbot\\carbon\\src\\Carbon\\Carbon.php:909)
 )  
 [2018-08-23 16:16:58] local.INFO: Successfully inserted to GL table 16:16:58  
 >>>>>>> 5aa1c39c66e6dd1238c2715c7c35af04a4eec702
+[2018-08-24 09:30:09] local.ERROR: Trying to get property 'userGroupID' of non-object {"userId":2668,"email":"shahmee@gears-int.com","exception":"[object] (ErrorException(code: 0): Trying to get property 'userGroupID' of non-object at D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\UserGroupAssignAPIController.php:197)
+[stacktrace]
+#0 D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\UserGroupAssignAPIController.php(197): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleError(8, 'Trying to get p...', 'D:\\\\gears\\\\Gears_...', 197, Array)
+#1 [internal function]: App\\Http\\Controllers\\API\\UserGroupAssignAPIController->checkUserGroupAccessRights(Object(Illuminate\\Http\\Request))
+#2 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
+#3 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('checkUserGroupA...', Array)
+#4 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\UserGroupAssignAPIController), 'checkUserGroupA...')
+#5 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
+#6 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
+#7 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#8 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#9 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
+#10 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#11 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#12 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#13 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#14 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#15 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#16 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#17 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#18 D:\\gears\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#19 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#20 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#21 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#22 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#23 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#25 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#28 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#31 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#33 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#34 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#35 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#36 D:\\gears\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#37 D:\\gears\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears\\\\Gears_...')
+#38 {main}
+"} 
+[2018-08-24 09:52:34] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 52,
+    'companyID' => 'SGEE',
+    'masterCompanyID' => 'GE',
+    'documentID' => 'INV',
+    'documentSystemID' => 20,
+    'documentSystemCode' => 54016,
+    'documentCode' => 'SGEE\\2018\\INV006051',
+    'documentDate' => '2018-03-14 00:00:00',
+    'documentYear' => 2018,
+    'documentMonth' => 3,
+    'invoiceNumber' => 'SGEE/DES/72014-PRO353',
+    'invoiceDate' => '2018-03-14 00:00:00',
+    'serviceLineSystemID' => 4,
+    'serviceLineCode' => 'DES',
+    'chartOfAccountSystemID' => 610,
+    'glCode' => 610,
+    'glAccountType' => 'BS',
+    'documentConfirmedDate' => '2018-08-24 09:50:31',
+    'documentConfirmedBy' => '4444',
+    'documentConfirmedByEmpSystemID' => 2665,
+    'documentFinalApprovedDate' => '2018-08-24 09:52:33',
+    'documentFinalApprovedBy' => 4444,
+    'documentFinalApprovedByEmpSystemID' => 2665,
+    'documentNarration' => 'asdasdas',
+    'clientContractID' => 'C310587',
+    'contractUID' => 32,
+    'supplierCodeSystem' => 79,
+    'documentTransCurrencyID' => 2,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => 46256.48999999997,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 2.5974026,
+    'documentLocalAmount' => 17808.748632239272,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1.0,
+    'documentRptAmount' => 46256.48999999997,
+    'documentType' => 11,
+    'createdUserSystemID' => 2665,
+    'createdDateTime' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 09:52:34.031359',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+    'createdUserID' => '4444',
+    'createdUserPC' => 'DESKTOP-J5G2HAA',
+    'timestamp' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 09:52:34.031359',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+  ),
+  1 => 
+  array (
+    'companySystemID' => 52,
+    'companyID' => 'SGEE',
+    'masterCompanyID' => 'GE',
+    'documentID' => 'INV',
+    'documentSystemID' => 20,
+    'documentSystemCode' => 54016,
+    'documentCode' => 'SGEE\\2018\\INV006051',
+    'documentDate' => '2018-03-14 00:00:00',
+    'documentYear' => 2018,
+    'documentMonth' => 3,
+    'invoiceNumber' => 'SGEE/DES/72014-PRO353',
+    'invoiceDate' => '2018-03-14 00:00:00',
+    'serviceLineSystemID' => 4,
+    'serviceLineCode' => 'DES',
+    'chartOfAccountSystemID' => 553,
+    'glCode' => '90006',
+    'glAccountType' => 'PL',
+    'documentConfirmedDate' => '2018-08-24 09:50:31',
+    'documentConfirmedBy' => '4444',
+    'documentConfirmedByEmpSystemID' => 2665,
+    'documentFinalApprovedDate' => '2018-08-24 09:52:33',
+    'documentFinalApprovedBy' => 4444,
+    'documentFinalApprovedByEmpSystemID' => 2665,
+    'documentNarration' => 'Equipment Rental',
+    'clientContractID' => 'C310587',
+    'contractUID' => 32,
+    'supplierCodeSystem' => 79,
+    'documentTransCurrencyID' => 2,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => -44053.79999999997,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 2.5974026,
+    'documentLocalAmount' => -16960.712983039273,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1.0,
+    'documentRptAmount' => -44053.79999999997,
+    'documentType' => 11,
+    'createdUserSystemID' => 2665,
+    'createdDateTime' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 09:52:34.031359',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+    'createdUserID' => '4444',
+    'createdUserPC' => 'DESKTOP-J5G2HAA',
+    'timestamp' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 09:52:34.031359',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+  ),
+  2 => 
+  array (
+    'companySystemID' => 52,
+    'companyID' => 'SGEE',
+    'masterCompanyID' => 'GE',
+    'documentID' => 'INV',
+    'documentSystemID' => 20,
+    'documentSystemCode' => 54016,
+    'documentCode' => 'SGEE\\2018\\INV006051',
+    'documentDate' => '2018-03-14 00:00:00',
+    'documentYear' => 2018,
+    'documentMonth' => 3,
+    'invoiceNumber' => 'SGEE/DES/72014-PRO353',
+    'invoiceDate' => '2018-03-14 00:00:00',
+    'serviceLineSystemID' => 4,
+    'serviceLineCode' => 'DES',
+    'chartOfAccountSystemID' => 874,
+    'glCode' => '46024',
+    'glAccountType' => 'BS',
+    'documentConfirmedDate' => '2018-08-24 09:50:31',
+    'documentConfirmedBy' => '4444',
+    'documentConfirmedByEmpSystemID' => 2665,
+    'documentFinalApprovedDate' => '2018-08-24 09:52:33',
+    'documentFinalApprovedBy' => 4444,
+    'documentFinalApprovedByEmpSystemID' => 2665,
+    'documentNarration' => 'Tax 5%',
+    'clientContractID' => 'C310587',
+    'contractUID' => 32,
+    'supplierCodeSystem' => 79,
+    'documentTransCurrencyID' => 2,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => -2202.69,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 2.5974026,
+    'documentLocalAmount' => -848.0356492,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1.0,
+    'documentRptAmount' => -2202.69,
+    'documentType' => 11,
+    'createdUserSystemID' => 2665,
+    'createdDateTime' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 09:52:34.031359',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+    'createdUserID' => '4444',
+    'createdUserPC' => 'DESKTOP-J5G2HAA',
+    'timestamp' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 09:52:34.031359',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+  ),
+)  
+[2018-08-24 09:52:34] local.INFO: Successfully inserted to GL table 09:52:34  
+[2018-08-24 10:00:22] local.ERROR: Trying to get property 'userGroupID' of non-object {"userId":2668,"email":"shahmee@gears-int.com","exception":"[object] (ErrorException(code: 0): Trying to get property 'userGroupID' of non-object at D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\UserGroupAssignAPIController.php:197)
+[stacktrace]
+#0 D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\UserGroupAssignAPIController.php(197): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleError(8, 'Trying to get p...', 'D:\\\\gears\\\\Gears_...', 197, Array)
+#1 [internal function]: App\\Http\\Controllers\\API\\UserGroupAssignAPIController->checkUserGroupAccessRights(Object(Illuminate\\Http\\Request))
+#2 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
+#3 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('checkUserGroupA...', Array)
+#4 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\UserGroupAssignAPIController), 'checkUserGroupA...')
+#5 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
+#6 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
+#7 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#8 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#9 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
+#10 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#11 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#12 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#13 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#14 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#15 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#16 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#17 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#18 D:\\gears\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#19 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#20 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#21 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#22 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#23 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#25 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#28 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#31 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#33 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#34 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#35 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#36 D:\\gears\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#37 D:\\gears\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears\\\\Gears_...')
+#38 {main}
+"} 
+[2018-08-24 10:00:34] local.ERROR: Trying to get property 'userGroupID' of non-object {"userId":2668,"email":"shahmee@gears-int.com","exception":"[object] (ErrorException(code: 0): Trying to get property 'userGroupID' of non-object at D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\UserGroupAssignAPIController.php:197)
+[stacktrace]
+#0 D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\UserGroupAssignAPIController.php(197): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleError(8, 'Trying to get p...', 'D:\\\\gears\\\\Gears_...', 197, Array)
+#1 [internal function]: App\\Http\\Controllers\\API\\UserGroupAssignAPIController->checkUserGroupAccessRights(Object(Illuminate\\Http\\Request))
+#2 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
+#3 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('checkUserGroupA...', Array)
+#4 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\UserGroupAssignAPIController), 'checkUserGroupA...')
+#5 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
+#6 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
+#7 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#8 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#9 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
+#10 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#11 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#12 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#13 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#14 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#15 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#16 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#17 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#18 D:\\gears\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#19 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#20 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#21 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#22 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#23 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#25 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#28 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#31 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#33 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#34 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#35 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#36 D:\\gears\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#37 D:\\gears\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears\\\\Gears_...')
+#38 {main}
+"} 
+[2018-08-24 11:18:09] local.ERROR: Undefined index: grvAutoID {"userId":2668,"email":"shahmee@gears-int.com","exception":"[object] (ErrorException(code: 0): Undefined index: grvAutoID at D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\CustomerInvoiceDirectAPIController.php:1070)
+[stacktrace]
+#0 D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\CustomerInvoiceDirectAPIController.php(1070): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleError(8, 'Undefined index...', 'D:\\\\gears\\\\Gears_...', 1070, Array)
+#1 [internal function]: App\\Http\\Controllers\\API\\CustomerInvoiceDirectAPIController->customerInvoiceReopen(Object(Illuminate\\Http\\Request))
+#2 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
+#3 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('customerInvoice...', Array)
+#4 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\CustomerInvoiceDirectAPIController), 'customerInvoice...')
+#5 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
+#6 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
+#7 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#8 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#9 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
+#10 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#11 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#12 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#13 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#14 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#15 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#16 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#17 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#18 D:\\gears\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#19 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#20 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#21 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#22 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#23 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#25 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#28 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#31 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#33 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#34 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#35 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#36 D:\\gears\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#37 D:\\gears\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears\\\\Gears_...')
+#38 {main}
+"} 
+[2018-08-24 11:26:03] local.ERROR: Class 'App\Http\Controllers\API\DocumentMaster' not found {"userId":2668,"email":"shahmee@gears-int.com","exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalThrowableError(code: 0): Class 'App\\Http\\Controllers\\API\\DocumentMaster' not found at D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\CustomerInvoiceDirectAPIController.php:1104)
+[stacktrace]
+#0 [internal function]: App\\Http\\Controllers\\API\\CustomerInvoiceDirectAPIController->customerInvoiceReopen(Object(Illuminate\\Http\\Request))
+#1 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
+#2 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('customerInvoice...', Array)
+#3 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\CustomerInvoiceDirectAPIController), 'customerInvoice...')
+#4 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
+#5 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
+#6 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#7 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#8 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
+#9 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#10 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#11 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#12 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#13 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#14 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#15 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#16 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#17 D:\\gears\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#18 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#19 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#20 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#21 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#22 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#23 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#24 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#25 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#26 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#27 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#28 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#29 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#30 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#31 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#32 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#33 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#34 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#35 D:\\gears\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#36 D:\\gears\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears\\\\Gears_...')
+#37 {main}
+"} 
+[2018-08-24 11:51:44] local.ERROR: Trying to get property 'chartOfAccountSystemID' of non-object  
+[2018-08-24 11:55:24] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 52,
+    'companyID' => 'SGEE',
+    'masterCompanyID' => 'GE',
+    'documentID' => 'INV',
+    'documentSystemID' => 20,
+    'documentSystemCode' => 54017,
+    'documentCode' => 'SGEE\\2018\\INV006055',
+    'documentDate' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 11:55:24.045702',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+    'documentYear' => 2018,
+    'documentMonth' => 3,
+    'invoiceNumber' => 'SGEE/DES/82017-PRO7635',
+    'invoiceDate' => '2018-03-05 00:00:00',
+    'serviceLineSystemID' => 4,
+    'serviceLineCode' => 'DES',
+    'chartOfAccountSystemID' => 610,
+    'glCode' => '9999993',
+    'glAccountType' => 'BS',
+    'documentConfirmedDate' => '2018-08-24 11:54:56',
+    'documentConfirmedBy' => '4444',
+    'documentConfirmedByEmpSystemID' => 2665,
+    'documentFinalApprovedDate' => '2018-08-24 11:55:23',
+    'documentFinalApprovedBy' => 4444,
+    'documentFinalApprovedByEmpSystemID' => 2665,
+    'documentNarration' => 'test',
+    'clientContractID' => 'AB/2014-121',
+    'contractUID' => 10084,
+    'supplierCodeSystem' => 131,
+    'documentTransCurrencyID' => 2,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => 19372.8,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 2.5974026,
+    'documentLocalAmount' => 7458.527992541472,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1.0,
+    'documentRptAmount' => 19372.8,
+    'documentType' => 11,
+    'createdUserSystemID' => 2665,
+    'createdDateTime' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 11:55:24.045702',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+    'createdUserID' => '4444',
+    'createdUserPC' => 'DESKTOP-J5G2HAA',
+    'timestamp' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 11:55:24.045702',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+  ),
+  1 => 
+  array (
+    'companySystemID' => 52,
+    'companyID' => 'SGEE',
+    'masterCompanyID' => 'GE',
+    'documentID' => 'INV',
+    'documentSystemID' => 20,
+    'documentSystemCode' => 54017,
+    'documentCode' => 'SGEE\\2018\\INV006055',
+    'documentDate' => '2018-03-05 00:00:00',
+    'documentYear' => 2018,
+    'documentMonth' => 3,
+    'invoiceNumber' => 'SGEE/DES/82017-PRO7635',
+    'invoiceDate' => '2018-03-05 00:00:00',
+    'serviceLineSystemID' => 4,
+    'serviceLineCode' => 'DES',
+    'chartOfAccountSystemID' => 553,
+    'glCode' => '90006',
+    'glAccountType' => 'PL',
+    'documentConfirmedDate' => '2018-08-24 11:54:56',
+    'documentConfirmedBy' => '4444',
+    'documentConfirmedByEmpSystemID' => 2665,
+    'documentFinalApprovedDate' => '2018-08-24 11:55:23',
+    'documentFinalApprovedBy' => 4444,
+    'documentFinalApprovedByEmpSystemID' => 2665,
+    'documentNarration' => 'Equipment Rental',
+    'clientContractID' => 'AB/2014-121',
+    'contractUID' => 10084,
+    'supplierCodeSystem' => 131,
+    'documentTransCurrencyID' => 2,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => -19372.8,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 2.5974026,
+    'documentLocalAmount' => -7458.527992541472,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 1.0,
+    'documentRptAmount' => -19372.8,
+    'documentType' => 11,
+    'createdUserSystemID' => 2665,
+    'createdDateTime' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 11:55:24.045702',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+    'createdUserID' => '4444',
+    'createdUserPC' => 'DESKTOP-J5G2HAA',
+    'timestamp' => 
+    Carbon\Carbon::__set_state(array(
+       'date' => '2018-08-24 11:55:24.045702',
+       'timezone_type' => 3,
+       'timezone' => 'UTC',
+    )),
+  ),
+)  
+[2018-08-24 11:55:24] local.INFO: Successfully inserted to GL table 11:55:24  
