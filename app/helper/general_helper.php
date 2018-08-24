@@ -847,9 +847,12 @@ class Helper
         try {
 
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
-
             if ($docApproved) {
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+                $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
+                if(!$isConfirmed[$docInforArr["confirmedYN"]]){ // check document is confirmed or not
+                    return ['success' => false, 'message' => 'Document is not confirmed'];
+                }
                 //check document is already approved
                 $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
@@ -859,9 +862,7 @@ class Helper
 
                         // get current employee detail
                         $empInfo = self::getEmployeeInfo();
-
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
-
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];

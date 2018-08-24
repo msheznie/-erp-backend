@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : CustomerInvoiceDirect.php
+ * -- Project Name : ERP
+ * -- Module Name :  Customer Invoice
+ * -- Author : Nazir
+ * -- Create date : 21 - August 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
