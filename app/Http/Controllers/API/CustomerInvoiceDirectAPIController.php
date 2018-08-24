@@ -1029,16 +1029,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendError('Customer Invoice not found.');
         }
 
+
+
         $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
 
-        $array = array('entity' => $customerInvoice);
+        $array = array('request' => $customerInvoice);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
         $html = view('print.customer_invoice', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
     }
 
 }

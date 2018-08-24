@@ -1,0 +1,360 @@
+[2018-08-24 03:53:37] local.ERROR: The refresh token is invalid. {"exception":"[object] (League\\OAuth2\\Server\\Exception\\OAuthServerException(code: 8): The refresh token is invalid. at D:\\gears\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Exception\\OAuthServerException.php:160)
+[stacktrace]
+#0 D:\\gears\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\RefreshTokenGrant.php(105): League\\OAuth2\\Server\\Exception\\OAuthServerException::invalidRefreshToken('Token has expir...')
+#1 D:\\gears\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\RefreshTokenGrant.php(46): League\\OAuth2\\Server\\Grant\\RefreshTokenGrant->validateOldRefreshToken(Object(Zend\\Diactoros\\ServerRequest), '3')
+#2 D:\\gears\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\AuthorizationServer.php(187): League\\OAuth2\\Server\\Grant\\RefreshTokenGrant->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(League\\OAuth2\\Server\\ResponseTypes\\BearerTokenResponse), Object(DateInterval))
+#3 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(63): League\\OAuth2\\Server\\AuthorizationServer->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(Zend\\Diactoros\\Response))
+#4 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\HandlesOAuthErrors.php(27): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->Laravel\\Passport\\Http\\Controllers\\{closure}()
+#5 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(65): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->withErrorHandling(Object(Closure))
+#6 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(48): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->issueToken(Object(Zend\\Diactoros\\ServerRequest))
+#7 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(Laravel\\Passport\\Http\\Controllers\\AccessTokenController), 'issueToken')
+#8 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
+#9 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
+#10 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#11 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Middleware\\ThrottleRequests.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#12 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Routing\\Middleware\\ThrottleRequests->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#13 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#14 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#15 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#16 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#17 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#18 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#19 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#20 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#21 D:\\gears\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#22 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#23 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#25 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#28 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#31 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#33 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#34 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#35 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#36 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#37 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#38 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#39 D:\\gears\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#40 D:\\gears\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears\\\\Gears_...')
+#41 {main}
+"} 
+[2018-08-24 04:00:39] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: request (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: request (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 04:16:13] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: title (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: title (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 04:48:04] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Property [performadetails] does not exist on this collection instance. (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Property [performadetails] does not exist on this collection instance. (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 04:51:06] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Property [performadetails] does not exist on this collection instance. (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Property [performadetails] does not exist on this collection instance. (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 04:52:56] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'fieldShortCode' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'fieldShortCode' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:06:53] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: det (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: det (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:20:59] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Parse error: syntax error, unexpected end of file (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Parse error: syntax error, unexpected end of file (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:21:24] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:23:42] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:24:06] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:25:04] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:25:53] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: x (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: x (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:29:19] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:30:03] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:30:14] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:30:52] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: requesst (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:31:17] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: htmlspecialchars() expects parameter 1 to be string, array given (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: htmlspecialchars() expects parameter 1 to be string, array given (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:31:21] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: htmlspecialchars() expects parameter 1 to be string, array given (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: htmlspecialchars() expects parameter 1 to be string, array given (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:40:33] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: podata (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: podata (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 05:49:29] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: podata (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: podata (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:07:46] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'freebillingmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'freebillingmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:09:13] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'freebillingmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'freebillingmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:09:54] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'freebillingmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'freebillingmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:10:35] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'freebillingmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'freebillingmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:11:29] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'freebillingmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'freebillingmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:20:35] local.ERROR: Trying to get property 'userGroupID' of non-object {"userId":2668,"email":"shahmee@gears-int.com","exception":"[object] (ErrorException(code: 0): Trying to get property 'userGroupID' of non-object at D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\UserGroupAssignAPIController.php:197)
+[stacktrace]
+#0 D:\\gears\\Gears_BackEnd\\app\\Http\\Controllers\\API\\UserGroupAssignAPIController.php(197): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleError(8, 'Trying to get p...', 'D:\\\\gears\\\\Gears_...', 197, Array)
+#1 [internal function]: App\\Http\\Controllers\\API\\UserGroupAssignAPIController->checkUserGroupAccessRights(Object(Illuminate\\Http\\Request))
+#2 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
+#3 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('checkUserGroupA...', Array)
+#4 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\UserGroupAssignAPIController), 'checkUserGroupA...')
+#5 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
+#6 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
+#7 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#8 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#9 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
+#10 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#11 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#12 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#13 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#14 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#15 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#16 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#17 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#18 D:\\gears\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#19 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#20 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#21 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#22 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#23 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#25 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#28 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#31 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#33 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#34 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#35 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#36 D:\\gears\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#37 D:\\gears\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears\\\\Gears_...')
+#38 {main}
+"} 
+[2018-08-24 06:21:18] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'performadetails' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'performadetails' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:22:16] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:22:29] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:22:51] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:23:21] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:34:06] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:35:00] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Trying to get property 'ticketmaster' of non-object (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:55:23] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Use of undefined constant empName - assumed 'empName' (this will throw an Error in a future version of PHP) (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Use of undefined constant empName - assumed 'empName' (this will throw an Error in a future version of PHP) (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 06:56:38] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Use of undefined constant empName - assumed 'empName' (this will throw an Error in a future version of PHP) (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Use of undefined constant empName - assumed 'empName' (this will throw an Error in a future version of PHP) (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 07:02:19] local.ERROR: Method Illuminate\View\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: docRef (View: D:\gears\Gears_BackEnd\resources\views\print\customer_invoice.blade.php) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalErrorException(code: 1): Method Illuminate\\View\\View::__toString() must not throw an exception, caught ErrorException: Undefined variable: docRef (View: D:\\gears\\Gears_BackEnd\esources\\views\\print\\customer_invoice.blade.php) at D:\\gears\\Gears_BackEnd\\vendor\\seguce92\\laravel-dompdf\\src\\PDF.php:262)
+[stacktrace]
+#0 {main}
+"} 
+[2018-08-24 08:47:53] local.ERROR: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ {"exception":"[object] (Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at D:\\gears\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:47, PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at D:\\gears\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:43)
+[stacktrace]
+#0 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(64): Doctrine\\DBAL\\Driver\\PDOConnection->__construct('mysql:host=124....', 'gearsdev', 'gearsdev@123', Array)
+#1 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(43): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=124....', 'gearsdev', 'gearsdev@123', Array)
+#2 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=124....', Array, Array)
+#3 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\ConnectionFactory.php(183): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
+#5 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(915): call_user_func(Object(Closure))
+#6 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(940): Illuminate\\Database\\Connection->getPdo()
+#7 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(399): Illuminate\\Database\\Connection->getReadPdo()
+#8 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(325): Illuminate\\Database\\Connection->getPdoForSelect(true)
+#9 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(657): Illuminate\\Database\\Connection->Illuminate\\Database\\{closure}('select * from `...', Array)
+#10 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(624): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
+#11 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(333): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
+#12 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1719): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
+#13 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1704): Illuminate\\Database\\Query\\Builder->runSelect()
+#14 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(481): Illuminate\\Database\\Query\\Builder->get(Array)
+#15 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(465): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
+#16 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\BuildsQueries.php(77): Illuminate\\Database\\Eloquent\\Builder->get(Array)
+#17 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(291): Illuminate\\Database\\Eloquent\\Builder->first(Array)
+#18 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1477): Illuminate\\Database\\Eloquent\\Builder->find('3')
+#19 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1489): Illuminate\\Database\\Eloquent\\Model->__call('find', Array)
+#20 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(15): Illuminate\\Database\\Eloquent\\Model::__callStatic('find', Array)
+#21 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(26): Laravel\\Passport\\ClientRepository->find('3')
+#22 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Bridge\\ClientRepository.php(37): Laravel\\Passport\\ClientRepository->findActive('3')
+#23 D:\\gears\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\AbstractGrant.php(188): Laravel\\Passport\\Bridge\\ClientRepository->getClientEntity('3', 'password', 'N1TZtXOcP0m2IJR...', true)
+#24 D:\\gears\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\PasswordGrant.php(51): League\\OAuth2\\Server\\Grant\\AbstractGrant->validateClient(Object(Zend\\Diactoros\\ServerRequest))
+#25 D:\\gears\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\AuthorizationServer.php(187): League\\OAuth2\\Server\\Grant\\PasswordGrant->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(League\\OAuth2\\Server\\ResponseTypes\\BearerTokenResponse), Object(DateInterval))
+#26 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(63): League\\OAuth2\\Server\\AuthorizationServer->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(Zend\\Diactoros\\Response))
+#27 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\HandlesOAuthErrors.php(27): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->Laravel\\Passport\\Http\\Controllers\\{closure}()
+#28 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(65): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->withErrorHandling(Object(Closure))
+#29 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(48): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->issueToken(Object(Zend\\Diactoros\\ServerRequest))
+#30 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(Laravel\\Passport\\Http\\Controllers\\AccessTokenController), 'issueToken')
+#31 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
+#32 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
+#33 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#34 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Middleware\\ThrottleRequests.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#35 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Routing\\Middleware\\ThrottleRequests->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#36 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#37 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#38 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#39 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#40 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#41 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#42 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#43 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#44 D:\\gears\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#45 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#46 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#47 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#48 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#49 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#50 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#51 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#52 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#53 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#54 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#55 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#56 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#57 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#58 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#59 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#60 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#61 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#62 D:\\gears\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#63 D:\\gears\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears\\\\Gears_...')
+#64 {main}
+"} 
+[2018-08-24 08:47:53] local.ERROR: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ (SQL: select * from `oauth_clients` where `oauth_clients`.`id` = 3 limit 1) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ (SQL: select * from `oauth_clients` where `oauth_clients`.`id` = 3 limit 1) at D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:664, Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at D:\\gears\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:47, PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+ at D:\\gears\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:43)
+[stacktrace]
+#0 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(624): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
+#1 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(333): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
+#2 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1719): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
+#3 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1704): Illuminate\\Database\\Query\\Builder->runSelect()
+#4 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(481): Illuminate\\Database\\Query\\Builder->get(Array)
+#5 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(465): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
+#6 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\BuildsQueries.php(77): Illuminate\\Database\\Eloquent\\Builder->get(Array)
+#7 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(291): Illuminate\\Database\\Eloquent\\Builder->first(Array)
+#8 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1477): Illuminate\\Database\\Eloquent\\Builder->find('3')
+#9 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1489): Illuminate\\Database\\Eloquent\\Model->__call('find', Array)
+#10 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(15): Illuminate\\Database\\Eloquent\\Model::__callStatic('find', Array)
+#11 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(26): Laravel\\Passport\\ClientRepository->find('3')
+#12 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Bridge\\ClientRepository.php(37): Laravel\\Passport\\ClientRepository->findActive('3')
+#13 D:\\gears\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\AbstractGrant.php(188): Laravel\\Passport\\Bridge\\ClientRepository->getClientEntity('3', 'password', 'N1TZtXOcP0m2IJR...', true)
+#14 D:\\gears\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\PasswordGrant.php(51): League\\OAuth2\\Server\\Grant\\AbstractGrant->validateClient(Object(Zend\\Diactoros\\ServerRequest))
+#15 D:\\gears\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\AuthorizationServer.php(187): League\\OAuth2\\Server\\Grant\\PasswordGrant->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(League\\OAuth2\\Server\\ResponseTypes\\BearerTokenResponse), Object(DateInterval))
+#16 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(63): League\\OAuth2\\Server\\AuthorizationServer->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(Zend\\Diactoros\\Response))
+#17 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\HandlesOAuthErrors.php(27): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->Laravel\\Passport\\Http\\Controllers\\{closure}()
+#18 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(65): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->withErrorHandling(Object(Closure))
+#19 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(48): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->issueToken(Object(Zend\\Diactoros\\ServerRequest))
+#20 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(Laravel\\Passport\\Http\\Controllers\\AccessTokenController), 'issueToken')
+#21 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
+#22 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
+#23 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#24 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Middleware\\ThrottleRequests.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#25 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Routing\\Middleware\\ThrottleRequests->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#28 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#29 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#30 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#31 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#32 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#33 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#34 D:\\gears\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#35 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#36 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#37 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#38 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#39 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#40 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#41 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#42 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#43 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#44 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#45 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#46 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#47 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#48 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#49 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#50 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#51 D:\\gears\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#52 D:\\gears\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#53 D:\\gears\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears\\\\Gears_...')
+#54 {main}
+"} 
