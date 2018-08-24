@@ -59,6 +59,8 @@ class BankAccount extends Model
 
     protected $dates = ['deleted_at'];
 
+    protected $primaryKey = 'bankAccountAutoID';
+
 
     public $fillable = [
         'bankAssignedAutoID',
@@ -81,6 +83,7 @@ class BankAccount extends Model
         'isManualActive',
         'chquePrintedStartingNo',
         'isPrintedActive',
+        'chartOfAccountSystemID',
         'glCodeLinked',
         'extraNote',
         'isAccountActive',
@@ -126,6 +129,7 @@ class BankAccount extends Model
         'isManualActive' => 'integer',
         'chquePrintedStartingNo' => 'integer',
         'isPrintedActive' => 'integer',
+        'chartOfAccountSystemID' => 'integer',
         'glCodeLinked' => 'string',
         'extraNote' => 'string',
         'isAccountActive' => 'integer',
@@ -149,6 +153,4 @@ class BankAccount extends Model
     public static $rules = [
         
     ];
-
-    
 }

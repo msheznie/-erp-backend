@@ -541,6 +541,7 @@ class PaySupplierInvoiceMaster extends Model
         'directPayeeCurrency',
         'directPayeeBankMemo',
         'BPVsupplierID',
+        'supplierGLCodeSystemID',
         'supplierGLCode',
         'supplierTransCurrencyID',
         'supplierTransCurrencyER',
@@ -650,6 +651,7 @@ class PaySupplierInvoiceMaster extends Model
         'directPayeeCurrency' => 'integer',
         'directPayeeBankMemo' => 'string',
         'BPVsupplierID' => 'integer',
+        'supplierGLCodeSystemID' => 'integer',
         'supplierGLCode' => 'string',
         'supplierTransCurrencyID' => 'integer',
         'supplierTransCurrencyER' => 'float',
@@ -781,6 +783,11 @@ class PaySupplierInvoiceMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
     }
 
+
+    public function bank()
+    {
+        return $this->belongsTo('App\Models\BankAccount', 'BPVAccount', 'bankAccountAutoID');
+    }
 
 
 
