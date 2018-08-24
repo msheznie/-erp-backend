@@ -28,12 +28,18 @@ use App\Models\Months;
 use App\Models\Taxdetail;
 use App\Models\Company;
 use App\Models\CompanyFinanceYear;
+use App\Models\CurrencyMaster;
 use App\Models\Contract;
 use App\Models\chartOfAccount;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\EmployeesDepartment;
 use App\Models\SegmentMaster;
 use App\Models\FreeBillingMasterPerforma;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use Carbon\Carbon;
+use App\Models\BankMaster;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -147,6 +153,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
 
+        if($customer->creditDays ==0 || $customer->creditDays =='' ){
+            return $this->sendResponse('e', $customer->CustomerName.' - Credit days not mentioned for this customer');
+        }
+
+
         /**/
 
         $serialNo = CustomerInvoiceDirect::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))->where('documentID', 'INV')->where('companySystemID', $input['companyID'])->orderBy('serialNo', 'desc')->first();
@@ -181,7 +192,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
-            return $this->sendResponse($customerInvoiceDirects->toArray(), 'Customer Invoice Direct saved successfully');
+            return $this->sendResponse($customerInvoiceDirects->toArray(), 'Customer Invoice  saved successfully');
         } else {
             return $this->sendResponse('e', 'Document Date should be between financial period start date and end date');
         }
@@ -315,6 +326,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post['servicePeriod'] = $input['servicePeriod'];
         $_post['comments'] = $input['comments'];
         $_post['customerID'] = $input['customerID'];
+        $_post['rigNo'] = $input['rigNo'];
+        $_post['PONumber'] = $input['PONumber'];
+
+
+
 
 
 
@@ -340,6 +356,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if (count($detail) > 0) {
                 return $this->sendError('Invoice details exist. You can not change the customer.',500);
             }
+            $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+            if($customer->creditDays ==0 || $customer->creditDays =='' ){
+                return $this->sendResponse('e', $customer->CustomerName.' - Credit days not mentioned for this customer');
+            }
+
         }
 
         $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
@@ -628,13 +649,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
         $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-        $output['invoiceType'] = array(array('value' => 1, 'label' => 'Performa Invoice'), array('value' => 0, 'label' => 'Direct Invoice'));
+        $output['invoiceType'] = array(array('value' => 1, 'label' => 'Performa Invoice'), array('value' => 0, 'label' => 'Direct Invoice'), array('value' => 2, 'label' => 'Item'));
         $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId);
         $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companyId)->first();
         $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
         $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
         $output['yesNoSelection'] = YesNoSelection::all();
         $output['tax'] = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$output['company']['CompanyID']}'");
+
+        $output['currencies'] = CurrencyMaster::all();
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
@@ -1029,16 +1052,119 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendError('Customer Invoice not found.');
         }
 
+
+
         $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
 
-        $array = array('entity' => $customerInvoice);
+        $array = array('request' => $customerInvoice);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
         $html = view('print.customer_invoice', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
     }
+
+
+    public function customerInvoiceReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $custInvoiceDirectAutoID = $input['custInvoiceDirectAutoID'];
+
+        $invoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
+        $emails = array();
+        if (empty($invoice)) {
+            return $this->sendError('Invoice not found');
+        }
+
+        if ($invoice->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this invoice it is already partially approved');
+        }
+
+        if ($invoice->approved == -1) {
+            return $this->sendError('You cannot reopen this invoice it is already fully approved');
+        }
+
+        if ($invoice->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this invoice, it is not confirmed');
+        }
+
+        // updating fields
+        $invoice->confirmedYN = 0;
+        $invoice->confirmedByEmpSystemID = null;
+        $invoice->confirmedByEmpID = null;
+        $invoice->confirmedByName = null;
+        $invoice->confirmedDate = null;
+        $invoice->RollLevForApp_curr = 1;
+        $invoice->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $invoice->documentSystemiD)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $invoice->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $invoice->bookingInvCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $invoice->companySystemID)
+            ->where('documentSystemCode', $invoice->custInvoiceDirectAutoID)
+            ->where('documentSystemID', $invoice->documentSystemiD)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $invoice->companySystemID)
+                    ->where('documentSystemID', $invoice->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
+            ->where('companySystemID', $invoice->companySystemID)
+            ->where('documentSystemID', $invoice->documentSystemiD)
+            ->delete();
+
+        return $this->sendResponse($invoice->toArray(), 'Invoice reopened successfully');
+    }
+
 
 }
