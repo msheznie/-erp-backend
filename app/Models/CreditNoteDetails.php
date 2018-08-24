@@ -1,32 +1,22 @@
 <?php
-/**
- * =============================================
- * -- File Name : DebitNoteDetails.php
- * -- Project Name : ERP
- * -- Module Name :  DebitNoteDetails
- * -- Author : Nazir
- * -- Create date : 16 - August 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- * --
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="DebitNoteDetails",
+ *      definition="CreditNoteDetails",
  *      required={""},
  *      @SWG\Property(
- *          property="debitNoteDetailsID",
- *          description="debitNoteDetailsID",
+ *          property="creditNoteDetailsID",
+ *          description="creditNoteDetailsID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="debitNoteAutoID",
- *          description="debitNoteAutoID",
+ *          property="creditNoteAutoID",
+ *          description="creditNoteAutoID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -36,18 +26,14 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="serviceLineCode",
- *          description="serviceLineCode",
- *          type="string"
+ *          property="customerID",
+ *          description="customerID",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="contractID",
- *          description="contractID",
- *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="supplierID",
- *          description="supplierID",
+ *          property="chartOfAccountSystemID",
+ *          description="chartOfAccountSystemID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -62,25 +48,35 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="serviceLineCode",
+ *          description="serviceLineCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="clientContractID",
+ *          description="clientContractID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
  *          property="comments",
  *          description="comments",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="debitAmountCurrency",
- *          description="debitAmountCurrency",
+ *          property="creditAmountCurrency",
+ *          description="creditAmountCurrency",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="debitAmountCurrencyER",
- *          description="debitAmountCurrencyER",
+ *          property="creditAmountCurrencyER",
+ *          description="creditAmountCurrencyER",
  *          type="number",
  *          format="float"
  *      ),
  *      @SWG\Property(
- *          property="debitAmount",
- *          description="debitAmount",
+ *          property="creditAmount",
+ *          description="creditAmount",
  *          type="number",
  *          format="float"
  *      ),
@@ -134,31 +130,30 @@ use Eloquent as Model;
  *      )
  * )
  */
-class DebitNoteDetails extends Model
+class CreditNoteDetails extends Model
 {
 
-    public $table = 'erp_debitnotedetails';
+    public $table = 'erp_creditnotedetails';
+    
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
 
-    const CREATED_AT = 'createdDateTime';
-    const UPDATED_AT = 'timestamp';
+    protected $primaryKey = "creditNoteDetailsID";
 
-    protected $primaryKey = 'debitNoteDetailsID';
 
     public $fillable = [
-        'debitNoteAutoID',
-        'companySystemID',
+        'creditNoteAutoID',
         'companyID',
-        'serviceLineSystemID',
-        'serviceLineCode',
-        'contractID',
-        'supplierID',
+        'customerID',
         'chartOfAccountSystemID',
         'glCode',
         'glCodeDes',
+        'serviceLineCode',
+        'clientContractID',
         'comments',
-        'debitAmountCurrency',
-        'debitAmountCurrencyER',
-        'debitAmount',
+        'creditAmountCurrency',
+        'creditAmountCurrencyER',
+        'creditAmount',
         'localCurrency',
         'localCurrencyER',
         'localAmount',
@@ -176,21 +171,19 @@ class DebitNoteDetails extends Model
      * @var array
      */
     protected $casts = [
-        'debitNoteDetailsID' => 'integer',
-        'debitNoteAutoID' => 'integer',
-        'companySystemID' => 'integer',
+        'creditNoteDetailsID' => 'integer',
+        'creditNoteAutoID' => 'integer',
         'companyID' => 'string',
-        'serviceLineSystemID' => 'integer',
-        'serviceLineCode' => 'string',
-        'contractID' => 'string',
-        'supplierID' => 'integer',
+        'customerID' => 'integer',
         'chartOfAccountSystemID' => 'integer',
         'glCode' => 'string',
         'glCodeDes' => 'string',
+        'serviceLineCode' => 'string',
+        'clientContractID' => 'string',
         'comments' => 'string',
-        'debitAmountCurrency' => 'integer',
-        'debitAmountCurrencyER' => 'float',
-        'debitAmount' => 'float',
+        'creditAmountCurrency' => 'integer',
+        'creditAmountCurrencyER' => 'float',
+        'creditAmount' => 'float',
         'localCurrency' => 'integer',
         'localCurrencyER' => 'float',
         'localAmount' => 'float',
@@ -209,11 +202,6 @@ class DebitNoteDetails extends Model
     public static $rules = [
         
     ];
-
-    public function segment()
-    {
-        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
-    }
 
     
 }
