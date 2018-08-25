@@ -472,7 +472,9 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'issueDate' => 'required',
                 'serviceLineSystemID' => 'required|numeric|min:1',
-                'wareHouseFrom' => 'required|numeric|min:1'
+                'wareHouseFrom' => 'required|numeric|min:1',
+                'issueRefNo' => 'required',
+                'comment' => 'required',
             ]);
 
             if ($validator->fails()) {

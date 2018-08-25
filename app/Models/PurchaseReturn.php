@@ -334,7 +334,11 @@ class PurchaseReturn extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'liabilityAccountSysemID',
+        'liabilityAccount',
+        'UnbilledGRVAccountSystemID',
+        'UnbilledGRVAccount'
     ];
 
     /**
@@ -388,7 +392,11 @@ class PurchaseReturn extends Model
         'modifiedPc' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'timeStamp' => 'string'
+        'timeStamp' => 'string',
+        'liabilityAccountSysemID' => 'integer',
+        'liabilityAccount' => 'string',
+        'UnbilledGRVAccountSystemID' => 'integer',
+        'UnbilledGRVAccount' => 'string'
     ];
 
     /**

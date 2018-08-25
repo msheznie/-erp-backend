@@ -107,4 +107,6 @@ class CustomerInvoiceRepository extends BaseRepository
     {
         return CustomerInvoice::class;
     }
+
+
 }

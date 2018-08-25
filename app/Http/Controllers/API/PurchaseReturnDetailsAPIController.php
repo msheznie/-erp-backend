@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePurchaseReturnDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseReturnDetailsAPIRequest;
 use App\Models\GRVMaster;
+use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnDetails;
 use App\Repositories\PurchaseReturnDetailsRepository;
 use App\Repositories\PurchaseReturnRepository;
@@ -228,13 +229,52 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
     public function update($id, UpdatePurchaseReturnDetailsAPIRequest $request)
     {
         $input = $request->all();
-
+        $qtyError = array('type' => 'qty');
         /** @var PurchaseReturnDetails $purchaseReturnDetails */
         $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->findWithoutFail($id);
 
         if (empty($purchaseReturnDetails)) {
             return $this->sendError('Purchase Return Details not found');
         }
+
+        $purchaseReturn = PurchaseReturn::find($purchaseReturnDetails->purhaseReturnAutoID);
+
+        if (empty($purchaseReturn)) {
+            return $this->sendError('Purchase Return not found');
+        }
+
+
+        $data = array('companySystemID' => $purchaseReturn->companySystemID,
+            'itemCodeSystem' => $purchaseReturnDetails->itemCode,
+            'wareHouseId' => $purchaseReturn->purchaseReturnLocation);
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+        if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
+            $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
+            return $this->sendError("Warehouse stock Qty is 0. You cannot return.", 500,$qtyError);
+        }
+        if ($itemCurrentCostAndQty['currentStockQty'] <= 0) {
+            $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
+            return $this->sendError("Stock Qty is 0. You cannot return.", 500,$qtyError);
+        }
+        if ($input['noQty'] > $itemCurrentCostAndQty['currentStockQty']) {
+            $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
+            return $this->sendError("Current stock Qty is: " . $itemCurrentCostAndQty['currentStockQty'] . " .You cannot return more than the current stock qty.", 500, $qtyError);
+        }
+
+        if ($input['noQty'] > $itemCurrentCostAndQty['currentWareHouseStockQty']) {
+            $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
+            return $this->sendError("Current warehouse stock Qty is: " . $itemCurrentCostAndQty['currentWareHouseStockQty'] . " .You cannot return more than the current warehouse stock qty.", 500, $qtyError);
+        }
+
+        if ($input['noQty'] > $purchaseReturnDetails->GRVQty) {
+            $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
+            return $this->sendError("Return qty cannot be greater than GRV qty.", 500, $qtyError);
+        }
+
+        $input['netAmount'] = $input['noQty'] * $purchaseReturnDetails->GRVcostPerUnitSupTransCur;
+        $input['netAmountLocal'] = $input['noQty'] * $purchaseReturnDetails->GRVcostPerUnitLocalCur;
+        $input['netAmountRpt'] = $input['noQty'] * $purchaseReturnDetails->GRVcostPerUnitComRptCur;
 
         $purchaseReturnDetails = $this->purchaseReturnDetailsRepository->update($input, $id);
 
@@ -341,6 +381,20 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
             return $this->sendError('GRV not found');
         }
 
+        $finalError = array('cost_zero' => array(),
+            'cost_neg' => array(),
+            'same_item' => array(),
+            'qty_zero' => array(),
+            'more_then_grv_qty' => array(),
+            'currentStockQty_zero' => array(),
+            'currentWareHouseStockQty_zero' => array(),
+            'currentStockQty_more' => array(),
+            'currentWareHouseStockQty_more' => array());
+
+        $error_count = 0;
+
+        $createArray = array();
+
         foreach ($input['detailTable'] as $new) {
 
             if ($new['isChecked']) {
@@ -350,20 +404,44 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                     ->count();
 
                 if ($detailExistSameItem > 0) {
-                    return $this->sendError('Same inventory item cannot be added more than once', 500);
+                    // return $this->sendError('Same inventory item cannot be added more than once', 500);
+                    array_push($finalError['same_item'], $new['itemPrimaryCode']);
+                    $error_count++;
+                }
+                if ($new['rnoQty'] <= 0) {
+                    // return $this->sendError('Cannot add item without qty', 500);
+                    array_push($finalError['qty_zero'], $new['itemPrimaryCode']);
+                    $error_count++;
                 }
 
-                if($new['rnoQty'] <= 0){
-                    return $this->sendError('Cannot add item without qty', 500);
+                $data = array('companySystemID' => $purchaseReturn->companySystemID,
+                    'itemCodeSystem' => $new['itemCode'],
+                    'wareHouseId' => $purchaseReturn->purchaseReturnLocation);
+                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+                if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
+                    array_push($finalError['currentStockQty_zero'], $new['itemPrimaryCode']);
+                    $error_count++;
+                }
+                if ($itemCurrentCostAndQty['currentStockQty'] <= 0) {
+                    array_push($finalError['currentWareHouseStockQty_zero'], $new['itemPrimaryCode']);
+                    $error_count++;
+                }
+                if ($new['rnoQty'] > $itemCurrentCostAndQty['currentStockQty']) {
+                    array_push($finalError['currentStockQty_more'], $new['itemPrimaryCode']);
+                    $error_count++;
                 }
 
-                /*if ($new['unitCost'] == 0 || $new['unitCost'] == 0) {
-                    return $this->sendError("Cost is 0. You cannot return", 500);
+                if ($new['rnoQty'] > $itemCurrentCostAndQty['currentWareHouseStockQty']) {
+                    array_push($finalError['currentWareHouseStockQty_more'], $new['itemPrimaryCode']);
+                    $error_count++;
                 }
 
-                if ($new['unitCostLocal'] < 0 || $new['unitCostRpt'] < 0) {
-                    return $this->sendError("Cost is negative. You cannot return", 500);
-                }*/
+                if ($new['rnoQty'] > $new['noQty']) {
+                    array_push($finalError['more_then_grv_qty'], $new['itemPrimaryCode']);
+                    $error_count++;
+                }
+
                 $item = array();
 
                 $item['createdPCID'] = gethostname();
@@ -382,6 +460,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $item['GRVQty'] = $new['noQty'];
                 $item['comment'] = $new['comment'];
                 $item['noQty'] = $new['rnoQty'];
+
                 $item['supplierDefaultCurrencyID'] = $new['supplierDefaultCurrencyID'];
                 $item['supplierDefaultER'] = $new['supplierDefaultER'];
 
@@ -392,16 +471,38 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $item['companyReportingER'] = $new['companyReportingER'];
                 $item['localCurrencyID'] = $new['localCurrencyID'];
                 $item['localCurrencyER'] = $new['localCurrencyER'];
+
                 $item['GRVcostPerUnitLocalCur'] = $new['GRVcostPerUnitLocalCur'];
                 $item['GRVcostPerUnitSupDefaultCur'] = $new['GRVcostPerUnitSupDefaultCur'];
                 $item['GRVcostPerUnitSupTransCur'] = $new['GRVcostPerUnitSupTransCur'];
                 $item['GRVcostPerUnitComRptCur'] = $new['GRVcostPerUnitComRptCur'];
-                $item['netAmount'] = $new['netAmount'];
 
-                $item['netAmountLocal'] =  $new['rnoQty'] * $new['GRVcostPerUnitLocalCur'];
+
+                $item['netAmount'] = $new['rnoQty'] * $new['GRVcostPerUnitSupTransCur'];
+                $item['netAmountLocal'] = $new['rnoQty'] * $new['GRVcostPerUnitLocalCur'];
                 $item['netAmountRpt'] = $new['rnoQty'] * $new['GRVcostPerUnitComRptCur'];
 
-                $prndItem = $this->purchaseReturnDetailsRepository->create($item);
+
+                $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
+                $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
+                $item['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
+                $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                $item['financeGLcodePLSystemID'] = $new['financeGLcodePLSystemID'];
+                $item['financeGLcodePL'] = $new['financeGLcodePL'];
+                $item['includePLForGRVYN'] = $new['includePLForGRVYN'];
+
+                array_push($createArray, $item);
+            }
+        }
+
+
+        $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+
+        if ($error_count > 0) {
+            return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+        } else {
+            foreach ($createArray as $item) {
+                $this->purchaseReturnDetailsRepository->create($item);
             }
         }
 
