@@ -13,6 +13,7 @@
  * -- Date: 27-June 2018 By: Fayas Description: Added new functions named as getMaterielIssueAudit()
  * -- Date: 28-June 2018 By: Fayas Description: Added new functions named as getMaterielIssueApprovalByUser(),getMaterielIssueApprovedByUser()
  * -- Date: 26-July 2018 By: Fayas Description: Added new functions named as printItemIssue()
+ * -- Date: 27-August 2018 By: Fayas Description: Added new functions named as materielIssueReopen()
  */
 namespace App\Http\Controllers\API;
 
@@ -25,7 +26,9 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CustomerMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemIssueType;
@@ -370,9 +373,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
 
             if ($checkDepartmentActive->isActive == 0) {
-                $itemIssueUpdate = ItemIssueMaster::find($id);
-                $itemIssueUpdate->serviceLineSystemID = null;
-                $itemIssueUpdate->save();
+                $this->itemIssueMasterRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
                 return $this->sendError('Please select a active department', 500,$serviceLineError);
             }
         }
@@ -384,9 +385,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
 
             if ($checkWareHouseActive->isActive == 0) {
-                $itemIssueUpdate = ItemIssueMaster::find($id);
-                $itemIssueUpdate->wareHouseFrom = null;
-                $itemIssueUpdate->save();
+                 $this->itemIssueMasterRepository->update(['wareHouseFrom' => null,'wareHouseFromCode' => null,'wareHouseFromDes'=> null],$id);
                 return $this->sendError('Please select a active warehouse', 500, $wareHouseError);
             }
         }
@@ -1146,5 +1145,100 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
+
+    public function materielIssueReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['itemIssueAutoID'];
+        $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($itemIssueMaster)) {
+            return $this->sendError('Materiel Issue not found');
+        }
+
+        if ($itemIssueMaster->approved == -1) {
+            return $this->sendError('You cannot reopen this Materiel Issue it is already fully approved');
+        }
+
+        if ($itemIssueMaster->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Materiel Issue it is already partially approved');
+        }
+
+        if ($itemIssueMaster->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Materiel Issue, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
+                        'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->itemIssueMasterRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $itemIssueMaster->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $itemIssueMaster->itemIssueCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $itemIssueMaster->itemIssueCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $itemIssueMaster->companySystemID)
+                                            ->where('documentSystemCode', $itemIssueMaster->itemIssueAutoID)
+                                            ->where('documentSystemID', $itemIssueMaster->documentSystemID)
+                                            ->where('rollLevelOrder', 1)
+                                            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $itemIssueMaster->companySystemID)
+                    ->where('documentSystemID', $itemIssueMaster->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $itemIssueMaster->companySystemID)
+            ->where('documentSystemID', $itemIssueMaster->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($itemIssueMaster->toArray(), 'Materiel Issue reopened successfully');
+    }
+
 
 }
