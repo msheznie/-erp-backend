@@ -347,6 +347,7 @@
             </tr>
             </thead>
             <tbody>
+            {{$decimal = 2}}
             {{$x=1}}
             {{$directTraSubTotal=0}}
             {{$numberFormatting=2}}
