@@ -298,7 +298,7 @@ class Helper
                         // get current employee detail
                         $empInfo = self::getEmployeeInfo();
                         //confirm the document
-                        $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now()]);
+                        $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(),'RollLevForApp_curr' => 1]);
 
                         //get the policy
                         $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
@@ -311,7 +311,7 @@ class Helper
                             if ($isAttachment == -1) {
                                 $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                                 if (!$docAttachment) {
-                                    return ['success' => false, 'message' => 'No attachment found'];
+                                    return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
                                 }
                             }
                         } else {
