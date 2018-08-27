@@ -512,7 +512,9 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'currentStockQty_zero' => array(),
                 'currentWareHouseStockQty_zero' => array(),
                 'currentStockQty_more' => array(),
-                'currentWareHouseStockQty_more' => array());
+                'currentWareHouseStockQty_more' => array(),
+                'issuingQty_more_requested' => array()
+              );
             $error_count = 0;
 
             foreach ($itemIssueDetails as $item) {
@@ -554,6 +556,14 @@ class ItemIssueMasterAPIController extends AppBaseController
                 if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
                     array_push($finalError['currentWareHouseStockQty_more'], $updateItem->itemPrimaryCode);
                     $error_count++;
+                }
+
+                if ($itemIssueMaster->issueType == 2) {
+                    if($updateItem->qtyIssuedDefaultMeasure > $updateItem->qtyRequested){
+                        array_push($finalError['issuingQty_more_requested'], $updateItem->itemPrimaryCode);
+                        $error_count++;
+                       // return $this->sendError("Issuing qty cannot be more than requested qty", 500, $qtyError);
+                    }
                 }
             }
 
