@@ -764,3 +764,9 @@ Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
 Route::resource('credit_notes', 'CreditNoteAPIController');
 
 Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
+
+Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
+
+Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
+
+Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');

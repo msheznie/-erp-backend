@@ -7,10 +7,13 @@ use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
+use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DirectPaymentDetails;
+use App\Models\DirectReceiptDetail;
 use App\Models\Employee;
 use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
@@ -1306,6 +1309,131 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
                                         $data['timestamp'] = \Helper::currentDateTime();
                                         array_push($finalData, $data);
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    case 21: // BRV - Customer Receive Payment
+                        $masterData = CustomerReceivePayment::with(['bank'])->find($masterModel["autoID"]);
+
+                        //get balancesheet account
+                        $cpd = CustomerReceivePaymentDetail::selectRaw("SUM(receiveAmountLocal) as localAmount, SUM(receiveAmountRpt) as rptAmount,SUM(receiveAmountTrans) as transAmount,localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,custTransactionCurrencyID as transCurrencyID,companyReportingER as reportingCurrencyER,localCurrencyER as localCurrencyER,custTransactionCurrencyER as transCurrencyER")->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])->first();
+
+                        //get p&l account
+                        $dd = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")->WHERE('directReceiptAutoID', $masterModel["autoID"])->whereNotNull('serviceLineSystemID')->whereNotNull('chartOfAccountSystemID')->groupBy('serviceLineSystemID', 'chartOfAccountSystemID')->get();
+
+                        if ($masterData) {
+                            $data['companySystemID'] = $masterData->companySystemID;
+                            $data['companyID'] = $masterData->companyID;
+                            $data['serviceLineSystemID'] = null;
+                            $data['serviceLineCode'] = null;
+                            $data['masterCompanyID'] = null;
+                            $data['documentSystemID'] = $masterData->documentSystemID;
+                            $data['documentID'] = $masterData->documentID;
+                            $data['documentSystemCode'] = $masterModel["autoID"];
+                            $data['documentCode'] = $masterData->custPaymentReceiveCode;
+                            $data['documentDate'] = date('Y-m-d H:i:s');
+                            $data['documentYear'] = \Helper::dateYear($masterData->custPaymentReceiveDate);
+                            $data['documentMonth'] = \Helper::dateMonth($masterData->custPaymentReceiveDate);
+                            $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                            $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                            $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+                            $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                            $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                            $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                            $data['documentNarration'] = $masterData->narration;
+                            $data['clientContractID'] = 'X';
+                            $data['contractUID'] = 159;
+                            $data['supplierCodeSystem'] = $masterData->customerID;
+                            $data['holdingShareholder'] = null;
+                            $data['holdingPercentage'] = null;
+                            $data['nonHoldingPercentage'] = null;
+                            $data['chequeNumber'] = $masterData->custChequeNo;
+                            $data['documentType'] = $masterData->documentType;
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = $empID->empID;
+                            $data['createdUserSystemID'] = $empID->employeeSystemID;
+                            $data['createdUserPC'] = gethostname();
+                            $data['timestamp'] = \Helper::currentDateTime();
+
+
+                            if ($masterData->documentType == 2) { //Supplier Payment
+                                if ($cpd) {
+                                    $data['serviceLineSystemID'] = 24;
+                                    $data['serviceLineCode'] = 'X';
+                                    $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
+                                    $data['glCode'] = $masterData->customerGLCode;
+                                    $data['glAccountType'] = 'BS';
+                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount) * -1;
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount) * -1;
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount) * -1;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+
+                                    $data['serviceLineSystemID'] = 24;
+                                    $data['serviceLineCode'] = 'X';
+                                    $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
+                                    $data['glCode'] = $masterData->bank->glCodeLinked;
+                                    $data['glAccountType'] = 'BS';
+                                    $data['documentTransCurrencyID'] = $masterData->bankCurrency;
+                                    $data['documentTransCurrencyER'] = $masterData->bankCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount);
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount);
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount);
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
+                            }
+
+                            if ($masterData->invoiceType == 5) { //Advance Payment
+                                if ($cpd) {
+                                    $data['serviceLineSystemID'] = 24;
+                                    $data['serviceLineCode'] = 'X';
+                                    $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
+                                    $data['glCode'] = $masterData->customerGLCode;
+                                    $data['glAccountType'] = 'BS';
+                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount) * -1;
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount) * -1;
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount) * -1;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+
+                                    if ($dd) {
+                                        foreach ($dd as $val) {
+                                            $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                            $data['serviceLineCode'] = $val->serviceLineCode;
+                                            $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
+                                            $data['glCode'] = $val->financeGLcodePL;
+                                            $data['glAccountType'] = 'PL';
+                                            $data['documentTransCurrencyID'] = $val->transCurrencyID;
+                                            $data['documentTransCurrencyER'] = $val->transCurrencyER;
+                                            $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                            $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                            $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                                            $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                                            $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
+                                            $data['timestamp'] = \Helper::currentDateTime();
+                                            array_push($finalData, $data);
+                                        }
                                     }
                                 }
                             }
