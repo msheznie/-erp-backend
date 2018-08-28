@@ -24,6 +24,7 @@ use App\Models\ItemAssigned;
 use App\Models\ItemIssueMaster;
 use App\Models\SegmentMaster;
 use App\Models\StockTransfer;
+use App\Models\WarehouseMaster;
 use App\Repositories\InventoryReclassificationDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -129,14 +130,14 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
         $companySystemID = $input['companySystemID'];
-        $itemIssue = InventoryReclassification::find($input['inventoryreclassificationID']);
+        $reclassification = InventoryReclassification::find($input['inventoryreclassificationID']);
 
-        if (empty($itemIssue)) {
+        if (empty($reclassification)) {
             return $this->sendError('Reclassification not found', 500);
         }
 
-        if ($itemIssue->serviceLineSystemID) {
-            $checkDepartmentActive = SegmentMaster::find($itemIssue->serviceLineSystemID);
+        if ($reclassification->serviceLineSystemID) {
+            $checkDepartmentActive = SegmentMaster::find($reclassification->serviceLineSystemID);
             if (empty($checkDepartmentActive)) {
                 return $this->sendError('Department not found');
             }
@@ -145,6 +146,19 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
             }
         } else {
             return $this->sendError('Please select a department.', 500);
+        }
+
+        if ($reclassification->wareHouseSystemCode) {
+            $checkWarehouseActive = WarehouseMaster::find($reclassification->wareHouseSystemCode);
+            if (empty($checkWarehouseActive)) {
+                return $this->sendError('Warehouse not found');
+            }
+            if ($checkWarehouseActive->isActive == 0) {
+                return $this->sendError('Please select an active warehouse', 500);
+            }
+        }
+        else {
+            return $this->sendError('Please select a warehouse.', 500);
         }
 
         $item = ItemAssigned::where('idItemAssigned', $input['itemCode'])
@@ -176,14 +190,14 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $input['reportingCurrencyID'] = $item->wacValueReportingCurrencyID;
 
         if ($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0) {
-            return $this->sendError("Cost is 0. You cannot reclassify.", 500);
+            return $this->sendError("Cost is 0. You cannot add.", 500);
         }
 
         if ($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0) {
-            return $this->sendError("Cost is negative. You cannot reclassify.", 500);
+            return $this->sendError("Cost is negative. You cannot add.", 500);
         }
 
-        $checkWhether = ItemIssueMaster::where('companySystemID', $companySystemID)
+        $checkWhether = ItemIssueMaster::where('companySystemID', $companySystemID)->where('wareHouseFrom', $reclassification->wareHouseSystemCode)
             ->select([
                 'erp_itemissuemaster.itemIssueAutoID',
                 'erp_itemissuemaster.companySystemID',
@@ -209,7 +223,7 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
             return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
-        $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
+        $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)->where('locationFrom', $reclassification->wareHouseSystemCode)
             ->select([
                 'erp_stocktransfer.stockTransferAutoID',
                 'erp_stocktransfer.companySystemID',
@@ -235,14 +249,15 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
             return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
-        $currentStockQty = ErpItemLedger::where('itemSystemCode', $input['itemSystemCode'])
-            ->where('companySystemID', $companySystemID)
-            ->groupBy('itemSystemCode')
-            ->sum('inOutQty');
+        $data = array('companySystemID' => $reclassification->companySystemID,
+            'itemCodeSystem' => $input['itemSystemCode'],
+            'wareHouseId' => $reclassification->wareHouseSystemCode);
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+        $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
 
-        $input['currentStockQty'] = $currentStockQty;
 
-        if ($currentStockQty <= 0) {
+        if ($input['currentStockQty'] <= 0) {
             return $this->sendError("Stock Qty is 0. You cannot reclassify.", 500);
         }
 

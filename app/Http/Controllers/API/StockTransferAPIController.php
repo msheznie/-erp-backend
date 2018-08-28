@@ -11,6 +11,7 @@
  * -- Date: 13-July 2018 By: Nazir Description: Added new functions named as getStockTransferMasterView() For load Master View
  * -- Date: 24-July 2018 By: Fayas Description: Added new functions named as getStockTransferForReceive(),getStockTransferDetailsByMaster()
  * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as printStockTransfer()
+ * -- Date: 27-August 2018 By: Fayas Description: Added new functions named as stockTransferReopen()
  */
 namespace App\Http\Controllers\API;
 
@@ -20,7 +21,9 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CustomerMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\Company;
@@ -164,6 +167,23 @@ class StockTransferAPIController extends AppBaseController
             $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
         unset($inputParam);
+
+        $validator = \Validator::make($input, [
+            'locationFrom' => 'required|numeric|min:1',
+            'locationTo' => 'required|numeric|min:1',
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'tranferDate' => 'required',
+            'companyToSystemID' => 'required|numeric|min:1',
+            'companyFromSystemID' => 'required|numeric|min:1',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'refNo' => 'required',
+            'comment' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         if (isset($input['tranferDate'])) {
             if ($input['tranferDate']) {
@@ -393,9 +413,11 @@ class StockTransferAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $serviceLineError = array('type' => 'serviceLine');
         $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by', 'finance_period_by', 'finance_year_by']);
         $input = $this->convertArrayToValue($input);
+        $wareHouseFromError = array('type' => 'locationFrom');
+        $wareHouseToError   = array('type' => 'locationTo');
+        $serviceLineError   = array('type' => 'serviceLine');
 
         /** @var StockTransfer $stockTransfer */
         $stockTransfer = $this->stockTransferRepository->findWithoutFail($id);
@@ -409,6 +431,47 @@ class StockTransferAPIController extends AppBaseController
                 $input['tranferDate'] = new Carbon($input['tranferDate']);
             }
         }
+
+        if (isset($input['serviceLineSystemID'])) {
+            $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->where('isActive', 1)
+                ->first();
+
+            if (empty($segments)) {
+                $this->stockTransferRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
+                return $this->sendError('Selected department is not active. Please select an active department', 500, $serviceLineError);
+            }
+
+            if ($segments) {
+                $input['serviceLineCode'] = $segments->ServiceLineCode;
+            }
+        }
+
+        if (isset($input['locationFrom'])) {
+            $checkWareHouseActiveFrom = WarehouseMaster::find($input['locationFrom']);
+            if (empty($checkWareHouseActiveFrom)) {
+                return $this->sendError('Location from not found', 500, $wareHouseFromError);
+            }
+
+            if ($checkWareHouseActiveFrom->isActive == 0) {
+                $this->stockTransferRepository->update(['locationFrom' => null],$id);
+                return $this->sendError('Selected location from is not active. Please select an active location from', 500, $wareHouseFromError);
+            }
+        }
+
+        if (isset($input['locationTo'])) {
+            $checkWareHouseActiveTo = WarehouseMaster::find($input['locationTo']);
+            if (empty($checkWareHouseActiveTo)) {
+                return $this->sendError('Location to not found', 500, $wareHouseToError);
+            }
+
+            if ($checkWareHouseActiveTo->isActive == 0) {
+                $this->stockTransferRepository->update(['locationTo' => null],$id);
+                return $this->sendError('Selected location to is not active.Please select an active location to', 500, $wareHouseToError);
+            }
+        }
+
 
         if ($input['interCompanyTransferYN']) {
 
@@ -437,23 +500,6 @@ class StockTransferAPIController extends AppBaseController
             }
         }
 
-        if (isset($input['serviceLineSystemID'])) {
-            $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
-                ->where('companySystemID', $input['companySystemID'])
-                ->where('isActive', 1)
-                ->first();
-
-            if (empty($segments)) {
-                $stockTransferUpdate = StockTransfer::find($id);
-                $stockTransferUpdate->serviceLineSystemID = null;
-                $stockTransferUpdate->save();
-                return $this->sendError('Selected segment is not active. Please select an active segment', 500, $serviceLineError);
-            }
-
-            if ($segments) {
-                $input['serviceLineCode'] = $segments->ServiceLineCode;
-            }
-        }
 
         if ($input['locationFrom'] == $input['locationTo']) {
             return $this->sendError('Location From and Location To  cannot be same', 500);
@@ -507,7 +553,9 @@ class StockTransferAPIController extends AppBaseController
                 'tranferDate' => 'required',
                 'companyToSystemID' => 'required|numeric|min:1',
                 'companyFromSystemID' => 'required|numeric|min:1',
-                'serviceLineSystemID' => 'required|numeric|min:1'
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'refNo' => 'required',
+                'comment' => 'required'
             ]);
 
             if ($validator->fails()) {
@@ -1076,5 +1124,101 @@ class StockTransferAPIController extends AppBaseController
 
         return $this->sendResponse($stockTransferDetails->toArray(), 'Stock Transfer retrieved successfully');
     }
+
+
+    public function stockTransferReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['stockTransferAutoID'];
+        $stockTransfer = $this->stockTransferRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($stockTransfer)) {
+            return $this->sendError('Stock Transfer not found');
+        }
+
+        if ($stockTransfer->approved == -1) {
+            return $this->sendError('You cannot reopen this Stock Transfer it is already fully approved');
+        }
+
+        if ($stockTransfer->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Stock Transfer it is already partially approved');
+        }
+
+        if ($stockTransfer->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Stock Transfer, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->stockTransferRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $stockTransfer->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $stockTransfer->stockTransferCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $stockTransfer->stockTransferCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $stockTransfer->companySystemID)
+            ->where('documentSystemCode', $stockTransfer->stockTransferAutoID)
+            ->where('documentSystemID', $stockTransfer->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $stockTransfer->companySystemID)
+                    ->where('documentSystemID', $stockTransfer->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockTransfer->companySystemID)
+            ->where('documentSystemID', $stockTransfer->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer reopened successfully');
+    }
+
 
 }
