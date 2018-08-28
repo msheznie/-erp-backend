@@ -278,4 +278,16 @@ class ContractAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Contract deleted successfully');
     }
+
+    public function getAllcontractbyclient(request $request){
+        $input= $request->all();
+        $companyID=$input['companyID'];
+        $serviceLineSystemID=$input['serviceLineSystemID'];
+        $customerID=$input['customerID'];
+        $contract=Contract::select('contractUID','ContractNumber')->whereHas('segment', function ($query) use ($serviceLineSystemID)  {
+            $query->where('serviceLineSystemID',$serviceLineSystemID);
+        })->where('companySystemID',$companyID)->where('clientID',$customerID)->get();
+
+        return $this->sendResponse($contract, 'Contract deleted successfully');
+    }
 }
