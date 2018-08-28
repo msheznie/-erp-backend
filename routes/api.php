@@ -645,7 +645,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
 
-    Route::resource('book_inv_supp_masters', 'BookInvSuppMasterAPIController');
+    Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController');
     Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
     Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
     Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
@@ -684,6 +684,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getInvReclassificationApprovalByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovalByUser');
     Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification');
     Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification');
+
+    Route::post('invRecalssificationReopen', 'InventoryReclassificationAPIController@invRecalssificationReopen');
+
     Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
     Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
     Route::resource('performa_details', 'PerformaDetailsAPIController');
@@ -700,8 +703,6 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
 
-
-
     Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
     Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
     Route::resource('debit_notes', 'DebitNoteAPIController');
@@ -709,8 +710,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
 
-
     Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails');
+    Route::post('getInvoiceMasterView', 'BookInvSuppMasterAPIController@getInvoiceMasterView');
+    Route::get('getInvoiceMasterFormData', 'BookInvSuppMasterAPIController@getInvoiceMasterFormData');
 
     Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
     Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
@@ -732,6 +734,7 @@ Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
 Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
 Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
 Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
+Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF');
 Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
 Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
 
@@ -743,7 +746,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 11,'autoID' => 69624, 'companySystemID' => 7, 'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 21,'autoID' => 20711, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 
@@ -754,20 +757,7 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
-
-
-
-
-
-
-
-
-
-
 Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
-
-
-
 
 Route::resource('credit_notes', 'CreditNoteAPIController');
 

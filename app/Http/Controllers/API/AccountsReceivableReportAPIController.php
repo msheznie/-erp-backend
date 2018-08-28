@@ -1240,6 +1240,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 if ($output) {
                     $x = 0;
                     foreach ($output as $val) {
+                        $data[$x]['Invoice Type'] = $val->invoiceType;
                         $data[$x]['Company ID'] = $val->companyID;
                         $data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x]['Customer Code'] = $val->CutomerCode;
@@ -1256,7 +1257,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data[$x]['End Date'] = \Helper::dateFormat($val->serviceEndDate);
                         $data[$x]['Invoice Number'] = $val->invoiceNumber;
                         $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
-                        $data[$x]['Type'] = $val->invoiceType;
                         $data[$x]['Narration'] = $val->documentNarration;
                         $data[$x]['Currency'] = $val->documentCurrency;
                         $data[$x]['Invoice Amount'] = $val->invoiceAmount;

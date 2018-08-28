@@ -13,11 +13,13 @@
  * -- Date: 29-May 2018 By: Nazir Description: Added new functions named as storePoPaymentTermsLogistic()
  * -- Date: 31-April 2018 By: Nazir Description: Added new functions named as getLogisticPrintDetail()
  * -- Date: 14-June 2018 By: Nazir Description: Added new functions named as loadPoPaymentTermsLogisticForGRV()
+ * -- Date: 27-August 2018 By: Nazir Description: Added new functions named as getPoLogisticPrintPDF()
  **/
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePoAdvancePaymentAPIRequest;
 use App\Http\Requests\API\UpdatePoAdvancePaymentAPIRequest;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentAttachments;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
@@ -413,9 +415,28 @@ ORDER BY
 
         $items = PoAdvancePayment::where('poAdvPaymentID', $poAdvPaymentID)
             ->with(['company', 'currency', 'supplier_by' => function ($query) {
-            }])->get();
+            }])->first();
 
-        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+        $purchaseOrder = ProcumentOrder::find($items->poID);
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
+            ->first();
+
+        $newRefDoc = explode('D', $refernaceDoc["docRefNumber"]);
+
+        $newRefDocNew = $newRefDoc[0];
+
+        $printData = array(
+            'podata' => $items,
+            'docRef' => $newRefDocNew
+        );
+
+        return $this->sendResponse($printData, 'Data retrieved successfully');
     }
 
     public function loadPoPaymentTermsLogisticForGRV(Request $request)
@@ -453,6 +474,58 @@ ORDER BY
         $poAdvancePayment = $this->poAdvancePaymentRepository->update(['grvAutoID' => 0], $request->poAdvPaymentID);
 
         return $this->sendResponse([], 'Successfully unlinked');
+    }
+
+    public function getPoLogisticPrintPDF(Request $request)
+    {
+        $id = $request->get('id');
+        /** @var PoAdvancePayment $poAdvancePayment */
+        $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
+
+        if (empty($poAdvancePayment)) {
+            return $this->sendError('Po Advance Payment not found');
+        }
+
+        $purchaseOrder = ProcumentOrder::find($poAdvancePayment->poID);
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $PoAdvancePaymentData = PoAdvancePayment::where('poAdvPaymentID', $id)
+            ->with(['company', 'currency', 'supplier_by' => function ($query) {
+            }])->first();
+
+        $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemID', $purchaseOrder->documentSystemID)
+            ->first();
+
+        $newRefDoc = explode('D', $refernaceDoc["docRefNumber"]);
+
+        $newRefDocNew = $newRefDoc[0];
+
+        $currencyDecimal = CurrencyMaster::select('DecimalPlaces')
+            ->where('currencyID', $purchaseOrder->supplierTransactionCurrencyID)
+            ->first();
+
+        $decimal = 2;
+        if ($currencyDecimal) {
+            $decimal = $currencyDecimal['DecimalPlaces'];
+        }
+
+
+        $order = array(
+            'podata' => $PoAdvancePaymentData,
+            'docRef' => $newRefDocNew,
+            'numberFormatting' => $decimal
+        );
+
+        $html = view('print.po_logistic_print', $order);
+
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
     }
 
 
