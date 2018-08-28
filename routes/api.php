@@ -641,7 +641,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
 
-    Route::resource('book_inv_supp_masters', 'BookInvSuppMasterAPIController');
+    Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController');
     Route::resource('book_inv_supp_dets', 'BookInvSuppDetAPIController');
     Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord');
     Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
@@ -696,8 +696,6 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
 
-
-
     Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
     Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
     Route::resource('debit_notes', 'DebitNoteAPIController');
@@ -705,9 +703,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
 
-
     Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails');
-
+    Route::post('getInvoiceMasterView', 'BookInvSuppMasterAPIController@getInvoiceMasterView');
+    Route::get('getInvoiceMasterFormData', 'BookInvSuppMasterAPIController@getInvoiceMasterFormData');
 
 });
 
@@ -720,6 +718,7 @@ Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
 Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
 Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
 Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
+Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF');
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 

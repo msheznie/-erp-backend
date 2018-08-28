@@ -836,7 +836,7 @@ class Helper
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
 
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
-                                $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp')->join('companymaster','companySystemID','=','primaryCompanySystemID')->where('itemCodeSystem',$input["documentSystemCode"])->first();
+                                $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
                                 $itemAssign = Models\ItemAssigned::insert(collect($itemMaster)->toArray());
                             }
 
@@ -929,7 +929,6 @@ class Helper
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
 
-
                         }
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
@@ -948,7 +947,7 @@ class Helper
 
                                 if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
                                     $subject = $subjectName . " is fully approved";
-                                    $body = $bodyName . " is fully approved.";
+                                    $body = $bodyName . " is fully approved . ";
                                 } else {
 
                                     $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
@@ -1000,7 +999,7 @@ class Helper
                                     }
 
                                     $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
-                                    $body = $bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees <br>" . $nextApproveNameList;
+                                    $body = $bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees < br>" . $nextApproveNameList;
                                 }
 
                                 $emails[] = array('empSystemID' => $sourceModel[$docInforArr["confirmedEmpSystemID"]],
@@ -1114,7 +1113,7 @@ class Helper
     public static function dateFormat($date)
     {
         if ($date) {
-            return date("d/m/Y", strtotime($date));
+            return date("d / m / Y", strtotime($date));
         } else {
             return '';
         }
@@ -1165,7 +1164,7 @@ class Helper
      */
     public static function companyFinanceYear($companySystemID, $isAllowBackDate = 0)
     {
-        $companyFinanceYear = Models\CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))
+        $companyFinanceYear = Models\CompanyFinanceYear::select(DB::raw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ', DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))
             ->where('companySystemID', '=', $companySystemID)
             ->where('isActive', -1);
 
@@ -1183,7 +1182,7 @@ class Helper
      */
     public static function companyFinancePeriod($companySystemID, $companyFinanceYearID, $departmentSystemID)
     {
-        $companyFinancePeriod = Models\CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
+        $companyFinancePeriod = Models\CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
             ->where('companySystemID', '=', $companySystemID)
             ->where('companyFinanceYearID', $companyFinanceYearID)
             ->where('departmentSystemID', $departmentSystemID)
@@ -1245,12 +1244,12 @@ class Helper
 
     public static function currentDate()
     {
-        return date("Y-m-d");
+        return date("Y - m - d");
     }
 
     public static function currentDateTime()
     {
-        return date("Y-m-d H:i:s");
+        return date("Y - m - d H:i:s");
     }
 
     public static function getCompanyDocRefNo($companySystemID, $documentSystemID)
