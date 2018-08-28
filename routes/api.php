@@ -1,9 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
-use App\Models\Employee;
-
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -512,6 +508,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
     Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany');
     Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit');
+    Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen');
     Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue');
     Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue');
     Route::post('getGRVMasterApproval', 'GRVMasterAPIController@getGRVMasterApproval');
@@ -538,6 +535,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView');
     Route::get('getStockTransferFormData', 'StockTransferAPIController@getStockTransferFormData');
+    Route::post('stockTransferReopen', 'StockTransferAPIController@stockTransferReopen');
     Route::get('getStockTransferDetails', 'StockTransferDetailsAPIController@getStockTransferDetails');
     Route::get('getItemsOptionForStockTransfer', 'StockTransferAPIController@getItemsOptionForStockTransfer');
     Route::resource('stock_transfer_details', 'StockTransferDetailsAPIController');
@@ -547,6 +545,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser');
     Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer');
     Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
+
+
     Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
     Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
     Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany');
@@ -556,8 +556,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getItemsByMaterielReturn', 'ItemReturnDetailsAPIController@getItemsByMaterielReturn');
     Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn');
     Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
+    Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen');
     Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
     Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
+
+
     Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit');
     Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
@@ -569,6 +572,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getStockReceiveApproval', 'StockReceiveAPIController@getStockReceiveApproval');
     Route::post('getApprovedSRForCurrentUser', 'StockReceiveAPIController@getApprovedSRForCurrentUser');
     Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
+    Route::post('stockReceiveReopen', 'StockReceiveAPIController@stockReceiveReopen');
     Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData');
     Route::get('stockReceiveAudit', 'StockReceiveAPIController@stockReceiveAudit');
     Route::resource('stock_receive_details', 'StockReceiveDetailsAPIController');
@@ -707,6 +711,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getInvoiceMasterView', 'BookInvSuppMasterAPIController@getInvoiceMasterView');
     Route::get('getInvoiceMasterFormData', 'BookInvSuppMasterAPIController@getInvoiceMasterFormData');
 
+    Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
+    Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
+
+    Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany');
+    Route::get('getStockAdjustmentFormData', 'StockAdjustmentAPIController@getStockAdjustmentFormData');
+    Route::get('getStockAdjustmentAudit', 'StockAdjustmentAPIController@getStockAdjustmentAudit');
+    Route::get('getItemsByStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsByStockAdjustment');
+    Route::get('getItemsOptionsStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsOptionsStockAdjustment');
+    Route::post('customerInvoiceReopen', 'CustomerInvoiceDirectAPIController@customerInvoiceReopen');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -719,6 +732,8 @@ Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
 Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
 Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
 Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF');
+Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
+Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
@@ -728,7 +743,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 12, 'autoID' => 1749, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 11,'autoID' => 69624, 'companySystemID' => 7, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 
@@ -750,3 +765,16 @@ Route::get('runQueueSR', function () {
 
 
 Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+
+
+
+
+Route::resource('credit_notes', 'CreditNoteAPIController');
+
+Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
+
+Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
+
+Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
+
+Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');

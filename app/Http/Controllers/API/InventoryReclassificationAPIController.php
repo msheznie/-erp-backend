@@ -8,7 +8,8 @@
  * -- Create date : 10 - August 2018
  * -- Description : This file contains the all CRUD for Inventory Reclassification
  * -- REVISION HISTORY
- * -- Date: 14-March 2018 By: Description: Added new functions named as checkUser(),userCompanies()
+ * -- Date: 14-August 2018 By:Mubashir Description: Added new functions named as getAllInvReclassificationByCompany(),getInvReclassificationFormData(),getItemsOptionForReclassification()
+ * -- Date: 17-August 2018 By:Mubashir Description: Added new functions named as getInvReclassificationAudit(),getInvReclassificationApprovalByUser(),getInvReclassificationApprovedByUser()
  */
 
 namespace App\Http\Controllers\API;
@@ -174,6 +175,11 @@ class InventoryReclassificationAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
+        $warehouse = WarehouseMaster::find($input['wareHouseSystemCode']);
+        if ($warehouse) {
+            $input['wareHouseCode'] = $warehouse->wareHouseCode;
+        }
+
         $company = Company::find($input['companySystemID']);
         if ($company) {
             $input['companyID'] = $company->CompanyID;
@@ -260,7 +266,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         },'financeyear_by'=> function($query){
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        },'segment_by'])->findWithoutFail($id);
+        },'segment_by','warehouse_by'])->findWithoutFail($id);
 
         if (empty($inventoryReclassification)) {
             return $this->sendError('Inventory Reclassification not found');
@@ -319,11 +325,12 @@ class InventoryReclassificationAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by','confirmedByName','financeperiod_by','financeyear_by',
-            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID','segment_by']);
+            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID','segment_by','warehouse_by']);
         $input = $this->convertArrayToValue($input);
 
         $validator = \Validator::make($request->all(), [
             'serviceLineSystemID' => 'required',
+            'wareHouseSystemCode' => 'required',
             'narration' => 'required',
             'inventoryReclassificationDate' => 'required|date',
         ]);
@@ -350,6 +357,17 @@ class InventoryReclassificationAPIController extends AppBaseController
                 return $this->sendError('Please select an active department', 500);
             }
             $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
+        }
+
+        if ($input['wareHouseSystemCode']) {
+            $checkWarehouseActive = WarehouseMaster::find($input['wareHouseSystemCode']);
+            if (empty($checkWarehouseActive)) {
+                return $this->sendError('Warehouse not found');
+            }
+            if ($checkWarehouseActive->isActive == 0) {
+                return $this->sendError('Please select an active warehouse', 500);
+            }
+            $input['wareHouseCode'] = $checkWarehouseActive->wareHouseCode;
         }
 
         if ($inventoryReclassification->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -393,6 +411,36 @@ class InventoryReclassificationAPIController extends AppBaseController
                 ->count();
             if ($checkQuantity > 0) {
                 return $this->sendError('Every item should have at least one minimum Qty', 500);
+            }
+
+            $finalError = array(
+                'currentStockQty_notEqualTo_currentWareHouseStockQty' => array());
+            $error_count = 0;
+
+            $inventoryReclassificationDetail = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)->get();
+            if($inventoryReclassificationDetail){
+                foreach ($inventoryReclassificationDetail as $val){
+                    $updateItem = InventoryReclassificationDetail::find($val['inventoryReclassificationDetailID']);
+                    $data = array('companySystemID' => $inventoryReclassification->companySystemID,
+                        'itemCodeSystem' => $updateItem->itemSystemCode,
+                        'wareHouseId' => $inventoryReclassification->wareHouseSystemCode);
+                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                    $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
+                    $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                    $updateItem->unitCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                    $updateItem->unitCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
+                    $updateItem->save();
+
+                    if ($updateItem->currentStockQty != $updateItem->currentWareHouseStockQty) {
+                        array_push($finalError['currentStockQty_notEqualTo_currentWareHouseStockQty'], $updateItem->itemPrimaryCode);
+                        $error_count++;
+                    }
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
 
             $amount = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)
@@ -526,11 +574,22 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $segments = SegmentMaster::where("companySystemID", $companyId);
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $subCompanies = [$companyId];
+        }
+
+        $segments = SegmentMaster::whereIn("companySystemID", $subCompanies);
+        $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $segments = $segments->where('isActive', 1);
+            $wareHouses = $wareHouses->where('isActive', 1);
         }
         $segments = $segments->get();
+        $wareHouses = $wareHouses->get();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
@@ -549,6 +608,7 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         $output = array(
             'segments' => $segments,
+            'warehouse' => $wareHouses,
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
             'yesNoSelection' => $yesNoSelection,

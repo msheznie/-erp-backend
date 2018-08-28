@@ -190,4 +190,6 @@ class CustomerMaster extends Model
     {
         return $this->belongsTo('App\Models\Employee','approvedEmpSystemID','employeeSystemID');
     }
+
+
 }

@@ -11,6 +11,7 @@
  * -- Date: 16 - July 2018 By: Fayas Description: Added new functions named as getAllMaterielReturnByCompany(),getMaterielReturnFormData()
  * -- Date: 17 - July 2018 By: Fayas Description: Added new functions named as getMaterielReturnAudit(),getMaterielReturnApprovalByUser(),getMaterielReturnApprovedByUser()
  * -- Date: 30 - July 2018 By: Fayas Description: Added new functions named as printItemReturn()
+ * -- Date: 27 - August 2018 By: Fayas Description: Added new functions named as materielReturnReopen()
  *
  */
 namespace App\Http\Controllers\API;
@@ -21,7 +22,9 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemReturnDetails;
 use App\Models\ItemReturnMaster;
@@ -350,31 +353,27 @@ class ItemReturnMasterAPIController extends AppBaseController
             return $this->sendError('Item Return Master not found');
         }
         if (isset($input['serviceLineSystemID'])) {
-            if ($itemReturnMaster->serviceLineSystemID != $input['serviceLineSystemID']) {
+            if ($input['serviceLineSystemID']) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
                     return $this->sendError('Department not found');
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
-                    $itemReturnUpdate = ItemReturnMaster::find($id);
-                    $itemReturnUpdate->serviceLineSystemID = null;
-                    $itemReturnUpdate->save();
+                    $this->itemReturnMasterRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
                     return $this->sendError('Please select a active department.', 500, $serviceLineError);
                 }
             }
         }
         if (isset($input['wareHouseLocation'])) {
-            if ($itemReturnMaster->wareHouseLocation != $input['wareHouseLocation']) {
+            if ($input['wareHouseLocation']) {
                 $checkWareHouseActive = WarehouseMaster::find($input['wareHouseLocation']);
                 if (empty($checkWareHouseActive)) {
                     return $this->sendError('WareHouse not found', 500, $wareHouseError);
                 }
 
                 if ($checkWareHouseActive->isActive == 0) {
-                    $itemReturnUpdate = ItemReturnMaster::find($id);
-                    $itemReturnUpdate->wareHouseLocation = null;
-                    $itemReturnUpdate->save();
+                    $this->itemReturnMasterRepository->update(['wareHouseLocation' => null],$id);
                     return $this->sendError('Please select a active warehouse.', 500, $wareHouseError);
                 }
             }
@@ -438,6 +437,9 @@ class ItemReturnMasterAPIController extends AppBaseController
 
             $itemReturnDetails = ItemReturnDetails::where('itemReturnAutoID',$input['itemReturnAutoID'])->get();
 
+            $finalError = array('item_is_not_issued' => array());
+            $error_count = 0;
+
             foreach ($itemReturnDetails as $detail){
                 if ($detail['qtyIssuedDefaultMeasure'] > $detail['qtyFromIssue']) {
                     return $this->sendError("Return quantity should not be greater than issues quantity. Please check again.", 500);
@@ -452,11 +454,16 @@ class ItemReturnMasterAPIController extends AppBaseController
                                                     ->count();
 
                 if($itemIssuesCount == 0){
-                    return $this->sendError('Selected item is not issued. Please check again', 500);
+                    array_push($finalError['item_is_not_issued'], $detail['itemPrimaryCode']);
+                    $error_count++;
+                    //return $this->sendError('Selected item is not issued. Please check again', 500);
                 }
-
             }
 
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
 
             $amount = 0 ;
             /*ItemReturnDetails::where('itemReturnAutoID', $id)
@@ -485,7 +492,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $itemReturnMaster = $this->itemReturnMasterRepository->update($input, $id);
 
-        return $this->sendResponse($itemReturnMaster->toArray(), 'ItemReturnMaster updated successfully');
+        return $this->sendResponse($itemReturnMaster->toArray(), 'Material Return Master Updated Successfully');
     }
 
     /**
@@ -553,7 +560,7 @@ class ItemReturnMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseLocation', 'month', 'year'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -978,4 +985,97 @@ class ItemReturnMasterAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function materielReturnReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['itemReturnAutoID'];
+        $itemReturnMaster = $this->itemReturnMasterRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($itemReturnMaster)) {
+            return $this->sendError('Materiel Return not found');
+        }
+
+        if ($itemReturnMaster->approved == -1) {
+            return $this->sendError('You cannot reopen this Materiel Return it is already fully approved');
+        }
+
+        if ($itemReturnMaster->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Materiel Return it is already partially approved');
+        }
+
+        if ($itemReturnMaster->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Materiel Return, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->itemReturnMasterRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $itemReturnMaster->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $itemReturnMaster->itemReturnCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $itemReturnMaster->itemReturnCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $itemReturnMaster->companySystemID)
+            ->where('documentSystemCode', $itemReturnMaster->itemReturnAutoID)
+            ->where('documentSystemID', $itemReturnMaster->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $itemReturnMaster->companySystemID)
+                    ->where('documentSystemID', $itemReturnMaster->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                                            ->where('companySystemID', $itemReturnMaster->companySystemID)
+                                            ->where('documentSystemID', $itemReturnMaster->documentSystemID)
+                                            ->delete();
+
+        return $this->sendResponse($itemReturnMaster->toArray(), 'Materiel Return reopened successfully');
+    }
 }

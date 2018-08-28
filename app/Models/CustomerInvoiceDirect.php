@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : CustomerInvoiceDirect.php
+ * -- Project Name : ERP
+ * -- Module Name :  Customer Invoice
+ * -- Author : Nazir
+ * -- Create date : 21 - August 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -409,10 +419,10 @@ class CustomerInvoiceDirect extends Model
 {
 
     public $table = 'erp_custinvoicedirect';
-    
+
     const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey  = 'custInvoiceDirectAutoID';
+    protected $primaryKey = 'custInvoiceDirectAutoID';
 
 
     public $fillable = [
@@ -443,6 +453,7 @@ class CustomerInvoiceDirect extends Model
         'PONumber',
         'rigNo',
         'customerID',
+        'customerGLSystemID',
         'customerGLCode',
         'customerInvoiceNo',
         'customerInvoiceDate',
@@ -501,7 +512,9 @@ class CustomerInvoiceDirect extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
-        'createdDateAndTime'
+        'createdDateAndTime',
+        'approvedByUserSystemID',
+        'approvedByUserID'
     ];
 
     /**
@@ -531,6 +544,7 @@ class CustomerInvoiceDirect extends Model
         'PONumber' => 'string',
         'rigNo' => 'string',
         'customerID' => 'integer',
+        'customerGLSystemID' => 'integer',
         'customerGLCode' => 'string',
         'customerInvoiceNo' => 'string',
         'custTransactionCurrencyID' => 'integer',
@@ -581,7 +595,9 @@ class CustomerInvoiceDirect extends Model
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
         'createdDateTime' => 'string',
-        'createdDateAndTime' => 'string'
+        'createdDateAndTime' => 'string',
+        'approvedByUserSystemID' => 'integer',
+        'approvedByUserID' => 'integer'
     ];
 
     /**
@@ -590,7 +606,7 @@ class CustomerInvoiceDirect extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
 
@@ -601,22 +617,26 @@ class CustomerInvoiceDirect extends Model
 
     public function customer()
     {
-        return $this->belongsTo('App\Models\CustomerMaster','customerID',  'customerCodeSystem');
+        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
     }
 
-   public function invoicedetails()
+    public function invoicedetails()
     {
-        return $this->hasMany('App\Models\CustomerInvoiceDirectDetail','custInvoiceDirectID','custInvoiceDirectAutoID');
+        return $this->hasMany('App\Models\CustomerInvoiceDirectDetail', 'custInvoiceDirectID', 'custInvoiceDirectAutoID');
     }
 
-    public function tax(){
-        return $this->belongsTo('App\Models\TaxDetail','custInvoiceDirectAutoID','documentSystemCode');
+    public function tax()
+    {
+        return $this->belongsTo('App\Models\TaxDetail', 'custInvoiceDirectAutoID', 'documentSystemCode');
     }
 
-    public function createduser(){
+    public function createduser()
+    {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
-    public function bankaccount(){
+
+    public function bankaccount()
+    {
         return $this->belongsTo('App\Models\BankAccount', 'bankAccountID', 'bankAccountAutoID');
     }
 
@@ -624,6 +644,7 @@ class CustomerInvoiceDirect extends Model
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'custInvoiceDirectAutoID');
     }
+
     public function currency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'custTransactionCurrencyID', 'currencyID');

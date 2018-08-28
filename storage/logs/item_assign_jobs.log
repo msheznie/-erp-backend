@@ -1,0 +1,4 @@
+[2018-08-20 09:34:05] local.INFO: [{"companySystemID":11,"itemSystemCode":4,"inOutQty":6,"wacCostLocal":389.537921906,"wacCostRpt":1011.786811157,"TotalwacCostLocal":2337.227531436,"TotalwacCostRpt":6070.720866942}]  
+[2018-08-20 09:34:06] local.INFO: Successfully updated to item assign table 09:34:06  
+[2018-08-20 10:13:17] local.INFO: [{"companySystemID":11,"itemSystemCode":52,"inOutQty":2,"wacCostLocal":243.489162943,"wacCostRpt":632.439384531,"TotalwacCostLocal":486.978325886,"TotalwacCostRpt":1264.878769062},{"companySystemID":11,"itemSystemCode":507,"inOutQty":16,"wacCostLocal":59.213,"wacCostRpt":153.8,"TotalwacCostLocal":947.408,"TotalwacCostRpt":2460.8}]  
+[2018-08-20 10:13:17] local.INFO: Successfully updated to item assign table 10:13:17  

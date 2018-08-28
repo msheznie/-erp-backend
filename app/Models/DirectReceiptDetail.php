@@ -1,0 +1,188 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : DirectReceiptDetail.php
+ * -- Project Name : ERP
+ * -- Module Name :  Accounts receivable
+ * -- Author : Mubashir
+ * -- Create date : 24 - August 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="DirectReceiptDetail",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="directReceiptDetailsID",
+ *          description="directReceiptDetailsID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="directReceiptAutoID",
+ *          description="directReceiptAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="serviceLineCode",
+ *          description="serviceLineCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="glCode",
+ *          description="glCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="glCodeDes",
+ *          description="glCodeDes",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="contractID",
+ *          description="contractID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="comments",
+ *          description="comments",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="DRAmountCurrency",
+ *          description="DRAmountCurrency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="DDRAmountCurrencyER",
+ *          description="DDRAmountCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="DRAmount",
+ *          description="DRAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="localCurrency",
+ *          description="localCurrency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="localCurrencyER",
+ *          description="localCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="localAmount",
+ *          description="localAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptCurrency",
+ *          description="comRptCurrency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptCurrencyER",
+ *          description="comRptCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="comRptAmount",
+ *          description="comRptAmount",
+ *          type="number",
+ *          format="float"
+ *      )
+ * )
+ */
+class DirectReceiptDetail extends Model
+{
+
+    public $table = 'erp_directreceiptdetails';
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+    protected $primaryKey = 'directReceiptDetailsID';
+
+
+    public $fillable = [
+        'directReceiptAutoID',
+        'companyID',
+        'serviceLineSystemID',
+        'serviceLineCode',
+        'chartOfAccountSystemID',
+        'glCode',
+        'glCodeDes',
+        'contractID',
+        'comments',
+        'DRAmountCurrency',
+        'DDRAmountCurrencyER',
+        'DRAmount',
+        'localCurrency',
+        'localCurrencyER',
+        'localAmount',
+        'comRptCurrency',
+        'comRptCurrencyER',
+        'comRptAmount',
+        'timeStamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'directReceiptDetailsID' => 'integer',
+        'directReceiptAutoID' => 'integer',
+        'companyID' => 'string',
+        'serviceLineSystemID' => 'integer',
+        'serviceLineCode' => 'string',
+        'chartOfAccountSystemID' => 'integer',
+        'glCode' => 'string',
+        'glCodeDes' => 'string',
+        'contractID' => 'string',
+        'comments' => 'string',
+        'DRAmountCurrency' => 'integer',
+        'DDRAmountCurrencyER' => 'float',
+        'DRAmount' => 'float',
+        'localCurrency' => 'integer',
+        'localCurrencyER' => 'float',
+        'localAmount' => 'float',
+        'comRptCurrency' => 'integer',
+        'comRptCurrencyER' => 'float',
+        'comRptAmount' => 'float'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}

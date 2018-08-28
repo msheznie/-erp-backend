@@ -165,10 +165,11 @@ class StockTransferDetailsAPIController extends AppBaseController
         $validator = \Validator::make($stockTransferMaster->toArray(), [
             'locationFrom' => 'required|numeric|min:1',
             'locationTo' => 'required|numeric|min:1',
-            //'companyFinancePeriodID' => 'required|numeric|min:1',
-            //'companyFinanceYearID' => 'required|numeric|min:1',
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
             'companyToSystemID' => 'required|numeric|min:1',
-            'companyFromSystemID' => 'required|numeric|min:1'
+            'companyFromSystemID' => 'required|numeric|min:1',
+            'serviceLineSystemID' => 'required|numeric|min:1'
         ]);
 
         if ($validator->fails()) {

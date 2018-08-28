@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : InventoryReclassificationDetail.php
+ * -- Project Name : ERP
+ * -- Module Name :  Inventory Reclassification
+ * -- Author : Mubashir
+ * -- Create date : 10 - August 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -126,6 +136,7 @@ class InventoryReclassificationDetail extends Model
         'financeGLcodePL',
         'includePLForGRVYN',
         'currentStockQty',
+        'currentWareHouseStockQty',
         'localCurrencyID',
         'unitCostLocal',
         'reportingCurrencyID',
@@ -153,6 +164,7 @@ class InventoryReclassificationDetail extends Model
         'financeGLcodePL' => 'string',
         'includePLForGRVYN' => 'integer',
         'currentStockQty' => 'float',
+        'currentWareHouseStockQty' => 'float',
         'localCurrencyID' => 'integer',
         'unitCostLocal' => 'float',
         'reportingCurrencyID' => 'integer',
