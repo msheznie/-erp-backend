@@ -129,8 +129,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentRptCurrencyER'] = $masterData->details[0]->companyReportingER;
                             $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptAmount * -1);
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -238,8 +238,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -310,8 +310,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -382,8 +382,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -457,8 +457,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -532,8 +532,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -613,8 +613,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentRptCurrencyER'] = $masterData->companyReportingER;
                             $data['documentRptAmount'] = \Helper::roundValue($masterData->details[0]->rptAmount);
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -840,8 +840,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentTransCurrencyER'] = 0;
                             $data['documentTransAmount'] = 0;
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -937,8 +937,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             }
 
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['documentType'] = $masterData->documentType;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
@@ -1012,8 +1012,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['supplierCodeSystem'] = $masterData->supplierID;
 
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['documentType'] = $masterData->documentType;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
@@ -1097,8 +1097,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = $masterData->customerID;
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['documentType'] = $masterData->documentType;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
@@ -1185,8 +1185,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = $masterData->BPVsupplierID;
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['chequeNumber'] = $masterData->BPVchequeNo;
                             $data['documentType'] = $masterData->invoiceType;
                             $data['createdDateTime'] = \Helper::currentDateTime();
@@ -1320,6 +1320,8 @@ class GeneralLedgerInsert implements ShouldQueue
                         //get balancesheet account
                         $cpd = CustomerReceivePaymentDetail::selectRaw("SUM(receiveAmountLocal) as localAmount, SUM(receiveAmountRpt) as rptAmount,SUM(receiveAmountTrans) as transAmount,localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,custTransactionCurrencyID as transCurrencyID,companyReportingER as reportingCurrencyER,localCurrencyER as localCurrencyER,custTransactionCurrencyER as transCurrencyER")->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])->first();
 
+                        $totaldd = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")->WHERE('directReceiptAutoID', $masterModel["autoID"])->first();
+
                         //get p&l account
                         $dd = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")->WHERE('directReceiptAutoID', $masterModel["autoID"])->whereNotNull('serviceLineSystemID')->whereNotNull('chartOfAccountSystemID')->groupBy('serviceLineSystemID', 'chartOfAccountSystemID')->get();
 
@@ -1347,8 +1349,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = $masterData->customerID;
                             $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = null;
-                            $data['nonHoldingPercentage'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
                             $data['chequeNumber'] = $masterData->custChequeNo;
                             $data['documentType'] = $masterData->documentType;
                             $data['createdDateTime'] = \Helper::currentDateTime();
@@ -1358,7 +1360,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['timestamp'] = \Helper::currentDateTime();
 
 
-                            if ($masterData->documentType == 2) { //Supplier Payment
+                            if ($masterData->documentType == 13) { //Customer Recieve Payment
                                 if ($cpd) {
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
@@ -1396,22 +1398,22 @@ class GeneralLedgerInsert implements ShouldQueue
                                 }
                             }
 
-                            if ($masterData->invoiceType == 5) { //Advance Payment
-                                if ($cpd) {
-                                    $data['serviceLineSystemID'] = 24;
-                                    $data['serviceLineCode'] = 'X';
-                                    $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
-                                    $data['glCode'] = $masterData->customerGLCode;
+                            if ($masterData->documentType == 14) { //Direct Receipt
+                                if ($totaldd) {
+                                    $data['serviceLineSystemID'] = $totaldd->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $totaldd->serviceLineCode;
+                                    $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
+                                    $data['glCode'] = $masterData->bank->glCodeLinked;
                                     $data['glAccountType'] = 'BS';
-                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount) * -1;
+                                    $data['documentTransCurrencyID'] = $masterData->bankCurrency;
+                                    $data['documentTransCurrencyER'] = $masterData->bankCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue($totaldd->transAmount);
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount) * -1;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($totaldd->localAmount);
                                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount) * -1;
+                                    $data['documentRptAmount'] = \Helper::roundValue($totaldd->rptAmount);
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
 
@@ -1421,16 +1423,16 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['serviceLineCode'] = $val->serviceLineCode;
                                             $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
                                             $data['glCode'] = $val->financeGLcodePL;
-                                            $data['glAccountType'] = 'PL';
+                                            $data['glAccountType'] = 'BS';
                                             $data['documentTransCurrencyID'] = $val->transCurrencyID;
                                             $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                                            $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                            $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount)) * -1;
                                             $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                                             $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount)) * -1;
                                             $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                                             $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                                            $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
+                                            $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount)) * -1;
                                             $data['timestamp'] = \Helper::currentDateTime();
                                             array_push($finalData, $data);
                                         }

@@ -22,6 +22,7 @@ use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemReturnDetails;
 use App\Models\ItemReturnMaster;
+use App\Models\SegmentMaster;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
@@ -139,25 +140,48 @@ class ItemReturnDetailsAPIController extends AppBaseController
             return $this->sendError('Item Return not found', 500);
         }
 
+        $validator = \Validator::make($itemReturn->toArray(), [
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'wareHouseLocation' => 'required|numeric|min:1',
+            'ReturnType1' => 'required|numeric|min:1'
+        ]);
 
-        if($itemReturn->wareHouseLocation){
-            $wareHouse = WarehouseMaster::where("wareHouseSystemCode",$itemReturn->wareHouseLocation)->first();
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        if ($itemReturn->wareHouseLocation) {
+            $wareHouse = WarehouseMaster::where("wareHouseSystemCode", $itemReturn->wareHouseLocation)->first();
             if (empty($wareHouse)) {
                 return $this->sendError('Warehouse not found', 500);
             }
-            if($wareHouse->isActive == 0){
-                return $this->sendError('Please select a active warehouse.'.$wareHouse->wareHouseSystemCode,500);
+            if ($wareHouse->isActive == 0) {
+                return $this->sendError('Please select an active warehouse.', 500);
             }
-        }else{
+        } else {
             return $this->sendError('Please select a warehouse.', 500);
         }
+
+        if ($itemReturn->serviceLineSystemID) {
+            $checkDepartmentActive = SegmentMaster::find($itemReturn->serviceLineSystemID);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Department not found',500);
+            }
+
+            if ($checkDepartmentActive->isActive == 0) {
+                return $this->sendError('Please select an active department.', 500);
+            }
+        }else {
+            return $this->sendError('Please select a department.', 500);
+        }
+
 
         $input['itemReturnCode'] = $itemReturn->itemReturnCode;
 
 
-        $itemAssign = ItemAssigned::where('itemCodeSystem',$input['itemCodeSystem'])
-                                   ->where('companySystemID',$companySystemID)
-                                   ->first();
+        $itemAssign = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
 
         if (empty($itemAssign)) {
             return $this->sendError('Item not found', 500);
@@ -167,14 +191,14 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $input['itemDescription'] = $itemAssign->itemDescription;
 
 
-        $itemIssuesCount =  ItemIssueMaster::whereHas('details',function ($q) use($input){
-                                    $q->where('itemCodeSystem',$input['itemCodeSystem']);
-                                 })
-                                ->where('companySystemID',$companySystemID)
-                                ->where('approved',-1)
-                                ->count();
+        $itemIssuesCount = ItemIssueMaster::whereHas('details', function ($q) use ($input) {
+            $q->where('itemCodeSystem', $input['itemCodeSystem']);
+        })
+            ->where('companySystemID', $companySystemID)
+            ->where('approved', -1)
+            ->count();
 
-        if($itemIssuesCount == 0){
+        if ($itemIssuesCount == 0) {
             return $this->sendError('Selected item is not issued. Please check again', 500);
         }
 
@@ -190,18 +214,18 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $input['localCurrencyID'] = $itemAssign->wacValueLocalCurrencyID;
         $input['reportingCurrencyID'] = $itemAssign->wacValueReportingCurrencyID;
 
-        if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
+        if ($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0) {
             return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
-        if($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0){
+        if ($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0) {
             return $this->sendError("Cost is negative. You cannot issue", 500);
         }
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
-                                                                        ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
-                                                                        ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
-                                                                        ->first();
+            ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
+            ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
+            ->first();
 
         if (!empty($financeItemCategorySubAssigned)) {
             $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
@@ -209,11 +233,11 @@ class ItemReturnDetailsAPIController extends AppBaseController
             $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
             $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
-        }else{
+        } else {
             return $this->sendError("Account code not updated.", 500);
         }
 
-        if(!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']){
+        if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
             return $this->sendError("Account code not updated.", 500);
         }
 
@@ -235,34 +259,34 @@ class ItemReturnDetailsAPIController extends AppBaseController
             ->where('companySystemID', $companySystemID)
             ->first();
 
-       // if ($allowPendingApproval->isYesNO == 0) {
+        // if ($allowPendingApproval->isYesNO == 0) {
 
-            $checkWhether = ItemReturnMaster::where('itemReturnAutoID', '!=', $itemReturn->itemReturnAutoID)
-                ->where('companySystemID', $companySystemID)
-                ->where('wareHouseLocation', $itemReturn->wareHouseLocation)
-                ->select([
-                    'erp_itemreturnmaster.itemReturnAutoID',
-                    'erp_itemreturnmaster.companySystemID',
-                    'erp_itemreturnmaster.wareHouseLocation',
-                    'erp_itemreturnmaster.itemReturnCode',
-                    'erp_itemreturnmaster.approved'
-                ])
-                ->groupBy(
-                    'erp_itemreturnmaster.itemReturnAutoID',
-                    'erp_itemreturnmaster.companySystemID',
-                    'erp_itemreturnmaster.wareHouseLocation',
-                    'erp_itemreturnmaster.itemReturnCode',
-                    'erp_itemreturnmaster.approved'
-                )->whereHas('details', function ($query) use ($companySystemID, $input) {
-                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
-                })
-                ->where('approved', 0)
-                ->first();
-            /* approved=0*/
+        $checkWhether = ItemReturnMaster::where('itemReturnAutoID', '!=', $itemReturn->itemReturnAutoID)
+            ->where('companySystemID', $companySystemID)
+            ->where('wareHouseLocation', $itemReturn->wareHouseLocation)
+            ->select([
+                'erp_itemreturnmaster.itemReturnAutoID',
+                'erp_itemreturnmaster.companySystemID',
+                'erp_itemreturnmaster.wareHouseLocation',
+                'erp_itemreturnmaster.itemReturnCode',
+                'erp_itemreturnmaster.approved'
+            ])
+            ->groupBy(
+                'erp_itemreturnmaster.itemReturnAutoID',
+                'erp_itemreturnmaster.companySystemID',
+                'erp_itemreturnmaster.wareHouseLocation',
+                'erp_itemreturnmaster.itemReturnCode',
+                'erp_itemreturnmaster.approved'
+            )->whereHas('details', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+            })
+            ->where('approved', 0)
+            ->first();
+        /* approved=0*/
 
-            if (!empty($checkWhether)) {
-                return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
-            }
+        if (!empty($checkWhether)) {
+            return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
 
         //}
 
@@ -397,57 +421,57 @@ class ItemReturnDetailsAPIController extends AppBaseController
                 $convention = $unitConvention->conversion;
                 $input['convertionMeasureVal'] = $convention;
                 if ($convention > 0) {
-                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] / $convention),2);
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] / $convention), 2);
                 } else {
-                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] * $convention),2);
+                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] * $convention), 2);
                 }
             }
         } else {
             $input['qtyIssuedDefaultMeasure'] = $input['qtyIssued'];
         }
 
-        if($input['issueCodeSystem'] != $itemReturnDetails->issueCodeSystem){
+        if ($input['issueCodeSystem'] != $itemReturnDetails->issueCodeSystem) {
 
-            $itemIssueDetail = ItemIssueDetails::where('itemIssueAutoID',$input['issueCodeSystem'])
-                                               ->where('itemCodeSystem',$input['itemCodeSystem'])->first();
+            $itemIssueDetail = ItemIssueDetails::where('itemIssueAutoID', $input['issueCodeSystem'])
+                ->where('itemCodeSystem', $input['itemCodeSystem'])->first();
 
-            if(!empty($itemIssueDetail)){
-                $input['itemUnitOfMeasure']   = $itemIssueDetail->itemUnitOfMeasure;
+            if (!empty($itemIssueDetail)) {
+                $input['itemUnitOfMeasure'] = $itemIssueDetail->itemUnitOfMeasure;
                 $input['unitOfMeasureIssued'] = $itemIssueDetail->unitOfMeasureIssued;
-                $input['unitCostLocal']       = $itemIssueDetail->issueCostLocal;
-                $input['unitCostRpt']         = $itemIssueDetail->issueCostRpt;
-                $input['qtyFromIssue']        = $itemIssueDetail->qtyIssuedDefaultMeasure;
-                $input['qtyIssued']           = 0;
-                $input['qtyIssuedDefaultMeasure']  = 0;
-            }else{
+                $input['unitCostLocal'] = $itemIssueDetail->issueCostLocal;
+                $input['unitCostRpt'] = $itemIssueDetail->issueCostRpt;
+                $input['qtyFromIssue'] = $itemIssueDetail->qtyIssuedDefaultMeasure;
+                $input['qtyIssued'] = 0;
+                $input['qtyIssuedDefaultMeasure'] = 0;
+            } else {
                 return $this->sendError('Materiel Issue not found', 500);
             }
         }
 
-        if($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0){
+        if ($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0) {
             $input['qtyIssued'] = 0;
-            $input['qtyIssuedDefaultMeasure']  = 0;
+            $input['qtyIssuedDefaultMeasure'] = 0;
             $this->itemReturnDetailsRepository->update($input, $id);
             return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
-        if($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0){
+        if ($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0) {
             $input['qtyIssued'] = 0;
-            $input['qtyIssuedDefaultMeasure']  = 0;
+            $input['qtyIssuedDefaultMeasure'] = 0;
             $this->itemReturnDetailsRepository->update($input, $id);
             return $this->sendError("Cost is negative. You cannot issue", 500);
         }
 
         if ($input['qtyIssuedDefaultMeasure'] > $input['qtyFromIssue']) {
             $input['qtyIssued'] = 0;
-            $input['qtyIssuedDefaultMeasure']  = 0;
+            $input['qtyIssuedDefaultMeasure'] = 0;
             $this->itemReturnDetailsRepository->update($input, $id);
-            return $this->sendError("You cannot return more than the issued Qty", 500,$qtyError);
+            return $this->sendError("You cannot return more than the issued Qty", 500, $qtyError);
         }
 
-        if($input['qtyIssued'] == '' || is_null($input['qtyIssued'])){
+        if ($input['qtyIssued'] == '' || is_null($input['qtyIssued'])) {
             $input['qtyIssued'] = 0;
-            $input['qtyIssuedDefaultMeasure']  = 0;
+            $input['qtyIssuedDefaultMeasure'] = 0;
         }
 
         $itemReturnDetails = $this->itemReturnDetailsRepository->update($input, $id);
@@ -541,19 +565,19 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
             $item->issueUnits = $issueUnits;
 
-            if($item['itemCodeSystem']){
-                $itemIssues = ItemIssueMaster::whereHas('details',function ($q) use($item){
-                                                     $q->where('itemCodeSystem',$item['itemCodeSystem']);
-                                                  })
-                                                  ->where('companySystemID',$itemReturnMaster->companySystemID)
-                                                  ->where('serviceLineSystemID',$itemReturnMaster->serviceLineSystemID)
-                                                  ->where('wareHouseFrom',$itemReturnMaster->wareHouseLocation)
-                                                  ->where('approved',-1)
-                                                  ->select('itemIssueAutoID AS value','itemIssueCode AS label')
-                                                  ->get();
+            if ($item['itemCodeSystem']) {
+                $itemIssues = ItemIssueMaster::whereHas('details', function ($q) use ($item) {
+                    $q->where('itemCodeSystem', $item['itemCodeSystem']);
+                })
+                    ->where('companySystemID', $itemReturnMaster->companySystemID)
+                    ->where('serviceLineSystemID', $itemReturnMaster->serviceLineSystemID)
+                    ->where('wareHouseFrom', $itemReturnMaster->wareHouseLocation)
+                    ->where('approved', -1)
+                    ->select('itemIssueAutoID AS value', 'itemIssueCode AS label')
+                    ->get();
 
                 $item->issues = $itemIssues;
-            }else{
+            } else {
                 $item->issues = [];
             }
         }
@@ -574,8 +598,8 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $companyId = $input['companyId'];
 
         $items = ItemAssigned::where('companySystemID', $companyId)
-                            ->where('financeCategoryMaster', 1)
-                            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem','secondaryItemCode']);
+            ->where('financeCategoryMaster', 1)
+            ->select(['itemPrimaryCode', 'itemDescription', 'itemCodeSystem', 'secondaryItemCode']);
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
