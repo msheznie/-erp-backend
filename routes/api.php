@@ -682,6 +682,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getInvReclassificationApprovalByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovalByUser');
     Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification');
     Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification');
+
+    Route::post('invRecalssificationReopen', 'InventoryReclassificationAPIController@invRecalssificationReopen');
+
     Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
     Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
     Route::resource('performa_details', 'PerformaDetailsAPIController');
@@ -741,7 +744,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 11,'autoID' => 69624, 'companySystemID' => 7, 'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 21,'autoID' => 20711, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 
@@ -752,20 +755,7 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
-
-
-
-
-
-
-
-
-
-
 Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
-
-
-
 
 Route::resource('credit_notes', 'CreditNoteAPIController');
 
