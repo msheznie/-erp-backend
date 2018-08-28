@@ -13,6 +13,7 @@
  * -- Date: 17 - August 2018 By: Fayas Description: Added new functions named as getPurchaseReturnAudit(),getPurchaseReturnApprovedByUser(),
  *                          getPurchaseReturnApprovalByUser()
  * Date: 20 - August 2018 By: Fayas Description: Added new functions named as printPurchaseReturn()
+ * Date: 28 - August 2018 By: Fayas Description: Added new functions named as purchaseReturnReopen()
  *
  */
 namespace App\Http\Controllers\API;
@@ -25,7 +26,9 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
 use App\Models\GRVTypes;
@@ -1110,6 +1113,98 @@ class PurchaseReturnAPIController extends AppBaseController
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
+    public function purchaseReturnReopen(Request $request)
+    {
+        $input = $request->all();
 
+        $id = $input['purhaseReturnAutoID'];
+        $purchaseReturnMaster = $this->purchaseReturnRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($purchaseReturnMaster)) {
+            return $this->sendError('Purchase Return not found');
+        }
+
+        if ($purchaseReturnMaster->approved == -1) {
+            return $this->sendError('You cannot reopen this Purchase Return it is already fully approved');
+        }
+
+        if ($purchaseReturnMaster->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Purchase Return it is already partially approved');
+        }
+
+        if ($purchaseReturnMaster->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Purchase Return, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->purchaseReturnRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $purchaseReturnMaster->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseReturnMaster->itemReturnCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseReturnMaster->itemReturnCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $purchaseReturnMaster->companySystemID)
+            ->where('documentSystemCode', $purchaseReturnMaster->purhaseReturnAutoID)
+            ->where('documentSystemID', $purchaseReturnMaster->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $purchaseReturnMaster->companySystemID)
+                    ->where('documentSystemID', $purchaseReturnMaster->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $purchaseReturnMaster->companySystemID)
+            ->where('documentSystemID', $purchaseReturnMaster->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($purchaseReturnMaster->toArray(), 'Purchase Return reopened successfully');
+    }
 
 }
