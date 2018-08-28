@@ -508,6 +508,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
     Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany');
     Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit');
+    Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen');
     Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue');
     Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue');
     Route::post('getGRVMasterApproval', 'GRVMasterAPIController@getGRVMasterApproval');
@@ -543,6 +544,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser');
     Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer');
     Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
+
+
     Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
     Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
     Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany');
@@ -552,8 +555,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getItemsByMaterielReturn', 'ItemReturnDetailsAPIController@getItemsByMaterielReturn');
     Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn');
     Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
+    Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen');
     Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
     Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
+
+
     Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit');
     Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
@@ -764,3 +770,9 @@ Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
 Route::resource('credit_notes', 'CreditNoteAPIController');
 
 Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
+
+Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
+
+Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
+
+Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');

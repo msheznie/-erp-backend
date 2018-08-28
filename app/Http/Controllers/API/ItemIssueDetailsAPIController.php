@@ -608,50 +608,32 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
         if ($itemIssueDetails->issueCostLocal == 0 || $itemIssueDetails->issueCostRpt == 0) {
-            $input['issueCostRptTotal'] = 0;
-            $input['qtyIssuedDefaultMeasure'] = 0;
-            $input['qtyIssued'] = 0;
-            $this->itemIssueDetailsRepository->update($input, $id);
+            $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
             return $this->sendError("Cost is 0. You cannot issue.", 500);
         }
 
         if ($itemIssueDetails->issueCostLocal < 0 || $itemIssueDetails->issueCostRpt < 0) {
-            $input['issueCostRptTotal'] = 0;
-            $input['qtyIssuedDefaultMeasure'] = 0;
-            $input['qtyIssued'] = 0;
-            $this->itemIssueDetailsRepository->update($input, $id);
+            $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
             return $this->sendError("Cost is negative. You cannot issue.", 500);
         }
 
         if ($itemIssueDetails->currentStockQty <= 0) {
-            $input['issueCostRptTotal'] = 0;
-            $input['qtyIssuedDefaultMeasure'] = 0;
-            $input['qtyIssued'] = 0;
-            $this->itemIssueDetailsRepository->update($input, $id);
+            $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
             return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
         }
 
         if ($itemIssueDetails->currentWareHouseStockQty <= 0) {
-            $input['issueCostRptTotal'] = 0;
-            $input['qtyIssuedDefaultMeasure'] = 0;
-            $input['qtyIssued'] = 0;
-            $this->itemIssueDetailsRepository->update($input, $id);
+            $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
             return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
         }
 
         if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentStockQty) {
-            $input['issueCostRptTotal'] = 0;
-            $input['qtyIssuedDefaultMeasure'] = 0;
-            $input['qtyIssued'] = 0;
-            $this->itemIssueDetailsRepository->update($input, $id);
+            $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
             return $this->sendError("Current stock Qty is: " . $itemIssueDetails->currentStockQty . " .You cannot issue more than the current stock qty.", 500, $qtyError);
         }
 
         if ($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->currentWareHouseStockQty) {
-            $input['issueCostRptTotal'] = 0;
-            $input['qtyIssuedDefaultMeasure'] = 0;
-            $input['qtyIssued'] = 0;
-            $this->itemIssueDetailsRepository->update($input, $id);
+            $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
             return $this->sendError("Current warehouse stock Qty is: " . $itemIssueDetails->currentWareHouseStockQty . " .You cannot issue more than the current warehouse stock qty.", 500, $qtyError);
         }
 
@@ -662,6 +644,13 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if ($input['qtyIssued'] == '' || is_null($input['qtyIssued'])) {
             $input['qtyIssued'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
+        }
+
+        if ($itemIssue->issueType == 2) {
+            if($input['qtyIssuedDefaultMeasure'] > $itemIssueDetails->qtyRequested){
+                $this->itemIssueDetailsRepository->update(['issueCostRptTotal' => 0,'qtyIssuedDefaultMeasure' => 0, 'qtyIssued' => 0], $id);
+                return $this->sendError("Issuing qty cannot be more than requested qty", 500, $qtyError);
+            }
         }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
