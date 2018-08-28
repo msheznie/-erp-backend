@@ -14,3 +14,9 @@ Route::resource('stockAdjustmentDetails', 'StockAdjustmentDetailsController');
 Route::resource('creditNotes', 'CreditNoteController');
 
 Route::resource('creditNoteDetails', 'CreditNoteDetailsController');
+
+Route::resource('customerReceivePayments', 'CustomerReceivePaymentController');
+
+Route::resource('customerReceivePaymentDetails', 'CustomerReceivePaymentDetailController');
+
+Route::resource('directReceiptDetails', 'DirectReceiptDetailController');
