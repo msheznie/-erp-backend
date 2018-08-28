@@ -208,7 +208,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     );
 
                 $anyPendingApproval = $checkWhether->whereHas('details', function ($query) use ($companySystemID, $purchaseRequest, $item) {
-                    $query->where('itemPrimaryCode', $item->itemPrimaryCode);
+                    $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                                   ->where('manuallyClosed', 0);
                     /* $query->groupBy(
                          'erp_purchaserequestdetails.itemCode',
                          'erp_purchaserequestdetails.itemPrimaryCode',
@@ -257,7 +258,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                         $query->where('itemPrimaryCode', $item->itemPrimaryCode)
                             ->where('selectedForPO', 0)
                             ->where('prClosedYN', 0)
-                            ->where('fullyOrdered', 0);
+                            ->where('fullyOrdered', 0)
+                            ->where('manuallyClosed', 0);
+
                         /* $query->groupBy(
                              'erp_purchaserequestdetails.itemCode',
                              'erp_purchaserequestdetails.itemPrimaryCode',
@@ -305,7 +308,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                         $query->where('itemPrimaryCode', $item->itemPrimaryCode)
                             ->where('selectedForPO', 0)
                             ->where('prClosedYN', 0)
-                            ->where('fullyOrdered', 1);
+                            ->where('fullyOrdered', 1)
+                            ->where('manuallyClosed', 0);
                         /* $query->groupBy(
                              'erp_purchaserequestdetails.itemCode',
                              'erp_purchaserequestdetails.itemPrimaryCode',
@@ -334,7 +338,8 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                 $checkPOPending = ProcumentOrder::where('companySystemID', $companySystemID)
                     ->where('serviceLineSystemID', $purchaseRequest->serviceLineSystemID)
                     ->whereHas('detail', function ($query) use ($item) {
-                        $query->where('itemPrimaryCode', $item->itemPrimaryCode);
+                        $query->where('itemPrimaryCode', $item->itemPrimaryCode)
+                               ->where('manuallyClosed', 0);
                     })
                     ->where('approved', 0)
                     ->where('poCancelledYN', 0)
@@ -353,7 +358,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             $query->where('companySystemID', $companySystemID)
                 ->where('approved', -1)
                 ->where('poCancelledYN', 0);
-        })
+             })
             ->where('itemCode', $input['itemCode'])
             ->groupBy('erp_purchaseorderdetails.companySystemID',
                 'erp_purchaseorderdetails.itemCode'

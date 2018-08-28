@@ -89,7 +89,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $this->itemIssueDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemIssueDetails = $this->itemIssueDetailsRepository->all();
 
-        return $this->sendResponse($itemIssueDetails->toArray(), 'Item Issue Details retrieved successfully');
+        return $this->sendResponse($itemIssueDetails->toArray(), 'Materiel Issue Details retrieved successfully');
     }
 
     /**
@@ -141,7 +141,18 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $itemIssue = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->first();
 
         if (empty($itemIssue)) {
-            return $this->sendError('Item Issue not found', 500);
+            return $this->sendError('Materiel Issue not found', 500);
+        }
+
+        $validator = \Validator::make($itemIssue->toArray(), [
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'wareHouseFrom' => 'required|numeric|min:1',
+            'customerSystemID' => 'required|numeric|min:1',
+            'issueType' => 'required|numeric|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
         }
 
         if ($itemIssue->wareHouseFrom) {
@@ -150,7 +161,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 return $this->sendError('Warehouse not found', 500);
             }
             if ($wareHouse->isActive == 0) {
-                return $this->sendError('Please select a active warehouse.', 500);
+                return $this->sendError('Please select an active warehouse.', 500);
             }
         } else {
             return $this->sendError('Please select a warehouse.', 500);
@@ -162,7 +173,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 return $this->sendError('Department not found');
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError('Please select a active department', 500);
+                return $this->sendError('Please select an active department', 500);
             }
         } else {
             return $this->sendError('Please select a department.', 500);
@@ -189,13 +200,13 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $itemIssueMaster = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->first();
 
                 if (empty($itemIssueMaster)) {
-                    return $this->sendError('Item Issue Master not found');
+                    return $this->sendError('Materiel Issue not found');
                 }
             } else {
-                return $this->sendError('Item Issue Master not found');
+                return $this->sendError('Materiel Issue not found');
             }
         } else {
-            return $this->sendError('Item Issue Master not found');
+            return $this->sendError('Materiel Issue not found');
         }
 
 
@@ -467,7 +478,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         }
 
 
-        return $this->sendResponse($itemIssueDetails->toArray(), 'Item Issue Details saved successfully');
+        return $this->sendResponse($itemIssueDetails->toArray(), 'Materiel Issue Details saved successfully');
     }
 
     /**
@@ -514,10 +525,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $itemIssueDetails = $this->itemIssueDetailsRepository->findWithoutFail($id);
 
         if (empty($itemIssueDetails)) {
-            return $this->sendError('Item Issue Details not found');
+            return $this->sendError('Materiel Issue Details not found');
         }
 
-        return $this->sendResponse($itemIssueDetails->toArray(), 'Item Issue Details retrieved successfully');
+        return $this->sendResponse($itemIssueDetails->toArray(), 'Materiel Issue Details retrieved successfully');
     }
 
     /**
@@ -576,13 +587,13 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $itemIssueDetails = $this->itemIssueDetailsRepository->findWithoutFail($id);
 
         if (empty($itemIssueDetails)) {
-            return $this->sendError('Item Issue Details not found');
+            return $this->sendError('Materiel Issue Details not found');
         }
 
         $itemIssue = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->first();
 
         if (empty($itemIssue)) {
-            return $this->sendError('Item Issue not found', 500);
+            return $this->sendError('Materiel Issue not found', 500);
         }
 
 
@@ -754,13 +765,13 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $itemIssueDetails = $this->itemIssueDetailsRepository->findWithoutFail($id);
 
         if (empty($itemIssueDetails)) {
-            return $this->sendError('Item Issue Details not found');
+            return $this->sendError('Materiel Issue Details not found');
         }
 
         $itemIssue = ItemIssueMaster::where('itemIssueAutoID', $itemIssueDetails->itemIssueAutoID)->first();
 
         if (empty($itemIssue)) {
-            return $this->sendError('Item Issue not found');
+            return $this->sendError('Materiel Issue not found');
         }
 
         if ($itemIssue->issueType == 2) {
@@ -786,7 +797,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         $itemIssueDetails->delete();
 
-        return $this->sendResponse($id, 'Item Issue Details deleted successfully');
+        return $this->sendResponse($id, 'Materiel Issue Details deleted successfully');
     }
 
     /**

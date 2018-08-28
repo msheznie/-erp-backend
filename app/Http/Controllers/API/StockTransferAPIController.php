@@ -168,6 +168,23 @@ class StockTransferAPIController extends AppBaseController
         }
         unset($inputParam);
 
+        $validator = \Validator::make($input, [
+            'locationFrom' => 'required|numeric|min:1',
+            'locationTo' => 'required|numeric|min:1',
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'tranferDate' => 'required',
+            'companyToSystemID' => 'required|numeric|min:1',
+            'companyFromSystemID' => 'required|numeric|min:1',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'refNo' => 'required',
+            'comment' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         if (isset($input['tranferDate'])) {
             if ($input['tranferDate']) {
                 $input['tranferDate'] = new Carbon($input['tranferDate']);
@@ -396,9 +413,11 @@ class StockTransferAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $serviceLineError = array('type' => 'serviceLine');
         $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by', 'finance_period_by', 'finance_year_by']);
         $input = $this->convertArrayToValue($input);
+        $wareHouseFromError = array('type' => 'locationFrom');
+        $wareHouseToError   = array('type' => 'locationTo');
+        $serviceLineError   = array('type' => 'serviceLine');
 
         /** @var StockTransfer $stockTransfer */
         $stockTransfer = $this->stockTransferRepository->findWithoutFail($id);
@@ -412,6 +431,47 @@ class StockTransferAPIController extends AppBaseController
                 $input['tranferDate'] = new Carbon($input['tranferDate']);
             }
         }
+
+        if (isset($input['serviceLineSystemID'])) {
+            $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->where('isActive', 1)
+                ->first();
+
+            if (empty($segments)) {
+                $this->stockTransferRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
+                return $this->sendError('Selected department is not active. Please select an active department', 500, $serviceLineError);
+            }
+
+            if ($segments) {
+                $input['serviceLineCode'] = $segments->ServiceLineCode;
+            }
+        }
+
+        if (isset($input['locationFrom'])) {
+            $checkWareHouseActiveFrom = WarehouseMaster::find($input['locationFrom']);
+            if (empty($checkWareHouseActiveFrom)) {
+                return $this->sendError('Location from not found', 500, $wareHouseFromError);
+            }
+
+            if ($checkWareHouseActiveFrom->isActive == 0) {
+                $this->stockTransferRepository->update(['locationFrom' => null],$id);
+                return $this->sendError('Selected location from is not active. Please select an active location from', 500, $wareHouseFromError);
+            }
+        }
+
+        if (isset($input['locationTo'])) {
+            $checkWareHouseActiveTo = WarehouseMaster::find($input['locationTo']);
+            if (empty($checkWareHouseActiveTo)) {
+                return $this->sendError('Location to not found', 500, $wareHouseToError);
+            }
+
+            if ($checkWareHouseActiveTo->isActive == 0) {
+                $this->stockTransferRepository->update(['locationTo' => null],$id);
+                return $this->sendError('Selected location to is not active.Please select an active location to', 500, $wareHouseToError);
+            }
+        }
+
 
         if ($input['interCompanyTransferYN']) {
 
@@ -440,23 +500,6 @@ class StockTransferAPIController extends AppBaseController
             }
         }
 
-        if (isset($input['serviceLineSystemID'])) {
-            $segments = SegmentMaster::where("serviceLineSystemID", $input['serviceLineSystemID'])
-                ->where('companySystemID', $input['companySystemID'])
-                ->where('isActive', 1)
-                ->first();
-
-            if (empty($segments)) {
-                $stockTransferUpdate = StockTransfer::find($id);
-                $stockTransferUpdate->serviceLineSystemID = null;
-                $stockTransferUpdate->save();
-                return $this->sendError('Selected segment is not active. Please select an active segment', 500, $serviceLineError);
-            }
-
-            if ($segments) {
-                $input['serviceLineCode'] = $segments->ServiceLineCode;
-            }
-        }
 
         if ($input['locationFrom'] == $input['locationTo']) {
             return $this->sendError('Location From and Location To  cannot be same', 500);

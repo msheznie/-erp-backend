@@ -18,9 +18,11 @@ use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
 use App\Models\ItemIssueMaster;
+use App\Models\SegmentMaster;
 use App\Models\StockTransferDetails;
 use App\Models\StockTransfer;
 use App\Models\Company;
+use App\Models\WarehouseMaster;
 use App\Repositories\StockTransferDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -148,7 +150,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         if (!empty($itemExist)) {
-            return $this->sendError('Selected item all ready exist',500);
+            return $this->sendError('Selected item all ready exist', 500);
         }
 
         if (empty($item)) {
@@ -159,14 +161,12 @@ class StockTransferDetailsAPIController extends AppBaseController
             ->first();
 
         if (empty($stockTransferMaster)) {
-            return $this->sendError('Stock Transfer not found',500);
+            return $this->sendError('Stock Transfer not found', 500);
         }
 
         $validator = \Validator::make($stockTransferMaster->toArray(), [
             'locationFrom' => 'required|numeric|min:1',
             'locationTo' => 'required|numeric|min:1',
-            'companyFinancePeriodID' => 'required|numeric|min:1',
-            'companyFinanceYearID' => 'required|numeric|min:1',
             'companyToSystemID' => 'required|numeric|min:1',
             'companyFromSystemID' => 'required|numeric|min:1',
             'serviceLineSystemID' => 'required|numeric|min:1'
@@ -174,6 +174,35 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
+        }
+
+        $segment = SegmentMaster::where("serviceLineSystemID", $stockTransferMaster->serviceLineSystemID)
+            ->where('companySystemID', $stockTransferMaster->companySystemID)
+            ->where('isActive', 1)
+            ->first();
+
+        if (empty($segment)) {
+            return $this->sendError('Selected department is not active. Please select an active department', 500);
+        }
+
+
+        $checkWareHouseActiveFrom = WarehouseMaster::find($stockTransferMaster->locationFrom);
+        if (empty($checkWareHouseActiveFrom)) {
+            return $this->sendError('Location from not found', 500);
+        }
+
+        if ($checkWareHouseActiveFrom->isActive == 0) {
+            return $this->sendError('Selected location from is not active. Please select an active location from', 500);
+        }
+
+
+        $checkWareHouseActiveTo = WarehouseMaster::find($stockTransferMaster->locationTo);
+        if (empty($checkWareHouseActiveTo)) {
+            return $this->sendError('Location to not found', 500);
+        }
+
+        if ($checkWareHouseActiveTo->isActive == 0) {
+            return $this->sendError('Selected location to is not active.Please select an active location to', 500);
         }
 
 
@@ -249,8 +278,8 @@ class StockTransferDetailsAPIController extends AppBaseController
         $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
 
         $data = array('companySystemID' => $stockTransferMaster->companySystemID,
-                    'itemCodeSystem' => $input['itemCode'],
-                    'wareHouseId' => $stockTransferMaster->locationFrom);
+            'itemCodeSystem' => $input['itemCode'],
+            'wareHouseId' => $stockTransferMaster->locationFrom);
 
         $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
         $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
@@ -404,25 +433,25 @@ class StockTransferDetailsAPIController extends AppBaseController
             return $this->sendError('Stock Transfer not found');
         }
 
-        if ( $stockTransferDetails->unitCostLocal == 0 ||  $stockTransferDetails->unitCostRpt == 0) {
+        if ($stockTransferDetails->unitCostLocal == 0 || $stockTransferDetails->unitCostRpt == 0) {
             $input['qty'] = 0;
             $this->stockTransferDetailsRepository->update($input, $id);
             return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
-        if ( $stockTransferDetails->unitCostLocal < 0 ||  $stockTransferDetails->unitCostRpt < 0) {
+        if ($stockTransferDetails->unitCostLocal < 0 || $stockTransferDetails->unitCostRpt < 0) {
             $input['qty'] = 0;
             $this->stockTransferDetailsRepository->update($input, $id);
             return $this->sendError("Cost is negative. You cannot issue", 500);
         }
 
-        if($stockTransferDetails->currentStockQty <= 0){
+        if ($stockTransferDetails->currentStockQty <= 0) {
             $input['qty'] = 0;
             $this->stockTransferDetailsRepository->update($input, $id);
             return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
         }
 
-        if($stockTransferDetails->warehouseStockQty <= 0){
+        if ($stockTransferDetails->warehouseStockQty <= 0) {
             $input['qty'] = 0;
             $this->stockTransferDetailsRepository->update($input, $id);
             return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
@@ -431,13 +460,13 @@ class StockTransferDetailsAPIController extends AppBaseController
         if ($input['qty'] > $stockTransferDetails->warehouseStockQty) {
             $input['qty'] = 0;
             $this->stockTransferDetailsRepository->update($input, $id);
-            return $this->sendError("Current warehouse stock Qty is: ".$stockTransferDetails->warehouseStockQty." .You cannot issue more than the current warehouse stock qty.",500,$qtyError);
+            return $this->sendError("Current warehouse stock Qty is: " . $stockTransferDetails->warehouseStockQty . " .You cannot issue more than the current warehouse stock qty.", 500, $qtyError);
         }
 
         if ($input['qty'] > $stockTransferDetails->currentStockQty) {
             $input['qty'] = 0;
             $this->stockTransferDetailsRepository->update($input, $id);
-            return $this->sendError("Current stock Qty is: ".$stockTransferDetails->currentStockQty." .You cannot issue more than the current stock qty.",500,$qtyError);
+            return $this->sendError("Current stock Qty is: " . $stockTransferDetails->currentStockQty . " .You cannot issue more than the current stock qty.", 500, $qtyError);
         }
 
         $input['modifiedPc'] = gethostname();
@@ -450,8 +479,8 @@ class StockTransferDetailsAPIController extends AppBaseController
         $stockTransferDetails->warningMsg = 0;
 
         $item = ItemAssigned::where('itemCodeSystem', $stockTransferDetails->itemCodeSystem)
-                                                    ->where('companySystemID', $stockTransfer->companySystemID)
-                                                    ->first();
+            ->where('companySystemID', $stockTransfer->companySystemID)
+            ->first();
 
         if (!empty($item)) {
             if (($stockTransferDetails->currentStockQty - $stockTransferDetails->qty) < $item->minimumQty) {
