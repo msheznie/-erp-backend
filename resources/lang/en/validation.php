@@ -134,7 +134,9 @@ return [
         'ReturnDate' => 'Return date',
         'purchaseReturnDate' => 'Purchase return date',
         'issueDate' => 'Issue date',
+        'receivedDate' => 'Received date',
         'issueRefNo' => 'Reference No',
+        'refNo' => 'Reference No',
         'comment' => 'Comment',
     ],
 

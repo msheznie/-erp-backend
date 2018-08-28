@@ -12,6 +12,7 @@
  * -- Date: 24-July 2018 By: Fayas Description: Added new functions named as srPullFromTransferPreCheck()
  * -- Date: 25-July 2018 By: Fayas Description: Added new functions named as getStockReceiveApproval(),getApprovedSRForCurrentUser()
  * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as printStockReceive()
+ * -- Date: 28-August 2018 By: Fayas Description: Added new functions named as stockReceiveReopen()
  */
 namespace App\Http\Controllers\API;
 
@@ -21,7 +22,9 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\SegmentMaster;
@@ -449,6 +452,23 @@ class StockReceiveAPIController extends AppBaseController
                 return $this->sendError('Every item should have at least one minimum Qty', 500);
             }
 
+            $validator = \Validator::make($input, [
+                'locationFrom' => 'required|numeric|min:1',
+                'locationTo' => 'required|numeric|min:1',
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'receivedDate' => 'required',
+                'companyToSystemID' => 'required|numeric|min:1',
+                'companyFromSystemID' => 'required|numeric|min:1',
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'refNo' => 'required',
+                'comment' => 'required'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
             $stockReceiveDetails = StockReceiveDetails::where('stockReceiveAutoID', $id)->get();
 
 
@@ -759,6 +779,22 @@ class StockReceiveAPIController extends AppBaseController
             return $this->sendError('Stock Receive not found');
         }
 
+        $validator = \Validator::make($stockReceive->toArray(), [
+            'locationFrom' => 'required|numeric|min:1',
+            'locationTo' => 'required|numeric|min:1',
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'companyToSystemID' => 'required|numeric|min:1',
+            'companyFromSystemID' => 'required|numeric|min:1',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            //'refNo' => 'required',
+            //'comment' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         //checking segment is active
 
         $segments = SegmentMaster::where("serviceLineSystemID", $stockReceive->serviceLineSystemID)
@@ -918,5 +954,101 @@ class StockReceiveAPIController extends AppBaseController
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
+
+    public function stockReceiveReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['stockReceiveAutoID'];
+        $stockTransfer = $this->stockReceiveRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($stockTransfer)) {
+            return $this->sendError('Stock Receive not found');
+        }
+
+        if ($stockTransfer->approved == -1) {
+            return $this->sendError('You cannot reopen this Stock Receive it is already fully approved');
+        }
+
+        if ($stockTransfer->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Stock Receive it is already partially approved');
+        }
+
+        if ($stockTransfer->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Stock Receive, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->stockReceiveRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $stockTransfer->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $stockTransfer->stockTransferCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $stockTransfer->stockTransferCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $stockTransfer->companySystemID)
+            ->where('documentSystemCode', $stockTransfer->stockReceiveAutoID)
+            ->where('documentSystemID', $stockTransfer->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $stockTransfer->companySystemID)
+                    ->where('documentSystemID', $stockTransfer->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockTransfer->companySystemID)
+            ->where('documentSystemID', $stockTransfer->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($stockTransfer->toArray(), 'Stock Receive reopened successfully');
+    }
+
+
 
 }

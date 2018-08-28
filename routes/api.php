@@ -535,6 +535,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView');
     Route::get('getStockTransferFormData', 'StockTransferAPIController@getStockTransferFormData');
+    Route::post('stockTransferReopen', 'StockTransferAPIController@stockTransferReopen');
     Route::get('getStockTransferDetails', 'StockTransferDetailsAPIController@getStockTransferDetails');
     Route::get('getItemsOptionForStockTransfer', 'StockTransferAPIController@getItemsOptionForStockTransfer');
     Route::resource('stock_transfer_details', 'StockTransferDetailsAPIController');
@@ -571,6 +572,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getStockReceiveApproval', 'StockReceiveAPIController@getStockReceiveApproval');
     Route::post('getApprovedSRForCurrentUser', 'StockReceiveAPIController@getApprovedSRForCurrentUser');
     Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
+    Route::post('stockReceiveReopen', 'StockReceiveAPIController@stockReceiveReopen');
     Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData');
     Route::get('stockReceiveAudit', 'StockReceiveAPIController@stockReceiveAudit');
     Route::resource('stock_receive_details', 'StockReceiveDetailsAPIController');
