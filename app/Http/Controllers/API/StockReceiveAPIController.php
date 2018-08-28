@@ -827,18 +827,16 @@ class StockReceiveAPIController extends AppBaseController
         $validator = \Validator::make($stockReceive->toArray(), [
             'locationFrom' => 'required|numeric|min:1',
             'locationTo' => 'required|numeric|min:1',
-            'companyFinancePeriodID' => 'required|numeric|min:1',
-            'companyFinanceYearID' => 'required|numeric|min:1',
             'companyToSystemID' => 'required|numeric|min:1',
             'companyFromSystemID' => 'required|numeric|min:1',
-            'serviceLineSystemID' => 'required|numeric|min:1',
-            //'refNo' => 'required',
-            //'comment' => 'required'
+            'serviceLineSystemID' => 'required|numeric|min:1'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+
 
         //checking segment is active
 
@@ -849,6 +847,24 @@ class StockReceiveAPIController extends AppBaseController
 
         if (empty($segments)) {
             return $this->sendError('Selected Department is not active. Please select an active segment', 500);
+        }
+
+        $checkWareHouseActiveFrom = WarehouseMaster::find($stockReceive->locationFrom);
+        if (empty($checkWareHouseActiveFrom)) {
+            return $this->sendError('Location from not found', 500);
+        }
+
+        if ($checkWareHouseActiveFrom->isActive == 0) {
+            return $this->sendError('Selected location from is not active. Please select an active location from', 500);
+        }
+
+        $checkWareHouseActiveTo = WarehouseMaster::find($stockReceive->locationTo);
+        if (empty($checkWareHouseActiveTo)) {
+            return $this->sendError('Location to not found', 500);
+        }
+
+        if ($checkWareHouseActiveTo->isActive == 0) {
+            return $this->sendError('Selected location to is not active.Please select an active location to', 500);
         }
 
         return $this->sendResponse($id, 'success');
