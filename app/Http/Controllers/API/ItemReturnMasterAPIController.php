@@ -165,6 +165,22 @@ class ItemReturnMasterAPIController extends AppBaseController
         }
         unset($inputParam);
 
+        $validator = \Validator::make($input, [
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'ReturnDate' => 'required',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'wareHouseLocation' => 'required|numeric|min:1',
+            'ReturnType' => 'required|numeric|min:1',
+            //'customerID' => 'required|numeric|min:1',
+            'ReturnRefNo' => 'required',
+            'comment' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         if (isset($input['ReturnDate'])) {
             if ($input['ReturnDate']) {
                 $input['ReturnDate'] = new Carbon($input['ReturnDate']);
@@ -356,7 +372,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             if ($input['serviceLineSystemID']) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Department not found');
+                    return $this->sendError('Department not found',500);
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
@@ -402,7 +418,11 @@ class ItemReturnMasterAPIController extends AppBaseController
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'ReturnDate' => 'required',
                 'serviceLineSystemID' => 'required|numeric|min:1',
-                'wareHouseLocation' => 'required|numeric|min:1'
+                'wareHouseLocation' => 'required|numeric|min:1',
+                'ReturnType' => 'required|numeric|min:1',
+                //'customerID' => 'required|numeric|min:1',
+                'ReturnRefNo' => 'required',
+                'comment' => 'required',
             ]);
 
             if ($validator->fails()) {

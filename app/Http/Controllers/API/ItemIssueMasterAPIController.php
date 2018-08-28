@@ -173,11 +173,29 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
         unset($inputParam);
 
+        $validator = \Validator::make($input, [
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'issueDate' => 'required',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'wareHouseFrom' => 'required|numeric|min:1',
+            'customerSystemID' => 'required|numeric|min:1',
+            'issueType' => 'required|numeric|min:1',
+            'issueRefNo' => 'required',
+            'comment' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         if (isset($input['issueDate'])) {
             if ($input['issueDate']) {
                 $input['issueDate'] = new Carbon($input['issueDate']);
             }
         }
+
+
 
         $documentDate = $input['issueDate'];
         $monthBegin = $input['FYBiggin'];
@@ -374,7 +392,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             if ($checkDepartmentActive->isActive == 0) {
                 $this->itemIssueMasterRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
-                return $this->sendError('Please select a active department', 500,$serviceLineError);
+                return $this->sendError('Please select an active department', 500,$serviceLineError);
             }
         }
 
@@ -386,7 +404,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             if ($checkWareHouseActive->isActive == 0) {
                  $this->itemIssueMasterRepository->update(['wareHouseFrom' => null,'wareHouseFromCode' => null,'wareHouseFromDes'=> null],$id);
-                return $this->sendError('Please select a active warehouse', 500, $wareHouseError);
+                return $this->sendError('Please select an active warehouse', 500, $wareHouseError);
             }
         }
 
@@ -472,6 +490,8 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'issueDate' => 'required',
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'wareHouseFrom' => 'required|numeric|min:1',
+                'customerSystemID' => 'required|numeric|min:1',
+                'issueType' => 'required|numeric|min:1',
                 'issueRefNo' => 'required',
                 'comment' => 'required',
             ]);

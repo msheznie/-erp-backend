@@ -17,7 +17,10 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateInventoryReclassificationAPIRequest;
 use App\Http\Requests\API\UpdateInventoryReclassificationAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\InventoryReclassification;
 use App\Models\InventoryReclassificationDetail;
 use App\Models\ItemAssigned;
@@ -262,11 +265,11 @@ class InventoryReclassificationAPIController extends AppBaseController
     public function show($id)
     {
         /** @var InventoryReclassification $inventoryReclassification */
-        $inventoryReclassification = $this->inventoryReclassificationRepository->with(['confirmed_by','created_by','financeperiod_by'=> function($query){
+        $inventoryReclassification = $this->inventoryReclassificationRepository->with(['confirmed_by', 'created_by', 'financeperiod_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        },'financeyear_by'=> function($query){
+        }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        },'segment_by','warehouse_by'])->findWithoutFail($id);
+        }, 'segment_by', 'warehouse_by'])->findWithoutFail($id);
 
         if (empty($inventoryReclassification)) {
             return $this->sendError('Inventory Reclassification not found');
@@ -324,8 +327,8 @@ class InventoryReclassificationAPIController extends AppBaseController
     public function update($id, UpdateInventoryReclassificationAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by','confirmedByName','financeperiod_by','financeyear_by',
-            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID','segment_by','warehouse_by']);
+        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by',
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'segment_by', 'warehouse_by']);
         $input = $this->convertArrayToValue($input);
 
         $validator = \Validator::make($request->all(), [
@@ -418,8 +421,8 @@ class InventoryReclassificationAPIController extends AppBaseController
             $error_count = 0;
 
             $inventoryReclassificationDetail = InventoryReclassificationDetail::where('inventoryreclassificationID', $id)->get();
-            if($inventoryReclassificationDetail){
-                foreach ($inventoryReclassificationDetail as $val){
+            if ($inventoryReclassificationDetail) {
+                foreach ($inventoryReclassificationDetail as $val) {
                     $updateItem = InventoryReclassificationDetail::find($val['inventoryReclassificationDetailID']);
                     $data = array('companySystemID' => $inventoryReclassification->companySystemID,
                         'itemCodeSystem' => $updateItem->itemSystemCode,
@@ -576,14 +579,14 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $subCompanies = [$companyId];
         }
 
         $segments = SegmentMaster::whereIn("companySystemID", $subCompanies);
-        $wareHouses = WarehouseMaster::whereIn('companySystemID',$subCompanies);
+        $wareHouses = WarehouseMaster::whereIn('companySystemID', $subCompanies);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $segments = $segments->where('isActive', 1);
             $wareHouses = $wareHouses->where('isActive', 1);
@@ -648,7 +651,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             return $this->sendError('Inventory Reclassification not found');
         }
 
-        $invReclassification->docRefNo = \Helper::getCompanyDocRefNo($invReclassification->companySystemID,$invReclassification->documentSystemID);
+        $invReclassification->docRefNo = \Helper::getCompanyDocRefNo($invReclassification->companySystemID, $invReclassification->documentSystemID);
 
         return $this->sendResponse($invReclassification->toArray(), 'Inventory reclassification retrieved successfully');
     }
@@ -824,6 +827,110 @@ class InventoryReclassificationAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+
+    public function invRecalssificationReopen(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $inventoryreclassificationID = $input['inventoryreclassificationID'];
+
+            $inventoryReclassification = $this->inventoryReclassificationRepository->findWithoutFail($inventoryreclassificationID);
+            $emails = array();
+            if (empty($inventoryReclassification)) {
+                return $this->sendError('Inventory Reclassification not found');
+            }
+
+            if ($inventoryReclassification->RollLevForApp_curr > 1) {
+                return $this->sendError('You cannot reopen this inventory reclassification it is already partially approved');
+            }
+
+            if ($inventoryReclassification->approved == -1) {
+                return $this->sendError('You cannot reopen this inventory reclassification it is already fully approved');
+            }
+
+            if ($inventoryReclassification->confirmedYN == 0) {
+                return $this->sendError('You cannot reopen this inventory reclassification, it is not confirmed');
+            }
+
+            // updating fields
+            $inventoryReclassification->confirmedYN = 0;
+            $inventoryReclassification->confirmedByEmpSystemID = null;
+            $inventoryReclassification->confirmedByEmpID = null;
+            $inventoryReclassification->confirmedByName = null;
+            $inventoryReclassification->confirmedDate = null;
+            $inventoryReclassification->RollLevForApp_curr = 1;
+            $inventoryReclassification->save();
+
+            $employee = \Helper::getEmployeeInfo();
+            $document = DocumentMaster::where('documentSystemID', $inventoryReclassification->documentSystemID)->first();
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $inventoryReclassification->documentCode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $inventoryReclassification->documentCode;
+            $subject = $cancelDocNameSubject . ' is reopened';
+            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+            $documentApproval = DocumentApproved::where('companySystemID', $inventoryReclassification->companySystemID)
+                ->where('documentSystemCode', $inventoryReclassification->inventoryreclassificationID)
+                ->where('documentSystemID', $inventoryReclassification->documentSystemID)
+                ->where('rollLevelOrder', 1)
+                ->first();
+
+            if ($documentApproval) {
+                if ($documentApproval->approvedYN == 0) {
+                    $companyDocument = CompanyDocumentAttachment::where('companySystemID', $inventoryReclassification->companySystemID)
+                        ->where('documentSystemID', $inventoryReclassification->documentSystemID)
+                        ->first();
+                    if (empty($companyDocument)) {
+                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                    }
+                    $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                        ->where('companySystemID', $documentApproval->companySystemID)
+                        ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                    if ($companyDocument['isServiceLineApproval'] == -1) {
+                        $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                    }
+
+                    $approvalList = $approvalList
+                        ->with(['employee'])
+                        ->groupBy('employeeSystemID')
+                        ->get();
+
+                    if ($approvalList) {
+                        foreach ($approvalList as $da) {
+                            if ($da->employee) {
+                                $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                    'companySystemID' => $documentApproval->companySystemID,
+                                    'docSystemID' => $documentApproval->documentSystemID,
+                                    'alertMessage' => $subject,
+                                    'emailAlertMessage' => $body,
+                                    'docSystemCode' => $documentApproval->documentSystemCode);
+                            }
+                        }
+                    } else {
+                        return $this->sendError('Approval list not found!', 500);
+                    }
+
+                    $sendEmail = \Email::sendEmail($emails);
+                    if (!$sendEmail["success"]) {
+                        return ['success' => false, 'message' => $sendEmail["message"]];
+                    }
+                }
+            }
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $inventoryreclassificationID)
+                ->where('companySystemID', $inventoryReclassification->companySystemID)
+                ->where('documentSystemID', $inventoryReclassification->documentSystemID)
+                ->delete();
+
+            DB::commit();
+            return $this->sendResponse($inventoryReclassification->toArray(), 'Inventory Reclassification reopened successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError('Error Occurred', 500);
+        }
     }
 
 }
