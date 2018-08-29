@@ -298,7 +298,7 @@ class Helper
                         // get current employee detail
                         $empInfo = self::getEmployeeInfo();
                         //confirm the document
-                        $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(),'RollLevForApp_curr' => 1]);
+                        $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
 
                         //get the policy
                         $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
@@ -850,7 +850,7 @@ class Helper
             if ($docApproved) {
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
-                if(!$isConfirmed[$docInforArr["confirmedYN"]]){ // check document is confirmed or not
+                if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
                     return ['success' => false, 'message' => 'Document is not confirmed'];
                 }
                 //check document is already approved
@@ -879,10 +879,10 @@ class Helper
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset
                                 $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
-                                $qtyRangeArr= [];
+                                $qtyRangeArr = [];
                                 if ($fixeAssetDetail) {
                                     $lastSerialNumber = 1;
-                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID',$docApproved->companySystemID)->first();
+                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID', $docApproved->companySystemID)->first();
                                     if ($lastSerial) {
                                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                                     }
@@ -890,11 +890,11 @@ class Helper
                                         if ($val["currentStockQty"]) {
                                             $qtyRange = range(1, $val["currentStockQty"]);
                                             if ($qtyRange) {
-                                                foreach($qtyRange as $qty){
-                                                    $documentCode = ($val["master"]["companyID"] .'\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                                                foreach ($qtyRange as $qty) {
+                                                    $documentCode = ($val["master"]["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
                                                     $data["departmentID"] = 'AM';
                                                     $data["departmentSystemID"] = null;
-                                                    $data["serviceLineSystemID"] =  $val["master"]["serviceLineSystemID"];
+                                                    $data["serviceLineSystemID"] = $val["master"]["serviceLineSystemID"];
                                                     $data["serviceLineCode"] = $val["master"]["serviceLineSystemID"];
                                                     $data["docOriginSystemCode"] = $val["inventoryreclassificationID"];
                                                     $data["docOrigin"] = $val["master"]["documentCode"];
@@ -923,12 +923,12 @@ class Helper
 
                             // insert the record to item ledger
 
-                            if($input["documentSystemID"] != 20) {
+                            if ($input["documentSystemID"] != 20) {
                                 $jobIL = ItemLedgerInsert::dispatch($masterData);
                             }
 
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"]==20 ) {
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
@@ -1395,5 +1395,108 @@ class Helper
                 return ['success' => false, 'message' => 'Please select a finance period'];
             }
         }
+    }
+
+
+    public static function convertAmountToLocalRpt($documentSystemID, $autoID, $transactionAmount)
+    {
+        $docInforArr = [];
+        switch ($documentSystemID) { // check the document id and set relavant parameters
+            case 3:
+                $docInforArr["modelName"] = 'GRVMaster';
+                $docInforArr["transCurrencyID"] = 'supplierTransactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'supplierDefaultCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransactionER';
+                $docInforArr["rptCurrencyER"] = 'companyReportingER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'supplierDefaultER';
+                break;
+            default:
+                return ['success' => false, 'message' => 'Document ID not found'];
+        }
+
+        $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+        $masterData = $namespacedModel::find($autoID);
+        if ($masterData) {
+
+            $transactionCurrencyID = $masterData[$docInforArr["transCurrencyID"]];
+            $transactionDefaultCurrencyID = $masterData[$docInforArr["transDefaultCurrencyID"]];
+            $reportingCurrencyID = $masterData[$docInforArr["rptCurrencyID"]];
+            $locaCurrencyID = $masterData[$docInforArr["localCurrencyID"]];
+            $trasToRptER = $masterData[$docInforArr["rptCurrencyER"]];
+            $trasToTransER = $masterData[$docInforArr["transCurrencyER"]];
+            $trasToLocER = $masterData[$docInforArr["localCurrencyER"]];
+            $trasToDefaultER = $masterData[$docInforArr["defaultCurrencyER"]];
+            $reportingAmount = 0;
+            $localAmount = 0;
+            $defaultAmount = 0;
+
+            if ($transactionCurrencyID == $reportingCurrencyID) {
+                $reportingAmount = $transactionAmount;
+            } else {
+                if ($trasToRptER > $trasToTransER) {
+                    if ($trasToRptER > 1) {
+                        $reportingAmount = $transactionAmount / $trasToRptER;
+                    } else {
+                        $reportingAmount = $transactionAmount * $trasToRptER;
+                    }
+                } else {
+                    If ($trasToRptER > 1) {
+                        $reportingAmount = $transactionAmount * $trasToRptER;
+                    } else {
+                        $reportingAmount = $transactionAmount / $trasToRptER;
+                    }
+                }
+            }
+
+            if ($transactionCurrencyID == $locaCurrencyID) {
+                $localAmount = $transactionAmount;
+            } else {
+                if ($trasToLocER > $trasToTransER) {
+                    if ($trasToLocER > 1) {
+                        $localAmount = $transactionAmount / $trasToLocER;
+                    } else {
+                        $localAmount = $transactionAmount * $trasToLocER;
+                    }
+                } else {
+                    If ($trasToLocER > 1) {
+                        $localAmount = $transactionAmount * $trasToLocER;
+                    } else {
+                        $localAmount = $transactionAmount / $trasToLocER;
+                    }
+                }
+            }
+
+            if ($transactionCurrencyID == $transactionDefaultCurrencyID) {
+                $defaultAmount = $transactionAmount;
+            } else {
+                if ($trasToDefaultER > $trasToTransER) {
+                    if ($trasToDefaultER > 1) {
+                        $defaultAmount = $transactionAmount / $trasToDefaultER;
+                    } else {
+                        $defaultAmount = $transactionAmount * $trasToDefaultER;
+                    }
+                } else {
+                    If ($trasToDefaultER > 1) {
+                        $defaultAmount = $transactionAmount * $trasToDefaultER;
+                    } else {
+                        $defaultAmount = $transactionAmount / $trasToDefaultER;
+                    }
+                }
+            }
+
+        } else {
+            return ['success' => false, 'message' => 'No records found'];
+        }
+
+        $array = array(
+            'reportingAmount' => $reportingAmount,
+            'localAmount' => $localAmount,
+            'defaultAmount' => $defaultAmount,
+        );
+
+        return $array;
     }
 }
