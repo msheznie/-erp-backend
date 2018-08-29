@@ -28,6 +28,7 @@ use App\Models\DocumentAttachments;
 use App\Models\EmployeesDepartment;
 use App\Models\GRVMaster;
 use App\Models\CompanyPolicyMaster;
+use App\Models\ItemAssigned;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
@@ -736,7 +737,7 @@ class GRVMasterAPIController extends AppBaseController
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $grvTypes = GRVTypes::where('grvTypeID', 2)->get();
+        $grvTypes = GRVTypes::all();
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
@@ -1190,6 +1191,24 @@ class GRVMasterAPIController extends AppBaseController
             ->delete();
 
         return $this->sendResponse($grvMasterData->toArray(), 'Good Receipt Voucher reopened successfully');
+    }
+
+    public function getItemsOptionForGRV(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $items = ItemAssigned::where('companySystemID', $companyID);
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 
 }

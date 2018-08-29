@@ -157,7 +157,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
         $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
-        if (count($currency) > 0) {
+
+        if ($currency) {
             $input['custTransactionCurrencyID'] = $currency->currencyID;
             $myCurr = $currency->currencyID;
 

@@ -579,8 +579,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdateItemIssueDetailsAPIRequest $request)
     {
-
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing']);
+        $message = "Item updated successfully";
+        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         /** @var ItemIssueDetails $itemIssueDetails */
@@ -588,6 +588,13 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         if (empty($itemIssueDetails)) {
             return $this->sendError('Materiel Issue Details not found');
+        }
+
+        if(isset($input['deliveryPrint'])){
+            if($input['deliveryPrint'] == 1){
+                $this->itemIssueDetailsRepository->update(array_only($input, ['backLoad','used','pl10','pl3','grvDocumentNO']), $id);
+                return $this->sendResponse($itemIssueDetails->toArray(), $message);
+            }
         }
 
         $itemIssue = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->first();
@@ -704,7 +711,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
             }
         }
 
-        $message = "Item updated successfully";
         $itemIssueDetails->warningMsg = 0;
 
         if (($itemIssueDetails->currentStockQty - $itemIssueDetails->qtyIssuedDefaultMeasure) < $itemIssueDetails->minQty) {
@@ -813,7 +819,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         $rId = $input['itemIssueAutoID'];
 
         $items = ItemIssueDetails::where('itemIssueAutoID', $rId)
-            ->with(['uom_default', 'uom_issuing'])
+            ->with(['uom_default', 'uom_issuing','item_by'])
             ->get();
 
 

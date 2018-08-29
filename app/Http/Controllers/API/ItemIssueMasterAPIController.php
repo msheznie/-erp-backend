@@ -14,6 +14,7 @@
  * -- Date: 28-June 2018 By: Fayas Description: Added new functions named as getMaterielIssueApprovalByUser(),getMaterielIssueApprovedByUser()
  * -- Date: 26-July 2018 By: Fayas Description: Added new functions named as printItemIssue()
  * -- Date: 27-August 2018 By: Fayas Description: Added new functions named as materielIssueReopen()
+ * -- Date: 29-August 2018 By: Fayas Description: Added new functions named as deliveryPrintItemIssue()
  */
 namespace App\Http\Controllers\API;
 
@@ -308,7 +309,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ItemIssueMaster $itemIssueMaster */
-        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by', 'created_by', 'finance_period_by' => function ($query) {
+        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by', 'created_by','customer_by','finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
@@ -370,7 +371,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function update($id, UpdateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by',
+        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by','customer_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
 
         $input = $this->convertArrayToValue($input);
@@ -1134,32 +1135,54 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function getMaterielIssueAudit(Request $request)
     {
         $id = $request->get('id');
-        $materielRequest = $this->itemIssueMasterRepository->getAudit($id);
+        $materielIssue = $this->itemIssueMasterRepository->getAudit($id);
 
-        if (empty($materielRequest)) {
+        if (empty($materielIssue)) {
             return $this->sendError('Materiel Issue not found');
         }
 
-        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
+        $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
 
-        return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
+        return $this->sendResponse($materielIssue->toArray(), 'Materiel Issue retrieved successfully');
     }
 
     public function printItemIssue(Request $request)
     {
         $id = $request->get('id');
-        $materielRequest = $this->itemIssueMasterRepository->getAudit($id);
+        $materielIssue = $this->itemIssueMasterRepository->getAudit($id);
 
-        if (empty($materielRequest)) {
+        if (empty($materielIssue)) {
             return $this->sendError('Materiel Issue not found');
         }
 
-        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
+        $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
 
-        $array = array('entity' => $materielRequest);
+        $array = array('entity' => $materielIssue);
         $time = strtotime("now");
         $fileName = 'item_issue_' . $id . '_' . $time . '.pdf';
         $html = view('print.item_issue', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+
+    public function deliveryPrintItemIssue(Request $request)
+    {
+        $id = $request->get('id');
+        $materielIssue = $this->itemIssueMasterRepository->getAudit($id);
+
+        if (empty($materielIssue)) {
+            return $this->sendError('Materiel Issue not found');
+        }
+
+        $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
+
+        $array = array('entity' => $materielIssue);
+        $time = strtotime("now");
+        $fileName = 'item_issue_delivery' . $id . '_' . $time . '.pdf';
+        $html = view('print.item_issue_delivery', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
