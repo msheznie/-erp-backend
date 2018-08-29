@@ -1,9 +1,9 @@
 <style type="text/css">
     <!--
     @page {
-        margin-left: 3%;
+        margin-left: 5%;
         margin-right: 3%;
-        margin-top: 4%;
+        margin-top: 1%;
     }
 
     .footer {
@@ -101,11 +101,11 @@
     }
 
     .title {
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .titlebolt {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
     }
 
@@ -165,26 +165,23 @@
     <div class="row">
         <table style="width:100%">
             <tr>
-                <td width="30%">
+                <td width="35%">
                     <table>
                         <tr>
                             <td><img src="logos/{{$podata->company->companyLogo}}" width="180px" height="60px"></td>
                         </tr>
                     </table>
                 </td>
-                <td width="70%">
+                <td width="65%">
                     <table>
                         <tr>
                             <td>
-                                <h2 class="font-weight-bold" style="text-align: center">
-                                    Advance Payment Request
-                                </h2>
-
-                                <h2 class="font-weight-bold">
+                                <h3 class="font-weight-bold" style="text-align: center; font-size: 14px">
+                                    Advance Payment Request <br>
                                     @if ($podata->company)
                                         {{$podata->company->CompanyName}}
                                     @endif
-                                </h2>
+                                </h3>
                             </td>
                         </tr>
                     </table>
@@ -192,15 +189,14 @@
             </tr>
         </table>
     </div>
-    <hr style="background-color: black">
     <table style="width:100%">
         <tr>
-            <td width="50%">
-                <table>
+            <td width="60%">
+                <table style="width:100%">
                     <tr>
-                        <td><span class="titlebolt">Po Code</span></td>
-                        <td><span class="titlebolt">:</span></td>
-                        <td><span class="titlebolt">
+                        <td width="20%"><span class="titlebolt">Po Code</span></td>
+                        <td width="10%"><span class="titlebolt">:</span></td>
+                        <td width="70%"><span class="titlebolt">
                             @if ($podata->poCode)
                                 {{$podata->poCode}}
                             @endif
@@ -209,12 +205,12 @@
                     </tr>
                 </table>
             </td>
-            <td width="50%">
-                <table>
+            <td width="40%">
+                <table style="width:100%">
                     <tr>
-                        <td><span class="titlebolt">Req. Date </span></td>
-                        <td><span class="titlebolt">:</span></td>
-                        <td><span class="titlebolt">{{ \App\helper\Helper::dateFormat($podata->reqDate)}}</span></td>
+                        <td width="26%"><span class="titlebolt">Req. Date </span></td>
+                        <td width="4%"><span class="titlebolt">:</span></td>
+                        <td width="70%"><span class="titlebolt">{{ \App\helper\Helper::dateFormat($podata->reqDate)}}</span></td>
                     </tr>
                 </table>
             </td>
@@ -222,46 +218,40 @@
     </table>
     <table style="width:43%">
         <tr>
-            <td width="35%"><span class="titlebolt">Doc Control #</span></td>
-            <td width="5%"><span class="titlebolt">:</span></td>
+            <td width="28%"><span class="titlebolt">Doc Control #</span></td>
+            <td width="15%"><span class="titlebolt">:</span></td>
             <td width="60%"><span class="titlebolt">{{$docRef}}</span></td>
         </tr>
     </table>
     <table style="width:100%">
+        <tr >
+            <td height="20" width="14%"><span class="title">Supplier</span></td>
+            <td width="3%"><span class="title">:</span></td>
+            <td width="83%"> &nbsp;
+                @if ($podata->supplier_by)
+                    {{$podata->supplier_by->supplierName}}
+                @endif
+            </td>
+        </tr>
         <tr>
-            <td width="100%">
-                <table>
-                    <tr >
-                        <td height="20" width="35%"><span class="title">Supplier</span></td>
-                        <td width="5%"><span class="title">:</span></td>
-                        <td width="60%">
-                            @if ($podata->supplier_by)
-                                {{$podata->supplier_by->supplierName}}
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td height="20" width="35%"><span class="title">Narration</span></td>
-                        <td width="5%"><span class="title">:</span></td>
-                        <td width="60%"><span class="title">
-                            @if ($podata->narration)
-                                    {{$podata->narration}}
-                                @endif
+            <td height="20" width="14%"><span class="title">Narration </span></td>
+            <td width="3%"><span class="title">:</span></td>
+            <td width="83%"><span class="title"> &nbsp;
+                    @if ($podata->narration)
+                        {{$podata->narration}}
+                    @endif
                             </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td height="20" width="35%"><span class="titlebolt">Amount</span></td>
-                        <td width="5%"><span class="titlebolt">:</span></td>
-                        <td width="60%"><span class="titlebolt">
-                            @if ($podata->currency)
-                                    {{$podata->currency->CurrencyCode}} &nbsp;
-                                    &nbsp; {{number_format($podata->reqAmount, $podata->currency->DecimalPlaces)}}
-                                @endif
-                            </span>
-                        </td>
-                    </tr>
-                </table>
+            </td>
+        </tr>
+        <tr>
+            <td height="20" width="14%"><span class="titlebolt">Amount</span></td>
+            <td width="3%"><span class="titlebolt">:</span></td>
+            <td width="83%"><span class="titlebolt"> &nbsp;
+                    @if ($podata->currency)
+                        {{$podata->currency->CurrencyCode}} &nbsp;
+                        &nbsp; {{number_format($podata->reqAmount, $podata->currency->DecimalPlaces)}}
+                    @endif
+                </span>
             </td>
         </tr>
     </table>

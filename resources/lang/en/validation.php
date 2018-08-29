@@ -127,8 +127,8 @@ return [
         'tranferDate' => 'Transfer Date',
         'companyToSystemID' => 'Company to',
         'companyFromSystemID' => 'Company from',
-        'wareHouseFrom' => 'WareHouse',
-        'wareHouseLocation' => 'WareHouse',
+        'wareHouseFrom' => 'Warehouse',
+        'wareHouseLocation' => 'Warehouse',
         'purchaseReturnLocation' => 'Location',
         'serviceLineSystemID' => 'Department',
         'ReturnDate' => 'Return date',
@@ -138,6 +138,11 @@ return [
         'issueRefNo' => 'Reference No',
         'refNo' => 'Reference No',
         'comment' => 'Comment',
+        'customerSystemID' => 'Customer',
+        'customerID' => 'Customer',
+        'issueType' => 'Issues Type',
+        'ReturnType' => 'Return Type',
+        'ReturnRefNo' => 'Reference No',
     ],
 
 ];

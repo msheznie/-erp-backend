@@ -161,6 +161,23 @@ class StockReceiveAPIController extends AppBaseController
         }
         unset($inputParam);
 
+        $validator = \Validator::make($input, [
+            'locationFrom' => 'required|numeric|min:1',
+            'locationTo' => 'required|numeric|min:1',
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'receivedDate' => 'required',
+            'companyToSystemID' => 'required|numeric|min:1',
+            'companyFromSystemID' => 'required|numeric|min:1',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'refNo' => 'required',
+            'comment' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         if (isset($input['receivedDate'])) {
             if ($input['receivedDate']) {
                 $input['receivedDate'] = new Carbon($input['receivedDate']);
@@ -358,6 +375,9 @@ class StockReceiveAPIController extends AppBaseController
     public function update($id, UpdateStockReceiveAPIRequest $request)
     {
         $input = $request->all();
+        $wareHouseFromError = array('type' => 'locationFrom');
+        $wareHouseToError   = array('type' => 'locationTo');
+        $serviceLineError   = array('type' => 'serviceLine');
         $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by','finance_period_by','finance_year_by']);
         $input = $this->convertArrayToValue($input);
         /** @var StockReceive $stockReceive */
@@ -385,16 +405,42 @@ class StockReceiveAPIController extends AppBaseController
                 ->first();
 
             if (empty($segment)) {
-                return $this->sendError('Selected segment is not active. Please select an active segment');
-            }
-
-            if ($input['locationFrom'] == $input['locationTo']) {
-                return $this->sendError('Location From and Location To  cannot be same');
+                $this->stockReceiveRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
+                return $this->sendError('Selected segment is not active. Please select an active segment',500,$serviceLineError);
             }
 
             if ($segment) {
                 $input['serviceLineCode'] = $segment->ServiceLineCode;
             }
+        }
+
+        if (isset($input['locationFrom'])) {
+            $checkWareHouseActiveFrom = WarehouseMaster::find($input['locationFrom']);
+            if (empty($checkWareHouseActiveFrom)) {
+                return $this->sendError('Location from not found', 500, $wareHouseFromError);
+            }
+
+            if ($checkWareHouseActiveFrom->isActive == 0) {
+                $this->stockReceiveRepository->update(['locationFrom' => null],$id);
+                return $this->sendError('Selected location from is not active. Please select an active location from', 500, $wareHouseFromError);
+            }
+        }
+
+        if (isset($input['locationTo'])) {
+            $checkWareHouseActiveTo = WarehouseMaster::find($input['locationTo']);
+            if (empty($checkWareHouseActiveTo)) {
+                return $this->sendError('Location to not found', 500, $wareHouseToError);
+            }
+
+            if ($checkWareHouseActiveTo->isActive == 0) {
+                $this->stockReceiveRepository->update(['locationTo' => null],$id);
+                return $this->sendError('Selected location to is not active.Please select an active location to', 500, $wareHouseToError);
+            }
+        }
+
+        if ($input['locationFrom'] == $input['locationTo']) {
+            $this->stockReceiveRepository->update(['locationTo' => null], $id);
+            return $this->sendError('Location From and Location To  cannot be same',500,$wareHouseToError);
         }
 
         if (isset($input['companyFromSystemID'])) {
@@ -434,14 +480,14 @@ class StockReceiveAPIController extends AppBaseController
 
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Receive date is not within the selected financial period !');
+                return $this->sendError('Receive date is not within the selected financial period !',500);
             }
 
             $stockReceiveDetailExist = StockReceiveDetails::where('stockReceiveAutoID', $id)
                 ->count();
 
             if ($stockReceiveDetailExist == 0) {
-                return $this->sendError('Stock Receive document cannot confirm without details');
+                return $this->sendError('Stock Receive document cannot confirm without details',500);
             }
 
             $checkQuantity = StockReceiveDetails::where('stockReceiveAutoID', $id)
@@ -782,18 +828,16 @@ class StockReceiveAPIController extends AppBaseController
         $validator = \Validator::make($stockReceive->toArray(), [
             'locationFrom' => 'required|numeric|min:1',
             'locationTo' => 'required|numeric|min:1',
-            'companyFinancePeriodID' => 'required|numeric|min:1',
-            'companyFinanceYearID' => 'required|numeric|min:1',
             'companyToSystemID' => 'required|numeric|min:1',
             'companyFromSystemID' => 'required|numeric|min:1',
-            'serviceLineSystemID' => 'required|numeric|min:1',
-            //'refNo' => 'required',
-            //'comment' => 'required'
+            'serviceLineSystemID' => 'required|numeric|min:1'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+
 
         //checking segment is active
 
@@ -804,6 +848,24 @@ class StockReceiveAPIController extends AppBaseController
 
         if (empty($segments)) {
             return $this->sendError('Selected Department is not active. Please select an active segment', 500);
+        }
+
+        $checkWareHouseActiveFrom = WarehouseMaster::find($stockReceive->locationFrom);
+        if (empty($checkWareHouseActiveFrom)) {
+            return $this->sendError('Location from not found', 500);
+        }
+
+        if ($checkWareHouseActiveFrom->isActive == 0) {
+            return $this->sendError('Selected location from is not active. Please select an active location from', 500);
+        }
+
+        $checkWareHouseActiveTo = WarehouseMaster::find($stockReceive->locationTo);
+        if (empty($checkWareHouseActiveTo)) {
+            return $this->sendError('Location to not found', 500);
+        }
+
+        if ($checkWareHouseActiveTo->isActive == 0) {
+            return $this->sendError('Selected location to is not active.Please select an active location to', 500);
         }
 
         return $this->sendResponse($id, 'success');
