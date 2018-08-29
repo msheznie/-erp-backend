@@ -483,13 +483,13 @@ class StockTransferAPIController extends AppBaseController
 
             $checkCustomer = CustomerMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->count();
             if ($checkCustomer == 0) {
-                $this->stockTransferRepository->update(['companyToSystemID' => null], $id);
+                $this->stockTransferRepository->update(['companyToSystemID' => null,'companyTo' => null,'locationTo' => null,'interCompanyTransferYN' => 0], $id);
                 return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500,$companyToError);
             }
 
             $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyFromSystemID'])->count();
             if ($checkSupplier == 0) {
-                $this->stockTransferRepository->update(['companyToSystemID' => null], $id);
+                $this->stockTransferRepository->update(['companyToSystemID' => null,'companyTo' => null,'locationTo' => null,'interCompanyTransferYN' => 0], $id);
                 return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500,$companyToError);
             }
 
@@ -504,7 +504,7 @@ class StockTransferAPIController extends AppBaseController
             $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
 
             if ($toCompanyFinancePeriod == 0) {
-                $this->stockTransferRepository->update(['companyToSystemID' => null,'companyTo' => null], $id);
+                $this->stockTransferRepository->update(['companyToSystemID' => null,'companyTo' => null,'locationTo' => null,'interCompanyTransferYN' => 0], $id);
                 return $this->sendError('Financial year and period is not activated in ' . $companyTo->CompanyName, 500,$companyToError);
             }
         }
