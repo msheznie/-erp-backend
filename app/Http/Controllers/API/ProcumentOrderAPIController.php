@@ -496,6 +496,12 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
 
+        // updating coloum
+        if ($input['documentSystemID'] != 5 && $input['poType_N'] != 5) {
+            $procumentOrderUpdate->WO_PeriodFrom = null;
+            $procumentOrderUpdate->WO_PeriodTo = null;
+        }
+
         // calculating total Supplier Default currency
 
         $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], $poMasterSumDeducted);
@@ -4080,7 +4086,6 @@ FROM
 
         $fetchSupEmail = SupplierContactDetails::where('supplierID', $procumentOrderUpdate->supplierID)
             ->get();
-
 
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
