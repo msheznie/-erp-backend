@@ -439,7 +439,8 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot be same');
+            $this->stockReceiveRepository->update(['locationTo' => null], $id);
+            return $this->sendError('Location From and Location To  cannot be same',500,$wareHouseToError);
         }
 
         if (isset($input['companyFromSystemID'])) {
@@ -479,14 +480,14 @@ class StockReceiveAPIController extends AppBaseController
 
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Receive date is not within the selected financial period !');
+                return $this->sendError('Receive date is not within the selected financial period !',500);
             }
 
             $stockReceiveDetailExist = StockReceiveDetails::where('stockReceiveAutoID', $id)
                 ->count();
 
             if ($stockReceiveDetailExist == 0) {
-                return $this->sendError('Stock Receive document cannot confirm without details');
+                return $this->sendError('Stock Receive document cannot confirm without details',500);
             }
 
             $checkQuantity = StockReceiveDetails::where('stockReceiveAutoID', $id)

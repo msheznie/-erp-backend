@@ -418,6 +418,7 @@ class StockTransferAPIController extends AppBaseController
         $wareHouseFromError = array('type' => 'locationFrom');
         $wareHouseToError   = array('type' => 'locationTo');
         $serviceLineError   = array('type' => 'serviceLine');
+        $companyToError   = array('type' => 'companyTo');
 
         /** @var StockTransfer $stockTransfer */
         $stockTransfer = $this->stockTransferRepository->findWithoutFail($id);
@@ -449,26 +450,31 @@ class StockTransferAPIController extends AppBaseController
         }
 
         if (isset($input['locationFrom'])) {
-            $checkWareHouseActiveFrom = WarehouseMaster::find($input['locationFrom']);
-            if (empty($checkWareHouseActiveFrom)) {
-                return $this->sendError('Location from not found', 500, $wareHouseFromError);
-            }
+            if($input['locationFrom']) {
+                $checkWareHouseActiveFrom = WarehouseMaster::find($input['locationFrom']);
+                if (empty($checkWareHouseActiveFrom)) {
+                    return $this->sendError('Location from not found', 500, $wareHouseFromError);
+                }
 
-            if ($checkWareHouseActiveFrom->isActive == 0) {
-                $this->stockTransferRepository->update(['locationFrom' => null],$id);
-                return $this->sendError('Selected location from is not active. Please select an active location from', 500, $wareHouseFromError);
+                if ($checkWareHouseActiveFrom->isActive == 0) {
+                    $this->stockTransferRepository->update(['locationFrom' => null], $id);
+                    return $this->sendError('Selected location from is not active. Please select an active location from', 500, $wareHouseFromError);
+                }
             }
         }
 
         if (isset($input['locationTo'])) {
-            $checkWareHouseActiveTo = WarehouseMaster::find($input['locationTo']);
-            if (empty($checkWareHouseActiveTo)) {
-                return $this->sendError('Location to not found', 500, $wareHouseToError);
-            }
 
-            if ($checkWareHouseActiveTo->isActive == 0) {
-                $this->stockTransferRepository->update(['locationTo' => null],$id);
-                return $this->sendError('Selected location to is not active.Please select an active location to', 500, $wareHouseToError);
+            if($input['locationTo']) {
+                $checkWareHouseActiveTo = WarehouseMaster::find($input['locationTo']);
+                if (empty($checkWareHouseActiveTo)) {
+                    return $this->sendError('Location to not found', 500, $wareHouseToError);
+                }
+
+                if ($checkWareHouseActiveTo->isActive == 0) {
+                    $this->stockTransferRepository->update(['locationTo' => null], $id);
+                    return $this->sendError('Selected location to is not active.Please select an active location to', 500, $wareHouseToError);
+                }
             }
         }
 
@@ -477,12 +483,14 @@ class StockTransferAPIController extends AppBaseController
 
             $checkCustomer = CustomerMaster::where('companyLinkedToSystemID', $input['companyToSystemID'])->count();
             if ($checkCustomer == 0) {
-                return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500);
+                $this->stockTransferRepository->update(['companyToSystemID' => null,'companyTo' => null,'locationTo' => null,'interCompanyTransferYN' => 0], $id);
+                return $this->sendError('Customer is not linked to the selected company. Please create a customer and link to the company.', 500,$companyToError);
             }
 
             $checkSupplier = SupplierMaster::where('companyLinkedToSystemID', $input['companyFromSystemID'])->count();
             if ($checkSupplier == 0) {
-                return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500);
+                $this->stockTransferRepository->update(['companyToSystemID' => null,'companyTo' => null,'locationTo' => null,'interCompanyTransferYN' => 0], $id);
+                return $this->sendError('Supplier is not linked to the selected company. Please create a supplier and link to the company.', 500,$companyToError);
             }
 
             $toCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $input['companyToSystemID'])
@@ -496,13 +504,15 @@ class StockTransferAPIController extends AppBaseController
             $companyTo = Company::where('companySystemID', $input['companyToSystemID'])->first();
 
             if ($toCompanyFinancePeriod == 0) {
-                return $this->sendError('Financial year and period is not activated in ' . $companyTo->CompanyName, 500);
+                $this->stockTransferRepository->update(['companyToSystemID' => null,'companyTo' => null,'locationTo' => null,'interCompanyTransferYN' => 0], $id);
+                return $this->sendError('Financial year and period is not activated in ' . $companyTo->CompanyName, 500,$companyToError);
             }
         }
 
 
         if ($input['locationFrom'] == $input['locationTo']) {
-            return $this->sendError('Location From and Location To  cannot be same', 500);
+            $this->stockTransferRepository->update(['locationTo' => null], $id);
+            return $this->sendError('Location From and Location To  cannot be same', 500,$wareHouseToError);
         }
 
 

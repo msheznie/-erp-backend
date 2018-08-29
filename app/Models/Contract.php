@@ -661,5 +661,10 @@ class Contract extends Model
         
     ];
 
+    public function segment(){
+        return $this->belongsTo('App\Models\SegmentMaster','ServiceLineCode','ServiceLineCode');
+    }
+
+
     
 }
