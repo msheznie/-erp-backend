@@ -487,4 +487,5 @@ class ItemIssueMaster extends Model
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 
+
 }
