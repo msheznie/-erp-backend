@@ -223,20 +223,20 @@
             <td width="60%"><span class="titlebolt">{{$docRef}}</span></td>
         </tr>
     </table>
-    <table style="width:43%">
+    <table style="width:100%">
         <tr >
-            <td height="20" width="35%"><span class="title">Supplier</span></td>
-            <td width="5%"><span class="title">:</span></td>
-            <td width="60%"> &nbsp;
+            <td height="20" width="14%"><span class="title">Supplier</span></td>
+            <td width="3%"><span class="title">:</span></td>
+            <td width="83%"> &nbsp;
                 @if ($podata->supplier_by)
                     {{$podata->supplier_by->supplierName}}
                 @endif
             </td>
         </tr>
         <tr>
-            <td height="20" width="35%"><span class="title">Narration </span></td>
-            <td width="5%"><span class="title">:</span></td>
-            <td width="60%"><span class="title"> &nbsp;
+            <td height="20" width="14%"><span class="title">Narration </span></td>
+            <td width="3%"><span class="title">:</span></td>
+            <td width="83%"><span class="title"> &nbsp;
                     @if ($podata->narration)
                         {{$podata->narration}}
                     @endif
@@ -244,14 +244,14 @@
             </td>
         </tr>
         <tr>
-            <td height="20" width="35%"><span class="titlebolt">Amount</span></td>
-            <td width="5%"><span class="titlebolt">:</span></td>
-            <td width="60%"><span class="titlebolt"> &nbsp;
+            <td height="20" width="14%"><span class="titlebolt">Amount</span></td>
+            <td width="3%"><span class="titlebolt">:</span></td>
+            <td width="83%"><span class="titlebolt"> &nbsp;
                     @if ($podata->currency)
                         {{$podata->currency->CurrencyCode}} &nbsp;
                         &nbsp; {{number_format($podata->reqAmount, $podata->currency->DecimalPlaces)}}
                     @endif
-                            </span>
+                </span>
             </td>
         </tr>
     </table>
