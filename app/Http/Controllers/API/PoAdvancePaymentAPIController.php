@@ -413,6 +413,15 @@ ORDER BY
     {
         $input = $request->all();
         $poAdvPaymentID = $input['poAdvPaymentID'];
+        $typeID = $input['typeID'];
+
+        if($typeID == 1){
+
+            $poPaymentTerms = PoAdvancePayment::where('poTermID', $poAdvPaymentID)
+                ->first();
+
+            $poAdvPaymentID = $poPaymentTerms->poAdvPaymentID;
+        }
 
         $items = PoAdvancePayment::where('poAdvPaymentID', $poAdvPaymentID)
             ->with(['company', 'currency', 'supplier_by' => function ($query) {
@@ -480,6 +489,17 @@ ORDER BY
     public function getPoLogisticPrintPDF(Request $request)
     {
         $id = $request->get('id');
+
+        $typeID = $request->get('typeID');
+
+        if($typeID == 1){
+
+            $poPaymentTerms = PoAdvancePayment::where('poTermID', $id)
+                ->first();
+
+            $id = $poPaymentTerms->poAdvPaymentID;
+        }
+
         /** @var PoAdvancePayment $poAdvancePayment */
         $poAdvancePayment = $this->poAdvancePaymentRepository->findWithoutFail($id);
 
