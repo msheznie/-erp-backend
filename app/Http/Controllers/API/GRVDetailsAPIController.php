@@ -25,6 +25,8 @@ use App\Models\ProcumentOrder;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderDetails;
+use App\Models\SegmentMaster;
+use App\Models\WarehouseMaster;
 use App\Repositories\GRVDetailsRepository;
 use App\Repositories\GRVMasterRepository;
 use Illuminate\Http\Request;
@@ -240,13 +242,15 @@ class GRVDetailsAPIController extends AppBaseController
         }
         $grvMaster = GRVMaster::find($gRVDetails->grvAutoID);
 
-        $allowPartialGRVPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 23)
-            ->where('companySystemID', $grvMaster->companySystemID)
-            ->first();
-        $POMaster = ProcumentOrder::find($purchaseOrderMastertID);
+        if($grvMaster->grvTypeID == 2) {
+            $allowPartialGRVPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 23)
+                ->where('companySystemID', $grvMaster->companySystemID)
+                ->first();
+            $POMaster = ProcumentOrder::find($purchaseOrderMastertID);
 
-        if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
-            return $this->sendError('You cannot delete one line item as partial GRV is disabled.', 422);
+            if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
+                return $this->sendError('You cannot delete one line item as partial GRV is disabled.', 422);
+            }
         }
 
         // delete the grv detail
@@ -518,6 +522,31 @@ class GRVDetailsAPIController extends AppBaseController
             return $this->sendError('GRV Master not found');
         }
 
+        if ($grvMaster->serviceLineSystemID) {
+            $checkDepartmentActive = SegmentMaster::find($grvMaster->serviceLineSystemID);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Department not found');
+            }
+            if ($checkDepartmentActive->isActive == 0) {
+                return $this->sendError('Please select a active department', 500);
+            }
+        } else {
+            return $this->sendError('Please select a department.', 500);
+        }
+
+        if ($grvMaster->grvLocation) {
+            $checkWarehouseActive = WarehouseMaster::find($grvMaster->grvLocation);
+            if (empty($checkWarehouseActive)) {
+                return $this->sendError('Warehouse not found');
+            }
+            if ($checkWarehouseActive->isActive == 0) {
+                return $this->sendError('Please select an active warehouse', 500);
+            }
+        }
+        else {
+            return $this->sendError('Please select a warehouse.', 500);
+        }
+
         DB::beginTransaction();
         try {
             $itemAssign = ItemAssigned::find($input['itemCode']);
@@ -568,7 +597,7 @@ class GRVDetailsAPIController extends AppBaseController
             $GRVDetail_arr['financeGLcodebBS'] = $financeCategorySub->financeGLcodebBS;
             $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
             $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
-            $GRVDetail_arr['includePLForGRVYN'] = 0;
+            $GRVDetail_arr['includePLForGRVYN'] = $financeCategorySub->includePLForGRVYN;
             $GRVDetail_arr['supplierPartNumber'] = $itemAssign->secondaryItemCode;
             $GRVDetail_arr['unitOfMeasure'] = $itemAssign->itemUnitOfMeasure;
             $GRVDetail_arr['noQty'] = $input['noQty'];
@@ -589,13 +618,13 @@ class GRVDetailsAPIController extends AppBaseController
             $GRVDetail_arr['localCurrencyID'] = $grvMaster->localCurrencyID;
             $GRVDetail_arr['localCurrencyER'] = $grvMaster->localCurrencyER;
             $GRVDetail_arr['addonDistCost'] = 0;
-            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = $currency['localAmount'];
-            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = $currency['defaultAmount'];
-            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = $input['unitCost'];
-            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = $currency['reportingAmount'];
-            $GRVDetail_arr['landingCost_LocalCur'] = $currency['localAmount'];
-            $GRVDetail_arr['landingCost_TransCur'] = $input['unitCost'];
-            $GRVDetail_arr['landingCost_RptCur'] = $currency['reportingAmount'];
+            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
+            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount']);
+            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($input['unitCost']);
+            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
+            $GRVDetail_arr['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount']);
+            $GRVDetail_arr['landingCost_TransCur'] = \Helper::roundValue($input['unitCost']);
+            $GRVDetail_arr['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
             $GRVDetail_arr['vatRegisteredYN'] = 0;
             $GRVDetail_arr['supplierVATEligible'] = 0;
             $GRVDetail_arr['VATPercentage'] = 0;
@@ -632,6 +661,31 @@ class GRVDetailsAPIController extends AppBaseController
             return $this->sendError('GRV Master not found');
         }
 
+        if ($grvMaster->serviceLineSystemID) {
+            $checkDepartmentActive = SegmentMaster::find($grvMaster->serviceLineSystemID);
+            if (empty($checkDepartmentActive)) {
+                return $this->sendError('Department not found');
+            }
+            if ($checkDepartmentActive->isActive == 0) {
+                return $this->sendError('Please select a active department', 500);
+            }
+        } else {
+            return $this->sendError('Please select a department.', 500);
+        }
+
+        if ($grvMaster->grvLocation) {
+            $checkWarehouseActive = WarehouseMaster::find($grvMaster->grvLocation);
+            if (empty($checkWarehouseActive)) {
+                return $this->sendError('Warehouse not found');
+            }
+            if ($checkWarehouseActive->isActive == 0) {
+                return $this->sendError('Please select an active warehouse', 500);
+            }
+        }
+        else {
+            return $this->sendError('Please select a warehouse.', 500);
+        }
+
         DB::beginTransaction();
         try {
             $itemAssign = ItemAssigned::find($input['itemCode']);
@@ -645,58 +699,20 @@ class GRVDetailsAPIController extends AppBaseController
 
             // checking the qty request is matching with sum total
             $GRVDetail_arr['grvAutoID'] = $grvAutoID;
-            $GRVDetail_arr['companySystemID'] = $grvMaster->companySystemID;
-            $GRVDetail_arr['companyID'] = $grvMaster->companyID;
-            $GRVDetail_arr['serviceLineCode'] =$grvMaster->serviceLineCode;
-            $GRVDetail_arr['purchaseOrderMastertID'] = 0;
-            $GRVDetail_arr['purchaseOrderDetailsID'] = 0;
-            $GRVDetail_arr['itemCode'] = $itemAssign->itemCodeSystem;
-            $GRVDetail_arr['itemPrimaryCode'] = $itemAssign->itemPrimaryCode;
-            $GRVDetail_arr['itemDescription'] = $itemAssign->itemDescription;
-            $GRVDetail_arr['itemFinanceCategoryID'] = $itemAssign->financeCategoryMaster;
-            $GRVDetail_arr['itemFinanceCategorySubID'] = $itemAssign->financeCategorySub;
-            $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;
-            $GRVDetail_arr['financeGLcodebBS'] = $financeCategorySub->financeGLcodebBS;
-            $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
-            $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
-            $GRVDetail_arr['includePLForGRVYN'] = 0;
-            $GRVDetail_arr['supplierPartNumber'] = $itemAssign->secondaryItemCode;
-            $GRVDetail_arr['unitOfMeasure'] = $itemAssign->itemUnitOfMeasure;
             $GRVDetail_arr['noQty'] = $input['noQty'];
-            $GRVDetail_arr['prvRecievedQty'] = 0;
-            $GRVDetail_arr['poQty'] = 0;
             $totalNetcost = $input['unitCost'] * $input['noQty'];
             $GRVDetail_arr['unitCost'] = $input['unitCost'];
-            $GRVDetail_arr['discountPercentage'] = 0;
-            $GRVDetail_arr['discountAmount'] = 0;
             $GRVDetail_arr['netAmount'] = $totalNetcost;
             $GRVDetail_arr['comment'] = $input['comment'];
-            $GRVDetail_arr['supplierDefaultCurrencyID'] = $grvMaster->supplierDefaultCurrencyID;
-            $GRVDetail_arr['supplierDefaultER'] = $grvMaster->supplierDefaultER;
-            $GRVDetail_arr['supplierItemCurrencyID'] = $grvMaster->supplierTransactionCurrencyID;
-            $GRVDetail_arr['foreignToLocalER'] = $grvMaster->supplierTransactionER;
-            $GRVDetail_arr['companyReportingCurrencyID'] = $grvMaster->companyReportingCurrencyID;
-            $GRVDetail_arr['companyReportingER'] = $grvMaster->companyReportingER;
-            $GRVDetail_arr['localCurrencyID'] = $grvMaster->localCurrencyID;
-            $GRVDetail_arr['localCurrencyER'] = $grvMaster->localCurrencyER;
-            $GRVDetail_arr['addonDistCost'] = 0;
-            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = $currency['localAmount'];
-            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = $currency['defaultAmount'];
-            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = $input['unitCost'];
-            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = $currency['reportingAmount'];
-            $GRVDetail_arr['landingCost_LocalCur'] = $currency['localAmount'];
-            $GRVDetail_arr['landingCost_TransCur'] = $input['unitCost'];
-            $GRVDetail_arr['landingCost_RptCur'] = $currency['reportingAmount'];
-            $GRVDetail_arr['vatRegisteredYN'] = 0;
-            $GRVDetail_arr['supplierVATEligible'] = 0;
-            $GRVDetail_arr['VATPercentage'] = 0;
-            $GRVDetail_arr['VATAmount'] = 0;
-            $GRVDetail_arr['VATAmountLocal'] = 0;
-            $GRVDetail_arr['VATAmountRpt'] = 0;
-            $GRVDetail_arr['logisticsAvailable'] = 0;
-            $GRVDetail_arr['createdPcID'] = gethostname();
-            $GRVDetail_arr['createdUserID'] = $user->empID;
-            $GRVDetail_arr['createdUserSystemID'] = $user->employeeSystemID;
+            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
+            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount']);
+            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($input['unitCost']);
+            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
+            $GRVDetail_arr['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount']);
+            $GRVDetail_arr['landingCost_TransCur'] = \Helper::roundValue($input['unitCost']);
+            $GRVDetail_arr['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
+            $GRVDetail_arr['modifiedPc'] = gethostname();
+            $GRVDetail_arr['modifiedUser'] = $user->empID;
 
             $item = $this->gRVDetailsRepository->update($GRVDetail_arr,$id);
 
