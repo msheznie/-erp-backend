@@ -356,6 +356,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
             }
 
+            if ($_post['bankID'] != $customerInvoiceDirect->bankID) {
+                $_post['bankAccountID'] = NULL;
+            }
+
         }
 
 
