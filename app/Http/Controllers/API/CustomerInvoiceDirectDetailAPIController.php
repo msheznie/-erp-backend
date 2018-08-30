@@ -300,6 +300,17 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
     {
 
 
+        $messages = [
+            'companySystemID.required' => 'The company is required.',
+            'contractID.required' => 'The contract number is required.',
+            'unitID.required' => 'The unit is required.',
+            'qty.required' => 'The qty is required.',
+            'unitCost.required' => 'The unit cost is required.',
+            'custInvoiceDirectAutoID.required' => 'The id is required.',
+            'glCode.required' => 'The GL Account is required.',
+            'serviceLineSystemID.required' => 'The department is required.',
+        ];
+
         $validator = \Validator::make($request->all(), [
             'companySystemID' => 'required|numeric|min:1',
             'contractID' => 'required|numeric|min:1',
@@ -309,7 +320,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             'custInvoiceDirectAutoID' => 'required|numeric|min:1',
             'glCode' => 'required|numeric|min:1',
             'serviceLineSystemID' => 'required|numeric|min:1',
-        ]);
+        ],$messages);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);

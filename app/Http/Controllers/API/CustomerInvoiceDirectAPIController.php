@@ -462,11 +462,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if ($customerInvoiceDirect->confirmedYN == 0) {
                 if ($isPerforma != 1) {
 
+                    $messages = [
+
+                        'custTransactionCurrencyID.required' => 'The currency is required.',
+                        'bankID.required' => 'The bank is required.',
+                        'bankAccountID.required' => 'The bank account is required.'
+
+                    ];
                     $validator = \Validator::make($_post, [
                         'custTransactionCurrencyID' => 'required|numeric|min:1',
                         'bankID' => 'required|numeric|min:1',
                         'bankAccountID' => 'required|numeric|min:1'
-                    ]);
+                    ],$messages);
+
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
