@@ -20,3 +20,5 @@ Route::resource('customerReceivePayments', 'CustomerReceivePaymentController');
 Route::resource('customerReceivePaymentDetails', 'CustomerReceivePaymentDetailController');
 
 Route::resource('directReceiptDetails', 'DirectReceiptDetailController');
+
+Route::resource('unbilledGRVs', 'UnbilledGRVController');
