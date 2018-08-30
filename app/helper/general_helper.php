@@ -1439,4 +1439,107 @@ class Helper
             }
         }
     }
+
+
+    public static function convertAmountToLocalRpt($documentSystemID, $autoID, $transactionAmount)
+    {
+        $docInforArr = [];
+        switch ($documentSystemID) { // check the document id and set relavant parameters
+            case 3:
+                $docInforArr["modelName"] = 'GRVMaster';
+                $docInforArr["transCurrencyID"] = 'supplierTransactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'supplierDefaultCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransactionER';
+                $docInforArr["rptCurrencyER"] = 'companyReportingER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'supplierDefaultER';
+                break;
+            default:
+                return ['success' => false, 'message' => 'Document ID not found'];
+        }
+
+        $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+        $masterData = $namespacedModel::find($autoID);
+        if ($masterData) {
+
+            $transactionCurrencyID = $masterData[$docInforArr["transCurrencyID"]];
+            $transactionDefaultCurrencyID = $masterData[$docInforArr["transDefaultCurrencyID"]];
+            $reportingCurrencyID = $masterData[$docInforArr["rptCurrencyID"]];
+            $locaCurrencyID = $masterData[$docInforArr["localCurrencyID"]];
+            $trasToRptER = $masterData[$docInforArr["rptCurrencyER"]];
+            $trasToTransER = $masterData[$docInforArr["transCurrencyER"]];
+            $trasToLocER = $masterData[$docInforArr["localCurrencyER"]];
+            $trasToDefaultER = $masterData[$docInforArr["defaultCurrencyER"]];
+            $reportingAmount = 0;
+            $localAmount = 0;
+            $defaultAmount = 0;
+
+            if ($transactionCurrencyID == $reportingCurrencyID) {
+                $reportingAmount = $transactionAmount;
+            } else {
+                if ($trasToRptER > $trasToTransER) {
+                    if ($trasToRptER > 1) {
+                        $reportingAmount = $transactionAmount / $trasToRptER;
+                    } else {
+                        $reportingAmount = $transactionAmount * $trasToRptER;
+                    }
+                } else {
+                    If ($trasToRptER > 1) {
+                        $reportingAmount = $transactionAmount * $trasToRptER;
+                    } else {
+                        $reportingAmount = $transactionAmount / $trasToRptER;
+                    }
+                }
+            }
+
+            if ($transactionCurrencyID == $locaCurrencyID) {
+                $localAmount = $transactionAmount;
+            } else {
+                if ($trasToLocER > $trasToTransER) {
+                    if ($trasToLocER > 1) {
+                        $localAmount = $transactionAmount / $trasToLocER;
+                    } else {
+                        $localAmount = $transactionAmount * $trasToLocER;
+                    }
+                } else {
+                    If ($trasToLocER > 1) {
+                        $localAmount = $transactionAmount * $trasToLocER;
+                    } else {
+                        $localAmount = $transactionAmount / $trasToLocER;
+                    }
+                }
+            }
+
+            if ($transactionCurrencyID == $transactionDefaultCurrencyID) {
+                $defaultAmount = $transactionAmount;
+            } else {
+                if ($trasToDefaultER > $trasToTransER) {
+                    if ($trasToDefaultER > 1) {
+                        $defaultAmount = $transactionAmount / $trasToDefaultER;
+                    } else {
+                        $defaultAmount = $transactionAmount * $trasToDefaultER;
+                    }
+                } else {
+                    If ($trasToDefaultER > 1) {
+                        $defaultAmount = $transactionAmount * $trasToDefaultER;
+                    } else {
+                        $defaultAmount = $transactionAmount / $trasToDefaultER;
+                    }
+                }
+            }
+
+        } else {
+            return ['success' => false, 'message' => 'No records found'];
+        }
+
+        $array = array(
+            'reportingAmount' => $reportingAmount,
+            'localAmount' => $localAmount,
+            'defaultAmount' => $defaultAmount,
+        );
+
+        return $array;
+    }
 }

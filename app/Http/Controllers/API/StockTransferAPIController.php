@@ -573,16 +573,16 @@ class StockTransferAPIController extends AppBaseController
             }
 
             $stockTransDetailExist = StockTransferDetails::select(DB::raw('stockTransferDetailsID'))
-                ->where('stockTransferAutoID', $input['stockTransferAutoID'])
-                ->first();
+                                                        ->where('stockTransferAutoID', $input['stockTransferAutoID'])
+                                                        ->first();
 
             if (empty($stockTransDetailExist)) {
-                return $this->sendError('Stock Transfer document cannot confirm without details');
+                return $this->sendError('Stock Transfer document cannot confirm without details',500);
             }
 
             $checkQuantity = StockTransferDetails::where('stockTransferAutoID', $id)
-                ->where('qty', '<=', 0)
-                ->count();
+                                                ->where('qty', '<=', 0)
+                                                ->count();
 
             if ($checkQuantity > 0) {
                 return $this->sendError('Every item should have at least one minimum Qty', 500);

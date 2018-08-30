@@ -17,13 +17,16 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateGRVDetailsAPIRequest;
 use App\Http\Requests\API\UpdateGRVDetailsAPIRequest;
+use App\Models\FinanceItemCategorySub;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
+use App\Models\ItemAssigned;
 use App\Models\ProcumentOrder;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrderDetail;
 use App\Models\PurchaseOrderDetails;
 use App\Repositories\GRVDetailsRepository;
+use App\Repositories\GRVMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -41,11 +44,13 @@ class GRVDetailsAPIController extends AppBaseController
 {
     /** @var  GRVDetailsRepository */
     private $gRVDetailsRepository;
+    private $gRVMasterRepository;
     private $userRepository;
 
-    public function __construct(GRVDetailsRepository $gRVDetailsRepo, UserRepository $userRepo)
+    public function __construct(GRVDetailsRepository $gRVDetailsRepo, UserRepository $userRepo, GRVMasterRepository $gRVMasterRepository)
     {
         $this->gRVDetailsRepository = $gRVDetailsRepo;
+        $this->gRVMasterRepository = $gRVMasterRepository;
         $this->userRepository = $userRepo;
     }
 
@@ -136,7 +141,7 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError('GRV not found');
             }
 
-            if(is_null($input['noQty'])){
+            if (is_null($input['noQty'])) {
                 $input['noQty'] = 0;
             }
 
@@ -193,10 +198,10 @@ class GRVDetailsAPIController extends AppBaseController
                 $balanceQty = PurchaseOrderDetails::selectRaw('SUM(noQty) as noQty,SUM(receivedQty) as receivedQty,SUM(noQty) - SUM(receivedQty) as balanceQty')->WHERE('purchaseOrderMasterID', $input['purchaseOrderMastertID'])->WHERE('companySystemID', $grvMaster->companySystemID)->first();
 
 
-                if($balanceQty["balanceQty"] == 0){
+                if ($balanceQty["balanceQty"] == 0) {
                     $updatePO = ProcumentOrder::find($gRVDetails->purchaseOrderMastertID)
                         ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
-                }else {
+                } else {
                     if ($masterPOSUM > 0) {
                         $updatePO = ProcumentOrder::find($gRVDetails->purchaseOrderMastertID)
                             ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
@@ -333,7 +338,7 @@ class GRVDetailsAPIController extends AppBaseController
         $frontDetailcount = count(array_filter($size));
 
         if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
-            $poDetailTotal = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderMastertID'])->where('goodsRecievedYN','<>',2)
+            $poDetailTotal = PurchaseOrderDetails::where('purchaseOrderMasterID', $input['purchaseOrderMastertID'])->where('goodsRecievedYN', '<>', 2)
                 ->count();
             if ($poDetailTotal != $frontDetailcount) {
                 return $this->sendError('All PO detail items should be pulled for this grv', 422);
@@ -362,7 +367,6 @@ class GRVDetailsAPIController extends AppBaseController
                     }
 
 
-
                     if ($new['noQty'] > ($new['poQty'] - $new['receivedQty'])) {
                         return $this->sendError('Number of quantity should not be greater than received qty', 422);
                     }
@@ -386,7 +390,7 @@ class GRVDetailsAPIController extends AppBaseController
                         ->first();
 
                     if ($grvDetailExistSameItem) {
-                        if($new['itemFinanceCategoryID'] != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
+                        if ($new['itemFinanceCategoryID'] != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
                             return $this->sendError('You cannot add different category item', 422);
                         }
                     }
@@ -501,6 +505,211 @@ class GRVDetailsAPIController extends AppBaseController
         }
 
     }
+
+    public function storeGRVDetailsDirect(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $grvAutoID = $input['grvAutoID'];
+
+        $grvMaster = $this->gRVMasterRepository->findWithoutFail($grvAutoID);
+        if (empty($grvMaster)) {
+            return $this->sendError('GRV Master not found');
+        }
+
+        DB::beginTransaction();
+        try {
+            $itemAssign = ItemAssigned::find($input['itemCode']);
+            if (empty($itemAssign)) {
+                return $this->sendError('Item not assigned');
+            }
+
+            //checking if item category is same or not
+            $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                ->where('grvAutoID', $grvAutoID)
+                ->first();
+
+            if ($grvDetailExistSameItem) {
+                if ($itemAssign->financeCategoryMaster != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
+                    return $this->sendError('You cannot add different category item', 422);
+                }
+            }
+
+            $user = \Helper::getEmployeeInfo();
+
+            //checking if item is inventory item cannot be added more than one
+            $grvDetailExistSameItem = GRVDetails::select(DB::raw('itemCode'))
+                ->where('grvAutoID', $grvAutoID)
+                ->where('itemCode', $input["itemCode"])
+                ->first();
+
+            if ($grvDetailExistSameItem) {
+                return $this->sendError('Selected item is already added from the same grv.', 422);
+            }
+
+            $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
+
+            $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$input['unitCost']);
+
+            // checking the qty request is matching with sum total
+            $GRVDetail_arr['grvAutoID'] = $grvAutoID;
+            $GRVDetail_arr['companySystemID'] = $grvMaster->companySystemID;
+            $GRVDetail_arr['companyID'] = $grvMaster->companyID;
+            $GRVDetail_arr['serviceLineCode'] =$grvMaster->serviceLineCode;
+            $GRVDetail_arr['purchaseOrderMastertID'] = 0;
+            $GRVDetail_arr['purchaseOrderDetailsID'] = 0;
+            $GRVDetail_arr['itemCode'] = $itemAssign->itemCodeSystem;
+            $GRVDetail_arr['itemPrimaryCode'] = $itemAssign->itemPrimaryCode;
+            $GRVDetail_arr['itemDescription'] = $itemAssign->itemDescription;
+            $GRVDetail_arr['itemFinanceCategoryID'] = $itemAssign->financeCategoryMaster;
+            $GRVDetail_arr['itemFinanceCategorySubID'] = $itemAssign->financeCategorySub;
+            $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;
+            $GRVDetail_arr['financeGLcodebBS'] = $financeCategorySub->financeGLcodebBS;
+            $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
+            $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
+            $GRVDetail_arr['includePLForGRVYN'] = 0;
+            $GRVDetail_arr['supplierPartNumber'] = $itemAssign->secondaryItemCode;
+            $GRVDetail_arr['unitOfMeasure'] = $itemAssign->itemUnitOfMeasure;
+            $GRVDetail_arr['noQty'] = $input['noQty'];
+            $GRVDetail_arr['prvRecievedQty'] = 0;
+            $GRVDetail_arr['poQty'] = 0;
+            $totalNetcost = $input['unitCost'] * $input['noQty'];
+            $GRVDetail_arr['unitCost'] = $input['unitCost'];
+            $GRVDetail_arr['discountPercentage'] = 0;
+            $GRVDetail_arr['discountAmount'] = 0;
+            $GRVDetail_arr['netAmount'] = $totalNetcost;
+            $GRVDetail_arr['comment'] = $input['comment'];
+            $GRVDetail_arr['supplierDefaultCurrencyID'] = $grvMaster->supplierDefaultCurrencyID;
+            $GRVDetail_arr['supplierDefaultER'] = $grvMaster->supplierDefaultER;
+            $GRVDetail_arr['supplierItemCurrencyID'] = $grvMaster->supplierTransactionCurrencyID;
+            $GRVDetail_arr['foreignToLocalER'] = $grvMaster->supplierTransactionER;
+            $GRVDetail_arr['companyReportingCurrencyID'] = $grvMaster->companyReportingCurrencyID;
+            $GRVDetail_arr['companyReportingER'] = $grvMaster->companyReportingER;
+            $GRVDetail_arr['localCurrencyID'] = $grvMaster->localCurrencyID;
+            $GRVDetail_arr['localCurrencyER'] = $grvMaster->localCurrencyER;
+            $GRVDetail_arr['addonDistCost'] = 0;
+            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = $currency['localAmount'];
+            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = $currency['defaultAmount'];
+            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = $input['unitCost'];
+            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = $currency['reportingAmount'];
+            $GRVDetail_arr['landingCost_LocalCur'] = $currency['localAmount'];
+            $GRVDetail_arr['landingCost_TransCur'] = $input['unitCost'];
+            $GRVDetail_arr['landingCost_RptCur'] = $currency['reportingAmount'];
+            $GRVDetail_arr['vatRegisteredYN'] = 0;
+            $GRVDetail_arr['supplierVATEligible'] = 0;
+            $GRVDetail_arr['VATPercentage'] = 0;
+            $GRVDetail_arr['VATAmount'] = 0;
+            $GRVDetail_arr['VATAmountLocal'] = 0;
+            $GRVDetail_arr['VATAmountRpt'] = 0;
+            $GRVDetail_arr['logisticsAvailable'] = 0;
+            $GRVDetail_arr['createdPcID'] = gethostname();
+            $GRVDetail_arr['createdUserID'] = $user->empID;
+            $GRVDetail_arr['createdUserSystemID'] = $user->employeeSystemID;
+
+            $item = $this->gRVDetailsRepository->create($GRVDetail_arr);
+
+            DB::commit();
+            return $this->sendResponse('', 'GRV details saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Error Occurred');
+        }
+
+    }
+
+    public function updateGRVDetailsDirect(Request $request)
+    {
+        $input = $request->all();
+        $input = array_except($input, ['unit', 'po_master']);
+        $input = $this->convertArrayToValue($input);
+
+        $id=$input['grvDetailsID'];
+        $grvAutoID = $input['grvAutoID'];
+
+        $grvMaster = $this->gRVMasterRepository->findWithoutFail($grvAutoID);
+        if (empty($grvMaster)) {
+            return $this->sendError('GRV Master not found');
+        }
+
+        DB::beginTransaction();
+        try {
+            $itemAssign = ItemAssigned::find($input['itemCode']);
+            if (empty($itemAssign)) {
+                return $this->sendError('Item not assigned');
+            }
+
+            $user = \Helper::getEmployeeInfo();
+            $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
+            $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$input['unitCost']);
+
+            // checking the qty request is matching with sum total
+            $GRVDetail_arr['grvAutoID'] = $grvAutoID;
+            $GRVDetail_arr['companySystemID'] = $grvMaster->companySystemID;
+            $GRVDetail_arr['companyID'] = $grvMaster->companyID;
+            $GRVDetail_arr['serviceLineCode'] =$grvMaster->serviceLineCode;
+            $GRVDetail_arr['purchaseOrderMastertID'] = 0;
+            $GRVDetail_arr['purchaseOrderDetailsID'] = 0;
+            $GRVDetail_arr['itemCode'] = $itemAssign->itemCodeSystem;
+            $GRVDetail_arr['itemPrimaryCode'] = $itemAssign->itemPrimaryCode;
+            $GRVDetail_arr['itemDescription'] = $itemAssign->itemDescription;
+            $GRVDetail_arr['itemFinanceCategoryID'] = $itemAssign->financeCategoryMaster;
+            $GRVDetail_arr['itemFinanceCategorySubID'] = $itemAssign->financeCategorySub;
+            $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;
+            $GRVDetail_arr['financeGLcodebBS'] = $financeCategorySub->financeGLcodebBS;
+            $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
+            $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
+            $GRVDetail_arr['includePLForGRVYN'] = 0;
+            $GRVDetail_arr['supplierPartNumber'] = $itemAssign->secondaryItemCode;
+            $GRVDetail_arr['unitOfMeasure'] = $itemAssign->itemUnitOfMeasure;
+            $GRVDetail_arr['noQty'] = $input['noQty'];
+            $GRVDetail_arr['prvRecievedQty'] = 0;
+            $GRVDetail_arr['poQty'] = 0;
+            $totalNetcost = $input['unitCost'] * $input['noQty'];
+            $GRVDetail_arr['unitCost'] = $input['unitCost'];
+            $GRVDetail_arr['discountPercentage'] = 0;
+            $GRVDetail_arr['discountAmount'] = 0;
+            $GRVDetail_arr['netAmount'] = $totalNetcost;
+            $GRVDetail_arr['comment'] = $input['comment'];
+            $GRVDetail_arr['supplierDefaultCurrencyID'] = $grvMaster->supplierDefaultCurrencyID;
+            $GRVDetail_arr['supplierDefaultER'] = $grvMaster->supplierDefaultER;
+            $GRVDetail_arr['supplierItemCurrencyID'] = $grvMaster->supplierTransactionCurrencyID;
+            $GRVDetail_arr['foreignToLocalER'] = $grvMaster->supplierTransactionER;
+            $GRVDetail_arr['companyReportingCurrencyID'] = $grvMaster->companyReportingCurrencyID;
+            $GRVDetail_arr['companyReportingER'] = $grvMaster->companyReportingER;
+            $GRVDetail_arr['localCurrencyID'] = $grvMaster->localCurrencyID;
+            $GRVDetail_arr['localCurrencyER'] = $grvMaster->localCurrencyER;
+            $GRVDetail_arr['addonDistCost'] = 0;
+            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = $currency['localAmount'];
+            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = $currency['defaultAmount'];
+            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = $input['unitCost'];
+            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = $currency['reportingAmount'];
+            $GRVDetail_arr['landingCost_LocalCur'] = $currency['localAmount'];
+            $GRVDetail_arr['landingCost_TransCur'] = $input['unitCost'];
+            $GRVDetail_arr['landingCost_RptCur'] = $currency['reportingAmount'];
+            $GRVDetail_arr['vatRegisteredYN'] = 0;
+            $GRVDetail_arr['supplierVATEligible'] = 0;
+            $GRVDetail_arr['VATPercentage'] = 0;
+            $GRVDetail_arr['VATAmount'] = 0;
+            $GRVDetail_arr['VATAmountLocal'] = 0;
+            $GRVDetail_arr['VATAmountRpt'] = 0;
+            $GRVDetail_arr['logisticsAvailable'] = 0;
+            $GRVDetail_arr['createdPcID'] = gethostname();
+            $GRVDetail_arr['createdUserID'] = $user->empID;
+            $GRVDetail_arr['createdUserSystemID'] = $user->employeeSystemID;
+
+            $item = $this->gRVDetailsRepository->update($GRVDetail_arr,$id);
+
+            DB::commit();
+            return $this->sendResponse('', 'GRV details saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Error Occurred');
+        }
+
+    }
+
+
 
     public function grvDeleteAllDetails(Request $request)
     {

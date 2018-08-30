@@ -13,7 +13,7 @@ use InfyOm\Generator\Common\BaseRepository;
  * @method ItemIssueMaster findWithoutFail($id, $columns = ['*'])
  * @method ItemIssueMaster find($id, $columns = ['*'])
  * @method ItemIssueMaster first($columns = ['*'])
-*/
+ */
 class ItemIssueMasterRepository extends BaseRepository
 {
     /**
@@ -87,13 +87,16 @@ class ItemIssueMasterRepository extends BaseRepository
         return ItemIssueMaster::class;
     }
 
-    public function getAudit($id){
-        return  $this->with(['created_by','confirmed_by','modified_by','warehouse_by','company','details.uom_issuing','approved_by' => function ($query) {
-            $query->with(['employee' =>  function($q){
+    public function getAudit($id)
+    {
+        return $this->with(['created_by', 'confirmed_by', 'modified_by', 'warehouse_by', 'company', 'details' => function ($q) {
+              $q->with('uom_issuing', 'item_by');
+        }, 'approved_by' => function ($query) {
+            $query->with(['employee' => function ($q) {
                 $q->with(['details.designation']);
             }])
-                ->where('documentSystemID',8);
-             }])
+                ->where('documentSystemID', 8);
+        }])
             ->findWithoutFail($id);
     }
 }

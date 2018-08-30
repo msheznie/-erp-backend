@@ -143,7 +143,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $validator = \Validator::make($itemReturn->toArray(), [
             'serviceLineSystemID' => 'required|numeric|min:1',
             'wareHouseLocation' => 'required|numeric|min:1',
-            'ReturnType1' => 'required|numeric|min:1'
+            'ReturnType' => 'required|numeric|min:1'
         ]);
 
         if ($validator->fails()) {

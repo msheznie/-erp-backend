@@ -156,10 +156,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-        $currency=customercurrency::where('customerCodeSystem',$customer->customerCodeSystem)->where('isDefault',-1)->first();
-        if(count($currency) >0){
+        $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+
+        if ($currency) {
             $input['custTransactionCurrencyID'] = $currency->currencyID;
-            $myCurr=$currency->currencyID;
+            $myCurr = $currency->currencyID;
 
             $companyCurrency = \Helper::companyCurrency($currency->currencyID);
             $companyCurrencyConversion = \Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
@@ -170,17 +171,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
-            $bank=BankAssign::select('bankmasterAutoID')->where('companyID',$company['CompanyID'])->where('isDefault',-1)->first();
-            if(count($bank)>0){
-                $input['bankID']=$bank->bankmasterAutoID;
-               $bankAccount= BankAccount::where('companyID',$company['CompanyID'])->where('bankmasterAutoID',$bank->bankmasterAutoID)->where('isDefault',1)->where('accountCurrencyID',$currency->currencyID)->first();
-               $input['bankAccountID']=$bankAccount->bankAccountAutoID;
+            $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $company['CompanyID'])->where('isDefault', -1)->first();
+            if ($bank) {
+                $input['bankID'] = $bank->bankmasterAutoID;
+                $bankAccount = BankAccount::where('companyID', $company['CompanyID'])->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $currency->currencyID)->first();
+                $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
             }
         }
 
-       /* if ($customer->creditDays == 0 || $customer->creditDays == '') {
-            return $this->sendResponse('e', $customer->CustomerName . ' - Credit days not mentioned for this customer');
-        }*/
+        /* if ($customer->creditDays == 0 || $customer->creditDays == '') {
+             return $this->sendResponse('e', $customer->CustomerName . ' - Credit days not mentioned for this customer');
+         }*/
 
 
         /**/
@@ -355,13 +356,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
             }
 
+            if ($_post['bankID'] != $customerInvoiceDirect->bankID) {
+                $_post['bankAccountID'] = NULL;
+            }
+
         }
 
 
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found', 500);
         }
-
+        $input['departmentSystemID']=4;
         /*financial Year check*/
         $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYearCheck["success"]) {
@@ -394,8 +399,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
-        if($input['customerInvoiceNo'] != $customerInvoiceDirect->customerInvoiceNo){
-            $_post['customerInvoiceNo'] =$input['customerInvoiceNo'];
+        if ($input['customerInvoiceNo'] != $customerInvoiceDirect->customerInvoiceNo) {
+            $_post['customerInvoiceNo'] = $input['customerInvoiceNo'];
         }
 
 
@@ -407,15 +412,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             if ($customer->creditDays == 0 || $customer->creditDays == '') {
-                return $this->sendError( $customer->CustomerName . ' - Credit days not mentioned for this customer',500);
+                return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500);
             }
 
             /*if customer change*/
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-            $currency=customercurrency::where('customerCodeSystem',$customer->customerCodeSystem)->where('isDefault',-1)->first();
-            if(count($currency) >0){
+            $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+            if ($currency) {
                 $_post['custTransactionCurrencyID'] = $currency->currencyID;
-                $myCurr=$currency->currencyID;
+                $myCurr = $currency->currencyID;
 
                 $companyCurrency = \Helper::companyCurrency($currency->currencyID);
                 $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
@@ -425,13 +430,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                 $_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
                 $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $_post['bankID']=null;
-                $_post['bankAccountID']=null;
-                $bank=BankAssign::select('bankmasterAutoID')->where('companyID',$customerInvoiceDirect->companyID)->where('isDefault',-1)->first();
-                if(count($bank)>0){
-                    $_post['bankID']=$bank->bankmasterAutoID;
-                    $bankAccount= BankAccount::where('companyID',$customerInvoiceDirect->companyID)->where('bankmasterAutoID',$bank->bankmasterAutoID)->where('isDefault',1)->where('accountCurrencyID',$currency->currencyID)->first();
-                    $_post['bankAccountID']=$bankAccount->bankAccountAutoID;
+                $_post['bankID'] = null;
+                $_post['bankAccountID'] = null;
+                $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $customerInvoiceDirect->companyID)->where('isDefault', -1)->first();
+                if ($bank) {
+                    $_post['bankID'] = $bank->bankmasterAutoID;
+                    $bankAccount = BankAccount::where('companyID', $customerInvoiceDirect->companyID)->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $currency->currencyID)->first();
+                    $_post['bankAccountID'] = $bankAccount->bankAccountAutoID;
                 }
             }
             /**/
@@ -439,11 +444,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
-
-        if($input['serviceStartDate'] !='' && $input['serviceEndDate'] !='' ){
+        if ($input['serviceStartDate'] != '' && $input['serviceEndDate'] != '') {
             $_post['serviceStartDate'] = Carbon::parse($input['serviceStartDate'])->format('Y-m-d') . ' 00:00:00';
             $_post['serviceEndDate'] = Carbon::parse($input['serviceEndDate'])->format('Y-m-d') . ' 00:00:00';
-            if (($_post['serviceStartDate'] >= $_post['serviceEndDate']) ) {
+            if (($_post['serviceStartDate'] >= $_post['serviceEndDate'])) {
                 return $this->sendError('Service start date can not be greater than service end date.', 500);
             }
         }
@@ -462,11 +466,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if ($customerInvoiceDirect->confirmedYN == 0) {
                 if ($isPerforma != 1) {
 
+                    $messages = [
+
+                        'custTransactionCurrencyID.required' => 'The currency is required.',
+                        'bankID.required' => 'The bank is required.',
+                        'bankAccountID.required' => 'The bank account is required.'
+
+                    ];
                     $validator = \Validator::make($_post, [
                         'custTransactionCurrencyID' => 'required|numeric|min:1',
                         'bankID' => 'required|numeric|min:1',
                         'bankAccountID' => 'required|numeric|min:1'
-                    ]);
+                    ],$messages);
+
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
@@ -646,7 +658,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'month', 'approved', 'year'));
+
+        $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'month', 'approved', 'year', 'isProforma'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -654,20 +667,33 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $invMaster = CustomerInvoiceDirect::where('companySystemID', $input['companyId']);
-        $invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with(['currency', 'createduser', 'customer']);
+        $invMaster = DB::table('erp_custinvoicedirect')
+            ->leftjoin('currencymaster', 'custTransactionCurrencyID', '=', 'currencyID')
+            ->leftjoin('employees', 'erp_custinvoicedirect.createdUserSystemID', '=', 'employees.employeeSystemID')
+            ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_custinvoicedirect.customerID')
+            ->where('companySystemID', $input['companyId'])
+            ->where('erp_custinvoicedirect.documentSystemID', $input['documentId']);
+
+
+        /* $invMaster = CustomerInvoiceDirect::where('companySystemID', $input['companyId']);
+         $invMaster->where('documentSystemID', $input['documentId']);
+         $invMaster->with(['currency', 'createduser', 'customer']);*/
 
 
         if (array_key_exists('invConfirmedYN', $input)) {
             if (($input['invConfirmedYN'] == 0 || $input['invConfirmedYN'] == 1) && !is_null($input['invConfirmedYN'])) {
-                $invMaster->where('confirmedYN', $input['invConfirmedYN']);
+                $invMaster->where('erp_custinvoicedirect.confirmedYN', $input['invConfirmedYN']);
             }
         }
 
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $invMaster->where('approved', $input['approved']);
+                $invMaster->where('erp_custinvoicedirect.approved', $input['approved']);
+            }
+        }
+        if (array_key_exists('isProforma', $input)) {
+            if (!is_null($input['isProforma'])) {
+                $invMaster->where('isPerforma', $input['isProforma']);
             }
         }
 
@@ -686,42 +712,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
-        /*    $grvMaster = $invMaster->select(
-                [ 'erp_custinvoicedirect.custInvoiceDirectAutoID',
-                    'erp_custinvoicedirect.custInvoiceDirectAutoID','bookingDate',
-                    'erp_custinvoicedirect.comments',
-                    'bookingInvCode',
-                    'erp_custinvoicedirect.customerID',
-                    'custTransactionCurrencyID',
-                    'bookingAmountTrans',
-                    'erp_custinvoicedirect.createdUserID',
-                    'erp_custinvoicedirect.approvedDate',
-
-                  'erp_custinvoicedirect.confirmedYN','approved','VATAmount'
-                ]);*/
 
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $invMaster = $invMaster->where(function ($query) use ($search) {
-                $query->where('employees.empName', 'LIKE', "%{$search}%")
-                    ->orWhere('bookingInvCode', 'LIKE', "%{$search}%")
-                    ->orWhere('customermaster.CustomerName', 'LIKE', "%{$search}%");
+                $query->Where('bookingInvCode', 'LIKE', "%{$search}%")
+                    ->orwhere('employees.empName', 'LIKE', "%{$search}%")
+                    ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
+                    ->orWhere('customerInvoiceNo', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
             });
         }
 
+        $request->request->remove('search.value');
+        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount');
 
-        /*       $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
-                   ->where('companySystemID', $input['companyId'])->first();
-
-               $policy = 0;
-
-               if (!empty($historyPolicy)) {
-                   $policy = $historyPolicy->isYesNO;
-               }*/
-
-        return \DataTables::eloquent($invMaster)
-            /*  ->addColumn('Actions', $policy)*/
+        return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -750,7 +757,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
         $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-        $output['invoiceType'] = array(array('value' => 1, 'label' => 'Performa Invoice'), array('value' => 0, 'label' => 'Direct Invoice'), array('value' => 2, 'label' => 'Item'));
+        $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'), array('value' => 2, 'label' => 'Item'));
         $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId);
         $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companyId)->first();
         $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
@@ -1276,6 +1283,25 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->delete();
 
         return $this->sendResponse($invoice->toArray(), 'Invoice reopened successfully');
+    }
+
+    function customerInvoiceAudit(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        $gRVMaster = $this->customerInvoiceDirectRepository->with(['createduser', 'confirmed_by', 'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
+            $query->with('employee')
+                ->where('documentSystemID', 20);
+        }, 'invoicedetails', 'company', 'currency', 'companydocumentattachment_by' => function ($query) {
+            $query->where('documentSystemID', 20);
+        } ])->findWithoutFail($id);
+
+
+        if (empty($gRVMaster)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        return $this->sendResponse($gRVMaster->toArray(), 'GRV retrieved successfully');
     }
 
 
