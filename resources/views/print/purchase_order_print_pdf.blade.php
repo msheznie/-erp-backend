@@ -570,9 +570,7 @@
             <tbody>
             <tr>
                 <td  style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                <td  class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;"><span class="font-weight-bold"
-                                                         style="font-size: 11px">Sub Total</span>
-                </td>
+                <td  class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;"><span class="font-weight-bold" style="font-size: 11px">Sub Total</span></td>
                 <td class="text-right" style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                 <span class="font-weight-bold">
                 @if ($podata->detail)

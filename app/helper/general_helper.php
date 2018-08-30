@@ -298,7 +298,7 @@ class Helper
                         // get current employee detail
                         $empInfo = self::getEmployeeInfo();
                         //confirm the document
-                        $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(),'RollLevForApp_curr' => 1]);
+                        $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
 
                         //get the policy
                         $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
@@ -850,7 +850,7 @@ class Helper
             if ($docApproved) {
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
-                if(!$isConfirmed[$docInforArr["confirmedYN"]]){ // check document is confirmed or not
+                if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
                     return ['success' => false, 'message' => 'Document is not confirmed'];
                 }
                 //check document is already approved
@@ -879,10 +879,10 @@ class Helper
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset
                                 $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
-                                $qtyRangeArr= [];
+                                $qtyRangeArr = [];
                                 if ($fixeAssetDetail) {
                                     $lastSerialNumber = 1;
-                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID',$docApproved->companySystemID)->first();
+                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID', $docApproved->companySystemID)->first();
                                     if ($lastSerial) {
                                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                                     }
@@ -890,11 +890,11 @@ class Helper
                                         if ($val["currentStockQty"]) {
                                             $qtyRange = range(1, $val["currentStockQty"]);
                                             if ($qtyRange) {
-                                                foreach($qtyRange as $qty){
-                                                    $documentCode = ($val["master"]["companyID"] .'\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                                                foreach ($qtyRange as $qty) {
+                                                    $documentCode = ($val["master"]["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
                                                     $data["departmentID"] = 'AM';
                                                     $data["departmentSystemID"] = null;
-                                                    $data["serviceLineSystemID"] =  $val["master"]["serviceLineSystemID"];
+                                                    $data["serviceLineSystemID"] = $val["master"]["serviceLineSystemID"];
                                                     $data["serviceLineCode"] = $val["master"]["serviceLineSystemID"];
                                                     $data["docOriginSystemCode"] = $val["inventoryreclassificationID"];
                                                     $data["docOrigin"] = $val["master"]["documentCode"];
@@ -923,12 +923,12 @@ class Helper
 
                             // insert the record to item ledger
 
-                            if($input["documentSystemID"] != 20) {
+                            if ($input["documentSystemID"] != 20) {
                                 $jobIL = ItemLedgerInsert::dispatch($masterData);
                             }
 
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"]==20 ) {
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
@@ -1006,7 +1006,50 @@ class Helper
                             }
 
                         } else {
+                            //Budget check on the 1st level approval for PR/DR/WR
 
+                            if ($input["rollLevelOrder"] == 1) {
+                                if ($input["documentSystemID"] == 1 || $input["documentSystemID"] == 50 || $input["documentSystemID"] == 51) {
+
+                                    $purchaseRequestMaster = Models\PurchaseRequest::find($input["documentSystemCode"]);
+
+                                    $checkBudget = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
+                                        ->where('companySystemID', $purchaseRequestMaster->companySystemID)
+                                        ->first();
+
+                                    if ($checkBudget->isYesNO == 1) {
+                                        if ($purchaseRequestMaster->checkBudgetYN == -1) {
+
+                                            $purchaseRequestID = $purchaseRequestMaster->purchaseRequestID;
+                                            $serviceLineSystemID = $purchaseRequestMaster->serviceLineSystemID;
+                                            $companySystemID = $purchaseRequestMaster->companySystemID;
+                                            $budgetYear = $purchaseRequestMaster->budgetYear;
+
+                                            if ($purchaseRequestMaster->financeCategory != 3) {
+
+                                                $documentAmount = \DB::select('SELECT erp_purchaserequestdetails.purchaseRequestID,templateGLCode.templatesDetailsAutoID, Sum(erp_purchaserequestdetails.quantityRequested*erp_purchaserequestdetails.estimatedCost) AS totalCost, erp_purchaserequestdetails.budgetYear FROM erp_purchaserequestdetails INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription,erp_templatesglcode.templateMasterID, erp_templatesglcode.chartOfAccountSystemID, erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_purchaserequestdetails.financeGLcodePLSystemID AND erp_purchaserequestdetails.budgetYear = ' . $budgetYear . ' WHERE erp_purchaserequestdetails.purchaseRequestID = ' . $purchaseRequestID . ' GROUP BY erp_purchaserequestdetails.purchaseRequestID,templateGLCode.templatesDetailsAutoID');
+
+                                                if ($documentAmount) {
+                                                    $budgetAmount = \DB::select('SELECT erp_budjetdetails.companySystemID, erp_budjetdetails.serviceLineSystemID,erp_budjetdetails.templateDetailID,templateGLCode.templateDetailDescription, erp_budjetdetails. YEAR,sum(erp_budjetdetails.budjetAmtLocal) AS budgetLocalAmount,sum(erp_budjetdetails.budjetAmtRpt) AS budgetRptAmount FROM erp_budjetdetails INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID,erp_templatesdetails.templateDetailDescription,erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID,erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.templatesDetailsAutoID = erp_budjetdetails.templateDetailID AND templateGLCode.chartOfAccountSystemID = erp_budjetdetails.chartOfAccountID WHERE erp_budjetdetails.YEAR = ' . $budgetYear . ' AND erp_budjetdetails.companySystemID = ' . $companySystemID . ' AND erp_budjetdetails.serviceLineSystemID = ' . $serviceLineSystemID . ' AND erp_budjetdetails.templateDetailID = '.$documentAmount['templatesDetailsAutoID'].' GROUP BY erp_budjetdetails.companySystemID, erp_budjetdetails.serviceLineSystemID, erp_budjetdetails. YEAR, erp_budjetdetails.templateDetailID');
+
+                                                    $consumedAmount = \DB::select('SELECT erp_budgetconsumeddata.companySystemID,erp_budgetconsumeddata.serviceLineSystemID,templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription, erp_budgetconsumeddata.Year, sum( erp_budgetconsumeddata.consumedLocalAmount ) AS ConsumedLocalAmount, sum( erp_budgetconsumeddata.consumedRptAmount ) AS ConsumedRptAmount FROM erp_budgetconsumeddata INNER JOIN ( SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID, erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_budgetconsumeddata.chartOfAccountID WHERE erp_budgetconsumeddata.Year = ' . $budgetYear . ' AND erp_budgetconsumeddata.companySystemID = ' . $companySystemID . ' AND erp_budgetconsumeddata.serviceLineSystemID = ' . $serviceLineSystemID . ' AND templateGLCode.templateDetailID = '.$documentAmount['templatesDetailsAutoID'].' GROUP BY erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, erp_budgetconsumeddata.Year,templateGLCode.templatesDetailsAutoID');
+
+                                                    $pendingAmount = \DB::select('SELECT erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription,Sum(GRVcostPerUnitLocalCur) AS localAmt,Sum(GRVcostPerUnitComRptCur ) AS rptAmt,erp_purchaseorderdetails.budgetYear FROM erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID,erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_purchaseorderdetails.financeGLcodePLSystemID WHERE erp_purchaseordermaster.approved = 0 AND erp_purchaseordermaster.poCancelledYN= 0 AND erp_purchaseordermaster.budgetYear = ' . $budgetYear . ' AND erp_purchaseordermaster.companySystemID = ' . $companySystemID . ' AND erp_purchaseordermaster.serviceLineSystemID = ' . $serviceLineSystemID . ' AND templateGLCode.templateDetailID = '.$documentAmount['templatesDetailsAutoID'].' GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, templateGLCode.templatesDetailsAutoID, erp_purchaseorderdetails.budgetYear');
+
+                                                    //get reporting amount converted
+                                                    $currencyConversionRptAmount = self::currencyConversion($companySystemID, $purchaseRequestMaster->currency, $purchaseRequestMaster->currency, $documentAmount["totalCost"]);
+
+                                                    $totalConsumedAmount = $currencyConversionRptAmount['reportingAmount'] + $consumedAmount['ConsumedRptAmount'] + $pendingAmount['rptAmt'];
+
+                                                    if ($totalConsumedAmount > $budgetAmount['budgetRptAmount']) {
+                                                        return ['success' => false, 'message' => 'Budget Exceeded. ' . $budgetAmount['templateDetailDescription'] . ' Budget Amount : ' . $budgetAmount['budgetRptAmount'] . ', Total Consumed Amount : ' . $totalConsumedAmount . ''];
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
 
