@@ -354,7 +354,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $master->companyID)->where('contractUID', $contractID)->first();
 
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
-        if (count($detail) > 0) {
+        if ($detail) {
             if ($detail->serviceLineSystemID != $serviceLineSystemID || $contract->ContractNumber != $detail->clientContractID) {
                 return $this->sendError('Different Service Line or Contract ID selected');
             }

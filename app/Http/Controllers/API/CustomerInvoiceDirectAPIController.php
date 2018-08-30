@@ -172,7 +172,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
             $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $company['CompanyID'])->where('isDefault', -1)->first();
-            if (count($bank) > 0) {
+            if ($bank) {
                 $input['bankID'] = $bank->bankmasterAutoID;
                 $bankAccount = BankAccount::where('companyID', $company['CompanyID'])->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $currency->currencyID)->first();
                 $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
@@ -414,7 +414,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             /*if customer change*/
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
-            if (count($currency) > 0) {
+            if ($currency) {
                 $_post['custTransactionCurrencyID'] = $currency->currencyID;
                 $myCurr = $currency->currencyID;
 
@@ -429,7 +429,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
                 $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $customerInvoiceDirect->companyID)->where('isDefault', -1)->first();
-                if (count($bank) > 0) {
+                if ($bank) {
                     $_post['bankID'] = $bank->bankmasterAutoID;
                     $bankAccount = BankAccount::where('companyID', $customerInvoiceDirect->companyID)->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $currency->currencyID)->first();
                     $_post['bankAccountID'] = $bankAccount->bankAccountAutoID;
