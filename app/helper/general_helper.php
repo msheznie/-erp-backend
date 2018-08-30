@@ -1420,7 +1420,6 @@ class Helper
         $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
         $masterData = $namespacedModel::find($autoID);
         if ($masterData) {
-
             $transactionCurrencyID = $masterData[$docInforArr["transCurrencyID"]];
             $transactionDefaultCurrencyID = $masterData[$docInforArr["transDefaultCurrencyID"]];
             $reportingCurrencyID = $masterData[$docInforArr["rptCurrencyID"]];
