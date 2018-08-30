@@ -225,6 +225,7 @@ class ItemLedgerInsert implements ShouldQueue
                             'serviceLineCode' => 'serviceLineCode',
                             'documentSystemID' => 'documentSystemID',
                             'documentID' => 'documentID',
+                            'wareHouseSystemCode' => 'wareHouseSystemCode',
                             'documentCode' => 'documentCode');
 
                         $detailColumnArray = array(
