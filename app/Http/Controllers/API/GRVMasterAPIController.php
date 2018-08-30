@@ -637,6 +637,12 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('grvTypeID', $input)) {
+            if ($input['grvTypeID'] && !is_null($input['grvTypeID'])) {
+                $grvMaster->where('grvTypeID', $input['grvTypeID']);
+            }
+        }
+
         $grvMaster = $grvMaster->select(
             ['erp_grvmaster.grvAutoID',
                 'erp_grvmaster.grvPrimaryCode',
