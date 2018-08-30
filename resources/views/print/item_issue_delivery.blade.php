@@ -3,19 +3,18 @@
     <title>Item Issue Delivery</title>
     <style>
         @page {
-            margin-left: 30px;
-            margin-right: 30px;
-            margin-top: 30px;
-            margin-bottom: 0px;
+            margin-left: 2%;
+            margin-right: 3%;
+            margin-top: 4%;
         }
 
         body {
-            font-size: 12px;
+            font-size: 11px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         }
 
         h3 {
-            font-size: 24.5px;
+            font-size: 24px;
         }
 
         h6 {
@@ -23,7 +22,7 @@
         }
 
         h4 {
-            font-size: 18px;
+            font-size: 16px;
         }
 
         h6, h3 {
@@ -36,11 +35,11 @@
         }
 
         table > tbody > tr > td {
-            font-size: 11.5px;
+            font-size: 11px;
         }
 
         .theme-tr-head {
-            background-color: #DEDEDE !important;
+            background-color: #ffffff !important;
         }
 
         .text-left {
@@ -82,28 +81,32 @@
         }
 
         .table thead th {
-            vertical-align: bottom;
+            vertical-align: top;
             border-bottom: 2px solid #c2cfd6;
         }
 
         table.table-bordered {
-            border: 1px solid #000;
+            border: 0.5px solid #e2e3e5;
         }
 
         .table th, .table td {
-            padding: 6.4px !important;
+            padding: 5px !important;
         }
 
         table.table-bordered {
             border-collapse: collapse;
         }
 
+        .table-striped tbody tr:nth-of-type(even) {
+            background-color: #f1f1f1;
+        }
+
         table.table-bordered, .table-bordered th, .table-bordered td {
-            border: 1px solid black;
+            border: 0.5px solid #EEEEEE;
         }
 
         table > thead > tr > th {
-            font-size: 11.5px;
+            font-size: 11px;
         }
 
         hr {
@@ -149,7 +152,13 @@
         }
 
         .content {
-            margin-bottom: 10px;
+            margin-bottom: 0px;
+        }
+
+        .input-box {
+            border: 0.5px solid #f4f4f4;
+            width: 300px;
+            height: 25px
         }
     </style>
 </head>
@@ -158,8 +167,8 @@
     --}}{{--Footer Page <span class="pagenum"></span>--}}{{--
     --}}{{--  <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>--}}{{--
 </div>--}}
-<div id="watermark"></div>
-<div class="card-body content" id="print-section">
+{{--<div id="watermark"></div>--}}
+<div class="content">
     <table style="width: 100%">
         <tr style="width:100%">
             <td style="width: 25%;">
@@ -295,146 +304,212 @@
             </td>
         </tr>
     </table>
-    <table class="table table-bordered" style="width: 100%;">
-        <thead>
-        <tr class="theme-tr-head">
-            <th>#</th>
-            <th colspan="3">Item</th>
-            <th>{{$entity->companyID}}</th>
-            <th>Manufacture</th>
-            <th>PDO</th>
-            <th>Item Description</th>
-            <th colspan="3">"Material PO no(enter 13 digits) including PO line
-                Item"
-            </th>
-            <th>GR Number</th>
-        </tr>
-        <tr class="theme-tr-head">
-            <th style="width: 2%"></th>
-            <th style="width: 5%">DEL</th>
-            <th style="width: 5%">Bacl Load</th>
-            <th style="width: 5%">USED</th>
-            <th style="width: 5%">Item Code</th>
-            <th style="width: 5%">Part No</th>
-            <th style="width: 5%">Item SAP Number</th>
-            <th style="width: 10%"></th>
-            <th style="width: 5%"></th>
-            <th style="width: 3%"></th>
-            <th style="width: 5%"></th>
-            <th style="width: 5%"></th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach ($entity->details as $item)
-            <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
-                <td>{{$loop->iteration}}</td>
-                <td>{{round($item->qtyIssued,2)}}</td>
-                <td>
-                    {{$item->backLoad}}
+    <div class="row">
+        <table class="table table-bordered table-striped" style="width: 100%;">
+            <thead>
+            <tr class="theme-tr-head">
+                <th></th>
+                <th colspan="3">Item</th>
+                <th>{{$entity->companyID}}</th>
+                <th>Manufacture</th>
+                <th>PDO</th>
+                <th>Item Description</th>
+                <th colspan="3">"Material PO no(enter 13 digits) including PO line
+                    Item"
+                </th>
+                <th>GR Number</th>
+            </tr>
+            <tr class="theme-tr-head">
+                <th style="width: 2%">#</th>
+                <th style="width: 3%">DEL</th>
+                <th style="width: 4%">Bacl Load</th>
+                <th style="width: 4%">USED</th>
+                <th style="width: 5%">Item Code</th>
+                <th style="width: 5%">Part No</th>
+                <th style="width: 5%">Item SAP Number</th>
+                <th style="width: 16%"></th>
+                <th style="width: 6%"></th>
+                <th style="width: 1%"></th>
+                <th style="width: 4%"></th>
+                <th style="width: 5%"></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach ($entity->details as $item)
+                <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                    <td>{{$loop->iteration}}</td>
+                    <td>{{round($item->qtyIssued,2)}}</td>
+                    <td>
+                        {{$item->backLoad}}
+                    </td>
+                    <td>
+                        {{$item->used}}
+                    </td>
+                    <td>
+                        {{$item->itemPrimaryCode}}
+                    </td>
+                    <td>
+                        @if($item->item_by)
+                            {{$item->item_by->secondaryItemCode}}
+                        @endif
+                    </td>
+                    <td>
+                        {{$item->clientReferenceNumber}}
+                    </td>
+                    <td>
+                        {{$item->itemDescription}}
+                    </td>
+                    <td>
+                        {{--<!--{{$item->pl10}}-->--}}
+                        {{$entity->purchaseOrderNo}}
+                    </td>
+                    <td>
+                        /
+                    </td>
+                    <td>
+                        {{$item->pl3}}
+                    </td>
+                    <td>
+                        {{$item->grvDocumentNO}}
+                    </td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </div>
+    <div class="row">
+        <table width="100%">
+            <tr width="100%">
+                <td width="40%">
+                    <table width="100%">
+                        <tr>   &nbsp;</tr>
+                    </table>
                 </td>
-                <td>
-                    {{$item->used}}
+                <td width="40%" valign="top">
+                    <table width="100%">
+                        <tr>
+                            <td width="100px" valign="top">
+                                <span class="font-weight-bold">Ticket issued by :</span>
+                            </td>
+                            <td valign="top">
+                                <div class="input-box"></div>
+                            </td>
+                        </tr>
+                    </table>
                 </td>
-                <td>
-                    {{$item->itemPrimaryCode}}
-                </td>
-                <td>
-                    @if($item->item_by)
-                        {{$item->item_by->secondaryItemCode}}
-                    @endif
-                </td>
-                <td>
-                    {{$item->clientReferenceNumber}}
-                </td>
-                <td>
-                    {{$item->itemDescription}}
-                </td>
-                <td>
-                    {{--<!--{{$item->pl10}}-->--}}
-                    {{$entity->purchaseOrderNo}}
-                </td>
-                <td>
-                    /
-                </td>
-                <td>
-                    {{$item->pl3}}
-                </td>
-                <td>
-                    {{$item->grvDocumentNO}}
+                <td width="20%" valign="top">
+                       <span style="padding-top:20px"> "Comments: 1. Customer Rep.provide stamp signature with details needed.
+                       </span>
                 </td>
             </tr>
-        @endforeach
-        </tbody>
-    </table>
-    <table style="  margin-top: 10px;">
-        <tr width="100%">
-            <td width="40%">
-                <table width="100%">
-                    <tr>
-                        <td width="70px">
-                            {{-- <span class="font-weight-bold">Issued By :</span>--}}
-                        </td>
-                        <td>
-                            {{-- @if($entity->confirmed_by)
-                                 {{$entity->confirmed_by->empName}}
-                             @endif--}}
-                        </td>
-                    </tr>
-                </table>
-            </td>
-            <td width="40%" valign="top">
-                <table>
-                    <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Ticket issued by :</span>
-                        </td>
-                        <td>
-                            <div style="border: 0.5px solid black;width: 300px;margin-top: 7px;height: 25px"></div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Signature  :</span>
-                        </td>
-                        <td>
-                            <div style="border: 0.5px solid black;width: 300px;margin-top: 7px;height: 25px"></div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Date :</span>
-                        </td>
-                        <td>
-                            <div style="border: 0.5px solid black;width: 300px;margin-top: 7px;height: 25px"></div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Checked By :</span>
-                        </td>
-                        <td>
-                            <div style="border: 0.5px solid black;width: 300px;margin-top: 7px;height: 25px"></div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Date :</span>
-                        </td>
-                        <td>
-                            <div style="border: 0.5px solid black;width: 300px;margin-top: 7px;height: 25px"></div>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-            <td width="20%" valign="top">
-               <span style="padding-top:20px"> "Comments: 1. Customer Rep.provide stamp signature with details needed.
-                2. Supervisor to verify prior to signature that material purchase
-                order nos (including PO line items) are filled out correctly in the
-                consumables ticket."
-               </span>
-            </td>
-        </tr>
-    </table>
+        </table>
+    </div>
+    <div class="row">
+        <table width="100%" style="margin-top: -3%">
+            <tr width="100%">
+                <td width="40%">
+                    &nbsp;
+                </td>
+                <td width="40%" valign="top">
+                    <table width="100%">
+                        <tr>
+                            <td width="100px" valign="top">
+                                <span class="font-weight-bold">Signature :</span>
+                            </td>
+                            <td valign="top">
+                                <div class="input-box"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td width="20%" valign="top">
+                       <span style="padding-top:20px">
+                        2. Supervisor to verify prior to signature that material purchase
+                        order nos
+                       </span>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="row">
+        <table width="100%" style="margin-top: -3%">
+            <tr width="100%">
+                <td width="40%">
+                    <table width="100%">
+                        <tr>  &nbsp;</tr>
+                    </table>
+                </td>
+                <td width="40%" valign="top">
+                    <table width="100%">
+                        <tr>
+                            <td width="100px">
+                                <span class="font-weight-bold">Date :</span>
+                            </td>
+                            <td>
+                                <div class="input-box"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td width="20%" valign="top">
+                    <span style="padding-top:20px">
+                        (including PO line items) are filled out correctly in the
+                        consumables ticket."
+                       </span>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="row">
+        <table width="100%" style="margin-top: -3%">
+            <tr width="100%">
+                <td width="40%">
+                    <table width="100%">
+                        <tr>   &nbsp;</tr>
+                    </table>
+                </td>
+                <td width="40%" valign="top">
+                    <table width="100%">
+                        <tr>
+                            <td width="100px">
+                                <span class="font-weight-bold">Checked By :</span>
+                            </td>
+                            <td>
+                                <div class="input-box"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td width="20%" valign="top">
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="row">
+        <table width="100%" style="margin-top: -3%">
+            <tr width="100%">
+                <td width="40%">
+                    <table width="100%">
+                        <tr>  &nbsp;</tr>
+                    </table>
+                </td>
+                <td width="40%" valign="top">
+                    <table width="100%">
+                        <tr>
+                            <td width="100px">
+                                <span class="font-weight-bold">Date :</span>
+                            </td>
+                            <td>
+                                <div class="input-box"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td width="20%" valign="top">
+                </td>
+            </tr>
+        </table>
+    </div>
 </div>
 </body>
 </html>
