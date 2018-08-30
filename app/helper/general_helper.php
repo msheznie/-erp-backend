@@ -802,7 +802,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 61:
+            case 61: // Inventory reclassification
                 $docInforArr["tableName"] = 'erp_inventoryreclassification';
                 $docInforArr["modelName"] = 'InventoryReclassification';
                 $docInforArr["primarykey"] = 'inventoryreclassificationID';
@@ -877,6 +877,28 @@ class Helper
                                 $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
                             }
 
+                            // insert the record to item ledger
+
+                            if ($input["documentSystemID"] != 20) {
+                                $jobIL = ItemLedgerInsert::dispatch($masterData);
+                            }
+
+                            // insert the record to general ledger
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20 || $input["documentSystemID"] == 61) {
+                                $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                                if ($input["documentSystemID"] == 3) {
+                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
+                                }
+                            }
+
+                            $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
+                            if ($input["documentSystemID"] == 13 && !empty($sourceModel)) {
+                                $jobCI = CreateStockReceive::dispatch($sourceModel);
+                            }
+                            if ($input["documentSystemID"] == 10 && !empty($sourceModel)) {
+                                $jobSI = CreateSupplierInvoice::dispatch($sourceModel);
+                            }
+
                             if ($input["documentSystemID"] == 61) { //create fixed asset
                                 $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
                                 $qtyRangeArr = [];
@@ -902,7 +924,7 @@ class Helper
                                                     $data["companySystemID"] = $val["master"]["companySystemID"];
                                                     $data["companyID"] = $val["master"]["companyID"];
                                                     $data["documentSystemID"] = $val["master"]["documentSystemID"];
-                                                    $data["documentID"] = $val["master"]["documentID"];
+                                                    $data["documentID"] = 'FA';
                                                     $data["serialNo"] = $lastSerialNumber;
                                                     $data["itemCode"] = $val["itemSystemCode"];
                                                     $data["faCode"] = $documentCode;
@@ -919,28 +941,6 @@ class Helper
                                     }
                                     $fixedAsset = Models\FixedAssetMaster::insert($qtyRangeArr);
                                 }
-                            }
-
-                            // insert the record to item ledger
-
-                            if ($input["documentSystemID"] != 20) {
-                                $jobIL = ItemLedgerInsert::dispatch($masterData);
-                            }
-
-                            // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20) {
-                                $jobGL = GeneralLedgerInsert::dispatch($masterData);
-                                if ($input["documentSystemID"] == 3) {
-                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
-                                }
-                            }
-
-                            $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
-                            if ($input["documentSystemID"] == 13 && !empty($sourceModel)) {
-                                $jobCI = CreateStockReceive::dispatch($sourceModel);
-                            }
-                            if ($input["documentSystemID"] == 10 && !empty($sourceModel)) {
-                                $jobSI = CreateSupplierInvoice::dispatch($sourceModel);
                             }
 
                             // insert the record to budget consumed data

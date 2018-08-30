@@ -291,7 +291,7 @@ class GeneralLedger extends Model
     public $table = 'erp_generalledger';
 
     const CREATED_AT = 'createdDateTime';
-    const UPDATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timestamp';
 
     protected $primaryKey  = 'GeneralLedgerID';
 
