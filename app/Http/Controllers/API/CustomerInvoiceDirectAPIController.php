@@ -366,7 +366,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found', 500);
         }
-
+        $input['departmentSystemID']=4;
         /*financial Year check*/
         $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYearCheck["success"]) {
