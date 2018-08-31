@@ -239,6 +239,33 @@ class ItemLedgerInsert implements ShouldQueue
                             'wacRptCurrencyID' => 'reportingCurrencyID',
                             'wacRpt' => 'unitCostRpt');
                         break;
+                    case 24: //Inventory Reclassification
+                        $docInforArr["approvedColumnName"] = 'approved';
+                        $docInforArr["modelName"] = 'PurchaseReturn';
+                        $docInforArr["childRelation"] = 'details';
+                        $docInforArr["autoID"] = 'purhaseReturnAutoID';
+                        $docInforArr["approvedYN"] = -1;
+                        $masterColumnArray = array(
+                            'companySystemID' => 'companySystemID',
+                            'companyID' => 'companyID',
+                            'serviceLineSystemID' => 'serviceLineSystemID',
+                            'serviceLineCode' => 'serviceLineCode',
+                            'documentSystemID' => 'documentSystemID',
+                            'documentID' => 'documentID',
+                            'wareHouseSystemCode' => 'purchaseReturnLocation',
+                            'documentCode' => 'documentCode');
+
+                        $detailColumnArray = array(
+                            'itemSystemCode' => 'itemCode',
+                            'itemPrimaryCode' => 'itemPrimaryCode',
+                            'itemDescription' => 'itemDescription',
+                            'unitOfMeasure' => 'unitOfMeasure',
+                            'inOutQty' => 'noQty',
+                            'wacLocalCurrencyID' => 'localCurrencyID',
+                            'wacLocal' => 'GRVcostPerUnitLocalCur',
+                            'wacRptCurrencyID' => 'reportingCurrencyID',
+                            'wacRpt' => 'GRVcostPerUnitComRptCur');
+                        break;
                     default:
                         Log::error('Document ID Not Found' . date('H:i:s'));
                         exit;

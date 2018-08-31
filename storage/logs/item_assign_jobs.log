@@ -287,3 +287,43 @@
   ),
 )  
 [2018-08-30 12:45:09] local.INFO: Successfully inserted to GL table 12:45:09  
+[2018-08-31 06:28:22] local.INFO: [{"companySystemID":11,"itemSystemCode":30230,"inOutQty":12,"wacCostLocal":39,"wacCostRpt":101.298701299,"TotalwacCostLocal":468,"TotalwacCostRpt":1215.584415588}]  
+[2018-08-31 06:28:22] local.INFO: Successfully updated to item assign table 06:28:22  
+[2018-08-31 06:29:55] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 30230,
+    'itemPrimaryCode' => 'INV028185',
+    'itemDescription' => 'Tires 205/80 R16',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 2.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 39.0,
+    'wacRptCurrencyID' => NULL,
+    'wacRpt' => 101.29870129870129,
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FREE-KUW',
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'wareHouseSystemCode' => 117,
+    'documentCode' => NULL,
+    'documentSystemCode' => 106,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-31 06:29:55',
+    'timestamp' => '2018-08-31 06:29:55',
+  ),
+)  
+[2018-08-31 06:29:55] local.INFO: array (
+  0 => 30230,
+)  
+[2018-08-31 06:29:55] local.INFO: Item successfully added to item ledger06:29:55  
+[2018-08-31 06:29:55] local.INFO: [{"companySystemID":11,"itemSystemCode":30230,"inOutQty":14,"wacCostLocal":39,"wacCostRpt":101.298701299,"TotalwacCostLocal":546,"TotalwacCostRpt":1418.181818186}]  
+[2018-08-31 06:29:55] local.INFO: [{"companySystemID":11,"itemSystemCode":30230,"inOutQty":14,"wacCostLocal":39,"wacCostRpt":101.298701299,"TotalwacCostLocal":546,"TotalwacCostRpt":1418.181818186}]  
+[2018-08-31 06:29:55] local.INFO: Successfully updated to item assign table 06:29:55  
+[2018-08-31 06:29:55] local.INFO: Successfully updated to item assign table 06:29:55  
+[2018-08-31 06:50:35] local.INFO: [{"companySystemID":11,"itemSystemCode":30230,"inOutQty":17,"wacCostLocal":39,"wacCostRpt":101.298701299,"TotalwacCostLocal":663,"TotalwacCostRpt":1722.077922083}]  
+[2018-08-31 06:50:35] local.INFO: Successfully updated to item assign table 06:50:35  

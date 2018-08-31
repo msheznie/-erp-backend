@@ -385,7 +385,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError('Item Issue Master not found');
         }
 
-        if ($input['serviceLineSystemID']) {
+        if (isset($input['serviceLineSystemID'])) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
                 return $this->sendError('Department not found');
@@ -397,7 +397,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
         }
 
-        if ($input['wareHouseFrom']) {
+        if (isset($input['wareHouseFrom'])) {
             $checkWareHouseActive = WarehouseMaster::find($input['wareHouseFrom']);
             if (empty($checkWareHouseActive)) {
                 return $this->sendError('WareHouse not found', 500, $wareHouseError);
@@ -415,10 +415,12 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
         }
 
-        $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
+        if(isset($input["customerSystemID"])){
+            $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
 
-        if (!empty($customer)) {
-            $input["customerID"] = $customer->CutomerCode;
+            if (!empty($customer)) {
+                $input["customerID"] = $customer->CutomerCode;
+            }
         }
 
 

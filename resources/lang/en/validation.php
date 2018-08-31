@@ -143,6 +143,10 @@ return [
         'issueType' => 'Issues Type',
         'ReturnType' => 'Return Type',
         'ReturnRefNo' => 'Reference No',
+        'purchaseReturnRefNo' => 'Reference No',
+        'narration' => 'Narration',
+        'supplierID' => 'Supplier',
+        'supplierTransactionCurrencyID' => 'Currency'
     ],
 
 ];
