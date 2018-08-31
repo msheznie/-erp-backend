@@ -670,6 +670,18 @@ class CustomerInvoiceDirect extends Model
         return $this->hasMany('App\Models\CompanyDocumentAttachment', 'companySystemID', 'companySystemID');
     }
 
+     public function finance_year_by() {
+         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+     }
+
+    public function finance_period_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+
+
+
 
 
 
