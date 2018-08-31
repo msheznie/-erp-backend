@@ -837,8 +837,6 @@ class StockReceiveAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-
-
         //checking segment is active
 
         $segments = SegmentMaster::where("serviceLineSystemID", $stockReceive->serviceLineSystemID)
