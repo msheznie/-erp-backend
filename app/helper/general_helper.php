@@ -884,7 +884,7 @@ class Helper
                             }
 
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20 || $input["documentSystemID"] == 61) {
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20 || $input["documentSystemID"] == 61 || $input["documentSystemID"] == 24) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
