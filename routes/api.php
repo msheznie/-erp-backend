@@ -627,6 +627,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
     Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster');
     Route::post('storePurchaseReturnDetailsFromGRV', 'PurchaseReturnDetailsAPIController@storePurchaseReturnDetailsFromGRV');
+    Route::post('purchaseReturnDeleteAllDetails', 'PurchaseReturnDetailsAPIController@purchaseReturnDeleteAllDetails');
 
     Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
     Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
@@ -778,3 +779,5 @@ Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIControlle
 Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
 
 Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
+
+Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');

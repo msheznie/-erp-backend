@@ -311,6 +311,7 @@ class ErpItemLedgerAPIController extends AppBaseController
         $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription','itemmaster.secondaryItemCode')
             ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->whereIn('erp_itemledger.companySystemID', $subCompanies)
+            ->where('itemmaster.financeCategoryMaster', 1)
             ->groupBy('erp_itemledger.itemSystemCode')
             //->take(50)
             ->get();

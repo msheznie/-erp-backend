@@ -1,1013 +1,247 @@
-[2018-08-28 07:12:04] local.ERROR: Parse error: syntax error, unexpected '<<' (T_SL) {"userId":2666,"email":"nazir@gears-int.com","exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalThrowableError(code: 0): Parse error: syntax error, unexpected '<<' (T_SL) at C:\\gears_erp\\Gears_BackEnd\outes\\api.php:711)
-[stacktrace]
-#0 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(349): Illuminate\\Routing\\Router->loadRoutes('C:\\\\gears_erp\\\\Ge...')
-#1 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\RouteRegistrar.php(105): Illuminate\\Routing\\Router->group(Array, 'C:\\\\gears_erp\\\\Ge...')
-#2 C:\\gears_erp\\Gears_BackEnd\\app\\Providers\\RouteServiceProvider.php(88): Illuminate\\Routing\\RouteRegistrar->group('C:\\\\gears_erp\\\\Ge...')
-#3 C:\\gears_erp\\Gears_BackEnd\\app\\Providers\\RouteServiceProvider.php(39): App\\Providers\\RouteServiceProvider->mapApiRoutes()
-#4 [internal function]: App\\Providers\\RouteServiceProvider->map()
-#5 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(29): call_user_func_array(Array, Array)
-#6 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(87): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
-#7 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(31): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
-#8 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(549): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
-#9 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider.php(74): Illuminate\\Container\\Container->call(Array)
-#10 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider.php(33): Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider->loadRoutes()
-#11 C:\\gears_erp\\Gears_BackEnd\\app\\Providers\\RouteServiceProvider.php(29): Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider->boot()
-#12 [internal function]: App\\Providers\\RouteServiceProvider->boot()
-#13 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(29): call_user_func_array(Array, Array)
-#14 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(87): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
-#15 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(31): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
-#16 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(549): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
-#17 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(792): Illuminate\\Container\\Container->call(Array)
-#18 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(775): Illuminate\\Foundation\\Application->bootProvider(Object(App\\Providers\\RouteServiceProvider))
-#19 [internal function]: Illuminate\\Foundation\\Application->Illuminate\\Foundation\\{closure}(Object(App\\Providers\\RouteServiceProvider), 29)
-#20 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(776): array_walk(Array, Object(Closure))
-#21 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\BootProviders.php(17): Illuminate\\Foundation\\Application->boot()
-#22 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(213): Illuminate\\Foundation\\Bootstrap\\BootProviders->bootstrap(Object(Illuminate\\Foundation\\Application))
-#23 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(162): Illuminate\\Foundation\\Application->bootstrapWith(Array)
-#24 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(146): Illuminate\\Foundation\\Http\\Kernel->bootstrap()
-#25 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#26 C:\\gears_erp\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#27 C:\\gears_erp\\Gears_BackEnd\\server.php(21): require_once('C:\\\\gears_erp\\\\Ge...')
-#28 {main}
-"} 
-[2018-08-28 07:12:04] local.ERROR: Parse error: syntax error, unexpected '<<' (T_SL) {"exception":"[object] (Symfony\\Component\\Debug\\Exception\\FatalThrowableError(code: 0): Parse error: syntax error, unexpected '<<' (T_SL) at C:\\gears_erp\\Gears_BackEnd\outes\\api.php:711)
-[stacktrace]
-#0 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(349): Illuminate\\Routing\\Router->loadRoutes('C:\\\\gears_erp\\\\Ge...')
-#1 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\RouteRegistrar.php(105): Illuminate\\Routing\\Router->group(Array, 'C:\\\\gears_erp\\\\Ge...')
-#2 C:\\gears_erp\\Gears_BackEnd\\app\\Providers\\RouteServiceProvider.php(88): Illuminate\\Routing\\RouteRegistrar->group('C:\\\\gears_erp\\\\Ge...')
-#3 C:\\gears_erp\\Gears_BackEnd\\app\\Providers\\RouteServiceProvider.php(39): App\\Providers\\RouteServiceProvider->mapApiRoutes()
-#4 [internal function]: App\\Providers\\RouteServiceProvider->map()
-#5 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(29): call_user_func_array(Array, Array)
-#6 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(87): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
-#7 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(31): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
-#8 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(549): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
-#9 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider.php(74): Illuminate\\Container\\Container->call(Array)
-#10 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider.php(33): Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider->loadRoutes()
-#11 C:\\gears_erp\\Gears_BackEnd\\app\\Providers\\RouteServiceProvider.php(29): Illuminate\\Foundation\\Support\\Providers\\RouteServiceProvider->boot()
-#12 [internal function]: App\\Providers\\RouteServiceProvider->boot()
-#13 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(29): call_user_func_array(Array, Array)
-#14 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(87): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
-#15 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\BoundMethod.php(31): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
-#16 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Container\\Container.php(549): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
-#17 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(792): Illuminate\\Container\\Container->call(Array)
-#18 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(775): Illuminate\\Foundation\\Application->bootProvider(Object(App\\Providers\\RouteServiceProvider))
-#19 [internal function]: Illuminate\\Foundation\\Application->Illuminate\\Foundation\\{closure}(Object(App\\Providers\\RouteServiceProvider), 29)
-#20 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(776): array_walk(Array, Object(Closure))
-#21 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\BootProviders.php(17): Illuminate\\Foundation\\Application->boot()
-#22 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(213): Illuminate\\Foundation\\Bootstrap\\BootProviders->bootstrap(Object(Illuminate\\Foundation\\Application))
-#23 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(162): Illuminate\\Foundation\\Application->bootstrapWith(Array)
-#24 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(146): Illuminate\\Foundation\\Http\\Kernel->bootstrap()
-#25 C:\\gears_erp\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#26 C:\\gears_erp\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#27 C:\\gears_erp\\Gears_BackEnd\\server.php(21): require_once('C:\\\\gears_erp\\\\Ge...')
-#28 {main}
-"} 
-[2018-08-27 13:16:06] local.ERROR: SQLSTATE[HY000] [2002] A socket operation was attempted to an unreachable host.
- {"exception":"[object] (Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A socket operation was attempted to an unreachable host.
- at D:\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:47, PDOException(code: 2002): SQLSTATE[HY000] [2002] A socket operation was attempted to an unreachable host.
- at D:\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:43)
-[stacktrace]
-#0 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(64): Doctrine\\DBAL\\Driver\\PDOConnection->__construct('mysql:host=124....', 'gearsuser', 'asd@12345', Array)
-#1 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(43): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=124....', 'gearsuser', 'asd@12345', Array)
-#2 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=124....', Array, Array)
-#3 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\ConnectionFactory.php(183): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
-#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
-#5 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(915): call_user_func(Object(Closure))
-#6 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(940): Illuminate\\Database\\Connection->getPdo()
-#7 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(399): Illuminate\\Database\\Connection->getReadPdo()
-#8 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(325): Illuminate\\Database\\Connection->getPdoForSelect(true)
-#9 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(657): Illuminate\\Database\\Connection->Illuminate\\Database\\{closure}('select * from `...', Array)
-#10 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(624): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
-#11 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(333): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
-#12 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1719): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
-#13 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1704): Illuminate\\Database\\Query\\Builder->runSelect()
-#14 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(481): Illuminate\\Database\\Query\\Builder->get(Array)
-#15 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(465): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
-#16 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\BuildsQueries.php(77): Illuminate\\Database\\Eloquent\\Builder->get(Array)
-#17 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(291): Illuminate\\Database\\Eloquent\\Builder->first(Array)
-#18 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1477): Illuminate\\Database\\Eloquent\\Builder->find('3')
-#19 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1489): Illuminate\\Database\\Eloquent\\Model->__call('find', Array)
-#20 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(15): Illuminate\\Database\\Eloquent\\Model::__callStatic('find', Array)
-#21 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(26): Laravel\\Passport\\ClientRepository->find('3')
-#22 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Bridge\\ClientRepository.php(37): Laravel\\Passport\\ClientRepository->findActive('3')
-#23 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\AbstractGrant.php(188): Laravel\\Passport\\Bridge\\ClientRepository->getClientEntity('3', 'refresh_token', 'N1TZtXOcP0m2IJR...', true)
-#24 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\RefreshTokenGrant.php(45): League\\OAuth2\\Server\\Grant\\AbstractGrant->validateClient(Object(Zend\\Diactoros\\ServerRequest))
-#25 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\AuthorizationServer.php(187): League\\OAuth2\\Server\\Grant\\RefreshTokenGrant->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(League\\OAuth2\\Server\\ResponseTypes\\BearerTokenResponse), Object(DateInterval))
-#26 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(63): League\\OAuth2\\Server\\AuthorizationServer->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(Zend\\Diactoros\\Response))
-#27 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\HandlesOAuthErrors.php(27): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->Laravel\\Passport\\Http\\Controllers\\{closure}()
-#28 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(65): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->withErrorHandling(Object(Closure))
-#29 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(48): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->issueToken(Object(Zend\\Diactoros\\ServerRequest))
-#30 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(Laravel\\Passport\\Http\\Controllers\\AccessTokenController), 'issueToken')
-#31 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
-#32 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
-#33 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#34 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Middleware\\ThrottleRequests.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#35 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Routing\\Middleware\\ThrottleRequests->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#36 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#37 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#38 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#39 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
-#40 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
-#41 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
-#42 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
-#43 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
-#44 D:\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#45 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#46 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#47 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#48 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#49 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#50 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#51 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#52 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#53 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#54 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#55 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#56 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#57 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#58 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#59 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#60 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#61 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#62 D:\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#63 D:\\Gears_BackEnd\\server.php(21): require_once('D:\\\\Gears_BackEn...')
-#64 {main}
-"} 
-[2018-08-27 13:16:06] local.ERROR: SQLSTATE[HY000] [2002] A socket operation was attempted to an unreachable host.
- (SQL: select * from `oauth_clients` where `oauth_clients`.`id` = 3 limit 1) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 2002): SQLSTATE[HY000] [2002] A socket operation was attempted to an unreachable host.
- (SQL: select * from `oauth_clients` where `oauth_clients`.`id` = 3 limit 1) at D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:664, Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A socket operation was attempted to an unreachable host.
- at D:\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:47, PDOException(code: 2002): SQLSTATE[HY000] [2002] A socket operation was attempted to an unreachable host.
- at D:\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:43)
-[stacktrace]
-#0 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(624): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
-#1 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(333): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
-#2 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1719): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
-#3 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1704): Illuminate\\Database\\Query\\Builder->runSelect()
-#4 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(481): Illuminate\\Database\\Query\\Builder->get(Array)
-#5 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(465): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
-#6 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\BuildsQueries.php(77): Illuminate\\Database\\Eloquent\\Builder->get(Array)
-#7 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(291): Illuminate\\Database\\Eloquent\\Builder->first(Array)
-#8 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1477): Illuminate\\Database\\Eloquent\\Builder->find('3')
-#9 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1489): Illuminate\\Database\\Eloquent\\Model->__call('find', Array)
-#10 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(15): Illuminate\\Database\\Eloquent\\Model::__callStatic('find', Array)
-#11 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(26): Laravel\\Passport\\ClientRepository->find('3')
-#12 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Bridge\\ClientRepository.php(37): Laravel\\Passport\\ClientRepository->findActive('3')
-#13 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\AbstractGrant.php(188): Laravel\\Passport\\Bridge\\ClientRepository->getClientEntity('3', 'refresh_token', 'N1TZtXOcP0m2IJR...', true)
-#14 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\RefreshTokenGrant.php(45): League\\OAuth2\\Server\\Grant\\AbstractGrant->validateClient(Object(Zend\\Diactoros\\ServerRequest))
-#15 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\AuthorizationServer.php(187): League\\OAuth2\\Server\\Grant\\RefreshTokenGrant->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(League\\OAuth2\\Server\\ResponseTypes\\BearerTokenResponse), Object(DateInterval))
-#16 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(63): League\\OAuth2\\Server\\AuthorizationServer->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(Zend\\Diactoros\\Response))
-#17 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\HandlesOAuthErrors.php(27): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->Laravel\\Passport\\Http\\Controllers\\{closure}()
-#18 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(65): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->withErrorHandling(Object(Closure))
-#19 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(48): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->issueToken(Object(Zend\\Diactoros\\ServerRequest))
-#20 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(Laravel\\Passport\\Http\\Controllers\\AccessTokenController), 'issueToken')
-#21 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
-#22 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
-#23 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#24 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Middleware\\ThrottleRequests.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#25 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Routing\\Middleware\\ThrottleRequests->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#26 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#27 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#28 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#29 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
-#30 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
-#31 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
-#32 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
-#33 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
-#34 D:\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#35 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#36 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#37 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#38 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#39 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#40 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#41 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#42 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#43 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#44 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#45 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#46 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#47 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#48 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#49 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#50 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#51 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#52 D:\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#53 D:\\Gears_BackEnd\\server.php(21): require_once('D:\\\\Gears_BackEn...')
-#54 {main}
-"} 
-[2018-08-27 13:22:03] local.ERROR: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
- {"exception":"[object] (Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
- at D:\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:47, PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
- at D:\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:43)
-[stacktrace]
-#0 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(64): Doctrine\\DBAL\\Driver\\PDOConnection->__construct('mysql:host=124....', 'gearsuser', 'asd@12345', Array)
-#1 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\Connector.php(43): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=124....', 'gearsuser', 'asd@12345', Array)
-#2 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=124....', Array, Array)
-#3 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connectors\\ConnectionFactory.php(183): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
-#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
-#5 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(915): call_user_func(Object(Closure))
-#6 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(940): Illuminate\\Database\\Connection->getPdo()
-#7 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(399): Illuminate\\Database\\Connection->getReadPdo()
-#8 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(325): Illuminate\\Database\\Connection->getPdoForSelect(true)
-#9 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(657): Illuminate\\Database\\Connection->Illuminate\\Database\\{closure}('select * from `...', Array)
-#10 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(624): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
-#11 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(333): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
-#12 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1719): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
-#13 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1704): Illuminate\\Database\\Query\\Builder->runSelect()
-#14 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(481): Illuminate\\Database\\Query\\Builder->get(Array)
-#15 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(465): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
-#16 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\BuildsQueries.php(77): Illuminate\\Database\\Eloquent\\Builder->get(Array)
-#17 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(291): Illuminate\\Database\\Eloquent\\Builder->first(Array)
-#18 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1477): Illuminate\\Database\\Eloquent\\Builder->find('3')
-#19 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1489): Illuminate\\Database\\Eloquent\\Model->__call('find', Array)
-#20 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(15): Illuminate\\Database\\Eloquent\\Model::__callStatic('find', Array)
-#21 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(26): Laravel\\Passport\\ClientRepository->find('3')
-#22 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Bridge\\ClientRepository.php(37): Laravel\\Passport\\ClientRepository->findActive('3')
-#23 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\AbstractGrant.php(188): Laravel\\Passport\\Bridge\\ClientRepository->getClientEntity('3', 'password', 'N1TZtXOcP0m2IJR...', true)
-#24 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\PasswordGrant.php(51): League\\OAuth2\\Server\\Grant\\AbstractGrant->validateClient(Object(Zend\\Diactoros\\ServerRequest))
-#25 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\AuthorizationServer.php(187): League\\OAuth2\\Server\\Grant\\PasswordGrant->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(League\\OAuth2\\Server\\ResponseTypes\\BearerTokenResponse), Object(DateInterval))
-#26 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(63): League\\OAuth2\\Server\\AuthorizationServer->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(Zend\\Diactoros\\Response))
-#27 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\HandlesOAuthErrors.php(27): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->Laravel\\Passport\\Http\\Controllers\\{closure}()
-#28 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(65): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->withErrorHandling(Object(Closure))
-#29 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(48): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->issueToken(Object(Zend\\Diactoros\\ServerRequest))
-#30 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(Laravel\\Passport\\Http\\Controllers\\AccessTokenController), 'issueToken')
-#31 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
-#32 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
-#33 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#34 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Middleware\\ThrottleRequests.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#35 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Routing\\Middleware\\ThrottleRequests->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#36 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#37 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#38 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#39 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
-#40 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
-#41 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
-#42 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
-#43 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
-#44 D:\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#45 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#46 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#47 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#48 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#49 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#50 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#51 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#52 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#53 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#54 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#55 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#56 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#57 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#58 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#59 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#60 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#61 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#62 D:\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#63 D:\\Gears_BackEnd\\server.php(21): require_once('D:\\\\Gears_BackEn...')
-#64 {main}
-"} 
-[2018-08-27 13:22:03] local.ERROR: SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
- (SQL: select * from `oauth_clients` where `oauth_clients`.`id` = 3 limit 1) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
- (SQL: select * from `oauth_clients` where `oauth_clients`.`id` = 3 limit 1) at D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:664, Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
- at D:\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:47, PDOException(code: 2002): SQLSTATE[HY000] [2002] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
- at D:\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:43)
-[stacktrace]
-#0 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(624): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
-#1 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(333): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
-#2 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1719): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
-#3 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1704): Illuminate\\Database\\Query\\Builder->runSelect()
-#4 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(481): Illuminate\\Database\\Query\\Builder->get(Array)
-#5 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(465): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
-#6 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Concerns\\BuildsQueries.php(77): Illuminate\\Database\\Eloquent\\Builder->get(Array)
-#7 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(291): Illuminate\\Database\\Eloquent\\Builder->first(Array)
-#8 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1477): Illuminate\\Database\\Eloquent\\Builder->find('3')
-#9 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(1489): Illuminate\\Database\\Eloquent\\Model->__call('find', Array)
-#10 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(15): Illuminate\\Database\\Eloquent\\Model::__callStatic('find', Array)
-#11 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\ClientRepository.php(26): Laravel\\Passport\\ClientRepository->find('3')
-#12 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Bridge\\ClientRepository.php(37): Laravel\\Passport\\ClientRepository->findActive('3')
-#13 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\AbstractGrant.php(188): Laravel\\Passport\\Bridge\\ClientRepository->getClientEntity('3', 'password', 'N1TZtXOcP0m2IJR...', true)
-#14 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\Grant\\PasswordGrant.php(51): League\\OAuth2\\Server\\Grant\\AbstractGrant->validateClient(Object(Zend\\Diactoros\\ServerRequest))
-#15 D:\\Gears_BackEnd\\vendor\\league\\oauth2-server\\src\\AuthorizationServer.php(187): League\\OAuth2\\Server\\Grant\\PasswordGrant->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(League\\OAuth2\\Server\\ResponseTypes\\BearerTokenResponse), Object(DateInterval))
-#16 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(63): League\\OAuth2\\Server\\AuthorizationServer->respondToAccessTokenRequest(Object(Zend\\Diactoros\\ServerRequest), Object(Zend\\Diactoros\\Response))
-#17 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\HandlesOAuthErrors.php(27): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->Laravel\\Passport\\Http\\Controllers\\{closure}()
-#18 D:\\Gears_BackEnd\\vendor\\laravel\\passport\\src\\Http\\Controllers\\AccessTokenController.php(65): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->withErrorHandling(Object(Closure))
-#19 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(48): Laravel\\Passport\\Http\\Controllers\\AccessTokenController->issueToken(Object(Zend\\Diactoros\\ServerRequest))
-#20 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(Laravel\\Passport\\Http\\Controllers\\AccessTokenController), 'issueToken')
-#21 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
-#22 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
-#23 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#24 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Middleware\\ThrottleRequests.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#25 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Routing\\Middleware\\ThrottleRequests->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#26 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#27 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#28 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#29 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
-#30 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
-#31 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
-#32 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
-#33 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
-#34 D:\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#35 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#36 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#37 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#38 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#39 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#40 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#41 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#42 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#43 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#44 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#45 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#46 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#47 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#48 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#49 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#50 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#51 D:\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#52 D:\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#53 D:\\Gears_BackEnd\\server.php(21): require_once('D:\\\\Gears_BackEn...')
-#54 {main}
-"} 
-[2018-08-28 04:58:24] local.INFO: array (
+[2018-08-31 06:28:21] local.INFO: array (
   0 => 
   array (
+    'itemSystemCode' => 30230,
+    'itemPrimaryCode' => 'INV028185',
+    'itemDescription' => 'Tires 205/80 R16',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 4.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 39.0,
+    'wacRptCurrencyID' => NULL,
+    'wacRpt' => 101.29870129870129,
     'companySystemID' => 11,
     'companyID' => 'FREE',
-    'serviceLineSystemID' => 24,
-    'serviceLineCode' => 'X',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 21016,
-    'documentCode' => 'FREE\\2018\\BRV000196',
-    'documentDate' => '2018-08-28 04:58:24',
-    'documentYear' => '2018',
-    'documentMonth' => '03',
-    'documentConfirmedDate' => '2018-03-13 15:35:10',
-    'documentConfirmedBy' => 'E-3212',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-03-13 15:36:27',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'Inter Company Transfer from WSS to FREE  WSS\\2018\\PV000098',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => NULL,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 14,
-    'createdDateTime' => '2018-08-28 04:58:24',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 04:58:24',
-    'chartOfAccountSystemID' => NULL,
-    'glCode' => NULL,
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => -0.0,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => -0.0,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => -0.0,
-  ),
-  1 => 
-  array (
-    'companySystemID' => 11,
-    'companyID' => 'FREE',
-    'serviceLineSystemID' => 51,
-    'serviceLineCode' => 'FREEGEN',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 21016,
-    'documentCode' => 'FREE\\2018\\BRV000196',
-    'documentDate' => '2018-08-28 04:58:24',
-    'documentYear' => '2018',
-    'documentMonth' => '03',
-    'documentConfirmedDate' => '2018-03-13 15:35:10',
-    'documentConfirmedBy' => 'E-3212',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-03-13 15:36:27',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'Inter Company Transfer from WSS to FREE  WSS\\2018\\PV000098',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => NULL,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 14,
-    'createdDateTime' => '2018-08-28 04:58:24',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 04:58:24',
-    'chartOfAccountSystemID' => 137,
-    'glCode' => '23002',
-    'glAccountType' => 'PL',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => 7000.0,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => 2694.9999973,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => 7000.0,
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'wareHouseSystemCode' => 117,
+    'documentCode' => NULL,
+    'documentSystemCode' => 105,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-31 06:28:21',
+    'timestamp' => '2018-08-31 06:28:21',
   ),
 )  
-[2018-08-28 04:58:24] local.INFO: Successfully inserted to GL table 04:58:24  
-[2018-08-28 05:15:13] local.ERROR: Property [serviceLineSystemID] does not exist on this collection instance.  
-[2018-08-28 05:19:46] local.ERROR: Property [serviceLineSystemID] does not exist on this collection instance.  
-[2018-08-28 05:20:55] local.INFO: array (
+[2018-08-31 06:28:21] local.INFO: array (
+  0 => 30230,
+)  
+[2018-08-31 06:28:21] local.INFO: Item successfully added to item ledger06:28:21  
+[2018-08-31 06:28:22] local.INFO: [{"companySystemID":11,"itemSystemCode":30230,"inOutQty":12,"wacCostLocal":39,"wacCostRpt":101.298701299,"TotalwacCostLocal":468,"TotalwacCostRpt":1215.584415588}]  
+[2018-08-31 06:28:22] local.INFO: Successfully updated to item assign table 06:28:22  
+[2018-08-31 06:29:05] local.ERROR: Impossible to create the root directory "C:\inetpub\wwwroot\GEARSERP\GEARSWEBPORTAL\Portal\uploads\PRN/106". {"userId":2637,"email":"gearsadmin@gulfenergy-int.com","exception":"[object] (League\\Flysystem\\Exception(code: 0): Impossible to create the root directory \"C:\\inetpub\\wwwroot\\GEARSERP\\GEARSWEBPORTAL\\Portal\\uploads\\PRN/106\". at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\league\\flysystem\\src\\Adapter\\Local.php:106)
+[stacktrace]
+#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\league\\flysystem\\src\\Adapter\\Local.php(127): League\\Flysystem\\Adapter\\Local->ensureDirectory('C:\\\\inetpub\\\\wwwr...')
+#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\league\\flysystem\\src\\Filesystem.php(102): League\\Flysystem\\Adapter\\Local->write('PRN/106/FREE_PR...', '\\x89PNG\\
+\\x1A\
+\\x00\\x00\\x00\IHD...', Object(League\\Flysystem\\Config))
+#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Filesystem\\FilesystemAdapter.php(180): League\\Flysystem\\Filesystem->put('PRN/106/FREE_PR...', '\\x89PNG\\
+\\x1A\
+\\x00\\x00\\x00\IHD...', Object(League\\Flysystem\\Config))
+#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\DocumentAttachmentsAPIController.php(202): Illuminate\\Filesystem\\FilesystemAdapter->put('PRN/106/FREE_PR...', '\\x89PNG\\
+\\x1A\
+\\x00\\x00\\x00\IHD...')
+#4 [internal function]: App\\Http\\Controllers\\API\\DocumentAttachmentsAPIController->store(Object(App\\Http\\Requests\\API\\CreateDocumentAttachmentsAPIRequest))
+#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
+#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('store', Array)
+#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\DocumentAttachmentsAPIController), 'store')
+#8 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
+#9 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
+#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
+#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#19 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#33 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#34 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#35 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#36 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#37 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#38 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#39 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#40 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\server.php(21): require_once('C:\\\\Users\\\\Fayas\\\\...')
+#41 {main}
+"} 
+[2018-08-31 06:29:55] local.INFO: array (
   0 => 
   array (
+    'itemSystemCode' => 30230,
+    'itemPrimaryCode' => 'INV028185',
+    'itemDescription' => 'Tires 205/80 R16',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 2.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 39.0,
+    'wacRptCurrencyID' => NULL,
+    'wacRpt' => 101.29870129870129,
     'companySystemID' => 11,
     'companyID' => 'FREE',
-    'serviceLineSystemID' => 51,
-    'serviceLineCode' => 'FREEGEN',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 21016,
-    'documentCode' => 'FREE\\2018\\BRV000196',
-    'documentDate' => '2018-08-28 05:20:55',
-    'documentYear' => '2018',
-    'documentMonth' => '03',
-    'documentConfirmedDate' => '2018-03-13 15:35:10',
-    'documentConfirmedBy' => 'E-3212',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-03-13 15:36:27',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'Inter Company Transfer from WSS to FREE  WSS\\2018\\PV000098',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => NULL,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 14,
-    'createdDateTime' => '2018-08-28 05:20:55',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 05:20:55',
-    'chartOfAccountSystemID' => NULL,
-    'glCode' => NULL,
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => -7000.0,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => -2694.9999973,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => -7000.0,
-  ),
-  1 => 
-  array (
-    'companySystemID' => 11,
-    'companyID' => 'FREE',
-    'serviceLineSystemID' => 51,
-    'serviceLineCode' => 'FREEGEN',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 21016,
-    'documentCode' => 'FREE\\2018\\BRV000196',
-    'documentDate' => '2018-08-28 05:20:55',
-    'documentYear' => '2018',
-    'documentMonth' => '03',
-    'documentConfirmedDate' => '2018-03-13 15:35:10',
-    'documentConfirmedBy' => 'E-3212',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-03-13 15:36:27',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'Inter Company Transfer from WSS to FREE  WSS\\2018\\PV000098',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => NULL,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 14,
-    'createdDateTime' => '2018-08-28 05:20:55',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 05:20:55',
-    'chartOfAccountSystemID' => 137,
-    'glCode' => '23002',
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => 7000.0,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => 2694.9999973,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => 7000.0,
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FREE-KUW',
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'wareHouseSystemCode' => 117,
+    'documentCode' => NULL,
+    'documentSystemCode' => 106,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-31 06:29:55',
+    'timestamp' => '2018-08-31 06:29:55',
   ),
 )  
-[2018-08-28 05:20:55] local.INFO: Successfully inserted to GL table 05:20:55  
-[2018-08-28 05:38:13] local.INFO: array (
+[2018-08-31 06:29:55] local.INFO: array (
+  0 => 30230,
+)  
+[2018-08-31 06:29:55] local.INFO: Item successfully added to item ledger06:29:55  
+[2018-08-31 06:29:55] local.INFO: [{"companySystemID":11,"itemSystemCode":30230,"inOutQty":14,"wacCostLocal":39,"wacCostRpt":101.298701299,"TotalwacCostLocal":546,"TotalwacCostRpt":1418.181818186}]  
+[2018-08-31 06:29:55] local.INFO: Successfully updated to item assign table 06:29:55  
+[2018-08-31 06:50:34] local.INFO: array (
   0 => 
   array (
+    'itemSystemCode' => 30230,
+    'itemPrimaryCode' => 'INV028185',
+    'itemDescription' => 'Tires 205/80 R16',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 3.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 39.0,
+    'wacRptCurrencyID' => NULL,
+    'wacRpt' => 101.29870129870129,
     'companySystemID' => 11,
     'companyID' => 'FREE',
-    'serviceLineSystemID' => 51,
-    'serviceLineCode' => 'FREEGEN',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 21016,
-    'documentCode' => 'FREE\\2018\\BRV000196',
-    'documentDate' => '2018-08-28 05:38:13',
-    'documentYear' => '2018',
-    'documentMonth' => '03',
-    'documentConfirmedDate' => '2018-03-13 15:35:10',
-    'documentConfirmedBy' => 'E-3212',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-03-13 15:36:27',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'Inter Company Transfer from WSS to FREE  WSS\\2018\\PV000098',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => NULL,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 14,
-    'createdDateTime' => '2018-08-28 05:38:13',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 05:38:13',
-    'chartOfAccountSystemID' => NULL,
-    'glCode' => '24102',
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => -7000.0,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => -2694.9999973,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => -7000.0,
-  ),
-  1 => 
-  array (
-    'companySystemID' => 11,
-    'companyID' => 'FREE',
-    'serviceLineSystemID' => 51,
-    'serviceLineCode' => 'FREEGEN',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 21016,
-    'documentCode' => 'FREE\\2018\\BRV000196',
-    'documentDate' => '2018-08-28 05:38:13',
-    'documentYear' => '2018',
-    'documentMonth' => '03',
-    'documentConfirmedDate' => '2018-03-13 15:35:10',
-    'documentConfirmedBy' => 'E-3212',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-03-13 15:36:27',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'Inter Company Transfer from WSS to FREE  WSS\\2018\\PV000098',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => NULL,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 14,
-    'createdDateTime' => '2018-08-28 05:38:13',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 05:38:13',
-    'chartOfAccountSystemID' => 137,
-    'glCode' => '23002',
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => 7000.0,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => 2694.9999973,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => 7000.0,
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'wareHouseSystemCode' => 117,
+    'documentCode' => NULL,
+    'documentSystemCode' => 104,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-31 06:50:34',
+    'timestamp' => '2018-08-31 06:50:34',
   ),
 )  
-[2018-08-28 05:38:13] local.INFO: Successfully inserted to GL table 05:38:13  
-[2018-08-28 05:47:03] local.INFO: array (
-  0 => 
-  array (
-    'companySystemID' => 11,
-    'companyID' => 'FREE',
-    'serviceLineSystemID' => 51,
-    'serviceLineCode' => 'FREEGEN',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 21016,
-    'documentCode' => 'FREE\\2018\\BRV000196',
-    'documentDate' => '2018-08-28 05:47:03',
-    'documentYear' => '2018',
-    'documentMonth' => '03',
-    'documentConfirmedDate' => '2018-03-13 15:35:10',
-    'documentConfirmedBy' => 'E-3212',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-03-13 15:36:27',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'Inter Company Transfer from WSS to FREE  WSS\\2018\\PV000098',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => NULL,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 14,
-    'createdDateTime' => '2018-08-28 05:47:03',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 05:47:03',
-    'chartOfAccountSystemID' => NULL,
-    'glCode' => '24102',
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => -7000.0,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => -2694.9999973,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => -7000.0,
-  ),
-  1 => 
-  array (
-    'companySystemID' => 11,
-    'companyID' => 'FREE',
-    'serviceLineSystemID' => 51,
-    'serviceLineCode' => 'FREEGEN',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 21016,
-    'documentCode' => 'FREE\\2018\\BRV000196',
-    'documentDate' => '2018-08-28 05:47:03',
-    'documentYear' => '2018',
-    'documentMonth' => '03',
-    'documentConfirmedDate' => '2018-03-13 15:35:10',
-    'documentConfirmedBy' => 'E-3212',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-03-13 15:36:27',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'Inter Company Transfer from WSS to FREE  WSS\\2018\\PV000098',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => NULL,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 14,
-    'createdDateTime' => '2018-08-28 05:47:03',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 05:47:03',
-    'chartOfAccountSystemID' => 137,
-    'glCode' => '23002',
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => 7000.0,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => 2694.9999973,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => 7000.0,
-  ),
+[2018-08-31 06:50:34] local.INFO: array (
+  0 => 30230,
 )  
-[2018-08-28 05:47:03] local.INFO: Successfully inserted to GL table 05:47:03  
-[2018-08-28 05:54:25] local.INFO: array (
+[2018-08-31 06:50:34] local.INFO: Item successfully added to item ledger06:50:34  
+[2018-08-31 06:50:34] local.INFO: array (
   0 => 
   array (
     'companySystemID' => 11,
     'companyID' => 'FREE',
-    'serviceLineSystemID' => 51,
-    'serviceLineCode' => 'FREEGEN',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FML',
     'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 21016,
-    'documentCode' => 'FREE\\2018\\BRV000196',
-    'documentDate' => '2018-08-28 05:54:25',
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'documentSystemCode' => 104,
+    'documentCode' => 'FREE\\2018\\PRN000004',
+    'documentDate' => '2018-08-31 06:50:34',
     'documentYear' => '2018',
-    'documentMonth' => '03',
-    'documentConfirmedDate' => '2018-03-13 15:35:10',
-    'documentConfirmedBy' => 'E-3212',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-03-13 15:36:27',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'Inter Company Transfer from WSS to FREE  WSS\\2018\\PV000098',
+    'documentMonth' => '08',
+    'documentConfirmedDate' => '2018-08-31 06:49:56',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-31 06:50:13',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Nostrud ea ut aut cupidatat illum cumque',
     'clientContractID' => 'X',
     'contractUID' => 159,
-    'supplierCodeSystem' => NULL,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 14,
-    'createdDateTime' => '2018-08-28 05:54:25',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 05:54:25',
-    'chartOfAccountSystemID' => 194,
-    'glCode' => '24102',
     'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
+    'supplierCodeSystem' => 1343,
+    'chartOfAccountSystemID' => 615,
+    'glCode' => '9999998',
+    'documentTransCurrencyID' => 1,
     'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => 7000.0,
+    'documentTransAmount' => 117.0,
     'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => 2694.9999973,
+    'documentLocalCurrencyER' => 1.0,
+    'documentLocalAmount' => 117.0,
     'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => 7000.0,
-  ),
-  1 => 
-  array (
-    'companySystemID' => 11,
-    'companyID' => 'FREE',
-    'serviceLineSystemID' => 51,
-    'serviceLineCode' => 'FREEGEN',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 21016,
-    'documentCode' => 'FREE\\2018\\BRV000196',
-    'documentDate' => '2018-08-28 05:54:25',
-    'documentYear' => '2018',
-    'documentMonth' => '03',
-    'documentConfirmedDate' => '2018-03-13 15:35:10',
-    'documentConfirmedBy' => 'E-3212',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-03-13 15:36:27',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'Inter Company Transfer from WSS to FREE  WSS\\2018\\PV000098',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => NULL,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 14,
-    'createdDateTime' => '2018-08-28 05:54:25',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 05:54:25',
-    'chartOfAccountSystemID' => 137,
-    'glCode' => '23002',
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => -7000.0,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => -2694.9999973,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => -7000.0,
-  ),
-)  
-[2018-08-28 05:54:25] local.INFO: Successfully inserted to GL table 05:54:25  
-[2018-08-28 06:00:20] local.INFO: array (
-  0 => 
-  array (
-    'companySystemID' => 11,
-    'companyID' => 'FREE',
-    'serviceLineSystemID' => 24,
-    'serviceLineCode' => 'X',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 20711,
-    'documentCode' => 'FREE\\2018\\BRV000028',
-    'documentDate' => '2018-08-28 06:00:20',
-    'documentYear' => '2018',
-    'documentMonth' => '02',
-    'documentConfirmedDate' => '2018-02-25 11:41:08',
-    'documentConfirmedBy' => 'E-3032',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-02-25 11:42:02',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'AMOUNT RECEIVED FROM PETROGAS IN GE ACCT',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => 78,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 13,
-    'createdDateTime' => '2018-08-28 06:00:20',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 06:00:20',
-    'chartOfAccountSystemID' => 610,
-    'glCode' => '9999993',
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => -39276.292,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => -15121.3724049,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => -39276.292,
-  ),
-  1 => 
-  array (
-    'companySystemID' => 11,
-    'companyID' => 'FREE',
-    'serviceLineSystemID' => 24,
-    'serviceLineCode' => 'X',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 20711,
-    'documentCode' => 'FREE\\2018\\BRV000028',
-    'documentDate' => '2018-08-28 06:00:20',
-    'documentYear' => '2018',
-    'documentMonth' => '02',
-    'documentConfirmedDate' => '2018-02-25 11:41:08',
-    'documentConfirmedBy' => 'E-3032',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-02-25 11:42:02',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'AMOUNT RECEIVED FROM PETROGAS IN GE ACCT',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => 78,
-    'holdingShareholder' => NULL,
-    'holdingPercentage' => NULL,
-    'nonHoldingPercentage' => NULL,
-    'chequeNumber' => 0,
-    'documentType' => 13,
-    'createdDateTime' => '2018-08-28 06:00:20',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 06:00:20',
-    'chartOfAccountSystemID' => 136,
-    'glCode' => '23001',
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => 39276.292,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => 15121.3724049,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => 39276.292,
-  ),
-)  
-[2018-08-28 06:00:20] local.INFO: Successfully inserted to GL table 06:00:20  
-[2018-08-28 07:30:38] local.INFO: array (
-  0 => 
-  array (
-    'companySystemID' => 11,
-    'companyID' => 'FREE',
-    'serviceLineSystemID' => 24,
-    'serviceLineCode' => 'X',
-    'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 20711,
-    'documentCode' => 'FREE\\2018\\BRV000028',
-    'documentDate' => '2018-08-28 07:30:38',
-    'documentYear' => '2018',
-    'documentMonth' => '02',
-    'documentConfirmedDate' => '2018-02-25 11:41:08',
-    'documentConfirmedBy' => 'E-3032',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-02-25 11:42:02',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'AMOUNT RECEIVED FROM PETROGAS IN GE ACCT',
-    'clientContractID' => 'X',
-    'contractUID' => 159,
-    'supplierCodeSystem' => 78,
+    'documentRptCurrencyER' => 0.385,
+    'documentRptAmount' => 303.8961039,
     'holdingShareholder' => NULL,
     'holdingPercentage' => 0,
     'nonHoldingPercentage' => 0,
-    'chequeNumber' => 0,
-    'documentType' => 13,
-    'createdDateTime' => '2018-08-28 07:30:38',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 07:30:38',
-    'chartOfAccountSystemID' => 610,
-    'glCode' => '9999993',
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => -39276.292,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => -15121.3724049,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => -39276.292,
+    'createdDateTime' => '2018-08-31 06:50:34',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-31 06:50:34',
   ),
   1 => 
   array (
     'companySystemID' => 11,
     'companyID' => 'FREE',
-    'serviceLineSystemID' => 24,
-    'serviceLineCode' => 'X',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FML',
     'masterCompanyID' => NULL,
-    'documentSystemID' => 21,
-    'documentID' => 'BRV',
-    'documentSystemCode' => 20711,
-    'documentCode' => 'FREE\\2018\\BRV000028',
-    'documentDate' => '2018-08-28 07:30:38',
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'documentSystemCode' => 104,
+    'documentCode' => 'FREE\\2018\\PRN000004',
+    'documentDate' => '2018-08-31 06:50:34',
     'documentYear' => '2018',
-    'documentMonth' => '02',
-    'documentConfirmedDate' => '2018-02-25 11:41:08',
-    'documentConfirmedBy' => 'E-3032',
-    'documentConfirmedByEmpSystemID' => NULL,
-    'documentFinalApprovedDate' => '2018-02-25 11:42:02',
-    'documentFinalApprovedBy' => NULL,
-    'documentFinalApprovedByEmpSystemID' => NULL,
-    'documentNarration' => 'AMOUNT RECEIVED FROM PETROGAS IN GE ACCT',
+    'documentMonth' => '08',
+    'documentConfirmedDate' => '2018-08-31 06:49:56',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-31 06:50:13',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Nostrud ea ut aut cupidatat illum cumque',
     'clientContractID' => 'X',
     'contractUID' => 159,
-    'supplierCodeSystem' => 78,
+    'glAccountType' => 'BS',
+    'supplierCodeSystem' => 1343,
+    'chartOfAccountSystemID' => 612,
+    'glCode' => '9999995',
+    'documentTransCurrencyID' => 1,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => -117.0,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1.0,
+    'documentLocalAmount' => -117.0,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 0.385,
+    'documentRptAmount' => -303.89610389610385,
     'holdingShareholder' => NULL,
     'holdingPercentage' => 0,
     'nonHoldingPercentage' => 0,
-    'chequeNumber' => 0,
-    'documentType' => 13,
-    'createdDateTime' => '2018-08-28 07:30:38',
-    'createdUserID' => '5555',
-    'createdUserSystemID' => 2664,
-    'createdUserPC' => 'LAPTOP-B7M1V7KL',
-    'timestamp' => '2018-08-28 07:30:38',
-    'chartOfAccountSystemID' => 136,
-    'glCode' => '23001',
-    'glAccountType' => 'BS',
-    'documentTransCurrencyID' => 2,
-    'documentTransCurrencyER' => 1.0,
-    'documentTransAmount' => 39276.292,
-    'documentLocalCurrencyID' => 1,
-    'documentLocalCurrencyER' => 2.5974026,
-    'documentLocalAmount' => 15121.3724049,
-    'documentRptCurrencyID' => 2,
-    'documentRptCurrencyER' => 1.0,
-    'documentRptAmount' => 39276.292,
+    'createdDateTime' => '2018-08-31 06:50:34',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-31 06:50:34',
   ),
 )  
+<<<<<<< HEAD
 [2018-08-28 07:30:38] local.INFO: Successfully inserted to GL table 07:30:38  
 [2018-08-28 10:25:12] local.ERROR: SQLSTATE[HY000] [2002] A socket operation was attempted to an unreachable host.
  {"exception":"[object] (Doctrine\\DBAL\\Driver\\PDOException(code: 2002): SQLSTATE[HY000] [2002] A socket operation was attempted to an unreachable host.
@@ -4664,3 +3898,8 @@
 #37 D:\\gears-laravel\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears-larave...')
 #38 {main}
 "} 
+=======
+[2018-08-31 06:50:34] local.INFO: Successfully inserted to GL table 06:50:34  
+[2018-08-31 06:50:35] local.INFO: [{"companySystemID":11,"itemSystemCode":30230,"inOutQty":17,"wacCostLocal":39,"wacCostRpt":101.298701299,"TotalwacCostLocal":663,"TotalwacCostRpt":1722.077922083}]  
+[2018-08-31 06:50:35] local.INFO: Successfully updated to item assign table 06:50:35  
+>>>>>>> 268d090ac891916c63ee35f80e4e73c4faf85691

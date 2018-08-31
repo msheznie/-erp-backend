@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 10-August 2018 By: Fayas Description: Added new functions named as getPurchaseRequestByDocumentType()
  * -- Date: 10-August 2018 By: Fayas Description: Added new functions named as getItemsByPurchaseReturnMaster(),storePurchaseReturnDetailsFromGRV()
+ * -- Date: 31-August 2018 By: Fayas Description: Added new functions named as purchaseReturnDeleteAllDetails()
  */
 namespace App\Http\Controllers\API;
 
@@ -356,18 +357,6 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
 
-
-        foreach ($input['detailTable'] as $newValidation) {
-            if ($newValidation['isChecked']) {
-                if ($newValidation['rnoQty'] <= 0) {
-                    return $this->sendError("Return Qty required", 500);
-                }
-                if ($newValidation['rnoQty'] > $newValidation['noQty']) {
-                    return $this->sendError("Return qty cannot be greater than GRV qty", 500);
-                }
-            }
-        }
-
         /** @var PurchaseReturn $purchaseReturn */
         $purchaseReturn = $this->purchaseReturnRepository->findWithoutFail($input['purhaseReturnAutoID']);
 
@@ -507,6 +496,27 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         }
 
         return $this->sendResponse($purchaseReturn, 'Purchase Return Details added successfully');
+    }
+
+
+    public function purchaseReturnDeleteAllDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseReturnAutoID = $input['purhaseReturnAutoID'];
+
+        $detailExistAll = PurchaseReturnDetails::where('purhaseReturnAutoID', $purchaseReturnAutoID)->get();
+
+        if (count($detailExistAll) == 0) {
+            return $this->sendError('There are no details to delete');
+        }
+
+        if (!empty($detailExistAll)) {
+            foreach ($detailExistAll as $cvDetail) {
+                $deleteDetail = PurchaseReturnDetails::where('purhasereturnDetailID', $cvDetail['purhasereturnDetailID'])->delete();
+            }
+        }
+        return $this->sendResponse($purchaseReturnAutoID, 'Purchase Return details deleted successfully');
     }
 
 
