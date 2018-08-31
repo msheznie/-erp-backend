@@ -1,209 +1,47 @@
-[2018-08-31 03:56:19] local.ERROR: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist (SQL: select * from `suppliertype`) {"userId":2637,"email":"gearsadmin@gulfenergy-int.com","exception":"[object] (Illuminate\\Database\\QueryException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist (SQL: select * from `suppliertype`) at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:664, Doctrine\\DBAL\\Driver\\PDOException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:79, PDOException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:77)
-[stacktrace]
-#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(624): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
-#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(333): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
-#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1719): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
-#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1704): Illuminate\\Database\\Query\\Builder->runSelect()
-#4 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(483): Illuminate\\Database\\Query\\Builder->get(Array)
-#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(467): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
-#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(360): Illuminate\\Database\\Eloquent\\Builder->get(Array)
-#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\CompanyAPIController.php(114): Illuminate\\Database\\Eloquent\\Model::all()
-#8 [internal function]: App\\Http\\Controllers\\API\\CompanyAPIController->getSupplierFormData(Object(Illuminate\\Http\\Request))
-#9 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
-#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('getSupplierForm...', Array)
-#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\CompanyAPIController), 'getSupplierForm...')
-#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
-#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
-#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
-#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#19 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
-#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
-#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
-#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
-#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
-#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#33 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#34 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#35 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#36 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#37 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#38 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#39 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#40 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#41 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#42 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#43 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#44 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\server.php(21): require_once('C:\\\\Users\\\\Fayas\\\\...')
-#45 {main}
-"} 
-[2018-08-31 04:05:37] local.ERROR: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist (SQL: select * from `suppliertype`) {"userId":2637,"email":"gearsadmin@gulfenergy-int.com","exception":"[object] (Illuminate\\Database\\QueryException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist (SQL: select * from `suppliertype`) at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:664, Doctrine\\DBAL\\Driver\\PDOException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:79, PDOException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:77)
-[stacktrace]
-#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(624): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
-#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(333): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
-#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1719): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
-#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1704): Illuminate\\Database\\Query\\Builder->runSelect()
-#4 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(483): Illuminate\\Database\\Query\\Builder->get(Array)
-#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(467): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
-#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(360): Illuminate\\Database\\Eloquent\\Builder->get(Array)
-#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\CompanyAPIController.php(114): Illuminate\\Database\\Eloquent\\Model::all()
-#8 [internal function]: App\\Http\\Controllers\\API\\CompanyAPIController->getSupplierFormData(Object(Illuminate\\Http\\Request))
-#9 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
-#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('getSupplierForm...', Array)
-#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\CompanyAPIController), 'getSupplierForm...')
-#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
-#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
-#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
-#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#19 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
-#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
-#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
-#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
-#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
-#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#33 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#34 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#35 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#36 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#37 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#38 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#39 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#40 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#41 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#42 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#43 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#44 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\server.php(21): require_once('C:\\\\Users\\\\Fayas\\\\...')
-#45 {main}
-"} 
-[2018-08-31 04:08:25] local.ERROR: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist (SQL: select * from `suppliertype`) {"userId":2637,"email":"gearsadmin@gulfenergy-int.com","exception":"[object] (Illuminate\\Database\\QueryException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist (SQL: select * from `suppliertype`) at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:664, Doctrine\\DBAL\\Driver\\PDOException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:79, PDOException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:77)
-[stacktrace]
-#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(624): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
-#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(333): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
-#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1719): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
-#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1704): Illuminate\\Database\\Query\\Builder->runSelect()
-#4 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(483): Illuminate\\Database\\Query\\Builder->get(Array)
-#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(467): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
-#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(360): Illuminate\\Database\\Eloquent\\Builder->get(Array)
-#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\CompanyAPIController.php(114): Illuminate\\Database\\Eloquent\\Model::all()
-#8 [internal function]: App\\Http\\Controllers\\API\\CompanyAPIController->getSupplierFormData(Object(Illuminate\\Http\\Request))
-#9 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
-#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('getSupplierForm...', Array)
-#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\CompanyAPIController), 'getSupplierForm...')
-#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
-#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
-#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
-#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#19 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
-#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
-#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
-#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
-#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
-#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#33 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#34 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#35 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#36 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#37 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#38 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#39 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#40 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#41 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#42 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#43 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#44 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\server.php(21): require_once('C:\\\\Users\\\\Fayas\\\\...')
-#45 {main}
-"} 
-[2018-08-31 04:10:02] local.ERROR: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist (SQL: select * from `suppliertype`) {"userId":2637,"email":"gearsadmin@gulfenergy-int.com","exception":"[object] (Illuminate\\Database\\QueryException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist (SQL: select * from `suppliertype`) at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php:664, Doctrine\\DBAL\\Driver\\PDOException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:79, PDOException(code: 42S02): SQLSTATE[42S02]: Base table or view not found: 1146 Table 'gearserp.suppliertype' doesn't exist at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\doctrine\\dbal\\lib\\Doctrine\\DBAL\\Driver\\PDOConnection.php:77)
-[stacktrace]
-#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(624): Illuminate\\Database\\Connection->runQueryCallback('select * from `...', Array, Object(Closure))
-#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(333): Illuminate\\Database\\Connection->run('select * from `...', Array, Object(Closure))
-#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1719): Illuminate\\Database\\Connection->select('select * from `...', Array, true)
-#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Query\\Builder.php(1704): Illuminate\\Database\\Query\\Builder->runSelect()
-#4 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(483): Illuminate\\Database\\Query\\Builder->get(Array)
-#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Builder.php(467): Illuminate\\Database\\Eloquent\\Builder->getModels(Array)
-#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Eloquent\\Model.php(360): Illuminate\\Database\\Eloquent\\Builder->get(Array)
-#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\CompanyAPIController.php(114): Illuminate\\Database\\Eloquent\\Model::all()
-#8 [internal function]: App\\Http\\Controllers\\API\\CompanyAPIController->getSupplierFormData(Object(Illuminate\\Http\\Request))
-#9 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
-#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('getSupplierForm...', Array)
-#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\CompanyAPIController), 'getSupplierForm...')
-#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
-#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
-#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
-#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#19 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
-#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
-#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
-#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
-#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
-#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#33 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#34 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#35 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#36 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#37 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#38 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#39 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#40 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#41 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#42 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#43 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#44 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\server.php(21): require_once('C:\\\\Users\\\\Fayas\\\\...')
-#45 {main}
-"} 
-[2018-08-31 04:47:03] local.ERROR: Impossible to create the root directory "C:\inetpub\wwwroot\GEARSERP\GEARSWEBPORTAL\Portal\uploads\PRN/105". {"userId":2637,"email":"gearsadmin@gulfenergy-int.com","exception":"[object] (League\\Flysystem\\Exception(code: 0): Impossible to create the root directory \"C:\\inetpub\\wwwroot\\GEARSERP\\GEARSWEBPORTAL\\Portal\\uploads\\PRN/105\". at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\league\\flysystem\\src\\Adapter\\Local.php:106)
+[2018-08-31 06:28:21] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 30230,
+    'itemPrimaryCode' => 'INV028185',
+    'itemDescription' => 'Tires 205/80 R16',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 4.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 39.0,
+    'wacRptCurrencyID' => NULL,
+    'wacRpt' => 101.29870129870129,
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'wareHouseSystemCode' => 117,
+    'documentCode' => NULL,
+    'documentSystemCode' => 105,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-31 06:28:21',
+    'timestamp' => '2018-08-31 06:28:21',
+  ),
+)  
+[2018-08-31 06:28:21] local.INFO: array (
+  0 => 30230,
+)  
+[2018-08-31 06:28:21] local.INFO: Item successfully added to item ledger06:28:21  
+[2018-08-31 06:28:22] local.INFO: [{"companySystemID":11,"itemSystemCode":30230,"inOutQty":12,"wacCostLocal":39,"wacCostRpt":101.298701299,"TotalwacCostLocal":468,"TotalwacCostRpt":1215.584415588}]  
+[2018-08-31 06:28:22] local.INFO: Successfully updated to item assign table 06:28:22  
+[2018-08-31 06:29:05] local.ERROR: Impossible to create the root directory "C:\inetpub\wwwroot\GEARSERP\GEARSWEBPORTAL\Portal\uploads\PRN/106". {"userId":2637,"email":"gearsadmin@gulfenergy-int.com","exception":"[object] (League\\Flysystem\\Exception(code: 0): Impossible to create the root directory \"C:\\inetpub\\wwwroot\\GEARSERP\\GEARSWEBPORTAL\\Portal\\uploads\\PRN/106\". at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\league\\flysystem\\src\\Adapter\\Local.php:106)
 [stacktrace]
 #0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\league\\flysystem\\src\\Adapter\\Local.php(127): League\\Flysystem\\Adapter\\Local->ensureDirectory('C:\\\\inetpub\\\\wwwr...')
-#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\league\\flysystem\\src\\Filesystem.php(102): League\\Flysystem\\Adapter\\Local->write('PRN/105/FREE_PR...', '\\x89PNG\\
+#1 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\league\\flysystem\\src\\Filesystem.php(102): League\\Flysystem\\Adapter\\Local->write('PRN/106/FREE_PR...', '\\x89PNG\\
 \\x1A\
 \\x00\\x00\\x00\IHD...', Object(League\\Flysystem\\Config))
-#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Filesystem\\FilesystemAdapter.php(180): League\\Flysystem\\Filesystem->put('PRN/105/FREE_PR...', '\\x89PNG\\
+#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Filesystem\\FilesystemAdapter.php(180): League\\Flysystem\\Filesystem->put('PRN/106/FREE_PR...', '\\x89PNG\\
 \\x1A\
 \\x00\\x00\\x00\IHD...', Object(League\\Flysystem\\Config))
-#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\DocumentAttachmentsAPIController.php(202): Illuminate\\Filesystem\\FilesystemAdapter->put('PRN/105/FREE_PR...', '\\x89PNG\\
+#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\DocumentAttachmentsAPIController.php(202): Illuminate\\Filesystem\\FilesystemAdapter->put('PRN/106/FREE_PR...', '\\x89PNG\\
 \\x1A\
 \\x00\\x00\\x00\IHD...')
 #4 [internal function]: App\\Http\\Controllers\\API\\DocumentAttachmentsAPIController->store(Object(App\\Http\\Requests\\API\\CreateDocumentAttachmentsAPIRequest))
@@ -245,88 +83,164 @@
 #40 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\server.php(21): require_once('C:\\\\Users\\\\Fayas\\\\...')
 #41 {main}
 "} 
-[2018-08-31 05:52:07] local.ERROR: Undefined index: serviceLineSystemID {"userId":2637,"email":"gearsadmin@gulfenergy-int.com","exception":"[object] (ErrorException(code: 0): Undefined index: serviceLineSystemID at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\PurchaseReturnAPIController.php:842)
-[stacktrace]
-#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\PurchaseReturnAPIController.php(842): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleError(8, 'Undefined index...', 'C:\\\\Users\\\\Fayas\\\\...', 842, Array)
-#1 [internal function]: App\\Http\\Controllers\\API\\PurchaseReturnAPIController->purchaseReturnSegmentChkActive(Object(Illuminate\\Http\\Request))
-#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
-#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('purchaseReturnS...', Array)
-#4 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\PurchaseReturnAPIController), 'purchaseReturnS...')
-#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
-#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
-#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#8 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#9 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
-#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
-#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
-#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
-#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
-#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
-#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#19 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#33 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#34 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#35 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#36 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#37 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\server.php(21): require_once('C:\\\\Users\\\\Fayas\\\\...')
-#38 {main}
-"} 
-[2018-08-31 05:53:20] local.ERROR: Undefined index: serviceLineSystemID {"userId":2637,"email":"gearsadmin@gulfenergy-int.com","exception":"[object] (ErrorException(code: 0): Undefined index: serviceLineSystemID at C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\PurchaseReturnAPIController.php:842)
-[stacktrace]
-#0 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\app\\Http\\Controllers\\API\\PurchaseReturnAPIController.php(842): Illuminate\\Foundation\\Bootstrap\\HandleExceptions->handleError(8, 'Undefined index...', 'C:\\\\Users\\\\Fayas\\\\...', 842, Array)
-#1 [internal function]: App\\Http\\Controllers\\API\\PurchaseReturnAPIController->purchaseReturnSegmentChkActive(Object(Illuminate\\Http\\Request))
-#2 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Controller.php(54): call_user_func_array(Array, Array)
-#3 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\ControllerDispatcher.php(45): Illuminate\\Routing\\Controller->callAction('purchaseReturnS...', Array)
-#4 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(212): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\API\\PurchaseReturnAPIController), 'purchaseReturnS...')
-#5 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Route.php(169): Illuminate\\Routing\\Route->runController()
-#6 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(658): Illuminate\\Routing\\Route->run()
-#7 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#8 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Auth\\Middleware\\Authenticate.php(43): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#9 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'api')
-#10 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#11 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#12 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(660): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#13 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(635): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
-#14 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(601): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
-#15 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Router.php(590): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
-#16 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(176): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
-#17 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(30): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
-#18 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\fideloper\\proxy\\src\\TrustProxies.php(57): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#19 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Fideloper\\Proxy\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#20 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#21 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#22 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#23 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#24 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest.php(30): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#25 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#26 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#27 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize.php(27): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#28 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#29 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#30 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode.php(46): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#31 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(149): Illuminate\\Foundation\\Http\\Middleware\\CheckForMaintenanceMode->handle(Object(Illuminate\\Http\\Request), Object(Closure))
-#32 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Routing\\Pipeline.php(53): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
-#33 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Pipeline\\Pipeline.php(102): Illuminate\\Routing\\Pipeline->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
-#34 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(151): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
-#35 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Http\\Kernel.php(116): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
-#36 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\public\\index.php(55): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
-#37 C:\\Users\\Fayas\\source\\GERP\\Gears_BackEnd\\server.php(21): require_once('C:\\\\Users\\\\Fayas\\\\...')
-#38 {main}
-"} 
-[2018-08-31 06:13:12] local.ERROR: Document ID Not Found06:13:12  
+[2018-08-31 06:29:55] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 30230,
+    'itemPrimaryCode' => 'INV028185',
+    'itemDescription' => 'Tires 205/80 R16',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 2.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 39.0,
+    'wacRptCurrencyID' => NULL,
+    'wacRpt' => 101.29870129870129,
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FREE-KUW',
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'wareHouseSystemCode' => 117,
+    'documentCode' => NULL,
+    'documentSystemCode' => 106,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-31 06:29:55',
+    'timestamp' => '2018-08-31 06:29:55',
+  ),
+)  
+[2018-08-31 06:29:55] local.INFO: array (
+  0 => 30230,
+)  
+[2018-08-31 06:29:55] local.INFO: Item successfully added to item ledger06:29:55  
+[2018-08-31 06:29:55] local.INFO: [{"companySystemID":11,"itemSystemCode":30230,"inOutQty":14,"wacCostLocal":39,"wacCostRpt":101.298701299,"TotalwacCostLocal":546,"TotalwacCostRpt":1418.181818186}]  
+[2018-08-31 06:29:55] local.INFO: Successfully updated to item assign table 06:29:55  
+[2018-08-31 06:50:34] local.INFO: array (
+  0 => 
+  array (
+    'itemSystemCode' => 30230,
+    'itemPrimaryCode' => 'INV028185',
+    'itemDescription' => 'Tires 205/80 R16',
+    'unitOfMeasure' => 7,
+    'inOutQty' => 3.0,
+    'wacLocalCurrencyID' => 1,
+    'wacLocal' => 39.0,
+    'wacRptCurrencyID' => NULL,
+    'wacRpt' => 101.29870129870129,
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FML',
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'wareHouseSystemCode' => 117,
+    'documentCode' => NULL,
+    'documentSystemCode' => 104,
+    'createdUserSystemID' => 11,
+    'createdUserID' => '8888',
+    'fromDamagedTransactionYN' => 0,
+    'transactionDate' => '2018-08-31 06:50:34',
+    'timestamp' => '2018-08-31 06:50:34',
+  ),
+)  
+[2018-08-31 06:50:34] local.INFO: array (
+  0 => 30230,
+)  
+[2018-08-31 06:50:34] local.INFO: Item successfully added to item ledger06:50:34  
+[2018-08-31 06:50:34] local.INFO: array (
+  0 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'documentSystemCode' => 104,
+    'documentCode' => 'FREE\\2018\\PRN000004',
+    'documentDate' => '2018-08-31 06:50:34',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'documentConfirmedDate' => '2018-08-31 06:49:56',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-31 06:50:13',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Nostrud ea ut aut cupidatat illum cumque',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'glAccountType' => 'BS',
+    'supplierCodeSystem' => 1343,
+    'chartOfAccountSystemID' => 615,
+    'glCode' => '9999998',
+    'documentTransCurrencyID' => 1,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => 117.0,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1.0,
+    'documentLocalAmount' => 117.0,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 0.385,
+    'documentRptAmount' => 303.8961039,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => 0,
+    'nonHoldingPercentage' => 0,
+    'createdDateTime' => '2018-08-31 06:50:34',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-31 06:50:34',
+  ),
+  1 => 
+  array (
+    'companySystemID' => 11,
+    'companyID' => 'FREE',
+    'serviceLineSystemID' => 35,
+    'serviceLineCode' => 'FML',
+    'masterCompanyID' => NULL,
+    'documentSystemID' => 24,
+    'documentID' => 'PRN',
+    'documentSystemCode' => 104,
+    'documentCode' => 'FREE\\2018\\PRN000004',
+    'documentDate' => '2018-08-31 06:50:34',
+    'documentYear' => '2018',
+    'documentMonth' => '08',
+    'documentConfirmedDate' => '2018-08-31 06:49:56',
+    'documentConfirmedBy' => '8888',
+    'documentConfirmedByEmpSystemID' => 11,
+    'documentFinalApprovedDate' => '2018-08-31 06:50:13',
+    'documentFinalApprovedBy' => '8888',
+    'documentFinalApprovedByEmpSystemID' => 11,
+    'documentNarration' => 'Nostrud ea ut aut cupidatat illum cumque',
+    'clientContractID' => 'X',
+    'contractUID' => 159,
+    'glAccountType' => 'BS',
+    'supplierCodeSystem' => 1343,
+    'chartOfAccountSystemID' => 612,
+    'glCode' => '9999995',
+    'documentTransCurrencyID' => 1,
+    'documentTransCurrencyER' => 1.0,
+    'documentTransAmount' => -117.0,
+    'documentLocalCurrencyID' => 1,
+    'documentLocalCurrencyER' => 1.0,
+    'documentLocalAmount' => -117.0,
+    'documentRptCurrencyID' => 2,
+    'documentRptCurrencyER' => 0.385,
+    'documentRptAmount' => -303.89610389610385,
+    'holdingShareholder' => NULL,
+    'holdingPercentage' => 0,
+    'nonHoldingPercentage' => 0,
+    'createdDateTime' => '2018-08-31 06:50:34',
+    'createdUserID' => '8888',
+    'createdUserSystemID' => 11,
+    'createdUserPC' => 'Fayas-PC',
+    'timestamp' => '2018-08-31 06:50:34',
+  ),
+)  
+[2018-08-31 06:50:34] local.INFO: Successfully inserted to GL table 06:50:34  
+[2018-08-31 06:50:35] local.INFO: [{"companySystemID":11,"itemSystemCode":30230,"inOutQty":17,"wacCostLocal":39,"wacCostRpt":101.298701299,"TotalwacCostLocal":663,"TotalwacCostRpt":1722.077922083}]  
+[2018-08-31 06:50:35] local.INFO: Successfully updated to item assign table 06:50:35  

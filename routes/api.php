@@ -778,3 +778,5 @@ Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIControlle
 Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
 
 Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
+
+Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');

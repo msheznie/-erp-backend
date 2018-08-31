@@ -242,13 +242,15 @@ class GRVDetailsAPIController extends AppBaseController
         }
         $grvMaster = GRVMaster::find($gRVDetails->grvAutoID);
 
-        $allowPartialGRVPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 23)
-            ->where('companySystemID', $grvMaster->companySystemID)
-            ->first();
-        $POMaster = ProcumentOrder::find($purchaseOrderMastertID);
+        if($grvMaster->grvTypeID == 2) {
+            $allowPartialGRVPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 23)
+                ->where('companySystemID', $grvMaster->companySystemID)
+                ->first();
+            $POMaster = ProcumentOrder::find($purchaseOrderMastertID);
 
-        if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
-            return $this->sendError('You cannot delete one line item as partial GRV is disabled.', 422);
+            if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
+                return $this->sendError('You cannot delete one line item as partial GRV is disabled.', 422);
+            }
         }
 
         // delete the grv detail
