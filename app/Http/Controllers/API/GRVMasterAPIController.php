@@ -749,8 +749,9 @@ class GRVMasterAPIController extends AppBaseController
         $wareHouseLocation = $wareHouseLocation->get();
 
         $grvTypes = "";
-        $allowDirectGrv = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+        $allowDirectGrv = CompanyPolicyMaster::where('companyPolicyCategoryID', 30)
             ->where('companySystemID', $companyId)
+            ->where('isYesNO', 1)
             ->first();
 
         if ($allowDirectGrv) {
