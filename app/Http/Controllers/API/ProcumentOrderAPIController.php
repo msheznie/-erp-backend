@@ -4091,8 +4091,8 @@ FROM
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
             "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
 
-        if($fetchSupEmail){
-            foreach($fetchSupEmail as $row){
+        if ($fetchSupEmail) {
+            foreach ($fetchSupEmail as $row) {
                 if (!empty($row->contactPersonEmail)) {
                     $emailSentTo = 1;
                     $dataEmail['empName'] = $procumentOrderUpdate->supplierName;
@@ -4252,7 +4252,7 @@ FROM
             'years' => 'required'
         ]);
 
-        if ($validator->fails()) {//echo 'in';exit;
+        if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
@@ -4268,13 +4268,26 @@ FROM
 
         $year = $request->years;
 
-        $output = \DB::select('select
+        $sumMonthWise = '';
+        $countMonthWise = '';
+
+        $monthArray = array(1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dece');
+
+        foreach ($monthArray as $key => $mon) {
+            $sumMonthWise .= " SUM(IF(DocMONTH = $key, POValue , 0)) as Tot$mon ,";
+            $countMonthWise .= " SUM(IF(DocMONTH = $key, 1 , 0)) as Cou$mon ,";
+        }
+
+        $output = \DB::select('SELECT
 	poConfirmedByEmpID,
 	POConfirmedEmpName,
 	designation,
-	count(poConfirmedByEmpSystemID) as count,
-	sum(POValue) as TotalValue
-from
+	count(poConfirmedByEmpSystemID) as totalCount,
+	sum(POValue) as totalValue,
+	' . $sumMonthWise . '
+	' . $countMonthWise . '
+	DocMONTH
+FROM
 (
 SELECT
 	erp_purchaseordermaster.purchaseOrderID,
@@ -4289,7 +4302,8 @@ SELECT
 	erp_purchaseordermaster.poConfirmedByEmpID,
 	employees.empName as POConfirmedEmpName,
 	hrms_designation.designation,
-	sum((erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty)) AS POVALUE
+	sum(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) AS POVALUE,
+	MONTH ( erp_purchaseordermaster.approvedDate ) AS DocMONTH
 FROM
 	erp_purchaseordermaster
 	INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
@@ -4303,8 +4317,8 @@ WHERE
 	AND erp_purchaseordermaster.poCancelledYN = 0
 	AND erp_purchaseordermaster.approved =-1
 	AND erp_purchaseordermaster.poType_N <> 6
-group by purchaseOrderID,companySystemID	) as pocountfnal
-	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY count DESC;');
+group by purchaseOrderID,companySystemID) as pocountfnal
+	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY totalCount DESC;');
         //dd(DB::getQueryLog());
 
         return $this->sendResponse($output, 'Data retrieved successfully');
@@ -4325,13 +4339,27 @@ group by purchaseOrderID,companySystemID	) as pocountfnal
 
         $year = $request->years;
         $type = $request->type;
+        $tempType = $request->temp;
+
+        $sumMonthWise = '';
+        $countMonthWise = '';
+
+        $monthArray = array(1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dece');
+
+        foreach ($monthArray as $key => $mon) {
+            $sumMonthWise .= " SUM(IF(DocMONTH = $key, POValue , 0)) as Tot$mon ,";
+            $countMonthWise .= " SUM(IF(DocMONTH = $key, 1 , 0)) as Cou$mon ,";
+        }
 
         $output = \DB::select('select
 	poConfirmedByEmpID,
 	POConfirmedEmpName,
 	designation,
-	count(poConfirmedByEmpSystemID) as count,
-	sum(POValue) as TotalValue
+	count(poConfirmedByEmpSystemID) as totalCount,
+	sum(POValue) as totalValue,
+	' . $sumMonthWise . '
+	' . $countMonthWise . '
+	DocMONTH
 from
 (
 SELECT
@@ -4347,7 +4375,8 @@ SELECT
 	erp_purchaseordermaster.poConfirmedByEmpID,
 	employees.empName as POConfirmedEmpName,
 	hrms_designation.designation,
-	sum((erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty)) AS POVALUE
+	sum(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*erp_purchaseorderdetails.noQty) AS POVALUE,
+	MONTH ( erp_purchaseordermaster.approvedDate ) AS DocMONTH
 FROM
 	erp_purchaseordermaster
 	INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID
@@ -4361,22 +4390,64 @@ WHERE
 	AND erp_purchaseordermaster.poCancelledYN = 0
 	AND erp_purchaseordermaster.approved =-1
 	AND erp_purchaseordermaster.poType_N <> 6
-group by purchaseOrderID,companySystemID	) as pocountfnal
-	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY count DESC;');
+group by purchaseOrderID,companySystemID) as pocountfnal
+	group by pocountfnal.poConfirmedByEmpSystemID ORDER BY totalCount DESC;');
 
-        if ($output) {
-            $x = 0;
-            foreach ($output as $val) {
-                $data[$x]['Emp ID'] = $val->poConfirmedByEmpID;
-                $data[$x]['Employee Name'] = $val->POConfirmedEmpName;
-                $data[$x]['Designation'] = $val->designation;
-                $data[$x]['Year'] = $year;
-                $data[$x]['Count'] = $val->count;
-                $data[$x]['Total'] = $val->TotalValue;
-                $x++;
+        if ($tempType == 1) {
+            if ($output) {
+                $x = 0;
+                foreach ($output as $val) {
+                    $data[$x]['Emp ID'] = $val->poConfirmedByEmpID;
+                    $data[$x]['Employee Name'] = $val->POConfirmedEmpName;
+                    $data[$x]['Designation'] = $val->designation;
+                    $data[$x]['Year'] = $year;
+                    $data[$x]['Jan-Count'] = $val->CouJan;
+                    $data[$x]['Jan-Amt'] = $val->TotJan;
+                    $data[$x]['Feb-Count'] = $val->CouFeb;
+                    $data[$x]['Feb-Amt'] = $val->TotFeb;
+                    $data[$x]['Mar-Count'] = $val->CouMar;
+                    $data[$x]['Mar-Amt'] = $val->TotMar;
+                    $data[$x]['Apr-Count'] = $val->CouApr;
+                    $data[$x]['Apr-Amt'] = $val->TotApr;
+                    $data[$x]['May-Count'] = $val->CouMay;
+                    $data[$x]['May-Amt'] = $val->TotMay;
+                    $data[$x]['Jun-Count'] = $val->CouJun;
+                    $data[$x]['Jun-Amt'] = $val->TotJun;
+                    $data[$x]['Jul-Count'] = $val->CouJul;
+                    $data[$x]['Jul-Amt'] = $val->TotJul;
+                    $data[$x]['Aug-Count'] = $val->CouAug;
+                    $data[$x]['Aug-Amt'] = $val->TotAug;
+                    $data[$x]['Sept-Count'] = $val->CouSep;
+                    $data[$x]['Sept-Amt'] = $val->TotSep;
+                    $data[$x]['Oct-Count'] = $val->CouOct;
+                    $data[$x]['Oct-Amt'] = $val->TotOct;
+                    $data[$x]['Nov-Count'] = $val->CouNov;
+                    $data[$x]['Nov-Amt'] = $val->TotNov;
+                    $data[$x]['Dec-Count'] = $val->CouDece;
+                    $data[$x]['Dec-Amt'] = $val->TotDece;
+                    $data[$x]['Total Count'] = $val->totalCount;
+                    $data[$x]['Total Amount'] = $val->totalValue;
+                    $x++;
+                }
+            } else {
+                $data = array();
             }
-        } else {
-            $data = array();
+
+        } else if ($tempType == 2) {
+            if ($output) {
+                $x = 0;
+                foreach ($output as $val) {
+                    $data[$x]['Emp ID'] = $val->poConfirmedByEmpID;
+                    $data[$x]['Employee Name'] = $val->POConfirmedEmpName;
+                    $data[$x]['Designation'] = $val->designation;
+                    $data[$x]['Year'] = $year;
+                    $data[$x]['Count'] = $val->totalCount;
+                    $data[$x]['Total'] = $val->totalValue;
+                    $x++;
+                }
+            } else {
+                $data = array();
+            }
         }
         $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {

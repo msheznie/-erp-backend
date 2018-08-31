@@ -454,5 +454,15 @@ class BookInvSuppMaster extends Model
         return $this->belongsTo('App\Models\ChartOfAccount', 'supplierGLCodeSystemID', 'chartOfAccountSystemID');
     }
 
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
     
 }
