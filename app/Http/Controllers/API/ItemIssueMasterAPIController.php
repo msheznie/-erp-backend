@@ -13,6 +13,8 @@
  * -- Date: 27-June 2018 By: Fayas Description: Added new functions named as getMaterielIssueAudit()
  * -- Date: 28-June 2018 By: Fayas Description: Added new functions named as getMaterielIssueApprovalByUser(),getMaterielIssueApprovedByUser()
  * -- Date: 26-July 2018 By: Fayas Description: Added new functions named as printItemIssue()
+ * -- Date: 27-August 2018 By: Fayas Description: Added new functions named as materielIssueReopen()
+ * -- Date: 29-August 2018 By: Fayas Description: Added new functions named as deliveryPrintItemIssue()
  */
 namespace App\Http\Controllers\API;
 
@@ -25,7 +27,9 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CustomerMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemIssueType;
@@ -170,11 +174,29 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
         unset($inputParam);
 
+        $validator = \Validator::make($input, [
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'issueDate' => 'required',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'wareHouseFrom' => 'required|numeric|min:1',
+            'customerSystemID' => 'required|numeric|min:1',
+            'issueType' => 'required|numeric|min:1',
+            'issueRefNo' => 'required',
+            'comment' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         if (isset($input['issueDate'])) {
             if ($input['issueDate']) {
                 $input['issueDate'] = new Carbon($input['issueDate']);
             }
         }
+
+
 
         $documentDate = $input['issueDate'];
         $monthBegin = $input['FYBiggin'];
@@ -287,7 +309,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ItemIssueMaster $itemIssueMaster */
-        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by', 'created_by', 'finance_period_by' => function ($query) {
+        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by', 'created_by','customer_by','finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
@@ -349,7 +371,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function update($id, UpdateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by',
+        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by','customer_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
 
         $input = $this->convertArrayToValue($input);
@@ -363,31 +385,27 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError('Item Issue Master not found');
         }
 
-        if ($input['serviceLineSystemID']) {
+        if (isset($input['serviceLineSystemID'])) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
                 return $this->sendError('Department not found');
             }
 
             if ($checkDepartmentActive->isActive == 0) {
-                $itemIssueUpdate = ItemIssueMaster::find($id);
-                $itemIssueUpdate->serviceLineSystemID = null;
-                $itemIssueUpdate->save();
-                return $this->sendError('Please select a active department', 500,$serviceLineError);
+                $this->itemIssueMasterRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
+                return $this->sendError('Please select an active department', 500,$serviceLineError);
             }
         }
 
-        if ($input['wareHouseFrom']) {
+        if (isset($input['wareHouseFrom'])) {
             $checkWareHouseActive = WarehouseMaster::find($input['wareHouseFrom']);
             if (empty($checkWareHouseActive)) {
                 return $this->sendError('WareHouse not found', 500, $wareHouseError);
             }
 
             if ($checkWareHouseActive->isActive == 0) {
-                $itemIssueUpdate = ItemIssueMaster::find($id);
-                $itemIssueUpdate->wareHouseFrom = null;
-                $itemIssueUpdate->save();
-                return $this->sendError('Please select a active warehouse', 500, $wareHouseError);
+                 $this->itemIssueMasterRepository->update(['wareHouseFrom' => null,'wareHouseFromCode' => null,'wareHouseFromDes'=> null],$id);
+                return $this->sendError('Please select an active warehouse', 500, $wareHouseError);
             }
         }
 
@@ -397,10 +415,12 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
         }
 
-        $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
+        if(isset($input["customerSystemID"])){
+            $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
 
-        if (!empty($customer)) {
-            $input["customerID"] = $customer->CutomerCode;
+            if (!empty($customer)) {
+                $input["customerID"] = $customer->CutomerCode;
+            }
         }
 
 
@@ -473,6 +493,8 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'issueDate' => 'required',
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'wareHouseFrom' => 'required|numeric|min:1',
+                'customerSystemID' => 'required|numeric|min:1',
+                'issueType' => 'required|numeric|min:1',
                 'issueRefNo' => 'required',
                 'comment' => 'required',
             ]);
@@ -512,7 +534,9 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'currentStockQty_zero' => array(),
                 'currentWareHouseStockQty_zero' => array(),
                 'currentStockQty_more' => array(),
-                'currentWareHouseStockQty_more' => array());
+                'currentWareHouseStockQty_more' => array(),
+                'issuingQty_more_requested' => array()
+              );
             $error_count = 0;
 
             foreach ($itemIssueDetails as $item) {
@@ -554,6 +578,14 @@ class ItemIssueMasterAPIController extends AppBaseController
                 if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->currentWareHouseStockQty) {
                     array_push($finalError['currentWareHouseStockQty_more'], $updateItem->itemPrimaryCode);
                     $error_count++;
+                }
+
+                if ($itemIssueMaster->issueType == 2) {
+                    if($updateItem->qtyIssuedDefaultMeasure > $updateItem->qtyRequested){
+                        array_push($finalError['issuingQty_more_requested'], $updateItem->itemPrimaryCode);
+                        $error_count++;
+                       // return $this->sendError("Issuing qty cannot be more than requested qty", 500, $qtyError);
+                    }
                 }
             }
 
@@ -1105,29 +1137,29 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function getMaterielIssueAudit(Request $request)
     {
         $id = $request->get('id');
-        $materielRequest = $this->itemIssueMasterRepository->getAudit($id);
+        $materielIssue = $this->itemIssueMasterRepository->getAudit($id);
 
-        if (empty($materielRequest)) {
+        if (empty($materielIssue)) {
             return $this->sendError('Materiel Issue not found');
         }
 
-        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
+        $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
 
-        return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
+        return $this->sendResponse($materielIssue->toArray(), 'Materiel Issue retrieved successfully');
     }
 
     public function printItemIssue(Request $request)
     {
         $id = $request->get('id');
-        $materielRequest = $this->itemIssueMasterRepository->getAudit($id);
+        $materielIssue = $this->itemIssueMasterRepository->getAudit($id);
 
-        if (empty($materielRequest)) {
+        if (empty($materielIssue)) {
             return $this->sendError('Materiel Issue not found');
         }
 
-        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
+        $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
 
-        $array = array('entity' => $materielRequest);
+        $array = array('entity' => $materielIssue);
         $time = strtotime("now");
         $fileName = 'item_issue_' . $id . '_' . $time . '.pdf';
         $html = view('print.item_issue', $array);
@@ -1136,5 +1168,122 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
+
+
+    public function deliveryPrintItemIssue(Request $request)
+    {
+        $id = $request->get('id');
+        $materielIssue = $this->itemIssueMasterRepository->getAudit($id);
+
+        if (empty($materielIssue)) {
+            return $this->sendError('Materiel Issue not found');
+        }
+
+        $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
+
+        $array = array('entity' => $materielIssue);
+        $time = strtotime("now");
+        $fileName = 'item_issue_delivery' . $id . '_' . $time . '.pdf';
+        $html = view('print.item_issue_delivery', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+    public function materielIssueReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['itemIssueAutoID'];
+        $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($itemIssueMaster)) {
+            return $this->sendError('Materiel Issue not found');
+        }
+
+        if ($itemIssueMaster->approved == -1) {
+            return $this->sendError('You cannot reopen this Materiel Issue it is already fully approved');
+        }
+
+        if ($itemIssueMaster->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Materiel Issue it is already partially approved');
+        }
+
+        if ($itemIssueMaster->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Materiel Issue, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
+                        'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->itemIssueMasterRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $itemIssueMaster->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $itemIssueMaster->itemIssueCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $itemIssueMaster->itemIssueCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $itemIssueMaster->companySystemID)
+                                            ->where('documentSystemCode', $itemIssueMaster->itemIssueAutoID)
+                                            ->where('documentSystemID', $itemIssueMaster->documentSystemID)
+                                            ->where('rollLevelOrder', 1)
+                                            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $itemIssueMaster->companySystemID)
+                    ->where('documentSystemID', $itemIssueMaster->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $itemIssueMaster->companySystemID)
+            ->where('documentSystemID', $itemIssueMaster->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($itemIssueMaster->toArray(), 'Materiel Issue reopened successfully');
+    }
+
 
 }

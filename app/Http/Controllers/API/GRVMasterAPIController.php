@@ -28,9 +28,12 @@ use App\Models\DocumentAttachments;
 use App\Models\EmployeesDepartment;
 use App\Models\GRVMaster;
 use App\Models\CompanyPolicyMaster;
+use App\Models\ItemAssigned;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
+use App\Models\UnbilledGRV;
+use App\Models\UnbilledGrvGroupBy;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\Months;
@@ -270,7 +273,7 @@ class GRVMasterAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        }, 'grvtype_by'])->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
             return $this->sendError('Good Receipt Voucher not found');
@@ -295,7 +298,7 @@ class GRVMasterAPIController extends AppBaseController
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by', 'grvtype_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var GRVMaster $gRVMaster */
@@ -457,31 +460,34 @@ class GRVMasterAPIController extends AppBaseController
                 return $this->sendError('Every item should have at least a qty', 500);
             }
 
-            // checking logistic details  exist and updating grv id in erp_purchaseorderadvpayment  table
-            $fetchingGRVDetails = GRVDetails::select(DB::raw('purchaseOrderMastertID'))
-                ->where('grvAutoID', $input['grvAutoID'])
-                ->groupBy('purchaseOrderMastertID')
-                ->get();
 
-            if ($fetchingGRVDetails) {
-                foreach ($fetchingGRVDetails as $der) {
-                    $poMaster = ProcumentOrder::find($der['purchaseOrderMastertID']);
-                    if ($poMaster->logisticsAvailable == -1) {
-                        $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN', 1)
-                            ->where('grvAutoID', 0)->get();
-                        if (count($poAdvancePaymentdetail) > 0) {
-                            foreach ($poAdvancePaymentdetail as $advance) {
-                                if ($advance['grvAutoID'] == 0) {
-                                    $updatePoAdvancePaymentdetail = PoAdvancePayment::find($advance->poAdvPaymentID);
-                                    $updatePoAdvancePaymentdetail->grvAutoID = $input['grvAutoID'];
-                                    $updatePoAdvancePaymentdetail->save();
+            if ($gRVMaster->grvTypeID == 2) {
+                // checking logistic details  exist and updating grv id in erp_purchaseorderadvpayment  table
+                $fetchingGRVDetails = GRVDetails::select(DB::raw('purchaseOrderMastertID'))
+                    ->where('grvAutoID', $input['grvAutoID'])
+                    ->groupBy('purchaseOrderMastertID')
+                    ->get();
+
+                if ($fetchingGRVDetails) {
+                    foreach ($fetchingGRVDetails as $der) {
+                        $poMaster = ProcumentOrder::find($der['purchaseOrderMastertID']);
+                        if ($poMaster->logisticsAvailable == -1) {
+                            $poAdvancePaymentdetail = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN', 1)
+                                ->where('grvAutoID', 0)->get();
+                            if (count($poAdvancePaymentdetail) > 0) {
+                                foreach ($poAdvancePaymentdetail as $advance) {
+                                    if ($advance['grvAutoID'] == 0) {
+                                        $updatePoAdvancePaymentdetail = PoAdvancePayment::find($advance->poAdvPaymentID);
+                                        $updatePoAdvancePaymentdetail->grvAutoID = $input['grvAutoID'];
+                                        $updatePoAdvancePaymentdetail->save();
+                                    }
                                 }
-                            }
-                        } else {
-                            $grvCheck = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN', 1)
-                                ->where('grvAutoID', $id)->get();
-                            if (count($grvCheck) == 0) {
-                                return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . ' has logistics. You can confirm the GRV only after logistics details are updated.');
+                            } else {
+                                $grvCheck = PoAdvancePayment::where('poID', $der['purchaseOrderMastertID'])->where('isAdvancePaymentYN', 1)
+                                    ->where('grvAutoID', $id)->get();
+                                if (count($grvCheck) == 0) {
+                                    return $this->sendError('Added PO ' . $poMaster->purchaseOrderCode . ' has logistics. You can confirm the GRV only after logistics details are updated.');
+                                }
                             }
                         }
                     }
@@ -578,7 +584,7 @@ class GRVMasterAPIController extends AppBaseController
     public function getGoodReceiptVoucherMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -592,6 +598,7 @@ class GRVMasterAPIController extends AppBaseController
         }, 'location_by' => function ($query) {
         }, 'supplier_by' => function ($query) {
         }, 'currency_by' => function ($query) {
+        }, 'grvtype_by' => function ($query) {
         }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
@@ -636,6 +643,12 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('grvTypeID', $input)) {
+            if ($input['grvTypeID'] && !is_null($input['grvTypeID'])) {
+                $grvMaster->where('grvTypeID', $input['grvTypeID']);
+            }
+        }
+
         $grvMaster = $grvMaster->select(
             ['erp_grvmaster.grvAutoID',
                 'erp_grvmaster.grvPrimaryCode',
@@ -656,7 +669,8 @@ class GRVMasterAPIController extends AppBaseController
                 'erp_grvmaster.timesReferred',
                 'erp_grvmaster.grvConfirmedYN',
                 'erp_grvmaster.approved',
-                'erp_grvmaster.grvLocation'
+                'erp_grvmaster.grvLocation',
+                'erp_grvmaster.grvTypeID'
             ]);
 
         $search = $request->input('search.value');
@@ -736,7 +750,17 @@ class GRVMasterAPIController extends AppBaseController
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $grvTypes = GRVTypes::where('grvTypeID', 2)->get();
+        $grvTypes = "";
+        $allowDirectGrv = CompanyPolicyMaster::where('companyPolicyCategoryID', 30)
+            ->where('companySystemID', $companyId)
+            ->where('isYesNO', 1)
+            ->first();
+
+        if ($allowDirectGrv) {
+            $grvTypes = GRVTypes::all();
+        } else {
+            $grvTypes = GRVTypes::where('grvTypeID', 2)->get();
+        }
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
@@ -855,7 +879,8 @@ class GRVMasterAPIController extends AppBaseController
             'documentSystemCode',
             'employees.empName As created_user',
             'serviceline.ServiceLineDes as serviceLineDescription',
-            'warehousemaster.wareHouseDescription as wareHouseSet'
+            'warehousemaster.wareHouseDescription as wareHouseSet',
+            'erp_grvtpes.des'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -877,6 +902,7 @@ class GRVMasterAPIController extends AppBaseController
             ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->join('serviceline', 'erp_grvmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->join('warehousemaster', 'erp_grvmaster.grvLocation', 'warehousemaster.wareHouseSystemCode')
+            ->join('erp_grvtpes', 'erp_grvtpes.grvTypeID', 'erp_grvmaster.grvTypeID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 3)
             ->where('erp_documentapproved.companySystemID', $companyID);
@@ -940,7 +966,8 @@ class GRVMasterAPIController extends AppBaseController
             'documentSystemCode',
             'employees.empName As created_user',
             'serviceline.ServiceLineDes as serviceLineDescription',
-            'warehousemaster.wareHouseDescription as wareHouseSet'
+            'warehousemaster.wareHouseDescription as wareHouseSet',
+            'erp_grvtpes.des'
         )->join('erp_grvmaster', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'grvAutoID')
                 ->where('erp_grvmaster.companySystemID', $companyID)
@@ -951,6 +978,7 @@ class GRVMasterAPIController extends AppBaseController
             ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->join('serviceline', 'erp_grvmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->join('warehousemaster', 'erp_grvmaster.grvLocation', 'warehousemaster.wareHouseSystemCode')
+            ->join('erp_grvtpes', 'erp_grvtpes.grvTypeID', 'erp_grvmaster.grvTypeID')
             ->where('erp_documentapproved.documentSystemID', 3)
             ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
 
@@ -1095,101 +1123,129 @@ class GRVMasterAPIController extends AppBaseController
 
     public function getGoodReceiptVoucherReopen(Request $request)
     {
-        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
 
-        $grvAutoID = $input['grvAutoID'];
+            $grvAutoID = $input['grvAutoID'];
 
-        $grvMasterData = GRVMaster::find($grvAutoID);
-        $emails = array();
-        if (empty($grvMasterData)) {
-            return $this->sendError('Good Receipt Voucher not found');
-        }
+            $grvMasterData = GRVMaster::find($grvAutoID);
+            $emails = array();
+            if (empty($grvMasterData)) {
+                return $this->sendError('Good Receipt Voucher not found');
+            }
 
-        if ($grvMasterData->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this GRV it is already partially approved');
-        }
+            if ($grvMasterData->RollLevForApp_curr > 1) {
+                return $this->sendError('You cannot reopen this GRV it is already partially approved');
+            }
 
-        if ($grvMasterData->approved == -1) {
-            return $this->sendError('You cannot reopen this GRV it is already fully approved');
-        }
+            if ($grvMasterData->approved == -1) {
+                return $this->sendError('You cannot reopen this GRV it is already fully approved');
+            }
 
-        if ($grvMasterData->grvConfirmedYN == 0) {
-            return $this->sendError('You cannot reopen this GRV, it is not confirmed');
-        }
+            if ($grvMasterData->grvConfirmedYN == 0) {
+                return $this->sendError('You cannot reopen this GRV, it is not confirmed');
+            }
 
-        // updating fields
-        $grvMasterData->grvConfirmedYN = 0;
-        $grvMasterData->grvConfirmedByEmpSystemID = null;
-        $grvMasterData->grvConfirmedByEmpID = null;
-        $grvMasterData->grvConfirmedByName = null;
-        $grvMasterData->grvConfirmedDate = null;
-        $grvMasterData->RollLevForApp_curr = 1;
-        $grvMasterData->save();
+            // updating fields
+            $grvMasterData->grvConfirmedYN = 0;
+            $grvMasterData->grvConfirmedByEmpSystemID = null;
+            $grvMasterData->grvConfirmedByEmpID = null;
+            $grvMasterData->grvConfirmedByName = null;
+            $grvMasterData->grvConfirmedDate = null;
+            $grvMasterData->RollLevForApp_curr = 1;
+            $grvMasterData->save();
 
-        $employee = \Helper::getEmployeeInfo();
+            $employee = \Helper::getEmployeeInfo();
 
-        $document = DocumentMaster::where('documentSystemID', $grvMasterData->documentSystemID)->first();
+            $document = DocumentMaster::where('documentSystemID', $grvMasterData->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $grvMasterData->grvPrimaryCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $grvMasterData->grvPrimaryCode;
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $grvMasterData->grvPrimaryCode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $grvMasterData->grvPrimaryCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+            $subject = $cancelDocNameSubject . ' is reopened';
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
 
-        $documentApproval = DocumentApproved::where('companySystemID', $grvMasterData->companySystemID)
-            ->where('documentSystemCode', $grvMasterData->grvAutoID)
-            ->where('documentSystemID', $grvMasterData->documentSystemID)
-            ->where('rollLevelOrder', 1)
-            ->first();
+            $documentApproval = DocumentApproved::where('companySystemID', $grvMasterData->companySystemID)
+                ->where('documentSystemCode', $grvMasterData->grvAutoID)
+                ->where('documentSystemID', $grvMasterData->documentSystemID)
+                ->where('rollLevelOrder', 1)
+                ->first();
 
-        if ($documentApproval) {
-            if ($documentApproval->approvedYN == 0) {
-                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $grvMasterData->companySystemID)
-                    ->where('documentSystemID', $grvMasterData->documentSystemID)
-                    ->first();
+            if ($documentApproval) {
+                if ($documentApproval->approvedYN == 0) {
+                    $companyDocument = CompanyDocumentAttachment::where('companySystemID', $grvMasterData->companySystemID)
+                        ->where('documentSystemID', $grvMasterData->documentSystemID)
+                        ->first();
 
-                if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
-                }
+                    if (empty($companyDocument)) {
+                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                    }
 
-                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
-                    ->where('companySystemID', $documentApproval->companySystemID)
-                    ->where('documentSystemID', $documentApproval->documentSystemID);
+                    $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                        ->where('companySystemID', $documentApproval->companySystemID)
+                        ->where('documentSystemID', $documentApproval->documentSystemID);
 
-                if ($companyDocument['isServiceLineApproval'] == -1) {
-                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
-                }
+                    if ($companyDocument['isServiceLineApproval'] == -1) {
+                        $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                    }
 
-                $approvalList = $approvalList
-                    ->with(['employee'])
-                    ->groupBy('employeeSystemID')
-                    ->get();
+                    $approvalList = $approvalList
+                        ->with(['employee'])
+                        ->groupBy('employeeSystemID')
+                        ->get();
 
-                foreach ($approvalList as $da) {
-                    if ($da->employee) {
-                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
-                            'companySystemID' => $documentApproval->companySystemID,
-                            'docSystemID' => $documentApproval->documentSystemID,
-                            'alertMessage' => $subject,
-                            'emailAlertMessage' => $body,
-                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    foreach ($approvalList as $da) {
+                        if ($da->employee) {
+                            $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                'companySystemID' => $documentApproval->companySystemID,
+                                'docSystemID' => $documentApproval->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $documentApproval->documentSystemCode);
+                        }
+                    }
+
+                    $sendEmail = \Email::sendEmail($emails);
+                    if (!$sendEmail["success"]) {
+                        return ['success' => false, 'message' => $sendEmail["message"]];
                     }
                 }
-
-                $sendEmail = \Email::sendEmail($emails);
-                if (!$sendEmail["success"]) {
-                    return ['success' => false, 'message' => $sendEmail["message"]];
-                }
             }
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $grvAutoID)
+                ->where('companySystemID', $grvMasterData->companySystemID)
+                ->where('documentSystemID', $grvMasterData->documentSystemID)
+                ->delete();
+
+            $unbilledGrvGroupBy = UnbilledGrvGroupBy::where('companySystemID', $grvMasterData->companySystemID)->where('grvAutoID', $grvAutoID)->delete();
+
+            $unbilledGrv = UnbilledGRV::where('companySystemID', $grvMasterData->companySystemID)->where('grvAutoID', $grvAutoID)->delete();
+            DB::commit();
+            return $this->sendResponse($grvMasterData->toArray(), 'Good Receipt Voucher reopened successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError('Error Occurred', 500);
+        }
+    }
+
+    public function getItemsOptionForGRV(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $items = ItemAssigned::where('companySystemID', $companyID);
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+            });
         }
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $grvAutoID)
-            ->where('companySystemID', $grvMasterData->companySystemID)
-            ->where('documentSystemID', $grvMasterData->documentSystemID)
-            ->delete();
-
-        return $this->sendResponse($grvMasterData->toArray(), 'Good Receipt Voucher reopened successfully');
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
     }
 
 }

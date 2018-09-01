@@ -496,6 +496,12 @@ class ProcumentOrderAPIController extends AppBaseController
         $procumentOrderUpdate->localCurrencyER = round($currencyConversionMaster['trasToLocER'], 8);
 
 
+        // updating coloum
+        if ($input['documentSystemID'] != 5 && $input['poType_N'] != 5) {
+            $procumentOrderUpdate->WO_PeriodFrom = null;
+            $procumentOrderUpdate->WO_PeriodTo = null;
+        }
+
         // calculating total Supplier Default currency
 
         $currencyConversionMaster = \Helper::currencyConversion($input["companySystemID"], $supplierCurrency->currencyID, $input['supplierTransactionCurrencyID'], $poMasterSumDeducted);
@@ -4035,6 +4041,7 @@ FROM
 
         $currencyDecimal = CurrencyMaster::select('DecimalPlaces')->where('currencyID', $procumentOrderUpdate->supplierTransactionCurrencyID)
             ->first();
+
         $decimal = 2;
         if (!empty($currencyDecimal)) {
             $decimal = $currencyDecimal['DecimalPlaces'];
@@ -4076,39 +4083,44 @@ FROM
         $pdf = \App::make('dompdf.wrapper');
 
         $pdf->loadHTML($html)->save('C:/inetpub/wwwroot/GEARSERP/GEARSWEBPORTAL/Portal/uploads/emailAttachment/po_print_' . $nowTime . '.pdf');
+
         $fetchSupEmail = SupplierContactDetails::where('supplierID', $procumentOrderUpdate->supplierID)
-            ->where('isDefault', -1)
-            ->first();
+            ->get();
 
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
             "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
 
-        if (!empty($fetchSupEmail->contactPersonEmail)) {
-            $emailSentTo = 1;
-            $dataEmail['empName'] = $procumentOrderUpdate->supplierName;
-            $dataEmail['empEmail'] = $fetchSupEmail->contactPersonEmail;
+        if($fetchSupEmail){
+            foreach($fetchSupEmail as $row){
+                if (!empty($row->contactPersonEmail)) {
+                    $emailSentTo = 1;
+                    $dataEmail['empName'] = $procumentOrderUpdate->supplierName;
+                    $dataEmail['empEmail'] = $row->contactPersonEmail;
 
-            $dataEmail['companySystemID'] = $procumentOrderUpdate->companySystemID;
-            $dataEmail['companyID'] = $procumentOrderUpdate->companyID;
+                    $dataEmail['companySystemID'] = $procumentOrderUpdate->companySystemID;
+                    $dataEmail['companyID'] = $procumentOrderUpdate->companyID;
 
-            $dataEmail['docID'] = $procumentOrderUpdate->documentID;
-            $dataEmail['docSystemID'] = $procumentOrderUpdate->documentSystemID;
-            $dataEmail['docSystemCode'] = $procumentOrderUpdate->purchaseOrderID;
+                    $dataEmail['docID'] = $procumentOrderUpdate->documentID;
+                    $dataEmail['docSystemID'] = $procumentOrderUpdate->documentSystemID;
+                    $dataEmail['docSystemCode'] = $procumentOrderUpdate->purchaseOrderID;
 
-            $dataEmail['docApprovedYN'] = $procumentOrderUpdate->approved;
-            $dataEmail['docCode'] = $procumentOrderUpdate->purchaseOrderCode;
+                    $dataEmail['docApprovedYN'] = $procumentOrderUpdate->approved;
+                    $dataEmail['docCode'] = $procumentOrderUpdate->purchaseOrderCode;
+                    $dataEmail['ccEmailID'] = $employee->empEmail;
 
-            $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
+                    $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
-            $location = \DB::table('systemmanualfolder')->first();
-            $pdfName = $location->folderDes . "emailAttachment\\po_print_" . $nowTime . ".pdf";
+                    $location = \DB::table('systemmanualfolder')->first();
+                    $pdfName = $location->folderDes . "emailAttachment\\po_print_" . $nowTime . ".pdf";
 
-            $dataEmail['isEmailSend'] = 0;
-            $dataEmail['attachmentFileName'] = $pdfName;
-            $dataEmail['alertMessage'] = "New order from " . $company->CompanyName;
-            $dataEmail['emailAlertMessage'] = $temp;
-            Alert::create($dataEmail);
+                    $dataEmail['isEmailSend'] = 0;
+                    $dataEmail['attachmentFileName'] = $pdfName;
+                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName;
+                    $dataEmail['emailAlertMessage'] = $temp;
+                    Alert::create($dataEmail);
+                }
+            }
         }
 
         $procumentOrderUpdate->sentToSupplier = -1;
@@ -4122,7 +4134,7 @@ FROM
         if ($emailSentTo == 0) {
             return $this->sendResponse($emailSentTo, 'Supplier email is not updated. Email notification is sent');
         } else {
-            return $this->sendResponse($emailSentTo, 'Supplier notification email sent to ' . $fetchSupEmail->contactPersonEmail . '');
+            return $this->sendResponse($emailSentTo, 'Supplier notification email sent');
         }
 
 

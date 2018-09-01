@@ -5,11 +5,18 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCustomerInvoiceDirectDetailAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectDetailAPIRequest;
 use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CompanyFinanceYear;
+use App\Models\Contract;
+use App\Models\SegmentMaster;
+use App\Models\ChartOfAccount;
+use App\Models\Taxdetail;
 use App\Repositories\CustomerInvoiceDirectDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -274,30 +281,320 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         if (empty($customerInvoiceDirectDetail)) {
             return $this->sendError('Customer Invoice Direct Detail not found');
         }
-
+        $masterID = $customerInvoiceDirectDetail->custInvoiceDirectID;
         $customerInvoiceDirectDetail->delete();
+
+        $details = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $masterID)->first()->toArray();
+
+
+        /* selectRaw*/
+
+
+        CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $masterID)->update($details);
 
         return $this->sendResponse($id, 'Customer Invoice Direct Detail deleted successfully');
     }
 
-    public function AllDeleteCustomerInvoiceDetails(Request $request)
+    public function addDirectInvoiceDetails(Request $request)
     {
-        $id = $request['id'];
 
 
+        $messages = [
+            'companySystemID.required' => 'Company is required.',
+            /*    'contractID.required' => 'The contract number is required.',*/
+            /* 'unitID.required' => 'The unit is required.',*/
+            /* 'qty.required' => 'The qty is required.',*/
+            /* 'unitCost.required' => 'The unit cost is required.',*/
+            'custInvoiceDirectAutoID.required' => 'ID is required.',
+            'glCode.required' => 'GL Account is required.',
+            /* 'serviceLineSystemID.required' => 'The department is required.',*/
+        ];
 
-  /*      $PerformaInvoiceNo = $_POST['PerformaInvoiceNo'];
-        $custInvoiceDirectAutoID = $_POST['custInvoiceDirectAutoID'];
-        $tax = $database->query("SELECT * FROM `erp_taxdetail` WHERE `documentSystemCode` = $custInvoiceDirectAutoID ")->fetch();
-        if ($tax) {
-            echo json_encode(array('e', 'Please delete tax details to continue'));
-            exit;
+        $validator = \Validator::make($request->all(), [
+            'companySystemID' => 'required|numeric|min:1',
+            /* 'contractID' => 'required|numeric|min:1',*/
+            /*    'unitID' => 'required|numeric|min:1',*/
+            /*  'qty' => 'required|numeric|min:1',*/
+            /* 'unitCost' => 'required|numeric|min:1',*/
+            'custInvoiceDirectAutoID' => 'required|numeric|min:1',
+            'glCode' => 'required|numeric|min:1',
+            /*     'serviceLineSystemID' => 'required|numeric|min:1',*/
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
         }
 
-        $database->query("UPDATE performamaster SET performaStatus=0,timeStamp=NOW()   WHERE companyID='{$companyID}' AND PerformaInvoiceNo={$PerformaInvoiceNo}");
-        $database->query("UPDATE erp_performadetails SET invoiceSsytemCode=0,timestamp=NOW()  WHERE companyID='{$companyID}' AND PerformaMasterID='{$PerformaInvoiceNo}' ");
+        /* $amount = $request['amount'];
+         $comments = $request['comments'];*/
+        $companySystemID = $request['companySystemID'];
+        /* $contractID = $request['contractID'];*/
+        $custInvoiceDirectAutoID = $request['custInvoiceDirectAutoID'];
+        $glCode = $request['glCode'];
+        /* $qty = $request['qty'];*/
+        /* $serviceLineSystemID = $request['serviceLineSystemID'];
+         $unitCost = $request['unitCost'];
+         $unitID = $request['unitID'];*/
 
-        $delete = $database->delete('erp_custinvoicedirectdet', array('performaMasterID' => $PerformaInvoiceNo));*/
+
+        /*this*/
+
+
+        /*get master*/
+        $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
+        $bookingInvCode = $master->bookingInvCode;
+        /*selectedPerformaMaster*/
+
+
+        /*if bookinvoice not available create header*/
+        if ($master->bookingInvCode == '' || $master->bookingInvCode == 0) {
+
+            $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $master->companyFinanceYearID)->first();
+            $serialNo = CustomerInvoiceDirect::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))->where('documentID', 'INV')->where('companySystemID', $master->companySystemID)->orderBy('serialNo', 'desc')->first();
+            $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
+
+            /*header*/
+            $bookingInvCode = ($master->companyID . '\\' . $y . '\\INV' . str_pad($serialNo->serialNo, 6, '0', STR_PAD_LEFT));
+            $upMaster['serialNo'] = $serialNo->serialNo;
+            $upMaster['bookingInvCode'] = $bookingInvCode;
+            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($upMaster);
+        }
+
+
+        /*  $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $master->companyID)->where('contractUID', $contractID)->first();
+
+          $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+          if ($detail) {
+              if ($detail->serviceLineSystemID != $serviceLineSystemID || $contract->ContractNumber != $detail->clientContractID) {
+                  return $this->sendError('Different Service Line or Contract ID selected');
+              }
+          }*/
+
+        $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)->first();
+        if (!empty($tax)) {
+            return $this->sendResponse('e', 'Please delete tax details to continue');
+        }
+        /*  if (!empty($contract)) {
+              if ($contract->paymentInDaysForJob <= 0) {
+                  return $this->sendError('Payment Period is not updated in the contract. Please update and try again');
+              }
+          } else {
+              return $this->sendError('Contract not exist.');
+
+          }*/
+
+
+        $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
+
+        $companyCurrency = \Helper::companyCurrency($myCurr);
+        $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+        $x = 0;
+
+
+        /*$serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $serviceLineSystemID)->first();*/
+        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
+        $totalAmount = 0; //$unitCost * $qty;
+
+        $addToCusInvDetails['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
+        $addToCusInvDetails['companyID'] = $master->companyID;
+        /*  $addToCusInvDetails['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;*/
+        /*        $addToCusInvDetails['serviceLineCode'] = $serviceLine->ServiceLineCode;*/
+        $addToCusInvDetails['customerID'] = $master->customerID;
+        $addToCusInvDetails['glSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+        $addToCusInvDetails['glCode'] = $chartOfAccount->AccountCode;
+        $addToCusInvDetails['glCodeDes'] = $chartOfAccount->AccountDescription;
+        $addToCusInvDetails['accountType'] = $chartOfAccount->catogaryBLorPL;
+        $addToCusInvDetails['comments'] = $master->comments;
+        $addToCusInvDetails['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
+        $addToCusInvDetails['invoiceAmountCurrencyER'] = 1;
+        /* $addToCusInvDetails['unitOfMeasure'] = $unitID;
+         $addToCusInvDetails['invoiceQty'] = $qty;
+         $addToCusInvDetails['unitCost'] = $unitCost;*/
+        $addToCusInvDetails['invoiceAmount'] = round($totalAmount, $decimal);
+
+        $addToCusInvDetails['localCurrency'] = $companyCurrency->localcurrency->currencyID;
+        $addToCusInvDetails['localCurrencyER'] = $master->localCurrencyER;
+
+        $addToCusInvDetails['comRptCurrency'] = $companyCurrency->reportingcurrency->currencyID;
+        $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
+
+        /*        $addToCusInvDetails['clientContractID'] = $contract->ContractNumber;*/
+
+        /**/
+        /*   $MyRptAmount = 0;
+           if ($master->custTransactionCurrencyID == $master->companyReportingCurrencyID) {
+               $MyRptAmount = $totalAmount;
+           } else {
+               if ($master->companyReportingER > $master->custTransactionCurrencyER) {
+                   if ($master->companyReportingER > 1) {
+                       $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                   } else {
+                       $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                   }
+               } else {
+                   if ($master->companyReportingER > 1) {
+                       $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                   } else {
+                       $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                   }
+               }
+           }*/
+        $addToCusInvDetails["comRptAmount"] = 0; // \Helper::roundValue($MyRptAmount);
+        /*     if ($master->custTransactionCurrencyID == $master->localCurrencyID) {
+                 $MyLocalAmount = $totalAmount;
+             } else {
+                 if ($master->localCurrencyER > $master->custTransactionCurrencyER) {
+                     if ($master->localCurrencyER > 1) {
+                         $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                     } else {
+                         $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                     }
+                 } else {
+                     if ($master->localCurrencyER > 1) {
+                         $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                     } else {
+                         $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                     }
+                 }
+             }*/
+        $addToCusInvDetails["localAmount"] = 0; // \Helper::roundValue($MyLocalAmount);
+
+
+        /**/
+
+
+        DB::beginTransaction();
+
+        try {
+            CustomerInvoiceDirectDetail::create($addToCusInvDetails);
+            $details = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as bookingAmountTrans"), DB::raw("SUM(localAmount) as bookingAmountLocal"), DB::raw("SUM(comRptAmount) as bookingAmountRpt"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first()->toArray();
+
+            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($details);
+
+
+            DB::commit();
+            return $this->sendResponse('s', 'successfully created');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError('Error Occured !');
+        }
+
+
+        /*done*/
+
+
+    }
+
+    public function updateDirectInvoice(Request $request)
+    {
+
+        $input = $request->all();
+        $input = array_except($input, array('unit', 'department','performadetails'));
+        $input = $this->convertArrayToValue($input);
+        $input['unitOfMeasure'];
+        $id = $input['custInvDirDetAutoID'];
+
+        $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $id)->first();
+
+
+        if (empty($detail)) {
+            return $this->sendError('Customer Invoice Direct Detail not found');
+        }
+
+        $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
+
+        if ($input['contractID'] != $detail->contractID) {
+            $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $detail->companyID)->where('contractUID', $input['contractID'])->first();
+            $input['clientContractID'] = $contract->ContractNumber;
+
+            if (!empty($contract)) {
+                if ($contract->paymentInDaysForJob <= 0) {
+                    return $this->sendError('Payment Period is not updated in the contract. Please update and try again');
+                }
+            } else {
+                return $this->sendError('Contract not exist.');
+
+            }
+        }
+
+        if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID) {
+
+            $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+            $input['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
+            $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
+            $input['contractID'] = NULL;
+        }
+
+        $input['invoiceQty']= ($input['invoiceQty'] != ''?$input['invoiceQty']:0);
+        $input['unitCost']= ($input['unitCost'] != ''?$input['unitCost']:0);
+
+        if ($input['invoiceQty'] != $detail->invoiceQty || $input['unitCost'] != $detail->unitCost) {
+            $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
+            $companyCurrency = \Helper::companyCurrency($myCurr);
+            $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+
+            $input['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
+            $input['invoiceAmountCurrencyER'] = 1;
+            $totalAmount = ($input['unitCost'] != ''?$input['unitCost']:0) * ($input['invoiceQty'] != ''?$input['invoiceQty']:0);
+            $input['invoiceAmount'] = round($totalAmount, $decimal);
+            /**/
+               $MyRptAmount = 0;
+               if ($master->custTransactionCurrencyID == $master->companyReportingCurrencyID) {
+                   $MyRptAmount = $totalAmount;
+               } else {
+                   if ($master->companyReportingER > $master->custTransactionCurrencyER) {
+                       if ($master->companyReportingER > 1) {
+                           $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                       } else {
+                           $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                       }
+                   } else {
+                       if ($master->companyReportingER > 1) {
+                           $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                       } else {
+                           $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                       }
+                   }
+               }
+            $input["comRptAmount"] =   \Helper::roundValue($MyRptAmount);
+                if ($master->custTransactionCurrencyID == $master->localCurrencyID) {
+                     $MyLocalAmount = $totalAmount;
+                 } else {
+                     if ($master->localCurrencyER > $master->custTransactionCurrencyER) {
+                         if ($master->localCurrencyER > 1) {
+                             $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                         } else {
+                             $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                         }
+                     } else {
+                         if ($master->localCurrencyER > 1) {
+                             $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                         } else {
+                             $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                         }
+                     }
+                 }
+            $input["localAmount"] =  \Helper::roundValue($MyLocalAmount);
+
+
+        }
+
+
+        DB::beginTransaction();
+
+        try {
+            $x=CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $detail->custInvDirDetAutoID)->update($input);
+            $allDetail = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $detail->custInvoiceDirectID)->first()->toArray();
+
+            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->update($allDetail);
+
+
+            DB::commit();
+            return $this->sendResponse('s', 'successfully created');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError($exception);
+        }
 
     }
 

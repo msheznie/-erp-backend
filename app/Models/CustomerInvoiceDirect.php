@@ -650,6 +650,38 @@ class CustomerInvoiceDirect extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'custTransactionCurrencyID', 'currencyID');
     }
 
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'canceledByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function companydocumentattachment_by()
+    {
+        return $this->hasMany('App\Models\CompanyDocumentAttachment', 'companySystemID', 'companySystemID');
+    }
+
+     public function finance_year_by() {
+         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+     }
+
+    public function finance_period_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+
+
+
 
 
 

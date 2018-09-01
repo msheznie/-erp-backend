@@ -15,6 +15,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
+use App\Models\BankAccount;
+use App\Models\BankAssign;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoiceDirect;
@@ -22,11 +24,13 @@ use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerMaster;
 use App\Models\PerformaDetails;
 use App\Models\PerformaMaster;
+use App\Models\Unit;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\Months;
 use App\Models\Taxdetail;
 use App\Models\Company;
+use App\Models\customercurrency;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
 use App\Models\Contract;
@@ -152,10 +156,32 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+        $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
 
-        if($customer->creditDays ==0 || $customer->creditDays =='' ){
-            return $this->sendResponse('e', $customer->CustomerName.' - Credit days not mentioned for this customer');
+        if ($currency) {
+            $input['custTransactionCurrencyID'] = $currency->currencyID;
+            $myCurr = $currency->currencyID;
+
+            $companyCurrency = \Helper::companyCurrency($currency->currencyID);
+            $companyCurrencyConversion = \Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
+            /*exchange added*/
+            $input['custTransactionCurrencyER'] = 1;
+            $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+
+            $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $company['CompanyID'])->where('isDefault', -1)->first();
+            if ($bank) {
+                $input['bankID'] = $bank->bankmasterAutoID;
+                $bankAccount = BankAccount::where('companyID', $company['CompanyID'])->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $currency->currencyID)->first();
+                $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
+            }
         }
+
+        /* if ($customer->creditDays == 0 || $customer->creditDays == '') {
+             return $this->sendResponse('e', $customer->CustomerName . ' - Credit days not mentioned for this customer');
+         }*/
 
 
         /**/
@@ -186,8 +212,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['modifiedPc'] = getenv('COMPUTERNAME');
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-
-
 
 
         if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
@@ -243,7 +267,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company' => function ($query) {
             $query->select('CompanyName', 'companySystemID', 'isTaxYN');
-        }, 'bankaccount', 'currency'])->findWithoutFail($id);
+        }, 'bankaccount', 'currency', 'finance_year_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }, 'finance_period_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }])->findWithoutFail($id);
 
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found');
@@ -305,18 +333,51 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
-        $input = $this->convertArrayToSelectedValue($input, array('customerID','secondaryLogoCompanySystemID'));
-        if (empty($customerInvoiceDirect)) {
-            return $this->sendError('Customer Invoice Direct not found',500);
+        $isPerforma = $customerInvoiceDirect->isPerforma;
+        if ($isPerforma == 1) {
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID'));
+        } else {
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID'));
+            $_post['custTransactionCurrencyID'] = $input['custTransactionCurrencyID'];
+            $_post['bankID'] = $input['bankID'];
+            $_post['bankAccountID'] = $input['bankAccountID'];
+
+            if ($_post['custTransactionCurrencyID'] != $customerInvoiceDirect->custTransactionCurrencyID) {
+                if (count($detail) > 0) {
+                    return $this->sendError('Invoice details exist. You can not change the currency.', 500);
+                } else {
+                    $myCurr = $_post['custTransactionCurrencyID'];
+                    $companyCurrency = \Helper::companyCurrency($myCurr);
+                    $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
+                    /*exchange added*/
+                    $_post['custTransactionCurrencyER'] = 1;
+                    $_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    $_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $_post['bankAccountID'] = NULL;
+
+                }
+            }
+
+            if ($_post['bankID'] != $customerInvoiceDirect->bankID) {
+                $_post['bankAccountID'] = NULL;
+            }
+
         }
 
+
+        if (empty($customerInvoiceDirect)) {
+            return $this->sendError('Customer Invoice Direct not found', 500);
+        }
+        $input['departmentSystemID'] = 4;
         /*financial Year check*/
-        $companyFinanceYearCheck=\Helper::companyFinanceYearCheck($input);
+        $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYearCheck["success"]) {
             return $this->sendError($companyFinanceYearCheck["message"], 500);
         }
         /*financial Period check*/
-        $companyFinancePeriodCheck=\Helper::companyFinancePeriodCheck($input);
+        $companyFinancePeriodCheck = \Helper::companyFinancePeriodCheck($input);
         if (!$companyFinancePeriodCheck["success"]) {
             return $this->sendError($companyFinancePeriodCheck["message"], 500);
         }
@@ -330,37 +391,71 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post['PONumber'] = $input['PONumber'];
 
 
-
-
-
-
-        if($input['secondaryLogoCompanySystemID'] !=$customerInvoiceDirect->secondaryLogoCompanySystemID ){
-            if($input['secondaryLogoCompID'] !=''){
-                $company=Company::select('companyLogo','CompanyID')->where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
-                $_post['secondaryLogoCompID']=$company->CompanyID;
-                $_post['secondaryLogo']=$company->companyLogo;
-            }else{
-                $_post['secondaryLogoCompID']=NULL;
-                $_post['secondaryLogo']=NULL;
+        if ($input['secondaryLogoCompanySystemID'] != $customerInvoiceDirect->secondaryLogoCompanySystemID) {
+            if ($input['secondaryLogoCompID'] != '') {
+                $company = Company::select('companyLogo', 'CompanyID')->where('companySystemID', $input['secondaryLogoCompanySystemID'])->first();
+                $_post['secondaryLogoCompID'] = $company->CompanyID;
+                $_post['secondaryLogo'] = $company->companyLogo;
+            } else {
+                $_post['secondaryLogoCompID'] = NULL;
+                $_post['secondaryLogo'] = NULL;
             }
 
         }
 
-
-
+        if ($input['customerInvoiceNo'] != $customerInvoiceDirect->customerInvoiceNo) {
+            $_post['customerInvoiceNo'] = $input['customerInvoiceNo'];
+        }
 
 
         if ($input['customerID'] != $customerInvoiceDirect->customerID) {
 
 
             if (count($detail) > 0) {
-                return $this->sendError('Invoice details exist. You can not change the customer.',500);
+                return $this->sendError('Invoice details exist. You can not change the customer.', 500);
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-            if($customer->creditDays ==0 || $customer->creditDays =='' ){
-                return $this->sendResponse('e', $customer->CustomerName.' - Credit days not mentioned for this customer');
+            if ($customer->creditDays == 0 || $customer->creditDays == '') {
+                return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500);
             }
 
+            /*if customer change*/
+            $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+            $_post['customerGLCode'] = $customer->custGLaccount;
+            $_post['customerGLSystemID'] = $customer->custGLAccountSystemID;
+            $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+            if ($currency) {
+                $_post['custTransactionCurrencyID'] = $currency->currencyID;
+                $myCurr = $currency->currencyID;
+
+                $companyCurrency = \Helper::companyCurrency($currency->currencyID);
+                $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
+                /*exchange added*/
+                $_post['custTransactionCurrencyER'] = 1;
+                $_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $_post['bankID'] = null;
+                $_post['bankAccountID'] = null;
+                $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $customerInvoiceDirect->companyID)->where('isDefault', -1)->first();
+                if ($bank) {
+                    $_post['bankID'] = $bank->bankmasterAutoID;
+                    $bankAccount = BankAccount::where('companyID', $customerInvoiceDirect->companyID)->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $currency->currencyID)->first();
+                    $_post['bankAccountID'] = $bankAccount->bankAccountAutoID;
+                }
+            }
+            /**/
+
+        }
+
+
+        if ($input['serviceStartDate'] != '' && $input['serviceEndDate'] != '') {
+            $_post['serviceStartDate'] = Carbon::parse($input['serviceStartDate'])->format('Y-m-d') . ' 00:00:00';
+            $_post['serviceEndDate'] = Carbon::parse($input['serviceEndDate'])->format('Y-m-d') . ' 00:00:00';
+            if (($_post['serviceStartDate'] >= $_post['serviceEndDate'])) {
+                return $this->sendError('Service start date can not be greater than service end date.', 500);
+            }
         }
 
         $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
@@ -369,34 +464,100 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (($_post['bookingDate'] >= $input['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $input['FYPeriodDateTo'])) {
 
         } else {
-            return $this->sendError('Document Date should be between financial period start date and end date.',500);
+            return $this->sendError('Document Date should be between financial period start date and end date.', 500);
 
         }
 
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
+                if ($isPerforma != 1) {
 
-                if (count($detail) >! 0) {
-                    return $this->sendError('You can not confirm. Invoice Details not found.',500);
+                    $messages = [
+
+                        'custTransactionCurrencyID.required' => 'Currency is required.',
+                        'bankID.required' => 'Bank is required.',
+                        'bankAccountID.required' => 'Bank account is required.'
+
+                    ];
+                    $validator = \Validator::make($_post, [
+                        'custTransactionCurrencyID' => 'required|numeric|min:1',
+                        'bankID' => 'required|numeric|min:1',
+                        'bankAccountID' => 'required|numeric|min:1'
+                    ], $messages);
+
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+
+
+                }
+
+                if (count($detail) > !0) {
+                    return $this->sendError('You can not confirm. Invoice Details not found.', 500);
                 } else {
+                    $detailValidation = CustomerInvoiceDirectDetail::selectRaw("IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
+                    IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,
+                    IF ( unitCost IS NULL OR unitCost = '' OR unitCost = 0, null, 1 ) AS unitCost")->
+                    where('custInvoiceDirectID', $id)
+                        ->where(function ($query) {
+
+                            $query->whereIn('serviceLineSystemID', [null, 0])
+                                ->orwhereIn('unitOfMeasure', [null, 0])
+                                ->orwhereIn('invoiceQty', [null, 0])
+                                ->orwhereIn('contractID', [null, 0])
+                                ->orwhereIn('invoiceAmount', [null, 0])
+                                ->orwhereIn('unitCost', [null, 0]);
+                        });
 
 
-                  /*  $employee=\Helper::getEmployeeInfo();
-                    $input['createdPcID'] = getenv('COMPUTERNAME');
-                    $input['confirmedByEmpID'] =  \Helper::getEmployeeID();
-                    $input['confirmedByName'] = $employee->empName;
-                    $input['confirmedDate'] = Carbon::now();
-                    $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();*/
+                    if (!empty($detailValidation->get()->toArray())) {
 
 
-                   $groupby  = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
+                        foreach ($detailValidation->get()->toArray() as $item) {
+
+                            $validators = \Validator::make($item, [
+                                'serviceLineSystemID' => 'required|numeric|min:1',
+                                'unitOfMeasure' => 'required|numeric|min:1',
+                                'invoiceQty' => 'required|numeric|min:1',
+                                'contractID' => 'required|numeric|min:1',
+                                'invoiceAmount' => 'required|numeric|min:1',
+                                'unitCost' => 'required|numeric|min:1',
+                            ], [
+
+                                'serviceLineSystemID.required' => 'Department is required.',
+                                'unitOfMeasure.required' => 'UOM is required.',
+                                'invoiceQty.required' => 'Qty is required.',
+                                'contractID.required' => 'Contract no. is required.',
+                                'invoiceAmount.required' => 'Amount is required.',
+                                'unitCost.required' => 'Unit cost is required.'
+
+                            ]);
+
+                            if ($validators->fails()) {
+                                return $this->sendError($validators->messages(), 422);
+                            }
 
 
-                    if (count($groupby) != 0) {
+                        }
 
-                        if (count($groupby) > 1) {
-                            return $this->sendError('You can not continue . multiple service line exist in details.',500);
-                        }else{
+                    }
+
+                    /*  $employee=\Helper::getEmployeeInfo();
+                      $input['createdPcID'] = getenv('COMPUTERNAME');
+                      $input['confirmedByEmpID'] =  \Helper::getEmployeeID();
+                      $input['confirmedByName'] = $employee->empName;
+                      $input['confirmedDate'] = Carbon::now();
+                      $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();*/
+
+
+                    $groupby = CustomerInvoiceDirectDetail::select('serviceLineCode')->where('custInvoiceDirectID', $id)->groupBy('serviceLineCode')->get();
+                    $groupbycontract = CustomerInvoiceDirectDetail::select('contractID')->where('custInvoiceDirectID', $id)->groupBy('contractID')->get();
+
+                    if (count($groupby) != 0 || count($groupby) != 0) {
+
+                        if (count($groupby) > 1 || count($groupbycontract) > 1) {
+                            return $this->sendError('You can not continue . multiple service line or contract exist in details.', 500);
+                        } else {
                             $params = array('autoID' => $id,
                                 'company' => $customerInvoiceDirect->companySystemID,
                                 'document' => $customerInvoiceDirect->documentSystemiD,
@@ -409,24 +570,21 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             if (!$confirm["success"]) {
 
                                 return $this->sendError($confirm["message"], 500);
-                            }else{
+                            } else {
                                 return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
                             }
                         }
                     } else {
-                        return $this->sendError('No invoice details found.',500);
+                        return $this->sendError('No invoice details found.', 500);
                     }
 
                 }
             }
-        }else{
+        } else {
             $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
 
-            return $this->sendResponse($customerInvoiceDirect->toArray(), 'Invoice Updated Successfully ');
+            return $this->sendResponse($_post, 'Invoice Updated Successfully ');
         }
-
-
-
 
 
     }
@@ -553,7 +711,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'month', 'approved', 'year'));
+
+        $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'month', 'approved', 'year', 'isProforma'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -561,22 +720,33 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $invMaster = CustomerInvoiceDirect::where('companySystemID', $input['companyId']);
-        $invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with(['currency', 'createduser', 'customer']);
+        $invMaster = DB::table('erp_custinvoicedirect')
+            ->leftjoin('currencymaster', 'custTransactionCurrencyID', '=', 'currencyID')
+            ->leftjoin('employees', 'erp_custinvoicedirect.createdUserSystemID', '=', 'employees.employeeSystemID')
+            ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_custinvoicedirect.customerID')
+            ->where('companySystemID', $input['companyId'])
+            ->where('erp_custinvoicedirect.documentSystemID', $input['documentId']);
 
 
-        $invMaster->where('isPerforma', 1);
+        /* $invMaster = CustomerInvoiceDirect::where('companySystemID', $input['companyId']);
+         $invMaster->where('documentSystemID', $input['documentId']);
+         $invMaster->with(['currency', 'createduser', 'customer']);*/
+
 
         if (array_key_exists('invConfirmedYN', $input)) {
             if (($input['invConfirmedYN'] == 0 || $input['invConfirmedYN'] == 1) && !is_null($input['invConfirmedYN'])) {
-                $invMaster->where('confirmedYN', $input['invConfirmedYN']);
+                $invMaster->where('erp_custinvoicedirect.confirmedYN', $input['invConfirmedYN']);
             }
         }
 
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $invMaster->where('approved', $input['approved']);
+                $invMaster->where('erp_custinvoicedirect.approved', $input['approved']);
+            }
+        }
+        if (array_key_exists('isProforma', $input)) {
+            if (!is_null($input['isProforma'])) {
+                $invMaster->where('isPerforma', $input['isProforma']);
             }
         }
 
@@ -595,42 +765,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
-        /*    $grvMaster = $invMaster->select(
-                [ 'erp_custinvoicedirect.custInvoiceDirectAutoID',
-                    'erp_custinvoicedirect.custInvoiceDirectAutoID','bookingDate',
-                    'erp_custinvoicedirect.comments',
-                    'bookingInvCode',
-                    'erp_custinvoicedirect.customerID',
-                    'custTransactionCurrencyID',
-                    'bookingAmountTrans',
-                    'erp_custinvoicedirect.createdUserID',
-                    'erp_custinvoicedirect.approvedDate',
-
-                  'erp_custinvoicedirect.confirmedYN','approved','VATAmount'
-                ]);*/
 
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $invMaster = $invMaster->where(function ($query) use ($search) {
-                $query->where('employees.empName', 'LIKE', "%{$search}%")
-                    ->orWhere('bookingInvCode', 'LIKE', "%{$search}%")
-                    ->orWhere('customermaster.CustomerName', 'LIKE', "%{$search}%");
+                $query->Where('bookingInvCode', 'LIKE', "%{$search}%")
+                    ->orwhere('employees.empName', 'LIKE', "%{$search}%")
+                    ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
+                    ->orWhere('customerInvoiceNo', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%");
             });
         }
 
+        $request->request->remove('search.value');
+        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount');
 
-        /*       $historyPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 29)
-                   ->where('companySystemID', $input['companyId'])->first();
-
-               $policy = 0;
-
-               if (!empty($historyPolicy)) {
-                   $policy = $historyPolicy->isYesNO;
-               }*/
-
-        return \DataTables::eloquent($invMaster)
-            /*  ->addColumn('Actions', $policy)*/
+        return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -646,10 +797,20 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     function getcreateINVFormData(Request $request)
     {
         $companyId = $request['companyId'];
+        $id = $request['id'];
+        $bankID = isset($request['bankID']) ? $request['bankID'] : false;
+        if ($id) {
+            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID')->where('custInvoiceDirectAutoID', $id)->first();
+        }
+
+        if (!$bankID && $id) {
+            $bankID = $master->bankID;
+        }
+
         $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
         $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-        $output['invoiceType'] = array(array('value' => 1, 'label' => 'Performa Invoice'), array('value' => 0, 'label' => 'Direct Invoice'), array('value' => 2, 'label' => 'Item'));
+        $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'), array('value' => 2, 'label' => 'Item'));
         $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId);
         $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companyId)->first();
         $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
@@ -657,7 +818,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['yesNoSelection'] = YesNoSelection::all();
         $output['tax'] = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$output['company']['CompanyID']}'");
 
-        $output['currencies'] = CurrencyMaster::all();
+        if ($id) {
+            $output['currencies'] = CurrencyMaster::all();
+            $output['bankDropdown'] = BankAssign::where('isActive', 1)->where('isAssigned', -1)->where('companyID', $output['company']['CompanyID'])->get();
+            $output['bankAccount'] = [];
+            if ($bankID != '' && $master->custTransactionCurrencyID != '') {
+
+                $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $bankID)->where('accountCurrencyID', $master->custTransactionCurrencyID)->get();
+            }
+
+            $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
+            $output['uom'] = Unit::select('UnitID', 'UnitShortCode')->get();
+        }
+
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
@@ -745,7 +918,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
         }
 
-        $contract = Contract::select('isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $master->companyID)->where('ContractNumber', $performa->contractID)->first();
+        $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $master->companyID)->where('ContractNumber', $performa->contractID)->first();
 
 
         $getRentalDetailFromFreeBilling = FreeBillingMasterPerforma::select('companyID', 'PerformaInvoiceNo', 'rentalStartDate', 'rentalEndDate')->where('companyID', $master->companyID)->where('PerformaInvoiceNo', $performaMasterID)->first();
@@ -783,8 +956,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $x = 0;
         if (!empty($updatedInvoiceNo)) {
             foreach ($updatedInvoiceNo as $updateInvoice) {
-                $serviceLine = SegmentMaster::select('serviceLineSystemID')->where('ServiceLineCode',$updateInvoice->serviceLine)->first();
-                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL','chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
+                $serviceLine = SegmentMaster::select('serviceLineSystemID')->where('ServiceLineCode', $updateInvoice->serviceLine)->first();
+                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
 
                 $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totAmount);
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
@@ -814,10 +987,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                 $addToCusInvDetails[$x]['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
                 $addToCusInvDetails[$x]['clientContractID'] = $updateInvoice->contractID;
+                $addToCusInvDetails[$x]['contractID'] = $contract->contractUID;
                 $addToCusInvDetails[$x]['performaMasterID'] = $performaMasterID;
                 $x++;
             }
-
 
 
             $invNo['invoiceSsytemCode'] = $custInvoiceDirectAutoID; /*update in custinvoice*/
@@ -866,7 +1039,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 if (!empty($updatedInvoiceNo)) {
                     foreach ($updatedInvoiceNo as $peformaDet) {
-                       PerformaDetails::where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->where('idperformaDetails', $peformaDet->idperformaDetails)->update($invNo);
+                        PerformaDetails::where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->where('idperformaDetails', $peformaDet->idperformaDetails)->update($invNo);
                     }
                 }
                 $details = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as bookingAmountTrans"), DB::raw("SUM(localAmount) as bookingAmountLocal"), DB::raw("SUM(comRptAmount) as bookingAmountRpt"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first()->toArray();
@@ -1042,7 +1215,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
     }
 
-    public function printCustomerInvoice(Request $request){
+    public function printCustomerInvoice(Request $request)
+    {
 
         $id = $request->get('id');
         $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
@@ -1051,7 +1225,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (empty($customerInvoice)) {
             return $this->sendError('Customer Invoice not found.');
         }
-
 
 
         $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
@@ -1164,6 +1337,66 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->delete();
 
         return $this->sendResponse($invoice->toArray(), 'Invoice reopened successfully');
+    }
+
+    function customerInvoiceAudit(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        $gRVMaster = $this->customerInvoiceDirectRepository->with(['createduser', 'confirmed_by', 'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
+            $query->with('employee')
+                ->where('documentSystemID', 20);
+        }, 'invoicedetails', 'company', 'currency', 'companydocumentattachment_by' => function ($query) {
+            $query->where('documentSystemID', 20);
+        }])->findWithoutFail($id);
+
+
+        if (empty($gRVMaster)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        return $this->sendResponse($gRVMaster->toArray(), 'GRV retrieved successfully');
+    }
+
+    public function getAllcontractbyclient(request $request)
+    {
+        /*   $input = $request->all();
+           $companyID = $input['companyID'];
+           $serviceLineSystemID = $input['serviceLineSystemID'];
+           $custInvDirDetAutoID = $input['custInvDirDetAutoID'];
+           $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
+           $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
+           $contract = Contract::select('contractUID', 'ContractNumber')->whereHas('segment', function ($query) use ($serviceLineSystemID) {
+               $query->where('serviceLineSystemID', $serviceLineSystemID);
+           })->where('companySystemID', $companyID)->where('clientID', $master->customerID);
+
+           if($detail->contract !=''){
+               $contractb = Contract::select('contractUID', 'ContractNumber')->where('contractUID',$detail->contractID);
+               $contract->union($contractb)->get();
+           }*/
+
+        $input = $request->all();
+       
+
+        $custInvDirDetAutoID = $input['custInvDirDetAutoID'];
+        $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
+        $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
+    /*    $contract = Contract::select('contractUID', 'ContractNumber')->whereHas('segment', function ($query) use ($serviceLineSystemID) {
+            $query->where('serviceLineSystemID', $serviceLineSystemID);
+        })->where('companySystemID', $companyID)->where('clientID', $master->customerID)->get();*/
+
+
+        $contractID = 0;
+        if ($detail->contractID != '' && $detail->contractID != 0) {
+            $contractID = $detail->contractID;
+
+        }
+
+        $qry = "SELECT * FROM ( SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID AND clientID = $master->customerID UNION ALL SELECT contractUID, ContractNumber FROM contractmaster WHERE contractUID = $contractID ) t GROUP BY contractUID, ContractNumber";
+        $contract = DB::select($qry);
+
+
+        return $this->sendResponse($contract, 'Contract deleted successfully');
     }
 
 

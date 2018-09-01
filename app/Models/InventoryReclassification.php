@@ -185,6 +185,8 @@ class InventoryReclassification extends Model
         'companyID',
         'serviceLineSystemID',
         'serviceLineCode',
+        'wareHouseSystemCode',
+        'wareHouseCode',
         'companyFinanceYearID',
         'companyFinancePeriodID',
         'FYBiggin',
@@ -230,6 +232,8 @@ class InventoryReclassification extends Model
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
+        'wareHouseSystemCode' => 'integer',
+        'wareHouseCode' => 'string',
         'companyFinanceYearID' => 'integer',
         'companyFinancePeriodID' => 'integer',
         'documentSystemID' => 'integer',
@@ -278,6 +282,11 @@ class InventoryReclassification extends Model
     public function segment_by()
     {
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function warehouse_by()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster', 'wareHouseSystemCode', 'wareHouseSystemCode');
     }
 
     public function modified_by()

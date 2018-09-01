@@ -16,7 +16,6 @@ use Response;
  * Class ContractController
  * @package App\Http\Controllers\API
  */
-
 class ContractAPIController extends AppBaseController
 {
     /** @var  ContractRepository */
@@ -278,4 +277,6 @@ class ContractAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Contract deleted successfully');
     }
+
+
 }
