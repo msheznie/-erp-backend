@@ -413,7 +413,7 @@ ORDER BY
     {
         $input = $request->all();
         $poAdvPaymentID = $input['poAdvPaymentID'];
-        $typeID = $input['typeID'];
+        $typeID = $input['isAdvancePaymentYN'];
 
         if($typeID == 1){
 
