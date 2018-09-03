@@ -58,14 +58,13 @@ use Response;
  * Class PurchaseReturnController
  * @package App\Http\Controllers\API
  */
-
 class PurchaseReturnAPIController extends AppBaseController
 {
     /** @var  PurchaseReturnRepository */
     private $purchaseReturnRepository;
     private $purchaseReturnDetailsRepository;
 
-    public function __construct(PurchaseReturnRepository $purchaseReturnRepo,PurchaseReturnDetails $purchaseReturnDetailsRepo)
+    public function __construct(PurchaseReturnRepository $purchaseReturnRepo, PurchaseReturnDetails $purchaseReturnDetailsRepo)
     {
         $this->purchaseReturnRepository = $purchaseReturnRepo;
         $this->purchaseReturnDetailsRepository = $purchaseReturnDetailsRepo;
@@ -161,7 +160,6 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-
         $employee = \Helper::getEmployeeInfo();
 
         $input['createdPcID'] = gethostname();
@@ -191,11 +189,15 @@ class PurchaseReturnAPIController extends AppBaseController
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
             'purchaseReturnDate' => 'required',
-            'serviceLineSystemID' => 'required|numeric|min:1'
+            'purchaseReturnRefNo' => 'required',
+            'narration' => 'required',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'supplierID' => 'required|numeric|min:1',
+            'supplierTransactionCurrencyID' => 'required|numeric|min:1'
         ]);
 
         if ($validator->fails()) {
-            //return $this->sendError($validator->messages(), 422);
+            return $this->sendError($validator->messages(), 422);
         }
 
         if (isset($input['purchaseReturnDate'])) {
@@ -210,7 +212,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Purchase Return Date not between Financial period !',500);
+            return $this->sendError('Purchase Return Date not between Financial period !', 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -333,7 +335,7 @@ class PurchaseReturnAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PurchaseReturn $purchaseReturn */
-        $purchaseReturn = $this->purchaseReturnRepository->with(['confirmed_by','segment_by','location_by','finance_period_by' => function ($query) {
+        $purchaseReturn = $this->purchaseReturnRepository->with(['confirmed_by', 'segment_by', 'location_by', 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
@@ -395,8 +397,8 @@ class PurchaseReturnAPIController extends AppBaseController
     public function update($id, UpdatePurchaseReturnAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['confirmed_by','segment_by','location_by','finance_period_by','finance_year_by',
-            'confirmedByEmpSystemID','confirmedByEmpID', 'confirmedDate','confirmedByName']);
+        $input = array_except($input, ['confirmed_by', 'segment_by', 'location_by', 'finance_period_by', 'finance_year_by',
+            'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedDate', 'confirmedByName']);
         $wareHouseError = array('type' => 'wareHouse');
         $serviceLineError = array('type' => 'serviceLine');
 
@@ -408,26 +410,26 @@ class PurchaseReturnAPIController extends AppBaseController
             return $this->sendError('Purchase Return not found');
         }
 
-        if ($input['serviceLineSystemID']) {
+        if (isset($input['serviceLineSystemID'])) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
                 return $this->sendError('Segment not found');
             }
 
             if ($checkDepartmentActive->isActive == 0) {
-                $this->purchaseReturnRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
-                return $this->sendError('Please select a active segment ', 500,$serviceLineError);
+                $this->purchaseReturnRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
+                return $this->sendError('Please select a active segment ', 500, $serviceLineError);
             }
         }
 
-        if ($input['purchaseReturnLocation']) {
+        if (isset($input['purchaseReturnLocation'])) {
             $checkWareHouseActive = WarehouseMaster::find($input['purchaseReturnLocation']);
             if (empty($checkWareHouseActive)) {
                 return $this->sendError('Location not found', 500, $wareHouseError);
             }
 
             if ($checkWareHouseActive->isActive == 0) {
-                $this->purchaseReturnRepository->update(['purchaseReturnLocation' => null],$id);
+                $this->purchaseReturnRepository->update(['purchaseReturnLocation' => null], $id);
                 return $this->sendError('Please select a active location', 500, $wareHouseError);
             }
         }
@@ -471,11 +473,15 @@ class PurchaseReturnAPIController extends AppBaseController
             unset($inputParam);
 
             $validator = \Validator::make($input, [
+                'purchaseReturnLocation' => 'required|numeric|min:1',
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'purchaseReturnDate' => 'required',
+                'purchaseReturnRefNo' => 'required',
+                'narration' => 'required',
                 'serviceLineSystemID' => 'required|numeric|min:1',
-                'purchaseReturnLocation' => 'required|numeric|min:1'
+                'supplierID' => 'required|numeric|min:1',
+                'supplierTransactionCurrencyID' => 'required|numeric|min:1'
             ]);
 
             if ($validator->fails()) {
@@ -491,7 +497,7 @@ class PurchaseReturnAPIController extends AppBaseController
             }
 
             $checkItems = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
-                                              ->count();
+                ->count();
             if ($checkItems == 0) {
                 return $this->sendError('Every return should have at least one item', 500);
             }
@@ -556,7 +562,7 @@ class PurchaseReturnAPIController extends AppBaseController
             }
 
             $amount = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
-                                            ->sum('netAmount');
+                ->sum('netAmount');
 
             $input['RollLevForApp_curr'] = 1;
             $params = array('autoID' => $id,
@@ -641,7 +647,7 @@ class PurchaseReturnAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID',
-                     'purchaseReturnLocation', 'confirmedYN', 'approved', 'month', 'year'));
+            'purchaseReturnLocation', 'confirmedYN', 'approved', 'month', 'year'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -649,8 +655,8 @@ class PurchaseReturnAPIController extends AppBaseController
         }
 
         $purchaseReturn = PurchaseReturn::where('companySystemID', $input['companyId'])
-                                          ->where('documentSystemID', $input['documentId'])
-                                          ->with(['created_by', 'segment_by', 'location_by','supplier_by','currency_by']);
+            ->where('documentSystemID', $input['documentId'])
+            ->with(['created_by', 'segment_by', 'location_by', 'supplier_by', 'currency_by']);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
@@ -762,13 +768,13 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $month = Months::all();
 
-        $years = Year::orderBy('year','desc')->get();
+        $years = Year::orderBy('year', 'desc')->get();
 
         $supplier = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
-                                        ->where('companySystemID', $companyId)
-                                        ->where('isActive', 1)
-                                        ->where('isAssigned', -1)
-                                        ->get();
+            ->where('companySystemID', $companyId)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->get();
 
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
             ->get();
@@ -811,7 +817,8 @@ class PurchaseReturnAPIController extends AppBaseController
     {
 
         $input = $request->all();
-
+        $wareHouseError = array('type' => 'wareHouse');
+        $serviceLineError = array('type' => 'serviceLine');
         $purchaseReturnAutoID = $input['purchaseReturnAutoID'];
 
         $purchaseReturn = PurchaseReturn::find($purchaseReturnAutoID);
@@ -820,20 +827,41 @@ class PurchaseReturnAPIController extends AppBaseController
             return $this->sendError('Purchase Return not found');
         }
 
-        //checking segment is active
+        $validator = \Validator::make($purchaseReturn->toArray(), [
+            'purchaseReturnLocation' => 'required|numeric|min:1',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'supplierID' => 'required|numeric|min:1',
+            'supplierTransactionCurrencyID' => 'required|numeric|min:1'
+        ]);
 
-        $segments = SegmentMaster::where("serviceLineSystemID", $purchaseReturn->serviceLineSystemID)
-                                  ->where('companySystemID', $purchaseReturn->companySystemID)
-                                  ->where('isActive', 1)
-                                  ->first();
-
-        if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
         }
 
-        return $this->sendResponse($purchaseReturn, 'sucess');
-    }
 
+        $checkDepartmentActive = SegmentMaster::find($purchaseReturn->serviceLineSystemID);
+        if (empty($checkDepartmentActive)) {
+            return $this->sendError('Segment not found');
+        }
+
+        if ($checkDepartmentActive->isActive == 0) {
+          //  $this->purchaseReturnRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $purchaseReturnAutoID);
+            return $this->sendError('Please select a active segment ', 500, $serviceLineError);
+        }
+
+        $checkWareHouseActive = WarehouseMaster::find($purchaseReturn->purchaseReturnLocation);
+        if (empty($checkWareHouseActive)) {
+            return $this->sendError('Location not found', 500, $wareHouseError);
+        }
+
+        if ($checkWareHouseActive->isActive == 0) {
+            $this->purchaseReturnRepository->update(['purchaseReturnLocation' => null], $purchaseReturnAutoID);
+            return $this->sendError('Please select a active location', 500, $wareHouseError);
+        }
+
+
+        return $this->sendResponse($purchaseReturn, 'success');
+    }
     public function grvForPurchaseReturn(Request $request)
     {
 
@@ -847,11 +875,12 @@ class PurchaseReturnAPIController extends AppBaseController
             return $this->sendError('Purchase Return not found');
         }
 
-        $grv = GRVMaster::where('companySystemID',$purchaseReturn->companySystemID)
-                        ->where('serviceLineSystemID',$purchaseReturn->serviceLineSystemID)
-                        ->where('grvLocation',$purchaseReturn->purchaseReturnLocation)
-                        ->where('approved',-1)
-                        ->where('supplierID',$purchaseReturn->supplierID)
+        $grv = GRVMaster::where('companySystemID', $purchaseReturn->companySystemID)
+                        ->where('serviceLineSystemID', $purchaseReturn->serviceLineSystemID)
+                        ->where('grvLocation', $purchaseReturn->purchaseReturnLocation)
+                        ->where('approved', -1)
+                        ->where('supplierID', $purchaseReturn->supplierID)
+                        ->where('supplierTransactionCurrencyID', $purchaseReturn->supplierTransactionCurrencyID)
                         ->get();
 
         return $this->sendResponse($grv, 'success');
@@ -870,7 +899,7 @@ class PurchaseReturnAPIController extends AppBaseController
             return $this->sendError('Good Receipt Voucher not found');
         }
 
-        $grvDetails = GRVDetails::where('grvAutoID',$grvMaster->grvAutoID)->with(['unit'])->get();
+        $grvDetails = GRVDetails::where('grvAutoID', $grvMaster->grvAutoID)->with(['unit'])->get();
 
         return $this->sendResponse($grvDetails, 'success');
     }
@@ -1136,10 +1165,10 @@ class PurchaseReturnAPIController extends AppBaseController
             return $this->sendError('You cannot reopen this Purchase Return, it is not confirmed');
         }
 
-        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
-            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+        $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
 
-        $this->purchaseReturnRepository->update($updateInput,$id);
+        $this->purchaseReturnRepository->update($updateInput, $id);
 
         $employee = \Helper::getEmployeeInfo();
 

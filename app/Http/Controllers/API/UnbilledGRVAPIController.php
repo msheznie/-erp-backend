@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateContractAPIRequest;
-use App\Http\Requests\API\UpdateContractAPIRequest;
-use App\Models\Contract;
-use App\Repositories\ContractRepository;
+use App\Http\Requests\API\CreateUnbilledGRVAPIRequest;
+use App\Http\Requests\API\UpdateUnbilledGRVAPIRequest;
+use App\Models\UnbilledGRV;
+use App\Repositories\UnbilledGRVRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -13,17 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class ContractController
+ * Class UnbilledGRVController
  * @package App\Http\Controllers\API
  */
-class ContractAPIController extends AppBaseController
-{
-    /** @var  ContractRepository */
-    private $contractRepository;
 
-    public function __construct(ContractRepository $contractRepo)
+class UnbilledGRVAPIController extends AppBaseController
+{
+    /** @var  UnbilledGRVRepository */
+    private $unbilledGRVRepository;
+
+    public function __construct(UnbilledGRVRepository $unbilledGRVRepo)
     {
-        $this->contractRepository = $contractRepo;
+        $this->unbilledGRVRepository = $unbilledGRVRepo;
     }
 
     /**
@@ -31,10 +32,10 @@ class ContractAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/contracts",
-     *      summary="Get a listing of the Contracts.",
-     *      tags={"Contract"},
-     *      description="Get all Contracts",
+     *      path="/unbilledGRVs",
+     *      summary="Get a listing of the UnbilledGRVs.",
+     *      tags={"UnbilledGRV"},
+     *      description="Get all UnbilledGRVs",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -48,7 +49,7 @@ class ContractAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/Contract")
+     *                  @SWG\Items(ref="#/definitions/UnbilledGRV")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -60,29 +61,29 @@ class ContractAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->contractRepository->pushCriteria(new RequestCriteria($request));
-        $this->contractRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $contracts = $this->contractRepository->all();
+        $this->unbilledGRVRepository->pushCriteria(new RequestCriteria($request));
+        $this->unbilledGRVRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $unbilledGRVs = $this->unbilledGRVRepository->all();
 
-        return $this->sendResponse($contracts->toArray(), 'Contracts retrieved successfully');
+        return $this->sendResponse($unbilledGRVs->toArray(), 'Unbilled G R Vs retrieved successfully');
     }
 
     /**
-     * @param CreateContractAPIRequest $request
+     * @param CreateUnbilledGRVAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/contracts",
-     *      summary="Store a newly created Contract in storage",
-     *      tags={"Contract"},
-     *      description="Store Contract",
+     *      path="/unbilledGRVs",
+     *      summary="Store a newly created UnbilledGRV in storage",
+     *      tags={"UnbilledGRV"},
+     *      description="Store UnbilledGRV",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Contract that should be stored",
+     *          description="UnbilledGRV that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Contract")
+     *          @SWG\Schema(ref="#/definitions/UnbilledGRV")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -95,7 +96,7 @@ class ContractAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Contract"
+     *                  ref="#/definitions/UnbilledGRV"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -105,13 +106,13 @@ class ContractAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateContractAPIRequest $request)
+    public function store(CreateUnbilledGRVAPIRequest $request)
     {
         $input = $request->all();
 
-        $contracts = $this->contractRepository->create($input);
+        $unbilledGRVs = $this->unbilledGRVRepository->create($input);
 
-        return $this->sendResponse($contracts->toArray(), 'Contract saved successfully');
+        return $this->sendResponse($unbilledGRVs->toArray(), 'Unbilled G R V saved successfully');
     }
 
     /**
@@ -119,14 +120,14 @@ class ContractAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/contracts/{id}",
-     *      summary="Display the specified Contract",
-     *      tags={"Contract"},
-     *      description="Get Contract",
+     *      path="/unbilledGRVs/{id}",
+     *      summary="Display the specified UnbilledGRV",
+     *      tags={"UnbilledGRV"},
+     *      description="Get UnbilledGRV",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Contract",
+     *          description="id of UnbilledGRV",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -142,7 +143,7 @@ class ContractAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Contract"
+     *                  ref="#/definitions/UnbilledGRV"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -154,30 +155,30 @@ class ContractAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var Contract $contract */
-        $contract = $this->contractRepository->findWithoutFail($id);
+        /** @var UnbilledGRV $unbilledGRV */
+        $unbilledGRV = $this->unbilledGRVRepository->findWithoutFail($id);
 
-        if (empty($contract)) {
-            return $this->sendError('Contract not found');
+        if (empty($unbilledGRV)) {
+            return $this->sendError('Unbilled G R V not found');
         }
 
-        return $this->sendResponse($contract->toArray(), 'Contract retrieved successfully');
+        return $this->sendResponse($unbilledGRV->toArray(), 'Unbilled G R V retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateContractAPIRequest $request
+     * @param UpdateUnbilledGRVAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/contracts/{id}",
-     *      summary="Update the specified Contract in storage",
-     *      tags={"Contract"},
-     *      description="Update Contract",
+     *      path="/unbilledGRVs/{id}",
+     *      summary="Update the specified UnbilledGRV in storage",
+     *      tags={"UnbilledGRV"},
+     *      description="Update UnbilledGRV",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Contract",
+     *          description="id of UnbilledGRV",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -185,9 +186,9 @@ class ContractAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="Contract that should be updated",
+     *          description="UnbilledGRV that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/Contract")
+     *          @SWG\Schema(ref="#/definitions/UnbilledGRV")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -200,7 +201,7 @@ class ContractAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/Contract"
+     *                  ref="#/definitions/UnbilledGRV"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -210,20 +211,20 @@ class ContractAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateContractAPIRequest $request)
+    public function update($id, UpdateUnbilledGRVAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var Contract $contract */
-        $contract = $this->contractRepository->findWithoutFail($id);
+        /** @var UnbilledGRV $unbilledGRV */
+        $unbilledGRV = $this->unbilledGRVRepository->findWithoutFail($id);
 
-        if (empty($contract)) {
-            return $this->sendError('Contract not found');
+        if (empty($unbilledGRV)) {
+            return $this->sendError('Unbilled G R V not found');
         }
 
-        $contract = $this->contractRepository->update($input, $id);
+        $unbilledGRV = $this->unbilledGRVRepository->update($input, $id);
 
-        return $this->sendResponse($contract->toArray(), 'Contract updated successfully');
+        return $this->sendResponse($unbilledGRV->toArray(), 'UnbilledGRV updated successfully');
     }
 
     /**
@@ -231,14 +232,14 @@ class ContractAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/contracts/{id}",
-     *      summary="Remove the specified Contract from storage",
-     *      tags={"Contract"},
-     *      description="Delete Contract",
+     *      path="/unbilledGRVs/{id}",
+     *      summary="Remove the specified UnbilledGRV from storage",
+     *      tags={"UnbilledGRV"},
+     *      description="Delete UnbilledGRV",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of Contract",
+     *          description="id of UnbilledGRV",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -266,17 +267,15 @@ class ContractAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var Contract $contract */
-        $contract = $this->contractRepository->findWithoutFail($id);
+        /** @var UnbilledGRV $unbilledGRV */
+        $unbilledGRV = $this->unbilledGRVRepository->findWithoutFail($id);
 
-        if (empty($contract)) {
-            return $this->sendError('Contract not found');
+        if (empty($unbilledGRV)) {
+            return $this->sendError('Unbilled G R V not found');
         }
 
-        $contract->delete();
+        $unbilledGRV->delete();
 
-        return $this->sendResponse($id, 'Contract deleted successfully');
+        return $this->sendResponse($id, 'Unbilled G R V deleted successfully');
     }
-
-
 }

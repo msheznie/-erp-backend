@@ -784,7 +784,8 @@ class StockTransferAPIController extends AppBaseController
                 'erp_stocktransfer.timesReferred',
                 'erp_stocktransfer.confirmedYN',
                 'erp_stocktransfer.approved',
-                'erp_stocktransfer.approvedDate'
+                'erp_stocktransfer.approvedDate',
+                'erp_stocktransfer.fullyReceived'
             ]);
 
         $search = $request->input('search.value');
