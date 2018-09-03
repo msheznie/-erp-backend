@@ -149,6 +149,7 @@ class CreditNoteDetails extends Model
         'glCode',
         'glCodeDes',
         'serviceLineCode',
+        'serviceLineSystemID',
         'clientContractID',
         'comments',
         'creditAmountCurrency',
@@ -179,6 +180,7 @@ class CreditNoteDetails extends Model
         'glCode' => 'string',
         'glCodeDes' => 'string',
         'serviceLineCode' => 'string',
+        'serviceLineSystemID' => 'string',
         'clientContractID' => 'string',
         'comments' => 'string',
         'creditAmountCurrency' => 'integer',
@@ -202,6 +204,11 @@ class CreditNoteDetails extends Model
     public static $rules = [
         
     ];
+
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
 
     
 }

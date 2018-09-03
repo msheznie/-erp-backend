@@ -16,7 +16,6 @@ use Response;
  * Class CreditNoteController
  * @package App\Http\Controllers\API
  */
-
 class CreditNoteAPIController extends AppBaseController
 {
     /** @var  CreditNoteRepository */
@@ -277,5 +276,22 @@ class CreditNoteAPIController extends AppBaseController
         $creditNote->delete();
 
         return $this->sendResponse($id, 'Credit Note deleted successfully');
+    }
+
+    public function getCreditNoteMasterRecord(Request $request)
+    {
+        $input = $request->all();
+
+        $output = CreditNote::where('creditNoteAutoID', $input['creditNoteAutoID'])->with(['details'=> function ($query) {
+            $query->with('segment');
+        },'approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 19);
+        },'company','currency','customer','confirmed_by','createduser'])->first();
+
+
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+
     }
 }
