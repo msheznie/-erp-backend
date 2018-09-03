@@ -914,7 +914,7 @@ class Helper
                                                 $currencyConversionRptAmount = self::currencyConversion($companySystemID, $purchaseRequestMaster->currency, $purchaseRequestMaster->currency, $documentAmount->totalCost);
 
                                                 $budgetDescription = '';
-                                                $totalDocumentRptAmount = $documentAmount->totalCost;
+                                                $totalDocumentRptAmount = $currencyConversionRptAmount['reportingAmount'];
                                                 $totalBudgetRptAmount = 0;
                                                 $totalConsumedRptAmount = 0;
                                                 $totalPendingRptAmount = 0;
@@ -934,9 +934,30 @@ class Helper
                                                 $totalConsumedAmount = $currencyConversionRptAmount['reportingAmount'] + $totalConsumedRptAmount + $totalPendingRptAmount;
 
                                                 if ($totalConsumedAmount > $totalBudgetRptAmount) {
-                                                    return ['success' => false, 'message' => 'Budget Exceeded. ' . $budgetDescription . ' Budget Amount : ' . round($totalBudgetRptAmount, 2) . ', Document Amount : ' . round($totalDocumentRptAmount, 2) . ', Consumed Amount : ' . round($totalConsumedRptAmount, 2) . ', Pending PO Amount : ' . round($totalPendingRptAmount, 2) . ', Total Consumed Amount : ' . round($totalConsumedAmount, 2) . ''];
+                                                    $userMessage .= "Budget Exceeded ' . $budgetDescription . '";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Document Amount : '" . round($totalDocumentRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+
+                                                    return ['success' => false, 'message' => $userMessage];
                                                 }else{
-                                                    $userMessage = "Successfully approved the document, Budget Amount : '" . round($totalBudgetRptAmount, 2) . "', Document Amount : '" . round($totalDocumentRptAmount, 2) . "', Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "', Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "', Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Document Amount : '" . round($totalDocumentRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
+                                                    $userMessage .= "<br>";
+                                                    $userMessage .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
                                                 }
 
                                             }
