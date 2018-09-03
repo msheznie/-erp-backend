@@ -365,16 +365,6 @@ class CreateStockReceive implements ShouldQueue
                     // stock receive create start
                     $push = true;
                     if ($push) {
-                        $lastSerial = StockReceive::where('companySystemID', $stMaster->companyToSystemID)
-                            ->where('companyFinanceYearID', $stMaster->companyFinanceYearID)
-                            ->where('serialNo','>',0)
-                            ->orderBy('stockReceiveAutoID', 'desc')
-                            ->first();
-
-                        $lastSerialNumber = 1;
-                        if ($lastSerial) {
-                            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-                        }
 
                         $stockReceive = new StockReceive();
                         $stockReceive->documentSystemID = 10;
@@ -387,7 +377,6 @@ class CreateStockReceive implements ShouldQueue
                         $stockReceive->companyID = $stMaster->companyTo;
                         $stockReceive->serviceLineSystemID = NULl;
                         $stockReceive->serviceLineCode = NULl;
-                        $stockReceive->serialNo = $lastSerialNumber;
                         $stockReceive->refNo = $customerInvoice->bookingInvCode;
                         $stockReceive->comment = $customerInvoice->comments .', '.$customerInvoice->bookingInvCode;
                         $stockReceive->companyFromSystemID = $stMaster->companyFromSystemID;
@@ -414,11 +403,20 @@ class CreateStockReceive implements ShouldQueue
                                                                         //->where('dateTo', '>', $stMaster->tranferDate)
                                                                         ->where('isCurrent', -1)
                                                                         ->first();
-
+                        $lastSerialNumber = 1;
                         if (!empty($toCompanyFinancePeriod)) {
                             $companyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
                                 ->where('companySystemID', $stMaster->companyToSystemID)
                                 ->first();
+
+                            $lastSerial = StockReceive::where('companySystemID', $stMaster->companyToSystemID)
+                                ->where('companyFinanceYearID', $toCompanyFinancePeriod->companyFinanceYearID)
+                                ->where('serialNo','>',0)
+                                ->orderBy('stockReceiveAutoID', 'desc')
+                                ->first();
+                            if ($lastSerial) {
+                                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                            }
 
                             if (!empty($companyFinanceYear)) {
                                 $stockReceive->FYBiggin = $companyFinanceYear->bigginingDate;
@@ -439,6 +437,8 @@ class CreateStockReceive implements ShouldQueue
                                 $finYear = date("Y");
                             }
                         }
+
+                        $stockReceive->serialNo = $lastSerialNumber;
 
                         $stockReceiveCode = ($stockReceive->companyID . '\\' . $finYear . '\\' . $stockReceive->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
                         $stockReceive->stockReceiveCode = $stockReceiveCode;

@@ -273,7 +273,7 @@ class GRVMasterAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        }, 'grvtype_by'])->findWithoutFail($id);
 
         if (empty($gRVMaster)) {
             return $this->sendError('Good Receipt Voucher not found');
@@ -298,7 +298,7 @@ class GRVMasterAPIController extends AppBaseController
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by']);
+        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by', 'grvtype_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var GRVMaster $gRVMaster */
@@ -584,7 +584,7 @@ class GRVMasterAPIController extends AppBaseController
     public function getGoodReceiptVoucherMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -598,6 +598,7 @@ class GRVMasterAPIController extends AppBaseController
         }, 'location_by' => function ($query) {
         }, 'supplier_by' => function ($query) {
         }, 'currency_by' => function ($query) {
+        }, 'grvtype_by' => function ($query) {
         }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
@@ -668,7 +669,8 @@ class GRVMasterAPIController extends AppBaseController
                 'erp_grvmaster.timesReferred',
                 'erp_grvmaster.grvConfirmedYN',
                 'erp_grvmaster.approved',
-                'erp_grvmaster.grvLocation'
+                'erp_grvmaster.grvLocation',
+                'erp_grvmaster.grvTypeID'
             ]);
 
         $search = $request->input('search.value');
@@ -877,7 +879,8 @@ class GRVMasterAPIController extends AppBaseController
             'documentSystemCode',
             'employees.empName As created_user',
             'serviceline.ServiceLineDes as serviceLineDescription',
-            'warehousemaster.wareHouseDescription as wareHouseSet'
+            'warehousemaster.wareHouseDescription as wareHouseSet',
+            'erp_grvtpes.des'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -899,6 +902,7 @@ class GRVMasterAPIController extends AppBaseController
             ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->join('serviceline', 'erp_grvmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->join('warehousemaster', 'erp_grvmaster.grvLocation', 'warehousemaster.wareHouseSystemCode')
+            ->join('erp_grvtpes', 'erp_grvtpes.grvTypeID', 'erp_grvmaster.grvTypeID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 3)
             ->where('erp_documentapproved.companySystemID', $companyID);
@@ -962,7 +966,8 @@ class GRVMasterAPIController extends AppBaseController
             'documentSystemCode',
             'employees.empName As created_user',
             'serviceline.ServiceLineDes as serviceLineDescription',
-            'warehousemaster.wareHouseDescription as wareHouseSet'
+            'warehousemaster.wareHouseDescription as wareHouseSet',
+            'erp_grvtpes.des'
         )->join('erp_grvmaster', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'grvAutoID')
                 ->where('erp_grvmaster.companySystemID', $companyID)
@@ -973,6 +978,7 @@ class GRVMasterAPIController extends AppBaseController
             ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->join('serviceline', 'erp_grvmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->join('warehousemaster', 'erp_grvmaster.grvLocation', 'warehousemaster.wareHouseSystemCode')
+            ->join('erp_grvtpes', 'erp_grvtpes.grvTypeID', 'erp_grvmaster.grvTypeID')
             ->where('erp_documentapproved.documentSystemID', 3)
             ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
 

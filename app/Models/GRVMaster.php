@@ -342,5 +342,10 @@ class GRVMaster extends Model
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 
+    public function grvtype_by()
+    {
+        return $this->belongsTo('App\Models\GRVTypes', 'grvTypeID', 'grvTypeID');
+    }
+
     
 }
