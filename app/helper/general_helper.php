@@ -864,6 +864,7 @@ class Helper
         DB::beginTransaction();
         try {
             $userMessage = 'Successfully approved the document';
+            $userMessageE = '';
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApproved) {
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -934,19 +935,19 @@ class Helper
                                                 $totalConsumedAmount = $currencyConversionRptAmount['reportingAmount'] + $totalConsumedRptAmount + $totalPendingRptAmount;
 
                                                 if ($totalConsumedAmount > $totalBudgetRptAmount) {
-                                                    $userMessage .= "Budget Exceeded ' . $budgetDescription . '";
-                                                    $userMessage .= "<br>";
-                                                    $userMessage .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
-                                                    $userMessage .= "<br>";
-                                                    $userMessage .= "Document Amount : '" . round($totalDocumentRptAmount, 2) . "'";
-                                                    $userMessage .= "<br>";
-                                                    $userMessage .= "Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "'";
-                                                    $userMessage .= "<br>";
-                                                    $userMessage .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
-                                                    $userMessage .= "<br>";
-                                                    $userMessage .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+                                                    $userMessageE .= "Budget Exceeded ' . $budgetDescription . '";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Document Amount : '" . round($totalDocumentRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
 
-                                                    return ['success' => false, 'message' => $userMessage];
+                                                    return ['success' => false, 'message' => $userMessageE];
                                                 }else{
                                                     $userMessage .= "<br>";
                                                     $userMessage .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
