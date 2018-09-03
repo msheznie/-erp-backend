@@ -41,6 +41,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\EmployeesDepartment;
 use App\Models\SegmentMaster;
 use App\Models\FreeBillingMasterPerforma;
+use App\Models\GRVMaster;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use Carbon\Carbon;
 use App\Models\BankMaster;
@@ -271,7 +272,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        }])->findWithoutFail($id);
+        },'grv'])->findWithoutFail($id);
+
+
 
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found');
@@ -330,6 +333,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     public function update($id, UpdateCustomerInvoiceDirectAPIRequest $request)
     {
         $input = $request->all();
+
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
@@ -389,6 +393,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $_post['customerID'] = $input['customerID'];
         $_post['rigNo'] = $input['rigNo'];
         $_post['PONumber'] = $input['PONumber'];
+        $_post['customerGRVAutoID'] = $input['customerGRVAutoID'];
 
 
         if ($input['secondaryLogoCompanySystemID'] != $customerInvoiceDirect->secondaryLogoCompanySystemID) {
@@ -829,6 +834,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
             $output['uom'] = Unit::select('UnitID', 'UnitShortCode')->get();
+
         }
 
 

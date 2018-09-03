@@ -679,6 +679,11 @@ class CustomerInvoiceDirect extends Model
         return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
     }
 
+    public function grv()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'customerGRVAutoID', 'grvAutoID');
+    }
+
 
 
 
