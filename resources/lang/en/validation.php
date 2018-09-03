@@ -146,7 +146,9 @@ return [
         'purchaseReturnRefNo' => 'Reference No',
         'narration' => 'Narration',
         'supplierID' => 'Supplier',
-        'supplierTransactionCurrencyID' => 'Currency'
+        'supplierTransactionCurrencyID' => 'Currency',
+        'stockAdjustmentDate' => 'Document Date',
+        'location' => 'Location'
     ],
 
 ];

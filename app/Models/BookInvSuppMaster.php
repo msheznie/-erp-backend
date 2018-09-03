@@ -331,7 +331,10 @@ class BookInvSuppMaster extends Model
         'canceledByEmpSystemID',
         'canceledByEmpID',
         'canceledByEmpName',
-        'timestamp'
+        'timestamp',
+        'supplierGLCodeSystemID',
+        'UnbilledGRVAccountSystemID',
+        'UnbilledGRVAccount'
     ];
 
     /**
@@ -382,7 +385,10 @@ class BookInvSuppMaster extends Model
         'cancelComment' => 'string',
         'canceledByEmpSystemID' => 'integer',
         'canceledByEmpID' => 'string',
-        'canceledByEmpName' => 'string'
+        'canceledByEmpName' => 'string',
+        'UnbilledGRVAccount' => 'string',
+        'supplierGLCodeSystemID' => 'integer',
+        'UnbilledGRVAccountSystemID' => 'integer'
     ];
 
     /**
