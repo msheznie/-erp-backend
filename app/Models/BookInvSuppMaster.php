@@ -331,7 +331,10 @@ class BookInvSuppMaster extends Model
         'canceledByEmpSystemID',
         'canceledByEmpID',
         'canceledByEmpName',
-        'timestamp'
+        'timestamp',
+        'supplierGLCodeSystemID',
+        'UnbilledGRVAccountSystemID',
+        'UnbilledGRVAccount'
     ];
 
     /**
@@ -382,7 +385,10 @@ class BookInvSuppMaster extends Model
         'cancelComment' => 'string',
         'canceledByEmpSystemID' => 'integer',
         'canceledByEmpID' => 'string',
-        'canceledByEmpName' => 'string'
+        'canceledByEmpName' => 'string',
+        'UnbilledGRVAccount' => 'string',
+        'supplierGLCodeSystemID' => 'integer',
+        'UnbilledGRVAccountSystemID' => 'integer'
     ];
 
     /**
@@ -452,6 +458,16 @@ class BookInvSuppMaster extends Model
     public function suppliergrv()
     {
         return $this->belongsTo('App\Models\ChartOfAccount', 'supplierGLCodeSystemID', 'chartOfAccountSystemID');
+    }
+
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 
     
