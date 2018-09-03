@@ -191,20 +191,6 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         $input['itemFinanceCategoryID'] = $item->financeCategoryMaster;
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
 
-       /* if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
-            return $this->sendError("Cost is 0. You cannot issue.", 500);
-        }
-
-        if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
-            return $this->sendError("Cost is negative. You cannot issue.", 500);
-        }*/
-
-        // check policy 18
-
-        $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
-                                                    ->where('companySystemID', $companySystemID)
-                                                    ->first();
-
         $checkWhether = StockAdjustment::where('stockAdjustmentAutoID', '!=', $stockAdjustment->stockAdjustmentAutoID)
                                         ->where('companySystemID', $companySystemID)
                                         ->where('location', $stockAdjustment->location)
@@ -215,13 +201,6 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
                                             'stockAdjustmentCode',
                                             'approved'
                                         ])
-                                        ->groupBy(
-                                            'stockAdjustmentAutoID',
-                                            'companySystemID',
-                                            'location',
-                                            'stockAdjustmentCode',
-                                            'approved'
-                                        )
                                         ->whereHas('details', function ($query) use ($companySystemID, $input) {
                                             $query->where('itemCodeSystem', $input['itemCodeSystem']);
                                         })
@@ -232,33 +211,6 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         if (!empty($checkWhether)) {
             return $this->sendError("There is a Stock Adjustment (" . $checkWhether->stockAdjustmentCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
-
-        /*$checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
-            ->where('locationFrom', $stockAdjustment->wareHouseFrom)
-            ->select([
-                'erp_stocktransfer.stockTransferAutoID',
-                'erp_stocktransfer.companySystemID',
-                'erp_stocktransfer.locationFrom',
-                'erp_stocktransfer.stockTransferCode',
-                'erp_stocktransfer.approved'
-            ])
-            ->groupBy(
-                'erp_stocktransfer.stockTransferAutoID',
-                'erp_stocktransfer.companySystemID',
-                'erp_stocktransfer.locationFrom',
-                'erp_stocktransfer.stockTransferCode',
-                'erp_stocktransfer.approved'
-            )
-            ->whereHas('details', function ($query) use ($companySystemID, $input) {
-                $query->where('itemCodeSystem', $input['itemCodeSystem']);
-            })
-            ->where('approved', 0)
-            ->first();*/
-        /* approved=0*/
-
-        /*if (!empty($checkWhetherStockTransfer)) {
-            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
-        }*/
 
         $data = array('companySystemID' => $companySystemID,
             'itemCodeSystem' => $input['itemCodeSystem'],
@@ -283,14 +235,6 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
 
         $input['wacAdjRptER']      = 1;
         $input['wacAdjLocalER']    = $companyCurrencyConversion['trasToLocER'];
-
-       /* if ($input['currentWareHouseStockQty'] <= 0) {
-            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
-        }
-
-        if ($input['currentStockQty'] <= 0) {
-            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
-        }*/
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
                                                                             ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])

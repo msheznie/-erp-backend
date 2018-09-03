@@ -129,6 +129,9 @@ class CreateSupplierInvoice implements ShouldQueue
                     $supplierInvoiceData['secondaryRefNo'] = null;
                     $supplierInvoiceData['supplierID'] = $supplier->supplierCodeSystem;
                     $supplierInvoiceData['supplierGLCode'] = $supplier->liabilityAccount;
+                    $supplierInvoiceData['supplierGLCodeSystemID'] = $supplier->liabilityAccountSysemID;
+                    $supplierInvoiceData['UnbilledGRVAccountSystemID'] = $supplier->UnbilledGRVAccountSystemID;
+                    $supplierInvoiceData['UnbilledGRVAccount'] = $supplier->UnbilledGRVAccount;
                     $supplierInvoiceData['supplierInvoiceNo'] = $srMaster->refNo;
                     $supplierInvoiceData['supplierInvoiceDate'] = $today;
                     $supplierInvoiceData['supplierTransactionCurrencyID'] = $toCompany->reportingCurrency;

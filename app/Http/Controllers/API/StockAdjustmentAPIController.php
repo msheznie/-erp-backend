@@ -22,6 +22,7 @@ use App\Models\DocumentMaster;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\StockAdjustment;
+use App\Models\StockAdjustmentDetails;
 use App\Models\Unit;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
@@ -156,6 +157,20 @@ class StockAdjustmentAPIController extends AppBaseController
             $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
         unset($inputParam);
+
+        $validator = \Validator::make($input, [
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'stockAdjustmentDate' => 'required',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'location' => 'required|numeric|min:1',
+            'refNo' => 'required',
+            'comment' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         if (isset($input['stockAdjustmentDate'])) {
             if ($input['stockAdjustmentDate']) {
@@ -377,11 +392,87 @@ class StockAdjustmentAPIController extends AppBaseController
             }
         }
 
+
+        if ($stockAdjustment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 10;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            unset($inputParam);
+
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'stockAdjustmentDate' => 'required',
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'location' => 'required|numeric|min:1',
+                'refNo' => 'required',
+                'comment' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $documentDate = $input['stockAdjustmentDate'];
+            $monthBegin = $input['FYBiggin'];
+            $monthEnd = $input['FYEnd'];
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Document  date is not within the selected financial period !', 500);
+            }
+
+            $checkItems = StockAdjustmentDetails::where('stockAdjustmentAutoID', $id)
+                ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every document should have at least one item', 500);
+            }
+
+            $checkQuantity = StockAdjustmentDetails::where('stockAdjustmentAutoID', $id)
+                                                    ->where(function ($q) {
+                                                        $q->where('noQty', '<=', 0)
+                                                            ->orWhereNull('noQty');
+                                                    })
+                                                    ->count();
+            if ($checkQuantity > 0) {
+                return $this->sendError('Every item should have at least one minimum Qty requested', 500);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+            $params = array('autoID' => $id,
+                'company' => $stockAdjustment->companySystemID,
+                'document' => $stockAdjustment->documentSystemID,
+                'segment' => $input['serviceLineSystemID'],
+                'category' => 0,
+                'amount' => 0
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
         $employee = \Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
+
+        return $input;
 
         $stockAdjustment = $this->stockAdjustmentRepository->update($input, $id);
 
