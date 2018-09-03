@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Pay Supplier Invoice Master
  * -- REVISION HISTORY
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
@@ -302,4 +303,53 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Data retrieved successfully');
 
     }
+
+
+    public function getAllPaymentVoucherByCompany(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('supplier', 'created_by'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by'])->whereIN('companySystemID', $subCompanies);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $paymentVoucher = $paymentVoucher->where(function ($query) use ($search) {
+                $query->where('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($paymentVoucher)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('PayMasterAutoId', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
 }
