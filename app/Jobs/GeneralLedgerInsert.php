@@ -552,22 +552,18 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentRptAmount'] = ABS($bs->rptAmount) * -1;
                                 $data['timestamp'] = \Helper::currentDateTime();
                                 array_push($finalData, $data);
-                            }
 
-                            if ($pl) {
-                                foreach ($pl as $val) {
-                                    $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
-                                    $data['glCode'] = $val->financeGLcodePL;
-                                    $data['glAccountType'] = 'PL';
-                                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
-                                    $data['documentLocalCurrencyER'] = 1;
-                                    $data['documentLocalAmount'] = ABS($val->localAmount);
-                                    $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
-                                    $data['documentRptCurrencyER'] = 1;
-                                    $data['documentRptAmount'] = ABS($val->rptAmount);
-                                    $data['timestamp'] = \Helper::currentDateTime();
-                                    array_push($finalData, $data);
-                                }
+                                $data['chartOfAccountSystemID'] = 4;
+                                $data['glCode'] = '9000001';
+                                $data['glAccountType'] = 'BS';
+                                $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = 1;
+                                $data['documentLocalAmount'] = ABS($bs->localAmount);
+                                $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
+                                $data['documentRptCurrencyER'] = 1;
+                                $data['documentRptAmount'] = ABS($bs->rptAmount);
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                array_push($finalData, $data);
                             }
                         }
                         break;
