@@ -863,7 +863,7 @@ class Helper
         //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
-            $userMessage = '';
+            $userMessage = 'Successfully approved the document';
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApproved) {
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -936,7 +936,7 @@ class Helper
                                                 if ($totalConsumedAmount > $totalBudgetRptAmount) {
                                                     return ['success' => false, 'message' => 'Budget Exceeded. ' . $budgetDescription . ' Budget Amount : ' . round($totalBudgetRptAmount, 2) . ', Document Amount : ' . round($totalDocumentRptAmount, 2) . ', Consumed Amount : ' . round($totalConsumedRptAmount, 2) . ', Pending PO Amount : ' . round($totalPendingRptAmount, 2) . ', Total Consumed Amount : ' . round($totalConsumedAmount, 2) . ''];
                                                 }else{
-                                                    $userMessage .= "Successfully approved the document, Budget Amount : ' . round($totalBudgetRptAmount, 2) . ', Document Amount : ' . round($totalDocumentRptAmount, 2) . ', Consumed Amount : ' . round($totalConsumedRptAmount, 2) . ', Pending PO Amount : ' . round($totalPendingRptAmount, 2) . ', Total Consumed Amount : ' . round($totalConsumedAmount, 2) . '";
+                                                    $userMessage = "Successfully approved the document, Budget Amount : '" . round($totalBudgetRptAmount, 2) . "', Document Amount : '" . round($totalDocumentRptAmount, 2) . "', Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "', Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "', Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
                                                 }
 
                                             }
@@ -1190,7 +1190,7 @@ class Helper
                         return ['success' => false, 'message' => 'Approval level not found'];
                     }
                     DB::commit();
-                    return ['success' => true, 'message' => 'Document is successfully approved', 'data' => $userMessage];
+                    return ['success' => true, 'message' => $userMessage];
                 } else {
                     return ['success' => false, 'message' => 'Document is already approved'];
                 }
