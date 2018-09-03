@@ -267,8 +267,8 @@ class CreditNote extends Model
 {
 
     public $table = 'erp_creditnote';
-    
-    const CREATED_AT = 'timestamp';
+
+    const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = "creditNoteAutoID";
@@ -327,7 +327,8 @@ class CreditNote extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'createdDateAndTime'
     ];
 
     /**
@@ -380,7 +381,8 @@ class CreditNote extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'createdDateTime' => 'string'
+        'createdDateTime' => 'string',
+        'createdDateAndTime' => 'integer'
     ];
 
     /**
@@ -389,11 +391,40 @@ class CreditNote extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function details()
     {
-        return $this->hasMany('App\Models\CreditNoteDetails','creditNoteAutoID','creditNoteAutoID');
+        return $this->hasMany('App\Models\CreditNoteDetails', 'creditNoteAutoID', 'creditNoteAutoID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'creditNoteAutoID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'customerCurrencyID', 'currencyID');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
+
+    }
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+    public function createduser()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
 }
