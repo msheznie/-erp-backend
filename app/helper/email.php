@@ -27,6 +27,7 @@ use App\Models\MaterielRequest;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseReturn;
+use App\Models\StockAdjustment;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
@@ -191,6 +192,13 @@ class email
                     if (!empty($stockReceive)) {
                         $data['docApprovedYN'] = $inventoryReclassification->approved;
                         $data['docCode'] = $inventoryReclassification->bookingInvCode;
+                    }
+                    break;
+                case 7:
+                    $stockAdjustment = StockAdjustment::where('stockAdjustmentAutoID', $data['docSystemCode'])->first();
+                    if (!empty($stockAdjustment)) {
+                        $data['docApprovedYN'] = $stockAdjustment->approved;
+                        $data['docCode'] = $stockAdjustment->stockAdjustmentCode;
                     }
                     break;
                 default:

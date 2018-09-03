@@ -288,9 +288,9 @@ class Helper
                     $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
-                    $docInforArr["tableName"] = 'erp_custinvoicedirect';
-                    $docInforArr["modelName"] = 'CustomerInvoiceDirect';
-                    $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                    $docInforArr["tableName"] = 'erp_stockadjustment';
+                    $docInforArr["modelName"] = 'StockAdjustment';
+                    $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
@@ -849,6 +849,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 7:
+                $docInforArr["tableName"] = 'erp_stockadjustment';
+                $docInforArr["modelName"] = 'StockAdjustment';
+                $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -895,7 +907,7 @@ class Helper
                             }
 
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20 || $input["documentSystemID"] == 61 || $input["documentSystemID"] == 24) {
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20 || $input["documentSystemID"] == 61 || $input["documentSystemID"] == 24 || $input["documentSystemID"] == 7) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
