@@ -303,201 +303,208 @@ class Helper
                 //checking whether document approved table has a data for the same document
                 $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
-                    //check document is already confirmed
-                    $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
-                    if (!$isConfirm) {
-                        // get current employee detail
-                        $empInfo = self::getEmployeeInfo();
-                        //confirm the document
-                        $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
+                    // check document is available in document master table
+                    $document = Models\DocumentMaster::where('documentSystemID', $params["document"])->first();
+                    if($document) {
+                        //check document is already confirmed
+                        $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
+                        if (!$isConfirm) {
+                            // get current employee detail
+                            $empInfo = self::getEmployeeInfo();
+                            //confirm the document
+                            $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
 
-                        //get the policy
-                        $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
-                        if ($policy) {
-                            $isSegmentWise = $policy->isServiceLineApproval;
-                            $isCategoryWise = $policy->isCategoryApproval;
-                            $isValueWise = $policy->isAmountApproval;
-                            $isAttachment = $policy->isAttachmentYN;
-                            //check for attachment is uploaded if attachment policy is set to must
-                            if ($isAttachment == -1) {
-                                $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
-                                if (!$docAttachment) {
-                                    return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
-                                }
-                            }
-                        } else {
-                            return ['success' => false, 'message' => 'Policy not available for this document.'];
-                        }
-
-                        // get approval rolls
-                        $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('isActive', -1);
-                        if ($isSegmentWise) {
-                            if (array_key_exists('segment', $params)) {
-                                if ($params["segment"]) {
-                                    $approvalLevel->where('serviceLineSystemID', $params["segment"]);
-                                    $approvalLevel->where('serviceLineWise', 1);
-                                } else {
-                                    return ['success' => false, 'message' => 'No approval setup created for this document'];
+                            //get the policy
+                            $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
+                            if ($policy) {
+                                $isSegmentWise = $policy->isServiceLineApproval;
+                                $isCategoryWise = $policy->isCategoryApproval;
+                                $isValueWise = $policy->isAmountApproval;
+                                $isAttachment = $policy->isAttachmentYN;
+                                //check for attachment is uploaded if attachment policy is set to must
+                                if ($isAttachment == -1) {
+                                    $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                                    if (!$docAttachment) {
+                                        return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
+                                    }
                                 }
                             } else {
-                                return ['success' => false, 'message' => 'Serviceline parameters are missing'];
+                                return ['success' => false, 'message' => 'Policy not available for this document.'];
                             }
-                        }
 
-                        if ($isCategoryWise) {
-                            if (array_key_exists('category', $params)) {
-                                if ($params["category"]) {
-                                    $approvalLevel->where('categoryID', $params["category"]);
-                                    $approvalLevel->where('isCategoryWiseApproval', -1);
+                            // get approval rolls
+                            $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID',$document["departmentSystemID"])->where('isActive', -1);
+                            if ($isSegmentWise) {
+                                if (array_key_exists('segment', $params)) {
+                                    if ($params["segment"]) {
+                                        $approvalLevel->where('serviceLineSystemID', $params["segment"]);
+                                        $approvalLevel->where('serviceLineWise', 1);
+                                    } else {
+                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                    }
                                 } else {
-                                    return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                    return ['success' => false, 'message' => 'Serviceline parameters are missing'];
                                 }
-                            } else {
-                                return ['success' => false, 'message' => 'Category parameter are missing'];
                             }
-                        }
 
-                        if ($isValueWise) {
-                            if (array_key_exists('amount', $params)) {
-                                if ($params["amount"]) {
-                                    $amount = $params["amount"];
-                                    $approvalLevel->where(function ($query) use ($amount) {
-                                        $query->where('valueFrom', '<=', $amount);
-                                        $query->where('valueTo', '>=', $amount);
-                                    });
-                                    $approvalLevel->where('valueWise', 1);
-                                } else {
-                                    return ['success' => false, 'message' => 'No approval setup created for this document'];
-                                }
-                            } else {
-                                return ['success' => false, 'message' => 'Amount parameter are missing'];
-                            }
-                        }
-                        $output = $approvalLevel->first();
-
-                        //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
-                        if (empty($output)) {
                             if ($isCategoryWise) {
-                                $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('isActive', -1);
-                                if ($isSegmentWise) {
-                                    if (array_key_exists('segment', $params)) {
-                                        if ($params["segment"]) {
-                                            $approvalLevel->where('serviceLineSystemID', $params["segment"]);
-                                            $approvalLevel->where('serviceLineWise', 1);
-                                        } else {
-                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
-                                        }
+                                if (array_key_exists('category', $params)) {
+                                    if ($params["category"]) {
+                                        $approvalLevel->where('categoryID', $params["category"]);
+                                        $approvalLevel->where('isCategoryWiseApproval', -1);
                                     } else {
-                                        return ['success' => false, 'message' => 'Serviceline parameters are missing'];
-                                    }
-                                }
-
-                                if ($isValueWise) {
-                                    if (array_key_exists('amount', $params)) {
-                                        if ($params["amount"]) {
-                                            $amount = $params["amount"];
-                                            $approvalLevel->where(function ($query) use ($amount) {
-                                                $query->where('valueFrom', '<=', $amount);
-                                                $query->where('valueTo', '>=', $amount);
-                                            });
-                                            $approvalLevel->where('valueWise', 1);
-                                        } else {
-                                            return ['success' => false, 'message' => 'No approval setup created for this document'];
-                                        }
-                                    } else {
-                                        return ['success' => false, 'message' => 'Amount parameter are missing'];
-                                    }
-                                }
-
-                                $approvalLevel->where('isCategoryWiseApproval', 0);
-                                $output = $approvalLevel->first();
-                            }
-                        }
-
-                        if ($output) {
-                            /** get source document master record*/
-                            $sorceDocument = $namespacedModel::find($params["autoID"]);
-                            $documentApproved = [];
-                            if ($output) {
-                                if ($output->approvalrole) {
-                                    foreach ($output->approvalrole as $val) {
-                                        if ($val->approvalGroupID) {
-                                            $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $val->documentSystemID, 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID);
-                                        } else {
-                                            return ['success' => false, 'message' => 'Please set the approval group'];
-                                        }
+                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
                                     }
                                 } else {
-                                    return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                    return ['success' => false, 'message' => 'Category parameter are missing'];
                                 }
                             }
-                            // insert rolls to document approved table
-                            Models\DocumentApproved::insert($documentApproved);
 
-                            $documentApproved = Models\DocumentApproved::where("documentSystemID", $params["document"])
-                                ->where("documentSystemCode", $sorceDocument[$docInforArr["primarykey"]])
-                                ->where("rollLevelOrder", 1)
-                                ->first();
-                            if ($documentApproved) {
-
-                                if ($documentApproved->approvedYN == 0) {
-                                    $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $documentApproved->companySystemID)
-                                        ->where('documentSystemID', $documentApproved->documentSystemID)
-                                        ->first();
-
-                                    if (empty($companyDocument)) {
-                                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                            if ($isValueWise) {
+                                if (array_key_exists('amount', $params)) {
+                                    if ($params["amount"]) {
+                                        $amount = $params["amount"];
+                                        $approvalLevel->where(function ($query) use ($amount) {
+                                            $query->where('valueFrom', '<=', $amount);
+                                            $query->where('valueTo', '>=', $amount);
+                                        });
+                                        $approvalLevel->where('valueWise', 1);
+                                    } else {
+                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
                                     }
+                                } else {
+                                    return ['success' => false, 'message' => 'Amount parameter are missing'];
+                                }
+                            }
+                            $output = $approvalLevel->first();
 
-                                    $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
-                                        ->where('companySystemID', $documentApproved->companySystemID)
-                                        ->where('documentSystemID', $documentApproved->documentSystemID);
-
-                                    if ($companyDocument['isServiceLineApproval'] == -1) {
-                                        $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproved->serviceLineSystemID);
-                                    }
-
-                                    $approvalList = $approvalList
-                                        ->with(['employee'])
-                                        ->groupBy('employeeSystemID')
-                                        ->get();
-
-                                    $emails = array();
-                                    $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
-
-                                    $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
-
-                                    $body = '<p>' . $approvedDocNameBody . '  is pending for your approval.</p>';
-                                    $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
-
-                                    foreach ($approvalList as $da) {
-                                        if ($da->employee) {
-                                            $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
-                                                'companySystemID' => $documentApproved->companySystemID,
-                                                'docSystemID' => $documentApproved->documentSystemID,
-                                                'alertMessage' => $subject,
-                                                'emailAlertMessage' => $body,
-                                                'docSystemCode' => $documentApproved->documentSystemCode);
+                            //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
+                            if (empty($output)) {
+                                if ($isCategoryWise) {
+                                    $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID',$document["departmentSystemID"])->where('isActive', -1);
+                                    if ($isSegmentWise) {
+                                        if (array_key_exists('segment', $params)) {
+                                            if ($params["segment"]) {
+                                                $approvalLevel->where('serviceLineSystemID', $params["segment"]);
+                                                $approvalLevel->where('serviceLineWise', 1);
+                                            } else {
+                                                return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                            }
+                                        } else {
+                                            return ['success' => false, 'message' => 'Serviceline parameters are missing'];
                                         }
                                     }
 
-                                    $sendEmail = \Email::sendEmail($emails);
-                                    if (!$sendEmail["success"]) {
-                                        return ['success' => false, 'message' => $sendEmail["message"]];
+                                    if ($isValueWise) {
+                                        if (array_key_exists('amount', $params)) {
+                                            if ($params["amount"]) {
+                                                $amount = $params["amount"];
+                                                $approvalLevel->where(function ($query) use ($amount) {
+                                                    $query->where('valueFrom', '<=', $amount);
+                                                    $query->where('valueTo', '>=', $amount);
+                                                });
+                                                $approvalLevel->where('valueWise', 1);
+                                            } else {
+                                                return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                            }
+                                        } else {
+                                            return ['success' => false, 'message' => 'Amount parameter are missing'];
+                                        }
+                                    }
+
+                                    $approvalLevel->where('isCategoryWiseApproval', 0);
+                                    $output = $approvalLevel->first();
+                                }
+                            }
+
+                            if ($output) {
+                                /** get source document master record*/
+                                $sorceDocument = $namespacedModel::find($params["autoID"]);
+                                $documentApproved = [];
+                                if ($output) {
+                                    if ($output->approvalrole) {
+                                        foreach ($output->approvalrole as $val) {
+                                            if ($val->approvalGroupID) {
+                                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $val->documentSystemID, 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID);
+                                            } else {
+                                                return ['success' => false, 'message' => 'Please set the approval group'];
+                                            }
+                                        }
+                                    } else {
+                                        return ['success' => false, 'message' => 'No approval setup created for this document'];
+                                    }
+                                }
+                                // insert rolls to document approved table
+                                Models\DocumentApproved::insert($documentApproved);
+
+                                $documentApproved = Models\DocumentApproved::where("documentSystemID", $params["document"])
+                                    ->where("documentSystemCode", $sorceDocument[$docInforArr["primarykey"]])
+                                    ->where("rollLevelOrder", 1)
+                                    ->first();
+                                if ($documentApproved) {
+
+                                    if ($documentApproved->approvedYN == 0) {
+                                        $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $documentApproved->companySystemID)
+                                            ->where('documentSystemID', $documentApproved->documentSystemID)
+                                            ->first();
+
+                                        if (empty($companyDocument)) {
+                                            return ['success' => false, 'message' => 'Policy not found for this document'];
+                                        }
+
+                                        $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
+                                            ->where('companySystemID', $documentApproved->companySystemID)
+                                            ->where('documentSystemID', $documentApproved->documentSystemID);
+
+                                        if ($companyDocument['isServiceLineApproval'] == -1) {
+                                            $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproved->serviceLineSystemID);
+                                        }
+
+                                        $approvalList = $approvalList
+                                            ->with(['employee'])
+                                            ->groupBy('employeeSystemID')
+                                            ->get();
+
+                                        $emails = array();
+                                        $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
+
+                                        $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
+
+                                        $body = '<p>' . $approvedDocNameBody . '  is pending for your approval.</p>';
+                                        $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+
+                                        foreach ($approvalList as $da) {
+                                            if ($da->employee) {
+                                                $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                                    'companySystemID' => $documentApproved->companySystemID,
+                                                    'docSystemID' => $documentApproved->documentSystemID,
+                                                    'alertMessage' => $subject,
+                                                    'emailAlertMessage' => $body,
+                                                    'docSystemCode' => $documentApproved->documentSystemCode);
+                                            }
+                                        }
+
+                                        $sendEmail = \Email::sendEmail($emails);
+                                        if (!$sendEmail["success"]) {
+                                            return ['success' => false, 'message' => $sendEmail["message"]];
+                                        }
+
                                     }
 
                                 }
-
+                                DB::commit();
+                                return ['success' => true, 'message' => 'Successfully document confirmed'];
+                            } else {
+                                DB::rollback();
+                                return ['success' => false, 'message' => 'No approval setup created for this document'];
                             }
-                            DB::commit();
-                            return ['success' => true, 'message' => 'Successfully document confirmed'];
                         } else {
                             DB::rollback();
-                            return ['success' => false, 'message' => 'No approval setup created for this document'];
+                            return ['success' => false, 'message' => 'Document is already confirmed'];
                         }
-                    } else {
+                    }else {
                         DB::rollback();
-                        return ['success' => false, 'message' => 'Document is already confirmed'];
+                        return ['success' => false, 'message' => 'Document not found'];
                     }
                 } else {
                     DB::rollback();
