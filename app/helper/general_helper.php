@@ -288,9 +288,9 @@ class Helper
                     $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
-                    $docInforArr["tableName"] = 'erp_custinvoicedirect';
-                    $docInforArr["modelName"] = 'CustomerInvoiceDirect';
-                    $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                    $docInforArr["tableName"] = 'erp_stockadjustment';
+                    $docInforArr["modelName"] = 'StockAdjustment';
+                    $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
@@ -856,6 +856,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 7:
+                $docInforArr["tableName"] = 'erp_stockadjustment';
+                $docInforArr["modelName"] = 'StockAdjustment';
+                $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -864,6 +876,7 @@ class Helper
         DB::beginTransaction();
         try {
             $userMessage = 'Successfully approved the document';
+            $userMessageE = '';
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApproved) {
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -934,19 +947,19 @@ class Helper
                                                 $totalConsumedAmount = $currencyConversionRptAmount['reportingAmount'] + $totalConsumedRptAmount + $totalPendingRptAmount;
 
                                                 if ($totalConsumedAmount > $totalBudgetRptAmount) {
-                                                    $userMessage .= "Budget Exceeded ' . $budgetDescription . '";
-                                                    $userMessage .= "<br>";
-                                                    $userMessage .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
-                                                    $userMessage .= "<br>";
-                                                    $userMessage .= "Document Amount : '" . round($totalDocumentRptAmount, 2) . "'";
-                                                    $userMessage .= "<br>";
-                                                    $userMessage .= "Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "'";
-                                                    $userMessage .= "<br>";
-                                                    $userMessage .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
-                                                    $userMessage .= "<br>";
-                                                    $userMessage .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+                                                    $userMessageE .= "Budget Exceeded ' . $budgetDescription . '";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Document Amount : '" . round($totalDocumentRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Consumed Amount : '" . round($totalConsumedRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
+                                                    $userMessageE .= "<br>";
+                                                    $userMessageE .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
 
-                                                    return ['success' => false, 'message' => $userMessage];
+                                                    return ['success' => false, 'message' => $userMessageE];
                                                 }else{
                                                     $userMessage .= "<br>";
                                                     $userMessage .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
@@ -992,7 +1005,7 @@ class Helper
                             }
 
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20 || $input["documentSystemID"] == 61 || $input["documentSystemID"] == 24) {
+                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20 || $input["documentSystemID"] == 61 || $input["documentSystemID"] == 24 || $input["documentSystemID"] == 7) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);

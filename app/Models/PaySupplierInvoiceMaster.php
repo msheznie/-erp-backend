@@ -803,9 +803,24 @@ class PaySupplierInvoiceMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
     }
 
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdByEmpSystemID', 'employeeSystemID');
+    }
+
     public function bank()
     {
         return $this->belongsTo('App\Models\BankAccount', 'BPVAccount', 'bankAccountAutoID');
+    }
+
+    public function suppliercurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransCurrencyID', 'currencyID');
+    }
+
+    public function bankcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'BPVbankCurrency', 'currencyID');
     }
 
 

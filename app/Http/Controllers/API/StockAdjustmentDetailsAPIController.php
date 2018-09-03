@@ -161,9 +161,9 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
             return $this->sendError('Please select a service line.', 500);
         }
 
-         $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
-                                    ->where('companySystemID', $companySystemID)
-                                    ->first();
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
 
         if (empty($item)) {
             return $this->sendError('Item not found');
@@ -180,9 +180,6 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
             return $this->sendError('Company not found');
         }
 
-        //$input['localCurrencyID'] = $company->localCurrencyID;
-       // $input['reportingCurrencyID'] = $company->reportingCurrency;
-
         $input['itemCodeSystem'] = $item->itemCodeSystem;
         $input['itemPrimaryCode'] = $item->itemPrimaryCode;
         $input['itemDescription'] = $item->itemDescription;
@@ -192,20 +189,20 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         $input['itemFinanceCategorySubID'] = $item->financeCategorySub;
 
         $checkWhether = StockAdjustment::where('stockAdjustmentAutoID', '!=', $stockAdjustment->stockAdjustmentAutoID)
-                                        ->where('companySystemID', $companySystemID)
-                                        ->where('location', $stockAdjustment->location)
-                                        ->select([
-                                            'stockAdjustmentAutoID',
-                                            'companySystemID',
-                                            'location',
-                                            'stockAdjustmentCode',
-                                            'approved'
-                                        ])
-                                        ->whereHas('details', function ($query) use ($companySystemID, $input) {
-                                            $query->where('itemCodeSystem', $input['itemCodeSystem']);
-                                        })
-                                        ->where('approved', 0)
-                                        ->first();
+            ->where('companySystemID', $companySystemID)
+            ->where('location', $stockAdjustment->location)
+            ->select([
+                'stockAdjustmentAutoID',
+                'companySystemID',
+                'location',
+                'stockAdjustmentCode',
+                'approved'
+            ])
+            ->whereHas('details', function ($query) use ($companySystemID, $input) {
+                $query->where('itemCodeSystem', $input['itemCodeSystem']);
+            })
+            ->where('approved', 0)
+            ->first();
         /* approved=0*/
 
         if (!empty($checkWhether)) {
@@ -217,29 +214,29 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
             'wareHouseId' => $stockAdjustment->location);
 
         $input['currentWacLocalCurrencyID'] = $item->wacValueLocalCurrencyID;
-        $input['currentWacRptCurrencyID']   = $item->wacValueReportingCurrencyID;
+        $input['currentWacRptCurrencyID'] = $item->wacValueReportingCurrencyID;
 
-        $itemCurrentCostAndQty     = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
         $input['currenctStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
 
-        $input['wacAdjRpt']        = $itemCurrentCostAndQty['wacValueReporting'];
-        $input['currentWacRpt']    = $itemCurrentCostAndQty['wacValueReporting'];
+        $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+        $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companyFromSystemID, $item->wacValueReportingCurrencyID, $item->wacValueReportingCurrencyID, $itemCurrentCostAndQty['wacValueReporting']);
 
-        $input['currentWaclocal']  =  $companyCurrencyConversion['localAmount'];
-        $input['wacAdjLocal']      =  $companyCurrencyConversion['localAmount'];
+        $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
+            $item->wacValueReportingCurrencyID,
+            $item->wacValueReportingCurrencyID,
+            $itemCurrentCostAndQty['wacValueReporting']);
 
-        //$input['currentWaclocal']  = $itemCurrentCostAndQty['wacValueLocal'];
-        //$input['wacAdjLocal']      =  $itemCurrentCostAndQty['wacValueLocal'];
-
-        $input['wacAdjRptER']      = 1;
-        $input['wacAdjLocalER']    = $companyCurrencyConversion['trasToLocER'];
+        $input['currentWaclocal'] = $companyCurrencyConversion['localAmount'];
+        $input['wacAdjLocal'] = $companyCurrencyConversion['localAmount'];
+        $input['wacAdjRptER'] = $companyCurrencyConversion['trasToRptER'];
+        $input['wacAdjLocalER'] = 1;
 
         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
-                                                                            ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
-                                                                            ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
-                                                                            ->first();
+            ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
+            ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
+            ->first();
 
         if (!empty($financeItemCategorySubAssigned)) {
             $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
@@ -379,6 +376,32 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         if (empty($stockAdjustmentDetails)) {
             return $this->sendError('Stock Adjustment Details not found');
         }
+
+        $stockAdjustment = StockAdjustment::find($stockAdjustmentDetails->stockAdjustmentAutoID);
+
+        if (empty($stockAdjustmentDetails)) {
+            return $this->sendError('Stock Adjustment not found');
+        }
+
+
+        $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
+            $stockAdjustmentDetails->currentWacLocalCurrencyID,
+            $stockAdjustmentDetails->currentWacLocalCurrencyID,
+            $input['wacAdjLocal']);
+
+        if (is_null($input['wacAdjLocal'])) {
+            $input['wacAdjRpt'] = 0;
+            $input['wacAdjLocal'] = 0;
+        }else{
+            $input['wacAdjRpt'] = $companyCurrencyConversion['reportingAmount'];
+        }
+
+        $input['wacAdjRptER'] = $companyCurrencyConversion['trasToRptER'];
+
+        if (is_null($input['noQty'])) {
+            $input['noQty'] = 0;
+        }
+
 
         $stockAdjustmentDetails = $this->stockAdjustmentDetailsRepository->update($input, $id);
 
