@@ -291,13 +291,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BookInvSuppMaster $bookInvSuppMaster */
-        $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
+        $bookInvSuppMaster = $this->bookInvSuppMasterRepository->with(['created_by', 'confirmed_by', 'financeperiod_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'financeyear_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Book Inv Supp Master not found');
+            return $this->sendError('Supplier Invoice not found');
         }
 
-        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Book Inv Supp Master retrieved successfully');
+        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice retrieved successfully');
     }
 
     /**

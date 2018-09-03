@@ -751,15 +751,19 @@ class GRVMasterAPIController extends AppBaseController
         $wareHouseLocation = $wareHouseLocation->get();
 
         $grvTypes = "";
-        $allowDirectGrv = CompanyPolicyMaster::where('companyPolicyCategoryID', 30)
-            ->where('companySystemID', $companyId)
-            ->where('isYesNO', 1)
-            ->first();
+        if (isset($request['type']) && $request['type'] != 'filter') {
+            $allowDirectGrv = CompanyPolicyMaster::where('companyPolicyCategoryID', 30)
+                ->where('companySystemID', $companyId)
+                ->where('isYesNO', 1)
+                ->first();
 
-        if ($allowDirectGrv) {
+            if ($allowDirectGrv) {
+                $grvTypes = GRVTypes::all();
+            } else {
+                $grvTypes = GRVTypes::where('grvTypeID', 2)->get();
+            }
+        }else{
             $grvTypes = GRVTypes::all();
-        } else {
-            $grvTypes = GRVTypes::where('grvTypeID', 2)->get();
         }
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),

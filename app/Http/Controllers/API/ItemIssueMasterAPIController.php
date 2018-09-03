@@ -581,6 +581,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 }
 
                 if ($itemIssueMaster->issueType == 2) {
+
                     if($updateItem->qtyIssuedDefaultMeasure > $updateItem->qtyRequested){
                         array_push($finalError['issuingQty_more_requested'], $updateItem->itemPrimaryCode);
                         $error_count++;

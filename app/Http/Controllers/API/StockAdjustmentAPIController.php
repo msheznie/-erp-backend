@@ -10,18 +10,23 @@
  * -- REVISION HISTORY
  * -- Date: 21 - August 2018 By: Fayas Description: Added new functions named as getAllStockAdjustmentsByCompany(),getStockAdjustmentFormData(),
  *                        getStockAdjustmentAudit()
+ * -- Date: 03 - September 2018 By: Fayas Description: Added new functions named as getStockAdjustmentApprovedByUser(),getStockAdjustmentApprovalByUser()
+ *
+ *
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateStockAdjustmentAPIRequest;
 use App\Http\Requests\API\UpdateStockAdjustmentAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentMaster;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\StockAdjustment;
+use App\Models\StockAdjustmentDetails;
 use App\Models\Unit;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
@@ -156,6 +161,20 @@ class StockAdjustmentAPIController extends AppBaseController
             $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
         unset($inputParam);
+
+        $validator = \Validator::make($input, [
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'stockAdjustmentDate' => 'required',
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'location' => 'required|numeric|min:1',
+            'refNo' => 'required',
+            'comment' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         if (isset($input['stockAdjustmentDate'])) {
             if ($input['stockAdjustmentDate']) {
@@ -374,6 +393,79 @@ class StockAdjustmentAPIController extends AppBaseController
         if (isset($input['stockAdjustmentDate'])) {
             if ($input['stockAdjustmentDate']) {
                 $input['stockAdjustmentDate'] = new Carbon($input['stockAdjustmentDate']);
+            }
+        }
+
+
+        if ($stockAdjustment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 10;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            unset($inputParam);
+
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'stockAdjustmentDate' => 'required',
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'location' => 'required|numeric|min:1',
+                'refNo' => 'required',
+                'comment' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $documentDate = $input['stockAdjustmentDate'];
+            $monthBegin = $input['FYBiggin'];
+            $monthEnd = $input['FYEnd'];
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Document  date is not within the selected financial period !', 500);
+            }
+
+            $checkItems = StockAdjustmentDetails::where('stockAdjustmentAutoID', $id)
+                ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every document should have at least one item', 500);
+            }
+
+            $checkQuantity = StockAdjustmentDetails::where('stockAdjustmentAutoID', $id)
+                                                    ->where(function ($q) {
+                                                        $q->where('noQty', '<=', 0)
+                                                            ->orWhereNull('noQty');
+                                                    })
+                                                    ->count();
+            if ($checkQuantity > 0) {
+                //return $this->sendError('Every item should have at least one minimum Qty requested', 500);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+            $params = array('autoID' => $id,
+                'company' => $stockAdjustment->companySystemID,
+                'document' => $stockAdjustment->documentSystemID,
+                'segment' => $input['serviceLineSystemID'],
+                'category' => 0,
+                'amount' => 0
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
             }
         }
 
@@ -650,6 +742,201 @@ class StockAdjustmentAPIController extends AppBaseController
         $stockAdjustment->docRefNo = \Helper::getCompanyDocRefNo($stockAdjustment->companySystemID, $stockAdjustment->documentSystemID);
 
         return $this->sendResponse($stockAdjustment->toArray(), 'Stock Adjustment retrieved successfully');
+    }
+
+    public function getStockAdjustmentApprovedByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'location', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $purchaseReturnMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_stockadjustment.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As serviceLineDes',
+                'warehousemaster.wareHouseDescription As wareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_stockadjustment', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'stockAdjustmentAutoID')
+                    ->where('erp_stockadjustment.companySystemID', $companyId)
+                    ->where('erp_stockadjustment.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_stockadjustment.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [7])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseReturnMaster->where('erp_stockadjustment.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('location', $input)) {
+            if ($input['location'] && !is_null($input['location'])) {
+                $purchaseReturnMaster->where('erp_stockadjustment.location', $input['location']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $purchaseReturnMaster->whereMonth('erp_stockadjustment.purchaseReturnDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $purchaseReturnMaster->whereYear('erp_stockadjustment.purchaseReturnDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseReturnMaster = $purchaseReturnMaster->where(function ($query) use ($search) {
+                $query->where('stockAdjustmentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($purchaseReturnMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('stockAdjustmentAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getStockAdjustmentApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'location', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $purchaseReturnMaster = DB::table('erp_documentapproved')
+            ->select(
+                'erp_stockadjustment.*',
+                'employees.empName As created_emp',
+                'serviceline.ServiceLineDes As serviceLineDes',
+                'warehousemaster.wareHouseDescription As wareHouseDescription',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+                    ->where('documentSystemID', 1)
+                    ->first();
+
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
+
+                $query->whereIn('employeesdepartments.documentSystemID', [7])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_stockadjustment', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'stockAdjustmentAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_stockadjustment.companySystemID', $companyId)
+                    ->where('erp_stockadjustment.approved', 0)
+                    ->where('erp_stockadjustment.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('warehousemaster', 'location', 'warehousemaster.wareHouseSystemCode')
+            ->leftJoin('serviceline', 'erp_stockadjustment.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [7])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if (array_key_exists('serviceLineSystemID', $input)) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseReturnMaster->where('erp_stockadjustment.serviceLineSystemID', $input['serviceLineSystemID']);
+            }
+        }
+
+        if (array_key_exists('location', $input)) {
+            if ($input['location'] && !is_null($input['location'])) {
+                $purchaseReturnMaster->where('erp_stockadjustment.location', $input['location']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $purchaseReturnMaster->whereMonth('erp_stockadjustment.purchaseReturnDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $purchaseReturnMaster->whereYear('erp_stockadjustment.purchaseReturnDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $purchaseReturnMaster = $purchaseReturnMaster->where(function ($query) use ($search) {
+                $query->where('stockAdjustmentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($purchaseReturnMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('stockAdjustmentAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
     }
 
 }
