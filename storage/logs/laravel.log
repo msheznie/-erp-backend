@@ -4669,3 +4669,18 @@ esbot\\carbon\\src\\Carbon\\Carbon.php:909)
 #37 D:\\gears-laravel\\Gears_BackEnd\\server.php(21): require_once('D:\\\\gears-larave...')
 #38 {main}
 "} 
+[2018-09-04 03:51:45] local.ERROR: Command "server" is not defined.
+
+Did you mean this?
+    serve {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"server\" is not defined.
+
+Did you mean this?
+    serve at D:\\gears-laravel\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php:618)
+[stacktrace]
+#0 D:\\gears-laravel\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(229): Symfony\\Component\\Console\\Application->find('server')
+#1 D:\\gears-laravel\\Gears_BackEnd\\vendor\\symfony\\console\\Application.php(148): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#2 D:\\gears-laravel\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Console\\Application.php(88): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#3 D:\\gears-laravel\\Gears_BackEnd\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(121): Illuminate\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#4 D:\\gears-laravel\\Gears_BackEnd\\artisan(37): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#5 {main}
+"} 
