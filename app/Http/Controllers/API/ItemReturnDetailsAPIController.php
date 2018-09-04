@@ -192,10 +192,12 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
 
         $itemIssuesCount = ItemIssueMaster::whereHas('details', function ($q) use ($input) {
-            $q->where('itemCodeSystem', $input['itemCodeSystem']);
-        })
+                     $q->where('itemCodeSystem', $input['itemCodeSystem']);
+              })
             ->where('companySystemID', $companySystemID)
             ->where('approved', -1)
+            ->where('serviceLineSystemID', $itemReturn->serviceLineSystemID)
+            ->where('wareHouseFrom', $itemReturn->wareHouseLocation)
             ->count();
 
         if ($itemIssuesCount == 0) {
@@ -215,7 +217,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $input['reportingCurrencyID'] = $itemAssign->wacValueReportingCurrencyID;
 
         if ($input['unitCostLocal'] == 0 || $input['unitCostRpt'] == 0) {
-            return $this->sendError("Cost is 0. You cannot issue", 500);
+            //return $this->sendError("Cost is 0. You cannot issue", 500);
         }
 
         if ($input['unitCostLocal'] < 0 || $input['unitCostRpt'] < 0) {
@@ -567,8 +569,8 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
             if ($item['itemCodeSystem']) {
                 $itemIssues = ItemIssueMaster::whereHas('details', function ($q) use ($item) {
-                    $q->where('itemCodeSystem', $item['itemCodeSystem']);
-                })
+                       $q->where('itemCodeSystem', $item['itemCodeSystem']);
+                     })
                     ->where('companySystemID', $itemReturnMaster->companySystemID)
                     ->where('serviceLineSystemID', $itemReturnMaster->serviceLineSystemID)
                     ->where('wareHouseFrom', $itemReturnMaster->wareHouseLocation)
