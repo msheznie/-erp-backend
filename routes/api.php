@@ -363,6 +363,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('unlinkLogistic', 'PoAdvancePaymentAPIController@unlinkLogistic');
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
+    Route::post('exportPrToGrvReport', 'PurchaseRequestAPIController@exportPrToGrvReport');
+
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
     Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
     Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
