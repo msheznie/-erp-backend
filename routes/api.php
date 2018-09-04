@@ -767,7 +767,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 21,'autoID' => 20711, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 19,'autoID' => 2748, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 
