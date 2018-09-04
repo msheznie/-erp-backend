@@ -8,16 +8,21 @@
  * -- Create date : 16 - August 2018
  * -- Description : This file contains the all CRUD for Debit Note
  * -- REVISION HISTORY
- * -- Date: 08-August 2018 By: Nazir Description: Added new function getDebitNoteMasterRecord(),
+ * -- Date: 08-August 2018 By: Nazir Description: Added new function getDebitNoteMasterRecord()
+ * -- Date: 04-September 2018 By: Nazir Description: Added new function getAllDebitNotes(),getDebitNoteFormData()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDebitNoteAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteAPIRequest;
 use App\Models\DebitNote;
+use App\Models\Months;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\DebitNoteRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -302,5 +307,108 @@ class DebitNoteAPIController extends AppBaseController
         }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier','confirmed_by'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
+    }
+
+    public function getAllDebitNotes(Request $request)
+    {
+
+        $input = $request->all();
+
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'isProforma'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $debitNotes = DebitNote::whereIn('companySystemID', $subCompanies)
+                                ->with('created_by','transactioncurrency','supplier')
+                               ->where('documentSystemID', $input['documentId']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $debitNotes = $debitNotes->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $debitNotes = $debitNotes->whereMonth('debitNoteDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $debitNotes = $debitNotes->whereYear('debitNoteDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $debitNotes = $debitNotes->where(function ($query) use ($search) {
+                  $query->where('debitNoteCode', 'LIKE', "%{$search}%")
+                        ->orWhereHas('supplier', function ($query) use($search) {
+                            $query->where('supplierName', 'like', "%{$search}%");
+                        });
+            });
+        }
+
+        return \DataTables::of($debitNotes)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('debitNoteAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getDebitNoteFormData(Request $request)
+    {
+
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $month = Months::all();
+
+        $years = DebitNote::select(DB::raw("YEAR(createdDateAndTime) as year"))
+            ->whereNotNull('createdDateAndTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get();
+
+
+        $output = array(
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'month' => $month,
+            'years' => $years,
+
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }
