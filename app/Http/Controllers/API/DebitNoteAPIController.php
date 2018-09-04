@@ -385,7 +385,7 @@ class DebitNoteAPIController extends AppBaseController
 
     public function getDebitNoteFormData(Request $request)
     {
-
+        $companyId = $request['companyId'];
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -399,14 +399,14 @@ class DebitNoteAPIController extends AppBaseController
             ->groupby('year')
             ->orderby('year', 'desc')
             ->get();
-
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
-
+            'companyFinanceYear' => $companyFinanceYear
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
