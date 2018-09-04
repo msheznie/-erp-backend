@@ -8,16 +8,21 @@
  * -- Create date : 08 - August 2018
  * -- Description : This file contains the all CRUD for Pay Supplier Invoice Master
  * -- REVISION HISTORY
+ * -- Date: 03-September 2018 By:Mubashir Description: Added new functions named as getPaymentVoucherFormData(),getAllPaymentVoucherByCompany()
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
+use App\Models\Months;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\SupplierAssigned;
+use App\Models\YesNoSelection;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -308,7 +313,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function getAllPaymentVoucherByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('supplier', 'created_by'));
+        $input = $this->convertArrayToSelectedValue($input, array('supplier', 'created_by', 'suppliercurrency', 'bankcurrency'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -325,7 +330,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by'])->whereIN('companySystemID', $subCompanies);
+        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency'])->whereIN('companySystemID', $subCompanies);
 
         $search = $request->input('search.value');
 
@@ -350,6 +355,51 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
 
+    }
+
+    public function getPaymentVoucherFormData(Request $request)
+    {
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+
+        $supplier = SupplierAssigned::whereIn("companySystemID", $subCompanies);
+        if (isset($request['type']) && $request['type'] != 'filter') {
+            $supplier = $supplier->where('isActive', 1);
+        }
+        $supplier = $supplier->get();
+
+        $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
+            array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
+
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        $month = Months::all();
+
+        $years = PaySupplierInvoiceMaster::select(DB::raw("YEAR(createdDateTime) as year"))
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get();
+
+        $output = array(
+            'financialYears' => $financialYears,
+            'companyFinanceYear' => $companyFinanceYear,
+            'yesNoSelection' => $yesNoSelection,
+            'month' => $month,
+            'years' => $years,
+            'supplier' => $supplier,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
 }
