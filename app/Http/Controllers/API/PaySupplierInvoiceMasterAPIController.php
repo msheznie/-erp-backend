@@ -19,6 +19,7 @@ use App\Models\Months;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierAssigned;
 use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -330,7 +331,39 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+
+
         $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency'])->whereIN('companySystemID', $subCompanies);
+
+        if (array_key_exists('cancelYN', $input)) {
+            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
+                $paymentVoucher->where('cancelYN', $input['cancelYN']);
+            }
+        }
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $paymentVoucher->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $paymentVoucher->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $paymentVoucher->whereMonth('BPVdate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $paymentVoucher->whereYear('BPVdate', '=', $input['year']);
+            }
+        }
 
         $search = $request->input('search.value');
 
@@ -382,6 +415,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
         $month = Months::all();
 
         $years = PaySupplierInvoiceMaster::select(DB::raw("YEAR(createdDateTime) as year"))
@@ -394,6 +429,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
             'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
             'supplier' => $supplier,

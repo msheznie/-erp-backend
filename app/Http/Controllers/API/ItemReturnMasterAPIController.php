@@ -454,11 +454,22 @@ class ItemReturnMasterAPIController extends AppBaseController
                 return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
             }
 
+            $checkCost = ItemReturnDetails::where('itemReturnAutoID', $id)
+                ->where(function ($q){
+                    $q->where('unitCostLocal', '<=', 0)
+                      ->orWhere('unitCostLocal', '<=', 0)->orWhereNull('qtyIssued');
+                })
+                ->count();
+
+            if ($checkCost > 0) {
+                return $this->sendError('Unit Cost should be greater than 0 for every items', 500);
+            }
 
             $itemReturnDetails = ItemReturnDetails::where('itemReturnAutoID',$input['itemReturnAutoID'])->get();
 
             $finalError = array('item_is_not_issued' => array());
             $error_count = 0;
+
 
             foreach ($itemReturnDetails as $detail){
                 if ($detail['qtyIssuedDefaultMeasure'] > $detail['qtyFromIssue']) {
