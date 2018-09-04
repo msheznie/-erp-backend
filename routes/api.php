@@ -363,6 +363,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('unlinkLogistic', 'PoAdvancePaymentAPIController@unlinkLogistic');
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
+    Route::post('exportPrToGrvReport', 'PurchaseRequestAPIController@exportPrToGrvReport');
+
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
     Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
     Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
@@ -710,7 +712,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
     Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
     Route::resource('debit_notes', 'DebitNoteAPIController');
+    Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
+    Route::get('getDebitNoteFormData', 'DebitNoteAPIController@getDebitNoteFormData');
     Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
+
+
+
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
 
