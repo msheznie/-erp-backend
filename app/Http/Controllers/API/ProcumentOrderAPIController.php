@@ -2576,6 +2576,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
     public function getProcumentOrderPrintPDF(Request $request)
     {
         $id = $request->get('id');
+        $typeID = $request->get('typeID');
 
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
@@ -2631,6 +2632,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'docRef' => $refernaceDoc,
             'numberFormatting' => $decimal,
             'title' => $documentTitle,
+            'termsCond' => $typeID,
             'paymentTermsView' => $paymentTermsView
 
         );
