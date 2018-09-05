@@ -1035,7 +1035,7 @@
                     provided by the Company to the Supplier for any purpose in connection with the Order
                     and whenever the Order requires the Supplier to repair or apply a process to goods or
                     materials owned by the Company (hereinafter called "The Company’s Property") which
-                    the Company makes available for that purpose:-
+                    the Company makes
                 </td>
                 <td width="50%" style="text-align: justify">
                     B) Where Goods or Services are subject to purchase tax, value added tax or any
@@ -1106,6 +1106,7 @@
         <table style="width:100%">
             <tr>
                 <td width="50%" style="text-align: justify">
+                    available for that purpose:-<br>
                     (i) The Company's Property shall be returnable on demand;<br>
                     (ii) The Supplier shall indemnify the Company against loss of or damage to the
                     Company's Property while it is in the care, custody or control of the Supplier or of any
