@@ -1020,7 +1020,7 @@ class Helper
                                                     $userMessageE .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
                                                     // update PR master table
                                                     $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
-
+                                                    DB::commit();
                                                     return ['success' => false, 'message' => $userMessageE];
                                                 }else{
                                                     $userMessage .= "<br>";
