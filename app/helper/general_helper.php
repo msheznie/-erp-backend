@@ -1018,6 +1018,8 @@ class Helper
                                                     $userMessageE .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
                                                     $userMessageE .= "<br>";
                                                     $userMessageE .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+                                                    // update PR master table
+                                                    $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
 
                                                     return ['success' => false, 'message' => $userMessageE];
                                                 }else{
@@ -1031,6 +1033,9 @@ class Helper
                                                     $userMessage .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
                                                     $userMessage .= "<br>";
                                                     $userMessage .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+
+                                                    // update PR master table
+                                                    $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
                                                 }
 
                                             }

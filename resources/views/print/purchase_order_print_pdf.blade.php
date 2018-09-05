@@ -115,6 +115,7 @@
         font-size: 10px;
         padding-top: -20px;
     }
+
     .pagenum:after {
         content: counter(page);
     }
@@ -144,6 +145,10 @@
         left: 0;
         transform-origin: 20% 20%;
         z-index: 1000;
+    }
+
+    .page_break {
+        page-break-before: always;
     }
 
 
@@ -198,7 +203,7 @@
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 38%;">Printed Date :  {{date("d-M-y", strtotime(now()))}}</span>
+                <span style="margin-left: 38%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
@@ -569,9 +574,11 @@
         <table style="width:100%;" class="table table-bordered">
             <tbody>
             <tr>
-                <td  style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                <td  class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;"><span class="font-weight-bold" style="font-size: 11px">Sub Total</span></td>
-                <td class="text-right" style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                <td class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                            class="font-weight-bold" style="font-size: 11px">Sub Total</span></td>
+                <td class="text-right"
+                    style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                 <span class="font-weight-bold">
                 @if ($podata->detail)
                         {{number_format($subTotal, $numberFormatting)}}
@@ -580,33 +587,43 @@
                 </td>
             </tr>
             <tr>
-                <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
-                <td class="text-right" style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127)!important;"><span class="font-weight-bold"
-                                                                                 style="font-size: 11px">Discount</span>
+                <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                    &nbsp;</td>
+                <td class="text-right"
+                    style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                            class="font-weight-bold"
+                            style="font-size: 11px">Discount</span>
                 </td>
-                <td class="text-right" style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span class="font-weight-bold">
+                <td class="text-right"
+                    style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
+                            class="font-weight-bold">
                      {{number_format($podata->poDiscountAmount, $numberFormatting)}}
                 </span>
                 </td>
             </tr>
             @if ($podata->supplierVATEligible)
                 <tr>
-                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        &nbsp;</td>
                     <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
                                 class="font-weight-bold"
                                 style="font-size: 11px">Tax Amount({{$podata->VATPercentage .'%'}}
                             )</span></td>
-                    <td class="text-right" style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
+                    <td class="text-right"
+                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
                                 class="font-weight-bold">{{number_format($podata->VATAmount, $numberFormatting)}}</span>
                     </td>
                 </tr>
             @endif
             <tr>
-                <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
-                <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span class="font-weight-bold"
-                                                         style="font-size: 11px">Net Amount</span>
+                <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                    &nbsp;</td>
+                <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                            class="font-weight-bold"
+                            style="font-size: 11px">Net Amount</span>
                 </td>
-                <td class="text-right" style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                <td class="text-right"
+                    style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                 <span class="font-weight-bold">
                 @if ($podata->detail)
                         {{number_format($subTotal - $podata->poDiscountAmount + $podata->VATAmount, $numberFormatting)}}
@@ -645,3 +662,41 @@
         </table>
     </div>
 </div>
+<div class="page_break"></div>
+<table style="width:100%">
+    <tr>
+        <td width="100%" style="text-align: center"><h3>Master Service Agreement for Purchase of Goods and Services</h3></td>
+    </tr>
+</table>
+<br>
+<table style="width:100%">
+    <tr>
+        <td width="50%" style="text-align: justify">
+            <span class="font-weight-bold">1. DEFINITIONS</span><br>
+            In these Conditions:<br>
+            (A) “Affiliate” means in relation to any person, a subsidiary of that person or a holding company of that person or any other subsidiary of that holding company.<br>
+            (B) “Company” means either NPS Bahrain for Oil and Gas Wells Services W.L.L, Gulf Energy SAOC, National Energy Services Reunited Corp or any of their respective Affiliates placing the Order.<br>
+            (C) " Goods" means the articles, raw materials or any of them to be supplied by the Supplier to the Company pursuant to the Order (including any articles or materials supplied in connection with the Services).<br>
+            (D) "Information” means specifications, drawings, sketches, models, samples, designs, technical information and data and other proprietary information whether written, oral or otherwise.<br>
+            (E) "Order" means a purchase order in respect of Goods and/or Services issued by the Company to the Supplier on the Company's official purchase order form, together with all other documents referred to therein.<br>
+            (F) “Services" means work and/or services or any of them to be performed by the Supplier for the Company pursuant to the Order.<br>
+            (G) "Supplier" means the person, firm or the Company to whom the Order is addressed.<br>
+            (H) "Tooling" means tools, jigs, dies, fixtures, molds, patterns and/or equipment which is furnished to the Supplier and which is supplied or paid for by the Company or for which the Company is liable to pay under the terms of the Order.<br><br>
+            <span class="font-weight-bold">2. APPLICATION</span><br>
+            These Conditions shall apply to and be incorporated in the contract between the Supplier and the Company for the supply of the Goods and/or the Services and shall be in substitution for any oral arrangements made between the Company and the Supplier and shall prevail over any inconsistent terms or conditions contained in or referred to in the Supplier's quotation or acceptance of order or correspondence or elsewhere or implied by trade, custom or practice or course of dealing and no addition to or variation of or exclusion or attempted exclusion of the Order and/or these Conditions or any of them shall be binding upon the Company unless specifically agreed to in writing and signed by a duly authorized representative of theCompany.<br><br>
+            <span class="font-weight-bold">3. ACCEPTANCE OF ORDER</span><br>
+            All the terms of the contract between the Company and the Supplier are contained in or referred to in the Order and in these Conditions. The execution and return of the acknowledgement copy of the Order by the Supplier or the Supplier's execution or commencement of work or commencement of delivery pursuant to the Order constitutes acceptance of the Order on the terms hereof by the Supplier and of the Company’s conditions of purchase for goods and services. The acceptance of the Order is limited to and conditional upon acceptance by the Supplier of these Conditions.<br><br>
+            <span class="font-weight-bold">4. PACKING, MARKING AND DOCUMENTATION</span><br>
+            (A) The Goods shall be properly packed, marked and delivered at the Supplier's expense in accordance with the Order. The Company shall not accept a charge for packages, containers or freight unless specified in the Order.
+            (B) Each advice note, bill of lading and invoice shall bear the applicable Order number, delivery date and / or date of completion of the Services and the location to which the Goods are to be delivered or at which the Services are to be provided.
+            (C) Advice notes and invoices must be sent as directed by the Order.
+            (D) The Supplier agrees on request to supply the Company with any required certifications, including without limitation any necessary declarations and documents stating the origin of the Goods and the manner in which they qualify for E.E.C.,
+            E.F.T.A. or other applicable preferences.
+            (E) All lifting equipment shall meet the requirements of BSEN12079 standard. All chemicals shall be supplied with latest MSDS and packaging/marking shall be done as specified on MSDS. Batch number, Production and Expiry date shall also be marked on chemical products.
+            (F) Supplier shall provide Certificate of Conformity, operating and maintenance manual and other relevant certificates with all equipment, machineries, accessories, spare parts etc. All goods shall be manufactured in accordance with the latest version of international standards, especially PCE’s shall meet latest version of API6A,
+        </td>
+        <td width="50%">
+
+        </td>
+    </tr>
+</table>

@@ -1361,6 +1361,8 @@ class PurchaseRequestAPIController extends AppBaseController
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
+            }else{
+                $input['budgetBlockYN'] = 0;
             }
         }
 
