@@ -669,7 +669,7 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="text-align: center"><h3 style=" text-decoration: underline;">Master Service
+                <td width="100%" style="text-align: center"><h3 class="font-weight-bold" style=" text-decoration: underline;">Master Service
                         Agreement for Purchase of Goods and
                         Services</h3></td>
             </tr>
