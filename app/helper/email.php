@@ -16,6 +16,7 @@ use App\Models\Alert;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CustomerMaster;
+use App\Models\DebitNote;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\GRVMaster;
@@ -199,6 +200,13 @@ class email
                     if (!empty($stockAdjustment)) {
                         $data['docApprovedYN'] = $stockAdjustment->approved;
                         $data['docCode'] = $stockAdjustment->stockAdjustmentCode;
+                    }
+                    break;
+                case 15:
+                    $debitNote = DebitNote::where('debitNoteAutoID', $data['docSystemCode'])->first();
+                    if (!empty($debitNote)) {
+                        $data['docApprovedYN'] = $debitNote->approved;
+                        $data['docCode'] = $debitNote->debitNoteCode;
                     }
                     break;
                 default:
