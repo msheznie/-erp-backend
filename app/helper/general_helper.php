@@ -292,6 +292,17 @@ class Helper
                     $docInforArr["modelName"] = 'StockAdjustment';
                     $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
                     break;
+                case 15:
+                    $docInforArr["documentCodeColumnName"] = 'debitNoteCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_debitnote';
+                    $docInforArr["modelName"] = 'DebitNote';
+                    $docInforArr["primarykey"] = 'debitNoteAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }

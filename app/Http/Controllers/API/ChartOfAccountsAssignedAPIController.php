@@ -173,7 +173,20 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
     public function getDirectInvoiceGL(request $request){
         $input = $request->all();
         $companyID = $input['companyID'];
-        $items = ChartOfAccountsAssigned::where('companySystemID', $companyID)->where('controllAccountYN', 0)->where('isAssigned', -1)->where('isActive',1 );
+
+
+        $items = ChartOfAccountsAssigned::where('companySystemID', $companyID)->where('controllAccountYN', 0)
+                                          ->where('isAssigned', -1)
+                                          ->where('isAssigned', -1);
+
+        if(isset($input['controllAccountYN'])){
+            $items = $items->where('controllAccountYN',0);
+        }
+
+        if(isset($input['isBank'])){
+            $items = $items->where('isBank',0);
+        }
+
         if (array_key_exists('search', $input)) {
             $search = $input['search'];
             $items = $items->where(function ($query) use ($search) {
