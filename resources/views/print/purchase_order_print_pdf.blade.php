@@ -747,21 +747,41 @@
                     Production and Expiry date shall also be marked on chemical products.
                 </td>
                 <td width="50%" style="text-align: justify">
-                    Goods so delivered or Services so performed and to cancel or vary the balance of the Order.<br>
+                    (F) Supplier shall provide Certificate of Conformity, operating and maintenance manual and other
+                    relevant certificates with all equipment, machineries, accessories, spare parts etc. All goods shall
+                    be
+                    manufactured in accordance with the latest version of international standards, especially PCE’s
+                    shall
+                    meet latest version of API6A, API16A and NACEMR0175 standards and CT string shall meet API5ST
+                    standard.<br><br>
+                    <span class="font-weight-bold">5. DELIVERY</span><br>
+                    (A) Time is of the essence in the performance by the Supplier of the Order. If delivery dates for
+                    the
+                    Goods or the dates for the provision and/or performance of the Services cannot be met, the Supplier
+                    shall promptly notify the Company of the earliest possible date for delivery of the Goods or the
+                    provision of the Services. Notwithstanding such notice, and unless a substitute delivery date for
+                    the
+                    Goods or date for the provision of the Services has been expressly agreed to by the Company in
+                    writing,
+                    the Supplier's failure to effect delivery of the Goods or the provision of Services on the date
+                    specified shall entitle the Company to cancel the Order without liability to the Supplier, to
+                    purchase
+                    substitute items or services elsewhere, and to recover
+                    from the Supplier any loss and additional costs incurred.<br>
+                    (B) If delivery or performance pursuant to the Order is incomplete, the Company reserves the right
+                    (without prejudice to any of its other rights) to accept or reject the goods so delivered or
+                    Services so performed and to cancel or vary the balance of the Order.<br>
                     (C) The Goods must be delivered at the delivery point specified in the Order. If the Goods are
                     incorrectly delivered, the Supplier will be liable for any additional expense involved in handling
-                    and
-                    delivering them to their correct destination.<br>
+                    and delivering them to their correct destination.<br>
                     (D) In the event, of default by the Supplier, the Supplier shall pay the Company, as liquidated
-                    damages
-                    2% of the total value of the delayed Goods and/or Services, (and not as a penalty) for each week’s
-                    (7
-                    consecutive days) delay, up to a maximum of the value of the relevant Order. The Supplier shall pay
-                    these liquidated damages on demand or the Company may deduct them from its payments to the Supplier.
-                    These liquidated damages shall be due and payable by Supplier to the Company without prejudice to
-                    any
-                    other rights the Company may have hereunder. The parties confirm that these liquidated damages are
-                    reasonable and proportionate to protect the Company’s legitimate interest in performance.<br><br>
+                    damages 2% of the total value of the delayed Goods and/or Services, (and not as a penalty) for each
+                    week’s (7 consecutive days) delay, up to a maximum of the value of the relevant Order. The Supplier
+                    shall pay these liquidated damages on demand or the Company may deduct them from its payments to the
+                    Supplier. These liquidated damages shall be due and payable by Supplier to the Company without
+                    prejudice to any other rights the Company may have hereunder. The parties confirm that these
+                    liquidated damages are reasonable and proportionate to protect the Company’s legitimate interest in
+                    performance.<br><br>
                     <span class="font-weight-bold">6. WARRANTY</span><br>
                     (A) The Supplier warrants, and it is a condition of the Order, that the Goods supplied to the
                     Company
@@ -795,20 +815,7 @@
                     requirements of IS09001 or an internationally recognized standard of the same level, and conforming
                     to
                     laws and regulations of the jurisdiction governing its operations, and shall have a defined person
-                    within its organization responsible for compliance therewith. The Supplier shall send copies of all
-                    non-conformance reports and dispensations issued by any regulatory agency following the most recent
-                    certifications, to the Company as soon as the same become available. The Company may conduct a
-                    quality
-                    audit at any time in relation to all or any of the foregoing and may terminate the Order if the
-                    Supplier
-                    at any time does not meet, in the Company's reasonable opinion, the requirements mentioned above, or
-                    fails to implement corrective actions recommended by the Company.<br>
-                    (C) The Supplier agrees to allow a representative of the Company to enter the Supplier's premises on
-                    reasonable prior notice to inspect the Goods and/or Services.<br>
-                    (D) The Company reserves the right at any time to change the relevant Order by written instruction,
-                    in
-                    which event the Supplier shall notify the Company of any consequent change in price within seven (7)
-                    days of receipt of such change order, which the Company shall then accept or reject. No increase<br><br><br><br>
+                    within its organization responsible for compliance there with.
                 </td>
             </tr>
         </table>
@@ -816,78 +823,16 @@
         <table style="width:100%">
             <tr>
                 <td width="50%" style="text-align: justify">
-                    (F) Supplier shall provide Certificate of Conformity, operating and maintenance manual and other
-                    relevant certificates with all equipment, machineries, accessories, spare parts etc. All goods shall
-                    be
-                    manufactured in accordance with the latest version of international standards, especially PCE’s
-                    shall
-                    meet latest version of API6A, API16A and NACEMR0175 standards and CT string shall meet API5ST
-                    standard.<br><br>
-                    <span class="font-weight-bold">5. DELIVERY</span><br>
-                    (A) Time is of the essence in the performance by the Supplier of the Order. If delivery dates for
-                    the
-                    Goods or the dates for the provision and/or performance of the Services cannot be met, the Supplier
-                    shall promptly notify the Company of the earliest possible date for delivery of the Goods or the
-                    provision of the Services. Notwithstanding such notice, and unless a substitute delivery date for
-                    the
-                    Goods or date for the provision of the Services has been expressly agreed to by the Company in
-                    writing,
-                    the Supplier's failure to effect delivery of the Goods or the provision of Services on the date
-                    specified shall entitle the Company to cancel the Order without liability to the Supplier, to
-                    purchase
-                    substitute items or services elsewhere, and to recover
-                    from the Supplier any loss and additional costs incurred.<br>
-                    (B) If delivery or performance pursuant to the Order is incomplete, the Company reserves the right
-                    (without prejudice to any of its other rights) to accept or reject the limitation any liability
-                    arising
-                    from any injury or loss to any person or persons or any
-                    damage to or loss of any property, directly or indirectly arising out of or in
-                    connection with:<br>
-                    (i) any alleged or actual infringement of any patent, registered design, copyright, trade
-                    mark or other rights of property vested in any other person, firm or company resulting
-                    from the purchase, use or resale by the Company, its servants, agents or clients of the
-                    Goods or the Services or any part thereof;<br>
-                    (ii) any act or omission in the performance of or in connection with any or all of the
-                    obligations undertaken by the Supplier pursuant to the Order, whether by reason of the
-                    negligence of the Supplier, its agents, employees or sub-contractors or their agents or
-                    employees, or otherwise;<br>
-                    (iii) any alleged fault or defect howsoever rising in the Goods (whether in materials,
-                    workmanship or otherwise); Provided that the Supplier shall have no obligation to
-                    indemnify under this Condition if and to the extent that any relevant liability,
-                    damage, loss, cost or expense incurred was only incurred because the Supplier
-                    delivered the Goods or provided the Services solely in accordance with designs, plans
-                    or specifications supplied by the Company.<br><br>
-                    <span class="font-weight-bold">10. INSURANCE</span><br>
-                    (A) The Supplier will at all times insure and keep itself insured with a reputable
-                    insurance company in compliance with local legislation against all insurable liability
-                    under the Order and in respect of the Goods or the Services including without
-                    limitation all the Supplier's liabilities under Condition 9. The Supplier will promptly
-                    advise the Company of any claim made against the Supplier arising out of the
-                    Supplier’s performance of the Order. The Supplier will provide all facilities, assistance
-                    and advice required by the Company or the Company's insurers for the purpose of
-                    contesting or dealing with any action, claim or matter arising out of the Supplier's
-                    performance of the Order.<br>
-                    (B) Without limitation of its liabilities and obligations hereunder, the Supplier shall at its
-                    own cost obtain and maintain in full force and effect, as a minimum, the following
-                    insurance policies all of which shall be endorsed to show the Company as
-                    additional insured and all liability policies of which shall include a cross liability clause
-                    to the effect that the Company will be treated as third party towards the first named
-                    insured in respect of any claim made by the Company against the additional insured.
-                    Deductibles, if any, will be borne by the Supplier and the rejection or late
-                    settlement of any claim will not be opposed to the Company:<br>
-                    (i) Workmen's Compensation insurance up to statutory limits;<br>
-                    (ii) Employer's Liability up to statutory limits or US$2,000,000 for any one
-                    occurrence, whichever is the higher;<br>
-                    (iii) Automobile Insurance up to statutory limits, but not less than US$2,000,000 for any
-                    one accident in respect of personal injury and US$500,000 for any one accident in
-                    respect of property damage;<br>
-                    (iv) General Third Party Liability Insurance including product liability and, if
-                    applicable, contractual liability with a combined single limit of not less than
-                    US$2,000,000 for any one occurrence for personal injury and property damage;<br>
-                    (v) If applicable, Professional Liability insurance up to with limits to be agreed between
-                    the parties in writing;
-                </td>
-                <td width="50%" style="text-align: justify">
+                    The Supplier shall send copies of all
+                    non-conformance reports and dispensations issued by any regulatory agency following the most recent
+                    certifications, to the Company as soon as the same become available. The Company may conduct a
+                    quality
+                    audit at any time in relation to all or any of the foregoing and may terminate the Order if the
+                    Supplier
+                    at any time does not meet, in the Company's reasonable opinion, the requirements mentioned above, or
+                    fails to implement corrective actions recommended by the Company.<br>
+                    (C) The Supplier agrees to allow a representative of the Company to enter the Supplier's premises on reasonable prior notice to inspect the Goods and/or Services.<br>
+                    (D) The Company reserves the right at any time to change the relevant Order by written instruction, in which event the Supplier shall notify the Company of any consequent change in price within seven (7) days of receipt of such change order, which the Company shall then accept or reject. No increase in price shall be allowed if the Supplier fails to give timely notification to the Company.<br><br>
                     <span class="font-weight-bold"> 8. ACCEPTANCE OF GOODS AND SERVICES</span><br>
                     (A) The Goods and the provision of the Services shall be subject to inspection and testing by the
                     Company prior to acceptance. In any case where the Goods, the Services or any part thereof (whether
@@ -919,57 +864,59 @@
                     or
                     Services or any part thereof during the period of twelve (12) consecutive months (or in the case of
                     any
-                    latent or inherent defect, the period of twelve<br>
+                    latent or inherent defect, the period of twelve
                     (12) consecutive months after the same could first reasonably have been discovered) commencing on
                     the
                     date of acceptance.<br><br>
                     <span class="font-weight-bold"> 9. INDEMNITY</span><br>
-                    The Supplier agrees to indemnify and at all times to hold the Company, its agents, employees,
-                    officers,
-                    subsidiaries, associated companies and assigns harmless from and against any and all liability,
-                    damage,
-                    loss, cost or expense, including without prejudice to any other rights or remedies to which it may
-                    be
-                    entitled, the
-                    Company shall have the right to terminate the Order in whole or in part at any time by
-                    giving the Supplier notice in writing. The Supplier shall on receipt of such notice
-                    immediately discontinue the supply of Goods or the provision of Services. The
-                    Company shall pay a fair and reasonable price for such work-in-progress properly
-                    performed and the Supplier shall afford the Company every assistance to ascertain
-                    the extent of, and to minimize expenses and costs in relation to, such work-in-progress
-                    and shall submit all final invoices to the Company within two (2) months of notice
-                    of termination. Such payment by the Company shall constitute full and final
-                    satisfaction of any claims arising out of such termination and upon such payment the
-                    Supplier shall deliver to the Company all work completed or in progress. In no event
-                    shall the amount payable by the Company under this Condition (B) exceed the amount
-                    that would have been payable had the Order not been terminated.<br><br>
-                    <span class="font-weight-bold">12. TITLE AND RISK</span><br>
-                    The property and risk in the Goods shall pass to the Company on delivery of the
-                    Goods in accordance with the Order, without prejudice to any right of rejection which
-                    may accrue to the Company under these Conditions or otherwise. The Supplier shall
-                    be liable for, and indemnify the Company against, any and all liens, charges,
-                    claims and other encumbrances in respect of any and all Goods or Services
-                    provided hereunder.<br><br>
-                    <span class="font-weight-bold">13. ASSIGNMENT</span><br>
-                    Neither the Order nor any part thereof shall be assigned, sub-contracted or transferred
-                    in any other manner to a third party without the Company's prior written
-                    consent. Any such consent shall not relieve the Supplier of any obligation to comply
-                    with these Conditions or the Order.<br><br>
-                    <span class="font-weight-bold">14. PRICE</span><br>
-                    (A) All prices for the Goods and the Services shall be as stated in the Order, and
-                    unless otherwise provided cover the cost of packaging, insurance and freight. Only
-                    variations agreed to in writing by the parties as a result of changes in the Order will be
-                    accepted. If no such price is stated, the price of the Goods or the Services shall be the
-                    lowest price currently quoted or charged at the date of the Order by the Supplier for
-                    those Goods or Services, but in no event higher than the price most recently charged
-                    to the Company by the Supplier for those Goods or Services.
+                    The Supplier agrees to indemnify and at all times to hold the Company, its agents, employees, officers, subsidiaries, associated companies and assigns harmless from and against any and all liability, damage, loss, cost or expense, including without limitation any liability arising from any injury or loss to any person or persons or any
+                    damage to or loss of any property, directly or indirectly arising out of or in
+                    connection with:<br>
+                    (i) any alleged or actual infringement of any patent, registered design, copyright, trade
+                    mark or other rights of property vested in any other person, firm or company resulting
+                    from the purchase, use or resale by the Company, its servants, agents or clients of the
+                    Goods or the Services or any part thereof;<br>
+                    (ii) any act or omission in the performance of or in connection with any or all of the
+                    obligations undertaken by the Supplier pursuant to the Order, whether by reason of the
+                    negligence of the Supplier, its agents, employees or sub-contractors or their agents or
+                    employees, or otherwise;<br>
+                    (iii) any alleged fault or defect howsoever rising in the Goods (whether in materials,
+                    workmanship or otherwise); Provided that the Supplier shall have no obligation to
+                    indemnify under this Condition if and to the extent that any relevant liability,
+                    damage, loss, cost or expense incurred was only incurred because the Supplier
+                    delivered the Goods or provided the Services solely in accordance with designs, plans
+                    or specifications supplied by the Company.
                 </td>
-            </tr>
-        </table>
-        <div class="page_break"></div>
-        <table style="width:100%">
-            <tr>
                 <td width="50%" style="text-align: justify">
+                    <span class="font-weight-bold">10. INSURANCE</span><br>
+                    (A) The Supplier will at all times insure and keep itself insured with a reputable
+                    insurance company in compliance with local legislation against all insurable liability
+                    under the Order and in respect of the Goods or the Services including without
+                    limitation all the Supplier's liabilities under Condition 9. The Supplier will promptly
+                    advise the Company of any claim made against the Supplier arising out of the
+                    Supplier’s performance of the Order. The Supplier will provide all facilities, assistance
+                    and advice required by the Company or the Company's insurers for the purpose of
+                    contesting or dealing with any action, claim or matter arising out of the Supplier's
+                    performance of the Order.<br>
+                    (B) Without limitation of its liabilities and obligations hereunder, the Supplier shall at its
+                    own cost obtain and maintain in full force and effect, as a minimum, the following
+                    insurance policies all of which shall be endorsed to show the Company as
+                    additional insured and all liability policies of which shall include a cross liability clause
+                    to the effect that the Company will be treated as third party towards the first named
+                    insured in respect of any claim made by the Company against the additional insured.
+                    Deductibles, if any, will be borne by the Supplier and the rejection or late
+                    settlement of any claim will not be opposed to the Company:<br>
+                    (i) Workmen's Compensation insurance up to statutory limits;<br>
+                    (ii) Employer's Liability up to statutory limits or US$2,000,000 for any one
+                    occurrence, whichever is the higher;<br>
+                    (iii) Automobile Insurance up to statutory limits, but not less than US$2,000,000 for any
+                    one accident in respect of personal injury and US$500,000 for any one accident in
+                    respect of property damage;<br>
+                    (iv) General Third Party Liability Insurance including product liability and, if
+                    applicable, contractual liability with a combined single limit of not less than
+                    US$2,000,000 for any one occurrence for personal injury and property damage;<br>
+                    (v) If applicable, Professional Liability insurance up to with limits to be agreed between
+                    the parties in writing;<br>
                     (vi) Fire and Explosion insurance in respect of the Company's property while in the
                     care, custody or control of, the Supplier or Supplier's contractors in amount(s) agreed
                     in writing by the Company;<br>
@@ -1007,38 +954,47 @@
                     or suffers any similar or analogous action in consequence of debt or commits any
                     breach of this or any other contract between the Company and the Supplier; or if
                     the Company reasonably apprehends that any of the above is likely to occur.<br>
-                    execution of the Order save where expressly otherwise agreed with the
-                    Company. The Supplier shall be obliged:<br>
-                    (i) promptly to disclose to the Company all inventions which it, its subcontractor or its
-                    or their employees have made pursuant to or in connection with the Order; and<br>
-                    (ii) to execute or have executed all documents and perform or have performed all such
-                    other acts, deeds and things as the Company may deem necessary or desirable
-                    to protect the Company's (or its assignee's) title to such inventions and to obtain and
-                    maintain patent coverage therefor throughout the world, subject to the Company
-                    agreeing to reimburse the Supplier for all the Supplier's reasonable costs incurred
-                    thereby.<br><br>
-                    <span class="font-weight-bold"> 17. TOOLING</span><br>
-                    All Tooling shall be and remains the property of the Company and the Supplier shall
-                    mark the Company’s name on such Tooling. The Supplier shall at the Supplier's
-                    expense maintain all Tooling in first class condition and immediately replace any
-                    Tooling which is lost or destroyed or becomes worn out. The Supplier shall adequately
-                    insure all Tooling against loss or destruction and shall produce on demand by the
-                    Company the policy of such insurance and the premium receipts. No Tooling shall be
-                    moved from the Supplier's premises or disposed of by the Supplier without the prior
-                    written approval of the Company. No Tooling shall be used in the production,
-                    manufacture or design of any goods or materials other than those contracted for by or
-                    in pursuance neither of the relevant Order nor for larger quantities than those
-                    specified. The Company shall accept the invoicing of Tooling only if such Tooling has
-                    been specifically ordered and accepted by the Company under the Order.<br><br>
-                    <span class="font-weight-bold"> 18. THE COMPANY'S PROPERTY</span><br>
-                    The following provisions of this Condition shall apply to any material or property
-                    provided by the Company to the Supplier for any purpose in connection with the Order
-                    and whenever the Order requires the Supplier to repair or apply a process to goods or
-                    materials owned by the Company (hereinafter called "The Company’s Property") which
-                    the Company makes
                 </td>
+            </tr>
+        </table>
+        <div class="page_break"></div>
+        <table style="width:100%">
+            <tr>
                 <td width="50%" style="text-align: justify">
-                    B) Where Goods or Services are subject to purchase tax, value added tax or any
+                    (B) Without prejudice to any other rights or remedies to which it may be entitled, the
+                    Company shall have the right to terminate the Order in whole or in part at any time by
+                    giving the Supplier notice in writing. The Supplier shall on receipt of such notice
+                    immediately discontinue the supply of Goods or the provision of Services. The
+                    Company shall pay a fair and reasonable price for such work-in-progress properly
+                    performed and the Supplier shall afford the Company every assistance to ascertain
+                    the extent of, and to minimize expenses and costs in relation to, such work-in-progress
+                    and shall submit all final invoices to the Company within two (2) months of notice
+                    of termination. Such payment by the Company shall constitute full and final
+                    satisfaction of any claims arising out of such termination and upon such payment the
+                    Supplier shall deliver to the Company all work completed or in progress. In no event
+                    shall the amount payable by the Company under this Condition (B) exceed the amount
+                    that would have been payable had the Order not been terminated.<br><br>
+                    <span class="font-weight-bold">12. TITLE AND RISK</span><br>
+                    The property and risk in the Goods shall pass to the Company on delivery of the
+                    Goods in accordance with the Order, without prejudice to any right of rejection which
+                    may accrue to the Company under these Conditions or otherwise. The Supplier shall
+                    be liable for, and indemnify the Company against, any and all liens, charges,
+                    claims and other encumbrances in respect of any and all Goods or Services
+                    provided hereunder.<br><br>
+                    <span class="font-weight-bold">13. ASSIGNMENT</span><br>
+                    Neither the Order nor any part thereof shall be assigned, sub-contracted or transferred
+                    in any other manner to a third party without the Company's prior written
+                    consent. Any such consent shall not relieve the Supplier of any obligation to comply
+                    with these Conditions or the Order.<br><br>
+                    <span class="font-weight-bold">14. PRICE</span><br>
+                    (A) All prices for the Goods and the Services shall be as stated in the Order, and
+                    unless otherwise provided cover the cost of packaging, insurance and freight. Only
+                    variations agreed to in writing by the parties as a result of changes in the Order will be
+                    accepted. If no such price is stated, the price of the Goods or the Services shall be the
+                    lowest price currently quoted or charged at the date of the Order by the Supplier for
+                    those Goods or Services, but in no event higher than the price most recently charged
+                    to the Company by the Supplier for those Goods or Services.<br>
+                    (B) Where Goods or Services are subject to purchase tax, value added tax or any
                     other similar taxation, the amount legally payable by the Company is to be rendered as
                     a separate item of account on a valid tax invoice and, if required by the Company, the
                     Supplier will produce bona fide evidence of the amount paid or to be paid in respect
@@ -1067,7 +1023,9 @@
                     below, unless the Company has otherwise agreed in .writing, all Information of every
                     description prepared by the Supplier in connection with the Order shall be the
                     Company's sole property and the Company may reproduce and use the said items
-                    freely for any purpose whatsoever.<br>
+                    freely for any purpose whatsoever.
+                </td>
+                <td width="50%" style="text-align: justify">
                     (B) Any invention, whether or not patentable, made by the Supplier (or any
                     subcontractor of the Supplier) in connection with, but outside the scope of the Order,
                     shall belong to the Supplier (or its subcontractor) save that the Company shall be
@@ -1078,35 +1036,39 @@
                     enable the Company to maintain, repair or alter any Goods or any unit or component
                     used or specified by the Supplier pursuant to the Order. The Supplier agrees to
                     perform such acts, deeds and things as the Company may deem necessary to vest
-                    such rights as aforesaid in the Company (or any assignee of the Company).<br>
+                    such rights as aforesaid in the Company (or any assignee of the Company).
                     (C) Subject to Condition (B) above, all inventions, whether or not patentable, made by
                     the Supplier (or any subcontractor of the Supplier) and information obtained and knowhow
                     gained by the Supplier (or subcontractor of the Supplier) in connection with the
                     Order shall belong absolutely to the Company and the exploitation of any of the
-                    aforesaid by the Supplier (or subcontractor of the Supplier) shall be limited to<br><br>
-                    <span class="font-weight-bold">21. ADVERTISING</span><br>
-                    The Supplier will not without the prior written consent of the Company advertise or
-                    publish in any way whatsoever the fact that the Supplier has contracted to supply the
-                    Goods or the Services to the Company.<br><br>
-                    <span class="font-weight-bold">22. SEVERABILITY</span><br>
-                    Any provision or term of this contract which is or may be void or unenforceable shall to
-                    the extent of such invalidity or unenforceability be deemed severable and shall not
-                    affect any other provision hereof.<br><br>
-                    <span class="font-weight-bold">23. NOTICES</span><br>
-                    Any notice hereunder shall be deemed to have been duly given if sent by prepaid first
-                    class post, telex, telefax or telegraph to the party concerned at, in the case of the
-                    Supplier, its last known address, and, in the case of the Company, the address
-                    appearing on the Order. Notices sent by first class post shall be deemed to have been
-                    given seven (7) days after dispatch and notices sent by telex, telefax or telegraph shall
-                    be deemed to have been given on the date of dispatch.
-                </td>
-            </tr>
-        </table>
-        <div class="page_break"></div>
-        <table style="width:100%">
-            <tr>
-                <td width="50%" style="text-align: justify">
-                    available for that purpose:-<br>
+                    aforesaid by the Supplier (or subcontractor of the Supplier) shall be limited to execution of the Order save where expressly otherwise agreed with the Company. The Supplier shall be obliged:<br>
+                    (i) promptly to disclose to the Company all inventions which it, its subcontractor or its
+                    or their employees have made pursuant to or in connection with the Order; and<br>
+                    (ii) to execute or have executed all documents and perform or have performed all such
+                    other acts, deeds and things as the Company may deem necessary or desirable
+                    to protect the Company's (or its assignee's) title to such inventions and to obtain and
+                    maintain patent coverage therefor throughout the world, subject to the Company
+                    agreeing to reimburse the Supplier for all the Supplier's reasonable costs incurred
+                    thereby.<br><br>
+                    <span class="font-weight-bold"> 17. TOOLING</span><br>
+                    All Tooling shall be and remains the property of the Company and the Supplier shall
+                    mark the Company’s name on such Tooling. The Supplier shall at the Supplier's
+                    expense maintain all Tooling in first class condition and immediately replace any
+                    Tooling which is lost or destroyed or becomes worn out. The Supplier shall adequately
+                    insure all Tooling against loss or destruction and shall produce on demand by the
+                    Company the policy of such insurance and the premium receipts. No Tooling shall be
+                    moved from the Supplier's premises or disposed of by the Supplier without the prior
+                    written approval of the Company. No Tooling shall be used in the production,
+                    manufacture or design of any goods or materials other than those contracted for by or
+                    in pursuance neither of the relevant Order nor for larger quantities than those
+                    specified. The Company shall accept the invoicing of Tooling only if such Tooling has
+                    been specifically ordered and accepted by the Company under the Order.<br><br>
+                    <span class="font-weight-bold"> 18. THE COMPANY'S PROPERTY</span><br>
+                    The following provisions of this Condition shall apply to any material or property
+                    provided by the Company to the Supplier for any purpose in connection with the Order
+                    and whenever the Order requires the Supplier to repair or apply a process to goods or
+                    materials owned by the Company (hereinafter called "The Company’s Property") which
+                    the Company makes available for that purpose:-<br>
                     (i) The Company's Property shall be returnable on demand;<br>
                     (ii) The Supplier shall indemnify the Company against loss of or damage to the
                     Company's Property while it is in the care, custody or control of the Supplier or of any
@@ -1122,7 +1084,15 @@
                     information regarding the Company's Property asked for by the Company. The
                     Company and persons authorized by it shall be entitled at all reasonable times to
                     check and inspect the Company's Property and the Supplier's records thereof and may
-                    enter the Supplier's land and buildings for those purposes;
+                    enter the Supplier's land and buildings for those purposes;<br>
+
+                </td>
+            </tr>
+        </table>
+        <div class="page_break"></div>
+        <table style="width:100%">
+            <tr>
+                <td width="50%" style="text-align: justify">
                     (v) The Supplier shall promptly pay to the Company on demand the full replacement
                     value of any of the Company's Property which is not returned.<br><br>
                     <span class="font-weight-bold">19. INDEPENDENT CONTRACTOR</span><br>
@@ -1131,9 +1101,22 @@
                     <span class="font-weight-bold">20. LICENCES</span><br>
                     If the performance of the Order requires the Company to have any permit or license
                     from any government or other relevant authority, the Order shall be conditional upon
-                    such permit or license being available at the required time.<br><br><br><br><br><br><br><br><br>
-                </td>
-                <td width="50%" style="text-align: justify">
+                    such permit or license being available at the required time.<br><br>
+                    <span class="font-weight-bold">21. ADVERTISING</span><br>
+                    The Supplier will not without the prior written consent of the Company advertise or
+                    publish in any way whatsoever the fact that the Supplier has contracted to supply the
+                    Goods or the Services to the Company.<br><br>
+                    <span class="font-weight-bold">22. SEVERABILITY</span><br>
+                    Any provision or term of this contract which is or may be void or unenforceable shall to
+                    the extent of such invalidity or unenforceability be deemed severable and shall not
+                    affect any other provision hereof.<br><br>
+                    <span class="font-weight-bold">23. NOTICES</span><br>
+                    Any notice hereunder shall be deemed to have been duly given if sent by prepaid first
+                    class post, telex, telefax or telegraph to the party concerned at, in the case of the
+                    Supplier, its last known address, and, in the case of the Company, the address
+                    appearing on the Order. Notices sent by first class post shall be deemed to have been
+                    given seven (7) days after dispatch and notices sent by telex, telefax or telegraph shall
+                    be deemed to have been given on the date of dispatch.<br><br>
                     <span class="font-weight-bold">24. WAIVER</span><br>
                     Failure by the Company to exercise or enforce any rights under this contract or at law
                     shall not be deemed to be a waiver of any such right nor operate to bar its exercise or
@@ -1164,6 +1147,10 @@
                     Except as set out in these Conditions, no variation, including the introduction of any
                     additional terms and conditions, shall be effective unless it is agreed in writing and
                     signed by the parties or their authorized representatives.
+                </td>
+                <td width="50%" style="text-align: justify">
+
+
                 </td>
             </tr>
         </table>
