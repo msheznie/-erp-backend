@@ -800,5 +800,28 @@ class CreditNoteAPIController extends AppBaseController
         return $this->sendResponse($creditNote->toArray(), 'Credit Note retrieved successfully');
     }
 
+    public function printCreditNote(Request $request){
+        $id = $request->get('id');
+        $creditNote = $this->creditNoteRepository->getAudit($id);
+
+
+
+        if (empty($creditNote)) {
+            return $this->sendError('Credit note not found.');
+        }
+
+
+        $creditNote->docRefNo = \Helper::getCompanyDocRefNo($creditNote->companySystemID, $creditNote->documentSystemiD);
+
+        $array = array('request' => $creditNote);
+        $time = strtotime("now");
+        $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
+        $html = view('print.credit_note', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+    }
+
 
 }
