@@ -119,6 +119,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
 
     Route::resource('item/assigneds', 'ItemAssignedAPIController');
+    Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
 
     Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
 

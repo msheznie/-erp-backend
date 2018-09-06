@@ -7,6 +7,8 @@
 -- Author : Mohamed Fayas
 -- Create date : 14 - March 2018
 -- Description : This file contains the all CRUD for Item Assigned
+ * -- Date: 6-September 2018 By: Fayas Description: Added new functions named as getAllAssignedItemsByCompany(),
+ *
 -- REVISION HISTORY
  */
 namespace App\Http\Controllers\API;
@@ -159,5 +161,90 @@ class ItemAssignedAPIController extends AppBaseController
         $itemAssigned->delete();
 
         return $this->sendResponse($id, 'Item Assigned deleted successfully');
+    }
+
+    /**
+     * Display a listing of the Items by company.
+     * POST /getAllAssignedItemsByCompany
+     *
+     * @param Request $request
+     * @return Response
+     */
+
+    public function getAllAssignedItemsByCompany(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,array('financeCategoryMaster','financeCategorySub','isActive','itemApprovedYN','itemConfirmedYN'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+
+        $itemMasters = ItemAssigned::with(['unit', 'financeMainCategory', 'financeSubCategory'])
+                                   ->whereIn('companySystemID',$childCompanies);
+
+        if (array_key_exists('financeCategoryMaster', $input)) {
+            if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
+                $itemMasters->where('financeCategoryMaster', $input['financeCategoryMaster']);
+            }
+        }
+
+        if (array_key_exists('financeCategorySub', $input)) {
+            if ($input['financeCategorySub'] > 0 && !is_null($input['financeCategorySub'])) {
+                $itemMasters->where('financeCategorySub', $input['financeCategorySub']);
+            }
+        }
+
+        if (array_key_exists('isActive', $input)) {
+            if (($input['isActive'] == 0 || $input['isActive'] == 1) && !is_null($input['isActive'])) {
+                $itemMasters->where('isActive', $input['isActive']);
+            }
+        }
+        if (array_key_exists('itemApprovedYN', $input)) {
+            if (($input['itemApprovedYN'] == 0 || $input['itemApprovedYN'] == 1) && !is_null($input['itemApprovedYN'])) {
+                $itemMasters->where('itemApprovedYN', $input['itemApprovedYN']);
+            }
+        }
+
+        if (array_key_exists('itemConfirmedYN', $input)) {
+            if (($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1) && !is_null($input['itemConfirmedYN'])) {
+                $itemMasters->where('itemConfirmedYN', $input['itemConfirmedYN']);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if($search){
+            $itemMasters =   $itemMasters->where(function ($query) use($search) {
+                $query->where('primaryCode','LIKE',"%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($itemMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
     }
 }
