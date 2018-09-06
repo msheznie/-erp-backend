@@ -7,6 +7,7 @@ use App\Http\Requests\API\UpdateCreditNoteDetailsAPIRequest;
 use App\Models\CreditNoteDetails;
 use App\Models\CreditNote;
 use App\Models\chartOfAccount;
+use App\Models\Contract;
 use App\Models\SegmentMaster;
 use App\Repositories\CreditNoteDetailsRepository;
 use Illuminate\Http\Request;
@@ -387,6 +388,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
         $id = $input['creditNoteDetailsID'];
+        array_except($input,'creditNoteDetailsID');
 
         $detail = CreditNoteDetails::where('creditNoteDetailsID', $id)->first();
 
@@ -477,10 +479,11 @@ class CreditNoteDetailsAPIController extends AppBaseController
         DB::beginTransaction();
 
         try {
-            $x=CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $detail->custInvDirDetAutoID)->update($input);
-            $allDetail = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $detail->custInvoiceDirectID)->first()->toArray();
 
-            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->update($allDetail);
+            $x=CreditNoteDetails::where('creditNoteDetailsID', $id)->update($input);
+            $details = CreditNoteDetails::select(DB::raw("SUM(creditAmount) as creditAmountTrans"), DB::raw("SUM(localAmount) as creditAmountLocal"), DB::raw("SUM(comRptAmount) as creditAmountRpt"))->where('creditNoteAutoID', $detail->creditNoteAutoID)->first()->toArray();
+            CreditNote::where('creditNoteAutoID', $detail->creditNoteAutoID)->update($details);
+
 
 
             DB::commit();
