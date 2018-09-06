@@ -19,6 +19,7 @@ use App\Models\Company;
 use App\Models\CreditNote;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
+use App\Models\DebitNote;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\GRVMaster;
@@ -204,6 +205,13 @@ class email
                         $data['docCode'] = $stockAdjustment->stockAdjustmentCode;
                     }
                     break;
+                case 15:
+                    $debitNote = DebitNote::where('debitNoteAutoID', $data['docSystemCode'])->first();
+                    if (!empty($debitNote)) {
+                        $data['docApprovedYN'] = $debitNote->approved;
+                        $data['docCode'] = $debitNote->debitNoteCode;
+                    }
+                    break;
                 case 21:
                     $receiptVoucher = CustomerReceivePayment::where('custReceivePaymentAutoID', $data['docSystemCode'])->first();
                     if (!empty($receiptVoucher)) {
@@ -227,7 +235,6 @@ class email
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
-
             }
 
             $data['isEmailSend'] = 0;

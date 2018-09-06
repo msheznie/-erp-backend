@@ -292,6 +292,17 @@ class Helper
                     $docInforArr["modelName"] = 'StockAdjustment';
                     $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
                     break;
+                case 15:
+                    $docInforArr["documentCodeColumnName"] = 'debitNoteCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_debitnote';
+                    $docInforArr["modelName"] = 'DebitNote';
+                    $docInforArr["primarykey"] = 'debitNoteAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1017,7 +1028,9 @@ class Helper
                                                     $userMessageE .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
                                                     $userMessageE .= "<br>";
                                                     $userMessageE .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
-
+                                                    // update PR master table
+                                                    $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
+                                                    DB::commit();
                                                     return ['success' => false, 'message' => $userMessageE];
                                                 } else {
                                                     $userMessage .= "<br>";
@@ -1030,6 +1043,9 @@ class Helper
                                                     $userMessage .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
                                                     $userMessage .= "<br>";
                                                     $userMessage .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+
+                                                    // update PR master table
+                                                    $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
                                                 }
 
                                             }
