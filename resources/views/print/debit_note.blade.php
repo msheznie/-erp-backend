@@ -155,9 +155,8 @@
         }
         .border-bottom-remov{
             border-bottom: 1px solid #ffffffff !important;
-            border-right: 1px solid #ffffff !important;
             background-color: #ffffff !important;
-            border-right: 0;
+            border-right:  1px solid #ffffffff !important;
         }
     </style>
 </head>
