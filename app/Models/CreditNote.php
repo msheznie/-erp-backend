@@ -308,6 +308,7 @@ class CreditNote extends Model
         'approved',
         'approvedDate',
         'postedDate',
+        'secondaryLogoCompanySystemID',
         'secondaryLogoCompID',
         'secondaryLogo',
         'matchInvoice',
@@ -364,6 +365,7 @@ class CreditNote extends Model
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approved' => 'integer',
+        'secondaryLogoCompanySystemID'=>'integer',
         'secondaryLogoCompID' => 'string',
         'secondaryLogo' => 'string',
         'matchInvoice' => 'integer',
@@ -426,5 +428,15 @@ class CreditNote extends Model
     public function createduser()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function finance_period_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function finance_year_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 }
