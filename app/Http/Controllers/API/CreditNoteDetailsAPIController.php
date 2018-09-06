@@ -436,42 +436,48 @@ class CreditNoteDetailsAPIController extends AppBaseController
 
             $input['creditAmountCurrency'] = $master->customerCurrencyID;
             $input['creditAmountCurrencyER'] = 1;
-            $totalAmount =$input['creditAmount'];
+             $totalAmount =$input['creditAmount'];
             $input['creditAmount'] = round($input['creditAmount'], $decimal);
             /**/
             $MyRptAmount = 0;
-            if ($master->customerCurrencyID == $master->companyReportingCurrencyID) {
-                $MyRptAmount = $totalAmount;
-            } else {
-                if ($master->companyReportingER > $master->customerCurrencyER) {
-                    if ($master->companyReportingER > 1) {
-                        $MyRptAmount = ($totalAmount / $master->companyReportingER);
-                    } else {
-                        $MyRptAmount = ($totalAmount * $master->companyReportingER);
-                    }
+            if($totalAmount !=0) {
+                if ($master->customerCurrencyID == $master->companyReportingCurrencyID) {
+                    $MyRptAmount = $totalAmount;
                 } else {
-                    if ($master->companyReportingER > 1) {
-                        $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                    if ($master->companyReportingER > $master->customerCurrencyER) {
+                        if ($master->companyReportingER > 1) {
+                            $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                        } else {
+                            $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                        }
                     } else {
-                        $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                        if ($master->companyReportingER > 1) {
+                            $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                        } else {
+                            $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                        }
                     }
                 }
             }
             $input["comRptAmount"] =   \Helper::roundValue($MyRptAmount);
-            if ($master->customerCurrencyID == $master->localCurrencyID) {
-                $MyLocalAmount = $totalAmount;
-            } else {
-                if ($master->localCurrencyER > $master->customerCurrencyER) {
-                    if ($master->localCurrencyER > 1) {
-                        $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
-                    } else {
-                        $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
-                    }
+            $MyLocalAmount=0;
+            if($totalAmount !=0) {
+                if ($master->customerCurrencyID == $master->localCurrencyID) {
+                    $MyLocalAmount = $totalAmount;
                 } else {
-                    if ($master->localCurrencyER > 1) {
-                        $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                    if ($master->localCurrencyER > $master->customerCurrencyER) {
+                        if ($master->localCurrencyER > 1) {
+                            $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                        } else {
+                            $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                        }
                     } else {
-                        $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                        if ($master->localCurrencyER > 1) {
+                            $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                        } else {
+                            $master->localCurrencyER;
+                            $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                        }
                     }
                 }
             }

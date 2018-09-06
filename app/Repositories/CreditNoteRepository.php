@@ -88,9 +88,13 @@ class CreditNoteRepository extends BaseRepository
     {
         $creditNote = $this->with(['company', 'customer', 'createduser','currency', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
-                ->where('documentSystemID', 20);
-        }, 'details'
+                ->where('documentSystemID', 19);
+        }, 'details'=>function($query){
+            $query->with('segment');
+        }
         ])->findWithoutFail($id);
+
+        return $creditNote;
 
     }
 }
