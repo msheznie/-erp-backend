@@ -119,6 +119,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
 
     Route::resource('item/assigneds', 'ItemAssignedAPIController');
+    Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
 
     Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
 
@@ -721,8 +722,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
     Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
 
-
-
+    
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
 
@@ -755,6 +755,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice');
     Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
     Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
+    Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
+    Route::post('getInvoiceMasterApproval', 'BookInvSuppMasterAPIController@getInvoiceMasterApproval');
+    Route::post('getApprovedInvoiceForCurrentUser', 'BookInvSuppMasterAPIController@getApprovedInvoiceForCurrentUser');
+    Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
+    Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice');
     Route::get('getCreditNoteViewFormData', 'CreditNoteAPIController@getCreditNoteViewFormData');
     Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
     Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
@@ -763,8 +768,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
     Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
     Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
-
-
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

@@ -669,7 +669,7 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="text-align: center"><h3 class="font-weight-bold" style=" text-decoration: underline;">Master Service
+                <td width="100%" style="text-align: center;font-size: 9px;"><h3 class="font-weight-bold" style=" text-decoration: underline;">Master Service
                         Agreement for Purchase of Goods and
                         Services</h3></td>
             </tr>
@@ -677,7 +677,7 @@
         <br>
         <table style="width:100%">
             <tr>
-                <td width="50%" style="text-align: justify">
+                <td width="50%" style="text-align: justify;font-size: 9px;">
                     <span class="font-weight-bold">1. DEFINITIONS</span><br>
                     In these Conditions:<br>
                     (A) “Affiliate” means in relation to any person, a subsidiary of that person or a holding company of
@@ -744,9 +744,7 @@
                     E.F.T.A. or other applicable preferences.<br>
                     (E) All lifting equipment shall meet the requirements of BSEN12079 standard. All chemicals shall be
                     supplied with latest MSDS and packaging/marking shall be done as specified on MSDS. Batch number,
-                    Production and Expiry date shall also be marked on chemical products.
-                </td>
-                <td width="50%" style="text-align: justify">
+                    Production and Expiry date shall also be marked on chemical products.<br>
                     (F) Supplier shall provide Certificate of Conformity, operating and maintenance manual and other
                     relevant certificates with all equipment, machineries, accessories, spare parts etc. All goods shall
                     be
@@ -773,7 +771,10 @@
                     Services so performed and to cancel or vary the balance of the Order.<br>
                     (C) The Goods must be delivered at the delivery point specified in the Order. If the Goods are
                     incorrectly delivered, the Supplier will be liable for any additional expense involved in handling
-                    and delivering them to their correct destination.<br>
+                    and delivering them to their correct destination.
+                </td>
+                <td width="1%">&nbsp;</td>
+                <td width="49%" style="text-align: justify; font-size: 9px;">
                     (D) In the event, of default by the Supplier, the Supplier shall pay the Company, as liquidated
                     damages 2% of the total value of the delayed Goods and/or Services, (and not as a penalty) for each
                     week’s (7 consecutive days) delay, up to a maximum of the value of the relevant Order. The Supplier
@@ -816,13 +817,6 @@
                     to
                     laws and regulations of the jurisdiction governing its operations, and shall have a defined person
                     within its organization responsible for compliance there with.
-                </td>
-            </tr>
-        </table>
-        <div class="page_break"></div>
-        <table style="width:100%">
-            <tr>
-                <td width="50%" style="text-align: justify">
                     The Supplier shall send copies of all
                     non-conformance reports and dispensations issued by any regulatory agency following the most recent
                     certifications, to the Company as soon as the same become available. The Company may conduct a
@@ -872,6 +866,13 @@
                     The Supplier agrees to indemnify and at all times to hold the Company, its agents, employees, officers, subsidiaries, associated companies and assigns harmless from and against any and all liability, damage, loss, cost or expense, including without limitation any liability arising from any injury or loss to any person or persons or any
                     damage to or loss of any property, directly or indirectly arising out of or in
                     connection with:<br>
+                </td>
+            </tr>
+        </table>
+        <div class="page_break"></div>
+        <table style="width:100%">
+            <tr>
+                <td width="50%" style="text-align: justify;font-size: 9px;">
                     (i) any alleged or actual infringement of any patent, registered design, copyright, trade
                     mark or other rights of property vested in any other person, firm or company resulting
                     from the purchase, use or resale by the Company, its servants, agents or clients of the
@@ -885,9 +886,7 @@
                     indemnify under this Condition if and to the extent that any relevant liability,
                     damage, loss, cost or expense incurred was only incurred because the Supplier
                     delivered the Goods or provided the Services solely in accordance with designs, plans
-                    or specifications supplied by the Company.
-                </td>
-                <td width="50%" style="text-align: justify">
+                    or specifications supplied by the Company.<br><br>
                     <span class="font-weight-bold">10. INSURANCE</span><br>
                     (A) The Supplier will at all times insure and keep itself insured with a reputable
                     insurance company in compliance with local legislation against all insurable liability
@@ -953,14 +952,10 @@
                     Manager or which entitle the court to make a winding up order; or if the Supplier takes
                     or suffers any similar or analogous action in consequence of debt or commits any
                     breach of this or any other contract between the Company and the Supplier; or if
-                    the Company reasonably apprehends that any of the above is likely to occur.<br>
+                    the Company reasonably apprehends that any of the above is likely to occur.<br><br><br><br><br>
                 </td>
-            </tr>
-        </table>
-        <div class="page_break"></div>
-        <table style="width:100%">
-            <tr>
-                <td width="50%" style="text-align: justify">
+                <td width="1%">&nbsp;</td>
+                <td width="49%" style="text-align: justify;font-size: 9px;">
                     (B) Without prejudice to any other rights or remedies to which it may be entitled, the
                     Company shall have the right to terminate the Order in whole or in part at any time by
                     giving the Supplier notice in writing. The Supplier shall on receipt of such notice
@@ -1023,9 +1018,7 @@
                     below, unless the Company has otherwise agreed in .writing, all Information of every
                     description prepared by the Supplier in connection with the Order shall be the
                     Company's sole property and the Company may reproduce and use the said items
-                    freely for any purpose whatsoever.
-                </td>
-                <td width="50%" style="text-align: justify">
+                    freely for any purpose whatsoever.<br>
                     (B) Any invention, whether or not patentable, made by the Supplier (or any
                     subcontractor of the Supplier) in connection with, but outside the scope of the Order,
                     shall belong to the Supplier (or its subcontractor) save that the Company shall be
@@ -1036,7 +1029,7 @@
                     enable the Company to maintain, repair or alter any Goods or any unit or component
                     used or specified by the Supplier pursuant to the Order. The Supplier agrees to
                     perform such acts, deeds and things as the Company may deem necessary to vest
-                    such rights as aforesaid in the Company (or any assignee of the Company).
+                    such rights as aforesaid in the Company (or any assignee of the Company).<br>
                     (C) Subject to Condition (B) above, all inventions, whether or not patentable, made by
                     the Supplier (or any subcontractor of the Supplier) and information obtained and knowhow
                     gained by the Supplier (or subcontractor of the Supplier) in connection with the
@@ -1044,6 +1037,14 @@
                     aforesaid by the Supplier (or subcontractor of the Supplier) shall be limited to execution of the Order save where expressly otherwise agreed with the Company. The Supplier shall be obliged:<br>
                     (i) promptly to disclose to the Company all inventions which it, its subcontractor or its
                     or their employees have made pursuant to or in connection with the Order; and<br>
+
+                </td>
+            </tr>
+        </table>
+        <div class="page_break"></div>
+        <table style="width:100%">
+            <tr>
+                <td width="50%" style="text-align: justify;font-size: 9px;">
                     (ii) to execute or have executed all documents and perform or have performed all such
                     other acts, deeds and things as the Company may deem necessary or desirable
                     to protect the Company's (or its assignee's) title to such inventions and to obtain and
@@ -1085,14 +1086,6 @@
                     Company and persons authorized by it shall be entitled at all reasonable times to
                     check and inspect the Company's Property and the Supplier's records thereof and may
                     enter the Supplier's land and buildings for those purposes;<br>
-
-                </td>
-            </tr>
-        </table>
-        <div class="page_break"></div>
-        <table style="width:100%">
-            <tr>
-                <td width="50%" style="text-align: justify">
                     (v) The Supplier shall promptly pay to the Company on demand the full replacement
                     value of any of the Company's Property which is not returned.<br><br>
                     <span class="font-weight-bold">19. INDEPENDENT CONTRACTOR</span><br>
@@ -1102,6 +1095,10 @@
                     If the performance of the Order requires the Company to have any permit or license
                     from any government or other relevant authority, the Order shall be conditional upon
                     such permit or license being available at the required time.<br><br>
+
+                </td>
+                <td width="1%">&nbsp;</td>
+                <td width="49%" style="text-align: justify;font-size: 9px;">
                     <span class="font-weight-bold">21. ADVERTISING</span><br>
                     The Supplier will not without the prior written consent of the Company advertise or
                     publish in any way whatsoever the fact that the Supplier has contracted to supply the
@@ -1147,10 +1144,6 @@
                     Except as set out in these Conditions, no variation, including the introduction of any
                     additional terms and conditions, shall be effective unless it is agreed in writing and
                     signed by the parties or their authorized representatives.
-                </td>
-                <td width="50%" style="text-align: justify">
-
-
                 </td>
             </tr>
         </table>
