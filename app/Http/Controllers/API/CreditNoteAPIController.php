@@ -815,7 +815,7 @@ class CreditNoteAPIController extends AppBaseController
 
         $array = array('request' => $creditNote);
         $time = strtotime("now");
-        $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
+        $fileName = 'credit_note_' . $id . '_' . $time . '.pdf';
         $html = view('print.credit_note', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);

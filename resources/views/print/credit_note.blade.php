@@ -161,7 +161,7 @@
         </tr>
         <tr>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
-               <p><span class="font-weight-bold"><span >{!! nl2br($request->docRefNo) !!} </span></span>
+                <p><span class="font-weight-bold"><span >{!! nl2br($request->docRefNo) !!} </span></span>
                 </p>
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
@@ -195,19 +195,20 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
-                    <img src="logos/{{$request->secondaryLogo =='' ? $request->company->companyLogo:$request->secondaryLogo}}"
+                    <img src="logos/{{$request->secondaryLogoCompanySystemID =='' ? $request->company->companyLogo:$request->secondaryLogo}}"
                          width="180px" height="60px"></td>
 
 
                 <td width="50%" style="text-align: center">
                     <div class="text-center">
                         <h3 class="font-weight-bold">
+
                             @if ($request->company)
                                 {{$request->company->CompanyName}}
                             @endif
                         </h3>
                         <h3 class="font-weight-bold">
-                            Invoice
+                            Credit Note
                         </h3>
                     </div>
 
@@ -222,7 +223,7 @@
     <div class="row">
         <table style="width:100%">
             <td style="width: 40%">
-                <b>Customer Details</b>
+                <b>To :</b>
                 <br>
                 <br>
                 <table style="width: 100%">
@@ -245,78 +246,27 @@
             </td>
             <td style="width: 10%"></td>
             <td style="width: 40%">
-                <b>Invoice Details</b>
+
                 <br>
                 <br>
                 <table style="width: 100%">
                     <tr>
-                        <td width="120px"><span class="font-weight-bold">Invoice Number</span></td>
-                        <td width="10px"><span class="font-weight-bold">-</span></td>
-                        <td><span>{{$request->bookingInvCode}}</span></td>
+                        <td width="120px"><span class="font-weight-bold">Doc Code</span></td>
+                        <td width="10px"><span class="font-weight-bold">:</span></td>
+                        <td><span>{{$request->creditNoteCode}}</span></td>
                     </tr>
                     <tr>
-                        <td width="120px"><span class="font-weight-bold">Invoice Date</span></td>
-                        <td width="10px"><span class="font-weight-bold">-</span></td>
+                        <td width="120px"><span class="font-weight-bold">Doc Date</span></td>
+                        <td width="10px"><span class="font-weight-bold">:</span></td>
                         <td><span>
-                                 @if(!empty($request->bookingDate))
-                                    {{\App\helper\Helper::dateFormat($request->bookingDate) }}
+                                 @if(!empty($request->creditNoteDate))
+                                    {{\App\helper\Helper::dateFormat($request->creditNoteDate) }}
                                 @endif
                             </span></td>
                     </tr>
-                    <tr>
-                        <td width="120px"><span class="font-weight-bold">SE No</span></td>
-                        <td width="10px"><span class="font-weight-bold">-</span></td>
-                        <td><span>{{$request->wanNO}}</span></td>
-                    </tr>
-                    <tr>
-                        <td width="120px"><span class="font-weight-bold">Due Date</span></td>
-                        <td width="10px"><span class="font-weight-bold">-</span></td>
-                        <td><span>
-                                     @if(!empty($request->invoiceDueDate))
-                                    {{\App\helper\Helper::dateFormat($request->invoiceDueDate)}}
-                                @endif
-                            </span></td>
-                    </tr>
-                    <tr>
-                        <td width="120px"><span class="font-weight-bold">PO Number</span></td>
-                        <td width="10px"><span class="font-weight-bold">{{$request->poNumber}}</span></td>
-                        <td><span></span></td>
-                    </tr>
 
-                    <tr>
-                        <td width="120px"><span class="font-weight-bold">Rig</span></td>
-                        <td width="10px"><span class="font-weight-bold">-</span></td>
-                        <td><span>{{$request->rigNo}}</span></td>
-                    </tr>
-                    <tr>
-                        <td width="150px"><span class="font-weight-bold">Well</span></td>
-                        <td width="10px">
-                        <span class="font-weight-bold">
-                          -
-                         </span>
-                        </td>
 
-                        <td>
-                        {{--  {{  (dd($request->invoicedetails[0])) }}--}}
 
-                            @if($request->invoicedetails[0]->performadetails )
-                                <span>
-                                  @if($request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->field )
-                                        {{$request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->field->fieldShortCode}}
-                                        |
-                                    @endif
-                                       @if($request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster )
-                                           {{$request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->wellNo}}
-                                       @endif
-
-                                    @endif </span>
-                        </td>
-                    </tr>
-                    {{-- <tr>
-                         <td width="150px"><span class="font-weight-bold">Proforma Number</span></td>
-                         <td width="10px"><span class="font-weight-bold">-</span></td>
-                         <td><span>{{$request->invoicedetails[0]->performadetails->performaCode}}</span></td>
-                     </tr>--}}
 
 
                 </table>
@@ -326,6 +276,9 @@
 
     </div>
     <div class="row">
+        <br>
+    </div>
+    <div class="row">
         <b>Comments : </b> {{$request->comments}}
     </div>
     <div class="row">
@@ -333,39 +286,36 @@
                 : {{empty($request->currency) ? '' : $request->currency->CurrencyCode}} </b></div>
     </div>
     <div class="row">
-
-
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
-                <th style="width:3%"></th>
-                <th style="width:10%;text-align: center">GL Code</th>
-                <th style="width:60%;text-align: center">GL Code Description</th>
-                <th style="width:10%;text-align: center">QTY</th>
-                <th style="width:10%;text-align: center">Unit Rate</th>
+
+                <th style="width:10%;text-align: center">Comments</th>
+                <th style="width:10%;text-align: center">Service Line</th>
                 <th style="width:10%;text-align: center">Amount</th>
             </tr>
             </thead>
             <tbody>
-            {{$decimal = 2}}
-            {{$x=1}}
-            {{$directTraSubTotal=0}}
-            {{$numberFormatting=2}}
-            @foreach ($request->invoicedetails as $item)
-                {{$directTraSubTotal +=$item->invoiceAmount}}
+            {{$directTraSubTotal =0}}
+            {{$numberFormatting= empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}}}
+            @foreach ($request->details as $item)
+                {{$directTraSubTotal +=$item->creditAmount}}
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                    <td>{{$x}}</td>
-                    <td>{{$item->glCode}}</td>
-                    <td>{{$item->glCodeDes}}</td>
-                    <td>{{$item->invoiceQty}}</td>
-                    <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
-                    <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
+                    <td>{{$item->comments}}</td>
+
+                    <td>{{$item->segment->ServiceLineDes}}</td>
+                    <td class="text-right">{{number_format($item->creditAmount,$numberFormatting)}}</td>
                 </tr>
-                {{ $x++ }}
+
             @endforeach
             </tbody>
 
+
+            </tbody>
         </table>
+
+
+
     </div>
     <div class="row">
         <table style="width:100%;" class="table table-bordered">
@@ -379,80 +329,17 @@
                 <td class="text-right"
                     style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                 <span class="font-weight-bold">
-                @if ($request->invoicedetails)
-                        {{number_format($directTraSubTotal, $numberFormatting)}}
+                @if ($request->details)
+                        {{number_format($directTraSubTotal,$numberFormatting)}}
                     @endif
                 </span>
                 </td>
             </tr>
-
-            @if ($request->tax)
-                {{$directTraSubTotal+=$request->tax->amount}}
-                <tr>
-                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                        &nbsp;
-                    </td>
-                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                                class="font-weight-bold"
-                                style="font-size: 11px">Tax Amount ({{$request->tax->taxPercent}} %)
-                            </span></td>
-                    <td class="text-right"
-                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
-                                class="font-weight-bold">{{number_format($request->tax->amount, $numberFormatting)}}</span>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                        &nbsp;
-                    </td>
-                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                                class="font-weight-bold"
-                                style="font-size: 11px">Net Amount</span>
-                    </td>
-                    <td class="text-right"
-                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                <span class="font-weight-bold">
-
-                        {{number_format($directTraSubTotal, $numberFormatting)}}
-
-                </span>
-                    </td>
-                </tr>
-            @endif
             </tbody>
         </table>
-    </div>
-<br>
-    <div class="row">
 
-            <br>
-        <br>
-        <br>
-            <table>
-                <tr>
-                    <td width="100px"><span class="font-weight-bold">Bank Details :</span></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td width="100px"><span class="font-weight-bold">Bank Name </span></td>
-                    <td> - {{($request->bankaccount) ? $request->bankaccount->bankName : ''}}</td>
-                </tr>
-                <tr>
-                    <td width="100px"><span class="font-weight-bold">Branch </span></td>
-                    <td> - {{($request->bankaccount) ? $request->bankaccount->bankBranch : ''}}</td>
-                </tr>
-                <tr>
-                    <td width="100px"><span class="font-weight-bold">Ac Num </span></td>
-                    <td> - {{($request->bankaccount) ? $request->bankaccount->AccountNo : ''}}</td>
-                </tr>
-                <tr>
-                    <td width="100px"><span class="font-weight-bold">Swift Code </span></td>
-                    <td> - {{($request->bankaccount) ? $request->bankaccount->accountSwiftCode : ''}}</td>
-                </tr>
-            </table>
-        </div>
-    </div>
+
+</div>
 
 <div class="row" style="margin-top: 60px;">
     <table>
