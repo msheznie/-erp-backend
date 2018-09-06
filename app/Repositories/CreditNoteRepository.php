@@ -83,4 +83,14 @@ class CreditNoteRepository extends BaseRepository
     {
         return CreditNote::class;
     }
+
+    function getAudit($id)
+    {
+        $creditNote = $this->with(['company', 'customer', 'createduser','currency', 'approved_by' => function ($query) {
+            $query->with('employee.details.designation')
+                ->where('documentSystemID', 20);
+        }, 'details'
+        ])->findWithoutFail($id);
+
+    }
 }
