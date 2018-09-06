@@ -5,18 +5,22 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCreditNoteDetailsAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteDetailsAPIRequest;
 use App\Models\CreditNoteDetails;
+use App\Models\CreditNote;
+use App\Models\chartOfAccount;
+use App\Models\Contract;
+use App\Models\SegmentMaster;
 use App\Repositories\CreditNoteDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
  * Class CreditNoteDetailsController
  * @package App\Http\Controllers\API
  */
-
 class CreditNoteDetailsAPIController extends AppBaseController
 {
     /** @var  CreditNoteDetailsRepository */
@@ -273,9 +277,229 @@ class CreditNoteDetailsAPIController extends AppBaseController
         if (empty($creditNoteDetails)) {
             return $this->sendError('Credit Note Details not found');
         }
-
         $creditNoteDetails->delete();
+        $details = CreditNoteDetails::select(DB::raw("IFNULL(SUM(creditAmount),0) as creditAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as creditAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as creditAmountRpt"))->where('creditNoteAutoID', $creditNoteDetails->creditNoteAutoID)->first()->toArray();
+
+
+        CreditNote::where('creditNoteAutoID', $creditNoteDetails->creditNoteAutoID)->update($details);
+
+
 
         return $this->sendResponse($id, 'Credit Note Details deleted successfully');
     }
+
+    public function addcreditNoteDetails(Request $request)
+    {
+        $input = $request->all();
+        $messages = [
+            'companySystemID.required' => 'Company is required.',
+            'creditNoteAutoID.required' => 'ID is required.',
+            'glCode.required' => 'GL Account is required.'
+        ];
+
+        $validator = \Validator::make($request->all(), [
+            'companySystemID' => 'required|numeric|min:1',
+            'creditNoteAutoID' => 'required|numeric|min:1',
+            'glCode' => 'required|numeric|min:1'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $companySystemID = $request['companySystemID'];
+        $creditNoteAutoID = $request['creditNoteAutoID'];
+        $glCode = $request['glCode'];
+
+
+        /*get master*/
+        $master = CreditNote::select('*')->where('creditNoteAutoID', $creditNoteAutoID)->first();
+        $myCurr = $master->customerCurrencyID;               /*currencyID*/
+        $companyCurrency = \Helper::companyCurrency($myCurr);
+        $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+        $x = 0;
+
+
+        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
+
+
+        $inputData['creditNoteAutoID'] = $creditNoteAutoID;
+        $inputData['companyID'] = $master->companyID;
+        $inputData['companySystemID'] = $companySystemID;
+        $inputData['customerID'] = $master->customerID;
+        $inputData['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+        $inputData['glCode'] = $chartOfAccount->AccountCode;
+        $inputData['glCodeDes'] = $chartOfAccount->AccountDescription;
+        $inputData['comments'] = $master->comments;
+        $inputData['creditAmountCurrency'] = $myCurr;
+        $inputData['creditAmountCurrencyER'] = '';
+        $inputData['creditAmount'] = 0;
+        $inputData['localCurrency'] = $companyCurrency->localcurrency->currencyID;
+        $inputData['localCurrencyER'] = $master->localCurrencyER;
+        $inputData['localAmount'] = 0;
+        $inputData['comRptCurrency'] = $companyCurrency->reportingcurrency->currencyID;
+        $inputData['comRptCurrencyER'] = $master->companyReportingER;
+        $inputData['comRptAmount'] = 0;
+
+
+        DB::beginTransaction();
+
+        try {
+            CreditNoteDetails::create($inputData);
+            $details = CreditNoteDetails::select(DB::raw("SUM(creditAmount) as creditAmountTrans"), DB::raw("SUM(localAmount) as creditAmountLocal"), DB::raw("SUM(comRptAmount) as creditAmountRpt"))->where('creditNoteAutoID', $creditNoteAutoID)->first()->toArray();
+
+            CreditNote::where('creditNoteAutoID', $creditNoteAutoID)->update($details);
+
+
+            DB::commit();
+            return $this->sendResponse('s', 'successfully created');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError('Error Occured !');
+        }
+
+    }
+
+    public function creditNoteDetails(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        $data = CreditNoteDetails::where('creditNoteAutoID', $id)->get();
+        return $this->sendResponse($data, 'Credit Note Details deleted successfully');
+    }
+
+    public function creditNotegetcontract(Request $request)
+    {
+        $input = $request->all();
+        $creditNoteDetailsID = $input['creditNoteDetailsID'];
+        $detail = CreditNoteDetails::where('creditNoteDetailsID', $creditNoteDetailsID)->first();
+        $master = CreditNote::where('creditNoteAutoID', $detail->creditNoteAutoID)->first();
+
+        $contractID = 0;
+        if ($detail->contractUID != '' && $detail->contractUID != 0) {
+            $contractID = $detail->contractUID;
+
+        }
+
+        $qry = "SELECT * FROM ( SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID AND clientID = $master->customerID UNION ALL SELECT contractUID, ContractNumber FROM contractmaster WHERE contractUID = $contractID ) t GROUP BY contractUID, ContractNumber";
+        $contract = DB::select($qry);
+
+
+        return $this->sendResponse($contract, 'Contract deleted successfully');
+    }
+
+
+    public function updateCreditNote(Request $request){
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $id = $input['creditNoteDetailsID'];
+        array_except($input,'creditNoteDetailsID');
+
+        $detail = CreditNoteDetails::where('creditNoteDetailsID', $id)->first();
+
+
+        if (empty($detail)) {
+            return $this->sendError('Customer Invoice Direct Detail not found',500);
+        }
+
+        $master = CreditNote::select('*')->where('creditNoteAutoID', $detail->creditNoteAutoID)->first();
+
+        if ($input['contractUID'] != $detail->contractUID) {
+            $input['clientContractID']=NULL;
+            $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $detail->companyID)->where('contractUID', $input['contractUID'])->first();
+            $input['clientContractID'] = $contract->ContractNumber;
+
+         /*   if (!empty($contract)) {
+                if ($contract->paymentInDaysForJob <= 0) {
+                    return $this->sendError('Payment Period is not updated in the contract. Please update and try again');
+                }
+            } else {
+                return $this->sendError('Contract not exist.');
+
+            }*/
+        }
+
+        if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID) {
+
+            $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+            $input['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
+            $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
+            $input['clientContractID'] = NULL;
+        }
+
+
+
+        if ($input['creditAmount'] != $detail->creditAmount) {
+            $myCurr = $master->customerCurrencyID;               /*currencyID*/
+            $companyCurrency = \Helper::companyCurrency($myCurr);
+            $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+
+            $input['creditAmountCurrency'] = $master->customerCurrencyID;
+            $input['creditAmountCurrencyER'] = 1;
+            $totalAmount =$input['creditAmount'];
+            $input['creditAmount'] = round($input['creditAmount'], $decimal);
+            /**/
+            $MyRptAmount = 0;
+            if ($master->customerCurrencyID == $master->companyReportingCurrencyID) {
+                $MyRptAmount = $totalAmount;
+            } else {
+                if ($master->companyReportingER > $master->customerCurrencyER) {
+                    if ($master->companyReportingER > 1) {
+                        $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                    } else {
+                        $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                    }
+                } else {
+                    if ($master->companyReportingER > 1) {
+                        $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                    } else {
+                        $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                    }
+                }
+            }
+            $input["comRptAmount"] =   \Helper::roundValue($MyRptAmount);
+            if ($master->customerCurrencyID == $master->localCurrencyID) {
+                $MyLocalAmount = $totalAmount;
+            } else {
+                if ($master->localCurrencyER > $master->customerCurrencyER) {
+                    if ($master->localCurrencyER > 1) {
+                        $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                    } else {
+                        $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                    }
+                } else {
+                    if ($master->localCurrencyER > 1) {
+                        $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                    } else {
+                        $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                    }
+                }
+            }
+            $input["localAmount"] =  \Helper::roundValue($MyLocalAmount);
+
+
+        }
+
+
+        DB::beginTransaction();
+
+        try {
+
+            $x=CreditNoteDetails::where('creditNoteDetailsID', $id)->update($input);
+            $details = CreditNoteDetails::select(DB::raw("SUM(creditAmount) as creditAmountTrans"), DB::raw("SUM(localAmount) as creditAmountLocal"), DB::raw("SUM(comRptAmount) as creditAmountRpt"))->where('creditNoteAutoID', $detail->creditNoteAutoID)->first()->toArray();
+            CreditNote::where('creditNoteAutoID', $detail->creditNoteAutoID)->update($details);
+
+
+
+            DB::commit();
+            return $this->sendResponse('s', 'successfully created');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError($exception);
+        }
+
+
+    }
+
+
 }

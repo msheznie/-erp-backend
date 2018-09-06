@@ -754,6 +754,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice');
     Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
     Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
+    Route::get('getCreditNoteViewFormData', 'CreditNoteAPIController@getCreditNoteViewFormData');
+    Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
+    Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
+    Route::get('creditNoteDetails', 'CreditNoteDetailsAPIController@creditNoteDetails');
+    Route::get('creditNotegetcontract', 'CreditNoteDetailsAPIController@creditNotegetcontract');
+    Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
+    Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
+    Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
+
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
