@@ -146,8 +146,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
             $items = $items->where(function ($query) use ($search) {
                 $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
-                      ->orWhere('itemDescription', 'LIKE', "%{$search}%")
-                      ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
             });
         }
 
@@ -268,7 +268,25 @@ class PurchaseRequestAPIController extends AppBaseController
     public function reportPrToGrv(Request $request)
     {
         $input = $request->all();
+        $purchaseRequests = $this->getPrToGrvQry($input);
+        $data = \DataTables::of($purchaseRequests)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('purchaseRequestID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->make(true);
 
+        return $data;
+        //return $this->sendResponse($purchaseRequests, 'Record retrieved successfully');
+    }
+
+    public function getPrToGrvQry($request)
+    {
+        $input = $request;
         $itemPrimaryCodes = [];
         $from = "";
         $to = "";
@@ -448,20 +466,235 @@ class PurchaseRequestAPIController extends AppBaseController
                     });
             }]);
 
-        $data = \DataTables::of($purchaseRequests)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('purchaseRequestID', $input['order'][0]['dir']);
-                    }
+
+        return $purchaseRequests;
+    }
+
+
+    public function exportPrToGrvReport(Request $request)
+    {
+        $input = $request->all();
+        $data = array();
+        $output = ($this->getPrToGrvQry($input))->orderBy('purchaseRequestID','DES')->get();
+        $type = $request->type;
+        if (!empty($output)) {
+             $x = 0;
+            foreach ($output as $value) {
+                $data[$x]['Company ID'] = $value->companyID;
+                //$data[$x]['Company Name'] = $val->CompanyName;
+                $data[$x]['Service Line'] = $value->serviceLineCode;
+                $data[$x]['PR Number'] = $value->purchaseRequestCode;
+
+                if($value->confirmed_by){
+                    $data[$x]['Processed By'] = $value->confirmed_by->empName;
+                }else{
+                    $data[$x]['Processed By'] = '';
                 }
-            })
-            ->addIndexColumn()
-            ->make(true);
 
-        return $data;
+                $data[$x]['PR Date'] = \Helper::dateFormat($value->PRRequestedDate);
+                $data[$x]['PR Comment'] = $value->comments;
 
-        //return $this->sendResponse($purchaseRequests, 'Record retrieved successfully');
+                if($value->approved == -1){
+                    $data[$x]['PR Approved'] = 'Yes';
+                }else{
+                    $data[$x]['PR Approved'] = 'No';
+                }
+
+                if(count($value->details) >0){
+                    $itemCount = 0;
+                    foreach ($value->details as $item) {
+
+                        if($itemCount != 0){
+                            $x++;
+                            $data[$x]['Company ID'] = '';
+                            //$data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['Service Line'] = '';
+                            $data[$x]['PR Number'] = '';
+                            $data[$x]['Processed By'] = '';
+                            $data[$x]['PR Date'] = '';
+                            $data[$x]['PR Comment'] = '';
+                            $data[$x]['PR Approved'] = '';
+                        }
+
+                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
+                        $data[$x]['Item Description'] = $item->itemDescription;
+                        $data[$x]['Part Number'] = $item->partNumber;
+                        if($item->uom){
+                            $data[$x]['Unit'] = $item->uom->UnitShortCode;
+                        }else{
+                            $data[$x]['Unit'] = '';
+                        }
+                        $data[$x]['PR Qty'] = $item->quantityRequested;
+
+                        if(count($item->podetail) >0) {
+                            $poCount = 0;
+                            foreach ($item->podetail as $poDetail) {
+                                if ($poCount != 0) {
+                                    $x++;
+                                    $data[$x]['Company ID'] = '';
+                                    //$data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x]['Service Line'] = '';
+                                    $data[$x]['PR Number'] = '';
+                                    $data[$x]['Processed By'] = '';
+                                    $data[$x]['PR Date'] = '';
+                                    $data[$x]['PR Comment'] = '';
+                                    $data[$x]['PR Approved'] = '';
+                                    $data[$x]['Item Code'] = '';
+                                    $data[$x]['Item Description'] = '';
+                                    $data[$x]['Part Number'] = '';
+                                    $data[$x]['Unit'] = '';
+                                    $data[$x]['PR Qty'] = '';
+                                }
+
+                                if($poDetail->order){
+                                    $data[$x]['PO Number'] = $poDetail->order->purchaseOrderCode;
+                                    $data[$x]['ETA'] = \Helper::dateFormat($poDetail->order->expectedDeliveryDate);
+                                    $data[$x]['Supplier Code'] = $poDetail->order->supplierPrimaryCode;
+                                    $data[$x]['Supplier Name'] = $poDetail->order->supplierPrimaryCode;
+                                }else{
+                                    $data[$x]['PO Number'] = '';
+                                    $data[$x]['ETA'] = '';
+                                    $data[$x]['Supplier Code'] = '';
+                                    $data[$x]['Supplier Name'] = '';
+                                }
+
+                                $data[$x]['PO Qty'] = round($poDetail->noQty,2);
+
+                                if($poDetail->reporting_currency){
+                                    $data[$x]['Currency'] = $poDetail->reporting_currency->CurrencyCode;
+                                }else{
+                                    $data[$x]['Currency'] = '';
+                                }
+
+
+                                $data[$x]['PO Cost'] = round($poDetail->GRVcostPerUnitComRptCur,2);
+
+                                if($poDetail->order) {
+                                    if($poDetail->order->approved == -1){
+                                        $data[$x]['PO Approved Status'] = 'Yes';
+                                    }else{
+                                        $data[$x]['PO Approved Status'] = 'No';
+                                    }
+                                }else{
+                                    $data[$x]['PO Approved Status'] = '';
+                                }
+
+                                if($poDetail->order){
+                                    $data[$x]['Approved Date'] = \Helper::dateFormat($poDetail->order->approvedDate);
+                                }else{
+                                    $data[$x]['Approved Date'] = '';
+                                }
+
+                                if(count($poDetail->grv_details) > 0){
+                                    $grvCount = 0;
+                                    foreach ($poDetail->grv_details as $grvDetail) {
+                                        if ($grvCount != 0) {
+                                            $x++;
+                                            $data[$x]['Company ID'] = '';
+                                            //$data[$x]['Company Name'] = $val->CompanyName;
+                                            $data[$x]['Service Line'] = '';
+                                            $data[$x]['PR Number'] = '';
+                                            $data[$x]['Processed By'] = '';
+                                            $data[$x]['PR Date'] = '';
+                                            $data[$x]['PR Comment'] = '';
+                                            $data[$x]['PR Approved'] = '';
+                                            $data[$x]['Item Code'] = '';
+                                            $data[$x]['Item Description'] = '';
+                                            $data[$x]['Part Number'] = '';
+                                            $data[$x]['Unit'] = '';
+                                            $data[$x]['PR Qty'] = '';
+                                            $data[$x]['PO Number'] = '';
+                                            $data[$x]['ETA'] = '';
+                                            $data[$x]['Supplier Code'] = '';
+                                            $data[$x]['Supplier Name'] = '';
+                                            $data[$x]['PO Qty'] = '';
+                                            $data[$x]['Currency'] = '';
+                                            $data[$x]['PO Cost'] = '';
+                                            $data[$x]['PO Approved Status'] = '';
+                                            $data[$x]['Approved Date'] = '';
+                                        }
+
+                                        if($grvDetail->grv_master){
+                                            $data[$x]['Receipt Doc Number'] = $grvDetail->grv_master->grvPrimaryCode;
+                                            $data[$x]['Receipt Date'] = \Helper::dateFormat($grvDetail->grv_master->grvDate);
+                                        }else{
+                                            $data[$x]['Receipt Doc Number'] = '';
+                                            $data[$x]['Receipt Date'] = '';
+                                        }
+                                        $data[$x]['Receipt Qty'] = $grvDetail->noQty;
+
+
+                                        if($poDetail->goodsRecievedYN == 2){
+                                            $data[$x]['Receipt Status'] = "Fully Received";
+                                        }
+                                        else if($poDetail->goodsRecievedYN == 0){
+                                            $data[$x]['Receipt Status'] = "Not Received";
+                                        }
+                                        else if($poDetail->goodsRecievedYN == 1){
+                                            $data[$x]['Receipt Status'] = "Partially Received";
+                                        }
+                                        $grvCount++;
+                                    }
+                                }else{
+                                    $data[$x]['Receipt Doc Number'] = '';
+                                    $data[$x]['Receipt Date'] = '';
+                                    $data[$x]['Receipt Qty'] = '';
+                                    $data[$x]['Receipt Status'] = "Not Received";
+                                }
+                                $poCount++;
+                            }
+                        }else{
+                            $data[$x]['PO Number'] = '';
+                            $data[$x]['ETA'] = '';
+                            $data[$x]['Supplier Code'] = '';
+                            $data[$x]['Supplier Name'] = '';
+                            $data[$x]['PO Qty'] = '';
+                            $data[$x]['Currency'] = '';
+                            $data[$x]['PO Cost'] = '';
+                            $data[$x]['PO Approved Status'] = '';
+                            $data[$x]['Approved Date'] = '';
+                            $data[$x]['Receipt Doc Number'] = '';
+                            $data[$x]['Receipt Date'] = '';
+                            $data[$x]['Receipt Qty'] = '';
+                            $data[$x]['Receipt Status'] = "Not Received";
+                        }
+                        $itemCount++;
+                    }
+                }else{
+                    $data[$x]['Item Code'] = 'Item Code';
+                    $data[$x]['Item Description'] = 'Item Description';
+                    $data[$x]['Part Number'] = '';
+                    $data[$x]['Unit'] = '';
+                    $data[$x]['PR Qty'] = '';
+                    $data[$x]['PO Number'] = '';
+                    $data[$x]['ETA'] = '';
+                    $data[$x]['Supplier Code'] = '';
+                    $data[$x]['Supplier Name'] = '';
+                    $data[$x]['PO Qty'] = '';
+                    $data[$x]['Currency'] = '';
+                    $data[$x]['PO Cost'] = '';
+                    $data[$x]['PO Approved Status'] = '';
+                    $data[$x]['Approved Date'] = '';
+                    $data[$x]['Receipt Doc Number'] = '';
+                    $data[$x]['Receipt Date'] = '';
+                    $data[$x]['Receipt Qty'] = '';
+                    $data[$x]['Receipt Status'] = "Not Received";
+                }
+                $x++;
+            }
+        }
+
+        $csv = \Excel::create('general_ledger', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 
     /**
@@ -500,15 +733,15 @@ class PurchaseRequestAPIController extends AppBaseController
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $value['approvalGroupID'])
                     ->where('companySystemID', $companySystemID)
                     ->where('documentSystemID', $documentSystemID);
-                    //->get();
+                //->get();
 
                 if ($companyDocument['isServiceLineApproval'] == -1) {
                     $approvalList = $approvalList->where('ServiceLineSystemID', $value['serviceLineSystemID']);
                 }
 
                 $approvalList = $approvalList->with(['employee'])
-                                                ->groupBy('employeeSystemID')
-                                                ->get();
+                    ->groupBy('employeeSystemID')
+                    ->get();
                 $value['approval_list'] = $approvalList;
             }
         }
@@ -569,7 +802,7 @@ class PurchaseRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','cancelledYN','PRConfirmedYN','approved','month','year'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -601,7 +834,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }]);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
-            if($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
             }
         }
@@ -625,13 +858,13 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if (array_key_exists('month', $input)) {
-            if($input['month'] && !is_null($input['month'])) {
+            if ($input['month'] && !is_null($input['month'])) {
                 $purchaseRequests->whereMonth('createdDateTime', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
-            if($input['year'] && !is_null($input['year'])) {
+            if ($input['year'] && !is_null($input['year'])) {
                 $purchaseRequests->whereYear('createdDateTime', '=', $input['year']);
             }
         }
@@ -948,8 +1181,8 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $companyDocumentAttachment = CompanyDocumentAttachment::where('companySystemID', $input['companySystemID'])
-                                                                ->where('documentSystemID', $input['documentSystemID'])
-                                                                ->first();
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->first();
 
         if ($companyDocumentAttachment) {
             $input['docRefNo'] = $companyDocumentAttachment->docRefNumber;
@@ -1036,7 +1269,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $id = $request->get('id');
         /** @var PurchaseRequest $purchaseRequest */
         $purchaseRequest = $this->purchaseRequestRepository->with(['created_by', 'confirmed_by',
-            'cancelled_by','manually_closed_by','modified_by','approved_by' => function ($query) {
+            'cancelled_by', 'manually_closed_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->whereIn('documentSystemID', [1, 50, 51]);
             }])->findWithoutFail($id);
@@ -1115,7 +1348,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
 
             $amount = PurchaseRequestDetails::where('purchaseRequestID', $id)
-                                                ->sum('totalCost');
+                ->sum('totalCost');
 
             $params = array('autoID' => $id,
                 'company' => $purchaseRequest->companySystemID,
@@ -1128,6 +1361,8 @@ class PurchaseRequestAPIController extends AppBaseController
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
+            }else{
+                $input['budgetBlockYN'] = 0;
             }
         }
 
@@ -1646,10 +1881,11 @@ class PurchaseRequestAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function getReportOpenRequest(Request $request){
+    public function getReportOpenRequest(Request $request)
+    {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','cancelledYN','PRConfirmedYN','approved','month','year'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month', 'year'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1660,27 +1896,27 @@ class PurchaseRequestAPIController extends AppBaseController
         $selectedCompanyId = $request['companySystemID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        }else{
+        } else {
             $subCompanies = [$selectedCompanyId];
         }
 
 
         $purchaseRequests = PurchaseRequest::whereIn('companySystemID', $subCompanies)
-                                            ->where('approved', -1)
-                                            ->where('manuallyClosed', 0)
-                                            ->where('cancelledYN', 0)
-                                            ->where('selectedForPO', 0)
-                                            ->where('prClosedYN',0)
-                                            ->with(['created_by','priority','location','segment']);
+            ->where('approved', -1)
+            ->where('manuallyClosed', 0)
+            ->where('cancelledYN', 0)
+            ->where('selectedForPO', 0)
+            ->where('prClosedYN', 0)
+            ->with(['created_by', 'priority', 'location', 'segment']);
 
         if (array_key_exists('selectedForPO', $input)) {
-            if($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
-                if($input['selectedForPO'] == 1){
+            if ($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
+                if ($input['selectedForPO'] == 1) {
                     $purchaseRequests = $purchaseRequests->whereDoesntHave('po_details');
-                }elseif ($input['selectedForPO'] == 2){
-                    $purchaseRequests =  $purchaseRequests->whereHas('po_details',function ($q){
+                } elseif ($input['selectedForPO'] == 2) {
+                    $purchaseRequests = $purchaseRequests->whereHas('po_details', function ($q) {
 
                     });
                 }
@@ -1688,8 +1924,8 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if (array_key_exists('serviceLineSystemID', $input)) {
-            if($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseRequests =  $purchaseRequests->where('serviceLineSystemID',$input['serviceLineSystemID']);
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
             }
         }
 
@@ -1746,10 +1982,11 @@ class PurchaseRequestAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function exportReportOpenRequest(Request $request){
+    public function exportReportOpenRequest(Request $request)
+    {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,array('serviceLineSystemID','selectedForPO'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'selectedForPO'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1760,35 +1997,36 @@ class PurchaseRequestAPIController extends AppBaseController
         $selectedCompanyId = $request['companySystemID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        }else{
+        } else {
             $subCompanies = [$selectedCompanyId];
         }
 
 
         $type = $input['type'];
         $purchaseRequests = PurchaseRequest::whereIn('companySystemID', $subCompanies)
-                                            ->where('approved', -1)
-                                            ->where('manuallyClosed', 0)
-                                            ->where('cancelledYN', 0)
-                                            ->where('selectedForPO', 0)
-                                            ->where('prClosedYN',0)
-                                            ->with(['created_by','priority_pdf','location_pdf','segment']);
+            ->where('approved', -1)
+            ->where('manuallyClosed', 0)
+            ->where('cancelledYN', 0)
+            ->where('selectedForPO', 0)
+            ->where('prClosedYN', 0)
+            ->with(['created_by', 'priority_pdf', 'location_pdf', 'segment']);
 
         if (array_key_exists('selectedForPO', $input)) {
-            if($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
-                if($input['selectedForPO'] == 1){
+            if ($input['selectedForPO'] && !is_null($input['selectedForPO'])) {
+                if ($input['selectedForPO'] == 1) {
                     $purchaseRequests = $purchaseRequests->whereDoesntHave('po_details');
-                }elseif ($input['selectedForPO'] == 2){
-                    $purchaseRequests =  $purchaseRequests->whereHas('po_details',function ($q){});
+                } elseif ($input['selectedForPO'] == 2) {
+                    $purchaseRequests = $purchaseRequests->whereHas('po_details', function ($q) {
+                    });
                 }
             }
         }
 
         if (array_key_exists('serviceLineSystemID', $input)) {
-            if($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
-                $purchaseRequests =  $purchaseRequests->where('serviceLineSystemID',$input['serviceLineSystemID']);
+            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                $purchaseRequests = $purchaseRequests->where('serviceLineSystemID', $input['serviceLineSystemID']);
             }
         }
 
@@ -1811,7 +2049,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.manuallyClosed',
                 'erp_purchaserequest.PRConfirmedDate',
                 'erp_purchaserequest.approvedDate',
-            ])->orderBy('purchaseRequestID','asc');
+            ])->orderBy('purchaseRequestID', 'asc');
 
         $search = $request->input('search.value');
 
@@ -1833,19 +2071,19 @@ class PurchaseRequestAPIController extends AppBaseController
             $createdBy = "";
             $serviceLineDes = "";
 
-            if(!empty($val->location_pdf)){
+            if (!empty($val->location_pdf)) {
                 $location = $val->location_pdf['locationName'];
             }
 
-            if(!empty($val->priority_pdf)){
+            if (!empty($val->priority_pdf)) {
                 $priority = $val->priority_pdf['priorityDescription'];
             }
 
-            if(!empty($val->created_by)){
+            if (!empty($val->created_by)) {
                 $createdBy = $val->created_by->empName;
             }
 
-            if(!empty($val->segment)){
+            if (!empty($val->segment)) {
                 $serviceLineDes = $val->segment->ServiceLineDes;
             }
 
@@ -1859,7 +2097,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'Priority' => $priority,
                 'Created By' => $createdBy,
                 'Confirmed Date' => \Helper::dateFormat($val->PRConfirmedDate),
-                'Approved Date' =>\Helper::dateFormat($val->approvedDate),
+                'Approved Date' => \Helper::dateFormat($val->approvedDate),
             );
         }
 
@@ -2041,8 +2279,6 @@ class PurchaseRequestAPIController extends AppBaseController
 
         return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request Amend successfully');
     }
-
-
 
 
 }

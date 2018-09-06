@@ -219,6 +219,7 @@ class AccountsReceivableLedger extends Model
         'selectedToPaymentInv',
         'fullyInvoiced',
         'createdDateTime',
+        'createdUserSystemID',
         'createdUserID',
         'createdPcID',
         'documentType',
@@ -258,6 +259,7 @@ class AccountsReceivableLedger extends Model
         'lockedComments' => 'string',
         'selectedToPaymentInv' => 'integer',
         'fullyInvoiced' => 'integer',
+        'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'createdPcID' => 'string',
         'documentType' => 'integer'

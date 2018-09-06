@@ -138,6 +138,7 @@ return [
         'issueRefNo' => 'Reference No',
         'refNo' => 'Reference No',
         'comment' => 'Comment',
+        'comments' => 'Comments',
         'customerSystemID' => 'Customer',
         'customerID' => 'Customer',
         'issueType' => 'Issues Type',

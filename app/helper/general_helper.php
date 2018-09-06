@@ -292,6 +292,17 @@ class Helper
                     $docInforArr["modelName"] = 'StockAdjustment';
                     $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
                     break;
+                case 15:
+                    $docInforArr["documentCodeColumnName"] = 'debitNoteCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_debitnote';
+                    $docInforArr["modelName"] = 'DebitNote';
+                    $docInforArr["primarykey"] = 'debitNoteAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -748,7 +759,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "PRConfirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "PRConfirmedBySystemID";
                 break;
-            case 3:
+            case 3: // GRV
                 $docInforArr["tableName"] = 'erp_grvmaster';
                 $docInforArr["modelName"] = 'GRVMaster';
                 $docInforArr["primarykey"] = 'grvAutoID';
@@ -760,7 +771,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "grvConfirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "grvConfirmedByEmpSystemID";
                 break;
-            case 8:
+            case 8: // material issue
                 $docInforArr["tableName"] = 'erp_itemissuemaster';
                 $docInforArr["modelName"] = 'ItemIssueMaster';
                 $docInforArr["primarykey"] = 'itemIssueAutoID';
@@ -772,7 +783,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 9:
+            case 9: // material request
                 $docInforArr["tableName"] = 'erp_request';
                 $docInforArr["modelName"] = 'MaterielRequest';
                 $docInforArr["primarykey"] = 'RequestID';
@@ -784,7 +795,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "ConfirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "ConfirmedBySystemID";
                 break;
-            case 12:
+            case 12: // stock return
                 $docInforArr["tableName"] = 'erp_itemreturnmaster';
                 $docInforArr["modelName"] = 'ItemReturnMaster';
                 $docInforArr["primarykey"] = 'itemReturnAutoID';
@@ -796,7 +807,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 13:
+            case 13: // stock transfer
                 $docInforArr["tableName"] = 'erp_stocktransfer';
                 $docInforArr["modelName"] = 'StockTransfer';
                 $docInforArr["primarykey"] = 'stockTransferAutoID';
@@ -808,7 +819,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 10:
+            case 10: // stock receive
                 $docInforArr["tableName"] = 'erp_stockreceive';
                 $docInforArr["modelName"] = 'StockReceive';
                 $docInforArr["primarykey"] = 'stockReceiveAutoID';
@@ -832,7 +843,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 20:
+            case 20: // customer invoice
                 $docInforArr["tableName"] = 'erp_custinvoicedirect';
                 $docInforArr["modelName"] = 'CustomerInvoiceDirect';
                 $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
@@ -844,7 +855,7 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 24:
+            case 24: // purchase return
                 $docInforArr["tableName"] = 'erp_purchasereturnmaster';
                 $docInforArr["modelName"] = 'PurchaseReturn';
                 $docInforArr["primarykey"] = 'purhaseReturnAutoID';
@@ -856,10 +867,70 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-            case 7:
+            case 7: // stock adjustment
                 $docInforArr["tableName"] = 'erp_stockadjustment';
                 $docInforArr["modelName"] = 'StockAdjustment';
                 $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 19: // credit note
+                $docInforArr["tableName"] = 'erp_creditnote';
+                $docInforArr["modelName"] = 'CreditNote';
+                $docInforArr["primarykey"] = 'creditNoteAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 15: // debit note
+                $docInforArr["tableName"] = 'erp_debitnote';
+                $docInforArr["modelName"] = 'DebitNote';
+                $docInforArr["primarykey"] = 'debitNoteAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 11: // supplier invoice
+                $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
+                $docInforArr["modelName"] = 'BookInvSuppMaster';
+                $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 4: // Payment voucher
+                $docInforArr["tableName"] = 'erp_paysupplierinvoicemaster';
+                $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
+                $docInforArr["primarykey"] = 'PayMasterAutoId';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 21: // Bank Receipt Voucher
+                $docInforArr["tableName"] = 'erp_customerreceivepayment';
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
                 $docInforArr["approvedColumnName"] = 'approved';
                 $docInforArr["approvedBy"] = 'approvedByUserID';
                 $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
@@ -958,7 +1029,9 @@ class Helper
                                                     $userMessageE .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
                                                     $userMessageE .= "<br>";
                                                     $userMessageE .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
-
+                                                    // update PR master table
+                                                    $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
+                                                    DB::commit();
                                                     return ['success' => false, 'message' => $userMessageE];
                                                 }else{
                                                     $userMessage .= "<br>";
@@ -971,6 +1044,9 @@ class Helper
                                                     $userMessage .= "Pending PO Amount : '" . round($totalPendingRptAmount, 2) . "'";
                                                     $userMessage .= "<br>";
                                                     $userMessage .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
+
+                                                    // update PR master table
+                                                    $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
                                                 }
 
                                             }
