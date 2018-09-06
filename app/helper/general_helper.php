@@ -293,15 +293,27 @@ class Helper
                     $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
                     break;
                 case 15:
-                    $docInforArr["documentCodeColumnName"] = 'debitNoteCode';
+                $docInforArr["documentCodeColumnName"] = 'debitNoteCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_debitnote';
+                $docInforArr["modelName"] = 'DebitNote';
+                $docInforArr["primarykey"] = 'debitNoteAutoID';
+                break;
+
+                case 19:
+                    $docInforArr["documentCodeColumnName"] = 'creditNoteCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
                     $docInforArr["confirmedBy"] = 'confirmedByName';
                     $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
-                    $docInforArr["tableName"] = 'erp_debitnote';
-                    $docInforArr["modelName"] = 'DebitNote';
-                    $docInforArr["primarykey"] = 'debitNoteAutoID';
+                    $docInforArr["tableName"] = 'erp_creditnote';
+                    $docInforArr["modelName"] = 'CreditNote';
+                    $docInforArr["primarykey"] = 'creditNoteAutoID';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
@@ -319,6 +331,8 @@ class Helper
                     if ($document) {
                         //check document is already confirmed
                         $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
+
+
                         if (!$isConfirm) {
                             // get current employee detail
                             $empInfo = self::getEmployeeInfo();
@@ -1073,10 +1087,12 @@ class Helper
                             // insert the record to item ledger
 
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7])) {
+
                                 $jobIL = ItemLedgerInsert::dispatch($masterData);
                             }
 
                             // insert the record to general ledger
+
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21])) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {

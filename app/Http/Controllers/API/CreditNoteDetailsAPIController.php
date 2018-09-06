@@ -7,6 +7,7 @@ use App\Http\Requests\API\UpdateCreditNoteDetailsAPIRequest;
 use App\Models\CreditNoteDetails;
 use App\Models\CreditNote;
 use App\Models\chartOfAccount;
+use App\Models\Contract;
 use App\Models\SegmentMaster;
 use App\Repositories\CreditNoteDetailsRepository;
 use Illuminate\Http\Request;
@@ -276,8 +277,13 @@ class CreditNoteDetailsAPIController extends AppBaseController
         if (empty($creditNoteDetails)) {
             return $this->sendError('Credit Note Details not found');
         }
-
         $creditNoteDetails->delete();
+        $details = CreditNoteDetails::select(DB::raw("IFNULL(SUM(creditAmount),0) as creditAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as creditAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as creditAmountRpt"))->where('creditNoteAutoID', $creditNoteDetails->creditNoteAutoID)->first()->toArray();
+
+
+        CreditNote::where('creditNoteAutoID', $creditNoteDetails->creditNoteAutoID)->update($details);
+
+
 
         return $this->sendResponse($id, 'Credit Note Details deleted successfully');
     }
@@ -387,6 +393,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
         $id = $input['creditNoteDetailsID'];
+        array_except($input,'creditNoteDetailsID');
 
         $detail = CreditNoteDetails::where('creditNoteDetailsID', $id)->first();
 
@@ -477,10 +484,11 @@ class CreditNoteDetailsAPIController extends AppBaseController
         DB::beginTransaction();
 
         try {
-            $x=CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $detail->custInvDirDetAutoID)->update($input);
-            $allDetail = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $detail->custInvoiceDirectID)->first()->toArray();
 
-            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->update($allDetail);
+            $x=CreditNoteDetails::where('creditNoteDetailsID', $id)->update($input);
+            $details = CreditNoteDetails::select(DB::raw("SUM(creditAmount) as creditAmountTrans"), DB::raw("SUM(localAmount) as creditAmountLocal"), DB::raw("SUM(comRptAmount) as creditAmountRpt"))->where('creditNoteAutoID', $detail->creditNoteAutoID)->first()->toArray();
+            CreditNote::where('creditNoteAutoID', $detail->creditNoteAutoID)->update($details);
+
 
 
             DB::commit();
