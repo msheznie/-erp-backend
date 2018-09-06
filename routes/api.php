@@ -713,6 +713,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
     Route::resource('debit_notes', 'DebitNoteAPIController');
     Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
+    Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
+    Route::post('getDebitNoteApprovalByUser', 'DebitNoteAPIController@getDebitNoteApprovalByUser');
+    Route::post('debitNoteReopen', 'DebitNoteAPIController@debitNoteReopen');
     Route::get('getDebitNoteFormData', 'DebitNoteAPIController@getDebitNoteFormData');
     Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
     Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
@@ -766,6 +769,8 @@ Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer'
 Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF');
 Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
 Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
+Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
+
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
