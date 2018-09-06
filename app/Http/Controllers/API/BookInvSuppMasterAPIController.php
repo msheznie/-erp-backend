@@ -10,6 +10,11 @@
  * -- REVISION HISTORY
  * -- Date: 08-August 2018 By: Nazir Description: Added new function getInvoiceMasterRecord(),
  * -- Date: 24-August 2018 By: Nazir Description: Added new function getInvoiceMasterView(),
+ * -- Date: 06-September 2018 By: Nazir Description: Added new function getSupplierInvoiceReopen(),
+ * -- Date: 06-September 2018 By: Nazir Description: Added new function getInvoiceMasterApproval(),
+ * -- Date: 06-September 2018 By: Nazir Description: Added new function getApprovedInvoiceForCurrentUser(),
+ * -- Date: 06-September 2018 By: Nazir Description: Added new function approveSupplierInvoice(),
+ * -- Date: 06-September 2018 By: Nazir Description: Added new function rejectSupplierInvoice(),
  */
 
 namespace App\Http\Controllers\API;
@@ -17,13 +22,19 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
 use App\Models\BookInvSuppMaster;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
+use App\Models\DirectInvoiceDetails;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\Months;
+use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\Company;
 use App\Models\SupplierCurrency;
+use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BookInvSuppMasterRepository;
@@ -183,7 +194,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
         $input['documentSystemID'] = '11';
-        $input['documentID'] = 'SI';
+        $input['documentID'] = 'BSI';
 
         $lastSerial = BookInvSuppMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
@@ -228,7 +239,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         if ($documentMaster) {
-            $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' .  $input['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['bookingInvCode'] = $bookingInvCode;
         }
 
@@ -353,17 +364,142 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function update($id, UpdateBookInvSuppMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
 
         /** @var BookInvSuppMaster $bookInvSuppMaster */
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
 
         if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Book Inv Supp Master not found');
+            return $this->sendError('Supplier Invoice not found');
         }
 
+        $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
+
+        if (!empty($supplier)) {
+            $input["supplierGLCodeSystemID"] = $supplier->liabilityAccountSysemID;
+            $input["supplierGLCode"] = $supplier->liabilityAccount;
+        }
+
+        if (isset($input['bookingDate'])) {
+            if ($input['bookingDate']) {
+                $input['bookingDate'] = new Carbon($input['bookingDate']);
+            }
+        }
+
+        if (isset($input['supplierInvoiceDate'])) {
+            if ($input['supplierInvoiceDate']) {
+                $input['supplierInvoiceDate'] = new Carbon($input['supplierInvoiceDate']);
+            }
+        }
+        if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 1;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+            }
+            unset($inputParam);
+
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'bookingDate' => 'required',
+                'supplierInvoiceDate' => 'required',
+                'supplierID' => 'required|numeric|min:1',
+                'supplierTransactionCurrencyID' => 'required|numeric|min:1',
+                'comments' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $documentDate = $input['bookingDate'];
+            $monthBegin = $input['FYPeriodDateFrom'];
+            $monthEnd = $input['FYPeriodDateTo'];
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Document date is not within the selected financial period !', 500);
+            }
+
+            $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+            }
+
+            $checkQuantity = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                ->where(function ($q) {
+                    $q->where('DIAmount', '<=', 0)
+                        ->orWhereNull('localAmount', '<=', 0)
+                        ->orWhereNull('comRptAmount', '<=', 0)
+                        ->orWhereNull('debitAmount')
+                        ->orWhereNull('localAmount')
+                        ->orWhereNull('comRptAmount');
+                })
+                ->count();
+            if ($checkQuantity > 0) {
+                return $this->sendError('Amount should be greater than 0 for every items', 500);
+            }
+
+            $amount = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                ->sum('DIAmount');
+
+            $input['bookingAmountTrans'] = $amount;
+
+            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
+
+            $input['bookingAmountLocal'] = $companyCurrencyConversion['localAmount'];
+            $input['bookingAmountRpt'] = $companyCurrencyConversion['reportingAmount'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+
+            $input['RollLevForApp_curr'] = 1;
+
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+            $params = array(
+                'autoID' => $id,
+                'company' => $input["companySystemID"],
+                'document' => $input["documentSystemID"],
+                'segment' => $input["serviceLineSystemID"],
+                'category' => '',
+                'amount' => $amount
+            );
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"]);
+            }
+
+        }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
 
-        return $this->sendResponse($bookInvSuppMaster->toArray(), 'BookInvSuppMaster updated successfully');
+        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice updated successfully');
     }
 
     /**
@@ -474,6 +610,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
+        $segments = SegmentMaster::where("companySystemID", $companyId);
+        if (isset($request['type']) && $request['type'] != 'filter') {
+            $segments = $segments->where('isActive', 1);
+        }
+        $segments = $segments->get();
+
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -481,7 +623,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'currencies' => $currencies,
             'financialYears' => $financialYears,
             'suppliers' => $supplier,
-            'companyFinanceYear' => $companyFinanceYear
+            'companyFinanceYear' => $companyFinanceYear,
+            'segments' => $segments
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -584,4 +727,279 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+    public function getSupplierInvoiceReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+        $emails = array();
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        if ($bookInvSuppMaster->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Supplier Invoice it is already partially approved');
+        }
+
+        if ($bookInvSuppMaster->approved == -1) {
+            return $this->sendError('You cannot reopen this Supplier Invoice it is already fully approved');
+        }
+
+        if ($bookInvSuppMaster->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Supplier Invoice, it is not confirmed');
+        }
+
+        // updating fields
+
+        $bookInvSuppMaster->confirmedYN = 0;
+        $bookInvSuppMaster->confirmedByEmpSystemID = null;
+        $bookInvSuppMaster->confirmedByEmpID = null;
+        $bookInvSuppMaster->confirmedByName = null;
+        $bookInvSuppMaster->confirmedDate = null;
+        $bookInvSuppMaster->RollLevForApp_curr = 1;
+        $bookInvSuppMaster->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $bookInvSuppMaster->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $bookInvSuppMaster->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $bookInvSuppMaster->bookingInvCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $bookInvSuppMaster->companySystemID)
+            ->where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
+            ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $bookInvSuppMaster->companySystemID)
+                    ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+            ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice reopened successfully');
+    }
+
+    public function getInvoiceMasterApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
+            ->where('documentSystemID', 3)
+            ->first();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_bookinvsuppmaster.bookingSuppMasInvAutoID',
+            'erp_bookinvsuppmaster.bookingInvCode',
+            'erp_bookinvsuppmaster.documentSystemID',
+            'erp_bookinvsuppmaster.secondaryRefNo',
+            'erp_bookinvsuppmaster.bookingDate',
+            'erp_bookinvsuppmaster.comments',
+            'erp_bookinvsuppmaster.createdDateAndTime',
+            'erp_bookinvsuppmaster.confirmedDate',
+            'erp_bookinvsuppmaster.bookingAmountTrans',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user',
+            'serviceline.ServiceLineDes as serviceLineDescription'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->where('employeesdepartments.documentSystemID', 11)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_bookinvsuppmaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'bookingSuppMasInvAutoID')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_bookinvsuppmaster.companySystemID', $companyID)
+                ->where('erp_bookinvsuppmaster.approved', 0)
+                ->where('erp_bookinvsuppmaster.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->join('serviceline', 'erp_bookinvsuppmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 11)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('bookingInvCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function getApprovedInvoiceForCurrentUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_bookinvsuppmaster.bookingSuppMasInvAutoID',
+            'erp_bookinvsuppmaster.bookingInvCode',
+            'erp_bookinvsuppmaster.documentSystemID',
+            'erp_bookinvsuppmaster.secondaryRefNo',
+            'erp_bookinvsuppmaster.bookingDate',
+            'erp_bookinvsuppmaster.comments',
+            'erp_bookinvsuppmaster.createdDateAndTime',
+            'erp_bookinvsuppmaster.confirmedDate',
+            'erp_bookinvsuppmaster.bookingAmountTrans',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user',
+            'serviceline.ServiceLineDes as serviceLineDescription'
+        )->join('erp_bookinvsuppmaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'bookingSuppMasInvAutoID')
+                ->where('erp_bookinvsuppmaster.companySystemID', $companyID)
+                ->where('erp_bookinvsuppmaster.approved', -1)
+                ->where('erp_bookinvsuppmaster.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
+            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->join('serviceline', 'erp_bookinvsuppmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->where('erp_documentapproved.documentSystemID', 11)
+            ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('bookingInvCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveSupplierInvoice(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectSupplierInvoice(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+
+    }
+
 }

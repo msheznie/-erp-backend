@@ -119,6 +119,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
 
     Route::resource('item/assigneds', 'ItemAssignedAPIController');
+    Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
 
     Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
 
@@ -660,6 +661,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
     Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
+    Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount');
     Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany');
     Route::get('getPaymentVoucherFormData', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherFormData');
     Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
@@ -720,8 +722,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
     Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
 
-
-
+    
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
 
@@ -754,6 +755,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice');
     Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
     Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
+    Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
+    Route::post('getInvoiceMasterApproval', 'BookInvSuppMasterAPIController@getInvoiceMasterApproval');
+    Route::post('getApprovedInvoiceForCurrentUser', 'BookInvSuppMasterAPIController@getApprovedInvoiceForCurrentUser');
+    Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
+    Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice');
     Route::get('getCreditNoteViewFormData', 'CreditNoteAPIController@getCreditNoteViewFormData');
     Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
     Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
@@ -762,8 +768,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
     Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
     Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
-
-
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -793,7 +797,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 20,'autoID' => 46881, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 15,'autoID' => 1989, 'companySystemID' => 52, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 

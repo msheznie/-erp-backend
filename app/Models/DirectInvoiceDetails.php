@@ -147,9 +147,11 @@ class DirectInvoiceDetails extends Model
 
     public $fillable = [
         'directInvoiceAutoID',
+        'companySystemID',
         'companyID',
         'serviceLineSystemID',
         'serviceLineCode',
+        'chartOfAccountSystemID',
         'glCode',
         'glCodeDes',
         'comments',
@@ -177,9 +179,11 @@ class DirectInvoiceDetails extends Model
     protected $casts = [
         'directInvoiceDetailsID' => 'integer',
         'directInvoiceAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
+        'chartOfAccountSystemID' => 'integer',
         'glCode' => 'string',
         'glCodeDes' => 'string',
         'comments' => 'string',
@@ -210,6 +214,11 @@ class DirectInvoiceDetails extends Model
     public function segment()
     {
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function chartofaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
     }
 
     
