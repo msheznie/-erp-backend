@@ -15,6 +15,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
+use App\Models\BankAssign;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierAssigned;
@@ -425,6 +426,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get();
 
+        $bank = BankAssign::where('companySystemID',$companyId)->where('isActive',1)->where('isAssigned',-1)->get();
+
         $output = array(
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
@@ -433,6 +436,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             'month' => $month,
             'years' => $years,
             'supplier' => $supplier,
+            'bank' => $bank,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
