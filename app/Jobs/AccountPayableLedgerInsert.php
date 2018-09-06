@@ -7,6 +7,7 @@ use App\Models\BookInvSuppMaster;
 use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
 use App\Models\Employee;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Models\Taxdetail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -120,13 +121,13 @@ class AccountPayableLedgerInsert implements ShouldQueue
 
                             if ($masterData->documentType == 0) { // check if it is supplier invoice
                                 $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
-                                $data['supplierTransER'] = \Helper::roundValue(($masterData->detail[0]->transAmount +  $taxTrans)/ ($masterData->detail[0]->transAmount + $taxTrans));
+                                $data['supplierTransER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $taxTrans) / ($masterData->detail[0]->transAmount + $taxTrans));
                                 $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount + $taxTrans));
                                 $data['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
-                                $data['supplierDefaultCurrencyER'] = \Helper::roundValue(($masterData->detail[0]->transAmount +  $taxTrans)/ ($masterData->detail[0]->transAmount + $taxTrans));
-                                $data['supplierDefaultAmount'] = ABS($masterData->detail[0]->transAmount + $taxTrans);
+                                $data['supplierDefaultCurrencyER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $taxTrans) / ($masterData->detail[0]->transAmount + $taxTrans));
+                                $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount + $taxTrans));
                                 $data['localCurrencyID'] = $masterData->localCurrencyID;
-                                $data['localER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $taxTrans)/ ($masterData->detail[0]->localAmount + $taxLocal));
+                                $data['localER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $taxTrans) / ($masterData->detail[0]->localAmount + $taxLocal));
                                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount + $taxLocal));
                                 $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                                 $data['comRptER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $taxTrans) / ($masterData->detail[0]->rptAmount + $taxRpt));
@@ -157,6 +158,63 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             array_push($finalData, $data);
                         }
 
+                        break;
+                    case 4: // Payment Voucher
+                        $masterData = PaySupplierInvoiceMaster::with(['bank', 'supplierdetail' => function ($query) {
+                            $query->selectRaw('SUM(paymentLocalAmount) as localAmount, SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierPaymentCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierPaymentER as transCurrencyER,PayMasterAutoId');
+                        }, 'advancedetail' => function ($query) {
+                            $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(supplierTransAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER,PayMasterAutoId');
+                        }])->find($masterModel["autoID"]);
+
+                        if ($masterData) {
+                            $data['companySystemID'] = $masterData->companySystemID;
+                            $data['companyID'] = $masterData->companyID;
+                            $data['documentSystemID'] = $masterData->documentSystemID;
+                            $data['documentID'] = $masterData->documentID;
+                            $data['documentSystemCode'] = $masterModel["autoID"];
+                            $data['documentCode'] = $masterData->BPVcode;
+                            $data['documentDate'] = $masterData->BPVdate;
+                            $data['supplierCodeSystem'] = $masterData->BPVsupplierID;
+                            $data['supplierInvoiceNo'] = 'NA';
+                            $data['supplierInvoiceDate'] = $masterData->BPVdate;
+                            if ($masterData->invoiceType == 2) {  //Supplier Payment
+                                $data['supplierTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                                $data['supplierTransER'] = $masterData->supplierTransCurrencyER;
+                                $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($masterData->supplierdetail[0]->transAmount) * -1);
+                                $data['supplierDefaultCurrencyID'] = $masterData->supplierDefCurrencyID;
+                                $data['supplierDefaultCurrencyER'] =  $masterData->supplierDefCurrencyER;
+                                $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->supplierdetail[0]->transAmount)  * -1);
+                                $data['localCurrencyID'] = $masterData->localCurrencyID;
+                                $data['localER'] = $masterData->localCurrencyER;
+                                $data['localAmount'] = \Helper::roundValue(ABS($masterData->supplierdetail[0]->localAmount) * -1);
+                                $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                $data['comRptER'] = $masterData->companyRptCurrencyER;
+                                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->supplierdetail[0]->rptAmount) * -1);
+                            } else if ($masterData->invoiceType == 5) { //Advance Payment
+                                $data['supplierTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                                $data['supplierTransER'] = $masterData->supplierTransCurrencyER;
+                                $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($masterData->advancedetail[0]->transAmount) * -1);
+                                $data['supplierDefaultCurrencyID'] = $masterData->supplierDefCurrencyID;
+                                $data['supplierDefaultCurrencyER'] =  $masterData->supplierDefCurrencyER;
+                                $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->advancedetail[0]->transAmount) * -1);
+                                $data['localCurrencyID'] = $masterData->localCurrencyID;
+                                $data['localER'] = $masterData->localCurrencyER;
+                                $data['localAmount'] = \Helper::roundValue(ABS($masterData->advancedetail[0]->localAmount) * -1);
+                                $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                $data['comRptER'] = $masterData->companyRptCurrencyER;
+                                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->advancedetail[0]->rptAmount) * -1);
+                            }
+                            $data['isInvoiceLockedYN'] = 0;
+                            $data['invoiceType'] = $masterData->invoiceType;
+                            $data['selectedToPaymentInv'] = 0;
+                            $data['fullyInvoice'] = 0;
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = $empID->empID;
+                            $data['createdUserSystemID'] = $empID->employeeSystemID;
+                            $data['createdPcID'] = gethostname();
+                            $data['timeStamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
+                        }
                         break;
                     default:
                         Log::warning('Document ID not found ' . date('H:i:s'));
