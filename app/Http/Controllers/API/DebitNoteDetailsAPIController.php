@@ -1,10 +1,25 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : DebitNoteDetailsAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  DebitNoteDetails
+ * -- Author : Mohamed Nazir
+ * -- Create date : 16 - August 2018
+ * -- Description : This file contains the all CRUD for Debit Note
+ * -- REVISION HISTORY
+ * -- Date: 05-September 2018 By: Fayas Description: Added new function getDetailsByDebitNote()
+ */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDebitNoteDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteDetailsAPIRequest;
+use App\Models\ChartOfAccount;
+use App\Models\Company;
+use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
+use App\Models\SegmentMaster;
 use App\Repositories\DebitNoteDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -16,7 +31,6 @@ use Response;
  * Class DebitNoteDetailsController
  * @package App\Http\Controllers\API
  */
-
 class DebitNoteDetailsAPIController extends AppBaseController
 {
     /** @var  DebitNoteDetailsRepository */
@@ -109,6 +123,91 @@ class DebitNoteDetailsAPIController extends AppBaseController
     public function store(CreateDebitNoteDetailsAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $companySystemID = $input['companySystemID'];
+        $debitNote = DebitNote::find($input['debitNoteAutoID']);
+
+        if (empty($debitNote)) {
+            return $this->sendError('Debit Note not found');
+        }
+        $validator = \Validator::make($debitNote->toArray(), [
+            'supplierID' => 'required|numeric|min:1',
+            'supplierTransactionCurrencyID' => 'required|numeric|min:1',
+            'comments' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $alreadyAdded = DebitNote::where('debitNoteAutoID', $debitNote->debitNoteAutoID)
+            ->whereHas('detail', function ($query) use ($input) {
+                $query->where('chartOfAccountSystemID', $input['chartOfAccountSystemID']);
+            })
+            ->first();
+
+        if ($alreadyAdded) {
+            return $this->sendError("Selected item is already added. Please check again", 500);
+        }
+
+        $checkWhether = DebitNote::where('debitNoteAutoID', '!=', $debitNote->debitNoteAutoID)
+            ->where('companySystemID', $companySystemID)
+            ->select([
+                'debitNoteAutoID',
+                'companySystemID',
+                'debitNoteCode',
+                'approved'
+            ])
+            ->groupBy(
+                'debitNoteAutoID',
+                'companySystemID',
+                'approved'
+            )
+            ->whereHas('detail', function ($query) use ($companySystemID, $input) {
+                $query->where('chartOfAccountSystemID', $input['chartOfAccountSystemID']);
+            })
+            ->where('approved', 0)
+            ->first();
+
+
+        if (!empty($checkWhether)) {
+            return $this->sendError("There is a Debit Note (" . $checkWhether->debitNoteCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
+
+
+        $input['companySystemID'] = $debitNote->companySystemID;
+        $input['companyID'] = $debitNote->companyID;
+        $input['supplierID'] = $debitNote->supplierID;
+
+        $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
+        if (empty($chartOfAccount)) {
+            return $this->sendError('Chart of Account not found');
+        }
+
+        $input['glCode'] = $chartOfAccount->AccountCode;
+        $input['glCodeDes'] = $chartOfAccount->AccountDescription;
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, 0);
+
+        $input['debitAmountCurrency'] = $debitNote->supplierTransactionCurrencyID;
+        $input['debitAmountCurrencyER'] = 1;
+        $input['localCurrency'] = $debitNote->localCurrencyID;
+        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        $input['comRptCurrency'] = $debitNote->companyReportingCurrencyID;
+        $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+
+        if ($debitNote->FYBiggin) {
+            $finYearExp = explode('-', $debitNote->FYBiggin);
+            $input['budgetYear'] = $finYearExp[0];
+        } else {
+            $input['budgetYear'] = date("Y");
+        }
 
         $debitNoteDetails = $this->debitNoteDetailsRepository->create($input);
 
@@ -214,6 +313,9 @@ class DebitNoteDetailsAPIController extends AppBaseController
     public function update($id, UpdateDebitNoteDetailsAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['segment']);
+        $input = $this->convertArrayToValue($input);
+        $serviceLineError = array('type' => 'serviceLine');
 
         /** @var DebitNoteDetails $debitNoteDetails */
         $debitNoteDetails = $this->debitNoteDetailsRepository->findWithoutFail($id);
@@ -222,8 +324,47 @@ class DebitNoteDetailsAPIController extends AppBaseController
             return $this->sendError('Debit Note Details not found');
         }
 
+        $debitNote = DebitNote::find($input['debitNoteAutoID']);
+
+        if (empty($debitNote)) {
+            return $this->sendError('Debit Note not found');
+        }
+
+        if (isset($input['serviceLineSystemID'])) {
+
+            if ($input['serviceLineSystemID'] > 0) {
+                $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
+                if (empty($checkDepartmentActive)) {
+                    return $this->sendError('Department not found');
+                }
+
+                if ($checkDepartmentActive->isActive == 0) {
+                    $this->debitNoteDetailsRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
+                    return $this->sendError('Please select an active department', 500, $serviceLineError);
+                }
+
+                $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
+            }
+        }
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['debitAmount']);
+
+        $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+        $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+
         $debitNoteDetails = $this->debitNoteDetailsRepository->update($input, $id);
 
+        $amount = DebitNoteDetails::where('debitNoteAutoID', $debitNoteDetails->debitNoteAutoID)
+            ->sum('debitAmount');
+        $companyCurrencyConversionMaster = \Helper::currencyConversion($debitNote->companySystemID, $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $amount);
+        $debitNote['debitAmountTrans'] = $amount;
+        $debitNote['debitAmountLocal'] = $companyCurrencyConversionMaster['localAmount'];
+        $debitNote['debitAmountRpt'] = $companyCurrencyConversionMaster['reportingAmount'];
+        $debitNote['localCurrencyER'] = $companyCurrencyConversionMaster['trasToLocER'];
+        $debitNote['companyReportingER'] = $companyCurrencyConversionMaster['trasToRptER'];
+        $debitNote->save();
         return $this->sendResponse($debitNoteDetails->toArray(), 'DebitNoteDetails updated successfully');
     }
 
@@ -278,4 +419,17 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Debit Note Details deleted successfully');
     }
+
+    public function getDetailsByDebitNote(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['debitNoteAutoID'];
+
+        $items = DebitNoteDetails::where('debitNoteAutoID', $id)
+            ->with(['segment'])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
+    }
+
 }

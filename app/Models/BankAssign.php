@@ -44,6 +44,7 @@ class BankAssign extends Model
 
     public $fillable = [
         'bankmasterAutoID',
+        'companySystemID',
         'companyID',
         'bankShortCode',
         'bankName',
@@ -63,6 +64,7 @@ class BankAssign extends Model
     protected $casts = [
         'bankAssignedAutoID' => 'integer',
         'bankmasterAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'bankShortCode' => 'string',
         'bankName' => 'string',

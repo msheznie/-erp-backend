@@ -139,7 +139,7 @@ class DebitNoteDetails extends Model
 
     public $table = 'erp_debitnotedetails';
 
-    const CREATED_AT = 'createdDateTime';
+    const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = 'debitNoteDetailsID';
