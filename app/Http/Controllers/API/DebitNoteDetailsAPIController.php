@@ -31,7 +31,6 @@ use Response;
  * Class DebitNoteDetailsController
  * @package App\Http\Controllers\API
  */
-
 class DebitNoteDetailsAPIController extends AppBaseController
 {
     /** @var  DebitNoteDetailsRepository */
@@ -194,13 +193,13 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $input['glCode'] = $chartOfAccount->AccountCode;
         $input['glCodeDes'] = $chartOfAccount->AccountDescription;
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID,$debitNote->supplierTransactionCurrencyID, 0);
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, 0);
 
         $input['debitAmountCurrency'] = $debitNote->supplierTransactionCurrencyID;
         $input['debitAmountCurrencyER'] = 1;
-        $input['localCurrency' ] =   $debitNote->localCurrencyID;
-        $input['localCurrencyER' ] = $companyCurrencyConversion['trasToLocER'];
-        $input['comRptCurrency'] =   $debitNote->companyReportingCurrencyID;
+        $input['localCurrency'] = $debitNote->localCurrencyID;
+        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        $input['comRptCurrency'] = $debitNote->companyReportingCurrencyID;
         $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
 
         if ($debitNote->FYBiggin) {
@@ -314,8 +313,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
     public function update($id, UpdateDebitNoteDetailsAPIRequest $request)
     {
         $input = $request->all();
-        //$input['serviceLineSystemID'] = 117;
-        // $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by']);
+        $input = array_except($input, ['segment']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
 
@@ -334,7 +332,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
         if (isset($input['serviceLineSystemID'])) {
 
-            if($input['serviceLineSystemID'] > 0) {
+            if ($input['serviceLineSystemID'] > 0) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
                     return $this->sendError('Department not found');
@@ -349,13 +347,24 @@ class DebitNoteDetailsAPIController extends AppBaseController
             }
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID,$debitNote->supplierTransactionCurrencyID, $input['debitAmount']);
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['debitAmount']);
 
-        $input['localAmount' ]        = $companyCurrencyConversion['localAmount'];
-        $input['comRptAmount']        = $companyCurrencyConversion['reportingAmount'];
-        $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
-        $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
+        $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+        $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+
         $debitNoteDetails = $this->debitNoteDetailsRepository->update($input, $id);
+
+        $amount = DebitNoteDetails::where('debitNoteAutoID', $debitNoteDetails->debitNoteAutoID)
+            ->sum('debitAmount');
+        $companyCurrencyConversionMaster = \Helper::currencyConversion($debitNote->companySystemID, $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $amount);
+        $debitNote['debitAmountTrans'] = $amount;
+        $debitNote['debitAmountLocal'] = $companyCurrencyConversionMaster['localAmount'];
+        $debitNote['debitAmountRpt'] = $companyCurrencyConversionMaster['reportingAmount'];
+        $debitNote['localCurrencyER'] = $companyCurrencyConversionMaster['trasToLocER'];
+        $debitNote['companyReportingER'] = $companyCurrencyConversionMaster['trasToRptER'];
+        $debitNote->save();
         return $this->sendResponse($debitNoteDetails->toArray(), 'DebitNoteDetails updated successfully');
     }
 
@@ -417,8 +426,8 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $id = $input['debitNoteAutoID'];
 
         $items = DebitNoteDetails::where('debitNoteAutoID', $id)
-                                    ->with(['segment'])
-                                    ->get();
+            ->with(['segment'])
+            ->get();
 
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }

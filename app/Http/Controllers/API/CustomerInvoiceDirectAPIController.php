@@ -497,7 +497,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 }
 
-                if (count($detail) > !0) {
+                if (count($detail) == 0) {
                     return $this->sendError('You can not confirm. Invoice Details not found.', 500);
                 } else {
                     $detailValidation = CustomerInvoiceDirectDetail::selectRaw("IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
@@ -755,20 +755,30 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $invMaster->whereMonth('bookingDate', '=', $input['month']);
+            }
+        }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $invoiceDate = $input['year'] . '-12-01';
+                $invMaster->whereYear('bookingDate', '=', $input['year']);
+            }
+        }
+      /*  if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $invoiceDate = $input['year'] . '-12-31';
                 if (array_key_exists('month', $input)) {
                     if ($input['month'] && !is_null($input['month'])) {
-                        $invoiceDate = $input['year'] . '-' . $input['month'] . '-01';
+                        $invoiceDate = $input['year'] . '-' . $input['month'] . '-31';
                     }
                 }
 
                 $invMaster->where('bookingDate', '<=', $invoiceDate);
 
             }
-        }
+        }*/
 
 
         $search = $request->input('search.value');

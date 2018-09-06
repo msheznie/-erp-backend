@@ -13,9 +13,12 @@
 namespace App\helper;
 
 use App\Models\Alert;
+use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\CreditNote;
 use App\Models\CustomerMaster;
+use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
@@ -25,6 +28,7 @@ use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\ItemReturnMaster;
 use App\Models\MaterielRequest;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseReturn;
@@ -209,13 +213,39 @@ class email
                         $data['docCode'] = $debitNote->debitNoteCode;
                     }
                     break;
+                case 21:
+                    $receiptVoucher = CustomerReceivePayment::where('custReceivePaymentAutoID', $data['docSystemCode'])->first();
+                    if (!empty($receiptVoucher)) {
+                        $data['docApprovedYN'] = $receiptVoucher->approved;
+                        $data['docCode'] = $receiptVoucher->custPaymentReceiveCode;
+                    }
+                    break;
+                case 19:
+                    $creditNote = CreditNote::where('creditNoteAutoID', $data['docSystemCode'])->first();
+                    if (!empty($creditNote)) {
+                        $data['docApprovedYN'] = $creditNote->approved;
+                        $data['docCode'] = $creditNote->creditNoteCode;
+                    }
+                    break;
+                case 11:
+                    $suppInv = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $data['docSystemCode'])->first();
+                    if (!empty($creditNote)) {
+                        $data['docApprovedYN'] = $suppInv->approved;
+                        $data['docCode'] = $suppInv->bookingInvCode;
+                    }
+                    break;
+                case 4:
+                    $payInv = PaySupplierInvoiceMaster::where('PayMasterAutoId', $data['docSystemCode'])->first();
+                    if (!empty($creditNote)) {
+                        $data['docApprovedYN'] = $payInv->approved;
+                        $data['docCode'] = $payInv->BPVcode;
+                    }
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
-
             }
 
             $data['isEmailSend'] = 0;
-
             $temp = "Hi " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
 
             $data['emailAlertMessage'] = $temp;

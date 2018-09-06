@@ -119,6 +119,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
 
     Route::resource('item/assigneds', 'ItemAssignedAPIController');
+    Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
 
     Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
 
@@ -713,12 +714,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
     Route::resource('debit_notes', 'DebitNoteAPIController');
     Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
+    Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
+    Route::post('getDebitNoteApprovalByUser', 'DebitNoteAPIController@getDebitNoteApprovalByUser');
+    Route::post('debitNoteReopen', 'DebitNoteAPIController@debitNoteReopen');
     Route::get('getDebitNoteFormData', 'DebitNoteAPIController@getDebitNoteFormData');
     Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
     Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
 
-
-
+    
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
 
@@ -751,12 +754,19 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice');
     Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
     Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
-
     Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
     Route::post('getInvoiceMasterApproval', 'BookInvSuppMasterAPIController@getInvoiceMasterApproval');
     Route::post('getApprovedInvoiceForCurrentUser', 'BookInvSuppMasterAPIController@getApprovedInvoiceForCurrentUser');
     Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
     Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice');
+    Route::get('getCreditNoteViewFormData', 'CreditNoteAPIController@getCreditNoteViewFormData');
+    Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
+    Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
+    Route::get('creditNoteDetails', 'CreditNoteDetailsAPIController@creditNoteDetails');
+    Route::get('creditNotegetcontract', 'CreditNoteDetailsAPIController@creditNotegetcontract');
+    Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
+    Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
+    Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -773,6 +783,11 @@ Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogistic
 Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
 Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
 
+Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
+
+Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
+
+
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
 
@@ -781,7 +796,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 19,'autoID' => 2748, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 20,'autoID' => 46881, 'companySystemID' => 52, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 
