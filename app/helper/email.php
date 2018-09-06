@@ -13,9 +13,12 @@
 namespace App\helper;
 
 use App\Models\Alert;
+use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\CreditNote;
 use App\Models\CustomerMaster;
+use App\Models\CustomerReceivePayment;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\GRVMaster;
@@ -199,6 +202,27 @@ class email
                     if (!empty($stockAdjustment)) {
                         $data['docApprovedYN'] = $stockAdjustment->approved;
                         $data['docCode'] = $stockAdjustment->stockAdjustmentCode;
+                    }
+                    break;
+                case 21:
+                    $receiptVoucher = CustomerReceivePayment::where('custReceivePaymentAutoID', $data['docSystemCode'])->first();
+                    if (!empty($receiptVoucher)) {
+                        $data['docApprovedYN'] = $receiptVoucher->approved;
+                        $data['docCode'] = $receiptVoucher->custPaymentReceiveCode;
+                    }
+                    break;
+                case 19:
+                    $creditNote = CreditNote::where('creditNoteAutoID', $data['docSystemCode'])->first();
+                    if (!empty($creditNote)) {
+                        $data['docApprovedYN'] = $creditNote->approved;
+                        $data['docCode'] = $creditNote->creditNoteCode;
+                    }
+                    break;
+                case 11:
+                    $suppInv = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $data['docSystemCode'])->first();
+                    if (!empty($creditNote)) {
+                        $data['docApprovedYN'] = $suppInv->approved;
+                        $data['docCode'] = $suppInv->bookingInvCode;
                     }
                     break;
                 default:

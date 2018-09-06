@@ -950,7 +950,6 @@ class Helper
                     $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
 
                     if ($approvalLevel) {
-
                         //Budget check on the 1st level approval for PR/DR/WR
                         if ($input["rollLevelOrder"] == 1) {
                             if ($input["documentSystemID"] == 1 || $input["documentSystemID"] == 50 || $input["documentSystemID"] == 51) {
@@ -1020,7 +1019,7 @@ class Helper
                                                     $userMessageE .= "Total Consumed Amount : '" . round($totalConsumedAmount, 2) . "'";
 
                                                     return ['success' => false, 'message' => $userMessageE];
-                                                }else{
+                                                } else {
                                                     $userMessage .= "<br>";
                                                     $userMessage .= "Budget Amount : '" . round($totalBudgetRptAmount, 2) . "'";
                                                     $userMessage .= "<br>";
@@ -1042,8 +1041,6 @@ class Helper
                         // get current employee detail
                         $empInfo = self::getEmployeeInfo();
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
-
-
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
@@ -1057,15 +1054,14 @@ class Helper
                                 $supplierMaster = $namespacedModel::selectRaw('supplierCodeSystem as supplierCodeSytem,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,uniqueTextcode,primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
                                 $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
                             }
-
                             // insert the record to item ledger
 
-                            if ($input["documentSystemID"] != 20) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7])) {
                                 $jobIL = ItemLedgerInsert::dispatch($masterData);
                             }
 
                             // insert the record to general ledger
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20 || $input["documentSystemID"] == 61 || $input["documentSystemID"] == 24 || $input["documentSystemID"] == 7) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21])) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
@@ -1189,18 +1185,14 @@ class Helper
                             }
 
                         } else {
-
                             // update roll level in master table
                             $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
-
                         }
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
                         $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
-
                         $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
-
                         $emails = array();
                         if (!empty($sourceModel)) {
                             $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
