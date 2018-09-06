@@ -1086,20 +1086,14 @@ class Helper
                             }
                             // insert the record to item ledger
 
-<<<<<<< HEAD
-                            if ($input["documentSystemID"] != 20 && $input["documentSystemID"] != 15) {
-=======
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7])) {
->>>>>>> 9bb5f0b2bde5cc0921aa93366efa17e0cc3fa78d
+
                                 $jobIL = ItemLedgerInsert::dispatch($masterData);
                             }
 
                             // insert the record to general ledger
-<<<<<<< HEAD
-                            if ($input["documentSystemID"] == 3 || $input["documentSystemID"] == 8 || $input["documentSystemID"] == 12 || $input["documentSystemID"] == 13 || $input["documentSystemID"] == 10 || $input["documentSystemID"] == 20 || $input["documentSystemID"] == 61 || $input["documentSystemID"] == 24 || $input["documentSystemID"] == 7 || $input["documentSystemID"] == 15) {
-=======
+
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21])) {
->>>>>>> 9bb5f0b2bde5cc0921aa93366efa17e0cc3fa78d
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
