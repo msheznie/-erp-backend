@@ -294,6 +294,8 @@ class BookInvSuppMaster extends Model
         'secondaryRefNo',
         'supplierID',
         'supplierGLCode',
+        'UnbilledGRVAccountSystemID',
+        'UnbilledGRVAccount',
         'supplierInvoiceNo',
         'supplierInvoiceDate',
         'supplierTransactionCurrencyID',
@@ -323,6 +325,7 @@ class BookInvSuppMaster extends Model
         'createdUserSystemID',
         'createdUserID',
         'createdPcID',
+        'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
@@ -383,6 +386,7 @@ class BookInvSuppMaster extends Model
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'createdPcID' => 'string',
+        'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
         'cancelYN' => 'integer',
@@ -412,6 +416,11 @@ class BookInvSuppMaster extends Model
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
 
     public function supplier()
@@ -474,5 +483,4 @@ class BookInvSuppMaster extends Model
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 
-    
 }
