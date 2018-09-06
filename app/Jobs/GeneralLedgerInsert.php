@@ -641,19 +641,12 @@ class GeneralLedgerInsert implements ShouldQueue
                         $masterData = CustomerInvoiceDirect::find($masterModel["autoID"]);
                         $det = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $masterModel["autoID"]);
                         $detOne = $det->first();
-                        $det = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode', 'serviceLineCode');
                         $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode")->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode', 'serviceLineCode', 'comments')->get();
-
                         $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
                         $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
-
                         $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
-
                         $date = new Carbon($masterData->bookingDate);
-                        $getEmployeeSystemID = \Helper::getEmployeeSystemID();
                         $time = Carbon::now();
-                        $getEmployeeID = \Helper::getEmployeeID();
-
                         $data['companySystemID'] = $masterData->companySystemID;
                         $data['companyID'] = $masterData->companyID;
                         $data['masterCompanyID'] = $company->masterComapanyID;
@@ -700,9 +693,9 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         $data['documentType'] = 11;
 
-                        $data['createdUserSystemID'] = $getEmployeeSystemID;
+                        $data['createdUserSystemID'] = $empID->empID;
                         $data['createdDateTime'] = $time;
-                        $data['createdUserID'] = $getEmployeeID;
+                        $data['createdUserID'] = $empID->employeeSystemID;
                         $data['createdUserPC'] = getenv('COMPUTERNAME');
                         $data['timestamp'] = $time;
                         array_push($finalData, $data);
@@ -747,15 +740,14 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentRptAmount'] = $item->comRptAmount * -1;
                                 /*  $data['isCustomer'] = 1;*/
                                 // $data['documentType'] = 11;
-                                $data['createdUserSystemID'] = $getEmployeeSystemID;
+                                $data['createdUserSystemID'] = $empID->empID;
                                 $data['createdDateTime'] = $time;
-                                $data['createdUserID'] = $getEmployeeID;
+                                $data['createdUserID'] = $empID->employeeSystemID;
                                 $data['createdUserPC'] = getenv('COMPUTERNAME');
                                 array_push($finalData, $data);
                             }
                         }
                         $erp_taxdetail = Taxdetail::where('companyID', $masterData->companyID)->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)->get();
-
                         if (!empty($erp_taxdetail)) {
                             foreach ($erp_taxdetail as $tax) {
 
@@ -795,9 +787,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentRptAmount'] = $tax->rptAmount * -1;
                                 /*$data['isCustomer'] = 1;*/
                                 // $data['documentType'] = 11;
-                                $data['createdUserSystemID'] = $getEmployeeSystemID;
+                                $data['createdUserSystemID'] = $empID->empID;
                                 $data['createdDateTime'] = $time;
-                                $data['createdUserID'] = $getEmployeeID;
+                                $data['createdUserID'] = $empID->employeeSystemID;
                                 $data['createdUserPC'] = getenv('COMPUTERNAME');
                                 array_push($finalData, $data);
                             }
@@ -1034,7 +1026,6 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['clientContractID'] = 'X';
                             $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = $masterData->supplierID;
-
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = 0;
                             $data['nonHoldingPercentage'] = 0;
@@ -1175,7 +1166,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     if ($val->serviceLineSystemID) {
                                         $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                                         $data['serviceLineCode'] = $val->serviceLineCode;
-                                    }else{
+                                    } else {
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
                                     }
@@ -1183,7 +1174,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     if ($val->clientContractID) {
                                         $data['clientContractID'] = $val->clientContractID;
                                         $data['contractUID'] = $val->contractUID;
-                                    }else{
+                                    } else {
                                         $data['clientContractID'] = 'X';
                                         $data['contractUID'] = 159;
                                     }
@@ -1434,7 +1425,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['timestamp'] = \Helper::currentDateTime();
 
 
-                            if ($masterData->documentType == 13) { //Customer Recieve Payment
+                            if ($masterData->documentType == 13) { //Customer Receive Payment
                                 if ($cpd) {
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
@@ -1525,7 +1516,7 @@ class GeneralLedgerInsert implements ShouldQueue
                     Log::info('Successfully inserted to GL table ' . date('H:i:s'));
 
                     if ($generalLedgerInsert) {
-                        if (in_array($masterModel["documentSystemID"], [15, 11])) {
+                        if (in_array($masterModel["documentSystemID"], [15, 11, 4])) {
                             $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
                         }
                         if (in_array($masterModel["documentSystemID"], [19])) {

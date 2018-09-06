@@ -28,6 +28,7 @@ use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\ItemReturnMaster;
 use App\Models\MaterielRequest;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseReturn;
@@ -233,12 +234,18 @@ class email
                         $data['docCode'] = $suppInv->bookingInvCode;
                     }
                     break;
+                case 4:
+                    $payInv = PaySupplierInvoiceMaster::where('PayMasterAutoId', $data['docSystemCode'])->first();
+                    if (!empty($creditNote)) {
+                        $data['docApprovedYN'] = $payInv->approved;
+                        $data['docCode'] = $payInv->BPVcode;
+                    }
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
 
             $data['isEmailSend'] = 0;
-
             $temp = "Hi " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
 
             $data['emailAlertMessage'] = $temp;
