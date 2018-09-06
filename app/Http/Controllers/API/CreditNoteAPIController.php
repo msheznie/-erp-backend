@@ -10,6 +10,10 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
 use App\Models\CustomerAssigned;
+use App\Models\DocumentMaster;
+use App\Models\DocumentApproved;
+use App\Models\EmployeesDepartment;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CustomerMaster;
@@ -170,10 +174,8 @@ class CreditNoteAPIController extends AppBaseController
             $creditNotes = $this->creditNoteRepository->create($input);
             return $this->sendResponse($creditNotes->toArray(), 'Credit Note saved successfully');
         } else {
-            return $this->sendError( 'Credit note document date should be between financial period start and end date',500);
+            return $this->sendError('Credit note document date should be between financial period start and end date', 500);
         }
-
-
 
 
     }
@@ -219,11 +221,11 @@ class CreditNoteAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CreditNote $creditNote */
-        $creditNote = $this->creditNoteRepository->with(['currency','finance_year_by' => function ($query) {
-        $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-    }, 'finance_period_by' => function ($query) {
-        $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-    }])->findWithoutFail($id);
+        $creditNote = $this->creditNoteRepository->with(['currency', 'finance_year_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }, 'finance_period_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }])->findWithoutFail($id);
 
         if (empty($creditNote)) {
             return $this->sendError('Credit Note not found');
@@ -281,8 +283,8 @@ class CreditNoteAPIController extends AppBaseController
     public function update($id, UpdateCreditNoteAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID','confirmedYN', 'companyFinanceYearID','customerID','secondaryLogoCompanySystemID','customerCurrencyID'));
-        $input = array_except($input,array('finance_period_by','finance_year_by','currency'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID'));
+        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency'));
 
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
         $input['modifiedUser'] = \Helper::getEmployeeID();
@@ -293,12 +295,12 @@ class CreditNoteAPIController extends AppBaseController
         $detail = CreditNoteDetails::where('creditNoteAutoID', $id)->get();
         $input['departmentSystemID'] = 4;
         if (empty($creditNote)) {
-            return $this->sendError('Credit Note not found',500);
+            return $this->sendError('Credit Note not found', 500);
         }
 
         /**/
         if ($input['customerCurrencyID'] != $creditNote->customerCurrencyID) {
-            if(count($detail)==0){
+            if (count($detail) == 0) {
                 /*currency*/
                 $myCurr = $input['customerCurrencyID'];
 
@@ -311,7 +313,7 @@ class CreditNoteAPIController extends AppBaseController
                 $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
                 $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 /*end of currency*/
-            }else{
+            } else {
                 return $this->sendError('Credit note details exist. You can not change the currency.', 500);
             }
         }
@@ -327,12 +329,11 @@ class CreditNoteAPIController extends AppBaseController
             return $this->sendError($companyFinancePeriodCheck["message"], 500);
         }
 
-        if($input['companyFinancePeriodID'] != $creditNote->companyFinancePeriodID){
+        if ($input['companyFinancePeriodID'] != $creditNote->companyFinancePeriodID) {
             $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
             $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
             $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
         }
-
 
 
         if ($input['secondaryLogoCompanySystemID'] != $creditNote->secondaryLogoCompanySystemID) {
@@ -353,9 +354,9 @@ class CreditNoteAPIController extends AppBaseController
                 return $this->sendError('Invoice details exist. You can not change the customer.', 500);
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-           /* if ($customer->creditDays == 0 || $customer->creditDays == '') {
-                return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500);
-            }*/
+            /* if ($customer->creditDays == 0 || $customer->creditDays == '') {
+                 return $this->sendError($customer->CustomerName . ' - Credit days not mentioned for this customer', 500);
+             }*/
 
             /*if customer change*/
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
@@ -404,7 +405,7 @@ class CreditNoteAPIController extends AppBaseController
 
                 /*details check*/
 
-                if (count($detail)  == 0) { /*==*/
+                if (count($detail) == 0) { /*==*/
                     return $this->sendError('You can not confirm. Credit note details not found.', 500);
                 } else {
 
@@ -453,13 +454,13 @@ class CreditNoteAPIController extends AppBaseController
                                 'category' => '',
                                 'amount' => ''
                             );
-                            $customerInvoiceDirect = $this->creditNoteRepository->update($input, $id);
+
                             $confirm = \Helper::confirmDocument($params);
                             if (!$confirm["success"]) {
-
+                                $customerInvoiceDirect = $this->creditNoteRepository->update($input, $id);
                                 return $this->sendError($confirm["message"], 500);
                             } else {
-                                return $this->sendResponse($customerInvoiceDirect->toArray(), 'Credit note confirmed successfully');
+                                return $this->sendResponse('s', 'Credit note confirmed successfully');
                             }
                         }
                     } else {
@@ -467,13 +468,13 @@ class CreditNoteAPIController extends AppBaseController
                     }
                 }
             }
-        }else{
+        } else {
 
 
             $creditNote = $this->creditNoteRepository->update($input, $id);
         }
-     /*   exit;
-        $creditNote = $this->creditNoteRepository->update($input, $id);*/
+        /*   exit;
+           $creditNote = $this->creditNoteRepository->update($input, $id);*/
 
         return $this->sendResponse($creditNote->toArray(), 'CreditNote updated successfully');
     }
@@ -579,10 +580,10 @@ class CreditNoteAPIController extends AppBaseController
                 $master = CreditNote::where('creditNoteAutoID', $id)->first();
                 $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
 
-                if($master->customerID !=''){
+                if ($master->customerID != '') {
                     $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
-                }else{
-                    $output['currencies']=[];
+                } else {
+                    $output['currencies'] = [];
                 }
                 $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
@@ -679,6 +680,124 @@ class CreditNoteAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
 
+    }
+
+    public function creditNoteReopen(request $request)
+    {
+        $input = $request->all();
+        $creditNoteAutoID = $input['creditNoteAutoID'];
+
+        $creditnote = CreditNote::find($creditNoteAutoID);
+        $emails = array();
+        if (empty($creditnote)) {
+            return $this->sendError('Credit note not found');
+        }
+
+        if ($creditnote->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this credit note it is already partially approved');
+        }
+
+        if ($creditnote->approved == -1) {
+            return $this->sendError('You cannot reopen this credit note it is already fully approved');
+        }
+
+        if ($creditnote->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this credit note, it is not confirmed');
+        }
+
+        // updating fields
+        $creditnote->confirmedYN = 0;
+        $creditnote->confirmedByEmpSystemID = null;
+        $creditnote->confirmedByEmpID = null;
+        $creditnote->confirmedByName = null;
+        $creditnote->confirmedDate = null;
+        $creditnote->RollLevForApp_curr = 1;
+        $creditnote->save();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $creditnote->documentSystemiD)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $creditnote->creditNoteCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $creditnote->creditNoteCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $creditnote->companySystemID)
+            ->where('documentSystemCode', $creditnote->custInvoiceDirectAutoID)
+            ->where('documentSystemID', $creditnote->documentSystemiD)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $creditnote->companySystemID)
+                    ->where('documentSystemID', $creditnote->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $creditNoteAutoID)
+            ->where('companySystemID', $creditnote->companySystemID)
+            ->where('documentSystemID', $creditnote->documentSystemiD)
+            ->delete();
+
+        return $this->sendResponse('s', 'Credit note reopened successfully');
+
+    }
+
+    public function creditNoteAudit(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        $creditNote = $this->creditNoteRepository->with(['createduser', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
+            $query->with('employee')
+                ->where('documentSystemID', 19);
+        }, 'company', 'currency', 'companydocumentattachment_by' => function ($query) {
+            $query->where('documentSystemID', 19);
+        }])->findWithoutFail($id);
+
+
+        if (empty($creditNote)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        return $this->sendResponse($creditNote->toArray(), 'Credit Note retrieved successfully');
     }
 
 

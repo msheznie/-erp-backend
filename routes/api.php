@@ -757,6 +757,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('creditNoteDetails', 'CreditNoteDetailsAPIController@creditNoteDetails');
     Route::get('creditNotegetcontract', 'CreditNoteDetailsAPIController@creditNotegetcontract');
     Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
+    Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
+    Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
+
 
 });
 

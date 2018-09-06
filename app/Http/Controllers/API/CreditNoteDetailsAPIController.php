@@ -277,8 +277,13 @@ class CreditNoteDetailsAPIController extends AppBaseController
         if (empty($creditNoteDetails)) {
             return $this->sendError('Credit Note Details not found');
         }
-
         $creditNoteDetails->delete();
+        $details = CreditNoteDetails::select(DB::raw("IFNULL(SUM(creditAmount),0) as creditAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as creditAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as creditAmountRpt"))->where('creditNoteAutoID', $creditNoteDetails->creditNoteAutoID)->first()->toArray();
+
+
+        CreditNote::where('creditNoteAutoID', $creditNoteDetails->creditNoteAutoID)->update($details);
+
+
 
         return $this->sendResponse($id, 'Credit Note Details deleted successfully');
     }
