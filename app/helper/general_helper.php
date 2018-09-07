@@ -303,7 +303,6 @@ class Helper
                 $docInforArr["modelName"] = 'DebitNote';
                 $docInforArr["primarykey"] = 'debitNoteAutoID';
                 break;
-
                 case 19:
                     $docInforArr["documentCodeColumnName"] = 'creditNoteCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
@@ -314,6 +313,17 @@ class Helper
                     $docInforArr["tableName"] = 'erp_creditnote';
                     $docInforArr["modelName"] = 'CreditNote';
                     $docInforArr["primarykey"] = 'creditNoteAutoID';
+                    break;
+                case 11:
+                    $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
+                    $docInforArr["modelName"] = 'BookInvSuppMaster';
+                    $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];

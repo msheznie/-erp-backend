@@ -18,11 +18,14 @@ use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\Company;
+use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
+use App\Models\Employee;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
+use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
@@ -212,25 +215,29 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
         $input['serialNo'] = $lastSerialNumber;
 
-        $supDetail = SupplierAssigned::where('BPVsupplierID', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
+        if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
+            $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
 
-        $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
+            $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
 
-        if ($supDetail) {
-            $input['supplierGLCode'] = $supDetail->liabilityAccount;
-            $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
-        }
-        $input['supplierTransCurrencyER'] = 1;
-        if ($supCurrency) {
-            $input['supplierDefCurrencyID'] = $supCurrency->currencyID;
-            $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
-            if ($currencyConversionDefaultMaster) {
-                $input['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+            if ($supDetail) {
+                $input['supplierGLCode'] = $supDetail->liabilityAccount;
+                $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
             }
+            $input['supplierTransCurrencyER'] = 1;
+            if ($supCurrency) {
+                $input['supplierDefCurrencyID'] = $supCurrency->currencyID;
+                $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
+                if ($currencyConversionDefaultMaster) {
+                    $input['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                }
+            }
+            $supplier = SupplierMaster::find($input['BPVsupplierID']);
+            $input['directPaymentPayee'] = $supplier->supplierName;
         }
 
-        $bankAccount = BankAccount::find($input['bankAccountAutoID']);
-        if($bankAccount){
+        $bankAccount = BankAccount::find($input['BPVAccount']);
+        if ($bankAccount) {
             $input['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
             $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $bankAccount->accountCurrencyID, 0);
             if ($currencyConversionDefaultMaster) {
@@ -239,15 +246,28 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
 
         $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
-        if($companyCurrency){
+        if ($companyCurrency) {
             $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
             $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
-            if($companyCurrencyConversion) {
+            if ($companyCurrencyConversion) {
                 $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
             }
         }
+
+        if ($input['invoiceType'] == 3) {
+            if ($input['payeeType'] == 3) {
+                $input['directPaymentpayeeYN'] = -1;
+            }
+            if ($input['payeeType'] == 2) {
+                $input['directPaymentPayeeSelectEmp'] = -1;
+                $emp = Employee::find($input["directPaymentPayeeEmpID"]);
+                $input['directPaymentPayee'] = $emp->empFullName;
+            }
+        }
+
+        $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = \Helper::getEmployeeID();
@@ -545,6 +565,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
         $month = Months::all();
+        $currency = CurrencyMaster::all();
 
         $years = PaySupplierInvoiceMaster::select(DB::raw("YEAR(createdDateTime) as year"))
             ->whereNotNull('createdDateTime')
@@ -554,6 +575,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $bank = BankAssign::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)->get();
 
+        $payee = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN', '<>', 2)->get();
+
         $output = array(
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
@@ -562,7 +585,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             'month' => $month,
             'years' => $years,
             'supplier' => $supplier,
+            'payee' => $payee,
             'bank' => $bank,
+            'currency' => $currency,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
