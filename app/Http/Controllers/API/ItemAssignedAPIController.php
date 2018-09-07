@@ -205,12 +205,6 @@ class ItemAssignedAPIController extends AppBaseController
 
             })
             ->make(true);
-
-
-        return $data;
-
-        $this->getCurrentCostAndQty($data->data);
-
         return $data;
         ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
     }

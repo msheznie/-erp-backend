@@ -120,6 +120,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('item/assigneds', 'ItemAssignedAPIController');
     Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
+    Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
     Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport');
 
     Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
@@ -772,6 +773,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCreditNoteApprovedByUser', 'CreditNoteAPIController@getCreditNoteApprovedByUser');
     Route::post('getCreditNoteApprovalByUser', 'CreditNoteAPIController@getCreditNoteApprovalByUser');
 
+    Route::resource('warehouse_items', 'WarehouseItemsAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -825,3 +827,7 @@ Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetai
 Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
 
 Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
+
+
+
+Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');

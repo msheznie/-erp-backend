@@ -29,6 +29,7 @@ use App\Models\FinanceItemCategorySub;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
 use App\Models\Unit;
+use App\Models\WarehouseBinLocation;
 use App\Models\YesNoSelection;
 use App\Repositories\ItemMasterRepository;
 use Illuminate\Validation\Rule;
@@ -362,12 +363,22 @@ class ItemMasterAPIController extends AppBaseController
         /** all Units*/
         $units = Unit::all();
 
+        $wareHouseBinLocations = [];
+        if(isset($request['warehouseSystemCode'])){
+            $wareHouseBinLocations = WarehouseBinLocation::where('companySystemID',$selectedCompanyId)
+                                                          ->where('wareHouseSystemCode',$request['warehouseSystemCode'])
+                                                          ->get();
+        }
+
+
+
         $output = array('companiesByGroup' => $companiesByGroup,
             'allCompanies' => $allCompanies,
             'financeItemCategoryMaster' => $itemCategory,
             'financeItemCategorySub' => $itemCategorySub,
             'yesNoSelection' => $yesNoSelection,
-            'units' => $units
+            'units' => $units,
+            'wareHouseBinLocations' => $wareHouseBinLocations
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

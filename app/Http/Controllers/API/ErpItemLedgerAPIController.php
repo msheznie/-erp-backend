@@ -318,14 +318,14 @@ class ErpItemLedgerAPIController extends AppBaseController
 
         $document = DB::table('erp_itemledger')
             ->join('erp_documentmaster', 'erp_itemledger.documentSystemID', '=', 'erp_documentmaster.documentSystemID')
-            ->select('erp_itemledger.companySystemID', 'erp_itemledger.documentSystemID', 'erp_documentmaster.documentDescription')
+            ->select('erp_itemledger.companySystemID', 'erp_itemledger.documentSystemID', 'erp_documentmaster.documentDescription', 'erp_documentmaster.documentID')
             ->whereIn('erp_itemledger.companySystemID', $subCompanies)
             ->groupBy('erp_itemledger.documentSystemID')
             ->get();
 
         $warehouse = DB::table('erp_itemledger')
             ->join('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
-            ->select('erp_itemledger.companySystemID', 'erp_itemledger.wareHouseSystemCode', 'warehousemaster.wareHouseDescription')
+            ->select('erp_itemledger.companySystemID', 'erp_itemledger.wareHouseSystemCode', 'warehousemaster.wareHouseDescription', 'warehousemaster.wareHouseCode')
             ->whereIn('erp_itemledger.companySystemID', $subCompanies)
             ->groupBy('erp_itemledger.wareHouseSystemCode')
             ->get();
