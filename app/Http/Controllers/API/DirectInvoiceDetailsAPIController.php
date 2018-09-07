@@ -126,10 +126,10 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $BookInvSuppMaster = BookInvSuppMaster::find($input['directInvoiceAutoID']);
 
         if (empty($BookInvSuppMaster)) {
-            return $this->sendError('Book Inv Supp Master not found');
+            return $this->sendError('Supplier Invoice not found');
         }
 
-        $alreadyAdded = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $BookInvSuppMaster->bookingSuppMasInvAutoID)
+/*        $alreadyAdded = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $BookInvSuppMaster->bookingSuppMasInvAutoID)
             ->whereHas('directdetail', function ($query) use ($input) {
                 $query->where('chartOfAccountSystemID', $input['chartOfAccountSystemID']);
             })
@@ -137,7 +137,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         if ($alreadyAdded) {
             return $this->sendError("Selected item is already added. Please check again", 500);
-        }
+        }*/
 
         $input['companySystemID'] = $BookInvSuppMaster->companySystemID;
         $input['companyID'] = $BookInvSuppMaster->companyID;

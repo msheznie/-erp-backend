@@ -171,5 +171,14 @@ class ItemAssigned extends Model
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemCodeSystem');
     }
 
+    public function local_currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster', 'wacValueLocalCurrencyID', 'currencyID');
+    }
+
+    public function rpt_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'wacValueReportingCurrencyID', 'currencyID');
+    }
+
 
 }
