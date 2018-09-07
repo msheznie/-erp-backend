@@ -235,7 +235,6 @@ class WarehouseItemsAPIController extends AppBaseController
         if(!isset($input['binNumber'])){
             $input['binNumber'] = 0;
         }
-
         $warehouseItems = $this->warehouseItemsRepository->update(array_only($input, ['binNumber']), $id);
 
         return $this->sendResponse($warehouseItems->toArray(), 'WarehouseItems updated successfully');
