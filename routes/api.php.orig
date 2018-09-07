@@ -768,9 +768,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
     Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
     Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
+<<<<<<< HEAD
+
     Route::post('getCreditNoteApprovedByUser', 'CreditNoteAPIController@getCreditNoteApprovedByUser');
     Route::post('getCreditNoteApprovalByUser', 'CreditNoteAPIController@getCreditNoteApprovalByUser');
 
+
+=======
+>>>>>>> b9622bf221ee7dbc4e468d53d5d40ded8bc09cbf
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

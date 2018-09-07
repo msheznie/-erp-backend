@@ -184,5 +184,10 @@ class DirectReceiptDetail extends Model
         
     ];
 
+    public function chartofaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
+    }
+
     
 }
