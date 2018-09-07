@@ -10,7 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 08-August 2018 By: Nazir Description: Added new function getInvoiceMasterRecord(),
  * -- Date: 24-August 2018 By: Nazir Description: Added new function getInvoiceMasterView(),
- * -- Date: 06-September 2018 By: Nazir Description: Added new function getSupplierInvoiceReopen(),
+ * -- Date: 06-September 2018 By: Nazir Description: Added new function supplierInvoiceReopen(),
  * -- Date: 06-September 2018 By: Nazir Description: Added new function getInvoiceMasterApproval(),
  * -- Date: 06-September 2018 By: Nazir Description: Added new function getApprovedInvoiceForCurrentUser(),
  * -- Date: 06-September 2018 By: Nazir Description: Added new function approveSupplierInvoice(),
@@ -151,6 +151,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])->first();
+
+        if ($alreadyAdded) {
+            return $this->sendError("Selected supplier invoice no is already added. Please check again", 500);
+        }
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
@@ -377,6 +383,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
+        $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])
+            ->where('bookingSuppMasInvAutoID','<>', $id)
+            ->first();
+
+        if ($alreadyAdded) {
+            return $this->sendError("Selected supplier invoice no is already added. Please check again", 500);
+        }
+
         $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
 
         if (!empty($supplier)) {
@@ -450,13 +464,64 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $q->where('DIAmount', '<=', 0)
                         ->orWhereNull('localAmount', '<=', 0)
                         ->orWhereNull('comRptAmount', '<=', 0)
-                        ->orWhereNull('debitAmount')
+                        ->orWhereNull('DIAmount')
                         ->orWhereNull('localAmount')
                         ->orWhereNull('comRptAmount');
                 })
                 ->count();
             if ($checkQuantity > 0) {
                 return $this->sendError('Amount should be greater than 0 for every items', 500);
+            }
+
+            $directInvoiceDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
+
+            $finalError = array('amount_zero' => array(),
+                'amount_neg' => array(),
+                'required_serviceLine' => array(),
+                'active_serviceLine' => array(),
+            );
+            $error_count = 0;
+
+            foreach ($directInvoiceDetails as $item) {
+                $updateItem = DirectInvoiceDetails::find($item['directInvoiceDetailsID']);
+
+                if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+
+                    $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                        ->where('isActive', 1)
+                        ->first();
+                    if (empty($checkDepartmentActive)) {
+                        $updateItem->serviceLineSystemID = null;
+                        $updateItem->serviceLineCode = null;
+                        array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                        $error_count++;
+                    }
+                } else {
+                    array_push($finalError['required_serviceLine'], $updateItem->glCode);
+                    $error_count++;
+                }
+
+                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->DIAmountCurrency, $updateItem->DIAmountCurrency, $updateItem->debitAmount);
+
+                $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+                $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                $updateItem->save();
+
+                if ($updateItem->DIAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
+                    array_push($finalError['amount_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->DIAmount < 0 || $updateItem->localAmount < 0 || $updateItem->comRptAmount < 0) {
+                    array_push($finalError['amount_neg'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
 
             $amount = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
@@ -483,8 +548,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'autoID' => $id,
                 'company' => $input["companySystemID"],
                 'document' => $input["documentSystemID"],
-                'segment' => $input["serviceLineSystemID"],
-                'category' => '',
+                'segment' => 0,
+                'category' => 0,
                 'amount' => $amount
             );
             $confirm = \Helper::confirmDocument($params);
@@ -567,7 +632,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
-        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by'])->first();
+        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -690,6 +755,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'erp_bookinvsuppmaster.supplierInvoiceNo',
                 'erp_bookinvsuppmaster.secondaryRefNo',
                 'erp_bookinvsuppmaster.createdDateTime',
+                'erp_bookinvsuppmaster.createdDateAndTime',
                 'erp_bookinvsuppmaster.createdUserSystemID',
                 'erp_bookinvsuppmaster.comments',
                 'erp_bookinvsuppmaster.bookingDate',
@@ -728,7 +794,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->make(true);
     }
 
-    public function getSupplierInvoiceReopen(Request $request)
+    public function supplierInvoiceReopen(Request $request)
     {
         $input = $request->all();
 
@@ -857,11 +923,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'erp_bookinvsuppmaster.bookingAmountTrans',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
-            'currencymaster.CurrencyCode',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'suppliermaster.supplierName As supplierName',
             'approvalLevelID',
             'documentSystemCode',
-            'employees.empName As created_user',
-            'serviceline.ServiceLineDes as serviceLineDescription'
+            'employees.empName As created_user'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -879,9 +946,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 ->where('erp_bookinvsuppmaster.approved', 0)
                 ->where('erp_bookinvsuppmaster.confirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', 0)
-            ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
-            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
-            ->join('serviceline', 'erp_bookinvsuppmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'supplierTransactionCurrencyID', 'currencymaster.currencyID')
+            ->leftJoin('suppliermaster', 'supplierID', 'suppliermaster.supplierCodeSystem')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 11)
             ->where('erp_documentapproved.companySystemID', $companyID);
@@ -937,22 +1004,24 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'erp_bookinvsuppmaster.bookingAmountTrans',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
-            'currencymaster.CurrencyCode',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'suppliermaster.supplierName As supplierName',
             'approvalLevelID',
             'documentSystemCode',
-            'employees.empName As created_user',
-            'serviceline.ServiceLineDes as serviceLineDescription'
+            'employees.empName As created_user'
         )->join('erp_bookinvsuppmaster', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'bookingSuppMasInvAutoID')
                 ->where('erp_bookinvsuppmaster.companySystemID', $companyID)
                 ->where('erp_bookinvsuppmaster.approved', -1)
                 ->where('erp_bookinvsuppmaster.confirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', -1)
-            ->join('currencymaster', 'supplierTransactionCurrencyID', '=', 'currencyID')
-            ->join('employees', 'createdUserSystemID', 'employees.employeeSystemID')
-            ->join('serviceline', 'erp_bookinvsuppmaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'supplierTransactionCurrencyID', 'currencymaster.currencyID')
+            ->leftJoin('suppliermaster', 'supplierID', 'suppliermaster.supplierCodeSystem')
             ->where('erp_documentapproved.documentSystemID', 11)
-            ->where('erp_documentapproved.companySystemID', $companyID)->where('erp_documentapproved.employeeSystemID', $empID);
+            ->where('erp_documentapproved.companySystemID', $companyID)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
 
         $search = $request->input('search.value');
 
