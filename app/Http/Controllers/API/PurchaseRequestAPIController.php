@@ -685,7 +685,7 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-        $csv = \Excel::create('general_ledger', function ($excel) use ($data) {
+        $csv = \Excel::create('pr_to_grv', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);

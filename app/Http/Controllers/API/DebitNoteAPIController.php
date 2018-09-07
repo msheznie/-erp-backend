@@ -474,7 +474,7 @@ class DebitNoteAPIController extends AppBaseController
                     $error_count++;
                 }
 
-                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $debitNote->debitAmountCurrency, $updateItem->debitAmount);
+                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
 
                 $input['localAmount'] = $companyCurrencyConversion['localAmount'];
                 $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];

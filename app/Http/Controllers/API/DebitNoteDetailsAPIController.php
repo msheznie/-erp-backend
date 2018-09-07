@@ -147,7 +147,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
             ->first();
 
         if ($alreadyAdded) {
-            return $this->sendError("Selected item is already added. Please check again", 500);
+            //return $this->sendError("Selected item is already added. Please check again", 500);
         }
 
         $checkWhether = DebitNote::where('debitNoteAutoID', '!=', $debitNote->debitNoteAutoID)

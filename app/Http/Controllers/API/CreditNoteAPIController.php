@@ -284,7 +284,7 @@ class CreditNoteAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID'));
-        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency'));
+        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency','createdDateAndTime'));
 
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
         $input['modifiedUser'] = \Helper::getEmployeeID();
@@ -439,6 +439,8 @@ class CreditNoteAPIController extends AppBaseController
                         }
                     }
 
+
+
                     /*serviceline and contract validation*/
                     $groupby = CreditNoteDetails::select('serviceLineSystemID')->where('creditNoteAutoID', $id)->groupBy('serviceLineSystemID')->get();
                     $groupbycontract = CreditNoteDetails::select('contractUID')->where('creditNoteAutoID', $id)->groupBy('contractUID')->get();
@@ -476,7 +478,7 @@ class CreditNoteAPIController extends AppBaseController
         /*   exit;
            $creditNote = $this->creditNoteRepository->update($input, $id);*/
 
-        return $this->sendResponse($creditNote->toArray(), 'CreditNote updated successfully');
+        return $this->sendResponse($creditNote->toArray(), 'Credit note updated successfully');
     }
 
     /**
@@ -588,7 +590,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-                $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'), array('value' => 2, 'label' => 'Item'));
+
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
@@ -822,6 +824,210 @@ class CreditNoteAPIController extends AppBaseController
 
         return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
     }
+
+    public function getCreditNoteApprovedByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $creditNote = DB::table('erp_documentapproved')
+            ->select(
+                'erp_creditnote.*',
+                'employees.empName As created_emp',
+                'currencymaster.DecimalPlaces As DecimalPlaces',
+                'currencymaster.CurrencyCode As CurrencyCode',
+'customermaster.CustomerName',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_creditnote', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'creditNoteAutoID')
+                    ->where('erp_creditnote.companySystemID', $companyId)
+                    ->where('erp_creditnote.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('customermaster', 'customerCodeSystem', 'erp_creditnote.customerID')
+            ->leftJoin('currencymaster', 'currencyID', 'erp_creditnote.customerCurrencyID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [19])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $creditNote = $creditNote->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $creditNote = $creditNote->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $creditNote = $creditNote->whereMonth('creditNoteDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $creditNote = $creditNote->whereYear('creditNoteDate', '=', $input['year']);
+            }
+        }
+
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $creditNote = $creditNote->where(function ($query) use ($search) {
+                $query->where('creditNoteCode', 'LIKE', "%{$search}%");
+                $query->orwhere('comments', 'LIKE', "%{$search}%");
+                $query->orwhere('CustomerName', 'LIKE', "%{$search}%");
+
+            });
+        }
+
+        return \DataTables::of($creditNote)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('creditNoteAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getCreditNoteApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $creditNote = DB::table('erp_documentapproved')
+            ->select(
+                'erp_creditnote.*',
+                'employees.empName As created_emp',
+                'currencymaster.DecimalPlaces As DecimalPlaces',
+                'currencymaster.CurrencyCode As CurrencyCode',
+                'erp_documentapproved.documentApprovedID',
+                'customermaster.CustomerName',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+                    ->where('documentSystemID', 19)
+                    ->first();
+
+                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                    //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                }
+
+                $query->whereIn('employeesdepartments.documentSystemID', [19])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_creditnote', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'creditNoteAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_creditnote.companySystemID', $companyId)
+                    ->where('erp_creditnote.approved', 0)
+                    ->where('erp_creditnote.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('customermaster', 'customerCodeSystem', 'erp_creditnote.customerID')
+            ->leftJoin('currencymaster', 'currencyID', 'erp_creditnote.customerCurrencyID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [19])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $creditNote = $creditNote->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $creditNote = $creditNote->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $creditNote = $creditNote->whereMonth('creditNoteDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $creditNote = $creditNote->whereYear('creditNoteDate', '=', $input['year']);
+            }
+        }
+
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $creditNote = $creditNote->where(function ($query) use ($search) {
+                $query->where('creditNoteCode', 'LIKE', "%{$search}%");
+                $query->orwhere('comments', 'LIKE', "%{$search}%");
+                $query->orwhere('CustomerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($creditNote)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('creditNoteAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+
 
 
 }
