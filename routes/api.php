@@ -120,6 +120,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('item/assigneds', 'ItemAssignedAPIController');
     Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
+    Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport');
 
     Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
 
@@ -722,7 +723,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
     Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
 
-    
+
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
 
@@ -757,6 +758,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
     Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
     Route::post('getInvoiceMasterApproval', 'BookInvSuppMasterAPIController@getInvoiceMasterApproval');
+    Route::post('supplierInvoiceReopen', 'BookInvSuppMasterAPIController@supplierInvoiceReopen');
     Route::post('getApprovedInvoiceForCurrentUser', 'BookInvSuppMasterAPIController@getApprovedInvoiceForCurrentUser');
     Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
     Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice');
