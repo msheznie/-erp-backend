@@ -1620,6 +1620,18 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'supplierDefaultER';
                 break;
+
+            case 19:
+                $docInforArr["modelName"] = 'CreditNote';
+                $docInforArr["transCurrencyID"] = 'customerCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'customerCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'customerCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyReportingER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'customerCurrencyER';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1697,10 +1709,11 @@ class Helper
             return ['success' => false, 'message' => 'No records found'];
         }
 
+
         $array = array(
-            'reportingAmount' => $reportingAmount,
-            'localAmount' => $localAmount,
-            'defaultAmount' => $defaultAmount,
+            'reportingAmount' =>   self::roundValue($reportingAmount),
+            'localAmount' =>   self::roundValue($localAmount),
+            'defaultAmount' =>   self::roundValue($defaultAmount),
         );
 
         return $array;

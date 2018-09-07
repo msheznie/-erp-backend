@@ -287,6 +287,7 @@ class DirectPaymentDetails extends Model
         'serviceLineCode',
         'supplierID',
         'expenseClaimMasterAutoID',
+        'chartOfAccountSystemID',
         'glCode',
         'glCodeDes',
         'glCodeIsBank',
@@ -340,6 +341,7 @@ class DirectPaymentDetails extends Model
         'serviceLineCode' => 'string',
         'supplierID' => 'integer',
         'expenseClaimMasterAutoID' => 'integer',
+        'chartOfAccountSystemID' => 'integer',
         'glCode' => 'string',
         'glCodeDes' => 'string',
         'glCodeIsBank' => 'integer',
@@ -393,5 +395,11 @@ class DirectPaymentDetails extends Model
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 
-    
+    public function chartofaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
+    }
+
+
+
 }

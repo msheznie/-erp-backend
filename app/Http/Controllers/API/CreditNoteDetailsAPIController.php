@@ -409,14 +409,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
             $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $detail->companyID)->where('contractUID', $input['contractUID'])->first();
             $input['clientContractID'] = $contract->ContractNumber;
 
-         /*   if (!empty($contract)) {
-                if ($contract->paymentInDaysForJob <= 0) {
-                    return $this->sendError('Payment Period is not updated in the contract. Please update and try again');
-                }
-            } else {
-                return $this->sendError('Contract not exist.');
 
-            }*/
         }
 
         if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID) {
@@ -439,49 +432,10 @@ class CreditNoteDetailsAPIController extends AppBaseController
              $totalAmount =$input['creditAmount'];
             $input['creditAmount'] = round($input['creditAmount'], $decimal);
             /**/
-            $MyRptAmount = 0;
-            if($totalAmount !=0) {
-                if ($master->customerCurrencyID == $master->companyReportingCurrencyID) {
-                    $MyRptAmount = $totalAmount;
-                } else {
-                    if ($master->companyReportingER > $master->customerCurrencyER) {
-                        if ($master->companyReportingER > 1) {
-                            $MyRptAmount = ($totalAmount / $master->companyReportingER);
-                        } else {
-                            $MyRptAmount = ($totalAmount * $master->companyReportingER);
-                        }
-                    } else {
-                        if ($master->companyReportingER > 1) {
-                            $MyRptAmount = ($totalAmount * $master->companyReportingER);
-                        } else {
-                            $MyRptAmount = ($totalAmount / $master->companyReportingER);
-                        }
-                    }
-                }
-            }
-            $input["comRptAmount"] =   \Helper::roundValue($MyRptAmount);
-            $MyLocalAmount=0;
-            if($totalAmount !=0) {
-                if ($master->customerCurrencyID == $master->localCurrencyID) {
-                    $MyLocalAmount = $totalAmount;
-                } else {
-                    if ($master->localCurrencyER > $master->customerCurrencyER) {
-                        if ($master->localCurrencyER > 1) {
-                            $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
-                        } else {
-                            $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
-                        }
-                    } else {
-                        if ($master->localCurrencyER > 1) {
-                            $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
-                        } else {
-                            $master->localCurrencyER;
-                            $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
-                        }
-                    }
-                }
-            }
-            $input["localAmount"] =  \Helper::roundValue($MyLocalAmount);
+            $currency = \Helper::convertAmountToLocalRpt(19,$detail->creditNoteAutoID,$totalAmount);
+            $input["comRptAmount"]=$currency['reportingAmount'];
+            $input["localAmount"]=$currency['localAmount'];
+
 
 
         }
