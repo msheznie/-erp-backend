@@ -1,15 +1,15 @@
 <?php
 /**
-=============================================
--- File Name : ItemAssignedAPIController.php
--- Project Name : ERP
--- Module Name :  Item Assigned
--- Author : Mohamed Fayas
--- Create date : 14 - March 2018
--- Description : This file contains the all CRUD for Item Assigned
+ * =============================================
+ * -- File Name : ItemAssignedAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Item Assigned
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Item Assigned
  * -- Date: 6-September 2018 By: Fayas Description: Added new functions named as getAllAssignedItemsByCompany(),
  *
--- REVISION HISTORY
+ * -- REVISION HISTORY
  */
 namespace App\Http\Controllers\API;
 
@@ -75,7 +75,7 @@ class ItemAssignedAPIController extends AppBaseController
             $itemAssigneds = ItemAssigned::where('idItemAssigned', $input['idItemAssigned'])->first();
             $itemAssigneds->isActive = $input['isActive'];
 
-            if($input['isAssigned'] == 1 || $input['isAssigned'] == true){
+            if ($input['isAssigned'] == 1 || $input['isAssigned'] == true) {
                 $input['isAssigned'] = -1;
             }
 
@@ -127,18 +127,18 @@ class ItemAssignedAPIController extends AppBaseController
      */
     public function update($id, UpdateItemAssignedAPIRequest $request)
     {
-        $input = $request->all();
+        $input = array_except($request->all(), ['unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency']);
 
         /** @var ItemAssigned $itemAssigned */
         $itemAssigned = $this->itemAssignedRepository->findWithoutFail($id);
 
         if (empty($itemAssigned)) {
-            return $this->sendError('Item Assigned not found');
+            return $this->sendError('Item not found');
         }
 
-        $itemAssigned = $this->itemAssignedRepository->update($input, $id);
+        $itemAssigned = $this->itemAssignedRepository->update(array_only($input, ['minimumQty', 'maximunQty', 'rolQuantity']), $id);
 
-        return $this->sendResponse($itemAssigned->toArray(), 'ItemAssigned updated successfully');
+        return $this->sendResponse($itemAssigned->toArray(), 'Item updated successfully');
     }
 
     /**
@@ -175,25 +175,154 @@ class ItemAssignedAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,array('financeCategoryMaster','financeCategorySub','isActive','itemApprovedYN','itemConfirmedYN'));
-
+        $itemMasters = $this->getAssignedItemsByCompanyQry($input);
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
+        $data = \DataTables::eloquent($itemMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('idItemAssigned', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('current', function ($row) {
+                $data = array('companySystemID' => $row->companySystemID,
+                    'itemCodeSystem' => $row->itemCodeSystem,
+                    'wareHouseId' => null);
+                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+                $array = array('local' => $itemCurrentCostAndQty['wacValueLocal'],
+                    'rpt' => $itemCurrentCostAndQty['wacValueReporting'],
+                    'stock' => $itemCurrentCostAndQty['currentStockQty']);
+                return $array;
+
+            })
+            ->make(true);
+
+
+        return $data;
+
+        $this->getCurrentCostAndQty($data->data);
+
+        return $data;
+        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+    }
+
+
+    public function exportItemAssignedByCompanyReport(Request $request)
+    {
+        $input = $request->all();
+        $data = array();
+        $output = ($this->getAssignedItemsByCompanyQry($input))->orderBy('idItemAssigned', 'DES')->get();
+        $output = $this->getCurrentCostAndQty($output);
+        $type = $request->type;
+        if (!empty($output)) {
+            $x = 0;
+            foreach ($output as $value) {
+                $data[$x]['Item code'] = $value->itemPrimaryCode;
+                $data[$x]['Mfg No'] = $value->secondaryItemCode;
+                $data[$x]['Item Description'] = $value->itemDescription;
+
+                if ($value->unit) {
+                    $data[$x]['Unit'] = $value->unit->UnitShortCode;
+                } else {
+                    $data[$x]['Unit'] = '';
+                }
+
+                if ($value->financeMainCategory) {
+                    $data[$x]['Main Category'] = $value->financeMainCategory->categoryDescription;
+                } else {
+                    $data[$x]['Main Category'] = '';
+                }
+
+                if ($value->financeSubCategory) {
+                    $data[$x]['Sub Category'] = $value->financeSubCategory->categoryDescription;
+                    $data[$x]['Finance BS Code'] = $value->financeSubCategory->financeGLcodebBS;
+                    $data[$x]['Finance PL Code'] = $value->financeSubCategory->financeGLcodePL;
+                    $data[$x]['Include PL For GRV YN'] = $value->financeSubCategory->includePLForGRVYN;
+                } else {
+                    $data[$x]['Sub Category'] = '';
+                    $data[$x]['Finance BS Code'] = '';
+                    $data[$x]['Finance PL Code'] = '';
+                    $data[$x]['Include PL For GRV YN'] = '';
+                }
+
+                $data[$x]['Min Qty'] = round($value->minimumQty, 2);
+                $data[$x]['MAx Qty'] = round($value->maximunQty, 2);
+                $data[$x]['Total Qty'] = round($value->totalQty, 2);
+                $localDecimal = 3;
+                $rptDecimal = 2;
+                if ($value->local_currency) {
+                    $localDecimal = $value->local_currency->DecimalPlaces;
+                }
+                if ($value->rpt_currency) {
+                    $rptDecimal = $value->rpt_currency->DecimalPlaces;
+                }
+
+                $data[$x]['WAC Value Local'] = round($value->wacValueLocal, $localDecimal);
+                $data[$x]['WAC Value Rpt'] = round($value->wacValueReporting, $rptDecimal);
+                $data[$x]['Category'] = $value->itemMovementCategory;
+                $status = "Not Active";
+                if ($value->isActive == 1) {
+                    $status = "Active Only";
+                }
+
+                $data[$x]['Status'] = $status;
+                $x++;
+            }
+        }
+
+        $csv = \Excel::create('items_by_company', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+    }
+
+    public function getCurrentCostAndQty($array)
+    {
+        foreach ($array as $item) {
+            $data = array('companySystemID' => $item->companySystemID,
+                'itemCodeSystem' => $item->itemCodeSystem,
+                'wareHouseId' => null);
+            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $item->totalQty = $itemCurrentCostAndQty['currentStockQty'];
+            $item->wacValueLocal = $itemCurrentCostAndQty['wacValueLocal'];
+            $item->wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];
+        }
+
+        return $array;
+    }
+
+    public function getAssignedItemsByCompanyQry($request)
+    {
+        $input = $request;
+        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
 
         $companyId = $input['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $childCompanies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $childCompanies = [$companyId];
         }
 
-        $itemMasters = ItemAssigned::with(['unit', 'financeMainCategory', 'financeSubCategory'])
-                                   ->whereIn('companySystemID',$childCompanies);
+        $itemMasters = ItemAssigned::with(['unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency'])
+            ->whereIn('companySystemID', $childCompanies);
 
         if (array_key_exists('financeCategoryMaster', $input)) {
             if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
@@ -218,33 +347,15 @@ class ItemAssignedAPIController extends AppBaseController
             }
         }
 
-        if (array_key_exists('itemConfirmedYN', $input)) {
-            if (($input['itemConfirmedYN'] == 0 || $input['itemConfirmedYN'] == 1) && !is_null($input['itemConfirmedYN'])) {
-                $itemMasters->where('itemConfirmedYN', $input['itemConfirmedYN']);
-            }
-        }
-
-        $search = $request->input('search.value');
-        if($search){
-            $itemMasters =   $itemMasters->where(function ($query) use($search) {
-                $query->where('primaryCode','LIKE',"%{$search}%")
+        $search = $input['search']['value'];
+        if ($search) {
+            $itemMasters = $itemMasters->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
                     ->orWhere('itemDescription', 'LIKE', "%{$search}%");
             });
         }
-
-        return \DataTables::eloquent($itemMasters)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->make(true);
-        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+        return $itemMasters;
     }
+
 }

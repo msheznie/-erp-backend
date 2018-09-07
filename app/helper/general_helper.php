@@ -303,7 +303,6 @@ class Helper
                 $docInforArr["modelName"] = 'DebitNote';
                 $docInforArr["primarykey"] = 'debitNoteAutoID';
                 break;
-
                 case 19:
                     $docInforArr["documentCodeColumnName"] = 'creditNoteCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
@@ -314,6 +313,17 @@ class Helper
                     $docInforArr["tableName"] = 'erp_creditnote';
                     $docInforArr["modelName"] = 'CreditNote';
                     $docInforArr["primarykey"] = 'creditNoteAutoID';
+                    break;
+                case 11:
+                    $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
+                    $docInforArr["modelName"] = 'BookInvSuppMaster';
+                    $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
@@ -1620,6 +1630,18 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'supplierDefaultER';
                 break;
+
+            case 19:
+                $docInforArr["modelName"] = 'CreditNote';
+                $docInforArr["transCurrencyID"] = 'customerCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'customerCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'customerCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyReportingER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'customerCurrencyER';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1697,10 +1719,11 @@ class Helper
             return ['success' => false, 'message' => 'No records found'];
         }
 
+
         $array = array(
-            'reportingAmount' => $reportingAmount,
-            'localAmount' => $localAmount,
-            'defaultAmount' => $defaultAmount,
+            'reportingAmount' =>   self::roundValue($reportingAmount),
+            'localAmount' =>   self::roundValue($localAmount),
+            'defaultAmount' =>   self::roundValue($defaultAmount),
         );
 
         return $array;
