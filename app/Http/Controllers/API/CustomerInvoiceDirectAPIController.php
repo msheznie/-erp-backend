@@ -272,8 +272,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        },'grv'])->findWithoutFail($id);
-
+        }, 'grv'])->findWithoutFail($id);
 
 
         if (empty($customerInvoiceDirect)) {
@@ -497,7 +496,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 }
 
-                if (count($detail) > !0) {
+                if (count($detail) == 0) {
                     return $this->sendError('You can not confirm. Invoice Details not found.', 500);
                 } else {
                     $detailValidation = CustomerInvoiceDirectDetail::selectRaw("IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
@@ -755,20 +754,30 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $invMaster->whereMonth('bookingDate', '=', $input['month']);
+            }
+        }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $invoiceDate = $input['year'] . '-12-01';
-                if (array_key_exists('month', $input)) {
-                    if ($input['month'] && !is_null($input['month'])) {
-                        $invoiceDate = $input['year'] . '-' . $input['month'] . '-01';
-                    }
-                }
-
-                $invMaster->where('bookingDate', '<=', $invoiceDate);
-
+                $invMaster->whereYear('bookingDate', '=', $input['year']);
             }
         }
+        /*  if (array_key_exists('year', $input)) {
+              if ($input['year'] && !is_null($input['year'])) {
+                  $invoiceDate = $input['year'] . '-12-31';
+                  if (array_key_exists('month', $input)) {
+                      if ($input['month'] && !is_null($input['month'])) {
+                          $invoiceDate = $input['year'] . '-' . $input['month'] . '-31';
+                      }
+                  }
+
+                  $invMaster->where('bookingDate', '<=', $invoiceDate);
+
+              }
+          }*/
 
 
         $search = $request->input('search.value');
@@ -805,7 +814,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $id = $request['id'];
         $bankID = isset($request['bankID']) ? $request['bankID'] : false;
         if ($id) {
-            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID')->where('custInvoiceDirectAutoID', $id)->first();
+            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID','customerID')->where('custInvoiceDirectAutoID', $id)->first();
         }
 
         if (!$bankID && $id) {
@@ -824,7 +833,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['tax'] = \DB::select("SELECT * FROM erp_taxmaster WHERE taxType=2 AND companyID='{$output['company']['CompanyID']}'");
 
         if ($id) {
-            $output['currencies'] = CurrencyMaster::all();
+            if ($master->customerID != '') {
+                $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault', 'DecimalPlaces')->get();
+            } else {
+                $output['currencies'] = [];
+            }
+
+            /* $output['currencies'] = CurrencyMaster::all();*/
             $output['bankDropdown'] = BankAssign::where('isActive', 1)->where('isAssigned', -1)->where('companyID', $output['company']['CompanyID'])->get();
             $output['bankAccount'] = [];
             if ($bankID != '' && $master->custTransactionCurrencyID != '') {
@@ -1382,14 +1397,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
            }*/
 
         $input = $request->all();
-       
+
 
         $custInvDirDetAutoID = $input['custInvDirDetAutoID'];
         $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
-    /*    $contract = Contract::select('contractUID', 'ContractNumber')->whereHas('segment', function ($query) use ($serviceLineSystemID) {
-            $query->where('serviceLineSystemID', $serviceLineSystemID);
-        })->where('companySystemID', $companyID)->where('clientID', $master->customerID)->get();*/
+        /*    $contract = Contract::select('contractUID', 'ContractNumber')->whereHas('segment', function ($query) use ($serviceLineSystemID) {
+                $query->where('serviceLineSystemID', $serviceLineSystemID);
+            })->where('companySystemID', $companyID)->where('clientID', $master->customerID)->get();*/
 
 
         $contractID = 0;

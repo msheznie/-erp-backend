@@ -144,6 +144,7 @@ class CreditNoteDetails extends Model
     public $fillable = [
         'creditNoteAutoID',
         'companyID',
+        'companySystemID',
         'customerID',
         'chartOfAccountSystemID',
         'glCode',
@@ -175,6 +176,7 @@ class CreditNoteDetails extends Model
     protected $casts = [
         'creditNoteDetailsID' => 'integer',
         'creditNoteAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'customerID' => 'integer',
         'chartOfAccountSystemID' => 'integer',
@@ -210,6 +212,11 @@ class CreditNoteDetails extends Model
     public function segment()
     {
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function chartofaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
     }
 
     

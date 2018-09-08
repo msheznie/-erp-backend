@@ -80,4 +80,15 @@ class DebitNoteRepository extends BaseRepository
     {
         return DebitNote::class;
     }
+
+    public function getAudit($id)
+    {
+        return $this->with(['detail' => function ($query) {
+            $query->with('segment');
+        }, 'approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 15);
+        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'confirmed_by', 'created_by', 'modified_by'])
+            ->findWithoutFail($id);
+    }
 }

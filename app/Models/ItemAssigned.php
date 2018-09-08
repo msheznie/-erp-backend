@@ -155,6 +155,30 @@ class ItemAssigned extends Model
         return $this->hasMany('App\Models\SupplierCurrency','supplierCodeSystem','currency');
     }
 
+    public function unit(){
+        return $this->hasOne('App\Models\Unit','UnitID','itemUnitOfMeasure');
+    }
+
+    public function financeMainCategory(){
+        return $this->hasOne('App\Models\FinanceItemCategoryMaster','itemCategoryID','financeCategoryMaster');
+    }
+
+    public function financeSubCategory(){
+        return $this->hasOne('App\Models\FinanceItemCategorySub','itemCategorySubID','financeCategorySub');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemCodeSystem');
+    }
+
+    public function local_currency(){
+        return $this->belongsTo('App\Models\CurrencyMaster', 'wacValueLocalCurrencyID', 'currencyID');
+    }
+
+    public function rpt_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'wacValueReportingCurrencyID', 'currencyID');
+    }
 
 
 }

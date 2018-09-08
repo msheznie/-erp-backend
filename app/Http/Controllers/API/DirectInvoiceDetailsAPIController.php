@@ -8,12 +8,16 @@
  * -- Create date : 09 - August 2018
  * -- Description : This file contains the all CRUD for Direct Invoice Details
  * -- REVISION HISTORY
+ * -- Date: 06 September 2018 By: Nazir Description: Added new function getDirectItems()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDirectInvoiceDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDirectInvoiceDetailsAPIRequest;
+use App\Models\BookInvSuppMaster;
+use App\Models\ChartOfAccount;
 use App\Models\DirectInvoiceDetails;
+use App\Models\SegmentMaster;
 use App\Repositories\DirectInvoiceDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -25,7 +29,6 @@ use Response;
  * Class DirectInvoiceDetailsController
  * @package App\Http\Controllers\API
  */
-
 class DirectInvoiceDetailsAPIController extends AppBaseController
 {
     /** @var  DirectInvoiceDetailsRepository */
@@ -118,6 +121,50 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
     public function store(CreateDirectInvoiceDetailsAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $companySystemID = $input['companySystemID'];
+        $BookInvSuppMaster = BookInvSuppMaster::find($input['directInvoiceAutoID']);
+
+        if (empty($BookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+/*        $alreadyAdded = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $BookInvSuppMaster->bookingSuppMasInvAutoID)
+            ->whereHas('directdetail', function ($query) use ($input) {
+                $query->where('chartOfAccountSystemID', $input['chartOfAccountSystemID']);
+            })
+            ->first();
+
+        if ($alreadyAdded) {
+            return $this->sendError("Selected item is already added. Please check again", 500);
+        }*/
+
+        $input['companySystemID'] = $BookInvSuppMaster->companySystemID;
+        $input['companyID'] = $BookInvSuppMaster->companyID;
+
+        $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
+        if (empty($chartOfAccount)) {
+            return $this->sendError('Chart of Account not found');
+        }
+
+        $input['glCode'] = $chartOfAccount->AccountCode;
+        $input['glCodeDes'] = $chartOfAccount->AccountDescription;
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, 0);
+
+        $input['DIAmountCurrency'] = $BookInvSuppMaster->supplierTransactionCurrencyID;
+        $input['DIAmountCurrencyER'] = 1;
+        $input['localCurrency' ] =   $BookInvSuppMaster->localCurrencyID;
+        $input['localCurrencyER' ] = $companyCurrencyConversion['trasToLocER'];
+        $input['comRptCurrency'] =   $BookInvSuppMaster->companyReportingCurrencyID;
+        $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+
+        if ($BookInvSuppMaster->FYBiggin) {
+            $finYearExp = explode('-', $BookInvSuppMaster->FYBiggin);
+            $input['budgetYear'] = $finYearExp[0];
+        } else {
+            $input['budgetYear'] = date("Y");
+        }
 
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->create($input);
 
@@ -223,6 +270,9 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
     public function update($id, UpdateDirectInvoiceDetailsAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['segment']);
+        $input = $this->convertArrayToValue($input);
+        $serviceLineError = array('type' => 'serviceLine');
 
         /** @var DirectInvoiceDetails $directInvoiceDetails */
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->findWithoutFail($id);
@@ -231,9 +281,39 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             return $this->sendError('Direct Invoice Details not found');
         }
 
+        $BookInvSuppMaster = BookInvSuppMaster::find($input['directInvoiceAutoID']);
+
+        if (empty($BookInvSuppMaster)) {
+            return $this->sendError('Book Inv Supp Master not found');
+        }
+
+        if (isset($input['serviceLineSystemID'])) {
+
+            if($input['serviceLineSystemID'] > 0) {
+                $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
+                if (empty($checkDepartmentActive)) {
+                    return $this->sendError('Department not found');
+                }
+
+                if ($checkDepartmentActive->isActive == 0) {
+                    $this->$directInvoiceDetails->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
+                    return $this->sendError('Please select an active department', 500, $serviceLineError);
+                }
+
+                $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
+            }
+        }
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['DIAmount']);
+
+        $input['localAmount' ]        = $companyCurrencyConversion['localAmount'];
+        $input['comRptAmount']        = $companyCurrencyConversion['reportingAmount'];
+        $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
+        $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
+
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($directInvoiceDetails->toArray(), 'DirectInvoiceDetails updated successfully');
+        return $this->sendResponse($directInvoiceDetails->toArray(), 'Direct Invoice Details updated successfully');
     }
 
     /**
@@ -286,5 +366,17 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $directInvoiceDetails->delete();
 
         return $this->sendResponse($id, 'Direct Invoice Details deleted successfully');
+    }
+
+    public function getDirectItems(Request $request)
+    {
+        $input = $request->all();
+        $invoiceID = $input['invoiceID'];
+
+        $items = DirectInvoiceDetails::where('directInvoiceAutoID', $invoiceID)
+            ->with(['segment'])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Direct Invoice Details retrieved successfully');
     }
 }

@@ -424,17 +424,20 @@ class PurchaseRequestAPIController extends AppBaseController
 
                 })
                     ->with(['uom', 'podetail' => function ($q) use ($from, $to, $documentSearch) {
-                        $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to, $documentSearch) {
-                            $q->whereHas('grv_details', function ($q) use ($from, $to) {
-                                $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
-                                    $q->whereHas('grv_master', function ($q) use ($from, $to) {
-                                        $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
-                                            return $q->whereBetween('grvDate', [$from, $to]);
+                            $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to, $documentSearch) {
+                                $q->whereHas('grv_details', function ($q) use ($from, $to) {
+                                    $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                        $q->whereHas('grv_master', function ($q) use ($from, $to) {
+                                            $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                                return $q->whereBetween('grvDate', [$from, $to]);
+                                            });
                                         });
                                     });
                                 });
-                            });
-                        })
+                            })
+                            ->whereHas('order', function ($q) use ($from, $to, $documentSearch) {
+                                $q->where('poConfirmedYN', 1);
+                            })
                             ->with(['order' => function ($q) use ($from, $to, $documentSearch) {
                                 $q->where('poConfirmedYN', 1)
                                     ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
@@ -475,36 +478,36 @@ class PurchaseRequestAPIController extends AppBaseController
     {
         $input = $request->all();
         $data = array();
-        $output = ($this->getPrToGrvQry($input))->orderBy('purchaseRequestID','DES')->get();
+        $output = ($this->getPrToGrvQry($input))->orderBy('purchaseRequestID', 'DES')->get();
         $type = $request->type;
         if (!empty($output)) {
-             $x = 0;
+            $x = 0;
             foreach ($output as $value) {
                 $data[$x]['Company ID'] = $value->companyID;
                 //$data[$x]['Company Name'] = $val->CompanyName;
                 $data[$x]['Service Line'] = $value->serviceLineCode;
                 $data[$x]['PR Number'] = $value->purchaseRequestCode;
 
-                if($value->confirmed_by){
+                if ($value->confirmed_by) {
                     $data[$x]['Processed By'] = $value->confirmed_by->empName;
-                }else{
+                } else {
                     $data[$x]['Processed By'] = '';
                 }
 
                 $data[$x]['PR Date'] = \Helper::dateFormat($value->PRRequestedDate);
                 $data[$x]['PR Comment'] = $value->comments;
 
-                if($value->approved == -1){
+                if ($value->approved == -1) {
                     $data[$x]['PR Approved'] = 'Yes';
-                }else{
+                } else {
                     $data[$x]['PR Approved'] = 'No';
                 }
 
-                if(count($value->details) >0){
+                if (count($value->details) > 0) {
                     $itemCount = 0;
                     foreach ($value->details as $item) {
 
-                        if($itemCount != 0){
+                        if ($itemCount != 0) {
                             $x++;
                             $data[$x]['Company ID'] = '';
                             //$data[$x]['Company Name'] = $val->CompanyName;
@@ -519,14 +522,14 @@ class PurchaseRequestAPIController extends AppBaseController
                         $data[$x]['Item Code'] = $item->itemPrimaryCode;
                         $data[$x]['Item Description'] = $item->itemDescription;
                         $data[$x]['Part Number'] = $item->partNumber;
-                        if($item->uom){
+                        if ($item->uom) {
                             $data[$x]['Unit'] = $item->uom->UnitShortCode;
-                        }else{
+                        } else {
                             $data[$x]['Unit'] = '';
                         }
                         $data[$x]['PR Qty'] = $item->quantityRequested;
 
-                        if(count($item->podetail) >0) {
+                        if (count($item->podetail) > 0) {
                             $poCount = 0;
                             foreach ($item->podetail as $poDetail) {
                                 if ($poCount != 0) {
@@ -546,46 +549,46 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x]['PR Qty'] = '';
                                 }
 
-                                if($poDetail->order){
+                                if ($poDetail->order) {
                                     $data[$x]['PO Number'] = $poDetail->order->purchaseOrderCode;
                                     $data[$x]['ETA'] = \Helper::dateFormat($poDetail->order->expectedDeliveryDate);
                                     $data[$x]['Supplier Code'] = $poDetail->order->supplierPrimaryCode;
                                     $data[$x]['Supplier Name'] = $poDetail->order->supplierPrimaryCode;
-                                }else{
+                                } else {
                                     $data[$x]['PO Number'] = '';
                                     $data[$x]['ETA'] = '';
                                     $data[$x]['Supplier Code'] = '';
                                     $data[$x]['Supplier Name'] = '';
                                 }
 
-                                $data[$x]['PO Qty'] = round($poDetail->noQty,2);
+                                $data[$x]['PO Qty'] = round($poDetail->noQty, 2);
 
-                                if($poDetail->reporting_currency){
+                                if ($poDetail->reporting_currency) {
                                     $data[$x]['Currency'] = $poDetail->reporting_currency->CurrencyCode;
-                                }else{
+                                } else {
                                     $data[$x]['Currency'] = '';
                                 }
 
 
-                                $data[$x]['PO Cost'] = round($poDetail->GRVcostPerUnitComRptCur,2);
+                                $data[$x]['PO Cost'] = round($poDetail->GRVcostPerUnitComRptCur, 2);
 
-                                if($poDetail->order) {
-                                    if($poDetail->order->approved == -1){
+                                if ($poDetail->order) {
+                                    if ($poDetail->order->approved == -1) {
                                         $data[$x]['PO Approved Status'] = 'Yes';
-                                    }else{
+                                    } else {
                                         $data[$x]['PO Approved Status'] = 'No';
                                     }
-                                }else{
+                                } else {
                                     $data[$x]['PO Approved Status'] = '';
                                 }
 
-                                if($poDetail->order){
+                                if ($poDetail->order) {
                                     $data[$x]['Approved Date'] = \Helper::dateFormat($poDetail->order->approvedDate);
-                                }else{
+                                } else {
                                     $data[$x]['Approved Date'] = '';
                                 }
 
-                                if(count($poDetail->grv_details) > 0){
+                                if (count($poDetail->grv_details) > 0) {
                                     $grvCount = 0;
                                     foreach ($poDetail->grv_details as $grvDetail) {
                                         if ($grvCount != 0) {
@@ -614,28 +617,26 @@ class PurchaseRequestAPIController extends AppBaseController
                                             $data[$x]['Approved Date'] = '';
                                         }
 
-                                        if($grvDetail->grv_master){
+                                        if ($grvDetail->grv_master) {
                                             $data[$x]['Receipt Doc Number'] = $grvDetail->grv_master->grvPrimaryCode;
                                             $data[$x]['Receipt Date'] = \Helper::dateFormat($grvDetail->grv_master->grvDate);
-                                        }else{
+                                        } else {
                                             $data[$x]['Receipt Doc Number'] = '';
                                             $data[$x]['Receipt Date'] = '';
                                         }
                                         $data[$x]['Receipt Qty'] = $grvDetail->noQty;
 
 
-                                        if($poDetail->goodsRecievedYN == 2){
+                                        if ($poDetail->goodsRecievedYN == 2) {
                                             $data[$x]['Receipt Status'] = "Fully Received";
-                                        }
-                                        else if($poDetail->goodsRecievedYN == 0){
+                                        } else if ($poDetail->goodsRecievedYN == 0) {
                                             $data[$x]['Receipt Status'] = "Not Received";
-                                        }
-                                        else if($poDetail->goodsRecievedYN == 1){
+                                        } else if ($poDetail->goodsRecievedYN == 1) {
                                             $data[$x]['Receipt Status'] = "Partially Received";
                                         }
                                         $grvCount++;
                                     }
-                                }else{
+                                } else {
                                     $data[$x]['Receipt Doc Number'] = '';
                                     $data[$x]['Receipt Date'] = '';
                                     $data[$x]['Receipt Qty'] = '';
@@ -643,7 +644,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                 }
                                 $poCount++;
                             }
-                        }else{
+                        } else {
                             $data[$x]['PO Number'] = '';
                             $data[$x]['ETA'] = '';
                             $data[$x]['Supplier Code'] = '';
@@ -660,7 +661,7 @@ class PurchaseRequestAPIController extends AppBaseController
                         }
                         $itemCount++;
                     }
-                }else{
+                } else {
                     $data[$x]['Item Code'] = 'Item Code';
                     $data[$x]['Item Description'] = 'Item Description';
                     $data[$x]['Part Number'] = '';
@@ -684,7 +685,7 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
-        $csv = \Excel::create('general_ledger', function ($excel) use ($data) {
+        $csv = \Excel::create('pr_to_grv', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
@@ -1361,6 +1362,8 @@ class PurchaseRequestAPIController extends AppBaseController
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
+            } else {
+                $input['budgetBlockYN'] = 0;
             }
         }
 

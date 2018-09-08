@@ -65,6 +65,7 @@ class BankAccount extends Model
     public $fillable = [
         'bankAssignedAutoID',
         'bankmasterAutoID',
+        'companySystemID',
         'companyID',
         'bankShortCode',
         'bankName',
@@ -111,6 +112,7 @@ class BankAccount extends Model
         'bankAccountAutoID' => 'integer',
         'bankAssignedAutoID' => 'integer',
         'bankmasterAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'bankShortCode' => 'string',
         'bankName' => 'string',
