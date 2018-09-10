@@ -22,3 +22,7 @@ Route::resource('customerReceivePaymentDetails', 'CustomerReceivePaymentDetailCo
 Route::resource('directReceiptDetails', 'DirectReceiptDetailController');
 
 Route::resource('unbilledGRVs', 'UnbilledGRVController');
+
+Route::resource('warehouseItems', 'WarehouseItemsController');
+
+Route::resource('warehouseBinLocations', 'WarehouseBinLocationController');
