@@ -27,4 +27,14 @@ Route::resource('warehouseItems', 'WarehouseItemsController');
 
 Route::resource('warehouseBinLocations', 'WarehouseBinLocationController');
 
+
 Route::resource('performaTemps', 'PerformaTempController');
+
+Route::resource('expenseClaims', 'ExpenseClaimController');
+
+Route::resource('expenseClaimDetails', 'ExpenseClaimDetailsController');
+
+Route::resource('expenseClaimTypes', 'ExpenseClaimTypeController');
+
+Route::resource('expenseClaimCategories', 'ExpenseClaimCategoriesController');
+

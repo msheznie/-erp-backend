@@ -240,16 +240,15 @@ class ItemAssignedAPIController extends AppBaseController
                     $data[$x]['Sub Category'] = $value->financeSubCategory->categoryDescription;
                     $data[$x]['Finance BS Code'] = $value->financeSubCategory->financeGLcodebBS;
                     $data[$x]['Finance PL Code'] = $value->financeSubCategory->financeGLcodePL;
-                    $data[$x]['Include PL For GRV YN'] = $value->financeSubCategory->includePLForGRVYN;
                 } else {
                     $data[$x]['Sub Category'] = '';
                     $data[$x]['Finance BS Code'] = '';
                     $data[$x]['Finance PL Code'] = '';
-                    $data[$x]['Include PL For GRV YN'] = '';
                 }
 
                 $data[$x]['Min Qty'] = round($value->minimumQty, 2);
                 $data[$x]['MAx Qty'] = round($value->maximunQty, 2);
+                $data[$x]['Order level'] = $value->rolQuantity;
                 $data[$x]['Total Qty'] = round($value->totalQty, 2);
                 $localDecimal = 3;
                 $rptDecimal = 2;
@@ -316,7 +315,8 @@ class ItemAssignedAPIController extends AppBaseController
         }
 
         $itemMasters = ItemAssigned::with(['unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency'])
-            ->whereIn('companySystemID', $childCompanies);
+            ->whereIn('companySystemID', $childCompanies)
+            ->where('financeCategoryMaster', 1);
 
         if (array_key_exists('financeCategoryMaster', $input)) {
             if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {

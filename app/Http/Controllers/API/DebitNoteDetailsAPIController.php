@@ -429,7 +429,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
             ->with(['segment'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), 'Debit Note Details retrieved successfully');
     }
 
 }

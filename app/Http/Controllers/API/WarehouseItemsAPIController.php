@@ -322,8 +322,9 @@ class WarehouseItemsAPIController extends AppBaseController
         }
 
         $itemMasters = WarehouseItems::with(['warehouse_by','binLocation','unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency'])
-            ->whereIn('companySystemID', $childCompanies)
-            ->where('warehouseSystemCode', $input['warehouseSystemCode']);
+                                    ->whereIn('companySystemID', $childCompanies)
+                                    ->where('warehouseSystemCode', $input['warehouseSystemCode'])
+                                    ->where('financeCategoryMaster', 1);
 
         if (array_key_exists('financeCategoryMaster', $input)) {
             if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
