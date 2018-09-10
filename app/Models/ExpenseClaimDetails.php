@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : DebitNoteDetails.php
+ * -- File Name : ExpenseClaimDetails.php
  * -- Project Name : ERP
- * -- Module Name :  DebitNoteDetails
- * -- Author : Nazir
- * -- Create date : 16 - August 2018
+ * -- Module Name :  Expense Claim
+ * -- Author : Fayas
+ * -- Create date : 10 - September 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
  */
@@ -15,17 +15,17 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="DebitNoteDetails",
+ *      definition="ExpenseClaimDetails",
  *      required={""},
  *      @SWG\Property(
- *          property="debitNoteDetailsID",
- *          description="debitNoteDetailsID",
+ *          property="expenseClaimDetailsID",
+ *          description="expenseClaimDetailsID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="debitNoteAutoID",
- *          description="debitNoteAutoID",
+ *          property="expenseClaimMasterAutoID",
+ *          description="expenseClaimMasterAutoID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -40,25 +40,26 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="contractID",
- *          description="contractID",
- *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="supplierID",
- *          description="supplierID",
+ *          property="expenseClaimCategoriesAutoID",
+ *          description="expenseClaimCategoriesAutoID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="glCode",
- *          description="glCode",
+ *          property="description",
+ *          description="description",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="glCodeDes",
- *          description="glCodeDes",
+ *          property="docRef",
+ *          description="docRef",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="amount",
+ *          description="amount",
+ *          type="number",
+ *          format="float"
  *      ),
  *      @SWG\Property(
  *          property="comments",
@@ -66,20 +67,24 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="debitAmountCurrency",
- *          description="debitAmountCurrency",
+ *          property="glCode",
+ *          description="glCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="glCodeDescription",
+ *          description="glCodeDescription",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="currencyID",
+ *          description="currencyID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="debitAmountCurrencyER",
- *          description="debitAmountCurrencyER",
- *          type="number",
- *          format="float"
- *      ),
- *      @SWG\Property(
- *          property="debitAmount",
- *          description="debitAmount",
+ *          property="currencyER",
+ *          description="currencyER",
  *          type="number",
  *          format="float"
  *      ),
@@ -118,54 +123,41 @@ use Eloquent as Model;
  *          description="comRptAmount",
  *          type="number",
  *          format="float"
- *      ),
- *      @SWG\Property(
- *          property="budgetYear",
- *          description="budgetYear",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="timesReferred",
- *          description="timesReferred",
- *          type="integer",
- *          format="int32"
  *      )
  * )
  */
-class DebitNoteDetails extends Model
+class ExpenseClaimDetails extends Model
 {
 
-    public $table = 'erp_debitnotedetails';
+    public $table = 'erp_expenseclaimdetails';
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
 
-    const CREATED_AT = 'timestamp';
-    const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'debitNoteDetailsID';
 
     public $fillable = [
-        'debitNoteAutoID',
-        'companySystemID',
+        'expenseClaimMasterAutoID',
         'companyID',
-        'serviceLineSystemID',
         'serviceLineCode',
-        'contractID',
-        'supplierID',
-        'chartOfAccountSystemID',
-        'glCode',
-        'glCodeDes',
+        'expenseClaimCategoriesAutoID',
+        'description',
+        'docRef',
+        'amount',
         'comments',
-        'debitAmountCurrency',
-        'debitAmountCurrencyER',
-        'debitAmount',
+        'glCode',
+        'glCodeDescription',
+        'currencyID',
+        'currencyER',
         'localCurrency',
         'localCurrencyER',
         'localAmount',
         'comRptCurrency',
         'comRptCurrencyER',
         'comRptAmount',
-        'budgetYear',
-        'timesReferred',
+        'companySystemID',
+        'serviceLineSystemID',
+        'chartOfAccountSystemID',
         'timeStamp'
     ];
 
@@ -175,29 +167,28 @@ class DebitNoteDetails extends Model
      * @var array
      */
     protected $casts = [
-        'debitNoteDetailsID' => 'integer',
-        'debitNoteAutoID' => 'integer',
-        'companySystemID' => 'integer',
+        'expenseClaimDetailsID' => 'integer',
+        'expenseClaimMasterAutoID' => 'integer',
         'companyID' => 'string',
-        'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
-        'contractID' => 'string',
-        'supplierID' => 'integer',
-        'chartOfAccountSystemID' => 'integer',
-        'glCode' => 'string',
-        'glCodeDes' => 'string',
+        'expenseClaimCategoriesAutoID' => 'integer',
+        'description' => 'string',
+        'docRef' => 'string',
+        'amount' => 'float',
         'comments' => 'string',
-        'debitAmountCurrency' => 'integer',
-        'debitAmountCurrencyER' => 'float',
-        'debitAmount' => 'float',
+        'glCode' => 'string',
+        'glCodeDescription' => 'string',
+        'currencyID' => 'integer',
+        'currencyER' => 'float',
         'localCurrency' => 'integer',
         'localCurrencyER' => 'float',
         'localAmount' => 'float',
         'comRptCurrency' => 'integer',
         'comRptCurrencyER' => 'float',
         'comRptAmount' => 'float',
-        'budgetYear' => 'integer',
-        'timesReferred' => 'integer'
+        'companySystemID' => 'integer',
+        'serviceLineSystemID' => 'integer',
+        'chartOfAccountSystemID' => 'integer'
     ];
 
     /**
@@ -214,10 +205,19 @@ class DebitNoteDetails extends Model
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 
-    public function chartofaccount()
+    public function chart_of_account()
     {
         return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
     }
 
-    
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID', 'currencyID');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo('App\Models\ExpenseClaimCategories', 'expenseClaimCategoriesAutoID', 'expenseClaimCategoriesAutoID');
+    }
+
 }

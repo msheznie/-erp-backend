@@ -149,7 +149,8 @@ return [
         'supplierID' => 'Supplier',
         'supplierTransactionCurrencyID' => 'Currency',
         'stockAdjustmentDate' => 'Document Date',
-        'location' => 'Location'
+        'location' => 'Location',
+        'priority' => 'Priority'
     ],
 
 ];

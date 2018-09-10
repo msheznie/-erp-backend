@@ -26,3 +26,11 @@ Route::resource('unbilledGRVs', 'UnbilledGRVController');
 Route::resource('warehouseItems', 'WarehouseItemsController');
 
 Route::resource('warehouseBinLocations', 'WarehouseBinLocationController');
+
+Route::resource('expenseClaims', 'ExpenseClaimController');
+
+Route::resource('expenseClaimDetails', 'ExpenseClaimDetailsController');
+
+Route::resource('expenseClaimTypes', 'ExpenseClaimTypeController');
+
+Route::resource('expenseClaimCategories', 'ExpenseClaimCategoriesController');

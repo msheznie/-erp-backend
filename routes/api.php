@@ -775,6 +775,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCreditNoteApprovalByUser', 'CreditNoteAPIController@getCreditNoteApprovalByUser');
 
     Route::resource('warehouse_items', 'WarehouseItemsAPIController');
+    Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
+
+    Route::resource('expense_claims', 'ExpenseClaimAPIController');
+    Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
+    Route::resource('expense_claim_types', 'ExpenseClaimTypeAPIController');
+    Route::resource('expense_claim_categories', 'ExpenseClaimCategoriesAPIController');
+    Route::post('getExpenseClaimByCompany', 'ExpenseClaimAPIController@getExpenseClaimByCompany');
+    Route::get('getExpenseClaimFormData', 'ExpenseClaimAPIController@getExpenseClaimFormData');
+    Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -831,4 +840,3 @@ Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
 
 
 
-Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
