@@ -773,6 +773,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
     Route::post('getCreditNoteApprovedByUser', 'CreditNoteAPIController@getCreditNoteApprovedByUser');
     Route::post('getCreditNoteApprovalByUser', 'CreditNoteAPIController@getCreditNoteApprovalByUser');
+    Route::get('getPurchaseOrderForSI', 'UnbilledGrvGroupByAPIController@getPurchaseOrderForSI');
 
     Route::resource('warehouse_items', 'WarehouseItemsAPIController');
     Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
