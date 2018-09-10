@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUnbilledGrvGroupByAPIRequest;
 use App\Http\Requests\API\UpdateUnbilledGrvGroupByAPIRequest;
+use App\Models\BookInvSuppMaster;
 use App\Models\UnbilledGrvGroupBy;
 use App\Repositories\UnbilledGrvGroupByRepository;
 use Illuminate\Http\Request;
@@ -277,5 +278,29 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
         $unbilledGrvGroupBy->delete();
 
         return $this->sendResponse($id, 'Unbilled Grv Group By deleted successfully');
+    }
+
+    public function getPurchaseOrderForSI(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companySystemID'];
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        $unbilledGrvGroupBy = UnbilledGrvGroupBy::where('companySystemID', $companyID)
+            ->with(['pomaster'])
+            ->where('fullyBooked', '<>', 2)
+            ->where('supplierID', $bookInvSuppMaster->supplierID)
+            ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
+            ->orderBy('purchaseOrderID', 'ASC')
+            ->get();
+
+        return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'Purchase Request Details retrieved successfully');
     }
 }

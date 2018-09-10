@@ -191,5 +191,10 @@ class UnbilledGrvGroupBy extends Model
         
     ];
 
+    public function pomaster()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
+    }
+
     
 }

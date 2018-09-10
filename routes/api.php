@@ -120,6 +120,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('item/assigneds', 'ItemAssignedAPIController');
     Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
+    Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
     Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport');
 
     Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
@@ -772,7 +773,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
     Route::post('getCreditNoteApprovedByUser', 'CreditNoteAPIController@getCreditNoteApprovedByUser');
     Route::post('getCreditNoteApprovalByUser', 'CreditNoteAPIController@getCreditNoteApprovalByUser');
+    Route::get('getPurchaseOrderForSI', 'UnbilledGrvGroupByAPIController@getPurchaseOrderForSI');
 
+    Route::resource('warehouse_items', 'WarehouseItemsAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -802,7 +805,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 15,'autoID' => 1989, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 21,'autoID' => 1292, 'companySystemID' => 52, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
 });
 
@@ -826,3 +829,7 @@ Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetai
 Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
 
 Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
+
+
+
+Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
