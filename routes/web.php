@@ -26,3 +26,5 @@ Route::resource('unbilledGRVs', 'UnbilledGRVController');
 Route::resource('warehouseItems', 'WarehouseItemsController');
 
 Route::resource('warehouseBinLocations', 'WarehouseBinLocationController');
+
+Route::resource('performaTemps', 'PerformaTempController');

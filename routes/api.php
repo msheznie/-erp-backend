@@ -832,3 +832,5 @@ Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
 
 
 Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
+
+Route::resource('performa_temps', 'PerformaTempAPIController');
