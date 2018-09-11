@@ -209,6 +209,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     /** Warehouse master Created by Fayas  */
     Route::resource('customer_masters', 'CustomerMasterAPIController');
     Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
+    Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
     Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
     Route::get('getAssignedCompaniesByCustomer', 'CustomerMasterAPIController@getAssignedCompaniesByCustomer');
     Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
