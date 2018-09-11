@@ -63,7 +63,7 @@ class WarehouseBinLocation extends Model
 
     public $table = 'warehousebinlocationmaster';
     
-    const CREATED_AT = 'timeStamp';
+    const CREATED_AT = 'dateCreated';
     const UPDATED_AT = 'timeStamp';
 
     protected $primaryKey  = 'binLocationID';
@@ -103,5 +103,8 @@ class WarehouseBinLocation extends Model
         
     ];
 
-    
+    public function warehouse_by()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseSystemCode','wareHouseSystemCode');
+    }
 }

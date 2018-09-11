@@ -1061,11 +1061,11 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
                                     $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) * -1);
-                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
                                     $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) * -1);
-                                    $data['documentRptCurrencyID'] = $masterData->reportingCurrencyID;
-                                    $data['documentRptCurrencyER'] = $masterData->reportingCurrencyER;
+                                    $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
                                     $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) * -1);
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);

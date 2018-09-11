@@ -394,8 +394,18 @@ class MaterielRequestAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
-        $input['RequestedDate'] = now();
+        $validator = \Validator::make($input, [
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'location' => 'required|numeric|min:1',
+            'priority' => 'required|numeric|min:1',
+            'comments' => 'required'
+        ]);
 
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input['RequestedDate'] = now();
         $input['departmentID'] = 'IM';
         $input['departmentSystemID'] = 10;
         $input['documentSystemID'] =  9;
@@ -569,6 +579,17 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         if ($materielRequest->ConfirmedYN == 0 && $input['ConfirmedYN'] == 1) {
+
+            $validator = \Validator::make($input, [
+                'serviceLineSystemID' => 'required|numeric|min:1',
+                'location' => 'required|numeric|min:1',
+                'priority' => 'required|numeric|min:1',
+                'comments1' => 'required'
+            ]);
+
+            if ($validator->fails()) {
+               // return $this->sendError($validator->messages(), 422);
+            }
 
 
             $checkItems = MaterielRequestDetails::where('RequestID', $id)
