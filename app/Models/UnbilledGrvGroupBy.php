@@ -127,10 +127,10 @@ class UnbilledGrvGroupBy extends Model
 
     public $table = 'erp_unbilledgrvgroupby';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
 
-
+    protected $primaryKey  = 'unbilledgrvAutoID';
 
     public $fillable = [
         'companySystemID',
@@ -194,6 +194,11 @@ class UnbilledGrvGroupBy extends Model
     public function pomaster()
     {
         return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
+    }
+
+    public function grvmaster()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
     }
 
     
