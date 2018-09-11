@@ -685,11 +685,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])->with(['grvdetail' => function ($query) {
-            $query->with('grv');
+            $query->with('grvmaster');
         }, 'directdetail' => function ($query) {
             $query->with('segment');
         }, 'detail' => function ($query) {
-            $query->with('grv');
+            $query->with('grvmaster');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
