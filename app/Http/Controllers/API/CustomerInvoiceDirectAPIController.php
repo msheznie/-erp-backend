@@ -1240,7 +1240,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
 
         $id = $request->get('id');
-        $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
+        $master=CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$id)->first();
+
+        if($master->isPerforma==1){
+
+            $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
+        }else{
+
+            $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
+
+        }
+
+
 
 
         if (empty($customerInvoice)) {
@@ -1250,10 +1261,21 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
 
+        $template=false;
+        if($master->isPerforma==1){
+           $detail= CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID',$id)->first();
+           $template= $detail->contract->performaTempID+1;
+        }
+         $customerInvoice->template =$template;
+
+
+;
+
         $array = array('request' => $customerInvoice);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
         $html = view('print.customer_invoice', $array);
+
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
