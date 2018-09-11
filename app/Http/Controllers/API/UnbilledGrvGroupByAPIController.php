@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUnbilledGrvGroupByAPIRequest;
 use App\Http\Requests\API\UpdateUnbilledGrvGroupByAPIRequest;
+use App\Models\BookInvSuppMaster;
 use App\Models\UnbilledGrvGroupBy;
 use App\Repositories\UnbilledGrvGroupByRepository;
 use Illuminate\Http\Request;
@@ -277,5 +278,59 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
         $unbilledGrvGroupBy->delete();
 
         return $this->sendResponse($id, 'Unbilled Grv Group By deleted successfully');
+    }
+
+    public function getPurchaseOrderForSI(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companySystemID'];
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        $unbilledGrvGroupBy = UnbilledGrvGroupBy::where('companySystemID', $companyID)
+            ->with(['pomaster'])
+            ->where('fullyBooked', '<>', 2)
+            ->where('supplierID', $bookInvSuppMaster->supplierID)
+            ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
+            ->groupBy('purchaseOrderID')
+            ->orderBy('purchaseOrderID', 'ASC')
+            ->get();
+
+        return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'Masters retrieved successfully');
+    }
+
+
+    public function getUnbilledGRVDetailsForSI(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyId'];
+        $purchaseOrderID = $input['poID'];
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+/*        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = ' . $prID . ' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');*/
+
+        $unbilledGrvGroupBy = UnbilledGrvGroupBy::where('companySystemID', $companyID)
+            ->with(['pomaster', 'grvmaster'])
+            ->where('fullyBooked', '<>', 2)
+            ->where('supplierID', $bookInvSuppMaster->supplierID)
+            ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
+            ->where('purchaseOrderID', $purchaseOrderID)
+            ->get();
+
+        return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'Purchase Request Details retrieved successfully');
+
     }
 }

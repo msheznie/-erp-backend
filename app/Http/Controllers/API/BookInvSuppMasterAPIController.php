@@ -15,12 +15,15 @@
  * -- Date: 06-September 2018 By: Nazir Description: Added new function getApprovedInvoiceForCurrentUser(),
  * -- Date: 06-September 2018 By: Nazir Description: Added new function approveSupplierInvoice(),
  * -- Date: 06-September 2018 By: Nazir Description: Added new function rejectSupplierInvoice(),
+ * -- Date: 11-September 2018 By: Nazir Description: Added new function saveSupplierInvoiceTaxDetails(),
+ * -- Date: 11-September 2018 By: Nazir Description: Added new function supplierInvoiceTaxTotal(),
  */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
+use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
@@ -35,6 +38,7 @@ use App\Models\SupplierAssigned;
 use App\Models\Company;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
+use App\Models\Taxdetail;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BookInvSuppMasterRepository;
@@ -245,7 +249,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         if ($documentMaster) {
-            $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' .  $input['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' . $input['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['bookingInvCode'] = $bookingInvCode;
         }
 
@@ -308,7 +312,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BookInvSuppMaster $bookInvSuppMaster */
-        $bookInvSuppMaster = $this->bookInvSuppMasterRepository->with(['created_by', 'confirmed_by', 'financeperiod_by' => function ($query) {
+        $bookInvSuppMaster = $this->bookInvSuppMasterRepository->with(['created_by', 'confirmed_by', 'company', 'financeperiod_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
@@ -371,7 +375,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
+            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
@@ -384,7 +388,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])
-            ->where('bookingSuppMasInvAutoID','<>', $id)
+            ->where('bookingSuppMasInvAutoID', '<>', $id)
             ->first();
 
         if ($alreadyAdded) {
@@ -452,25 +456,53 @@ class BookInvSuppMasterAPIController extends AppBaseController
             } else {
                 return $this->sendError('Document date is not within the selected financial period !', 500);
             }
-
-            $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
-                ->count();
-            if ($checkItems == 0) {
-                return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+            $checkItems = 0;
+            if ($input['documentType'] == 1) {
+                $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                    ->count();
+                if ($checkItems == 0) {
+                    return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+                }
             }
 
-            $checkQuantity = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
-                ->where(function ($q) {
-                    $q->where('DIAmount', '<=', 0)
-                        ->orWhereNull('localAmount', '<=', 0)
-                        ->orWhereNull('comRptAmount', '<=', 0)
-                        ->orWhereNull('DIAmount')
-                        ->orWhereNull('localAmount')
-                        ->orWhereNull('comRptAmount');
-                })
-                ->count();
-            if ($checkQuantity > 0) {
-                return $this->sendError('Amount should be greater than 0 for every items', 500);
+            if ($checkItems > 0) {
+                $checkQuantity = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                    ->where(function ($q) {
+                        $q->where('DIAmount', '<=', 0)
+                            ->orWhereNull('localAmount', '<=', 0)
+                            ->orWhereNull('comRptAmount', '<=', 0)
+                            ->orWhereNull('DIAmount')
+                            ->orWhereNull('localAmount')
+                            ->orWhereNull('comRptAmount');
+                    })
+                    ->count();
+                if ($checkQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+            }
+
+            if ($input['documentType'] == 0) {
+
+                $checkGRVItems = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->count();
+                if ($checkGRVItems == 0) {
+                    return $this->sendError('Every Supplier Invoice should have at least one item', 500);
+                }
+
+                $checkGRVQuantity = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->where(function ($q) {
+                        $q->where('supplierInvoAmount', '<=', 0)
+                            ->orWhereNull('totLocalAmount', '<=', 0)
+                            ->orWhereNull('totRptAmount', '<=', 0)
+                            ->orWhereNull('totTransactionAmount')
+                            ->orWhereNull('totLocalAmount')
+                            ->orWhereNull('totRptAmount');
+                    })
+                    ->count();
+                if ($checkGRVQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+
             }
 
             $directInvoiceDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
@@ -501,7 +533,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $error_count++;
                 }
 
-                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->DIAmountCurrency, $updateItem->DIAmountCurrency, $updateItem->debitAmount);
+                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->DIAmountCurrency, $updateItem->DIAmountCurrency, $updateItem->DIAmount);
 
                 $input['localAmount'] = $companyCurrencyConversion['localAmount'];
                 $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
@@ -510,11 +542,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $updateItem->save();
 
                 if ($updateItem->DIAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
-                    array_push($finalError['amount_zero'], $updateItem->itemPrimaryCode);
+                    array_push($finalError['amount_zero'], $updateItem->serviceLineCode);
                     $error_count++;
                 }
                 if ($updateItem->DIAmount < 0 || $updateItem->localAmount < 0 || $updateItem->comRptAmount < 0) {
-                    array_push($finalError['amount_neg'], $updateItem->itemPrimaryCode);
+                    array_push($finalError['amount_neg'], $updateItem->serviceLineCode);
                     $error_count++;
                 }
             }
@@ -527,14 +559,43 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $amount = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
                 ->sum('DIAmount');
 
-            $input['bookingAmountTrans'] = $amount;
+            $detailTaxSum = Taxdetail::select(DB::raw('sum(amount) as total'))
+                ->where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
+                ->where('documentSystemID', 11)
+                ->first();
 
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
+            if ($input['documentType'] == 0) {
+                $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->sum('totTransactionAmount');
 
-            $input['bookingAmountLocal'] = $companyCurrencyConversion['localAmount'];
-            $input['bookingAmountRpt'] = $companyCurrencyConversion['reportingAmount'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $grvAmountLocal = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->sum('totLocalAmount');
+
+                $grvAmountReporting = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->sum('totRptAmount');
+
+                $input['bookingAmountTrans'] = $grvAmountTransaction + $amount + $detailTaxSum['total'];
+
+                $currencyConverstionMaster = \Helper::convertAmountToLocalRpt($bookInvSuppMaster->documentSystemID, $bookInvSuppMaster->bookingSuppMasInvAutoID, $input['bookingAmountTrans']);
+
+                $bookingAmountLocal = $currencyConverstionMaster['localAmount'] + $grvAmountLocal;
+                $bookingAmountRpt = $currencyConverstionMaster['reportingAmount'] + $grvAmountReporting;
+
+                $input['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
+                $input['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
+                //$input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                //$input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+
+            } else {
+                $input['bookingAmountTrans'] = $amount + $detailTaxSum['total'];
+
+                $currencyConverstionMaster = \Helper::convertAmountToLocalRpt($bookInvSuppMaster->documentSystemID, $bookInvSuppMaster->bookingSuppMasInvAutoID, $input['bookingAmountTrans']);
+
+                $input['bookingAmountLocal'] = \Helper::roundValue($currencyConverstionMaster['localAmount']);
+                $input['bookingAmountRpt'] = \Helper::roundValue($currencyConverstionMaster['reportingAmount']);
+                //$input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                //$input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+            }
 
             $input['RollLevForApp_curr'] = 1;
 
@@ -624,11 +685,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])->with(['grvdetail' => function ($query) {
-            $query->with('grv');
+            $query->with('grvmaster');
         }, 'directdetail' => function ($query) {
             $query->with('segment');
         }, 'detail' => function ($query) {
-            $query->with('grv');
+            $query->with('grvmaster');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
@@ -648,6 +709,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
         $month = Months::all();
+
+        $taxMaster = DB::select('SELECT * FROM erp_taxmaster WHERE taxType = 2 AND companySystemID = ' . $companyId . '');
 
         $years = BookInvSuppMaster::select(DB::raw("YEAR(createdDateTime) as year"))
             ->whereNotNull('createdDateTime')
@@ -685,6 +748,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
+            'tax' => $taxMaster,
             'currencies' => $currencies,
             'financialYears' => $financialYears,
             'suppliers' => $supplier,
@@ -1069,6 +1133,150 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendResponse(array(), $reject["message"]);
         }
 
+    }
+
+    public function saveSupplierInvoiceTaxDetails(Request $request)
+    {
+        $input = $request->all();
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+        $percentage = $input['percentage'];
+        $taxMasterAutoID = $input['taxMasterAutoID'];
+
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        if ($bookInvSuppMaster->documentType == 0) {
+            $invoiceDetail = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->first();
+            if (empty($invoiceDetail)) {
+                return $this->sendResponse('e', 'Invoice details not found.');
+            }
+        }
+        $decimal = \Helper::getCurrencyDecimalPlace($bookInvSuppMaster->supplierTransactionCurrencyID);
+        if ($bookInvSuppMaster->documentType == 1) {
+            $invoiceDetail = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)->first();
+            if (empty($invoiceDetail)) {
+                return $this->sendResponse('e', 'Invoice Details not found.');
+            }
+        }
+
+        $totalAmount = 0;
+        $amount = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
+            ->sum('DIAmount');
+
+        if ($bookInvSuppMaster->documentType == 0) {
+            $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                ->sum('totTransactionAmount');
+
+            $totalAmount = $grvAmountTransaction + $amount;
+
+        } else {
+            $totalAmount = $amount;
+
+        }
+
+        $totalAmount = ($percentage / 100) * $totalAmount;
+
+        $taxMaster = \DB::select('SELECT * FROM erp_taxmaster WHERE taxType=1 AND companySystemID = ' . $bookInvSuppMaster->companySystemID . '');
+
+        if (empty($taxMaster)) {
+            return $this->sendResponse('e', 'Tax Master not found');
+        } else {
+            $taxMaster = $taxMaster[0];
+        }
+
+        $Taxdetail = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            ->where('documentSystemID', 11)
+            ->first();
+
+        if (!empty($Taxdetail)) {
+            return $this->sendResponse('e', 'Tax detail already exist');
+        }
+
+        $_post['taxMasterAutoID'] = $taxMasterAutoID;
+        $_post['companySystemID'] = $bookInvSuppMaster->companySystemID;
+        $_post['companyID'] = $bookInvSuppMaster->companyID;
+        $_post['documentSystemID'] = 11;
+        $_post['documentID'] = 'SI';
+        $_post['documentSystemCode'] = $bookingSuppMasInvAutoID;
+        $_post['documentCode'] = $bookInvSuppMaster->bookingInvCode;
+        $_post['taxShortCode'] = $taxMaster->taxShortCode;
+        $_post['taxDescription'] = $taxMaster->taxDescription;
+        $_post['taxPercent'] = $taxMaster->taxPercent;
+        $_post['payeeSystemCode'] = $taxMaster->payeeSystemCode;
+        $_post['currency'] = $bookInvSuppMaster->supplierTransactionCurrencyID;
+        $_post['currencyER'] = $bookInvSuppMaster->supplierTransactionCurrencyER;
+        $_post['amount'] = round($totalAmount, $decimal);
+        $_post['payeeDefaultCurrencyID'] = $bookInvSuppMaster->supplierTransactionCurrencyID;
+        $_post['payeeDefaultCurrencyER'] =  $bookInvSuppMaster->supplierTransactionCurrencyER;
+        $_post['payeeDefaultAmount'] = round($totalAmount, $decimal);
+        $_post['localCurrencyID'] = $bookInvSuppMaster->localCurrencyID;
+        $_post['localCurrencyER'] = $bookInvSuppMaster->localCurrencyER;
+        $_post['rptCurrencyID'] = $bookInvSuppMaster->companyReportingCurrencyID;
+        $_post['rptCurrencyER'] = $bookInvSuppMaster->companyReportingER;
+
+        if ($_post['currency'] == $_post['rptCurrencyID']) {
+            $MyRptAmount = $totalAmount;
+        } else {
+            if ($_post['rptCurrencyER'] > $_post['currencyER']) {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                }
+            } else {
+                if ($_post['rptCurrencyER'] > 1) {
+                    $MyRptAmount = ($totalAmount * $_post['rptCurrencyER']);
+                } else {
+                    $MyRptAmount = ($totalAmount / $_post['rptCurrencyER']);
+                }
+            }
+        }
+        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        if ($_post['currency'] == $_post['localCurrencyID']) {
+            $MyLocalAmount = $totalAmount;
+        } else {
+            if ($_post['localCurrencyER'] > $_post['currencyER']) {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalAmount / $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalAmount * $_post['localCurrencyER']);
+                }
+            } else {
+                if ($_post['localCurrencyER'] > 1) {
+                    $MyLocalAmount = ($totalAmount * $_post['localCurrencyER']);
+                } else {
+                    $MyLocalAmount = ($totalAmount / $_post['localCurrencyER']);
+                }
+            }
+        }
+        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+
+        DB::beginTransaction();
+        try {
+            Taxdetail::create($_post);
+            DB::commit();
+            return $this->sendResponse('s', 'Successfully Added');
+        } catch (\Exception $exception) {
+            DB::rollback();
+            return $this->sendError('e', 'Error Occurred');
+        }
+    }
+
+    public function supplierInvoiceTaxTotal(Request $request)
+    {
+        $input = $request->all();
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $detailTaxSum = Taxdetail::select(DB::raw('COALESCE(SUM(amount),0) as total'))
+            ->where('documentSystemCode', $bookingSuppMasInvAutoID)
+            ->where('documentSystemID', 11)
+            ->first();
+
+        return $this->sendResponse($detailTaxSum->toArray(), 'Data retrieved successfully');
     }
 
 }
