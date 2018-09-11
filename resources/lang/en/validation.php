@@ -150,7 +150,9 @@ return [
         'supplierTransactionCurrencyID' => 'Currency',
         'stockAdjustmentDate' => 'Document Date',
         'location' => 'Location',
-        'priority' => 'Priority'
+        'priority' => 'Priority',
+        'wareHouseSystemCode' => 'WareHouse',
+        'companySystemID' => 'Company',
     ],
 
 ];

@@ -777,6 +777,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('warehouse_items', 'WarehouseItemsAPIController');
     Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
+    Route::post('getAllBinLocationsByWarehouse', 'WarehouseBinLocationAPIController@getAllBinLocationsByWarehouse');
 
     Route::resource('expense_claims', 'ExpenseClaimAPIController');
     Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
