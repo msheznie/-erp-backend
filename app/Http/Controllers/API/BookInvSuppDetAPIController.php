@@ -8,24 +8,28 @@
  * -- Create date : 08 - August 2018
  * -- Description : This file contains the all CRUD for Purchase Order
  * -- REVISION HISTORY
+ * -- Date: 10-September 2018 By: Nazir Description: Added new functions named as storePOBaseDetail(),
+ * -- Date: 10-September 2018 By: Nazir Description: Added new functions named as getSupplierInvoiceGRVItems(),
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBookInvSuppDetAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppDetAPIRequest;
 use App\Models\BookInvSuppDet;
+use App\Models\BookInvSuppMaster;
+use App\Models\UnbilledGrvGroupBy;
 use App\Repositories\BookInvSuppDetRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
  * Class BookInvSuppDetController
  * @package App\Http\Controllers\API
  */
-
 class BookInvSuppDetAPIController extends AppBaseController
 {
     /** @var  BookInvSuppDetRepository */
@@ -222,7 +226,8 @@ class BookInvSuppDetAPIController extends AppBaseController
      */
     public function update($id, UpdateBookInvSuppDetAPIRequest $request)
     {
-        $input = $request->all();
+        $input = array_except($request->all(), ['grvmaster', 'pomaster']);
+        $input = $this->convertArrayToValue($input);
 
         /** @var BookInvSuppDet $bookInvSuppDet */
         $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
@@ -231,7 +236,38 @@ class BookInvSuppDetAPIController extends AppBaseController
             return $this->sendError('Book Inv Supp Det not found');
         }
 
+        $unbilledGrvGroupByMaster = UnbilledGrvGroupBy::where('unbilledgrvAutoID', $bookInvSuppDet->unbilledgrvAutoID)
+            ->first();
+
+        if (empty($unbilledGrvGroupByMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        $currency = \Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $input['supplierInvoAmount']);
+
+        $input['totTransactionAmount'] = $input['supplierInvoAmount'];
+        $input['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
+        $input['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+
         $bookInvSuppDet = $this->bookInvSuppDetRepository->update($input, $id);
+
+        // balance Amount
+        $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $bookInvSuppDet->unbilledgrvAutoID . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID'))->first();
+
+        if ($unbilledGrvGroupByMaster->totTransactionAmount == $balanceAmount->SumOftotTransactionAmount) {
+
+            $updatePRMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID)
+                ->update([
+                    'selectedForBooking' => -1,
+                    'fullyBooked' => 2
+                ]);
+        } else {
+            $updatePRMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID)
+                ->update([
+                    'selectedForBooking' => 0,
+                    'fullyBooked' => 1
+                ]);
+        }
 
         return $this->sendResponse($bookInvSuppDet->toArray(), 'BookInvSuppDet updated successfully');
     }
@@ -283,8 +319,113 @@ class BookInvSuppDetAPIController extends AppBaseController
             return $this->sendError('Book Inv Supp Det not found');
         }
 
+/*        $updatePRMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID)
+            ->update([
+                'selectedForBooking' => 0,
+                'fullyBooked' => 1
+            ]);*/
+
         $bookInvSuppDet->delete();
 
         return $this->sendResponse($id, 'Book Inv Supp Det deleted successfully');
+    }
+
+    public function storePOBaseDetail(Request $request)
+    {
+        $input = $request->all();
+        $prDetail_arr = array();
+        $validator = array();
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $isCheckArr = collect($input['detailTable'])->pluck('isChecked')->toArray();
+        if (!in_array(true, $isCheckArr)) {
+            return $this->sendError("No GRV selected to add.");
+        }
+
+        $itemExistArray = array();
+        //check added item exist
+        foreach ($input['detailTable'] as $itemExist) {
+
+            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
+                $siDetailExist = BookInvSuppDet::select(DB::raw('bookingSupInvoiceDetAutoID'))
+                    ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                    ->where('unbilledgrvAutoID', $itemExist['unbilledgrvAutoID'])
+                    ->get();
+
+                if (!empty($siDetailExist)) {
+                    foreach ($siDetailExist as $row) {
+                        $itemDrt = $row['grvmaster']['grvPrimaryCode'] . " all ready exist";
+                        $itemExistArray[] = [$itemDrt];
+                    }
+                }
+            }
+
+        }
+
+        if (!empty($itemExistArray)) {
+            return $this->sendError($itemExistArray, 422);
+        }
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        foreach ($input['detailTable'] as $new) {
+
+            $groupMaster = UnbilledGrvGroupBy::find($new['unbilledgrvAutoID']);
+
+            if (isset($new['isChecked']) && $new['isChecked']) {
+
+                $totalPendingAmount = 0;
+                // balance Amount
+                $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $new['unbilledgrvAutoID'] . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
+
+                if ($balanceAmount) {
+                    $totalPendingAmount = $groupMaster->totTransactionAmount - $balanceAmount['SumOftotTransactionAmount'];
+                }
+
+                $prDetail_arr['bookingSuppMasInvAutoID'] = $bookingSuppMasInvAutoID;
+                $prDetail_arr['unbilledgrvAutoID'] = $new['unbilledgrvAutoID'];
+                $prDetail_arr['companySystemID'] = $groupMaster->companySystemID;
+                $prDetail_arr['companyID'] = $groupMaster->companyID;
+                $prDetail_arr['supplierID'] = $groupMaster->supplierID;
+                $prDetail_arr['purchaseOrderID'] = $groupMaster->purchaseOrderID;
+                $prDetail_arr['grvAutoID'] = $groupMaster->grvAutoID;
+                $prDetail_arr['grvType'] = $groupMaster->grvType;
+                $prDetail_arr['supplierTransactionCurrencyID'] = $groupMaster->supplierTransactionCurrencyID;
+                $prDetail_arr['supplierTransactionCurrencyER'] = $groupMaster->supplierTransactionCurrencyER;
+                $prDetail_arr['companyReportingCurrencyID'] = $groupMaster->companyReportingCurrencyID;
+                $prDetail_arr['companyReportingER'] = $groupMaster->companyReportingER;
+                $prDetail_arr['localCurrencyID'] = $groupMaster->localCurrencyID;
+                $prDetail_arr['localCurrencyER'] = $groupMaster->localCurrencyER;
+                $prDetail_arr['supplierInvoOrderedAmount'] = $totalPendingAmount;
+                $prDetail_arr['transSupplierInvoAmount'] = $groupMaster->totTransactionAmount;
+                $prDetail_arr['localSupplierInvoAmount'] = $groupMaster->totLocalAmount;
+                $prDetail_arr['rptSupplierInvoAmount'] = $groupMaster->totRptAmount;
+                //$prDetail_arr['supplierInvoAmount'] = $groupMaster->totTransactionAmount;
+                //$prDetail_arr['totTransactionAmount'] = $groupMaster->totTransactionAmount;
+                //$prDetail_arr['totLocalAmount'] = $groupMaster->totLocalAmount;
+                //$prDetail_arr['totRptAmount'] = $groupMaster->totRptAmount;
+                $item = $this->bookInvSuppDetRepository->create($prDetail_arr);
+            }
+        }
+
+
+        return $this->sendResponse('', 'Purchase Order Details saved successfully');
+
+    }
+
+    public function getSupplierInvoiceGRVItems(Request $request)
+    {
+        $input = $request->all();
+        $invoiceID = $input['invoiceID'];
+
+        $items = BookInvSuppDet::where('bookingSuppMasInvAutoID', $invoiceID)
+            ->with(['grvmaster', 'pomaster'])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'GRV Invoice Details retrieved successfully');
     }
 }

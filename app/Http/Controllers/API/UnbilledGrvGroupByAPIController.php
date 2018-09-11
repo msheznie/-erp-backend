@@ -298,9 +298,39 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
             ->where('fullyBooked', '<>', 2)
             ->where('supplierID', $bookInvSuppMaster->supplierID)
             ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
+            ->groupBy('purchaseOrderID')
             ->orderBy('purchaseOrderID', 'ASC')
             ->get();
 
+        return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'Masters retrieved successfully');
+    }
+
+
+    public function getUnbilledGRVDetailsForSI(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyId'];
+        $purchaseOrderID = $input['poID'];
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+/*        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = ' . $prID . ' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');*/
+
+        $unbilledGrvGroupBy = UnbilledGrvGroupBy::where('companySystemID', $companyID)
+            ->with(['pomaster', 'grvmaster'])
+            ->where('fullyBooked', '<>', 2)
+            ->where('supplierID', $bookInvSuppMaster->supplierID)
+            ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
+            ->where('purchaseOrderID', $purchaseOrderID)
+            ->get();
+
         return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'Purchase Request Details retrieved successfully');
+
     }
 }

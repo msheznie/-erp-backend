@@ -1015,8 +1015,6 @@ class Helper
 
                                                 $consumedAmount = collect(\DB::select('SELECT erp_budgetconsumeddata.companySystemID,erp_budgetconsumeddata.serviceLineSystemID,templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription, erp_budgetconsumeddata.Year, sum( erp_budgetconsumeddata.consumedLocalAmount ) AS ConsumedLocalAmount, sum( erp_budgetconsumeddata.consumedRptAmount ) AS ConsumedRptAmount FROM erp_budgetconsumeddata INNER JOIN ( SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID, erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_budgetconsumeddata.chartOfAccountID WHERE erp_budgetconsumeddata.Year = ' . $budgetYear . ' AND erp_budgetconsumeddata.companySystemID = ' . $companySystemID . ' AND erp_budgetconsumeddata.serviceLineSystemID = ' . $serviceLineSystemID . ' AND templateGLCode.templatesDetailsAutoID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, erp_budgetconsumeddata.Year,templateGLCode.templatesDetailsAutoID'))->first();
 
-                                                $sql = 'SELECT erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription,Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt,Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt,erp_purchaseorderdetails.budgetYear FROM erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID,erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_purchaseorderdetails.financeGLcodePLSystemID WHERE erp_purchaseordermaster.approved = 0 AND erp_purchaseordermaster.poCancelledYN= 0 AND erp_purchaseordermaster.budgetYear = ' . $budgetYear . ' AND erp_purchaseordermaster.companySystemID = ' . $companySystemID . ' AND erp_purchaseordermaster.serviceLineSystemID = ' . $serviceLineSystemID . ' AND templateGLCode.templatesDetailsAutoID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, templateGLCode.templatesDetailsAutoID, erp_purchaseorderdetails.budgetYear';
-
                                                 $pendingAmount = collect(\DB::select('SELECT erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, templateGLCode.templatesDetailsAutoID,templateGLCode.templateDetailDescription,Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt,Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt,erp_purchaseorderdetails.budgetYear FROM erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID INNER JOIN (SELECT erp_templatesglcode.templatesDetailsAutoID, erp_templatesdetails.templateDetailDescription, erp_templatesglcode.templateMasterID,erp_templatesglcode.chartOfAccountSystemID,erp_templatesglcode.glCode FROM erp_templatesglcode INNER JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID AND erp_templatesdetails.templatesMasterAutoID = erp_templatesglcode.templateMasterID WHERE erp_templatesglcode.templateMasterID = 15 OR erp_templatesglcode.templateMasterID = 3 ) AS templateGLCode ON templateGLCode.chartOfAccountSystemID = erp_purchaseorderdetails.financeGLcodePLSystemID WHERE erp_purchaseordermaster.approved = 0 AND erp_purchaseordermaster.poCancelledYN= 0 AND erp_purchaseordermaster.budgetYear = ' . $budgetYear . ' AND erp_purchaseordermaster.companySystemID = ' . $companySystemID . ' AND erp_purchaseordermaster.serviceLineSystemID = ' . $serviceLineSystemID . ' AND templateGLCode.templatesDetailsAutoID = ' . $documentAmount->templatesDetailsAutoID . ' GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, templateGLCode.templatesDetailsAutoID, erp_purchaseorderdetails.budgetYear'))->first();
 
                                                 //get reporting amount converted
@@ -1646,6 +1644,28 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'companyReportingER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'customerCurrencyER';
+                break;
+            case 200: // This is for unbilled grv
+                $docInforArr["modelName"] = 'UnbilledGrvGroupBy';
+                $docInforArr["transCurrencyID"] = 'supplierTransactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'supplierTransactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransactionCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyReportingER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
+                break;
+            case 11: // This is for unbilled grv
+                $docInforArr["modelName"] = 'BookInvSuppMaster';
+                $docInforArr["transCurrencyID"] = 'supplierTransactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'supplierTransactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransactionCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyReportingER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
