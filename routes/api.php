@@ -783,7 +783,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('expense_claim_types', 'ExpenseClaimTypeAPIController');
     Route::resource('expense_claim_categories', 'ExpenseClaimCategoriesAPIController');
     Route::post('getExpenseClaimByCompany', 'ExpenseClaimAPIController@getExpenseClaimByCompany');
+    Route::get('getPaymentStatusHistory', 'ExpenseClaimAPIController@getPaymentStatusHistory');
     Route::get('getExpenseClaimFormData', 'ExpenseClaimAPIController@getExpenseClaimFormData');
+    Route::get('getExpenseClaimAudit', 'ExpenseClaimAPIController@getExpenseClaimAudit');
     Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
 });
 
@@ -800,6 +802,7 @@ Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer'
 Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF');
 Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
 Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
+Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
 
 Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
 

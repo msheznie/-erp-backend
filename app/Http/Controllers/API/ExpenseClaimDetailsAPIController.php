@@ -295,7 +295,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
         $id = $input['expenseClaimMasterAutoID'];
 
         $items = ExpenseClaimDetails::where('expenseClaimMasterAutoID', $id)
-                                ->with(['segment','chart_of_account','currency','category'])
+                                ->with(['segment','chart_of_account','currency','category','local_currency'])
                                 ->get();
 
         return $this->sendResponse($items->toArray(), 'Expense Claim Details retrieved successfully');
