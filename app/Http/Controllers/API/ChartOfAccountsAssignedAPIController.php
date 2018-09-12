@@ -177,7 +177,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
 
         $items = ChartOfAccountsAssigned::where('companySystemID', $companyID)->where('controllAccountYN', 0)
                                           ->where('isAssigned', -1)
-                                          ->where('isAssigned', -1);
+                                          ->where('isActive', 1);
 
         if(isset($input['controllAccountYN'])){
             $items = $items->where('controllAccountYN',0);
