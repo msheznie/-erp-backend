@@ -1374,10 +1374,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        //$companySystemID = $input['companySystemID'];
-        $companySystemID = 7;
-        $bookingSuppMasInvAutoID = 88180;
-        //$bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+        $companySystemID = $input['companySystemID'];
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
 
         $detail = DB::select('SELECT
 	erp_paysupplierinvoicedetail.payDetailAutoID,
