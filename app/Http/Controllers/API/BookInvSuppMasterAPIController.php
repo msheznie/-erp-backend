@@ -17,6 +17,7 @@
  * -- Date: 06-September 2018 By: Nazir Description: Added new function rejectSupplierInvoice(),
  * -- Date: 11-September 2018 By: Nazir Description: Added new function saveSupplierInvoiceTaxDetails(),
  * -- Date: 11-September 2018 By: Nazir Description: Added new function supplierInvoiceTaxTotal(),
+ * -- Date: 12-September 2018 By: Nazir Description: Added new function printSupplierInvoice(),
  */
 
 namespace App\Http\Controllers\API;
@@ -1286,6 +1287,86 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->first();
 
         return $this->sendResponse($detailTaxSum->toArray(), 'Data retrieved successfully');
+    }
+
+
+    public function printSupplierInvoice(Request $request)
+    {
+        $id = $request->get('bookingSuppMasInvAutoID');
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($id);
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        $bookInvSuppMasterRecord = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)->with(['grvdetail' => function ($query) {
+            $query->with('grvmaster');
+        }, 'directdetail' => function ($query) {
+            $query->with('segment');
+        }, 'detail' => function ($query) {
+            $query->with('grvmaster');
+        }, 'approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 11);
+        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by'])->first();
+
+        if (empty($bookInvSuppMasterRecord)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        $refernaceDoc = \Helper::getCompanyDocRefNo($bookInvSuppMaster->companySystemID, $bookInvSuppMaster->documentSystemID);
+
+        $transDecimal = 2;
+        $localDecimal = 3;
+        $rptDecimal = 2;
+
+        if ($bookInvSuppMasterRecord->transactioncurrency) {
+            $transDecimal = $bookInvSuppMasterRecord->transactioncurrency->DecimalPlaces;
+        }
+
+        if ($bookInvSuppMasterRecord->localcurrency) {
+            $localDecimal = $bookInvSuppMasterRecord->localcurrency->DecimalPlaces;
+        }
+
+        if ($bookInvSuppMasterRecord->rptcurrency) {
+            $rptDecimal = $bookInvSuppMasterRecord->rptcurrency->DecimalPlaces;
+        }
+
+        $directTotTra = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('DIAmount');
+
+        $directTotLoc = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('localAmount');
+
+        $grvTotTra = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+            ->sum('totTransactionAmount');
+
+        $grvTotLoc = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+            ->sum('totLocalAmount');
+
+        $grvTotRpt = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+            ->sum('totRptAmount');
+
+        $order = array(
+            'masterdata' => $bookInvSuppMasterRecord,
+            'docRef' => $refernaceDoc,
+            'transDecimal' => $transDecimal,
+            'localDecimal' => $localDecimal,
+            'rptDecimal' => $rptDecimal,
+            'directTotTra' => $directTotTra,
+            'directTotLoc' => $directTotLoc,
+            'grvTotTra' => $grvTotTra,
+            'grvTotLoc' => $grvTotLoc,
+            'grvTotRpt' => $grvTotRpt
+        );
+
+        $time = strtotime("now");
+        $fileName = 'supplier_invoice_' . $id . '_' . $time . '.pdf';
+        $html = view('print.supplier_invoice', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
 }
