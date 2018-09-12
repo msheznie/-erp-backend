@@ -263,7 +263,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
         $checkIsAssigned = WarehouseItems::where('binNumber',$id)->count();
 
         if($checkIsAssigned > 0){
-            return $this->sendError('The bin location cannot be edit as it has been assigned to the other warehouses',500);
+            return $this->sendError('Bin location you are trying to change is already assigned to an inventory.',500);
         }
 
         $warehouseBinLocation = $this->warehouseBinLocationRepository->update(array_only($input, ['binLocationDes']), $id);
@@ -321,7 +321,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
         $checkIsAssigned = WarehouseItems::where('binNumber',$id)->count();
 
         if($checkIsAssigned > 0){
-            return $this->sendError('The bin location cannot be delete as it has been assigned to the other warehouses',500);
+            return $this->sendError('Bin location you are trying to delete is already assigned to an inventory.',500);
         }
 
         $warehouseBinLocation->delete();

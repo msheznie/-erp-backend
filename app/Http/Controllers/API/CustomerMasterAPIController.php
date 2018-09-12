@@ -329,7 +329,7 @@ class CustomerMasterAPIController extends AppBaseController
                 $params = array('autoID' => $input['customerCodeSystem'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
                 $confirm = \Helper::confirmDocument($params);
                 if(!$confirm["success"]){
-                    return $this->sendError($confirm["message"]);
+                    return $this->sendError($confirm["message"],500);
                 }
             }
 
