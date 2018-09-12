@@ -800,11 +800,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getLogisticFormData', 'LogisticAPIController@getLogisticFormData');
     Route::post('getAllLogisticByCompany', 'LogisticAPIController@getAllLogisticByCompany');
     Route::post('exportLogisticsByCompanyReport', 'LogisticAPIController@exportLogisticsByCompanyReport');
-
     Route::resource('logistic_mode_of_imports', 'LogisticModeOfImportAPIController');
     Route::resource('logistic_shipping_modes', 'LogisticShippingModeAPIController');
     Route::resource('logistic_shipping_statuses', 'LogisticShippingStatusAPIController');
     Route::resource('logistic_statuses', 'LogisticStatusAPIController');
+
+    Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
+    Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
 
 });
 
