@@ -1,0 +1,441 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="MatchDocumentMaster",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="matchDocumentMasterAutoID",
+ *          description="matchDocumentMasterAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="PayMasterAutoId",
+ *          description="PayMasterAutoId",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentSystemID",
+ *          description="documentSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentID",
+ *          description="documentID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="serialNo",
+ *          description="serialNo",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchingDocCode",
+ *          description="matchingDocCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="BPVcode",
+ *          description="BPVcode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="BPVNarration",
+ *          description="BPVNarration",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="directPaymentPayee",
+ *          description="directPaymentPayee",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="directPayeeCurrency",
+ *          description="directPayeeCurrency",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="BPVsupplierID",
+ *          description="BPVsupplierID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierGLCode",
+ *          description="supplierGLCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierTransCurrencyID",
+ *          description="supplierTransCurrencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierTransCurrencyER",
+ *          description="supplierTransCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierDefCurrencyID",
+ *          description="supplierDefCurrencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="supplierDefCurrencyER",
+ *          description="supplierDefCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="localCurrencyID",
+ *          description="localCurrencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="localCurrencyER",
+ *          description="localCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyRptCurrencyID",
+ *          description="companyRptCurrencyID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyRptCurrencyER",
+ *          description="companyRptCurrencyER",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="payAmountBank",
+ *          description="payAmountBank",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="payAmountSuppTrans",
+ *          description="payAmountSuppTrans",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="payAmountSuppDef",
+ *          description="payAmountSuppDef",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="suppAmountDocTotal",
+ *          description="suppAmountDocTotal",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="payAmountCompLocal",
+ *          description="payAmountCompLocal",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="payAmountCompRpt",
+ *          description="payAmountCompRpt",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedYN",
+ *          description="confirmedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByEmpID",
+ *          description="confirmedByEmpID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByEmpSystemID",
+ *          description="confirmedByEmpSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByName",
+ *          description="confirmedByName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approved",
+ *          description="approved",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="invoiceType",
+ *          description="invoiceType",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchInvoice",
+ *          description="matchInvoice",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchingConfirmedYN",
+ *          description="matchingConfirmedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchingConfirmedByEmpSystemID",
+ *          description="matchingConfirmedByEmpSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchingConfirmedByEmpID",
+ *          description="matchingConfirmedByEmpID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchingConfirmedByName",
+ *          description="matchingConfirmedByName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchingAmount",
+ *          description="matchingAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchBalanceAmount",
+ *          description="matchBalanceAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchedAmount",
+ *          description="matchedAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchLocalAmount",
+ *          description="matchLocalAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchRptAmount",
+ *          description="matchRptAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="matchingType",
+ *          description="matchingType",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="isExchangematch",
+ *          description="isExchangematch",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserGroup",
+ *          description="createdUserGroup",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdPcID",
+ *          description="createdPcID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUser",
+ *          description="modifiedUser",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPc",
+ *          description="modifiedPc",
+ *          type="string"
+ *      )
+ * )
+ */
+class MatchDocumentMaster extends Model
+{
+
+    public $table = 'erp_matchdocumentmaster';
+    
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
+
+    protected $primaryKey = 'matchDocumentMasterAutoID';
+
+    public $fillable = [
+        'PayMasterAutoId',
+        'documentSystemID',
+        'companyID',
+        'companySystemID',
+        'documentID',
+        'serialNo',
+        'matchingDocCode',
+        'matchingDocdate',
+        'BPVcode',
+        'BPVdate',
+        'BPVNarration',
+        'directPaymentPayee',
+        'directPayeeCurrency',
+        'BPVsupplierID',
+        'supplierGLCode',
+        'supplierTransCurrencyID',
+        'supplierTransCurrencyER',
+        'supplierDefCurrencyID',
+        'supplierDefCurrencyER',
+        'localCurrencyID',
+        'localCurrencyER',
+        'companyRptCurrencyID',
+        'companyRptCurrencyER',
+        'payAmountBank',
+        'payAmountSuppTrans',
+        'payAmountSuppDef',
+        'suppAmountDocTotal',
+        'payAmountCompLocal',
+        'payAmountCompRpt',
+        'confirmedYN',
+        'confirmedByEmpID',
+        'confirmedByEmpSystemID',
+        'confirmedByName',
+        'confirmedDate',
+        'approved',
+        'approvedDate',
+        'invoiceType',
+        'matchInvoice',
+        'matchingConfirmedYN',
+        'matchingConfirmedByEmpSystemID',
+        'matchingConfirmedByEmpID',
+        'matchingConfirmedByName',
+        'matchingConfirmedDate',
+        'matchingAmount',
+        'matchBalanceAmount',
+        'matchedAmount',
+        'matchLocalAmount',
+        'matchRptAmount',
+        'matchingType',
+        'isExchangematch',
+        'createdUserGroup',
+        'createdUserID',
+        'createdPcID',
+        'modifiedUser',
+        'modifiedPc',
+        'createdDateTime',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'matchDocumentMasterAutoID' => 'integer',
+        'PayMasterAutoId' => 'integer',
+        'documentSystemID' => 'integer',
+        'companyID' => 'string',
+        'companySystemID' => 'integer',
+        'documentID' => 'string',
+        'serialNo' => 'integer',
+        'matchingDocCode' => 'string',
+        'BPVcode' => 'string',
+        'BPVNarration' => 'string',
+        'directPaymentPayee' => 'string',
+        'directPayeeCurrency' => 'integer',
+        'BPVsupplierID' => 'integer',
+        'supplierGLCode' => 'string',
+        'supplierTransCurrencyID' => 'integer',
+        'supplierTransCurrencyER' => 'float',
+        'supplierDefCurrencyID' => 'integer',
+        'supplierDefCurrencyER' => 'float',
+        'localCurrencyID' => 'integer',
+        'localCurrencyER' => 'float',
+        'companyRptCurrencyID' => 'integer',
+        'companyRptCurrencyER' => 'float',
+        'payAmountBank' => 'float',
+        'payAmountSuppTrans' => 'float',
+        'payAmountSuppDef' => 'float',
+        'suppAmountDocTotal' => 'float',
+        'payAmountCompLocal' => 'float',
+        'payAmountCompRpt' => 'float',
+        'confirmedYN' => 'integer',
+        'confirmedByEmpID' => 'string',
+        'confirmedByEmpSystemID' => 'integer',
+        'confirmedByName' => 'string',
+        'approved' => 'integer',
+        'invoiceType' => 'integer',
+        'matchInvoice' => 'integer',
+        'matchingConfirmedYN' => 'integer',
+        'matchingConfirmedByEmpSystemID' => 'integer',
+        'matchingConfirmedByEmpID' => 'string',
+        'matchingConfirmedByName' => 'string',
+        'matchingAmount' => 'float',
+        'matchBalanceAmount' => 'float',
+        'matchedAmount' => 'float',
+        'matchLocalAmount' => 'float',
+        'matchRptAmount' => 'float',
+        'matchingType' => 'string',
+        'isExchangematch' => 'integer',
+        'createdUserGroup' => 'string',
+        'createdUserID' => 'string',
+        'createdPcID' => 'string',
+        'modifiedUser' => 'string',
+        'modifiedPc' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}

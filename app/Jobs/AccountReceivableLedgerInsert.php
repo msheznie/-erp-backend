@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\AccountsReceivableLedger;
 use App\Models\CreditNote;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\Employee;
 use App\Models\Taxdetail;
 use Illuminate\Bus\Queueable;
@@ -84,6 +85,58 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['comRptER'] = $masterData->companyReportingER;
                             $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->details[0]->rptAmount + $taxRpt) * -1);
+                            $data['isInvoiceLockedYN'] = 0;
+                            $data['documentType'] = $masterData->documentType;
+                            $data['selectedToPaymentInv'] = 0;
+                            $data['fullyInvoiced'] = 0;
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = $empID->empID;
+                            $data['createdUserSystemID'] = $empID->employeeSystemID;
+                            $data['createdPcID'] = gethostname();
+                            $data['timeStamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
+                        }
+                        break;
+                    case 20: // Customer Invoice
+                        $masterData = CustomerInvoiceDirect::with(['invoicedetails' => function ($query) {
+                            $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(invoiceAmount) as transAmount,custInvoiceDirectID,serviceLineSystemID,serviceLineCode');
+                        }])->find($masterModel["autoID"]);
+
+                        $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER")->WHERE('documentSystemCode', $masterModel["autoID"])->WHERE('documentSystemID', $masterModel["documentSystemID"])->first();
+
+                        $taxLocal = 0;
+                        $taxRpt = 0;
+                        $taxTrans = 0;
+
+                        if ($tax) {
+                            $taxLocal = $tax->localAmount;
+                            $taxRpt = $tax->rptAmount;
+                            $taxTrans = $tax->transAmount;
+                        }
+
+                        if ($masterData) {
+                            $data['companySystemID'] = $masterData->companySystemID;
+                            $data['companyID'] = $masterData->companyID;
+                            $data['documentSystemID'] = $masterData->documentSystemiD;
+                            $data['documentID'] = $masterData->documentID;
+                            $data['documentCodeSystem'] = $masterModel["autoID"];
+                            $data['documentCode'] = $masterData->bookingInvCode;
+                            $data['documentDate'] = $masterData->bookingDate;
+                            $data['customerID'] = $masterData->customerID;
+                            $data['InvoiceNo'] = null;
+                            $data['InvoiceDate'] = null;
+                            $data['custTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                            $data['custTransER'] = $masterData->custTransactionCurrencyER;
+                            $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount);
+                            $data['custDefaultCurrencyID'] = 0;
+                            $data['custDefaultCurrencyER'] = 0;
+                            $data['custDefaultAmount'] = 0;
+                            $data['localCurrencyID'] = $masterData->localCurrencyID;
+                            $data['localER'] = $masterData->localCurrencyER;
+                            $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
+                            $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
+                            $data['comRptER'] = $masterData->companyReportingER;
+                            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
                             $data['isInvoiceLockedYN'] = 0;
                             $data['documentType'] = $masterData->documentType;
                             $data['selectedToPaymentInv'] = 0;
