@@ -433,6 +433,11 @@ class BookInvSuppMaster extends Model
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'bookingSuppMasInvAutoID');
     }
 
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'canceledByEmpSystemID', 'employeeSystemID');
+    }
+
     public function company()
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');

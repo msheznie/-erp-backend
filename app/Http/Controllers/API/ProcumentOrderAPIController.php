@@ -4020,6 +4020,8 @@ FROM
 
         $purchaseOrderID = $input['purchaseOrderID'];
 
+        $typeID = $request->get('typeID');
+
         $employee = \Helper::getEmployeeInfo();
 
         $emailSentTo = 0;
@@ -4076,6 +4078,7 @@ FROM
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
+            'termsCond' => $typeID,
             'numberFormatting' => $decimal,
             'title' => $documentTitle,
             'paymentTermsView' => $paymentTermsView

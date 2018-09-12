@@ -693,7 +693,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
-        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by'])->first();
+        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -762,7 +762,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function getInvoiceMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array( 'cancelYN', 'confirmedYN', 'approved', 'month', 'year'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -770,7 +770,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         $invMaster = BookInvSuppMaster::where('companySystemID', $input['companySystemID']);
-        $invMaster->where('documentSystemID', $input['documentSystemID']);
+        $invMaster->where('documentSystemID', $input['documentId']);
         $invMaster->with(['created_by' => function ($query) {
         }, 'supplier' => function ($query) {
         }, 'transactioncurrency' => function ($query) {
@@ -785,6 +785,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
                 $invMaster->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('documentType', $input)) {
+            if (($input['documentType'] == 0 || $input['documentType'] == 1) && !is_null($input['documentType'])) {
+                $invMaster->where('documentType', $input['documentType']);
             }
         }
 
@@ -831,6 +837,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'erp_bookinvsuppmaster.cancelYN',
                 'erp_bookinvsuppmaster.timesReferred',
                 'erp_bookinvsuppmaster.confirmedYN',
+                'erp_bookinvsuppmaster.documentType',
                 'erp_bookinvsuppmaster.approved'
             ]);
 
@@ -985,6 +992,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'erp_bookinvsuppmaster.createdDateAndTime',
             'erp_bookinvsuppmaster.confirmedDate',
             'erp_bookinvsuppmaster.bookingAmountTrans',
+            'erp_bookinvsuppmaster.documentType',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
@@ -1066,6 +1074,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'erp_bookinvsuppmaster.createdDateAndTime',
             'erp_bookinvsuppmaster.confirmedDate',
             'erp_bookinvsuppmaster.bookingAmountTrans',
+            'erp_bookinvsuppmaster.documentType',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
