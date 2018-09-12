@@ -229,7 +229,8 @@ class CustomerAssignedAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
         $customerMasters = CustomerAssigned::with(['country'])
-                                        ->whereIn('companySystemID',$childCompanies);
+                                        ->whereIn('companySystemID',$childCompanies)
+                                            ->where('isAssigned',-1);
 
         $search = $request->input('search.value');
         if($search){

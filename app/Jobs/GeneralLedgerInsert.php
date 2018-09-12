@@ -1517,7 +1517,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         if (in_array($masterModel["documentSystemID"], [15, 11, 4])) {
                             $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
                         }
-                        if (in_array($masterModel["documentSystemID"], [19])) {
+                        if (in_array($masterModel["documentSystemID"], [19,20])) {
                             $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel);
                         }
                     }

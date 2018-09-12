@@ -523,6 +523,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             $input['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
             $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
             $input['contractID'] = NULL;
+            $input['clientContractID'] = NULL;
         }
 
         $input['invoiceQty']= ($input['invoiceQty'] != ''?$input['invoiceQty']:0);

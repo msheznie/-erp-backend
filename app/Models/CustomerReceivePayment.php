@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * --
  */
+
 namespace App\Models;
 
 use Eloquent as Model;
@@ -384,12 +385,10 @@ class CustomerReceivePayment extends Model
 {
 
     public $table = 'erp_customerreceivepayment';
-    
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
 
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
     protected $primaryKey = 'custReceivePaymentAutoID';
-
 
 
     public $fillable = [
@@ -473,7 +472,14 @@ class CustomerReceivePayment extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'modifiedUserSystemID',
+        'createdUserSystemID',
+        'timesReferred',
+        'companyFinancePeriodID',
+        'customerGLCodeSystemID'
+
+
     ];
 
     /**
@@ -547,7 +553,12 @@ class CustomerReceivePayment extends Model
         'createdUserID' => 'string',
         'createdPcID' => 'string',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'createdUserSystemID' => 'integer',
+        'timesReferred' => 'integer',
+        'companyFinancePeriodID' => 'integer',
+        'customerGLCodeSystemID' => 'integer'
     ];
 
     /**
@@ -556,21 +567,36 @@ class CustomerReceivePayment extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function details()
     {
-        return $this->hasMany('App\Models\CustomerReceivePaymentDetail','custReceivePaymentAutoID','custReceivePaymentAutoID');
+        return $this->hasMany('App\Models\CustomerReceivePaymentDetail', 'custReceivePaymentAutoID', 'custReceivePaymentAutoID');
     }
 
     public function directdetails()
     {
-        return $this->hasMany('App\Models\DirectReceiptDetail','custReceivePaymentAutoID','directReceiptAutoID');
+        return $this->hasMany('App\Models\DirectReceiptDetail', 'custReceivePaymentAutoID', 'directReceiptAutoID');
     }
 
     public function bank()
     {
         return $this->belongsTo('App\Models\BankAccount', 'bankAccount', 'bankAccountAutoID');
+    }
+
+    public function finance_period_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function finance_year_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'custTransactionCurrencyID', 'currencyID');
     }
 }

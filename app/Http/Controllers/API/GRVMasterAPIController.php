@@ -537,7 +537,8 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             unset($input['grvConfirmedYN']);
-            unset($input['grvConfirmedByEmpSystemID']);
+            unset($input['
+            ']);
             unset($input['grvConfirmedByEmpID']);
             unset($input['grvConfirmedByName']);
             unset($input['grvConfirmedDate']);

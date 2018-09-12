@@ -661,9 +661,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');
     Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController');
     Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController');
+    Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
+    Route::post('deleteAllPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@deleteAllPOPaymentDetail');
+    Route::get('getPOPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getPOPaymentDetails');
     Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
+    Route::get('getADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getADVPaymentDetails');
+    Route::get('getADVPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForPV');
     Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
+    Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
+    Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV');
     Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount');
     Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany');
     Route::get('getPaymentVoucherFormData', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherFormData');
@@ -794,6 +801,21 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getExpenseClaimFormData', 'ExpenseClaimAPIController@getExpenseClaimFormData');
     Route::get('getExpenseClaimAudit', 'ExpenseClaimAPIController@getExpenseClaimAudit');
     Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
+
+    Route::resource('logistic_details', 'LogisticDetailsAPIController');
+    Route::resource('logistics', 'LogisticAPIController');
+    Route::get('getLogisticFormData', 'LogisticAPIController@getLogisticFormData');
+    Route::post('getAllLogisticByCompany', 'LogisticAPIController@getAllLogisticByCompany');
+    Route::post('exportLogisticsByCompanyReport', 'LogisticAPIController@exportLogisticsByCompanyReport');
+    Route::resource('logistic_mode_of_imports', 'LogisticModeOfImportAPIController');
+    Route::resource('logistic_shipping_modes', 'LogisticShippingModeAPIController');
+    Route::resource('logistic_shipping_statuses', 'LogisticShippingStatusAPIController');
+    Route::resource('logistic_statuses', 'LogisticStatusAPIController');
+
+    Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
+    Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
+    Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -810,10 +832,9 @@ Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogistic
 Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
 Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
 Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
-
 Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
-
 Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
+Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
@@ -824,8 +845,8 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 21,'autoID' => 1292, 'companySystemID' => 52, 'employeeSystemID' => 2664];
-    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    $master = ['documentSystemID' => 20,'autoID' => 49294, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $job = \App\Jobs\AccountReceivableLedgerInsert::dispatch($master);
 });
 
 Route::get('runQueueSR', function () {
@@ -850,9 +871,7 @@ Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
 Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
 
 
-
-
-Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
+Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
 
 Route::resource('performa_temps', 'PerformaTempAPIController');
 
