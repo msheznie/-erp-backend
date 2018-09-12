@@ -1039,7 +1039,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $bankdetails['invoiceDueDate'] = $new_date;
             $bankdetails['paymentInDaysForJob'] = $contract->paymentInDaysForJob;
             $bankdetails['performaDate'] = $performa->performaDate;
-            $bankdetails['rigNo'] = $performa->ticket->regNo . ' - ' . $performa->ticket->rig->RigDescription;
+            $bankdetails['rigNo'] = ($performa->ticket ? $performa->ticket->regNo . ' - ' . $performa->ticket->rig->RigDescription :'' ) ;
             $bankdetails['servicePeriod'] = "";
             $bankdetails['serviceStartDate'] = $getRentalDetailFromFreeBilling->rentalStartDate;
             $bankdetails['serviceEndDate'] = $getRentalDetailFromFreeBilling->rentalEndDate;
