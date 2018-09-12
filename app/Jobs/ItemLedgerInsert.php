@@ -313,7 +313,7 @@ class ItemLedgerInsert implements ShouldQueue
                                 if($column == 'inOutQty') {
                                     if ($masterModel["documentSystemID"] == 3 || $masterModel["documentSystemID"] == 12 ||$masterModel["documentSystemID"] == 10 ) {
                                         $data[$i][$column] = ABS($detail[$value]); // make qty always plus
-                                    }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61){
+                                    }else if ($masterModel["documentSystemID"] == 8 || $masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 61 || $masterModel["documentSystemID"] == 24){
                                         $data[$i][$column] = ABS($detail[$value]) * -1; // make qty always minus
                                     }else{
                                         $data[$i][$column] = $detail[$value];

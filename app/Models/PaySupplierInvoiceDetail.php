@@ -282,6 +282,7 @@ class PaySupplierInvoiceDetail extends Model
         'modifiedUserID',
         'modifiedPCID',
         'createdDateTime',
+        'createdUserSystemID',
         'createdUserID',
         'createdPcID',
         'timeStamp'
@@ -328,6 +329,7 @@ class PaySupplierInvoiceDetail extends Model
         'timesReferred' => 'integer',
         'modifiedUserID' => 'string',
         'modifiedPCID' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'createdPcID' => 'string'
     ];

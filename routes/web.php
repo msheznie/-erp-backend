@@ -22,3 +22,5 @@ Route::resource('customerReceivePaymentDetails', 'CustomerReceivePaymentDetailCo
 Route::resource('directReceiptDetails', 'DirectReceiptDetailController');
 
 Route::resource('unbilledGRVs', 'UnbilledGRVController');
+
+Route::resource('matchDocumentMasters', 'MatchDocumentMasterController');

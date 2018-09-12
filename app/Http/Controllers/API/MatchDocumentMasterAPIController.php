@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Requests\API\CreateAdvancePaymentDetailsAPIRequest;
-use App\Http\Requests\API\UpdateAdvancePaymentDetailsAPIRequest;
-use App\Models\AdvancePaymentDetails;
-use App\Repositories\AdvancePaymentDetailsRepository;
+use App\Http\Requests\API\CreateMatchDocumentMasterAPIRequest;
+use App\Http\Requests\API\UpdateMatchDocumentMasterAPIRequest;
+use App\Models\MatchDocumentMaster;
+use App\Repositories\MatchDocumentMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -13,17 +13,18 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
 /**
- * Class AdvancePaymentDetailsController
+ * Class MatchDocumentMasterController
  * @package App\Http\Controllers\API
  */
-class AdvancePaymentDetailsAPIController extends AppBaseController
-{
-    /** @var  AdvancePaymentDetailsRepository */
-    private $advancePaymentDetailsRepository;
 
-    public function __construct(AdvancePaymentDetailsRepository $advancePaymentDetailsRepo)
+class MatchDocumentMasterAPIController extends AppBaseController
+{
+    /** @var  MatchDocumentMasterRepository */
+    private $matchDocumentMasterRepository;
+
+    public function __construct(MatchDocumentMasterRepository $matchDocumentMasterRepo)
     {
-        $this->advancePaymentDetailsRepository = $advancePaymentDetailsRepo;
+        $this->matchDocumentMasterRepository = $matchDocumentMasterRepo;
     }
 
     /**
@@ -31,10 +32,10 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/advancePaymentDetails",
-     *      summary="Get a listing of the AdvancePaymentDetails.",
-     *      tags={"AdvancePaymentDetails"},
-     *      description="Get all AdvancePaymentDetails",
+     *      path="/matchDocumentMasters",
+     *      summary="Get a listing of the MatchDocumentMasters.",
+     *      tags={"MatchDocumentMaster"},
+     *      description="Get all MatchDocumentMasters",
      *      produces={"application/json"},
      *      @SWG\Response(
      *          response=200,
@@ -48,7 +49,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
-     *                  @SWG\Items(ref="#/definitions/AdvancePaymentDetails")
+     *                  @SWG\Items(ref="#/definitions/MatchDocumentMaster")
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -60,29 +61,29 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      */
     public function index(Request $request)
     {
-        $this->advancePaymentDetailsRepository->pushCriteria(new RequestCriteria($request));
-        $this->advancePaymentDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $advancePaymentDetails = $this->advancePaymentDetailsRepository->all();
+        $this->matchDocumentMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->matchDocumentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $matchDocumentMasters = $this->matchDocumentMasterRepository->all();
 
-        return $this->sendResponse($advancePaymentDetails->toArray(), 'Advance Payment Details retrieved successfully');
+        return $this->sendResponse($matchDocumentMasters->toArray(), 'Match Document Masters retrieved successfully');
     }
 
     /**
-     * @param CreateAdvancePaymentDetailsAPIRequest $request
+     * @param CreateMatchDocumentMasterAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
-     *      path="/advancePaymentDetails",
-     *      summary="Store a newly created AdvancePaymentDetails in storage",
-     *      tags={"AdvancePaymentDetails"},
-     *      description="Store AdvancePaymentDetails",
+     *      path="/matchDocumentMasters",
+     *      summary="Store a newly created MatchDocumentMaster in storage",
+     *      tags={"MatchDocumentMaster"},
+     *      description="Store MatchDocumentMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="AdvancePaymentDetails that should be stored",
+     *          description="MatchDocumentMaster that should be stored",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/AdvancePaymentDetails")
+     *          @SWG\Schema(ref="#/definitions/MatchDocumentMaster")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -95,7 +96,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/AdvancePaymentDetails"
+     *                  ref="#/definitions/MatchDocumentMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -105,13 +106,13 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      *      )
      * )
      */
-    public function store(CreateAdvancePaymentDetailsAPIRequest $request)
+    public function store(CreateMatchDocumentMasterAPIRequest $request)
     {
         $input = $request->all();
 
-        $advancePaymentDetails = $this->advancePaymentDetailsRepository->create($input);
+        $matchDocumentMasters = $this->matchDocumentMasterRepository->create($input);
 
-        return $this->sendResponse($advancePaymentDetails->toArray(), 'Advance Payment Details saved successfully');
+        return $this->sendResponse($matchDocumentMasters->toArray(), 'Match Document Master saved successfully');
     }
 
     /**
@@ -119,14 +120,14 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Get(
-     *      path="/advancePaymentDetails/{id}",
-     *      summary="Display the specified AdvancePaymentDetails",
-     *      tags={"AdvancePaymentDetails"},
-     *      description="Get AdvancePaymentDetails",
+     *      path="/matchDocumentMasters/{id}",
+     *      summary="Display the specified MatchDocumentMaster",
+     *      tags={"MatchDocumentMaster"},
+     *      description="Get MatchDocumentMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of AdvancePaymentDetails",
+     *          description="id of MatchDocumentMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -142,7 +143,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/AdvancePaymentDetails"
+     *                  ref="#/definitions/MatchDocumentMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -154,30 +155,30 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      */
     public function show($id)
     {
-        /** @var AdvancePaymentDetails $advancePaymentDetails */
-        $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWithoutFail($id);
+        /** @var MatchDocumentMaster $matchDocumentMaster */
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->findWithoutFail($id);
 
-        if (empty($advancePaymentDetails)) {
-            return $this->sendError('Advance Payment Details not found');
+        if (empty($matchDocumentMaster)) {
+            return $this->sendError('Match Document Master not found');
         }
 
-        return $this->sendResponse($advancePaymentDetails->toArray(), 'Advance Payment Details retrieved successfully');
+        return $this->sendResponse($matchDocumentMaster->toArray(), 'Match Document Master retrieved successfully');
     }
 
     /**
      * @param int $id
-     * @param UpdateAdvancePaymentDetailsAPIRequest $request
+     * @param UpdateMatchDocumentMasterAPIRequest $request
      * @return Response
      *
      * @SWG\Put(
-     *      path="/advancePaymentDetails/{id}",
-     *      summary="Update the specified AdvancePaymentDetails in storage",
-     *      tags={"AdvancePaymentDetails"},
-     *      description="Update AdvancePaymentDetails",
+     *      path="/matchDocumentMasters/{id}",
+     *      summary="Update the specified MatchDocumentMaster in storage",
+     *      tags={"MatchDocumentMaster"},
+     *      description="Update MatchDocumentMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of AdvancePaymentDetails",
+     *          description="id of MatchDocumentMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -185,9 +186,9 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
-     *          description="AdvancePaymentDetails that should be updated",
+     *          description="MatchDocumentMaster that should be updated",
      *          required=false,
-     *          @SWG\Schema(ref="#/definitions/AdvancePaymentDetails")
+     *          @SWG\Schema(ref="#/definitions/MatchDocumentMaster")
      *      ),
      *      @SWG\Response(
      *          response=200,
@@ -200,7 +201,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      *              ),
      *              @SWG\Property(
      *                  property="data",
-     *                  ref="#/definitions/AdvancePaymentDetails"
+     *                  ref="#/definitions/MatchDocumentMaster"
      *              ),
      *              @SWG\Property(
      *                  property="message",
@@ -210,20 +211,20 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      *      )
      * )
      */
-    public function update($id, UpdateAdvancePaymentDetailsAPIRequest $request)
+    public function update($id, UpdateMatchDocumentMasterAPIRequest $request)
     {
         $input = $request->all();
 
-        /** @var AdvancePaymentDetails $advancePaymentDetails */
-        $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWithoutFail($id);
+        /** @var MatchDocumentMaster $matchDocumentMaster */
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->findWithoutFail($id);
 
-        if (empty($advancePaymentDetails)) {
-            return $this->sendError('Advance Payment Details not found');
+        if (empty($matchDocumentMaster)) {
+            return $this->sendError('Match Document Master not found');
         }
 
-        $advancePaymentDetails = $this->advancePaymentDetailsRepository->update($input, $id);
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
 
-        return $this->sendResponse($advancePaymentDetails->toArray(), 'AdvancePaymentDetails updated successfully');
+        return $this->sendResponse($matchDocumentMaster->toArray(), 'MatchDocumentMaster updated successfully');
     }
 
     /**
@@ -231,14 +232,14 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      * @return Response
      *
      * @SWG\Delete(
-     *      path="/advancePaymentDetails/{id}",
-     *      summary="Remove the specified AdvancePaymentDetails from storage",
-     *      tags={"AdvancePaymentDetails"},
-     *      description="Delete AdvancePaymentDetails",
+     *      path="/matchDocumentMasters/{id}",
+     *      summary="Remove the specified MatchDocumentMaster from storage",
+     *      tags={"MatchDocumentMaster"},
+     *      description="Delete MatchDocumentMaster",
      *      produces={"application/json"},
      *      @SWG\Parameter(
      *          name="id",
-     *          description="id of AdvancePaymentDetails",
+     *          description="id of MatchDocumentMaster",
      *          type="integer",
      *          required=true,
      *          in="path"
@@ -266,21 +267,15 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var AdvancePaymentDetails $advancePaymentDetails */
-        $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWithoutFail($id);
+        /** @var MatchDocumentMaster $matchDocumentMaster */
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->findWithoutFail($id);
 
-        if (empty($advancePaymentDetails)) {
-            return $this->sendError('Advance Payment Details not found');
+        if (empty($matchDocumentMaster)) {
+            return $this->sendError('Match Document Master not found');
         }
 
-        $advancePaymentDetails->delete();
+        $matchDocumentMaster->delete();
 
-        return $this->sendResponse($id, 'Advance Payment Details deleted successfully');
-    }
-
-    public function getADVPaymentDetails(Request $request)
-    {
-        $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWhere(['PayMasterAutoId' => $request->payMasterAutoId]);
-        return $this->sendResponse($advancePaymentDetails, 'Payment details saved successfully');
+        return $this->sendResponse($id, 'Match Document Master deleted successfully');
     }
 }

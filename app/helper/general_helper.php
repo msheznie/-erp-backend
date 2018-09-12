@@ -293,16 +293,16 @@ class Helper
                     $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
                     break;
                 case 15:
-                $docInforArr["documentCodeColumnName"] = 'debitNoteCode';
-                $docInforArr["confirmColumnName"] = 'confirmedYN';
-                $docInforArr["confirmedBy"] = 'confirmedByName';
-                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
-                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
-                $docInforArr["confirmedDate"] = 'confirmedDate';
-                $docInforArr["tableName"] = 'erp_debitnote';
-                $docInforArr["modelName"] = 'DebitNote';
-                $docInforArr["primarykey"] = 'debitNoteAutoID';
-                break;
+                    $docInforArr["documentCodeColumnName"] = 'debitNoteCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_debitnote';
+                    $docInforArr["modelName"] = 'DebitNote';
+                    $docInforArr["primarykey"] = 'debitNoteAutoID';
+                    break;
                 case 19:
                     $docInforArr["documentCodeColumnName"] = 'creditNoteCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
@@ -397,7 +397,7 @@ class Helper
 
                             if ($isValueWise) {
                                 if (array_key_exists('amount', $params)) {
-                                    if ($params["amount"]) {
+                                    if ($params["amount"] >= 0) {
                                         $amount = $params["amount"];
                                         $approvalLevel->where(function ($query) use ($amount) {
                                             $query->where('valueFrom', '<=', $amount);
@@ -432,7 +432,7 @@ class Helper
 
                                     if ($isValueWise) {
                                         if (array_key_exists('amount', $params)) {
-                                            if ($params["amount"]) {
+                                            if ($params["amount"] >= 0) {
                                                 $amount = $params["amount"];
                                                 $approvalLevel->where(function ($query) use ($amount) {
                                                     $query->where('valueFrom', '<=', $amount);
@@ -1642,6 +1642,17 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'customerCurrencyER';
                 break;
+            case 4:
+                $docInforArr["modelName"] = 'PaySupplierInvoiceDetail';
+                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'supplierDefaultCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'comRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransER';
+                $docInforArr["rptCurrencyER"] = 'comRptER';
+                $docInforArr["localCurrencyER"] = 'localER';
+                $docInforArr["defaultCurrencyER"] = 'supplierDefaultCurrencyER';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1721,9 +1732,9 @@ class Helper
 
 
         $array = array(
-            'reportingAmount' =>   self::roundValue($reportingAmount),
-            'localAmount' =>   self::roundValue($localAmount),
-            'defaultAmount' =>   self::roundValue($defaultAmount),
+            'reportingAmount' => self::roundValue($reportingAmount),
+            'localAmount' => self::roundValue($localAmount),
+            'defaultAmount' => self::roundValue($defaultAmount),
         );
 
         return $array;
