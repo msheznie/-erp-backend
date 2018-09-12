@@ -18,6 +18,7 @@
  * -- Date: 11-September 2018 By: Nazir Description: Added new function saveSupplierInvoiceTaxDetails(),
  * -- Date: 11-September 2018 By: Nazir Description: Added new function supplierInvoiceTaxTotal(),
  * -- Date: 12-September 2018 By: Nazir Description: Added new function printSupplierInvoice(),
+ * -- Date: 12-September 2018 By: Nazir Description: Added new function getSupplierInvoiceStatusHistory(),
  */
 
 namespace App\Http\Controllers\API;
@@ -763,7 +764,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function getInvoiceMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array( 'cancelYN', 'confirmedYN', 'approved', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1220,7 +1221,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $_post['currencyER'] = $bookInvSuppMaster->supplierTransactionCurrencyER;
         $_post['amount'] = round($totalAmount, $decimal);
         $_post['payeeDefaultCurrencyID'] = $bookInvSuppMaster->supplierTransactionCurrencyID;
-        $_post['payeeDefaultCurrencyER'] =  $bookInvSuppMaster->supplierTransactionCurrencyER;
+        $_post['payeeDefaultCurrencyER'] = $bookInvSuppMaster->supplierTransactionCurrencyER;
         $_post['payeeDefaultAmount'] = round($totalAmount, $decimal);
         $_post['localCurrencyID'] = $bookInvSuppMaster->localCurrencyID;
         $_post['localCurrencyER'] = $bookInvSuppMaster->localCurrencyER;
@@ -1367,6 +1368,75 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+    }
+
+    public function getSupplierInvoiceStatusHistory(Request $request)
+    {
+        $input = $request->all();
+
+        //$companySystemID = $input['companySystemID'];
+        $companySystemID = 7;
+        $bookingSuppMasInvAutoID = 88180;
+        //$bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $detail = DB::select('SELECT
+	erp_paysupplierinvoicedetail.payDetailAutoID,
+	erp_paysupplierinvoicedetail.PayMasterAutoId,
+	erp_paysupplierinvoicedetail.apAutoID,
+	erp_paysupplierinvoicedetail.matchingDocID,
+	erp_paysupplierinvoicedetail.companyID,
+	erp_paysupplierinvoicedetail.companySystemID,
+IF (
+	erp_paysupplierinvoicedetail.matchingDocID = 0,
+	erp_paysupplierinvoicemaster.BPVcode,
+	erp_matchdocumentmaster.matchingDocCode
+) AS docCode,
+
+IF (
+	erp_paysupplierinvoicedetail.matchingDocID = 0,
+	erp_paysupplierinvoicemaster.BPVdate,
+	erp_matchdocumentmaster.matchingDocdate
+) AS docDate,
+
+IF (
+	erp_paysupplierinvoicedetail.matchingDocID = 0,
+	erp_paysupplierinvoicemaster.BPVNarration,
+	"Matching"
+) AS docNarration,
+ erp_paysupplierinvoicedetail.addedDocumentID,
+ erp_paysupplierinvoicedetail.bookingInvSystemCode,
+ erp_paysupplierinvoicedetail.bookingInvDocCode,
+ erp_paysupplierinvoicedetail.bookingInvoiceDate,
+ erp_paysupplierinvoicedetail.supplierCodeSystem,
+ erp_paysupplierinvoicedetail.supplierInvoiceNo,
+ suppliermaster.supplierName,
+ erp_paysupplierinvoicedetail.supplierTransCurrencyID,
+ erp_paysupplierinvoicedetail.supplierTransER,
+ currencymaster.CurrencyCode AS SupTransCur,
+ currencymaster.DecimalPlaces AS SupTransDec,
+ erp_paysupplierinvoicedetail.supplierPaymentAmount AS MyTotTransactionAmount,
+ erp_paysupplierinvoicedetail.supplierInvoiceAmount,
+ erp_paysupplierinvoicedetail.supplierPaymentAmount,
+
+IF (
+	erp_paysupplierinvoicedetail.matchingDocID = 0,
+	erp_paysupplierinvoicemaster.confirmedYN,
+	erp_matchdocumentmaster.matchingConfirmedYN
+) AS docConfirmed,
+
+IF (
+	erp_paysupplierinvoicedetail.matchingDocID = 0,
+	erp_paysupplierinvoicemaster.approved,
+	erp_matchdocumentmaster.matchingConfirmedYN
+) AS docApproved
+FROM
+	erp_paysupplierinvoicedetail
+LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+LEFT JOIN suppliermaster ON erp_paysupplierinvoicedetail.supplierCodeSystem = suppliermaster.supplierCodeSystem
+LEFT JOIN currencymaster ON erp_paysupplierinvoicedetail.supplierTransCurrencyID = currencymaster.currencyID
+LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID  WHERE bookingInvSystemCode = ' . $bookingSuppMasInvAutoID . ' AND erp_paysupplierinvoicedetail.companySystemID = ' . $companySystemID . ' ');
+
+        return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
 
 }
