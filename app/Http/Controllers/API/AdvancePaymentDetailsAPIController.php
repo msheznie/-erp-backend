@@ -16,7 +16,6 @@ use Response;
  * Class AdvancePaymentDetailsController
  * @package App\Http\Controllers\API
  */
-
 class AdvancePaymentDetailsAPIController extends AppBaseController
 {
     /** @var  AdvancePaymentDetailsRepository */
@@ -277,5 +276,11 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
         $advancePaymentDetails->delete();
 
         return $this->sendResponse($id, 'Advance Payment Details deleted successfully');
+    }
+
+    public function getADVPaymentDetails(Request $request)
+    {
+        $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWhere(['PayMasterAutoId' => $request->payMasterAutoId]);
+        return $this->sendResponse($advancePaymentDetails, 'Payment details saved successfully');
     }
 }

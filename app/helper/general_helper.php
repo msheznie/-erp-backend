@@ -397,7 +397,7 @@ class Helper
 
                             if ($isValueWise) {
                                 if (array_key_exists('amount', $params)) {
-                                    if ($params["amount"]) {
+                                    if ($params["amount"] >= 0) {
                                         $amount = $params["amount"];
                                         $approvalLevel->where(function ($query) use ($amount) {
                                             $query->where('valueFrom', '<=', $amount);
@@ -432,7 +432,7 @@ class Helper
 
                                     if ($isValueWise) {
                                         if (array_key_exists('amount', $params)) {
-                                            if ($params["amount"]) {
+                                            if ($params["amount"] >= 0) {
                                                 $amount = $params["amount"];
                                                 $approvalLevel->where(function ($query) use ($amount) {
                                                     $query->where('valueFrom', '<=', $amount);
@@ -1644,6 +1644,17 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'companyReportingER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'customerCurrencyER';
+                break;
+            case 4:
+                $docInforArr["modelName"] = 'PaySupplierInvoiceDetail';
+                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'supplierDefaultCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'comRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransER';
+                $docInforArr["rptCurrencyER"] = 'comRptER';
+                $docInforArr["localCurrencyER"] = 'localER';
+                $docInforArr["defaultCurrencyER"] = 'supplierDefaultCurrencyER';
                 break;
             case 200: // This is for unbilled grv
                 $docInforArr["modelName"] = 'UnbilledGrvGroupBy';

@@ -7,7 +7,7 @@
  * -- Author : Mohamed Fayas
  * -- Create date : 14 - March 2018
  * -- Description : This file contains the all CRUD for Item Assigned
- * -- Date: 6-September 2018 By: Fayas Description: Added new functions named as getAllAssignedItemsByCompany(),
+ * -- Date: 6-September 2018 By: Fayas Description: Added new functions named as getAllAssignedItemsByCompany(),exportItemAssignedByCompanyReport()
  *
  * -- REVISION HISTORY
  */
