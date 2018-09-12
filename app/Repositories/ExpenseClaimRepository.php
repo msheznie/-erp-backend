@@ -56,4 +56,15 @@ class ExpenseClaimRepository extends BaseRepository
     {
         return ExpenseClaim::class;
     }
+
+    public function getAudit($id)
+    {
+        return $this->with(['created_by', 'confirmed_by', 'modified_by', 'company.localcurrency', 'details' => function ($q) {
+            $q->with(['segment','chart_of_account','currency','local_currency','category']);
+        }, 'approved_by' => function ($query) {
+            $query->with(['employee' => function ($q) {
+                $q->with(['details.designation']);
+            }])->where('documentSystemID', 6);
+        }])->findWithoutFail($id);
+    }
 }

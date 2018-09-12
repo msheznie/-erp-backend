@@ -253,4 +253,16 @@ class ExpenseClaim extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\ExpenseClaimDetails','expenseClaimMasterAutoID','expenseClaimMasterAutoID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','expenseClaimMasterAutoID');
+    }
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
 }

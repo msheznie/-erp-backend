@@ -214,7 +214,10 @@ class ExpenseClaimDetails extends Model
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID', 'currencyID');
     }
-
+    public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrency', 'currencyID');
+    }
     public function category()
     {
         return $this->belongsTo('App\Models\ExpenseClaimCategories', 'expenseClaimCategoriesAutoID', 'expenseClaimCategoriesAutoID');

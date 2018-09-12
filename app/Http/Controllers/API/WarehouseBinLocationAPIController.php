@@ -8,13 +8,15 @@
  * -- Create date : 07 - September 2018
  * -- Description : This file contains the all CRUD for Warehouse Bin Location
  * -- REVISION HISTORY
- * -- Date: 07-September 2018 By: Fayas Description: Added new functions named as
+ * -- Date: 11-September 2018 By: Fayas Description: Added new functions named as getAllBinLocationsByWarehouse()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateWarehouseBinLocationAPIRequest;
 use App\Http\Requests\API\UpdateWarehouseBinLocationAPIRequest;
+use App\Models\Company;
 use App\Models\WarehouseBinLocation;
+use App\Models\WarehouseItems;
 use App\Repositories\WarehouseBinLocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -26,7 +28,6 @@ use Response;
  * Class WarehouseBinLocationController
  * @package App\Http\Controllers\API
  */
-
 class WarehouseBinLocationAPIController extends AppBaseController
 {
     /** @var  WarehouseBinLocationRepository */
@@ -119,6 +120,23 @@ class WarehouseBinLocationAPIController extends AppBaseController
     public function store(CreateWarehouseBinLocationAPIRequest $request)
     {
         $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        $input['createdBy'] = $employee->empID;
+
+        $validator = \Validator::make($input, [
+            'wareHouseSystemCode' => 'required',
+            'binLocationDes' => 'required',
+            'companySystemID' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
 
         $warehouseBinLocations = $this->warehouseBinLocationRepository->create($input);
 
@@ -225,6 +243,16 @@ class WarehouseBinLocationAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $validator = \Validator::make($input, [
+            'wareHouseSystemCode' => 'required',
+            'binLocationDes' => 'required',
+            'companySystemID' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         /** @var WarehouseBinLocation $warehouseBinLocation */
         $warehouseBinLocation = $this->warehouseBinLocationRepository->findWithoutFail($id);
 
@@ -232,7 +260,13 @@ class WarehouseBinLocationAPIController extends AppBaseController
             return $this->sendError('Warehouse Bin Location not found');
         }
 
-        $warehouseBinLocation = $this->warehouseBinLocationRepository->update($input, $id);
+        $checkIsAssigned = WarehouseItems::where('binNumber',$id)->count();
+
+        if($checkIsAssigned > 0){
+            return $this->sendError('Bin location you are trying to change is already assigned to an inventory.',500);
+        }
+
+        $warehouseBinLocation = $this->warehouseBinLocationRepository->update(array_only($input, ['binLocationDes']), $id);
 
         return $this->sendResponse($warehouseBinLocation->toArray(), 'WarehouseBinLocation updated successfully');
     }
@@ -284,8 +318,62 @@ class WarehouseBinLocationAPIController extends AppBaseController
             return $this->sendError('Warehouse Bin Location not found');
         }
 
+        $checkIsAssigned = WarehouseItems::where('binNumber',$id)->count();
+
+        if($checkIsAssigned > 0){
+            return $this->sendError('Bin location you are trying to delete is already assigned to an inventory.',500);
+        }
+
         $warehouseBinLocation->delete();
 
         return $this->sendResponse($id, 'Warehouse Bin Location deleted successfully');
+    }
+
+    public function getAllBinLocationsByWarehouse(Request $request)
+    {
+
+        $input = $request->all();
+
+        $input = $this->convertArrayToSelectedValue($input, array('wareHouseSystemCode'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $expenseClaims = WarehouseBinLocation::whereIn('companySystemID', $subCompanies)
+                                            ->where('wareHouseSystemCode', $input['wareHouseSystemCode'])
+                                            ->with('warehouse_by');
+
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $expenseClaims = $expenseClaims->where(function ($query) use ($search) {
+                $query->where('binLocationDes', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($expenseClaims)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('binLocationID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

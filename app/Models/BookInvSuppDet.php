@@ -256,10 +256,17 @@ class BookInvSuppDet extends Model
 
     ];
 
-    public function grv()
+    public function grvmaster()
     {
         return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
     }
+
+    public function pomaster()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
+    }
+
+
 
 
 

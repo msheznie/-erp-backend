@@ -209,6 +209,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     /** Warehouse master Created by Fayas  */
     Route::resource('customer_masters', 'CustomerMasterAPIController');
     Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
+    Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
     Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
     Route::get('getAssignedCompaniesByCustomer', 'CustomerMasterAPIController@getAssignedCompaniesByCustomer');
     Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
@@ -763,6 +764,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovedInvoiceForCurrentUser', 'BookInvSuppMasterAPIController@getApprovedInvoiceForCurrentUser');
     Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
     Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice');
+    Route::post('saveSupplierInvoiceTaxDetails', 'BookInvSuppMasterAPIController@saveSupplierInvoiceTaxDetails');
+    Route::get('supplierInvoiceTaxTotal', 'BookInvSuppMasterAPIController@supplierInvoiceTaxTotal');
     Route::get('getCreditNoteViewFormData', 'CreditNoteAPIController@getCreditNoteViewFormData');
     Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
     Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
@@ -776,14 +779,20 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getPurchaseOrderForSI', 'UnbilledGrvGroupByAPIController@getPurchaseOrderForSI');
 
     Route::resource('warehouse_items', 'WarehouseItemsAPIController');
+    Route::get('getUnbilledGRVDetailsForSI', 'UnbilledGrvGroupByAPIController@getUnbilledGRVDetailsForSI');
+    Route::post('storePOBaseDetail', 'BookInvSuppDetAPIController@storePOBaseDetail');
+    Route::get('getSupplierInvoiceGRVItems', 'BookInvSuppDetAPIController@getSupplierInvoiceGRVItems');
     Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
+    Route::post('getAllBinLocationsByWarehouse', 'WarehouseBinLocationAPIController@getAllBinLocationsByWarehouse');
 
     Route::resource('expense_claims', 'ExpenseClaimAPIController');
     Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
     Route::resource('expense_claim_types', 'ExpenseClaimTypeAPIController');
     Route::resource('expense_claim_categories', 'ExpenseClaimCategoriesAPIController');
     Route::post('getExpenseClaimByCompany', 'ExpenseClaimAPIController@getExpenseClaimByCompany');
+    Route::get('getPaymentStatusHistory', 'ExpenseClaimAPIController@getPaymentStatusHistory');
     Route::get('getExpenseClaimFormData', 'ExpenseClaimAPIController@getExpenseClaimFormData');
+    Route::get('getExpenseClaimAudit', 'ExpenseClaimAPIController@getExpenseClaimAudit');
     Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
     Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
     Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
@@ -803,6 +812,7 @@ Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer'
 Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF');
 Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
 Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
+Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
 
 Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
 

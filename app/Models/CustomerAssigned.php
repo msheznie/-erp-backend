@@ -125,7 +125,9 @@ class CustomerAssigned extends Model
     public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
-
+    public function country(){
+        return $this->belongsTo('App\Models\CountryMaster','customerCountry','countryID');
+    }
 
 
 }

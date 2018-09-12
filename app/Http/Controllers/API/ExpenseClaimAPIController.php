@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Expense Claim
  * -- REVISION HISTORY
  * -- Date: 10- September 2018 By: Fayas Description: Added new function getExpenseClaimByCompany(),getExpenseClaimFormData()
+ * -- Date: 11- September 2018 By: Fayas Description: Added new function getExpenseClaimAudit(),printExpenseClaim(),getPaymentStatusHistory()
  */
 namespace App\Http\Controllers\API;
 
@@ -170,7 +171,7 @@ class ExpenseClaimAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ExpenseClaim $expenseClaim */
-        $expenseClaim = $this->expenseClaimRepository->findWithoutFail($id);
+        $expenseClaim = $this->expenseClaimRepository->with(['confirmed_by'])->findWithoutFail($id);
 
         if (empty($expenseClaim)) {
             return $this->sendError('Expense Claim not found');
@@ -379,5 +380,113 @@ class ExpenseClaimAPIController extends AppBaseController
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    /**
+     * Display the specified Expense Claim Audit.
+     * GET|HEAD /getExpenseClaimAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getExpenseClaimAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $expenseClaim = $this->expenseClaimRepository->getAudit($id);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+        $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companySystemID, $expenseClaim->documentSystemID);
+
+        return $this->sendResponse($expenseClaim->toArray(), 'Expense Claim retrieved successfully');
+    }
+
+    public function printExpenseClaim(Request $request)
+    {
+        $id = $request->get('id');
+        $expenseClaim = $this->expenseClaimRepository->getAudit($id);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+        $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companySystemID, $expenseClaim->documentSystemID);
+        $expenseClaim->localDecimal = 3;
+        $expenseClaim->localDecimal = 'OMR';
+        $expenseClaim->total = 0;
+
+
+        $grandTotal = collect($expenseClaim->details)->pluck('localAmount')->toArray();
+        $expenseClaim->total = array_sum($grandTotal);
+
+        foreach ($expenseClaim->details as $item){
+            $item->currencyDecimal = 2;
+            $item->localDecimal = 3;
+
+            if($item->currency){
+                $item->currencyDecimal = $item->currency->DecimalPlaces;
+            }
+            if($item->local_currency){
+                $item->localDecimal = $item->local_currency->DecimalPlaces;
+            }
+        }
+
+        if($expenseClaim->company){
+            if($expenseClaim->company->localcurrency){
+                $expenseClaim->localDecimal = $expenseClaim->company->localcurrency->DecimalPlaces;
+                $expenseClaim->localCurrencyCode = $expenseClaim->company->localcurrency->CurrencyCode;
+            }
+        }
+
+        $array = array('entity' => $expenseClaim);
+        $time = strtotime("now");
+        $fileName = 'expense_claim' . $id . '_' . $time . '.pdf';
+        $html = view('print.expense_claim', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+    public function getPaymentStatusHistory(Request $request)
+    {
+        $id = $request->get('id');
+        $expenseClaim = $this->expenseClaimRepository->getAudit($id);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+        $detail = \DB::select('SELECT
+                            erp_paysupplierinvoicemaster.PayMasterAutoId,
+                            erp_paysupplierinvoicemaster.BPVcode,
+                            erp_paysupplierinvoicemaster.documentID,
+                            erp_paysupplierinvoicemaster.companyID,
+                            erp_paysupplierinvoicemaster.BPVdate,
+                            erp_paysupplierinvoicemaster.BPVNarration,
+                            erp_paysupplierinvoicemaster.createdUserID,
+                            employees.empName,
+                            erp_directpaymentdetails.expenseClaimMasterAutoID 
+                        FROM
+                            ( erp_directpaymentdetails INNER JOIN erp_paysupplierinvoicemaster ON erp_directpaymentdetails.directPaymentAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId )
+                            LEFT JOIN employees ON erp_paysupplierinvoicemaster.createdUserID = employees.empID 
+                            WHERE erp_directpaymentdetails.expenseClaimMasterAutoID = '.$id.'
+                        GROUP BY
+                            erp_paysupplierinvoicemaster.PayMasterAutoId,
+                            erp_paysupplierinvoicemaster.BPVcode,
+                            erp_paysupplierinvoicemaster.documentID,
+                            erp_paysupplierinvoicemaster.companyID,
+                            erp_paysupplierinvoicemaster.BPVdate,
+                            erp_paysupplierinvoicemaster.BPVNarration,
+                            erp_paysupplierinvoicemaster.createdUserID,
+                            employees.empName,
+                            erp_directpaymentdetails.expenseClaimMasterAutoID,
+                            erp_directpaymentdetails.expenseClaimMasterAutoID 
+                        HAVING
+                            ( ( ( erp_directpaymentdetails.expenseClaimMasterAutoID ) != 0 ) );');
+        return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
 }
