@@ -308,5 +308,9 @@ class FreeBillingMasterPerforma extends Model
         return $this->belongsTo('App\Models\TicketMaster','Ticketno','ticketidAtuto');
     }
 
+    public function performatemp(){
+        return $this->hasMany('App\Models\PerformaTemp','performaInvoiceNo','PerformaInvoiceNo');
+    }
+
     
 }

@@ -257,11 +257,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['qtyIssued'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
 
-            $input['issueCostLocal'] = $item->wacValueLocal;
-            $input['issueCostLocalTotal'] = $item->wacValueLocal * $input['qtyIssuedDefaultMeasure'];
-            $input['issueCostRpt'] = $item->wacValueReporting;
-            $input['issueCostRptTotal'] = $item->wacValueReporting * $input['qtyIssuedDefaultMeasure'];
-
         } else if ($input['issueType'] == 2) {
 
 
@@ -291,17 +286,28 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['qtyIssued'] = $item->quantityRequested;
             $input['qtyIssuedDefaultMeasure'] = $item->qtyIssuedDefaultMeasure;
             $input['itemPrimaryCode'] = $item->item_by->primaryCode;
+        }
 
-            $itemAssigned = ItemAssigned::where('itemCodeSystem', $input['itemCodeSystem'])
-                ->where('companySystemID', $companySystemID)
-                ->first();
+        $data = array('companySystemID' => $companySystemID,
+            'itemCodeSystem' => $input['itemCodeSystem'],
+            'wareHouseId' => $itemIssue->wareHouseFrom);
 
-            $input['issueCostLocal'] = $itemAssigned->wacValueLocal;
-            $input['issueCostLocalTotal'] = $itemAssigned->wacValueLocal * $input['qtyIssuedDefaultMeasure'];
-            $input['issueCostRpt'] = $itemAssigned->wacValueReporting;
-            $input['issueCostRptTotal'] = $itemAssigned->wacValueReporting * $input['qtyIssuedDefaultMeasure'];
+        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
+        $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+        $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+        $input['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+        $input['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+        $input['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+        $input['issueCostLocalTotal'] = $input['issueCostLocal'] * $input['qtyIssuedDefaultMeasure'];
+        $input['issueCostRptTotal'] = $input['issueCostRpt'] * $input['qtyIssuedDefaultMeasure'];
 
+        if ($input['currentStockQty'] <= 0) {
+            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+        }
+
+        if ($input['currentWareHouseStockQty'] <= 0) {
+            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
         }
 
         if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
@@ -310,6 +316,37 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
             return $this->sendError("Cost is negative. You cannot issue.", 500);
+        }
+
+        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
+            ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
+            ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
+            ->first();
+
+        if (!empty($financeItemCategorySubAssigned)) {
+            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+        } else {
+            return $this->sendError("Account code not updated.", 500);
+        }
+
+        if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
+            return $this->sendError("Account code not updated.", 500);
+        }
+
+        if ($input['itemFinanceCategoryID'] == 1) {
+            $alreadyAdded = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])
+                ->whereHas('details', function ($query) use ($input) {
+                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
+                })
+                ->first();
+
+            if ($alreadyAdded) {
+                return $this->sendError("Selected item is already added. Please check again", 500);
+            }
         }
 
         // check policy 18
@@ -373,56 +410,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
-        $data = array('companySystemID' => $companySystemID,
-                      'itemCodeSystem' => $input['itemCodeSystem'],
-                      'wareHouseId' => $itemIssue->wareHouseFrom);
-
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
-
-        $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
-        $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-        $input['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
-
-
-        if ($input['currentWareHouseStockQty'] <= 0) {
-            return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
-        }
-
-        if ($input['currentStockQty'] <= 0) {
-            return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
-        }
-
-        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
-            ->where('mainItemCategoryID', $input['itemFinanceCategoryID'])
-            ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
-            ->first();
-
-        if (!empty($financeItemCategorySubAssigned)) {
-            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
-            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
-            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
-        } else {
-            return $this->sendError("Account code not updated.", 500);
-        }
-
-        if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
-            return $this->sendError("Account code not updated.", 500);
-        }
-
-        if ($input['itemFinanceCategoryID'] == 1) {
-            $alreadyAdded = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])
-                ->whereHas('details', function ($query) use ($input) {
-                    $query->where('itemCodeSystem', $input['itemCodeSystem']);
-                })
-                ->first();
-
-            if ($alreadyAdded) {
-                return $this->sendError("Selected item is already added. Please check again", 500);
-            }
-        }
-
 
         if ($itemIssue->customerSystemID && $itemIssue->companySystemID && $itemIssue->contractUIID) {
 
@@ -435,7 +422,6 @@ class ItemIssueDetailsAPIController extends AppBaseController
             if (!empty($clientReferenceNumber)) {
                 $input['clientReferenceNumber'] = $clientReferenceNumber->clientReferenceNumber;
             }
-
         }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->create($input);

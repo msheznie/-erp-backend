@@ -9,6 +9,7 @@
 -- Description : This file contains the all CRUD for Customer Assigned
 -- REVISION HISTORY
  -- Date: 21-March 2018 By: Fayas Description: Added new functions named as getNotAssignedCompaniesByCustomer()
+ -- Date: 11-September 2018 By: Fayas Description: Added new functions named as getAllCustomersByCompany()
  */
 namespace App\Http\Controllers\API;
 
@@ -200,4 +201,60 @@ class CustomerAssignedAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Customer Assigned deleted successfully');
     }
+
+    /**
+     * Display a listing of the Customers by company.
+     * GET|HEAD /getAllCustomersByCompany
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getAllCustomersByCompany(Request $request){
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        }else{
+            $childCompanies = [$companyId];
+        }
+        $customerMasters = CustomerAssigned::with(['country'])
+                                        ->whereIn('companySystemID',$childCompanies)
+                                            ->where('isAssigned',-1);
+
+        $search = $request->input('search.value');
+        if($search){
+            $customerMasters =   $customerMasters->where(function ($query) use($search) {
+                $query->where('CutomerCode','LIKE',"%{$search}%")
+                    ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
+                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($customerMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order') ) {
+                    if($input['order'][0]['column'] == 0)
+                    {
+                        $query->orderBy('customerAssignedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
 }

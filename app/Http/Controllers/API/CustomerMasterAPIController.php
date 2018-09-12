@@ -321,15 +321,10 @@ class CustomerMasterAPIController extends AppBaseController
             }
 
             if($customerMasters->confirmedYN == 0 && $input['confirmedYN'] == 1){
-
-                /*$input['confirmedEmpSystemID'] = $user->employeeSystemID;
-                $input['confirmedEmpID'] = $empId;
-                $input['confirmedEmpName'] = $empName;
-                $input['confirmedDate'] = now();*/
                 $params = array('autoID' => $input['customerCodeSystem'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
                 $confirm = \Helper::confirmDocument($params);
                 if(!$confirm["success"]){
-                    return $this->sendError($confirm["message"]);
+                    return $this->sendError($confirm["message"],500);
                 }
             }
 
