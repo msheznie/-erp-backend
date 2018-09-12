@@ -38,3 +38,20 @@ Route::resource('expenseClaimTypes', 'ExpenseClaimTypeController');
 
 Route::resource('expenseClaimCategories', 'ExpenseClaimCategoriesController');
 
+
+
+Route::resource('logisticDetails', 'LogisticDetailsController');
+
+Route::resource('logistics', 'LogisticController');
+
+Route::resource('logisticDetails', 'LogisticDetailsController');
+
+Route::resource('logistics', 'LogisticController');
+
+Route::resource('logisticModeOfImports', 'LogisticModeOfImportController');
+
+Route::resource('logisticShippingModes', 'LogisticShippingModeController');
+
+Route::resource('logisticShippingStatuses', 'LogisticShippingStatusController');
+
+Route::resource('logisticStatuses', 'LogisticStatusController');

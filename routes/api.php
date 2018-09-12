@@ -794,6 +794,17 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getExpenseClaimFormData', 'ExpenseClaimAPIController@getExpenseClaimFormData');
     Route::get('getExpenseClaimAudit', 'ExpenseClaimAPIController@getExpenseClaimAudit');
     Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
+
+    Route::resource('logistic_details', 'LogisticDetailsAPIController');
+    Route::resource('logistics', 'LogisticAPIController');
+    Route::get('getLogisticFormData', 'LogisticAPIController@getLogisticFormData');
+    Route::post('getAllLogisticByCompany', 'LogisticAPIController@getAllLogisticByCompany');
+    Route::post('exportLogisticsByCompanyReport', 'LogisticAPIController@exportLogisticsByCompanyReport');
+    Route::resource('logistic_mode_of_imports', 'LogisticModeOfImportAPIController');
+    Route::resource('logistic_shipping_modes', 'LogisticShippingModeAPIController');
+    Route::resource('logistic_shipping_statuses', 'LogisticShippingStatusAPIController');
+    Route::resource('logistic_statuses', 'LogisticStatusAPIController');
+
     Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
     Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
 
@@ -851,10 +862,4 @@ Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
 
 Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
 
-
-
-
-Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
-
 Route::resource('performa_temps', 'PerformaTempAPIController');
-
