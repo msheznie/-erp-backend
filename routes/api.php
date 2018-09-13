@@ -804,6 +804,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('logistic_details', 'LogisticDetailsAPIController');
     Route::resource('logistics', 'LogisticAPIController');
+    Route::post('getCompanyLocalAndRptAmount', 'LogisticAPIController@getCompanyLocalAndRptAmount');
     Route::get('getLogisticFormData', 'LogisticAPIController@getLogisticFormData');
     Route::post('getAllLogisticByCompany', 'LogisticAPIController@getAllLogisticByCompany');
     Route::post('exportLogisticsByCompanyReport', 'LogisticAPIController@exportLogisticsByCompanyReport');
