@@ -346,6 +346,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         /*selectedPerformaMaster*/
 
 
+
         /*if bookinvoice not available create header*/
         if ($master->bookingInvCode == '' || $master->bookingInvCode == 0) {
 
@@ -458,7 +459,10 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
                  }
              }*/
         $addToCusInvDetails["localAmount"] = 0; // \Helper::roundValue($MyLocalAmount);
-
+        if($master->isPerforma==0){
+            $addToCusInvDetails['unitOfMeasure'] = 7;
+            $addToCusInvDetails['invoiceQty'] = 1;
+        }
 
         /**/
 
@@ -523,6 +527,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             $input['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
             $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
             $input['contractID'] = NULL;
+            $input['clientContractID'] = NULL;
         }
 
         $input['invoiceQty']= ($input['invoiceQty'] != ''?$input['invoiceQty']:0);

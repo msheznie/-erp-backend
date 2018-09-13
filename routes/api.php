@@ -661,9 +661,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('direct_invoice_details', 'DirectInvoiceDetailsAPIController');
     Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController');
     Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController');
+    Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
+    Route::post('deleteAllPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@deleteAllPOPaymentDetail');
+    Route::get('getPOPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getPOPaymentDetails');
     Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
+    Route::get('getADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getADVPaymentDetails');
+    Route::get('getADVPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForPV');
     Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
+    Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
+    Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV');
     Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount');
     Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany');
     Route::get('getPaymentVoucherFormData', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherFormData');
@@ -838,8 +845,8 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 21,'autoID' => 1292, 'companySystemID' => 52, 'employeeSystemID' => 2664];
-    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    $master = ['documentSystemID' => 20,'autoID' => 49294, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $job = \App\Jobs\AccountReceivableLedgerInsert::dispatch($master);
 });
 
 Route::get('runQueueSR', function () {
@@ -863,4 +870,8 @@ Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
 
 Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
 
+
+Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
+
 Route::resource('performa_temps', 'PerformaTempAPIController');
+

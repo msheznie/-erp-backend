@@ -7,10 +7,15 @@ use App\Http\Requests\API\UpdateCustomerReceivePaymentAPIRequest;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerAssigned;
 use App\Models\CurrencyMaster;
+use App\Models\customercurrency;
 use App\Models\Company;
 use App\Models\CustomerMaster;
+use App\Models\BankAccount;
 use App\Models\SegmentMaster;
 use App\Models\CompanyFinanceYear;
+use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DirectReceiptDetail;
+use App\Models\BankAssign;
 use App\Models\CompanyFinancePeriod;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
@@ -162,6 +167,21 @@ custTransactionCurrencyID
         $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
         $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
         $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+
+        $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $company['CompanyID'])->where('isDefault', -1)->first();
+        if ($bank) {
+            $input['bankID'] = $bank->bankmasterAutoID;
+            $bankAccount = BankAccount::where('companyID', $company['CompanyID'])->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $myCurr)->first();
+            if($bankAccount){
+                $input['bankAccount'] =  $bankAccount->bankAccountAutoID;
+
+                $input['bankCurrency']=$myCurr;
+                $input['bankCurrencyER']=1;
+            }
+
+        }
+
+
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
         $input['createdUserID'] = \Helper::getEmployeeID();
         $input['createdPcID'] = getenv('COMPUTERNAME');
@@ -231,8 +251,15 @@ custTransactionCurrencyID
      */
     public function show($id)
     {
+
         /** @var CustomerReceivePayment $customerReceivePayment */
-        $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
+      //  $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
+
+        $customerReceivePayment = $this->customerReceivePaymentRepository->with(['currency', 'finance_year_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }, 'finance_period_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }])->findWithoutFail($id);
 
         if (empty($customerReceivePayment)) {
             return $this->sendError('Customer Receive Payment not found');
@@ -289,14 +316,208 @@ custTransactionCurrencyID
      */
     public function update($id, UpdateCustomerReceivePaymentAPIRequest $request)
     {
-        $input = $request->all();
+         $input = $request->all();
 
+
+
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID','customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency','confirmedYN'));
+
+        $input= array_except($input,['currency','finance_year_by','finance_period_by']);
+      $bankcurrencyID=  $input['bankCurrency'];
         /** @var CustomerReceivePayment $customerReceivePayment */
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
+
 
         if (empty($customerReceivePayment)) {
             return $this->sendError('Customer Receive Payment not found');
         }
+
+         $input['custPaymentReceiveDate'] =  Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00';
+         $input['custChequeDate'] =  Carbon::parse($input['custChequeDate'])->format('Y-m-d') . ' 00:00:00';
+
+   /*     if (($input['custPaymentReceiveDate'] >= $input['FYPeriodDateFrom']) && ($input['custPaymentReceiveDate'] <= $input['FYPeriodDateTo'])) {
+
+        } else {
+            return $this->sendError('Document Date should be between financial period start date and end date.', 500);
+
+        }*/
+
+        if($input['documentType']==13){
+            /*customer reciept*/
+            $detail = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->get();
+
+            if($input['customerID'] !=$customerReceivePayment->customerID){
+                /*
+                 * customer change
+                 *
+                 * */
+
+                if (count($detail) > 0) {
+                    return $this->sendError('Invoice details exist. You can not change the customer.', 500);
+                }
+                $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+
+
+                /*if customer change*/
+                $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+                $input['customerGLCode'] = $customer->custGLaccount;
+                $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
+                $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+                if ($currency) {
+                    $input['custTransactionCurrencyID'] = $currency->currencyID;
+                    $myCurr = $currency->currencyID;
+
+                    $companyCurrency = \Helper::companyCurrency($currency->currencyID);
+                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    /*exchange added*/
+                    $input['custTransactionCurrencyER'] = 1;
+                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['bankID'] = null;
+                    $input['bankAccount'] = null;
+                    $input['bankCurrencyER']=0;
+                    $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $customerReceivePayment->companyID)->where('isDefault', -1)->first();
+                    if ($bank) {
+                        $input['bankID'] = $bank->bankmasterAutoID;
+                        $bankAccount = BankAccount::where('companyID', $customerReceivePayment->companyID)->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $myCurr)->first();
+                        if($bankAccount){
+                            $input['bankAccount'] =  $bankAccount->bankAccountAutoID;
+                            $input['bankCurrency']=$myCurr;
+                            $input['bankCurrencyER']=1;
+                        }
+
+
+                    }
+                }
+                /*
+                 *
+                 *
+                 * */
+            }
+
+
+
+            if($input['bankAccount'] != $customerReceivePayment->bankAccount){
+
+                $bankAccount = BankAccount::find($input['bankAccount']);
+                if ($bankAccount) {
+                    $input['bankCurrency'] = $bankAccount->accountCurrencyID;
+                    $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    if ($currencyConversionDefaultMaster) {
+                        $input['bankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                    }
+                }
+            }
+
+            if ($input['custTransactionCurrencyID'] != $customerReceivePayment->custTransactionCurrencyID) {
+                if (count($detail) > 0) {
+                    return $this->sendError('Invoice details exist. You can not change the currency.', 500);
+                } else {
+                    $myCurr = $input['custTransactionCurrencyID'];
+                    $companyCurrency = \Helper::companyCurrency($myCurr);
+                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    /*exchange added*/
+                    $input['custTransactionCurrencyER'] = 1;
+                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['bankID'] = null;
+                    $input['bankAccount'] = null;
+                    $input['bankCurrency'] = null;
+                    $input['bankCurrencyER']=0;
+
+
+                    $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $customerReceivePayment->companyID)->where('isDefault', -1)->first();
+                    $bankAccount = BankAccount::where('companyID', $customerReceivePayment->companyID)->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $myCurr)->first();
+                    if ($bank) {
+                        $input['bankID'] = $bank->bankmasterAutoID;
+                    }
+                    if($bankAccount){
+                        $input['bankAccount'] =  $bankAccount->bankAccountAutoID;
+
+                        $input['bankCurrency']=$myCurr;
+                        $input['bankCurrencyER']=1;
+                    }
+
+                }
+            }
+
+            if($input['bankID'] !=$customerReceivePayment->bankID){
+                $bankAccount = BankAccount::where('companyID', $customerReceivePayment->companyID)->where('bankmasterAutoID', $input['bankID'])->where('isDefault', 1)->where('accountCurrencyID', $input['custTransactionCurrencyID'])->first();
+                $input['bankAccount'] = null;
+                $input['bankCurrencyER']=0;
+                $input['bankCurrency'] = null;
+                if($bankAccount){
+                    $input['bankAccount'] =  $bankAccount->bankAccountAutoID;
+                    $input['bankCurrencyER']=1;
+                    $input['bankCurrency'] = $input['custTransactionCurrencyID'];
+                }
+            }
+
+
+
+        }
+
+        if($input['documentType']==14){
+            /*direct receipt*/
+            $detail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
+
+            if($input['bankID'] !=$customerReceivePayment->bankID){
+                $bankAccount = BankAccount::where('companyID', $customerReceivePayment->companyID)->where('bankmasterAutoID', $input['bankID'])->where('isDefault', 1)->first();
+
+
+                $input['custTransactionCurrencyER'] = 0;
+                $input['companyRptCurrencyID'] = 0;
+                $input['companyRptCurrencyER'] = 0;
+                $input['localCurrencyID'] = 0;
+                $input['localCurrencyER'] = 0;
+
+                if($bankAccount){
+                    $input['bankAccount'] =  $bankAccount->bankAccountAutoID;
+                    $input['bankCurrencyER']=1;
+                    $input['bankCurrency'] = $bankAccount->accountCurrencyID;
+                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
+                    $input['custTransactionCurrencyER'] = 1;
+
+                    $myCurr = $input['custTransactionCurrencyID'];
+                    $companyCurrency = \Helper::companyCurrency($myCurr);
+                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    /*exchange added*/
+                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                }
+            }
+
+            if($input['bankAccount'] != $customerReceivePayment->bankAccount){
+
+                $bankAccount = BankAccount::find($input['bankAccount']);
+                if ($bankAccount) {
+                    $input['bankCurrencyER']=1;
+                    $input['bankCurrency'] = $bankAccount->accountCurrencyID;
+                    $input['custTransactionCurrencyID'] = $bankAccount->accountCurrencyID;
+                    $input['custTransactionCurrencyER'] = 1;
+
+                    $myCurr = $input['custTransactionCurrencyID'];
+                    $companyCurrency = \Helper::companyCurrency($myCurr);
+                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    /*exchange added*/
+                    $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                }
+            }
+        }
+
+
+
+
+
 
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
@@ -412,6 +633,18 @@ custTransactionCurrencyID
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['docType']=$master->documentType;
+                $output['bankDropdown'] = BankAssign::where('isActive', 1)->where('isAssigned', -1)->where('companyID', $output['company']['CompanyID'])->get();
+
+                $output['bankAccount'] = [];
+                $output['bankCurrencies'] = [];
+                if ($master->bankID != '') {
+                    $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('isAccountActive', 1)->get();
+                }
+                    if ($master->bankAccount != '') {
+                    $output['bankCurrencies']=DB::table('erp_bankaccount')->join('currencymaster', 'accountCurrencyID', '=', 'currencymaster.currencyID')->where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('bankAccountAutoID',$master->bankAccount)->where('isAccountActive', 1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')->get();
+                }
+
+
 break;
             default:
                 $output = [];

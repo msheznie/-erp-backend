@@ -418,6 +418,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
             $input['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
             $input['serviceLineCode'] = $serviceLine->ServiceLineCode;
             $input['clientContractID'] = NULL;
+            $input['contractUID'] = NULL;
         }
 
 
