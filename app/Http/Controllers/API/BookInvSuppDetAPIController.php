@@ -348,6 +348,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
             if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
                 $siDetailExist = BookInvSuppDet::select(DB::raw('bookingSupInvoiceDetAutoID'))
+                    ->with(['grvmaster'])
                     ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
                     ->where('unbilledgrvAutoID', $itemExist['unbilledgrvAutoID'])
                     ->get();
@@ -359,7 +360,6 @@ class BookInvSuppDetAPIController extends AppBaseController
                     }
                 }
             }
-
         }
 
         if (!empty($itemExistArray)) {
@@ -384,6 +384,8 @@ class BookInvSuppDetAPIController extends AppBaseController
 
                 if ($balanceAmount) {
                     $totalPendingAmount = $groupMaster->totTransactionAmount - $balanceAmount['SumOftotTransactionAmount'];
+                }else{
+                    $totalPendingAmount = $groupMaster->totTransactionAmount;
                 }
 
                 $prDetail_arr['bookingSuppMasInvAutoID'] = $bookingSuppMasInvAutoID;
