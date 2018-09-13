@@ -15,10 +15,22 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateLogisticAPIRequest;
 use App\Http\Requests\API\UpdateLogisticAPIRequest;
+use App\Models\Company;
+use App\Models\CountryMaster;
+use App\Models\CurrencyMaster;
+use App\Models\DocumentMaster;
 use App\Models\Logistic;
+use App\Models\LogisticModeOfImport;
+use App\Models\LogisticShippingMode;
+use App\Models\SegmentMaster;
+use App\Models\SupplierAssigned;
+use App\Models\Unit;
+use App\Models\WarehouseMaster;
 use App\Repositories\LogisticRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -27,7 +39,6 @@ use Response;
  * Class LogisticController
  * @package App\Http\Controllers\API
  */
-
 class LogisticAPIController extends AppBaseController
 {
     /** @var  LogisticRepository */
@@ -120,6 +131,125 @@ class LogisticAPIController extends AppBaseController
     public function store(CreateLogisticAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['createdPCid'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
+
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required',
+            'customInvoiceNo' => 'required',
+            'customInvoiceDate' => 'required',
+            'customInvoiceCurrencyID' => 'required|numeric|min:1',
+            'customInvoiceAmount' => 'required',
+            'logisticShippingModeID' => 'required|numeric|min:1',
+            'modeOfImportID' => 'required|numeric|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        if (isset($input['nextCustomDocRenewalDate']) && $input['nextCustomDocRenewalDate']) {
+            $input['nextCustomDocRenewalDate'] = new Carbon($input['nextCustomDocRenewalDate']);
+        }
+
+        if (isset($input['customInvoiceDate']) && $input['customInvoiceDate']) {
+            $input['customInvoiceDate'] = new Carbon($input['customInvoiceDate']);
+        }
+
+        if (isset($input['customeArrivalDate']) && $input['customeArrivalDate']) {
+            $input['customeArrivalDate'] = new Carbon($input['customeArrivalDate']);
+        }
+
+        if (isset($input['deliveryDate']) && $input['deliveryDate']) {
+            $input['deliveryDate'] = new Carbon($input['deliveryDate']);
+        }
+
+        if (isset($input['billofEntryDate']) && $input['billofEntryDate']) {
+            $input['billofEntryDate'] = new Carbon($input['billofEntryDate']);
+        }
+
+        if (isset($input['agentDOdate']) && $input['agentDOdate']) {
+            $input['agentDOdate'] = new Carbon($input['agentDOdate']);
+        }
+
+        if (isset($input['shippingDestinationDate']) && $input['shippingDestinationDate']) {
+            $input['shippingDestinationDate'] = new Carbon($input['shippingDestinationDate']);
+        }
+
+        if (isset($input['shippingOriginDate']) && $input['shippingOriginDate']) {
+            $input['shippingOriginDate'] = new Carbon($input['shippingOriginDate']);
+        }
+
+        $input['documentSystemID'] = 14;
+        $input['documentID'] = 'LOG';
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->with(['localcurrency','reportingcurrency'])->first();
+
+        $localDecimal = 3;
+        $rptDecimal = 2;
+
+        if (empty($company)) {
+            return $this->sendError('Company not found', 500);
+        }
+        $input['companyID'] = $company->CompanyID;
+
+        if($company->localcurrency){
+            $localDecimal = $company->localcurrency->DecimalPlaces;
+        }
+
+        if($company->reportingcurrency){
+            $rptDecimal = $company->reportingcurrency->DecimalPlaces;
+        }
+
+        if (isset($input['serviceLineSystemID'])) {
+            $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+            if ($segment) {
+                $input['serviceLineCode'] = $segment->ServiceLineCode;
+            }
+        }
+
+        $lastSerial = Logistic::where('companySystemID', $input['companySystemID'])
+            ->orderBy('serialNo', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
+        $input['serialNo'] = $lastSerialNumber;
+        $input['RollLevForApp_curr'] = 1;
+
+        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
+        if ($documentMaster) {
+            $code = ($company->CompanyID . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['logisticDocCode'] = $code;
+        }
+
+        if(isset($input['agentFeeCurrencyID'])){
+            $agentFeeConvection = \Helper::currencyConversion($input['companySystemID'], $input['agentFeeCurrencyID'], $input['agentFeeCurrencyID'], $input['agentFee']);
+            $input['agentFeeLocalAmount'] = round($agentFeeConvection['localAmount'],$localDecimal);
+            $input['agenFeeRptAmount']    = round($agentFeeConvection['reportingAmount'],$rptDecimal);
+        }else{
+            $input['agenFeeRptAmount']    = 0;
+        }
+
+        if(isset($input['customDutyFeeCurrencyID'])){
+            $dutyFeeConvection = \Helper::currencyConversion($input['companySystemID'], $input['customDutyFeeCurrencyID'], $input['customDutyFeeCurrencyID'], $input['customDutyFeeAmount']);
+            $input['customDutyFeeLocalAmount']  =  round($dutyFeeConvection['localAmount'],$localDecimal);
+            $input['customDutyFeeRptAmount']    =  round($dutyFeeConvection['reportingAmount'],$rptDecimal);
+        }else{
+            $input['customDutyFeeRptAmount'] = 0;
+        }
+
+        $input['customDutyTotalAmount'] = round($input['agenFeeRptAmount'] + $input['customDutyFeeRptAmount'],$rptDecimal);
+
 
         $logistics = $this->logisticRepository->create($input);
 
@@ -337,20 +467,39 @@ class LogisticAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        /** Yes and No Selection */
-        $yesNoSelection = YesNoSelection::all();
-
-        /** all Units*/
-        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+        $countries = CountryMaster::all();
+        $currencies = CurrencyMaster::all();
 
         $units = Unit::all();
 
-        $output = array(
-            'yesNoSelection' => $yesNoSelection,
-            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
-            'units' => $units
-        );
+        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
+        if (isset($request['type']) && $request['type'] != 'filter') {
+            $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
+        }
+        $wareHouseLocation = $wareHouseLocation->get();
 
+        $modeOfShipping = LogisticShippingMode::all();
+
+        $modeOfImport = LogisticModeOfImport::all();
+
+        $suppliers = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
+            ->where('companySystemID', $companyId)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->get();
+
+        $company = Company::where('companySystemID',$companyId)->with(['localcurrency','reportingcurrency'])->first();
+
+        $output = array(
+            'units' => $units,
+            'countries' => $countries,
+            'currencies' => $currencies,
+            'wareHouseLocation' => $wareHouseLocation,
+            'modeOfShipping' => $modeOfShipping,
+            'modeOfImport' => $modeOfImport,
+            'suppliers' => $suppliers,
+            'company' => $company
+        );
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
@@ -362,10 +511,10 @@ class LogisticAPIController extends AppBaseController
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-               $data[$x]['Logistic Code'] = $value->logisticDocCode;
+                $data[$x]['Logistic Code'] = $value->logisticDocCode;
                 $data[$x]['Invoice No'] = $value->customInvoiceNo;
                 $data[$x]['Invoice Amount'] = $value->customInvoiceAmount;
-                $data[$x]['Invoice Date'] =  \Helper::dateFormat($value->customInvoiceDate);
+                $data[$x]['Invoice Date'] = \Helper::dateFormat($value->customInvoiceDate);
                 if ($value->shipping_mode) {
                     $data[$x]['Mode'] = $value->shipping_mode->modeShippingDescription;
                 } else {
@@ -378,19 +527,19 @@ class LogisticAPIController extends AppBaseController
                 }
                 $data[$x]['Comments '] = $value->comments;
 
-                $data[$x]['Renewal Date'] =  \Helper::dateFormat($value->nextCustomDocRenewalDate);
-                $data[$x]['Arrival Date'] =  \Helper::dateFormat($value->customeArrivalDate);
-                if($value->ftaOrDF){
-                    $data[$x]['FTA/DF'] =  $value->ftaOrDF;
-                }else{
-                    $data[$x]['FTA/DF'] =  'NA';
+                $data[$x]['Renewal Date'] = \Helper::dateFormat($value->nextCustomDocRenewalDate);
+                $data[$x]['Arrival Date'] = \Helper::dateFormat($value->customeArrivalDate);
+                if ($value->ftaOrDF) {
+                    $data[$x]['FTA/DF'] = $value->ftaOrDF;
+                } else {
+                    $data[$x]['FTA/DF'] = 'NA';
                 }
                 if ($value->created_by) {
-                    $data[$x]['Created By'] =  $value->created_by->empName;
+                    $data[$x]['Created By'] = $value->created_by->empName;
                 } else {
-                    $data[$x]['Created By'] =  '';
+                    $data[$x]['Created By'] = '';
                 }
-                $data[$x]['Created at'] =  \Helper::dateFormat($value->createdDateTime);
+                $data[$x]['Created at'] = \Helper::dateFormat($value->createdDateTime);
                 $x++;
             }
         }
@@ -422,7 +571,7 @@ class LogisticAPIController extends AppBaseController
         }
 
         $logistics = Logistic::whereIn('companySystemID', $subCompanies)
-            ->with(['created_by','supplier_by','shipping_mode']);
+            ->with(['created_by', 'supplier_by', 'shipping_mode']);
 
         $search = $request->input('search.value');
 
@@ -437,4 +586,25 @@ class LogisticAPIController extends AppBaseController
         return $logistics;
     }
 
+    public function  getCompanyLocalAndRptAmount(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID'));
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required',
+            'transactionCurrencyID' => 'required|numeric|min:1',
+            'amount' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+
+        $data = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], $input['amount']);
+
+        return $this->sendResponse($data, 'Record retrieved successfully');
+        
+    }
 }

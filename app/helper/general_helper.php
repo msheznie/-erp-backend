@@ -325,6 +325,17 @@ class Helper
                     $docInforArr["modelName"] = 'BookInvSuppMaster';
                     $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
                     break;
+                case 4:
+                    $docInforArr["documentCodeColumnName"] = 'BPVcode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_paysupplierinvoicemaster';
+                    $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
+                    $docInforArr["primarykey"] = 'PayMasterAutoId';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1677,6 +1688,28 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'companyReportingER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
+
+            case 21: // This is for receipt voucher - direct
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["transCurrencyID"] = 'bankCurrency';
+                $docInforArr["transDefaultCurrencyID"] = 'bankCurrency';
+                $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'bankCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
+                break;
+            case 201: // Advance Payment
+                $docInforArr["modelName"] = 'AdvancePaymentDetails';
+                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'supplierDefaultCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'comRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransER';
+                $docInforArr["rptCurrencyER"] = 'comRptER';
+                $docInforArr["localCurrencyER"] = 'localER';
+                $docInforArr["defaultCurrencyER"] = 'supplierDefaultCurrencyER';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
