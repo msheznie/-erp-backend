@@ -667,6 +667,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
     Route::get('getADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getADVPaymentDetails');
+    Route::post('addADVPaymentDetail', 'AdvancePaymentDetailsAPIController@addADVPaymentDetail');
+    Route::post('deleteAllADVPaymentDetail', 'AdvancePaymentDetailsAPIController@deleteAllADVPaymentDetail');
     Route::get('getADVPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForPV');
     Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
     Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');

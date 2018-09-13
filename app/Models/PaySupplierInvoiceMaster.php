@@ -809,7 +809,7 @@ class PaySupplierInvoiceMaster extends Model
 
     public function created_by()
     {
-        return $this->belongsTo('App\Models\Employee', 'createdByEmpSystemID', 'employeeSystemID');
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
 
     public function bank()
