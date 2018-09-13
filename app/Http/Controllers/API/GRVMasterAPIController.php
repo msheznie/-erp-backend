@@ -537,8 +537,7 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             unset($input['grvConfirmedYN']);
-            unset($input['
-            ']);
+            unset($input['grvConfirmedByEmpSystemID']);
             unset($input['grvConfirmedByEmpID']);
             unset($input['grvConfirmedByName']);
             unset($input['grvConfirmedDate']);
@@ -763,7 +762,7 @@ class GRVMasterAPIController extends AppBaseController
             } else {
                 $grvTypes = GRVTypes::where('grvTypeID', 2)->get();
             }
-        }else{
+        } else {
             $grvTypes = GRVTypes::all();
         }
 
