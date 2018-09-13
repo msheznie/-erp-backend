@@ -697,13 +697,13 @@ break;
             }
         }
         if (array_key_exists('documentType', $input)) {
-            if ($input['year'] && !is_null($input['documentType'])) {
-                $master->whereYear('documentType', '=', $input['documentType']);
+            if ($input['documentType'] && !is_null($input['documentType'])) {
+                $master->where('documentType', '=', $input['documentType']);
             }
         }
         if (array_key_exists('trsClearedYN', $input)) {
             if ($input['trsClearedYN'] && !is_null($input['trsClearedYN'])) {
-                $master->whereYear('trsClearedYN', '=', $input['trsClearedYN']);
+                $master->where('trsClearedYN', '=', $input['trsClearedYN']);
             }
         }
 
@@ -732,5 +732,9 @@ break;
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function recieptDetailsRecords(){
+
     }
 }
