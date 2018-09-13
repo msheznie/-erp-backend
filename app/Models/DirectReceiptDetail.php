@@ -121,8 +121,8 @@ class DirectReceiptDetail extends Model
 
     public $table = 'erp_directreceiptdetails';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'directReceiptDetailsID';
 
 
@@ -132,8 +132,11 @@ class DirectReceiptDetail extends Model
         'serviceLineSystemID',
         'serviceLineCode',
         'chartOfAccountSystemID',
+        'serviceLineSystemID',
+        'glSystemID',
         'glCode',
         'glCodeDes',
+        'contractUID',
         'contractID',
         'comments',
         'DRAmountCurrency',
@@ -160,8 +163,10 @@ class DirectReceiptDetail extends Model
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
         'chartOfAccountSystemID' => 'integer',
+        'glSystemID' => 'integer',
         'glCode' => 'string',
         'glCodeDes' => 'string',
+        'contractUID' => 'integer',
         'contractID' => 'string',
         'comments' => 'string',
         'DRAmountCurrency' => 'integer',

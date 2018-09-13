@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateBookInvSuppDetAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppDetAPIRequest;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
+use App\Models\GeneralLedger;
 use App\Models\UnbilledGrvGroupBy;
 use App\Repositories\BookInvSuppDetRepository;
 use Illuminate\Http\Request;
@@ -319,11 +320,11 @@ class BookInvSuppDetAPIController extends AppBaseController
             return $this->sendError('Book Inv Supp Det not found');
         }
 
-/*        $updatePRMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID)
-            ->update([
-                'selectedForBooking' => 0,
-                'fullyBooked' => 1
-            ]);*/
+        /*        $updatePRMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID)
+                    ->update([
+                        'selectedForBooking' => 0,
+                        'fullyBooked' => 1
+                    ]);*/
 
         $bookInvSuppDet->delete();
 
@@ -342,12 +343,18 @@ class BookInvSuppDetAPIController extends AppBaseController
             return $this->sendError("No GRV selected to add.");
         }
 
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
         $itemExistArray = array();
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
 
             if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
-                $siDetailExist = BookInvSuppDet::select(DB::raw('bookingSupInvoiceDetAutoID'))
+                $siDetailExist = BookInvSuppDet::with(['grvmaster'])
                     ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
                     ->where('unbilledgrvAutoID', $itemExist['unbilledgrvAutoID'])
                     ->get();
@@ -359,17 +366,43 @@ class BookInvSuppDetAPIController extends AppBaseController
                     }
                 }
             }
+        }
 
+        //check record exist in General Ledger table
+        foreach ($input['detailTable'] as $itemExist) {
+
+            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
+                $siDetailExistGL = GeneralLedger::where('documentSystemID', 3)
+                    ->where('documentSystemCode', $itemExist['grvAutoID'])
+                    ->first();
+
+                if (empty($siDetailExistGL)) {
+                    $itemDrt = "Selected GRV ".$itemExist['grvmaster']['grvPrimaryCode']." is not updated in general ledger. Please check again";
+                    $itemExistArray[] = [$itemDrt];
+                }
+            }
+        }
+
+        //check total matching
+        foreach ($input['detailTable'] as $temp) {
+
+            $groupMasterCheck = UnbilledGrvGroupBy::find($temp['unbilledgrvAutoID']);
+
+            if (isset($temp['isChecked']) && $temp['isChecked']) {
+
+                $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $temp['unbilledgrvAutoID'] . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
+
+                if($balanceAmount){
+                    if (($groupMasterCheck->totTransactionAmount == $balanceAmount->SumOftotTransactionAmount) ||  ($balanceAmount->SumOftotTransactionAmount > $groupMasterCheck->totTransactionAmount)) {
+                        $itemDrt = "Selected ".$temp['grvmaster']['grvPrimaryCode']." GRV has been booked fully. Please check again";
+                        $itemExistArray[] = [$itemDrt];
+                    }
+                }
+            }
         }
 
         if (!empty($itemExistArray)) {
             return $this->sendError($itemExistArray, 422);
-        }
-
-        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
-
-        if (empty($bookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
         }
 
         foreach ($input['detailTable'] as $new) {
@@ -383,7 +416,9 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $new['unbilledgrvAutoID'] . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
 
                 if ($balanceAmount) {
-                    $totalPendingAmount = $groupMaster->totTransactionAmount - $balanceAmount['SumOftotTransactionAmount'];
+                    $totalPendingAmount = ($groupMaster->totTransactionAmount - $balanceAmount['SumOftotTransactionAmount']);
+                } else {
+                    $totalPendingAmount = $groupMaster->totTransactionAmount;
                 }
 
                 $prDetail_arr['bookingSuppMasInvAutoID'] = $bookingSuppMasInvAutoID;

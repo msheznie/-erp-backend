@@ -5,18 +5,19 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateDirectReceiptDetailAPIRequest;
 use App\Http\Requests\API\UpdateDirectReceiptDetailAPIRequest;
 use App\Models\DirectReceiptDetail;
+use App\Models\CustomerReceivePayment;
 use App\Repositories\DirectReceiptDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
  * Class DirectReceiptDetailController
  * @package App\Http\Controllers\API
  */
-
 class DirectReceiptDetailAPIController extends AppBaseController
 {
     /** @var  DirectReceiptDetailRepository */
@@ -277,5 +278,28 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $directReceiptDetail->delete();
 
         return $this->sendResponse($id, 'Direct Receipt Detail deleted successfully');
+    }
+
+    public function directRecieptDetailsRecords(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        $detail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
+        return $this->sendResponse($detail, 'Direct Receipt Detail deleted successfully');
+    }
+
+    public function directReceiptContractDropDown(request $request){
+        $input = $request->all();
+        $detailID = $input['detailID'];
+        $detail = DirectReceiptDetail::where('directReceiptDetailsID', $detailID)->first();
+        $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $detail->directReceiptAutoID)->first();
+        $contractID = 0;
+        if ($detail->contractUID != '' && $detail->contractUID != 0) {
+            $contractID = $detail->contractUID;
+
+        }
+        $qry = "SELECT * FROM ( SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID AND clientID = $master->customerID UNION ALL SELECT contractUID, ContractNumber FROM contractmaster WHERE contractUID = $contractID ) t GROUP BY contractUID, ContractNumber";
+        $contract = DB::select($qry);
+        return $this->sendResponse($contract, 'Contract deleted successfully');
     }
 }
