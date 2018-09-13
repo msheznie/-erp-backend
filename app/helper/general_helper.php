@@ -1677,6 +1677,17 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'companyReportingER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
+
+            case 21: // This is for receipt voucher - direct
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["transCurrencyID"] = 'bankCurrency';
+                $docInforArr["transDefaultCurrencyID"] = 'bankCurrency';
+                $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'bankCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
