@@ -30,4 +30,5 @@ class LocationRepository extends BaseRepository
     {
         return Location::class;
     }
+
 }

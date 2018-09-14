@@ -96,5 +96,8 @@ class LogisticShippingStatus extends Model
         
     ];
 
-    
+    public function status(){
+        return $this->belongsTo('App\Models\LogisticStatus','shippingStatusID','StatusID');
+    }
+
 }

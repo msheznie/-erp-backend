@@ -9,7 +9,7 @@
  * -- Description : This file contains the all CRUD for Logistic
  * -- REVISION HISTORY
  * -- Date: 12-September 2018 By: Fayas Description: Added new functions named as getAllLogisticByCompany(),getLogisticFormData(),
- *                                exportLogisticsByCompanyReport()
+ *                                exportLogisticsByCompanyReport(),getLogisticAudit(),getStatusByLogistic(),checkPullFromGrv()
  */
 namespace App\Http\Controllers\API;
 
@@ -22,6 +22,8 @@ use App\Models\DocumentMaster;
 use App\Models\Logistic;
 use App\Models\LogisticModeOfImport;
 use App\Models\LogisticShippingMode;
+use App\Models\LogisticShippingStatus;
+use App\Models\LogisticStatus;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\Unit;
@@ -355,7 +357,7 @@ class LogisticAPIController extends AppBaseController
     public function update($id, UpdateLogisticAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToValue($input);
         /** @var Logistic $logistic */
         $logistic = $this->logisticRepository->findWithoutFail($id);
 
@@ -607,4 +609,70 @@ class LogisticAPIController extends AppBaseController
         return $this->sendResponse($data, 'Record retrieved successfully');
         
     }
+
+
+    /**
+     * Display the specified Logistic Audit.
+     * GET|HEAD /getLogisticAudit
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function getLogisticAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $logistic = $this->logisticRepository->getAudit($id);
+
+        if (empty($logistic)) {
+            return $this->sendError('Logistic not found');
+        }
+
+        $logistic->docRefNo = \Helper::getCompanyDocRefNo($logistic->companySystemID, $logistic->documentSystemID);
+
+        return $this->sendResponse($logistic->toArray(), 'Logistic retrieved successfully');
+    }
+
+    /**
+     * Display a listing of the status by Logistic.
+     * GET|HEAD /getStatusByLogistic
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getStatusByLogistic(Request $request)
+    {
+        $input = $request->all();
+        $rId = $input['logisticMasterID'];
+
+        $items = LogisticShippingStatus::where('logisticMasterID', $rId)
+            ->with(['status'])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Logistic Status retrieved successfully');
+    }
+
+    public function checkPullFromGrv(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+
+        $logistic = $this->logisticRepository->findWithoutFail($id);
+
+        if (empty($logistic)) {
+            return $this->sendError('Logistic not found');
+        }
+
+        $validator = \Validator::make($logistic->toArray(), [
+            'supplierID' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+
+        return $this->sendResponse($logistic->toArray(), 'Logistic retrieved successfully');
+    }
+
 }

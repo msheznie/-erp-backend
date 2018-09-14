@@ -803,9 +803,20 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
 
     Route::resource('logistic_details', 'LogisticDetailsAPIController');
+    Route::get('getItemsByLogistic', 'LogisticDetailsAPIController@getItemsByLogistic');
+
+    Route::get('getPurchaseOrdersForLogistic', 'LogisticDetailsAPIController@getPurchaseOrdersForLogistic');
+    Route::get('getGrvByPOForLogistic', 'LogisticDetailsAPIController@getGrvByPOForLogistic');
+    Route::get('getGrvDetailsByGrvForLogistic', 'LogisticDetailsAPIController@getGrvDetailsByGrvForLogistic');
+    Route::post('addLogisticDetails', 'LogisticDetailsAPIController@addLogisticDetails');
+
+
     Route::resource('logistics', 'LogisticAPIController');
     Route::post('getCompanyLocalAndRptAmount', 'LogisticAPIController@getCompanyLocalAndRptAmount');
     Route::get('getLogisticFormData', 'LogisticAPIController@getLogisticFormData');
+    Route::get('getStatusByLogistic', 'LogisticAPIController@getStatusByLogistic');
+    Route::get('checkPullFromGrv', 'LogisticAPIController@checkPullFromGrv');
+    Route::get('getLogisticAudit', 'LogisticAPIController@getLogisticAudit');
     Route::post('getAllLogisticByCompany', 'LogisticAPIController@getAllLogisticByCompany');
     Route::post('exportLogisticsByCompanyReport', 'LogisticAPIController@exportLogisticsByCompanyReport');
     Route::resource('logistic_mode_of_imports', 'LogisticModeOfImportAPIController');

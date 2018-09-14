@@ -91,4 +91,11 @@ class LogisticRepository extends BaseRepository
     {
         return Logistic::class;
     }
+
+    public function getAudit($id)
+    {
+        return $this->with(['created_by', 'modified_by', 'company', 'details' => function ($q) {
+            //$q->with('uom_issuing', 'item_by');
+        }])->findWithoutFail($id);
+    }
 }
