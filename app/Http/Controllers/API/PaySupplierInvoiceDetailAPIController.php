@@ -239,6 +239,32 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendError('Pay Supplier Invoice Detail not found');
         }
 
+        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])->where('payDetailAutoID','<>', $id)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+
+        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+
+        $currentPayAmount = $paySupplierInvoiceDetail->supplierPaymentAmount + $input['supplierPaymentAmount'];
+
+        $machAmount = 0;
+        if ($matchedAmount) {
+            $machAmount = $matchedAmount["SumOfmatchedAmount"];
+        }
+
+        $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+
+        if (ABS($input["supplierPaymentAmount"]) > $paymentBalancedAmount) {
+            return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
+        }
+
+        $input["paymentBalancedAmount"] = $paymentBalancedAmount - ABS($input["supplierPaymentAmount"]);
+
+        $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], ABS($input["supplierPaymentAmount"]));
+        $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
+        $input["paymentLocalAmount"] = $conversionAmount["localAmount"];
+        $input["paymentComRptAmount"] = $conversionAmount["reportingAmount"];
+
+        $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->update($input, $id);
+
         $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
@@ -247,28 +273,21 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         if ($matchedAmount) {
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
-        $input["paymentBalancedAmount"] = \Helper::roundValue($input["supplierInvoiceAmount"] - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
 
-        $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], $input["supplierPaymentAmount"]);
-        $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
-        $input["paymentLocalAmount"] = $conversionAmount["localAmount"];
-        $input["paymentComRptAmount"] = $conversionAmount["reportingAmount"];
+        $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
 
-        $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->update($input, $id);
 
-        //$master = PaySupplierInvoiceMaster::with('transactioncurrency')->find($paySupplierInvoiceDetail->PayMasterAutoId);
-
-        if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $paySupplierInvoiceDetail->paymentBalancedAmount) {
+        if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $paymentBalancedAmount) {
             $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                 ->update(['fullyInvoice' => 0]);
         }
 
-        if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $paySupplierInvoiceDetail->paymentBalancedAmount) && ($paySupplierInvoiceDetail->paymentBalancedAmount > 0)) {
+        if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $paymentBalancedAmount) && ($paySupplierInvoiceDetail->paymentBalancedAmount > 0)) {
             $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                 ->update(['fullyInvoice' => 1]);
         }
 
-        if ($paySupplierInvoiceDetail->paymentBalancedAmount <= 0) {
+        if ($paymentBalancedAmount <= 0) {
             $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                 ->update(['fullyInvoice' => 2]);
         }
@@ -336,7 +355,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 $machAmount = $matchedAmount["SumOfmatchedAmount"];
             }
 
-           $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+            $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
 
             if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $paymentBalancedAmount) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
@@ -464,7 +483,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
     function getPOPaymentDetails(Request $request)
     {
-        $data = PaySupplierInvoiceDetail::where('PayMasterAutoId', $request->PayMasterAutoId)->get();
+        $data = PaySupplierInvoiceDetail::where('PayMasterAutoId', $request->payMasterAutoId)->get();
         return $this->sendResponse($data, 'Payment details saved successfully');
     }
 
