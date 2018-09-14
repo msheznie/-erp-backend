@@ -282,6 +282,7 @@ class DirectPaymentDetails extends Model
 
     public $fillable = [
         'directPaymentAutoID',
+        'companySystemID',
         'companyID',
         'serviceLineSystemID',
         'serviceLineCode',
@@ -336,6 +337,7 @@ class DirectPaymentDetails extends Model
     protected $casts = [
         'directPaymentDetailsID' => 'integer',
         'directPaymentAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'string',
         'serviceLineCode' => 'string',

@@ -16,16 +16,19 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
+use App\Models\AdvancePaymentDetails;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\Company;
 use App\Models\CurrencyMaster;
+use App\Models\DirectPaymentDetails;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAdvancePayment;
+use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
@@ -494,14 +497,52 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->count();
 
                     if ($checkAmount > 0) {
-                        return $this->sendError('Every item should have payment amount', 500, ['type' => 'confirm']);
+                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
                     }
 
-                    $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-                    $confirm = \Helper::confirmDocument($params);
-                    if (!$confirm["success"]) {
-                        return $this->sendError($confirm["message"]);
+                }
+
+                if ($paySupplierInvoiceMaster->invoiceType == 5) {
+                    $pvDetailExist = AdvancePaymentDetails::select(DB::raw('PayMasterAutoId'))
+                        ->where('PayMasterAutoId', $id)
+                        ->first();
+
+                    if (empty($pvDetailExist)) {
+                        return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
+
+                    $checkAmount = AdvancePaymentDetails::where('PayMasterAutoId', $id)
+                        ->where('paymentAmount', '<=', 0)
+                        ->count();
+
+                    if ($checkAmount > 0) {
+                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                    }
+                }
+
+                if ($paySupplierInvoiceMaster->invoiceType == 3) {
+                    $pvDetailExist = DirectPaymentDetails::select(DB::raw('directPaymentAutoID'))
+                        ->where('directPaymentAutoID', $id)
+                        ->first();
+
+                    if (empty($pvDetailExist)) {
+                        return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
+                    }
+
+                    $checkAmount = DirectPaymentDetails::where('directPaymentAutoID', $id)
+                        ->where('DPAmount', '<=', 0)
+                        ->count();
+
+                    if ($checkAmount > 0) {
+                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                    }
+
+                }
+
+                $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"],500, ['type' => 'confirm']);
                 }
             }
 
@@ -515,6 +556,33 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                 $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount);
                 $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount);
+                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+            }
+
+            if ($paySupplierInvoiceMaster->invoiceType == 5) {
+                $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
+
+                $bankAmount = \Helper::currencyConversion($companySystemID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$totalAmount->paymentAmount,$paySupplierInvoiceMaster->BPVAccount);
+
+                $input['payAmountBank'] = \Helper::roundValue($bankAmount["bankAmount"]);
+                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierTransAmount);
+                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierDefaultAmount);
+                $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
+                $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierTransAmount);
+            }
+
+            if ($paySupplierInvoiceMaster->invoiceType == 3) {
+                $totalAmount = DirectPaymentDetails::selectRaw("SUM(DPAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount")->where('directPaymentAutoID', $id)->first();
+
+                $bankAmount = \Helper::currencyConversion($companySystemID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$totalAmount->paymentAmount,$paySupplierInvoiceMaster->BPVAccount);
+
+                $input['payAmountBank'] = \Helper::roundValue($bankAmount["bankAmount"]);
+                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
+                $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->comRptAmount);
             }
 
             $input['modifiedPc'] = gethostname();
@@ -716,6 +784,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $payee = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN', '<>', 2)->get();
 
+        $segment = SegmentMaster::ofCompany($subCompanies)->IsAcitve()->get();
+
         $output = array(
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
@@ -727,6 +797,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             'payee' => $payee,
             'bank' => $bank,
             'currency' => $currency,
+            'segments' => $segment,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -835,7 +906,7 @@ WHERE
 	AND erp_accountspayableledger.documentDate < "' . $paySupplierInvoiceMaster->BPVdate . '" 
 	AND erp_accountspayableledger.selectedToPaymentInv = 0 
 	AND erp_accountspayableledger.fullyInvoice <> 2 
-	AND erp_accountspayableledger.companysystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
+	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
 	AND erp_accountspayableledger.supplierCodeSystem = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' 
 	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount,DecimalPlaces) > 0');
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -847,21 +918,25 @@ WHERE
         $output = DB::select('SELECT
 	erp_purchaseorderadvpayment.poAdvPaymentID,
 	erp_purchaseorderadvpayment.companyID,
-	erp_purchaseorderadvpayment.poID,
-	erp_purchaseorderadvpayment.poCode,
+	erp_purchaseorderadvpayment.companySystemID,
+	erp_purchaseorderadvpayment.poID as purchaseOrderID,
+	erp_purchaseorderadvpayment.poCode as purchaseOrderCode,
 	erp_purchaseorderadvpayment.supplierID,
-	erp_purchaseorderadvpayment.narration,
+	erp_purchaseorderadvpayment.narration as comments,
 	erp_purchaseorderadvpayment.currencyID,
 	currencymaster.CurrencyCode,
 	currencymaster.DecimalPlaces,
 	IFNULL( erp_purchaseorderadvpayment.reqAmount, 0 ) AS reqAmount,
 	( IFNULL( erp_purchaseorderadvpayment.reqAmount, 0 ) - IFNULL( advd.SumOfpaymentAmount, 0 ) ) AS BalanceAmount,
-	erp_purchaseordermaster.supplierTransactionCurrencyID,
-	erp_purchaseordermaster.supplierTransactionER,
+	erp_purchaseordermaster.supplierTransactionCurrencyID as supplierTransCurrencyID,
+	erp_purchaseordermaster.supplierTransactionER as supplierTransER,
+	erp_purchaseordermaster.supplierDefaultCurrencyID,
+	erp_purchaseordermaster.supplierDefaultER as supplierDefaultCurrencyER, 
 	erp_purchaseordermaster.localCurrencyID,
-	erp_purchaseordermaster.localCurrencyER,
-	erp_purchaseordermaster.companyReportingCurrencyID,
-	erp_purchaseordermaster.companyReportingER 
+	erp_purchaseordermaster.localCurrencyER as localER,
+	erp_purchaseordermaster.companyReportingCurrencyID as comRptCurrencyID,
+	erp_purchaseordermaster.companyReportingER as comRptER,
+	false as isChecked  
 FROM
 	( ( erp_purchaseorderadvpayment LEFT JOIN currencymaster ON erp_purchaseorderadvpayment.currencyID = currencymaster.currencyID ) INNER JOIN erp_purchaseordermaster ON erp_purchaseorderadvpayment.poID = erp_purchaseordermaster.purchaseOrderID )
 	LEFT JOIN (
@@ -891,10 +966,9 @@ WHERE
 	AND ( ( erp_purchaseordermaster.poConfirmedYN ) = 1 ) 
 	AND ( ( erp_purchaseordermaster.approved ) =- 1 ) 
 	AND ( ( erp_purchaseordermaster.WO_confirmedYN ) = 1 ) 
-	AND ( ( erp_purchaseordermaster.fullyPaid ) <> 2 )
+	AND ( ( erp_purchaseorderadvpayment.fullyPaid ) <> 2 )
 	);');
         return $this->sendResponse($output, 'Record retrieved successfully');
-
     }
 
     public function getPaymentVoucherMatchItems(Request $request)
