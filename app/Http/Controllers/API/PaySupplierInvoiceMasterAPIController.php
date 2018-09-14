@@ -20,12 +20,14 @@ use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\Company;
 use App\Models\CurrencyMaster;
+use App\Models\DirectPaymentDetails;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAdvancePayment;
+use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
@@ -494,14 +496,52 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->count();
 
                     if ($checkAmount > 0) {
-                        return $this->sendError('Every item should have payment amount', 500, ['type' => 'confirm']);
+                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
                     }
 
-                    $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-                    $confirm = \Helper::confirmDocument($params);
-                    if (!$confirm["success"]) {
-                        return $this->sendError($confirm["message"],500, ['type' => 'confirm']);
+                }
+
+                if ($paySupplierInvoiceMaster->invoiceType == 5) {
+                    $pvDetailExist = AdvancePaymentDetails::select(DB::raw('PayMasterAutoId'))
+                        ->where('PayMasterAutoId', $id)
+                        ->first();
+
+                    if (empty($pvDetailExist)) {
+                        return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
+
+                    $checkAmount = AdvancePaymentDetails::where('PayMasterAutoId', $id)
+                        ->where('paymentAmount', '<=', 0)
+                        ->count();
+
+                    if ($checkAmount > 0) {
+                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                    }
+                }
+
+                if ($paySupplierInvoiceMaster->invoiceType == 3) {
+                    $pvDetailExist = DirectPaymentDetails::select(DB::raw('directPaymentAutoID'))
+                        ->where('directPaymentAutoID', $id)
+                        ->first();
+
+                    if (empty($pvDetailExist)) {
+                        return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
+                    }
+
+                    $checkAmount = DirectPaymentDetails::where('directPaymentAutoID', $id)
+                        ->where('DPAmount', '<=', 0)
+                        ->count();
+
+                    if ($checkAmount > 0) {
+                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                    }
+
+                }
+
+                $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"],500, ['type' => 'confirm']);
                 }
             }
 
@@ -529,6 +569,19 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
                 $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
                 $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierTransAmount);
+            }
+
+            if ($paySupplierInvoiceMaster->invoiceType == 3) {
+                $totalAmount = DirectPaymentDetails::selectRaw("SUM(DPAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount")->where('directPaymentAutoID', $id)->first();
+
+                $bankAmount = \Helper::currencyConversion($companySystemID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$totalAmount->paymentAmount,$paySupplierInvoiceMaster->BPVAccount);
+
+                $input['payAmountBank'] = \Helper::roundValue($bankAmount["bankAmount"]);
+                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
+                $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->comRptAmount);
             }
 
             $input['modifiedPc'] = gethostname();
@@ -730,6 +783,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $payee = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN', '<>', 2)->get();
 
+        $segment = SegmentMaster::ofCompany($subCompanies)->IsAcitve()->get();
+
         $output = array(
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
@@ -741,6 +796,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             'payee' => $payee,
             'bank' => $bank,
             'currency' => $currency,
+            'segments' => $segment,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
