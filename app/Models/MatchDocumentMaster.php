@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : MatchDocumentMaster.php
+ * -- Project Name : ERP
+ * -- Module Name :  MatchDocumentMaster
+ * -- Author : Nazir
+ * -- Create date : 13 - September 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -437,5 +447,50 @@ class MatchDocumentMaster extends Model
         
     ];
 
-    
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'BPVsupplierID', 'supplierCodeSystem');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'matchDocumentMasterAutoID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function transactioncurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransCurrencyID', 'currencyID');
+    }
+
+    public function localcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function rptcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyRptCurrencyID', 'currencyID');
+    }
+
+
 }

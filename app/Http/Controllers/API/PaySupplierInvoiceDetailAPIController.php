@@ -243,6 +243,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
+        $currentPayAmount = $paySupplierInvoiceDetail->supplierPaymentAmount + $input['supplierPaymentAmount'];
+
         $machAmount = 0;
         if ($matchedAmount) {
             $machAmount = $matchedAmount["SumOfmatchedAmount"];

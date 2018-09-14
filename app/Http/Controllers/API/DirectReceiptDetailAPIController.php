@@ -16,6 +16,7 @@ use App\Http\Requests\API\CreateDirectReceiptDetailAPIRequest;
 use App\Http\Requests\API\UpdateDirectReceiptDetailAPIRequest;
 use App\Models\DirectReceiptDetail;
 use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\BankAccount;
 use App\Models\Contract;
 use App\Models\SegmentMaster;
@@ -305,7 +306,9 @@ class DirectReceiptDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
-        $detail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
+        $detail['detail'] = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
+
+        $detail['custreceiptVocuherDetail'] = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID',$id)->get();
         return $this->sendResponse($detail, 'Direct Receipt Detail deleted successfully');
     }
 
@@ -380,8 +383,8 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $inputData['glCodeDes'] = $chartOfAccount->AccountDescription;
 
         $inputData['comments'] = $master->narration;
-        $inputData['DRAmountCurrency'] = $master->bankCurrency;
-        $inputData['DDRAmountCurrencyER'] = $master->bankCurrencyER;
+        $inputData['DRAmountCurrency'] = $master->custTransactionCurrencyID;
+        $inputData['DDRAmountCurrencyER'] = $master->custTransactionCurrencyER;
         $inputData['DRAmount'] = 0;
         $inputData['localCurrency'] = $master->localCurrencyID;
         $inputData['localCurrencyER'] = $master->localCurrencyER;
@@ -448,8 +451,8 @@ class DirectReceiptDetailAPIController extends AppBaseController
             $myCurr = $master->bankCurrency;               /*currencyID*/
             $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
 
-            $input['DRAmountCurrency'] = $master->customerCurrencyID;
-            $input['DDRAmountCurrencyER'] = 1;
+            $input['DRAmountCurrency'] = $master->custTransactionCurrencyID;
+            $input['DDRAmountCurrencyER'] = $master->custTransactionCurrencyER;
             $totalAmount =$input['DRAmount'];
             $input['DRAmount'] = round($input['DRAmount'], $decimal);
             /**/

@@ -181,5 +181,22 @@ class LogisticDetails extends Model
         
     ];
 
-    
+    public function uom(){
+        return $this->belongsTo('App\Models\Unit','itemUOM','UnitID');
+    }
+
+    public function supplier_by()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
+    }
+
+    public function warehouse_by()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','POdeliveryWarehousLocation','wareHouseSystemCode');
+    }
+
+    public function po()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder','POid','purchaseOrderID');
+    }
 }
