@@ -255,7 +255,7 @@ custTransactionCurrencyID
         /** @var CustomerReceivePayment $customerReceivePayment */
       //  $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
 
-        $customerReceivePayment = $this->customerReceivePaymentRepository->with(['currency', 'finance_year_by' => function ($query) {
+        $customerReceivePayment = $this->customerReceivePaymentRepository->with(['currency','localCurrency','rptCurrency', 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
@@ -322,7 +322,7 @@ custTransactionCurrencyID
 
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID','customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency','confirmedYN'));
 
-        $input= array_except($input,['currency','finance_year_by','finance_period_by']);
+        $input= array_except($input,['currency','finance_year_by','finance_period_by','localCurrency','rptCurrency']);
       $bankcurrencyID=  $input['bankCurrency'];
         /** @var CustomerReceivePayment $customerReceivePayment */
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);

@@ -107,6 +107,31 @@ class SegmentMaster extends Model
     ];
 
     /**
+     * Scope a query to only include active serviceline.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeIsAcitve($query)
+    {
+        return $query->where('isActive',  1);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCompany($query, $type)
+    {
+        return $query->whereIN('companySystemID',  $type);
+    }
+
+    /**
      * joining the company with serviceline table.
      */
 
