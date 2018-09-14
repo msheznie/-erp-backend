@@ -818,6 +818,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
     Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords');
     Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown');
+
+    Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
+    Route::post('getMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getMatchDocumentMasterView');
+    Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@getMatchDocumentMasterFormData');
+
+    Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -873,7 +879,7 @@ Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
 Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
 
 
-Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
+
 
 Route::resource('performa_temps', 'PerformaTempAPIController');
 

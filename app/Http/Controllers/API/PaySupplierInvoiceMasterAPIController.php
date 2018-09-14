@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Pay Supplier Invoice Master
  * -- REVISION HISTORY
  * -- Date: 03-September 2018 By:Mubashir Description: Added new functions named as getPaymentVoucherFormData(),getAllPaymentVoucherByCompany()
+ * -- Date: 14-September 2018 By:Mubashir Description: Added new functions named as getPaymentVoucherMatchItems()
  */
 
 namespace App\Http\Controllers\API;
@@ -507,7 +508,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($paySupplierInvoiceMaster->invoiceType == 2) {
                 $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")->where('PayMasterAutoId', $id)->first();
 
-                $bankAmount = \Helper::currencyConversion($companySystemID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$totalAmount->supplierPaymentAmount,$paySupplierInvoiceMaster->BPVAccount);
+                $bankAmount = \Helper::currencyConversion($companySystemID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $totalAmount->supplierPaymentAmount, $paySupplierInvoiceMaster->BPVAccount);
 
                 $input['payAmountBank'] = \Helper::roundValue($bankAmount["bankAmount"]);
                 $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
@@ -882,9 +883,9 @@ HAVING
 	AND ( erp_purchaseorderadvpayment.companyID = advd.companyID ) 
 WHERE
 	(
-	( ( erp_purchaseorderadvpayment.companySystemID ) = '.$paySupplierInvoiceMaster->companySystemID.' ) 
-	AND ( ( erp_purchaseorderadvpayment.supplierID ) = '.$paySupplierInvoiceMaster->BPVsupplierID.' ) 
-	AND ( ( erp_purchaseorderadvpayment.currencyID ) = '.$paySupplierInvoiceMaster->supplierTransCurrencyID.' ) 
+	( ( erp_purchaseorderadvpayment.companySystemID ) = ' . $paySupplierInvoiceMaster->companySystemID . ' )
+	AND ( ( erp_purchaseorderadvpayment.supplierID ) = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' )
+	AND ( ( erp_purchaseorderadvpayment.currencyID ) = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' )
 	AND ( ( erp_purchaseorderadvpayment.selectedToPayment ) = 0 ) 
 	AND ( ( erp_purchaseordermaster.poCancelledYN ) = 0 ) 
 	AND ( ( erp_purchaseordermaster.poConfirmedYN ) = 1 ) 
@@ -895,4 +896,63 @@ WHERE
         return $this->sendResponse($output, 'Record retrieved successfully');
 
     }
+
+    public function getPaymentVoucherMatchItems(Request $request)
+    {
+        $input = $request->all();
+        /*        $invoiceMaster = PaySupplierInvoiceMaster::with(['transactioncurrency'])
+                    ->where('approved', -1)
+                    ->where('invoiceType', 5)
+                    ->where('matchInvoice', '<>', 2)
+                    ->where('companySystemID', $input['companySystemID'])
+                    ->where('BPVsupplierID', $input['BPVsupplierID'])
+                    ->get();*/
+
+        $invoiceMaster = DB::select('SELECT
+	MASTER .PayMasterAutoId,
+	MASTER .BPVcode,
+	MASTER .BPVdate,
+	MASTER .payAmountSuppTrans,
+	MASTER .BPVsupplierID,
+	currency.CurrencyCode,
+	currency.DecimalPlaces,
+	IFNULL(advd.SumOfmatchingAmount, 0) as SumOfmatchingAmount,
+	(
+		MASTER .payAmountSuppTrans - IFNULL(advd.SumOfmatchingAmount, 0)
+	) AS BalanceAmt
+FROM
+	erp_paysupplierinvoicemaster AS MASTER
+INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransCurrencyID
+LEFT JOIN (
+	SELECT
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.documentID,
+		erp_matchdocumentmaster.companyID,
+		erp_matchdocumentmaster.BPVcode,
+		erp_matchdocumentmaster.payAmountSuppTrans,
+		COALESCE (
+			SUM(
+				erp_matchdocumentmaster.matchingAmount
+			),
+			0
+		) AS SumOfmatchingAmount
+	FROM
+		erp_matchdocumentmaster
+	WHERE
+		 companySystemID = ' . $input['companySystemID'] . '
+	GROUP BY
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.documentID
+) AS advd ON (
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId
+)
+WHERE
+	approved = - 1
+AND invoiceType = 5
+AND matchInvoice <> 2
+AND companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . '');
+
+        return $this->sendResponse($invoiceMaster, 'Data retrived successfully');
+    }
+
 }
