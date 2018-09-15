@@ -149,7 +149,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID','custTransactionCurrencyID'));
         $companyFinanceYearID = $input['companyFinanceYearID'];
         $company = Company::where('companySystemID', $input['companyID'])->first()->toArray();
         $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $companyFinanceYearID)->first();
@@ -157,13 +157,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-        $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+      /*  $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+        custTransactionCurrencyID*/
+       /* if ($currency) {*/
+            //$input['custTransactionCurrencyID'] = $currency->currencyID;
+            $myCurr = $input['custTransactionCurrencyID'];
 
-        if ($currency) {
-            $input['custTransactionCurrencyID'] = $currency->currencyID;
-            $myCurr = $currency->currencyID;
-
-            $companyCurrency = \Helper::companyCurrency($currency->currencyID);
+            $companyCurrency = \Helper::companyCurrency($myCurr);
             $companyCurrencyConversion = \Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
             /*exchange added*/
             $input['custTransactionCurrencyER'] = 1;
@@ -175,10 +175,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $company['CompanyID'])->where('isDefault', -1)->first();
             if ($bank) {
                 $input['bankID'] = $bank->bankmasterAutoID;
-                $bankAccount = BankAccount::where('companyID', $company['CompanyID'])->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $currency->currencyID)->first();
-                $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
+                $bankAccount = BankAccount::where('companyID', $company['CompanyID'])->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $myCurr)->first();
+                if($bankAccount){
+                    $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
+                }
+
             }
-        }
+      /*  }*/
 
         /* if ($customer->creditDays == 0 || $customer->creditDays == '') {
              return $this->sendResponse('e', $customer->CustomerName . ' - Credit days not mentioned for this customer');
@@ -813,6 +816,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $id = $request['id'];
         $bankID = isset($request['bankID']) ? $request['bankID'] : false;
+        $type = isset($request['type']) ? $request['type'] : false;
+
+        if($type=='getCurrency'){
+            $customerID = $request['customerID'];
+            $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
+            return $this->sendResponse($output, 'Record retrieved successfully');
+        }
         if ($id) {
             $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID','customerID')->where('custInvoiceDirectAutoID', $id)->first();
         }
@@ -824,7 +834,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
         $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-        $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'), array('value' => 2, 'label' => 'Item'));
+        $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'));
         $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId);
         $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companyId)->first();
         $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();

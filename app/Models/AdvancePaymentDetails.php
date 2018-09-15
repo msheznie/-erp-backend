@@ -156,6 +156,7 @@ class AdvancePaymentDetails extends Model
     public $fillable = [
         'PayMasterAutoId',
         'poAdvPaymentID',
+        'companySystemID',
         'companyID',
         'purchaseOrderID',
         'purchaseOrderCode',
@@ -186,6 +187,7 @@ class AdvancePaymentDetails extends Model
         'advancePaymentDetailAutoID' => 'integer',
         'PayMasterAutoId' => 'integer',
         'poAdvPaymentID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'purchaseOrderID' => 'integer',
         'purchaseOrderCode' => 'string',
@@ -214,6 +216,11 @@ class AdvancePaymentDetails extends Model
     public static $rules = [
         
     ];
+
+    public function purchaseorder_by()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
+    }
 
     
 }

@@ -8,14 +8,19 @@
  * -- Create date : 12 - September 2018
  * -- Description : This file contains the all CRUD for Logistic Details
  * -- REVISION HISTORY
- * -- Date: 12-September 2018 By: Fayas Description: Added new functions named as
+ * -- Date: 14-September 2018 By: Fayas Description: Added new functions named as getItemsByLogistic(),addLogisticDetails(),
+ *   getPurchaseOrdersForLogistic(),getGrvDetailsByGrvForLogistic(),getGrvDetailsByGrvForLogistic()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateLogisticDetailsAPIRequest;
 use App\Http\Requests\API\UpdateLogisticDetailsAPIRequest;
+use App\Models\GRVMaster;
+use App\Models\Logistic;
 use App\Models\LogisticDetails;
+use App\Models\ProcumentOrder;
 use App\Repositories\LogisticDetailsRepository;
+use App\Repositories\LogisticRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -31,10 +36,12 @@ class LogisticDetailsAPIController extends AppBaseController
 {
     /** @var  LogisticDetailsRepository */
     private $logisticDetailsRepository;
+    private $logisticRepository;
 
-    public function __construct(LogisticDetailsRepository $logisticDetailsRepo)
+    public function __construct(LogisticDetailsRepository $logisticDetailsRepo,LogisticRepository $logisticRepo)
     {
         $this->logisticDetailsRepository = $logisticDetailsRepo;
+        $this->logisticRepository = $logisticRepo;
     }
 
     /**
@@ -288,4 +295,171 @@ class LogisticDetailsAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Logistic Details deleted successfully');
     }
+
+    /**
+     * Display a listing of the items by Logistic.
+     * GET|HEAD /getItemsByLogistic
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getItemsByLogistic(Request $request)
+    {
+        $input = $request->all();
+        $rId = $input['logisticMasterID'];
+
+        $items = LogisticDetails::where('logisticMasterID', $rId)
+                                    ->with(['uom', 'supplier_by','warehouse_by','po'])
+                                    ->get();
+
+        return $this->sendResponse($items->toArray(), 'Logistic Details retrieved successfully');
+    }
+
+    public function getPurchaseOrdersForLogistic(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+
+        $logistic = Logistic::find($id);
+
+        if (empty($logistic)) {
+            return $this->sendError('Logistic not found');
+        }
+
+        $validator = \Validator::make($logistic->toArray(), [
+            'supplierID' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $purchaseOrders = ProcumentOrder::where('companySystemID', $logistic->companySystemID)
+                                        ->whereHas('detail',function ($q){
+                                            $q->whereHas('grv_details');
+                                        })
+                                        ->where('supplierID',$logistic->supplierID)
+                                        ->where('poConfirmedYN',1)
+                                        ->where('poCancelledYN',0)
+                                        ->where('manuallyClosed',0)
+                                        ->where('approved',-1)
+                                        ->get();
+
+        return $this->sendResponse($purchaseOrders->toArray(), 'Purchase Orders retrieved successfully');
+    }
+
+    public function getGrvByPOForLogistic(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+
+        $purchaseOrder = ProcumentOrder::with('detail')->find($id);
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        $grvs = GRVMaster::where('companySystemID', $purchaseOrder->companySystemID)
+                                ->whereHas('details',function ($q) use($purchaseOrder){
+                                    $q->where('purchaseOrderMastertID',$purchaseOrder->purchaseOrderID);
+                                })
+                                ->get();
+
+        return $this->sendResponse($grvs->toArray(), 'GRV  retrieved successfully');
+    }
+
+    public function getGrvDetailsByGrvForLogistic(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        $poId = $input['poId'];
+
+        $grv = GRVMaster::with(['details' => function($q) use($poId){
+            $q->where('purchaseOrderMastertID',$poId)->with(['item_by']);
+        }])->find($id);
+
+        if (empty($grv)) {
+            return $this->sendError('Good Receipt Voucher not found');
+        }
+
+        return $this->sendResponse($grv->details, 'Good Receipt Voucher Details retrieved successfully');
+    }
+
+    public function addLogisticDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $logistic = $this->logisticRepository->findWithoutFail($input['logisticMasterID']);
+
+        if (empty($logistic)) {
+            return $this->sendError('Logistic not found',500);
+        }
+
+        $finalError = array('same_item' => array());
+        $error_count = 0;
+        $createArray = array();
+
+        foreach ($input['grvDetails'] as $new) {
+
+            if ($new['isChecked']) {
+                $detailExistSameItem = LogisticDetails::where('logisticMasterID', $input['logisticMasterID'])
+                                                        ->where('itemcodeSystem', $new['itemCode'])
+                                                        ->where('POid', $new['purchaseOrderMastertID'])
+                                                        ->where('POdetailID', $new['purchaseOrderDetailsID'])
+                                                        ->count();
+
+                if($detailExistSameItem > 0) {
+                    array_push($finalError['same_item'], $new['itemPrimaryCode']);
+                    $error_count++;
+                }
+
+                $item = array();
+
+                $item['logisticMasterID'] = $input['logisticMasterID'];
+                $item['companySystemID'] = $logistic->companySystemID;
+                $item['companyID'] = $logistic->companyID;
+                $item['supplierID'] = $logistic->supplierID;
+                $item['POid'] = $new['purchaseOrderMastertID'];
+                $item['POdetailID'] = $new['purchaseOrderDetailsID'];
+                $item['itemcodeSystem'] = $new['itemCode'];
+                $item['itemPrimaryCode'] = $new['itemPrimaryCode'];
+                $item['itemDescription'] = $new['itemDescription'];
+
+                if($new['item_by']){
+                    $item['partNo'] = $new['item_by']['secondaryItemCode'];
+                }else{
+                    $item['partNo'] = '';
+                }
+                $item['itemUOM'] = $new['unitOfMeasure'];
+                $item['itemPOQtry'] = $new['poQty'];
+                $item['itemShippingQty'] = 0;
+                $item['POdeliveryWarehousLocation'] = $logistic->agentDeliveryLocationID;
+                $item['GRVStatus'] = '';
+                $item['GRVsystemCode'] = '';
+                array_push($createArray, $item);
+            }
+        }
+
+
+        $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+
+        if ($error_count > 0) {
+            return $this->sendError("You cannot add this items.", 500, $confirm_error);
+        } else {
+
+            if(count($createArray) > 0){
+                foreach ($createArray as $item) {
+                    $this->logisticDetailsRepository->create($item);
+                }
+            }else{
+                return $this->sendError("Please select the items.", 500);
+            }
+        }
+
+        return $this->sendResponse($logistic, 'Logistic Details added successfully');
+
+    }
+
 }

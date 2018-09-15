@@ -121,19 +121,21 @@ class DirectReceiptDetail extends Model
 
     public $table = 'erp_directreceiptdetails';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timeStamp';
+    const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'directReceiptDetailsID';
 
 
     public $fillable = [
         'directReceiptAutoID',
         'companyID',
+        'companySystemID',
         'serviceLineSystemID',
         'serviceLineCode',
         'chartOfAccountSystemID',
         'glCode',
         'glCodeDes',
+        'contractUID',
         'contractID',
         'comments',
         'DRAmountCurrency',
@@ -156,12 +158,14 @@ class DirectReceiptDetail extends Model
     protected $casts = [
         'directReceiptDetailsID' => 'integer',
         'directReceiptAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
         'chartOfAccountSystemID' => 'integer',
         'glCode' => 'string',
         'glCodeDes' => 'string',
+        'contractUID' => 'integer',
         'contractID' => 'string',
         'comments' => 'string',
         'DRAmountCurrency' => 'integer',

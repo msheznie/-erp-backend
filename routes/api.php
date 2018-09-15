@@ -667,6 +667,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
     Route::get('getADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getADVPaymentDetails');
+    Route::get('getDirectPaymentDetails', 'DirectPaymentDetailsAPIController@getDirectPaymentDetails');
+    Route::post('addADVPaymentDetail', 'AdvancePaymentDetailsAPIController@addADVPaymentDetail');
+    Route::post('deleteAllADVPaymentDetail', 'AdvancePaymentDetailsAPIController@deleteAllADVPaymentDetail');
     Route::get('getADVPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForPV');
     Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
     Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
@@ -803,8 +806,20 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
 
     Route::resource('logistic_details', 'LogisticDetailsAPIController');
+    Route::get('getItemsByLogistic', 'LogisticDetailsAPIController@getItemsByLogistic');
+
+    Route::get('getPurchaseOrdersForLogistic', 'LogisticDetailsAPIController@getPurchaseOrdersForLogistic');
+    Route::get('getGrvByPOForLogistic', 'LogisticDetailsAPIController@getGrvByPOForLogistic');
+    Route::get('getGrvDetailsByGrvForLogistic', 'LogisticDetailsAPIController@getGrvDetailsByGrvForLogistic');
+    Route::post('addLogisticDetails', 'LogisticDetailsAPIController@addLogisticDetails');
+
+
     Route::resource('logistics', 'LogisticAPIController');
+    Route::post('getCompanyLocalAndRptAmount', 'LogisticAPIController@getCompanyLocalAndRptAmount');
     Route::get('getLogisticFormData', 'LogisticAPIController@getLogisticFormData');
+    Route::get('getStatusByLogistic', 'LogisticAPIController@getStatusByLogistic');
+    Route::get('checkPullFromGrv', 'LogisticAPIController@checkPullFromGrv');
+    Route::get('getLogisticAudit', 'LogisticAPIController@getLogisticAudit');
     Route::post('getAllLogisticByCompany', 'LogisticAPIController@getAllLogisticByCompany');
     Route::post('exportLogisticsByCompanyReport', 'LogisticAPIController@exportLogisticsByCompanyReport');
     Route::resource('logistic_mode_of_imports', 'LogisticModeOfImportAPIController');
@@ -815,6 +830,23 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
     Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
+    Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
+    Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords');
+    Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown');
+
+
+    Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
+    Route::post('getMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getMatchDocumentMasterView');
+    Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@getMatchDocumentMasterFormData');
+
+    Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
+
+    Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
+    Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
+
+    Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
+
+
 
 });
 
@@ -871,7 +903,7 @@ Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
 Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
 
 
-Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
+
 
 Route::resource('performa_temps', 'PerformaTempAPIController');
 
