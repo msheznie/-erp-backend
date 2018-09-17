@@ -53,8 +53,8 @@ class BankAccount extends Model
 
     public $table = 'erp_bankaccount';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timeStamp';
 
 
     protected $dates = ['deleted_at'];
@@ -146,6 +146,18 @@ class BankAccount extends Model
         'modifiedByEmpID' => 'string',
         'modifiedPCID' => 'string'
     ];
+
+    /**
+     * Scope a query to only include active bankaccount.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeIsActive($query)
+    {
+        return $query->where('isAccountActive',  1);
+    }
 
     /**
      * Validation rules

@@ -113,7 +113,7 @@ class SegmentMaster extends Model
      * @return \Illuminate\Database\Eloquent\Builder
      */
 
-    public function scopeIsAcitve($query)
+    public function scopeIsActive($query)
     {
         return $query->where('isActive',  1);
     }
