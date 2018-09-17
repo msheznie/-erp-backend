@@ -747,9 +747,9 @@ class CreditNoteAPIController extends AppBaseController
                     ->where('companySystemID', $documentApproval->companySystemID)
                     ->where('documentSystemID', $documentApproval->documentSystemID);
 
-                if ($companyDocument['isServiceLineApproval'] == -1) {
+              /*  if ($companyDocument['isServiceLineApproval'] == -1) {
                     $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
-                }
+                }*/
 
                 $approvalList = $approvalList
                     ->with(['employee'])
