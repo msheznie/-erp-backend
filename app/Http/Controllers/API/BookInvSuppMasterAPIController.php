@@ -764,19 +764,16 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function getInvoiceMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
-
+        \DB::enableQueryLog();
         $invMaster = BookInvSuppMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with(['created_by' => function ($query) {
-        }, 'supplier' => function ($query) {
-        }, 'transactioncurrency' => function ($query) {
-        }]);
+        $invMaster->with('created_by', 'transactioncurrency', 'supplier');
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -852,8 +849,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             });
         }
 
-
         return \DataTables::eloquent($invMaster)
+
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
