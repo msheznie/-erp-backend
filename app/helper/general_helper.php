@@ -1691,11 +1691,11 @@ class Helper
                 break;
             case 21: // This is for receipt voucher - direct
                 $docInforArr["modelName"] = 'CustomerReceivePayment';
-                $docInforArr["transCurrencyID"] = 'bankCurrency';
-                $docInforArr["transDefaultCurrencyID"] = 'bankCurrency';
+                $docInforArr["transCurrencyID"] = 'custTransactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'custTransactionCurrencyID';
                 $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
                 $docInforArr["localCurrencyID"] = 'localCurrencyID';
-                $docInforArr["transCurrencyER"] = 'bankCurrencyER';
+                $docInforArr["transCurrencyER"] = 'custTransactionCurrencyER';
                 $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
