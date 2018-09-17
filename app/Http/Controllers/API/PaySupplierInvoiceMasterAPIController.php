@@ -974,19 +974,17 @@ WHERE
     public function getPaymentVoucherMatchItems(Request $request)
     {
         $input = $request->all();
-        /*        $invoiceMaster = PaySupplierInvoiceMaster::with(['transactioncurrency'])
-                    ->where('approved', -1)
-                    ->where('invoiceType', 5)
-                    ->where('matchInvoice', '<>', 2)
-                    ->where('companySystemID', $input['companySystemID'])
-                    ->where('BPVsupplierID', $input['BPVsupplierID'])
-                    ->get();*/
 
-        $invoiceMaster = DB::select('SELECT
+        if(!isset($input['matchType'])){
+            return $this->sendError('Please select a match type');
+        }
+
+        if($input['matchType'] == 1){
+            $invoiceMaster = DB::select('SELECT
 	MASTER .PayMasterAutoId,
-	MASTER .BPVcode,
-	MASTER .BPVdate,
-	MASTER .payAmountSuppTrans,
+	MASTER .BPVcode as documentCode,
+	MASTER .BPVdate as docDate,
+	MASTER .payAmountSuppTrans as transAmount,
 	MASTER .BPVsupplierID,
 	currency.CurrencyCode,
 	currency.DecimalPlaces,
@@ -1000,10 +998,9 @@ INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierT
 LEFT JOIN (
 	SELECT
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentID,
-		erp_matchdocumentmaster.companyID,
+		erp_matchdocumentmaster.documentSystemID,
+		erp_matchdocumentmaster.companySystemID,
 		erp_matchdocumentmaster.BPVcode,
-		erp_matchdocumentmaster.payAmountSuppTrans,
 		COALESCE (
 			SUM(
 				erp_matchdocumentmaster.matchingAmount
@@ -1012,19 +1009,90 @@ LEFT JOIN (
 		) AS SumOfmatchingAmount
 	FROM
 		erp_matchdocumentmaster
-	WHERE
-		 companySystemID = ' . $input['companySystemID'] . '
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentID
+		erp_matchdocumentmaster.documentSystemID
 ) AS advd ON (
-	MASTER .PayMasterAutoId = advd.PayMasterAutoId
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
 )
 WHERE
 	approved = - 1
 AND invoiceType = 5
 AND matchInvoice <> 2
-AND companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . '');
+AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
+        }elseif($input['matchType'] == 2){
+            $invoiceMaster = DB::select('SELECT
+	MASTER .debitNoteAutoID,
+	MASTER .debitNoteCode as documentCode,
+	MASTER .debitNoteDate as docDate,
+	MASTER .debitAmountTrans as transAmount,
+	MASTER .supplierID,
+	currency.CurrencyCode,
+	currency.DecimalPlaces,
+	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
+	IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) AS SumOfsupplierPaymentAmount,
+	(
+		MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
+	) AS BalanceAmt
+FROM
+	erp_debitnote AS MASTER
+INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransactionCurrencyID
+LEFT JOIN (
+	SELECT
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.documentSystemID,
+		erp_matchdocumentmaster.companySystemID,
+		erp_matchdocumentmaster.BPVcode,
+		COALESCE (
+			SUM(
+				erp_matchdocumentmaster.matchingAmount
+			),
+			0
+		) AS SumOfmatchingAmount
+	FROM
+		erp_matchdocumentmaster
+	GROUP BY
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.documentSystemID
+) AS advd ON (
+	MASTER .debitNoteAutoID = advd.PayMasterAutoId
+	AND MASTER .documentSystemID = advd.documentSystemID
+	AND MASTER .companySystemID = advd.companySystemID
+)
+LEFT JOIN (
+	SELECT
+		erp_paysupplierinvoicedetail.PayMasterAutoId,
+		erp_paysupplierinvoicedetail.addedDocumentSystemID,
+		erp_paysupplierinvoicedetail.bookingInvSystemCode,
+		erp_paysupplierinvoicedetail.bookingInvDocCode,
+		erp_paysupplierinvoicedetail.companySystemID,
+		Sum(
+			erp_paysupplierinvoicedetail.supplierPaymentAmount
+		) AS SumOfsupplierPaymentAmount
+	FROM
+		erp_paysupplierinvoicedetail
+	GROUP BY
+		erp_paysupplierinvoicedetail.addedDocumentSystemID,
+		erp_paysupplierinvoicedetail.bookingInvSystemCode,
+		erp_paysupplierinvoicedetail.bookingInvDocCode
+) AS payInvoice ON (
+	MASTER.debitNoteAutoID = payInvoice.PayMasterAutoId
+	AND MASTER.documentSystemID = payInvoice.addedDocumentSystemID
+	AND MASTER.companySystemID = payInvoice.companySystemID
+)
+WHERE
+	approved = - 1
+AND matchInvoice <> 2
+AND MASTER.companySystemID = ' . $input['companySystemID'] . '
+AND supplierID = ' . $input['BPVsupplierID'] . '
+HAVING
+	(
+		ROUND(
+			BalanceAmt,
+			currency.DecimalPlaces
+		) > 0
+	)');
+        }
 
         return $this->sendResponse($invoiceMaster, 'Data retrived successfully');
     }

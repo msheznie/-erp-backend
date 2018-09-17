@@ -18,9 +18,11 @@ use App\Http\Requests\API\UpdateMatchDocumentMasterAPIRequest;
 use App\Models\CurrencyMaster;
 use App\Models\MatchDocumentMaster;
 use App\Models\Months;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierAssigned;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\Company;
 use App\Repositories\MatchDocumentMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -125,6 +127,87 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function store(CreateMatchDocumentMasterAPIRequest $request)
     {
         $input = $request->all();
+
+        if(!isset($input['paymentAutoID'])) {
+            return $this->sendError('Please select a payment voucher !', 500);
+        }
+
+        $validator = \Validator::make($request->all(), [
+            'companySystemID' => 'required',
+            'matchType' => 'required',
+            'paymentAutoID' => 'required',
+            'supplierID' => 'required'
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $company = Company::find($input['companySystemID']);
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        if($input['matchType'] == 1){
+
+            $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($input['paymentAutoID']);
+            if (empty($paySupplierInvoiceMaster)) {
+                return $this->sendError('Pay Supplier Invoice Master not found');
+            }
+
+            $input['PayMasterAutoId'] = $input['paymentAutoID'];
+            $input['documentSystemID'] = $paySupplierInvoiceMaster->documentSystemID;
+            $input['documentID'] = $paySupplierInvoiceMaster->documentID;
+            $input['BPVcode'] = $paySupplierInvoiceMaster->BPVcode;
+            $input['BPVdate'] = $paySupplierInvoiceMaster->BPVdate;
+            $input['BPVNarration'] = $paySupplierInvoiceMaster->BPVNarration;
+            $input['directPaymentPayeeSelectEmp'] = $paySupplierInvoiceMaster->directPaymentPayeeSelectEmp;
+            $input['directPaymentPayee'] = $paySupplierInvoiceMaster->directPaymentPayee;
+            $input['directPayeeCurrency'] = $paySupplierInvoiceMaster->directPayeeCurrency;
+            $input['BPVsupplierID'] = $paySupplierInvoiceMaster->BPVsupplierID;
+            $input['supplierGLCodeSystemID'] = $paySupplierInvoiceMaster->supplierGLCodeSystemID;
+            $input['supplierGLCode'] = $paySupplierInvoiceMaster->supplierGLCode;
+            $input['supplierTransCurrencyID'] = $paySupplierInvoiceMaster->supplierTransCurrencyID;
+            $input['supplierTransCurrencyER'] = $paySupplierInvoiceMaster->supplierTransCurrencyER;
+            $input['supplierDefCurrencyID'] = $paySupplierInvoiceMaster->supplierDefCurrencyID;
+            $input['supplierDefCurrencyER'] = $paySupplierInvoiceMaster->supplierDefCurrencyER;
+            $input['localCurrencyID'] = $paySupplierInvoiceMaster->localCurrencyID;
+            $input['localCurrencyER'] = $paySupplierInvoiceMaster->localCurrencyER;
+            $input['companyRptCurrencyID'] = $paySupplierInvoiceMaster->companyRptCurrencyID;
+            $input['companyRptCurrencyER'] = $paySupplierInvoiceMaster->companyRptCurrencyER;
+            $input['payAmountBank'] = $paySupplierInvoiceMaster->payAmountBank;
+            $input['payAmountSuppTrans'] = $paySupplierInvoiceMaster->payAmountSuppTrans;
+            $input['payAmountSuppDef'] = $paySupplierInvoiceMaster->payAmountSuppDef;
+            $input['suppAmountDocTotal'] = $paySupplierInvoiceMaster->suppAmountDocTotal;
+            $input['payAmountCompLocal'] = $paySupplierInvoiceMaster->payAmountCompLocal;
+            $input['payAmountCompRpt'] = $paySupplierInvoiceMaster->payAmountCompRpt;
+            $input['invoiceType'] = $paySupplierInvoiceMaster->invoiceType;
+            $input['matchInvoice'] = $paySupplierInvoiceMaster->matchInvoice;
+
+            $input['matchingAmount'] = $paySupplierInvoiceMaster->matchInvoice;
+            $input['matchBalanceAmount'] = $paySupplierInvoiceMaster->matchInvoice;
+
+        }
+
+        $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+            ->orderBy('matchDocumentMasterAutoID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+        $input['serialNo'] = $lastSerialNumber;
+
+        $matchingDocCode = ($company->CompanyID . '\\'.'MT'. str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        $input['matchingDocCode'] = $matchingDocCode;
+        $input['matchingDocdate'] = date('Y-m-d H:i:s');
+        $input['matchingType'] = 'AP';
+
+
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
         $matchDocumentMasters = $this->matchDocumentMasterRepository->create($input);
 
