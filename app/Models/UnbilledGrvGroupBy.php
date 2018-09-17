@@ -126,7 +126,8 @@ class UnbilledGrvGroupBy extends Model
 {
 
     public $table = 'erp_unbilledgrvgroupby';
-    
+    public $append = ['totalAmount'];
+
     const CREATED_AT = 'timeStamp';
     const UPDATED_AT = 'timeStamp';
 
@@ -201,5 +202,9 @@ class UnbilledGrvGroupBy extends Model
         return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
     }
 
-    
+    public function detail()
+    {
+        return $this->hasMany('App\Models\BookInvSuppDet', 'unbilledgrvAutoID', 'unbilledgrvAutoID');
+    }
+
 }
