@@ -1346,7 +1346,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($documentApproval) {
             if ($documentApproval->approvedYN == 0) {
                 $companyDocument = CompanyDocumentAttachment::where('companySystemID', $invoice->companySystemID)
-                    ->where('documentSystemID', $invoice->documentSystemID)
+                    ->where('documentSystemID', $invoice->documentSystemiD)
                     ->first();
 
 
@@ -1355,9 +1355,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     ->where('companySystemID', $documentApproval->companySystemID)
                     ->where('documentSystemID', $documentApproval->documentSystemID);
 
-                if ($companyDocument['isServiceLineApproval'] == -1) {
+               /* if ($companyDocument['isServiceLineApproval'] == -1) {
                     $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
-                }
+                }*/
 
                 $approvalList = $approvalList
                     ->with(['employee'])
