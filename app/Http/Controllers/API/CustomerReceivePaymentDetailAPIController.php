@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCustomerReceivePaymentDetailAPIRequest;
 use App\Http\Requests\API\UpdateCustomerReceivePaymentDetailAPIRequest;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\CustomerReceivePayment;
 use App\Repositories\CustomerReceivePaymentDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -16,7 +17,6 @@ use Response;
  * Class CustomerReceivePaymentDetailController
  * @package App\Http\Controllers\API
  */
-
 class CustomerReceivePaymentDetailAPIController extends AppBaseController
 {
     /** @var  CustomerReceivePaymentDetailRepository */
@@ -277,5 +277,40 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $customerReceivePaymentDetail->delete();
 
         return $this->sendResponse($id, 'Customer Receive Payment Detail deleted successfully');
+    }
+
+    public function saveReceiptVoucherUnAllocationsDetails(Request $request)
+    {
+        $input = $request->all();
+
+        $custReceivePaymentAutoID = $input['custReceivePaymentAutoID'];
+
+        $output = CustomerReceivePayment::where('custReceivePaymentAutoID',$custReceivePaymentAutoID)->first();
+        $receiveAmountTrans = $input['receiveAmountTrans'];
+
+        $data['custReceivePaymentAutoID']=$custReceivePaymentAutoID;
+        $data['companySystemID']=$output->custReceivePaymentAutoID;
+        $data['companyID']=$output->companyID;
+        $data['matchingDocID']=0;
+        $data['bookingInvCode']=0;
+        $data['comments']= $input['comments'];
+        $data['custTransactionCurrencyID'] = $output->custTransactionCurrencyID;
+        $data['custTransactionCurrencyER']  =  $output->custTransactionCurrencyER;
+        $data['companyReportingCurrencyID']= $output->companyRptCurrencyID;
+        $data['companyReportingER']=   $output->companyRptCurrencyER;
+        $data['localCurrencyID']= $output->localCurrencyID;
+        $data['localCurrencyER']= $output->localCurrencyER;
+        $currency = \Helper::convertAmountToLocalRpt($output->documentSystemID,$output->directReceiptAutoID,$receiveAmountTrans);
+        $data['bookingAmountTrans']=$receiveAmountTrans;
+        $data['bookingAmountLocal']=$currency['localAmount'];
+        $data['bookingAmountRpt']=$currency['reportingAmount'];
+
+        $data['custReceiveCurrencyER']=0;
+        $data['custbalanceAmount']=0;
+        $data['receiveAmountTrans']=$receiveAmountTrans;
+        $data['receiveAmountLocal']=$currency['localAmount'];
+        $data['receiveAmountRpt']=$currency['reportingAmount'];
+
+
     }
 }

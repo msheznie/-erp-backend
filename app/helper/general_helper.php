@@ -1688,7 +1688,7 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'companyReportingER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
-
+                break;
             case 21: // This is for receipt voucher - direct
                 $docInforArr["modelName"] = 'CustomerReceivePayment';
                 $docInforArr["transCurrencyID"] = 'custTransactionCurrencyID';
