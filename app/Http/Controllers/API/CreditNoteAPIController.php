@@ -328,6 +328,12 @@ class CreditNoteAPIController extends AppBaseController
         if (!$companyFinancePeriodCheck["success"]) {
             return $this->sendError($companyFinancePeriodCheck["message"], 500);
         }
+      /*  if ($input['companyFinanceYearID'] != $creditNote->companyFinanceYearID) {
+            $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+            $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
+            $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
+        }*/
+
 
         if ($input['companyFinancePeriodID'] != $creditNote->companyFinancePeriodID) {
             $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();

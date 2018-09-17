@@ -339,6 +339,12 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $inputData['localAmount'] = 0;
         $inputData['comRptCurrency'] = $companyCurrency->reportingcurrency->currencyID;
         $inputData['comRptCurrencyER'] = $master->companyReportingER;
+        if ($master->FYBiggin) {
+            $finYearExp = explode('-', $master->FYBiggin);
+            $inputData['budgetYear'] = $finYearExp[0];
+        } else {
+            $inputData['budgetYear'] = date("Y");
+        }
         $inputData['comRptAmount'] = 0;
 
 
@@ -421,7 +427,12 @@ class CreditNoteDetailsAPIController extends AppBaseController
             $input['contractUID'] = NULL;
         }
 
-
+        if ($master->FYBiggin) {
+            $finYearExp = explode('-', $master->FYBiggin);
+            $input['budgetYear'] = $finYearExp[0];
+        } else {
+            $input['budgetYear'] = date("Y");
+        }
 
         if ($input['creditAmount'] != $detail->creditAmount) {
             $myCurr = $master->customerCurrencyID;               /*currencyID*/
