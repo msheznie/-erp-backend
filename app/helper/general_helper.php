@@ -1688,7 +1688,7 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'companyReportingER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
-
+                break;
             case 21: // This is for receipt voucher - direct
                 $docInforArr["modelName"] = 'CustomerReceivePayment';
                 $docInforArr["transCurrencyID"] = 'custTransactionCurrencyID';
@@ -1710,6 +1710,17 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'comRptER';
                 $docInforArr["localCurrencyER"] = 'localER';
                 $docInforArr["defaultCurrencyER"] = 'supplierDefaultCurrencyER';
+                break;
+            case 14: // Logistic
+                $docInforArr["modelName"] = 'Logistic';
+                $docInforArr["transCurrencyID"] = 'customInvoiceCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'customInvoiceCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'customInvoiceRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'customInvoiceLocalCurrencyID';
+                $docInforArr["transCurrencyER"] = 'customInvoiceRptER';
+                $docInforArr["rptCurrencyER"] = 'customInvoiceRptER';
+                $docInforArr["localCurrencyER"] = 'customInvoiceLocalER';
+                $docInforArr["defaultCurrencyER"] = 'customInvoiceRptER';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];

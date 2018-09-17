@@ -1346,20 +1346,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($documentApproval) {
             if ($documentApproval->approvedYN == 0) {
                 $companyDocument = CompanyDocumentAttachment::where('companySystemID', $invoice->companySystemID)
-                    ->where('documentSystemID', $invoice->documentSystemID)
+                    ->where('documentSystemID', $invoice->documentSystemiD)
                     ->first();
 
-                if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
-                }
+
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
                     ->where('companySystemID', $documentApproval->companySystemID)
                     ->where('documentSystemID', $documentApproval->documentSystemID);
 
-                if ($companyDocument['isServiceLineApproval'] == -1) {
+               /* if ($companyDocument['isServiceLineApproval'] == -1) {
                     $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
-                }
+                }*/
 
                 $approvalList = $approvalList
                     ->with(['employee'])

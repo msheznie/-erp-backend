@@ -19,6 +19,7 @@ use App\Models\GRVMaster;
 use App\Models\Logistic;
 use App\Models\LogisticDetails;
 use App\Models\ProcumentOrder;
+use App\Models\PurchaseOrderDetails;
 use App\Repositories\LogisticDetailsRepository;
 use App\Repositories\LogisticRepository;
 use Illuminate\Http\Request;
@@ -31,14 +32,13 @@ use Response;
  * Class LogisticDetailsController
  * @package App\Http\Controllers\API
  */
-
 class LogisticDetailsAPIController extends AppBaseController
 {
     /** @var  LogisticDetailsRepository */
     private $logisticDetailsRepository;
     private $logisticRepository;
 
-    public function __construct(LogisticDetailsRepository $logisticDetailsRepo,LogisticRepository $logisticRepo)
+    public function __construct(LogisticDetailsRepository $logisticDetailsRepo, LogisticRepository $logisticRepo)
     {
         $this->logisticDetailsRepository = $logisticDetailsRepo;
         $this->logisticRepository = $logisticRepo;
@@ -239,9 +239,9 @@ class LogisticDetailsAPIController extends AppBaseController
             return $this->sendError('Logistic Details not found');
         }
 
-        $logisticDetails = $this->logisticDetailsRepository->update($input, $id);
+        $logisticDetails = $this->logisticDetailsRepository->update(array_only($input, ['itemShippingQty']), $id);
 
-        return $this->sendResponse($logisticDetails->toArray(), 'LogisticDetails updated successfully');
+        return $this->sendResponse($logisticDetails->toArray(), 'Logistic Details updated successfully');
     }
 
     /**
@@ -291,6 +291,25 @@ class LogisticDetailsAPIController extends AppBaseController
             return $this->sendError('Logistic Details not found');
         }
 
+        $poDetail = PurchaseOrderDetails::find($logisticDetails->POdetailID);
+        if (!empty($poDetail)) {
+            $poDetail->logisticSelectedYN = 0;
+            $poDetail->save();
+        }
+
+        $checkAllSelected = PurchaseOrderDetails::where('purchaseOrderMasterID', $logisticDetails->POid)
+            ->where('logisticSelectedYN', 1)
+            ->count();
+
+        if ($checkAllSelected == 0) {
+            $po = ProcumentOrder::find($logisticDetails->POid);
+            if (!empty($po)) {
+                $po->logisticDoneYN = 0;
+                $po->save();
+            }
+        }
+
+
         $logisticDetails->delete();
 
         return $this->sendResponse($id, 'Logistic Details deleted successfully');
@@ -309,8 +328,8 @@ class LogisticDetailsAPIController extends AppBaseController
         $rId = $input['logisticMasterID'];
 
         $items = LogisticDetails::where('logisticMasterID', $rId)
-                                    ->with(['uom', 'supplier_by','warehouse_by','po'])
-                                    ->get();
+            ->with(['uom', 'supplier_by', 'warehouse_by', 'po'])
+            ->get();
 
         return $this->sendResponse($items->toArray(), 'Logistic Details retrieved successfully');
     }
@@ -335,15 +354,17 @@ class LogisticDetailsAPIController extends AppBaseController
         }
 
         $purchaseOrders = ProcumentOrder::where('companySystemID', $logistic->companySystemID)
-                                        ->whereHas('detail',function ($q){
-                                            $q->whereHas('grv_details');
-                                        })
-                                        ->where('supplierID',$logistic->supplierID)
-                                        ->where('poConfirmedYN',1)
-                                        ->where('poCancelledYN',0)
-                                        ->where('manuallyClosed',0)
-                                        ->where('approved',-1)
-                                        ->get();
+            ->whereHas('detail', function ($q) {
+                $q->where("logisticSelectedYN", 0)
+                    ->where("logisticRecievedYN", 0)
+                    ->whereHas('grv_details');
+            })
+            ->where('supplierID', $logistic->supplierID)
+            ->where('poConfirmedYN', 1)
+            ->where('poCancelledYN', 0)
+            ->where('logisticDoneYN', 0)
+            ->where('approved', -1)
+            ->get();
 
         return $this->sendResponse($purchaseOrders->toArray(), 'Purchase Orders retrieved successfully');
     }
@@ -360,10 +381,18 @@ class LogisticDetailsAPIController extends AppBaseController
         }
 
         $grvs = GRVMaster::where('companySystemID', $purchaseOrder->companySystemID)
-                                ->whereHas('details',function ($q) use($purchaseOrder){
-                                    $q->where('purchaseOrderMastertID',$purchaseOrder->purchaseOrderID);
-                                })
-                                ->get();
+            ->where("approved", -1)
+            ->whereHas('details', function ($q) use ($purchaseOrder) {
+                $q->whereHas('po_detail', function ($q) {
+                    $q->whereHas('order', function ($q) {
+                            $q->where('logisticDoneYN', 0);
+                         })
+                        ->where("logisticSelectedYN", 0)
+                        ->where("logisticRecievedYN", 0);
+                })
+                    ->where('purchaseOrderMastertID', $purchaseOrder->purchaseOrderID);
+            })
+            ->get();
 
         return $this->sendResponse($grvs->toArray(), 'GRV  retrieved successfully');
     }
@@ -374,8 +403,16 @@ class LogisticDetailsAPIController extends AppBaseController
         $id = $input['id'];
         $poId = $input['poId'];
 
-        $grv = GRVMaster::with(['details' => function($q) use($poId){
-            $q->where('purchaseOrderMastertID',$poId)->with(['item_by']);
+        $grv = GRVMaster::with(['details' => function ($q) use ($poId) {
+            $q->where('purchaseOrderMastertID', $poId)
+                ->whereHas('po_detail', function ($q) {
+                    $q->whereHas('order', function ($q) {
+                        $q->where('logisticDoneYN', 0);
+                    })
+                        ->where("logisticSelectedYN", 0)
+                        ->where("logisticRecievedYN", 0);
+                })
+                ->with(['item_by']);
         }])->find($id);
 
         if (empty($grv)) {
@@ -394,7 +431,7 @@ class LogisticDetailsAPIController extends AppBaseController
         $logistic = $this->logisticRepository->findWithoutFail($input['logisticMasterID']);
 
         if (empty($logistic)) {
-            return $this->sendError('Logistic not found',500);
+            return $this->sendError('Logistic not found', 500);
         }
 
         $finalError = array('same_item' => array());
@@ -405,40 +442,41 @@ class LogisticDetailsAPIController extends AppBaseController
 
             if ($new['isChecked']) {
                 $detailExistSameItem = LogisticDetails::where('logisticMasterID', $input['logisticMasterID'])
-                                                        ->where('itemcodeSystem', $new['itemCode'])
-                                                        ->where('POid', $new['purchaseOrderMastertID'])
-                                                        ->where('POdetailID', $new['purchaseOrderDetailsID'])
-                                                        ->count();
+                    ->where('GRVsystemCode', $new['grvAutoID'])
+                    ->where('itemcodeSystem', $new['itemCode'])
+                    ->where('POid', $new['purchaseOrderMastertID'])
+                    ->where('POdetailID', $new['purchaseOrderDetailsID'])
+                    ->count();
 
-                if($detailExistSameItem > 0) {
+                if ($detailExistSameItem > 0) {
                     array_push($finalError['same_item'], $new['itemPrimaryCode']);
                     $error_count++;
                 }
 
-                $item = array();
-
-                $item['logisticMasterID'] = $input['logisticMasterID'];
-                $item['companySystemID'] = $logistic->companySystemID;
-                $item['companyID'] = $logistic->companyID;
-                $item['supplierID'] = $logistic->supplierID;
-                $item['POid'] = $new['purchaseOrderMastertID'];
-                $item['POdetailID'] = $new['purchaseOrderDetailsID'];
-                $item['itemcodeSystem'] = $new['itemCode'];
-                $item['itemPrimaryCode'] = $new['itemPrimaryCode'];
-                $item['itemDescription'] = $new['itemDescription'];
-
-                if($new['item_by']){
-                    $item['partNo'] = $new['item_by']['secondaryItemCode'];
-                }else{
-                    $item['partNo'] = '';
+                if ($detailExistSameItem == 0) {
+                    $item = array();
+                    $item['logisticMasterID'] = $input['logisticMasterID'];
+                    $item['companySystemID'] = $logistic->companySystemID;
+                    $item['companyID'] = $logistic->companyID;
+                    $item['supplierID'] = $logistic->supplierID;
+                    $item['POid'] = $new['purchaseOrderMastertID'];
+                    $item['POdetailID'] = $new['purchaseOrderDetailsID'];
+                    $item['itemcodeSystem'] = $new['itemCode'];
+                    $item['itemPrimaryCode'] = $new['itemPrimaryCode'];
+                    $item['itemDescription'] = $new['itemDescription'];
+                    if ($new['item_by']) {
+                        $item['partNo'] = $new['item_by']['secondaryItemCode'];
+                    } else {
+                        $item['partNo'] = '';
+                    }
+                    $item['itemUOM'] = $new['unitOfMeasure'];
+                    $item['itemPOQtry'] = $new['poQty'];
+                    $item['itemShippingQty'] = 0;
+                    $item['POdeliveryWarehousLocation'] = $logistic->agentDeliveryLocationID;
+                    $item['GRVsystemCode'] = $new['grvAutoID'];
+                    $item['GRVStatus'] = -1;
+                    array_push($createArray, $item);
                 }
-                $item['itemUOM'] = $new['unitOfMeasure'];
-                $item['itemPOQtry'] = $new['poQty'];
-                $item['itemShippingQty'] = 0;
-                $item['POdeliveryWarehousLocation'] = $logistic->agentDeliveryLocationID;
-                $item['GRVStatus'] = '';
-                $item['GRVsystemCode'] = '';
-                array_push($createArray, $item);
             }
         }
 
@@ -449,11 +487,32 @@ class LogisticDetailsAPIController extends AppBaseController
             return $this->sendError("You cannot add this items.", 500, $confirm_error);
         } else {
 
-            if(count($createArray) > 0){
+            if (count($createArray) > 0) {
                 foreach ($createArray as $item) {
-                    $this->logisticDetailsRepository->create($item);
+                    $newRow = $this->logisticDetailsRepository->create($item);
+                    if (!empty($newRow)) {
+
+                        $poDetail = PurchaseOrderDetails::find($newRow->POdetailID);
+                        if (!empty($poDetail)) {
+                            $poDetail->logisticSelectedYN = 1;
+                            $poDetail->save();
+                        }
+
+                        $checkAllSelected = PurchaseOrderDetails::where('purchaseOrderMasterID', $newRow->POid)
+                            ->where('logisticSelectedYN', 1)
+                            ->count();
+
+                        if ($checkAllSelected == 0) {
+                            $po = ProcumentOrder::fiind($newRow->POid);
+                            if (!empty($po)) {
+                                $po->logisticDoneYN = 1;
+                                $po->save();
+                            }
+                        }
+                    }
+
                 }
-            }else{
+            } else {
                 return $this->sendError("Please select the items.", 500);
             }
         }

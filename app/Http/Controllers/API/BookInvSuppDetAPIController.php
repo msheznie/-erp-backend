@@ -361,7 +361,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
                 if (!empty($siDetailExist)) {
                     foreach ($siDetailExist as $row) {
-                        $itemDrt = $row['grvmaster']['grvPrimaryCode'] . " all ready exist";
+                        $itemDrt = $row['grvmaster']['grvPrimaryCode'] . " already exist";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
@@ -394,7 +394,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
                 if($balanceAmount){
                     if (($groupMasterCheck->totTransactionAmount == $balanceAmount->SumOftotTransactionAmount) ||  ($balanceAmount->SumOftotTransactionAmount > $groupMasterCheck->totTransactionAmount)) {
-                        $itemDrt = "Selected ".$temp['grvmaster']['grvPrimaryCode']." GRV has been booked fully. Please check again";
+                        $itemDrt = "Selected ".$temp['grvmaster']['grvPrimaryCode']." GRV has been fully booked. Please check again";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
