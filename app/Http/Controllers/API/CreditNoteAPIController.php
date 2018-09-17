@@ -739,9 +739,9 @@ class CreditNoteAPIController extends AppBaseController
                     ->where('documentSystemID', $creditnote->documentSystemID)
                     ->first();
 
-                if (empty($companyDocument)) {
+                /*if (empty($companyDocument)) {
                     return ['success' => false, 'message' => 'Policy not found for this document'];
-                }
+                }*/
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
                     ->where('companySystemID', $documentApproval->companySystemID)

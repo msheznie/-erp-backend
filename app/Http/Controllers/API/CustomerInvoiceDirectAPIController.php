@@ -1349,9 +1349,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     ->where('documentSystemID', $invoice->documentSystemID)
                     ->first();
 
-                if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
-                }
+
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
                     ->where('companySystemID', $documentApproval->companySystemID)
