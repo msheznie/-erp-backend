@@ -275,6 +275,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
             }
 
+            if ($input['chequePaymentYN']) {
+                $input['chequePaymentYN'] = -1;
+            } else {
+                $input['chequePaymentYN'] = 0;
+            }
+
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
             $input['createdPcID'] = gethostname();
@@ -283,31 +289,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->create($input);
 
-            $paySupplierInvoice = PaySupplierInvoiceMaster::find($paySupplierInvoiceMasters->PayMasterAutoId);
-            if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
-                if ($input['chequePaymentYN']) {
-                    $bankAccount = BankAccount::find($input['BPVAccount']);
-                    if ($bankAccount->isPrintedActive == 1) {
-                        $chequeNumber = $bankAccount->chquePrintedStartingNo + 1;
-                        $paySupplierInvoice->BPVchequeNo = $chequeNumber;
-                        $paySupplierInvoice->save();
-
-                        $bankAccount->chquePrintedStartingNo = $chequeNumber;
-                        $bankAccount->save();
-                    }
-                } else {
-                    $chkCheque = PaySupplierInvoiceMaster::where('companyID', $input['companySystemID'])->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('PayMasterAutoId', 'ASC')->first();
-                    if ($chkCheque) {
-                        $paySupplierInvoice->BPVchequeNo = 1;
-                        $paySupplierInvoice->save();
-                    } else {
-                        $paySupplierInvoice->BPVchequeNo = $chkCheque->BPVchequeNo + 1;
-                        $paySupplierInvoice->save();
-                    }
-                }
-            } else {
-                /*return $this->sendError("Cheque number won\'t be generated. The bank currency and the local currency is not equal", 500);*/
-            }
             DB::commit();
             return $this->sendResponse($paySupplierInvoiceMasters->toArray(), 'Pay Supplier Invoice Master saved successfully');
         } catch (\Exception $exception) {
@@ -483,6 +464,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
+            if ($input['chequePaymentYN']) {
+                $input['chequePaymentYN'] = -1;
+            } else {
+                $input['chequePaymentYN'] = 0;
+            }
+
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -606,6 +593,38 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
                 }
+
+                $paySupplierInvoice = PaySupplierInvoiceMaster::find($id);
+                if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
+                    if ($input['chequePaymentYN'] == -1) {
+
+                        $bankAccount = BankAccount::find($input['BPVAccount']);
+                        $nextChequeNo = $bankAccount->chquePrintedStartingNo + 1;
+
+                        $checkChequeNoDuplicate = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('BPVbank', $input['BPVbank'])->where('BPVAccount', $input['BPVAccount'])->where('BPVchequeNo', $nextChequeNo)->first();
+
+                        if ($checkChequeNoDuplicate) {
+                            return $this->sendError('The cheque no ' . $nextChequeNo . ' is already taken in ' . $checkChequeNoDuplicate['BPVcode'] . ' Please check again.', 500, ['type' => 'confirm']);
+                        }
+
+                        if ($bankAccount->isPrintedActive == 1) {
+                            $chequeNumber = $bankAccount->chquePrintedStartingNo + 1;
+                            $input['BPVchequeNo'] = $chequeNumber;
+
+                            $bankAccount->chquePrintedStartingNo = $chequeNumber;
+                            $bankAccount->save();
+                        }
+                    } else {
+                        $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('PayMasterAutoId', 'ASC')->first();
+                        if ($chkCheque) {
+                            $input['BPVchequeNo'] = 1;
+                        } else {
+                            $input['BPVchequeNo'] = $chkCheque->BPVchequeNo + 1;
+                        }
+                    }
+                } else {
+                    /*return $this->sendError("Cheque number won\'t be generated. The bank currency and the local currency is not equal", 500);*/
+                }
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 2) {
@@ -652,6 +671,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
+
             DB::commit();
             return $this->sendResponse($paySupplierInvoiceMaster->toArray(), 'PaySupplierInvoiceMaster updated successfully');
         } catch (\Exception $exception) {
@@ -1128,11 +1148,34 @@ WHERE
                 ->where('companySystemID', $payInvoice->companySystemID)
                 ->where('documentSystemID', $payInvoice->documentSystemID)
                 ->delete();
+
+            $paySupplierInvoice = PaySupplierInvoiceMaster::find($id);
+            if ($paySupplierInvoice->BPVbankCurrency == $paySupplierInvoice->localCurrencyID && $paySupplierInvoice->supplierTransCurrencyID == $paySupplierInvoice->localCurrencyID) {
+                if ($paySupplierInvoice->chequePaymentYN == -1) {
+                    $bankAccount = BankAccount::find($paySupplierInvoice->BPVAccount);
+                    if ($bankAccount->isPrintedActive == 1) {
+                        $paySupplierInvoice->BPVchequeNo = 0;
+                        $paySupplierInvoice->save();
+                    }
+                } else {
+                    $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('PayMasterAutoId', 'ASC')->first();
+                    if ($chkCheque) {
+                        $paySupplierInvoice->BPVchequeNo = 0;
+                        $paySupplierInvoice->save();
+                    } else {
+                        $paySupplierInvoice->BPVchequeNo = 0;
+                        $paySupplierInvoice->save();
+                    }
+                }
+            } else {
+                /*return $this->sendError("Cheque number won\'t be generated. The bank currency and the local currency is not equal", 500);*/
+            }
+
             DB::commit();
             return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher reopened successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError($exception->getMessage());
         }
 
     }
