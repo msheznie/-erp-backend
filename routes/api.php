@@ -848,7 +848,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
     Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
 
+    Route::resource('bank_ledgers', 'BankLedgerAPIController');
 
+    Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
+    Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
 
 });
 
@@ -908,4 +911,3 @@ Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
 
 
 Route::resource('performa_temps', 'PerformaTempAPIController');
-
