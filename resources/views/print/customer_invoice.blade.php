@@ -4,6 +4,7 @@
         margin-left: 3%;
         margin-right: 3%;
         margin-top: 4%;
+        color: black;
     }
 
     .footer {
@@ -12,7 +13,8 @@
 
     body {
         font-size: 11.5px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        color: black;
     }
 
     h3 {
@@ -48,6 +50,7 @@
 
     table {
         border-collapse: collapse;
+        color: black;
     }
 
     .font-weight-bold {
@@ -221,6 +224,7 @@
     <div class="row">
         <br>
     </div>
+
     <div class="row">
         <table style="width:100%">
             <td style="width: 40%">
@@ -395,6 +399,7 @@
         </table>
 
     </div>
+
     <br>
     <div class="row">
         <b>Comments : </b> {{$request->comments}}
@@ -428,8 +433,8 @@
                         <td>{{$x}}</td>
                         <td style="width: 10%">{{$item->ClientRef}}</td>
                         <td>{{$item->assetDescription}}</td>
-                        <td style="width: 8%;text-align: center">{{$item->mitQty}}</td>
-                        <td style="width: 10%">{{$item->opRate}}</td>
+                        <td style="width: 8%;text-align: center">{{$item->qty}}</td>
+                        <td style="width: 10%">{{$item->rate}}</td>
 
                         <td style="width: 10%" class="text-right">{{number_format($item->amount,$numberFormatting)}}</td>
                     </tr>
@@ -452,12 +457,16 @@
                     <th style="width:10%;text-align: center">Amount</th>
                 </tr>
                 </thead>
+
                 <tbody>
                 {{$decimal = 2}}
                 {{$x=1}}
                 {{$directTraSubTotal=0}}
                 {{$numberFormatting=2}}
+                {{$request->invoicedetail->billmaster->performatemp}}
+                {{exit}}
                 @foreach ($request->invoicedetail->billmaster->performatemp as $item)
+
                     {{$directTraSubTotal +=$item->sumofsumofStandbyAmount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                         <td>{{$x}}</td>
@@ -472,6 +481,7 @@
 
             </table>
         @endif
+
         @if ($request->template <> 1 && !$request->line_invoiceDetails)
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
