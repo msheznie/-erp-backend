@@ -15,6 +15,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePaySupplierInvoiceDetailAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceDetailAPIRequest;
 use App\Models\AccountsPayableLedger;
+use App\Models\BankAssign;
 use App\Models\MatchDocumentMaster;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
@@ -237,6 +238,20 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         if (empty($paySupplierInvoiceDetail)) {
             return $this->sendError('Pay Supplier Invoice Detail not found');
+        }
+
+        $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
+
+        $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID',$payMaster->BPVbank)->first();
+
+        if (empty($bankMaster)) {
+            return $this->sendError('Selected Bank is not active',500,['type' => 'amountmismatch']);
+        }
+
+        $bankAccount = \App\Models\BankAccount::isActive()->find($payMaster->BPVAccount);
+
+        if (empty($bankAccount)) {
+            return $this->sendError('Selected Bank Account is not active',500,['type' => 'amountmismatch']);
         }
 
         $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])->where('payDetailAutoID','<>', $id)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();

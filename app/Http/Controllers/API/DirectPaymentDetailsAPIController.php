@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDirectPaymentDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDirectPaymentDetailsAPIRequest;
+use App\Models\BankAccount;
+use App\Models\BankAssign;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\DirectPaymentDetails;
@@ -119,16 +121,26 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Company not found');
         }
 
-        $input['companyID'] = $company->companyID;
+        $input['companyID'] = $company->CompanyID;
 
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if (empty($chartOfAccount)) {
             return $this->sendError('Chart of Account not found');
         }
 
-        $input['glCode'] = $chartOfAccount->AccountCode;
-        $input['glCodeDes'] = $chartOfAccount->AccountDescription;
-        $input['glCodeIsBank'] = $chartOfAccount->isBank;
+        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 1]);
+
+        if (count($directPaymentDetails) > 0) {
+            return $this->sendError('You cannot add item because already a bank account is added');
+        }
+
+        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 0]);
+
+        if (count($directPaymentDetails) > 0) {
+            if($chartOfAccount->isBank){
+                return $this->sendError('You cannot add a bank account as already items added');
+            }
+        }
 
         $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);
 
@@ -136,14 +148,28 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Payment voucher not found');
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, 0);
+        $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID',$payMaster->BPVbank)->first();
+
+        if (empty($bankMaster)) {
+            return $this->sendError('Selected Bank is not active');
+        }
+
+        $bankAccount = BankAccount::isActive()->find($payMaster->BPVAccount);
+
+        if (empty($bankAccount)) {
+            return $this->sendError('Selected Bank Account is not active');
+        }
+
+        $input['glCode'] = $chartOfAccount->AccountCode;
+        $input['glCodeDes'] = $chartOfAccount->AccountDescription;
+        $input['glCodeIsBank'] = $chartOfAccount->isBank;
 
         $input['DPAmountCurrency'] = $payMaster->supplierTransCurrencyID;
         $input['DPAmountCurrencyER'] = 1;
         $input['localCurrency'] = $payMaster->localCurrencyID;
-        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        $input['localCurrencyER'] = $payMaster->localCurrencyER;
         $input['comRptCurrency'] = $payMaster->companyRptCurrencyID;
-        $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+        $input['comRptCurrencyER'] = $payMaster->companyRptCurrencyER;
         $input['bankCurrencyID'] = $payMaster->BPVbankCurrency;
         $input['bankCurrencyER'] = $payMaster->BPVbankCurrencyER;
 
@@ -276,7 +302,19 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);
 
         if (empty($payMaster)) {
-            return $this->sendError('Book Inv Supp Master not found');
+            return $this->sendError('Direct Payment Supp Master not found');
+        }
+
+        $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID',$payMaster->BPVbank)->first();
+
+        if (empty($bankMaster)) {
+            return $this->sendError('Selected Bank is not active');
+        }
+
+        $bankAccount = BankAccount::isActive()->find($payMaster->BPVAccount);
+
+        if (empty($bankAccount)) {
+            return $this->sendError('Selected Bank Account is not active');
         }
 
         if (isset($input['serviceLineSystemID'])) {
@@ -296,13 +334,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             }
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['DPAmount'],$payMaster->BPVAccount);
+        $conversionAmount = \Helper::convertAmountToLocalRpt(202, $input["directPaymentDetailsID"], ABS($input['DPAmount']));
 
-        $input['localAmount'] = $companyCurrencyConversion['localAmount'];
-        $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
-        $input['bankAmount'] = $companyCurrencyConversion['bankAmount'];
-        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-        $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+        $input['localAmount'] = $conversionAmount['localAmount'];
+        $input['comRptAmount'] = $conversionAmount['reportingAmount'];
+        $input['bankAmount'] = $conversionAmount['defaultAmount'];
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
 
@@ -370,4 +406,14 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         return $this->sendResponse($directPaymentDetails, 'Details retrieved successfully');
     }
+
+    public function deleteAllDirectPayment(Request $request){
+
+        $id = $request->directPaymentAutoID;
+
+        $directPaymentDetails =DirectPaymentDetails::where('directPaymentAutoID',$id)->delete();
+
+        return $this->sendResponse($directPaymentDetails, 'Successfully delete');
+    }
+
 }
