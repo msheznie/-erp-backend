@@ -183,4 +183,5 @@ class CustomerInvoiceDirectRepository extends BaseRepository
          ])->findWithoutFail($id);
         return $customerInvoiceDirect;
     }
+
 }

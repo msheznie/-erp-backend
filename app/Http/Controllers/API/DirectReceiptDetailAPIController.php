@@ -308,7 +308,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $id = $input['id'];
         $detail['detail'] = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
 
-        $detail['custreceiptVocuherDetail'] = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID',$id)->get();
+        $detail['custreceiptVocuherDetail'] = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID',$id)->get();
         return $this->sendResponse($detail, 'Direct Receipt Detail deleted successfully');
     }
 

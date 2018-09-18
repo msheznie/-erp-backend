@@ -177,8 +177,8 @@ class CustomerReceivePaymentDetail extends Model
 
     public $table = 'erp_custreceivepaymentdet';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timestamp';
+    const UPDATED_AT = 'timestamp';
     protected $primaryKey = 'custRecivePayDetAutoID';
 
 

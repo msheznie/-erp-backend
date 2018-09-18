@@ -75,6 +75,31 @@ class BankAssign extends Model
     ];
 
     /**
+     * Scope a query to only include active bankaccount.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeIsActive($query)
+    {
+        return $query->where('isActive',  1);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCompany($query, $type)
+    {
+        return $query->where('companySystemID',  $type);
+    }
+
+    /**
      * Validation rules
      *
      * @var array

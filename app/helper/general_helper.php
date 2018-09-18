@@ -1711,6 +1711,17 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localER';
                 $docInforArr["defaultCurrencyER"] = 'supplierDefaultCurrencyER';
                 break;
+            case 202: // Direct Payment
+                $docInforArr["modelName"] = 'DirectPaymentDetails';
+                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'bankCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'comRptCurrency';
+                $docInforArr["localCurrencyID"] = 'localCurrency';
+                $docInforArr["transCurrencyER"] = 'supplierTransER';
+                $docInforArr["rptCurrencyER"] = 'comRptCurrencyER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'bankCurrencyER';
+                break;
             case 14: // Logistic
                 $docInforArr["modelName"] = 'Logistic';
                 $docInforArr["transCurrencyID"] = 'customInvoiceCurrencyID';
