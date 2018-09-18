@@ -461,6 +461,12 @@ class Logistic extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
     public function supplier_by()
     {
         return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
@@ -470,4 +476,24 @@ class Logistic extends Model
     {
         return $this->belongsTo('App\Models\LogisticShippingMode', 'logisticShippingModeID', 'logisticShippingModeID');
     }
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\LogisticDetails','logisticMasterID','logisticMasterID');
+    }
+
+    public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'customInvoiceLocalCurrencyID','currencyID');
+    }
+
+    public function reporting_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'customInvoiceRptCurrencyID','currencyID');
+    }
+
 }

@@ -1691,11 +1691,11 @@ class Helper
                 break;
             case 21: // This is for receipt voucher - direct
                 $docInforArr["modelName"] = 'CustomerReceivePayment';
-                $docInforArr["transCurrencyID"] = 'bankCurrency';
-                $docInforArr["transDefaultCurrencyID"] = 'bankCurrency';
+                $docInforArr["transCurrencyID"] = 'custTransactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'custTransactionCurrencyID';
                 $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
                 $docInforArr["localCurrencyID"] = 'localCurrencyID';
-                $docInforArr["transCurrencyER"] = 'bankCurrencyER';
+                $docInforArr["transCurrencyER"] = 'custTransactionCurrencyER';
                 $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
@@ -1721,6 +1721,17 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'comRptCurrencyER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'bankCurrencyER';
+                break;
+            case 14: // Logistic
+                $docInforArr["modelName"] = 'Logistic';
+                $docInforArr["transCurrencyID"] = 'customInvoiceCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'customInvoiceCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'customInvoiceRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'customInvoiceLocalCurrencyID';
+                $docInforArr["transCurrencyER"] = 'customInvoiceRptER';
+                $docInforArr["rptCurrencyER"] = 'customInvoiceRptER';
+                $docInforArr["localCurrencyER"] = 'customInvoiceLocalER';
+                $docInforArr["defaultCurrencyER"] = 'customInvoiceRptER';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];

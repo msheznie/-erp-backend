@@ -14,11 +14,13 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateAccountsReceivableLedgerAPIRequest;
 use App\Http\Requests\API\UpdateAccountsReceivableLedgerAPIRequest;
 use App\Models\AccountsReceivableLedger;
+use App\Models\CustomerReceivePayment;
 use App\Repositories\AccountsReceivableLedgerRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -286,5 +288,117 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
         $accountsReceivableLedger->delete();
 
         return $this->sendResponse($id, 'Accounts Receivable Ledger deleted successfully');
+    }
+
+    public function getCustomerReceiptInvoices(Request $request){
+
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $master = CustomerReceivePayment::where('custReceivePaymentAutoID',$input['id'])->first();
+        $search = $request->input('search.value');
+        $filter='';
+        if($search){
+            $search = str_replace("\\", "\\\\\\\\", $search);
+            $filter= " AND ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%' OR erp_accountsreceivableledger.documentCode LIKE '%{$search}%' ) ";
+        }
+         $qry="SELECT
+	erp_accountsreceivableledger.arAutoID,
+	erp_accountsreceivableledger.documentCodeSystem AS bookingInvSystemCode,
+	custTransCurrencyID,
+	erp_accountsreceivableledger.custTransER,	erp_accountsreceivableledger.InvoiceNo,
+	erp_accountsreceivableledger.localCurrencyID,
+	erp_accountsreceivableledger.localER,
+	erp_accountsreceivableledger.localAmount,
+	erp_accountsreceivableledger.comRptCurrencyID,
+	erp_accountsreceivableledger.comRptER,
+	erp_accountsreceivableledger.comRptAmount,
+	erp_accountsreceivableledger.companySystemID,
+	erp_accountsreceivableledger.companyID,
+	erp_accountsreceivableledger.documentSystemID AS addedDocumentSystemID,
+	erp_accountsreceivableledger.documentID AS addedDocumentID,
+	erp_accountsreceivableledger.documentCode AS bookingInvDocCode,
+	erp_accountsreceivableledger.documentDate AS bookingInvoiceDate,
+	erp_accountsreceivableledger.customerID,
+	IFNULL( SumOfreceiveAmountTrans, 0 ) AS SumOfreceiveAmountTrans,
+	CurrencyCode,
+	DecimalPlaces,
+	IFNULL( SumOfcustbalanceAmount, 0 ) AS SumOfcustbalanceAmount,
+	IFNULL( matchedAmount, 0 ) AS matchedAmount,
+	FALSE AS isChecked 
+FROM
+	erp_accountsreceivableledger
+	LEFT JOIN (
+SELECT
+	erp_custreceivepaymentdet.arAutoID,
+	Sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS SumOfreceiveAmountTrans,
+	Sum( erp_custreceivepaymentdet.custbalanceAmount ) AS SumOfcustbalanceAmount 
+FROM
+	erp_custreceivepaymentdet 
+WHERE
+	companySystemID = $master->companySystemID 
+GROUP BY
+	erp_custreceivepaymentdet.arAutoID 
+HAVING
+	erp_custreceivepaymentdet.arAutoID IS NOT NULL 
+	) sid ON sid.arAutoID = erp_accountsreceivableledger.arAutoID
+	LEFT JOIN (
+SELECT
+	erp_matchdocumentmaster.PayMasterAutoId,
+	erp_matchdocumentmaster.companyID,
+	erp_matchdocumentmaster.documentSystemID,
+	erp_matchdocumentmaster.BPVcode,
+	erp_matchdocumentmaster.BPVsupplierID,
+	erp_matchdocumentmaster.supplierTransCurrencyID,
+	erp_matchdocumentmaster.matchedAmount,
+	erp_matchdocumentmaster.matchLocalAmount,
+	erp_matchdocumentmaster.matchRptAmount,
+	erp_matchdocumentmaster.matchingConfirmedYN 
+FROM
+	erp_matchdocumentmaster 
+WHERE
+	erp_matchdocumentmaster.companySystemID = $master->companySystemID 
+	AND erp_matchdocumentmaster.documentSystemID IN ( 20, 19 ) 
+	) md ON md.documentSystemID = erp_accountsreceivableledger.documentSystemID 
+	AND md.PayMasterAutoId = erp_accountsreceivableledger.documentCodeSystem 
+	AND md.BPVsupplierID = erp_accountsreceivableledger.customerID 
+	AND md.supplierTransCurrencyID = custTransCurrencyID
+	LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 
+WHERE
+	erp_accountsreceivableledger.documentDate < '{$master->custPaymentReceiveDate}' 
+	{$filter}
+	AND erp_accountsreceivableledger.selectedToPaymentInv = 0 
+	AND erp_accountsreceivableledger.fullyInvoiced <> 2 
+	AND erp_accountsreceivableledger.companySystemID = $master->companySystemID 
+	AND erp_accountsreceivableledger.customerID = $master->customerID 
+	AND erp_accountsreceivableledger.custTransCurrencyID = $master->custTransactionCurrencyID 
+HAVING
+	ROUND( SumOfcustbalanceAmount, DecimalPlaces ) > 0 ORDER BY arAutoID $sort";
+
+        $invMaster = DB::select($qry);
+
+
+
+        $col[0] = $input['order'][0]['column'];
+        $col[1] = $input['order'][0]['dir'];
+        $request->request->remove('order');
+        $data['order'] = [];
+        /*  $data['order'][0]['column'] = '';
+          $data['order'][0]['dir'] = '';*/
+        $data['search']['value'] = '';
+        $request->merge($data);
+
+
+
+        $request->request->remove('search.value');
+
+
+        return \DataTables::of($invMaster)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

@@ -328,6 +328,12 @@ class CreditNoteAPIController extends AppBaseController
         if (!$companyFinancePeriodCheck["success"]) {
             return $this->sendError($companyFinancePeriodCheck["message"], 500);
         }
+      /*  if ($input['companyFinanceYearID'] != $creditNote->companyFinanceYearID) {
+            $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+            $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
+            $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
+        }*/
+
 
         if ($input['companyFinancePeriodID'] != $creditNote->companyFinancePeriodID) {
             $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
@@ -739,17 +745,17 @@ class CreditNoteAPIController extends AppBaseController
                     ->where('documentSystemID', $creditnote->documentSystemID)
                     ->first();
 
-                if (empty($companyDocument)) {
+                /*if (empty($companyDocument)) {
                     return ['success' => false, 'message' => 'Policy not found for this document'];
-                }
+                }*/
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
                     ->where('companySystemID', $documentApproval->companySystemID)
                     ->where('documentSystemID', $documentApproval->documentSystemID);
 
-                if ($companyDocument['isServiceLineApproval'] == -1) {
+              /*  if ($companyDocument['isServiceLineApproval'] == -1) {
                     $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
-                }
+                }*/
 
                 $approvalList = $approvalList
                     ->with(['employee'])

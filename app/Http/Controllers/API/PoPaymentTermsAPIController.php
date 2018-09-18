@@ -99,13 +99,14 @@ class PoPaymentTermsAPIController extends AppBaseController
             return $this->sendError('Purchase Order not found');
         }
 
-        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
+/*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
         if ($supplier) {
             $input['inDays'] = $supplier->creditPeriod;
-        }
+        }*/
+        $input['inDays'] = $purchaseOrder->creditPeriod;
 
-        if (!empty($purchaseOrder->expectedDeliveryDate) && !empty($supplier->creditPeriod)) {
-            $addedDate = strtotime("+$supplier->creditPeriod day", strtotime($purchaseOrder->expectedDeliveryDate));
+        if (!empty($purchaseOrder->expectedDeliveryDate) && !empty($purchaseOrder->creditPeriod)) {
+            $addedDate = strtotime("+$purchaseOrder->creditPeriod day", strtotime($purchaseOrder->expectedDeliveryDate));
             $input['comDate'] = date("Y-m-d", $addedDate);
         } else {
             $input['comDate'] = '';

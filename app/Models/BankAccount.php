@@ -167,4 +167,10 @@ class BankAccount extends Model
     public static $rules = [
         
     ];
+
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'accountCurrencyID','currencyID');
+    }
+
 }

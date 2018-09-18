@@ -17,7 +17,6 @@ use Response;
  * Class UnbilledGrvGroupByController
  * @package App\Http\Controllers\API
  */
-
 class UnbilledGrvGroupByAPIController extends AppBaseController
 {
     /** @var  UnbilledGrvGroupByRepository */
@@ -293,11 +292,17 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
-        $unbilledGrvGroupBy = UnbilledGrvGroupBy::where('companySystemID', $companyID)
-            ->with(['pomaster'])
+        $unbilledGrvGroupBy = UnbilledGrvGroupBy::whereHas('pomaster', function ($query) {
+            $query->where('approved', -1);
+            $query->where('poCancelledYN', 0);
+        })->whereHas('grvmaster', function ($query) {
+            $query->where('approved', -1);
+            $query->where('grvCancelledYN', 0);
+        })->with(['pomaster', 'grvmaster'])->where('companySystemID', $companyID)
             ->where('fullyBooked', '<>', 2)
             ->where('supplierID', $bookInvSuppMaster->supplierID)
             ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
+            ->where('grvDate', '<=', $bookInvSuppMaster->bookingDate)
             ->groupBy('purchaseOrderID')
             ->orderBy('purchaseOrderID', 'ASC')
             ->get();
@@ -320,13 +325,20 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
-/*        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = ' . $prID . ' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');*/
+        /*        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = ' . $prID . ' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');*/
 
-        $unbilledGrvGroupBy = UnbilledGrvGroupBy::where('companySystemID', $companyID)
-            ->with(['pomaster', 'grvmaster'])
+/*        ->whereHas('detail', function ($query) {
+        $query->havingRaw('IFNULL(SUM(totTransactionAmount),0) > ?',[0]);
+    })*/
+        $unbilledGrvGroupBy = UnbilledGrvGroupBy::whereHas('grvmaster', function ($query) {
+            $query->where('interCompanyTransferYN', 0);
+        })->with(['pomaster', 'grvmaster'])
+            ->where('companySystemID', $companyID)
             ->where('fullyBooked', '<>', 2)
+            ->where('selectedForBooking', 0)
             ->where('supplierID', $bookInvSuppMaster->supplierID)
             ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
+            ->where('grvDate', '<=', $bookInvSuppMaster->bookingDate)
             ->where('purchaseOrderID', $purchaseOrderID)
             ->get();
 

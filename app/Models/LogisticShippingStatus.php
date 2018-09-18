@@ -59,7 +59,7 @@ class LogisticShippingStatus extends Model
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey  = 'logisticShippingModeID';
+    protected $primaryKey  = 'logisticShippingStatusID';
 
 
     public $fillable = [
@@ -96,5 +96,8 @@ class LogisticShippingStatus extends Model
         
     ];
 
-    
+    public function status(){
+        return $this->belongsTo('App\Models\LogisticStatus','shippingStatusID','StatusID');
+    }
+
 }

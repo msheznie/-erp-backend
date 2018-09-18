@@ -1,22 +1,40 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : MatchDocumentMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  MatchDocumentMaster
+ * -- Author : Mohamed Nazir
+ * -- Create date : 13 - September 2018
+ * -- Description : This file contains the all CRUD for Purchase Order
+ * -- REVISION HISTORY
+ * -- Date: 13-September 2018 By: Nazir Description: Added new functions named as getMatchDocumentMasterFormData() For load Master View
+ * -- Date: 13-September 2018 By: Nazir Description: Added new functions named as getMatchDocumentMasterView()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMatchDocumentMasterAPIRequest;
 use App\Http\Requests\API\UpdateMatchDocumentMasterAPIRequest;
+use App\Models\CurrencyMaster;
 use App\Models\MatchDocumentMaster;
+use App\Models\Months;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\SupplierAssigned;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
+use App\Models\Company;
 use App\Repositories\MatchDocumentMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
  * Class MatchDocumentMasterController
  * @package App\Http\Controllers\API
  */
-
 class MatchDocumentMasterAPIController extends AppBaseController
 {
     /** @var  MatchDocumentMasterRepository */
@@ -109,6 +127,87 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function store(CreateMatchDocumentMasterAPIRequest $request)
     {
         $input = $request->all();
+
+        if(!isset($input['paymentAutoID'])) {
+            return $this->sendError('Please select a payment voucher !', 500);
+        }
+
+        $validator = \Validator::make($request->all(), [
+            'companySystemID' => 'required',
+            'matchType' => 'required',
+            'paymentAutoID' => 'required',
+            'supplierID' => 'required'
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $company = Company::find($input['companySystemID']);
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        if($input['matchType'] == 1){
+
+            $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($input['paymentAutoID']);
+            if (empty($paySupplierInvoiceMaster)) {
+                return $this->sendError('Pay Supplier Invoice Master not found');
+            }
+
+            $input['PayMasterAutoId'] = $input['paymentAutoID'];
+            $input['documentSystemID'] = $paySupplierInvoiceMaster->documentSystemID;
+            $input['documentID'] = $paySupplierInvoiceMaster->documentID;
+            $input['BPVcode'] = $paySupplierInvoiceMaster->BPVcode;
+            $input['BPVdate'] = $paySupplierInvoiceMaster->BPVdate;
+            $input['BPVNarration'] = $paySupplierInvoiceMaster->BPVNarration;
+            $input['directPaymentPayeeSelectEmp'] = $paySupplierInvoiceMaster->directPaymentPayeeSelectEmp;
+            $input['directPaymentPayee'] = $paySupplierInvoiceMaster->directPaymentPayee;
+            $input['directPayeeCurrency'] = $paySupplierInvoiceMaster->directPayeeCurrency;
+            $input['BPVsupplierID'] = $paySupplierInvoiceMaster->BPVsupplierID;
+            $input['supplierGLCodeSystemID'] = $paySupplierInvoiceMaster->supplierGLCodeSystemID;
+            $input['supplierGLCode'] = $paySupplierInvoiceMaster->supplierGLCode;
+            $input['supplierTransCurrencyID'] = $paySupplierInvoiceMaster->supplierTransCurrencyID;
+            $input['supplierTransCurrencyER'] = $paySupplierInvoiceMaster->supplierTransCurrencyER;
+            $input['supplierDefCurrencyID'] = $paySupplierInvoiceMaster->supplierDefCurrencyID;
+            $input['supplierDefCurrencyER'] = $paySupplierInvoiceMaster->supplierDefCurrencyER;
+            $input['localCurrencyID'] = $paySupplierInvoiceMaster->localCurrencyID;
+            $input['localCurrencyER'] = $paySupplierInvoiceMaster->localCurrencyER;
+            $input['companyRptCurrencyID'] = $paySupplierInvoiceMaster->companyRptCurrencyID;
+            $input['companyRptCurrencyER'] = $paySupplierInvoiceMaster->companyRptCurrencyER;
+            $input['payAmountBank'] = $paySupplierInvoiceMaster->payAmountBank;
+            $input['payAmountSuppTrans'] = $paySupplierInvoiceMaster->payAmountSuppTrans;
+            $input['payAmountSuppDef'] = $paySupplierInvoiceMaster->payAmountSuppDef;
+            $input['suppAmountDocTotal'] = $paySupplierInvoiceMaster->suppAmountDocTotal;
+            $input['payAmountCompLocal'] = $paySupplierInvoiceMaster->payAmountCompLocal;
+            $input['payAmountCompRpt'] = $paySupplierInvoiceMaster->payAmountCompRpt;
+            $input['invoiceType'] = $paySupplierInvoiceMaster->invoiceType;
+            $input['matchInvoice'] = $paySupplierInvoiceMaster->matchInvoice;
+
+            $input['matchingAmount'] = $paySupplierInvoiceMaster->matchInvoice;
+            $input['matchBalanceAmount'] = $paySupplierInvoiceMaster->matchInvoice;
+
+        }
+
+        $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+            ->orderBy('matchDocumentMasterAutoID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+        $input['serialNo'] = $lastSerialNumber;
+
+        $matchingDocCode = ($company->CompanyID . '\\'.'MT'. str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        $input['matchingDocCode'] = $matchingDocCode;
+        $input['matchingDocdate'] = date('Y-m-d H:i:s');
+        $input['matchingType'] = 'AP';
+
+
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
         $matchDocumentMasters = $this->matchDocumentMasterRepository->create($input);
 
@@ -277,5 +376,116 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $matchDocumentMaster->delete();
 
         return $this->sendResponse($id, 'Match Document Master deleted successfully');
+    }
+
+    public function getMatchDocumentMasterFormData(Request $request)
+    {
+        $companyId = $request['companyId'];
+
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $month = Months::all();
+
+        $years = MatchDocumentMaster::select(DB::raw("YEAR(createdDateTime) as year"))
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get();
+
+        $supplier = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
+            ->where('companySystemID', $companyId)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->get();
+
+        $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
+            ->get();
+
+        $output = array('yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'month' => $month,
+            'years' => $years,
+            'currencies' => $currencies,
+            'suppliers' => $supplier
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getMatchDocumentMasterView(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year'));
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
+        $invMaster->where('documentSystemID', $input['documentId']);
+        $invMaster->with(['created_by' => function ($query) {
+        }, 'supplier' => function ($query) {
+        }, 'transactioncurrency' => function ($query) {
+        }]);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $invMaster->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $invMaster->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $invMaster->whereMonth('bookingDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $invMaster->whereYear('bookingDate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('BPVsupplierID', $input)) {
+            if ($input['BPVsupplierID'] && !is_null($input['BPVsupplierID'])) {
+                $invMaster->where('BPVsupplierID', $input['BPVsupplierID']);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $invMaster = $invMaster->where(function ($query) use ($search) {
+                $query->where('matchingDocCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhereHas('supplier', function ($query) use ($search) {
+                        $query->where('supplierName', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        return \DataTables::eloquent($invMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('matchDocumentMasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

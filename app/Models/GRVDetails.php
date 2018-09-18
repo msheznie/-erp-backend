@@ -265,5 +265,15 @@ class GRVDetails extends Model
         return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderMastertID', 'purchaseOrderID');
     }
 
+    public function item_by()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemCode', 'itemCodeSystem');
+    }
+
+    public function po_detail()
+    {
+        return $this->belongsTo('App\Models\PurchaseOrderDetails', 'purchaseOrderDetailsID', 'purchaseOrderDetailsID');
+    }
+
 
 }
