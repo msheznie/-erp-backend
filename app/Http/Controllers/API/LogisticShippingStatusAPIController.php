@@ -16,6 +16,7 @@ use App\Http\Requests\API\CreateLogisticShippingStatusAPIRequest;
 use App\Http\Requests\API\UpdateLogisticShippingStatusAPIRequest;
 use App\Models\LogisticShippingStatus;
 use App\Repositories\LogisticShippingStatusRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -119,6 +120,11 @@ class LogisticShippingStatusAPIController extends AppBaseController
     public function store(CreateLogisticShippingStatusAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+        $input['createdPCID'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
 
         $logisticShippingStatuses = $this->logisticShippingStatusRepository->create($input);
 
@@ -232,7 +238,11 @@ class LogisticShippingStatusAPIController extends AppBaseController
             return $this->sendError('Logistic Shipping Status not found');
         }
 
-        $logisticShippingStatus = $this->logisticShippingStatusRepository->update($input, $id);
+        if (isset($input['statusDate']) && $input['statusDate']) {
+            $input['statusDate'] = new Carbon($input['statusDate']);
+        }
+
+        $logisticShippingStatus = $this->logisticShippingStatusRepository->update(array_only($input, ['statusDate','statusComment']), $id);
 
         return $this->sendResponse($logisticShippingStatus->toArray(), 'LogisticShippingStatus updated successfully');
     }

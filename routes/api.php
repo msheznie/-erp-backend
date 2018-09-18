@@ -283,6 +283,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('currency_conversions', 'CurrencyConversionAPIController');
 
     Route::resource('bank_accounts', 'BankAccountAPIController');
+    Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');
     Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
     Route::resource('g_r_v_masters', 'GRVMasterAPIController');

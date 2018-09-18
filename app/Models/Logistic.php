@@ -486,4 +486,14 @@ class Logistic extends Model
         return $this->hasMany('App\Models\LogisticDetails','logisticMasterID','logisticMasterID');
     }
 
+    public function local_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'customInvoiceLocalCurrencyID','currencyID');
+    }
+
+    public function reporting_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'customInvoiceRptCurrencyID','currencyID');
+    }
+
 }
