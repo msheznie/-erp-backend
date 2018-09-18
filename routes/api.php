@@ -908,3 +908,6 @@ Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
 
 Route::resource('performa_temps', 'PerformaTempAPIController');
 
+
+
+Route::resource('free_billings', 'FreeBillingAPIController');

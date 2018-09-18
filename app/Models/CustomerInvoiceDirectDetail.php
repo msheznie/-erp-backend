@@ -175,10 +175,10 @@ class CustomerInvoiceDirectDetail extends Model
 {
 
     public $table = 'erp_custinvoicedirectdet';
-    
+
     const CREATED_AT = 'timeStamp';
     const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'custInvDirDetAutoID';
+    protected $primaryKey = 'custInvDirDetAutoID';
 
 
     public $fillable = [
@@ -249,8 +249,8 @@ class CustomerInvoiceDirectDetail extends Model
         'performaMasterID' => 'integer',
         'clientContractID' => 'string',
         'timesReferred' => 'integer',
-        'contractID'=>'integer',
-        'serviceLineSystemID'=>'integer',
+        'contractID' => 'integer',
+        'serviceLineSystemID' => 'integer',
         'glSystemID' => 'integer'
     ];
 
@@ -260,25 +260,36 @@ class CustomerInvoiceDirectDetail extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
+
     public function unit()
     {
         return $this->belongsTo('App\Models\Unit', 'unitOfMeasure', 'UnitID');
     }
-    public function performadetails(){
-        return $this->belongsTo('App\Models\PerformaDetails','custInvoiceDirectID','invoiceSsytemCode');
+
+    public function performadetails()
+    {
+        return $this->belongsTo('App\Models\PerformaDetails', 'custInvoiceDirectID', 'invoiceSsytemCode');
     }
 
-    public function department(){
-        return $this->belongsTo('App\Models\SegmentMaster','serviceLineCode','ServiceLineCode');
+    public function department()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineCode', 'ServiceLineCode');
     }
 
-    public function contract(){
-        return $this->belongsTo('App\Models\Contract','clientContractID','ContractNumber');
+    public function contract()
+    {
+        return $this->belongsTo('App\Models\Contract', 'clientContractID', 'ContractNumber');
     }
 
-    public function billmaster(){
-        return $this->belongsTo('App\Models\FreeBillingMasterPerforma','performaMasterID','PerformaInvoiceNo');
+    public function billmaster()
+    {
+        return $this->belongsTo('App\Models\FreeBillingMasterPerforma', 'performaMasterID', 'PerformaInvoiceNo');
+    }
+
+    public function billingdetails()
+    {
+        return $this->hasMany('App\Models\FreeBilling', 'performaInvoiceNo', 'performaMasterID');
     }
 }
