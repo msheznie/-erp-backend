@@ -149,7 +149,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID','custTransactionCurrencyID'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'custTransactionCurrencyID'));
         $companyFinanceYearID = $input['companyFinanceYearID'];
         $company = Company::where('companySystemID', $input['companyID'])->first()->toArray();
         $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $companyFinanceYearID)->first();
@@ -157,31 +157,31 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-      /*  $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
-        custTransactionCurrencyID*/
-       /* if ($currency) {*/
-            //$input['custTransactionCurrencyID'] = $currency->currencyID;
-            $myCurr = $input['custTransactionCurrencyID'];
+        /*  $currency = customercurrency::where('customerCodeSystem', $customer->customerCodeSystem)->where('isDefault', -1)->first();
+          custTransactionCurrencyID*/
+        /* if ($currency) {*/
+        //$input['custTransactionCurrencyID'] = $currency->currencyID;
+        $myCurr = $input['custTransactionCurrencyID'];
 
-            $companyCurrency = \Helper::companyCurrency($myCurr);
-            $companyCurrencyConversion = \Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
-            /*exchange added*/
-            $input['custTransactionCurrencyER'] = 1;
-            $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        $companyCurrency = \Helper::companyCurrency($myCurr);
+        $companyCurrencyConversion = \Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
+        /*exchange added*/
+        $input['custTransactionCurrencyER'] = 1;
+        $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+        $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+        $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
+        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
-            $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $company['CompanyID'])->where('isDefault', -1)->first();
-            if ($bank) {
-                $input['bankID'] = $bank->bankmasterAutoID;
-                $bankAccount = BankAccount::where('companyID', $company['CompanyID'])->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $myCurr)->first();
-                if($bankAccount){
-                    $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
-                }
-
+        $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $company['CompanyID'])->where('isDefault', -1)->first();
+        if ($bank) {
+            $input['bankID'] = $bank->bankmasterAutoID;
+            $bankAccount = BankAccount::where('companyID', $company['CompanyID'])->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $myCurr)->first();
+            if ($bankAccount) {
+                $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
             }
-      /*  }*/
+
+        }
+        /*  }*/
 
         /* if ($customer->creditDays == 0 || $customer->creditDays == '') {
              return $this->sendResponse('e', $customer->CustomerName . ' - Credit days not mentioned for this customer');
@@ -796,7 +796,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $request->request->remove('search.value');
-        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount');
+        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount','isPerforma');
 
         return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
@@ -818,13 +818,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $bankID = isset($request['bankID']) ? $request['bankID'] : false;
         $type = isset($request['type']) ? $request['type'] : false;
 
-        if($type=='getCurrency'){
+        if ($type == 'getCurrency') {
             $customerID = $request['customerID'];
             $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
             return $this->sendResponse($output, 'Record retrieved successfully');
         }
         if ($id) {
-            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID','customerID')->where('custInvoiceDirectAutoID', $id)->first();
+            $master = customerInvoiceDirect::select('bankID', 'custTransactionCurrencyID', 'customerID')->where('custInvoiceDirectAutoID', $id)->first();
         }
 
         if (!$bankID && $id) {
@@ -1049,7 +1049,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $bankdetails['invoiceDueDate'] = $new_date;
             $bankdetails['paymentInDaysForJob'] = $contract->paymentInDaysForJob;
             $bankdetails['performaDate'] = $performa->performaDate;
-            $bankdetails['rigNo'] = ($performa->ticket ? $performa->ticket->regNo . ' - ' . $performa->ticket->rig->RigDescription :'' ) ;
+            $bankdetails['rigNo'] = ($performa->ticket ? $performa->ticket->regNo . ' - ' . $performa->ticket->rig->RigDescription : '');
             $bankdetails['servicePeriod'] = "";
             $bankdetails['serviceStartDate'] = $getRentalDetailFromFreeBilling->rentalStartDate;
             $bankdetails['serviceEndDate'] = $getRentalDetailFromFreeBilling->rentalEndDate;
@@ -1250,18 +1250,102 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
 
         $id = $request->get('id');
-        $master=CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$id)->first();
+        $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
 
-        if($master->isPerforma==1){
-
+        if ($master->isPerforma == 1) {
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
-        }else{
+
+        } else {
 
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
 
         }
 
 
+        $companySystemID = $master->companySystemID;
+
+        $line_invoiceNO = true;
+        $line_invoiceDate = true;
+        $line_seNo = true;
+        $line_poNumber = true;
+        $line_unit = true;
+        $line_jobNo = true;
+        $line_contractNo = true;
+        $line_subcontractNo = true;
+        $line_dueDate = true;
+        $line_customerShortCode = true;
+        $invoiceDetails=false;
+        $template = 1;
+
+        $customerInvoice->companySystemID = $companySystemID;
+        switch ($companySystemID) {
+            case 7:
+                /*BO*/
+                if ($master->isPerforma == 1) {
+
+                    $template = 1;
+                    $line_dueDate = false;
+                    $line_contractNo = false;
+                    $line_customerShortCode =false;
+                }else{
+                    $template = 2;
+                    $line_unit = false;
+                    $line_jobNo = false;
+                    $line_subcontractNo = false;
+
+                }
+
+                break;
+            case 11:
+                /*FREE*/
+                if ($master->isPerforma == 1) {
+                    $template = 1;
+                    $line_dueDate = false;
+                    $line_contractNo = false;
+                    $line_customerShortCode = false;
+                }else{
+                    $template = 2;
+                    $line_unit = false;
+                    $line_jobNo = false;
+                    $line_subcontractNo = false;
+
+                }
+                break;
+            case 31: /*IPCP*/
+            case 42: /*MOS*/
+            case 60: /*WMS*/
+            case 63: /*WSS*/
+                if ($master->isPerforma == 1) {
+                    $template = 1;
+                    $line_unit = false;
+                    $line_jobNo = false;
+                    $line_subcontractNo = false;
+
+
+                    $invoiceDetails = DB::select("SELECT ClientRef, qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = 54976 GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = 'IPCP' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate");
+
+
+
+                }else{
+                    $template = 2;
+                    $line_unit = false;
+                    $line_jobNo = false;
+                    $line_subcontractNo = false;
+                    $line_dueDate = false;
+                    $invoiceDetails=false;
+                }
+                break;
+            default:
+                if ($master->isPerforma == 1) {
+                    $template = 1;
+                }else{
+                    $template = 2;
+                    $line_unit = false;
+                    $line_jobNo = false;
+                    $line_subcontractNo = false;
+
+                }
+        }
 
 
         if (empty($customerInvoice)) {
@@ -1271,20 +1355,28 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
 
-        $template=false;
-        if($master->isPerforma==1){
-           $detail= CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID',$id)->first();
-           $template= $detail->contract->performaTempID+1;
-        }
-         $customerInvoice->template =$template;
-
-
-;
+      /*  $template = false;
+        if ($master->isPerforma == 1) {
+            $detail = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $id)->first();
+            $template = $detail->contract->performaTempID + 1;
+        }*/
+        $customerInvoice->line_invoiceNO = $line_invoiceNO;
+        $customerInvoice->line_invoiceDate = $line_invoiceDate;
+        $customerInvoice->line_seNo = $line_seNo;
+        $customerInvoice->line_poNumber = $line_poNumber;
+        $customerInvoice->line_unit = $line_unit;
+        $customerInvoice->line_jobNo = $line_jobNo;
+        $customerInvoice->template = $template;
+        $customerInvoice->line_dueDate = $line_dueDate;
+        $customerInvoice->line_contractNo = $line_contractNo;
+        $customerInvoice->line_subcontractNo = $line_subcontractNo;
+        $customerInvoice->line_customerShortCode = $line_customerShortCode;
+        $customerInvoice->line_invoiceDetails = $invoiceDetails;
 
         $array = array('request' => $customerInvoice);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
-        $html = view('print.customer_invoice', $array);
+         $html = view('print.customer_invoice', $array);
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
@@ -1350,14 +1442,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     ->first();
 
 
-
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
                     ->where('companySystemID', $documentApproval->companySystemID)
                     ->where('documentSystemID', $documentApproval->documentSystemID);
 
-               /* if ($companyDocument['isServiceLineApproval'] == -1) {
-                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
-                }*/
+                /* if ($companyDocument['isServiceLineApproval'] == -1) {
+                     $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                 }*/
 
                 $approvalList = $approvalList
                     ->with(['employee'])

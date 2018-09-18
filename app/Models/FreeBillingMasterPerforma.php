@@ -311,6 +311,9 @@ class FreeBillingMasterPerforma extends Model
     public function performatemp(){
         return $this->hasMany('App\Models\PerformaTemp','performaInvoiceNo','PerformaInvoiceNo');
     }
+    public function freebilling(){
+        return $this->hasMany('App\Models\FreeBilling','performaInvoiceNo','PerformaInvoiceNo');
+    }
 
     
 }
