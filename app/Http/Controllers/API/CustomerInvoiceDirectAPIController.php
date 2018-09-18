@@ -1292,7 +1292,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $line_unit = false;
                     $line_jobNo = false;
                     $line_subcontractNo = false;
-                    $line_dueDate = false;
+
                 }
 
                 break;
@@ -1308,7 +1308,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $line_unit = false;
                     $line_jobNo = false;
                     $line_subcontractNo = false;
-                    $line_dueDate = false;
+
                 }
                 break;
             case 30: /*IPCP*/
@@ -1337,7 +1337,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $line_unit = false;
                     $line_jobNo = false;
                     $line_subcontractNo = false;
-                    $line_dueDate = false;
+                 
                 }
         }
 
