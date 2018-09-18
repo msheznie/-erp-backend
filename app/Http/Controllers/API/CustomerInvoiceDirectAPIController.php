@@ -796,7 +796,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $request->request->remove('search.value');
-        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount');
+        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma');
 
         return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
@@ -1274,10 +1274,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $line_subcontractNo = true;
         $line_dueDate = true;
         $line_customerShortCode = true;
-        $invoiceDetails=false;
+        $invoiceDetails = false;
         $template = 1;
 
-        $customerInvoice->companySystemID =7; // $companySystemID;
+        $customerInvoice->companySystemID = $companySystemID;
         switch ($companySystemID) {
             case 7:
                 /*BO*/
@@ -1286,8 +1286,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $template = 1;
                     $line_dueDate = false;
                     $line_contractNo = false;
-                    $line_customerShortCode =false;
-                }else{
+                    $line_customerShortCode = false;
+                } else {
                     $template = 2;
                     $line_unit = false;
                     $line_jobNo = false;
@@ -1303,7 +1303,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $line_dueDate = false;
                     $line_contractNo = false;
                     $line_customerShortCode = false;
-                }else{
+                } else {
                     $template = 2;
                     $line_unit = false;
                     $line_jobNo = false;
@@ -1311,7 +1311,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 }
                 break;
-            case 30: /*IPCP*/
+            case 31: /*IPCP*/
             case 42: /*MOS*/
             case 60: /*WMS*/
             case 63: /*WSS*/
@@ -1320,24 +1320,30 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $line_unit = false;
                     $line_jobNo = false;
                     $line_subcontractNo = false;
-                    $invoiceDetails = DB::select("    SELECT contractdetails.ClientRef, billProcessNo, assetDescription, sum( freebilling.qtyServiceProduct ) AS mitQty, sum( IFNULL(freebilling.standardRate,0)+IFNULL(freebilling.operationRate,0) ) AS opRate, sum( freebilling.qtyServiceProduct ) * sum( IFNULL(freebilling.standardRate,0)+IFNULL(freebilling.operationRate,0)  ) AS amount, performaInvoiceNo, TicketNo FROM `freebilling` INNER JOIN contractdetails ON freebilling.ContractDetailID = contractdetails.ContractDetailID WHERE freebilling.companyID = '$customerInvoice->companyID' AND performaInvoiceNo={$customerInvoice->invoicedetail->performaMasterID} AND TicketNo = {$customerInvoice->invoicedetail->billmaster->Ticketno} GROUP BY contractdetails.ContractDetailID, freebilling.operationRate");
-                }else{
+
+
+
+                    $invoiceDetails = DB::select("SELECT ClientRef, qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate");
+
+
+                } else {
                     $template = 2;
                     $line_unit = false;
                     $line_jobNo = false;
                     $line_subcontractNo = false;
                     $line_dueDate = false;
+                    $invoiceDetails = false;
                 }
                 break;
             default:
                 if ($master->isPerforma == 1) {
                     $template = 1;
-                }else{
+                } else {
                     $template = 2;
                     $line_unit = false;
                     $line_jobNo = false;
                     $line_subcontractNo = false;
-                 
+
                 }
         }
 
@@ -1349,11 +1355,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
 
-      /*  $template = false;
-        if ($master->isPerforma == 1) {
-            $detail = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $id)->first();
-            $template = $detail->contract->performaTempID + 1;
-        }*/
+        /*  $template = false;
+          if ($master->isPerforma == 1) {
+              $detail = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $id)->first();
+              $template = $detail->contract->performaTempID + 1;
+          }*/
         $customerInvoice->line_invoiceNO = $line_invoiceNO;
         $customerInvoice->line_invoiceDate = $line_invoiceDate;
         $customerInvoice->line_seNo = $line_seNo;

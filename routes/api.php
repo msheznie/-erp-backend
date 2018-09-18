@@ -852,7 +852,19 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
     Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
 
+    Route::resource('bank_ledgers', 'BankLedgerAPIController');
 
+    Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
+    Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
+    Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+    Route::resource('credit_notes', 'CreditNoteAPIController');
+    Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
+    Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
+    Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
+    Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
+    Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
+    Route::resource('performa_temps', 'PerformaTempAPIController');
+    Route::resource('free_billings', 'FreeBillingAPIController');
 
 });
 
@@ -894,25 +906,5 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
-Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
-
-Route::resource('credit_notes', 'CreditNoteAPIController');
-
-Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
-
-Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
-
-Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
-
-Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
-
-Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
 
 
-
-
-Route::resource('performa_temps', 'PerformaTempAPIController');
-
-
-
-Route::resource('free_billings', 'FreeBillingAPIController');
