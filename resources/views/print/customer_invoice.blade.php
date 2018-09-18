@@ -11,7 +11,7 @@
     }
 
     body {
-        font-size: 12px;
+        font-size: 11.5px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
 
@@ -31,7 +31,7 @@
     }
 
     table > tbody > th > tr > td {
-        font-size: 12px;
+        font-size: 11.5px;
     }
 
     .theme-tr-head {
@@ -170,7 +170,7 @@
 
     legend {
         margin-top: -15px;
-        font-size: 12px;
+        font-size: 11.5px;
         color: black;
     }
 
@@ -230,9 +230,16 @@
                     </legend>
                     <br>
                     <table style="width: 100%; !important">
+                        @if($request->line_subcontractNo)
+                            <tr>
+                                <td>{{$request->invoicedetails[0]->clientContractID}}</td>
+                            </tr>
+                        @endif
+                            @if($request->line_customerShortCode)
                         <tr>
                             <td>{{$request->customer->CutomerCode}}</td>
                         </tr>
+                            @endif
                         <tr>
                             <td>{{$request->customer->ReportTitle}}</td>
                         </tr>
@@ -299,16 +306,18 @@
                             <td width="10px"><span class="font-weight-bold">-</span></td>
                             <td><span>{{$request->wanNO}}</span></td>
                         </tr>
-                        <tr>
-                            <td width="120px"><span class="font-weight-bold">Due Date</span></td>
-                            <td width="10px"><span class="font-weight-bold">-</span></td>
-                            <td><span>
+                        @if($request->line_dueDate)
+                            <tr>
+                                <td width="120px"><span class="font-weight-bold">Due Date</span></td>
+                                <td width="10px"><span class="font-weight-bold">-</span></td>
+                                <td><span>
                                      @if(!empty($request->invoiceDueDate))
-                                        {{\App\helper\Helper::dateFormat($request->invoiceDueDate)}}
-                                    @endif
+                                            {{\App\helper\Helper::dateFormat($request->invoiceDueDate)}}
+                                        @endif
                             </span></td>
-                        </tr>
-                        @if ($request->template)
+                            </tr>
+                        @endif
+                        @if ($request->line_contractNo)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Contract</span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
@@ -321,13 +330,14 @@
                             <td><span class="font-weight-bold">{{$request->poNumber}}</span></td>
 
                         </tr>
-                        @if ($request->template==1)
-                        <tr>
-                            <td width="120px"><span class="font-weight-bold">Unit</span></td>
-                            <td width="10px"><span class="font-weight-bold">-</span></td>
-                            <td><span>{{$request->rigNo}}</span></td>
-                        </tr>
-
+                        @if ($request->line_unit)
+                            <tr>
+                                <td width="120px"><span class="font-weight-bold">Unit</span></td>
+                                <td width="10px"><span class="font-weight-bold">-</span></td>
+                                <td><span>{{$request->rigNo}}</span></td>
+                            </tr>
+@endif
+                        @if ($request->line_jobNo)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Job No</span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
@@ -395,7 +405,43 @@
     </div>
     <div class="row">
 
-        @if ($request->template==1)
+        @if($request->line_invoiceDetails)
+            <table class="table table-bordered table-striped table-sm" style="width: 100%;">
+                <thead>
+                <tr class="">
+                    <th style="width:1%"></th>
+                    <th style="text-align: center">Client Ref</th>
+                    <th style="text-align: center">Details</th>
+                    <th style="text-align: center">Qty</th>
+                    <th style="text-align: center">Unit Rate</th>
+                    <th style="text-align: right">Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{$decimal = 2}}
+                {{$x=1}}
+                {{$directTraSubTotal=0}}
+                {{$numberFormatting=2}}
+                @foreach ($request->line_invoiceDetails as $item)
+                    {{$directTraSubTotal +=$item->amount}}
+                    <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
+                        <td>{{$x}}</td>
+                        <td style="width: 10%">{{$item->ClientRef}}</td>
+                        <td>{{$item->assetDescription}}</td>
+                        <td style="width: 8%;text-align: center">{{$item->mitQty}}</td>
+                        <td style="width: 10%">{{$item->opRate}}</td>
+
+                        <td style="width: 10%" class="text-right">{{number_format($item->amount,$numberFormatting)}}</td>
+                    </tr>
+                    {{ $x++ }}
+                @endforeach
+                </tbody>
+
+            </table>
+
+            @endif
+
+        @if ($request->template==1 && !$request->line_invoiceDetails)
             <table class="table table-bordered table-striped table-sm" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
@@ -426,7 +472,7 @@
 
             </table>
         @endif
-        @if ($request->template <> 1)
+        @if ($request->template <> 1 && !$request->line_invoiceDetails)
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
@@ -467,10 +513,10 @@
                 <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
                 <td class="text-right" style="width: 20%;border-bottom: none !important"><span
                             class="font-weight-bold"
-                            style="border-bottom: none !important;font-size: 12px">Total:</span>
+                            style="border-bottom: none !important;font-size: 11.5px">Total:</span>
                 </td>
                 <td class="text-right"
-                    style="font-size: 12px;width: 20%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
+                    style="font-size: 11.5px;width: 20%;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
                 <span class="font-weight-bold">
                 @if ($request->invoicedetails)
                         {{number_format($directTraSubTotal, $numberFormatting)}}
@@ -487,10 +533,10 @@
                     </td>
                     <td class="text-right" style="border:none !important;"><span
                                 class="font-weight-bold"
-                                style="font-size: 12px">Tax Amount ({{$request->tax->taxPercent}} %)
+                                style="font-size: 11.5px">Tax Amount ({{$request->tax->taxPercent}} %)
                             </span></td>
                     <td class="text-right"
-                        style="font-size: 12px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
+                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
                                 class="font-weight-bold">{{number_format($request->tax->amount, $numberFormatting)}}</span>
                     </td>
                 </tr>
@@ -501,10 +547,10 @@
                     </td>
                     <td class="text-right" style="border:none !important;"><span
                                 class="font-weight-bold"
-                                style="font-size: 12px">Net Amount</span>
+                                style="font-size: 11.5px">Net Amount</span>
                     </td>
                     <td class="text-right"
-                        style="font-size: 12px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
+                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
                 <span class="font-weight-bold">
 
                         {{number_format($directTraSubTotal, $numberFormatting)}}
@@ -516,10 +562,11 @@
             </tbody>
         </table>
     </div>
-
-    <div class="" style="margin-top: 200px">
-
-
+    @if($request->line_invoiceDetails)
+    <div class="" style="">
+        @else
+            <div class="" style="margin-top: 100px">
+                @endif
         <table>
             <tr>
                 <td width="100px"><span class="font-weight-bold">Bank Details :</span></td>
