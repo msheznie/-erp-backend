@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Direct Invoice Details
  * -- REVISION HISTORY
  * -- Date: 06 September 2018 By: Nazir Description: Added new function getDirectItems()
+ * -- Date: 18 September 2018 By: Nazir Description: Added new function deleteAllSIDirectDetail()
  */
 namespace App\Http\Controllers\API;
 
@@ -378,5 +379,30 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Direct Invoice Details retrieved successfully');
+    }
+
+    public function deleteAllSIDirectDetail(Request $request)
+    {
+        $input = $request->all();
+
+        $directInvoiceAutoID = $input['directInvoiceAutoID'];
+
+        $detailExistAll = DirectInvoiceDetails::where('directInvoiceAutoID', $directInvoiceAutoID)
+            ->get();
+
+        if (empty($detailExistAll)) {
+            return $this->sendError('There are no details to delete');
+        }
+
+        if (!empty($detailExistAll)) {
+
+            foreach ($detailExistAll as $cvDeatil) {
+
+                $deleteDetails = DirectInvoiceDetails::where('directInvoiceDetailsID', $cvDeatil['directInvoiceDetailsID'])->delete();
+
+                }
+            }
+
+        return $this->sendResponse($directInvoiceAutoID, 'Details deleted successfully');
     }
 }

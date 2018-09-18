@@ -206,7 +206,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
         $input['documentSystemID'] = '11';
-        $input['documentID'] = 'BSI';
+        $input['documentID'] = 'SI';
 
         $lastSerial = BookInvSuppMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
@@ -251,7 +251,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         if ($documentMaster) {
-            $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' . $input['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' . 'BSI' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['bookingInvCode'] = $bookingInvCode;
         }
 
