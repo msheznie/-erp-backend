@@ -416,7 +416,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $new['unbilledgrvAutoID'] . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
 
                 if ($balanceAmount) {
-                    $totalPendingAmount = ($groupMaster->totTransactionAmount - $balanceAmount['SumOftotTransactionAmount']);
+                    $totalPendingAmount = ($groupMaster->totTransactionAmount - $balanceAmount->SumOftotTransactionAmount);
                 } else {
                     $totalPendingAmount = $groupMaster->totTransactionAmount;
                 }
