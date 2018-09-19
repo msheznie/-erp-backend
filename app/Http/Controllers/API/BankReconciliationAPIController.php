@@ -227,7 +227,7 @@ class BankReconciliationAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BankReconciliation $bankReconciliation */
-        $bankReconciliation = $this->bankReconciliationRepository->findWithoutFail($id);
+        $bankReconciliation = $this->bankReconciliationRepository->with(['bank_account.currency'])->findWithoutFail($id);
 
         if (empty($bankReconciliation)) {
             return $this->sendError('Bank Reconciliation not found');
