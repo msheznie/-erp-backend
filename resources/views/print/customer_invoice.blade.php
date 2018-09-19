@@ -127,6 +127,10 @@
         content: counter(page);
     }
 
+    pagecount:after {
+
+    }
+
     .content {
         margin-bottom: 45px;
     }
@@ -176,6 +180,8 @@
         font-size: 11.5px;
         color: black;
     }
+
+
 
 
 </style>
@@ -248,8 +254,13 @@
                             <td>{{$request->customer->ReportTitle}}</td>
                         </tr>
                         <tr>
-                            <td>{{$request->customer->customerAddress1}}</td>
+                            <td><div style="width: 122px">{{$request->customer->customerAddress1}}</div></td>
                         </tr>
+                            @if($request->lineSecondAddress)
+                            <tr>
+                            <td><div >{{$request->customer->customerAddress2}}</div></td>
+                        </tr>
+                            @else
                         <tr>
                             <td>{{$request->customer->customerCity}}</td>
                         </tr>
@@ -278,6 +289,7 @@
                         <tr>
                             <td></td>
                         </tr>
+                                @endif
                     </table>
                 </fieldset>
 
@@ -331,21 +343,24 @@
                         <tr>
                             <td width="120px"><span class="font-weight-bold">PO Number</span></td>
                             <td width="10px"><span class="font-weight-bold">-</span></td>
-                            <td><span class="font-weight-bold">{{$request->poNumber}}</span></td>
+                            <td>{{$request->PONumber}}</td>
 
                         </tr>
                         @if ($request->line_unit)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Unit</span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td><span>{{$request->rigNo}}</span></td>
+                                {{--<td><span>{{$request->rigNo}}</span></td> --}}
+                                <td>
+
+                                    <span>{{$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription}}</span> | <span>{{$request->invoicedetail->billmaster->ticketmaster->regNo}}</span></td>
                             </tr>
 @endif
                         @if ($request->line_jobNo)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Job No</span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
-                                <td><span>{{$request->invoicedetails[0]->performadetails->freebillingmaster->ticketmaster->ticketNo}}
+                                <td><span>{{$request->invoicedetail->billmaster->ticketmaster->ticketNo}}
 
 
                                     </span></td>
@@ -431,7 +446,7 @@
                     {{$directTraSubTotal +=$item->amount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
                         <td>{{$x}}</td>
-                        <td style="width: 10%">{{$item->ClientRef}}</td>
+                        <td style="width: 12%">{{$item->ClientRef}}</td>
                         <td>{{$item->assetDescription}}</td>
                         <td style="width: 8%;text-align: center">{{$item->qty}}</td>
                         <td style="width: 10%">{{$item->rate}}</td>
@@ -464,7 +479,7 @@
                 {{$directTraSubTotal=0}}
                 {{$numberFormatting=2}}
                 {{$request->invoicedetail->billmaster->performatemp}}
-           
+
                 @foreach ($request->invoicedetail->billmaster->performatemp as $item)
 
                     {{$directTraSubTotal +=$item->sumofsumofStandbyAmount}}
@@ -609,17 +624,26 @@
                 <td width="15%">
                     <span class="font-weight-bold">Prepared By :</span>
                 </td>
-                <td width="40%">
+                <td width="35%">
                     @if($request->createduser)
                         {{$request->createduser->empName}}
                     @endif
                 </td>
-                <td width="20%">
+                <td width="15%">
                     <span class="font-weight-bold">Checked By :</span>
                 </td>
-                <td width="25%">
-                    <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
+                <td width="15%">
+                    <div style="border-bottom: 1px solid black;width: 90px;margin-top: 7px;"></div>
                 </td>
+
+                @if($request->lineApprovedBy)
+                    <td width="15%">
+                        <span class="font-weight-bold">Approved By :</span>
+                    </td>
+                    <td width="15%">
+                        <div style="border-bottom: 1px solid black;width: 90px;margin-top: 7px;"></div>
+                    </td>
+                @endif
             </tr>
 
         </table>
@@ -653,13 +677,16 @@
 
 
     <table style="width:100%;">
-        <tr>
+      {{--  <tr>
             <td colspan="3" style="width:100%">
                 <hr style="background-color: black">
             </td>
-        </tr>
+        </tr>--}}
         <tr>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
+            <td style="width:33%;font-size: 10px;">
+              <span style="font-weight: bold; font-size: 12px ">  {{date("d/m/Y", strtotime(now()))}}</span>
+            </td>
+         {{--   <td style="width:33%;font-size: 10px;vertical-align: top;">
                 <p><span class="font-weight-bold"><span>{!! nl2br($request->docRefNo) !!} </span></span>
                 </p>
             </td>
@@ -668,11 +695,22 @@
                 @if ($request->company)
                     {{$request->company->CompanyName}}
                 @endif
+            </td>--}}
+        @if($request->linePageNo)
+            <td style="width:33%; text-align: right;font-size: 12px;vertical-align: top;">
+                <span style="text-align: right;font-weight: bold;">Page <span  class="pagenum"></span> <span  class="pagecount"></span></span><br>
+
             </td>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 38%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
+            @endif
+
         </tr>
+@if($request->linefooterAddress)
+        <tr>
+            <td colspan="2" style="font-size: 11px;font-style: italic">{{$request->company->CompanyAddress}}     Tel : {{$request->company->CompanyTelephone}}    , Fax : {{$request->company->CompanyFax}}    , E-mail : {{$request->company->CompanyEmail}}  </td>
+        </tr>
+    @endif
+
+
     </table>
 </div>
 
