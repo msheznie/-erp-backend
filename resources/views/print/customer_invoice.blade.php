@@ -464,7 +464,7 @@
                 {{$directTraSubTotal=0}}
                 {{$numberFormatting=2}}
                 {{$request->invoicedetail->billmaster->performatemp}}
-                {{exit}}
+           
                 @foreach ($request->invoicedetail->billmaster->performatemp as $item)
 
                     {{$directTraSubTotal +=$item->sumofsumofStandbyAmount}}
