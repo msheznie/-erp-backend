@@ -855,6 +855,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('bank_ledgers', 'BankLedgerAPIController');
 
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
+    Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');
     Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
     Route::resource('credit_notes', 'CreditNoteAPIController');
