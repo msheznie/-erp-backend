@@ -80,7 +80,7 @@ class BankAccountAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BankAccount $bankAccount */
-        $bankAccount = $this->bankAccountRepository->findWithoutFail($id);
+        $bankAccount = $this->bankAccountRepository->with(['currency'])->findWithoutFail($id);
 
         if (empty($bankAccount)) {
             return $this->sendError('Bank Account not found');
