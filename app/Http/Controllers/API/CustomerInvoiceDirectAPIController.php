@@ -1276,6 +1276,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $line_customerShortCode = true;
         $invoiceDetails = false;
         $template = 1;
+        $lineSecondAddress = false;
+        $lineApprovedBy=false;
+        $linePageNo=false;
+        $linefooterAddress=false;
 
         $customerInvoice->companySystemID = $companySystemID;
         switch ($companySystemID) {
@@ -1287,11 +1291,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $line_dueDate = false;
                     $line_contractNo = false;
                     $line_customerShortCode = false;
+                    $lineSecondAddress = true;
+                    $lineApprovedBy = true;
                 } else {
                     $template = 2;
                     $line_unit = false;
                     $line_jobNo = false;
                     $line_subcontractNo = false;
+                    $lineSecondAddress = true;
+                    $lineApprovedBy = true;
 
                 }
 
@@ -1303,6 +1311,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $line_dueDate = false;
                     $line_contractNo = false;
                     $line_customerShortCode = false;
+                    $lineSecondAddress = true;
                 } else {
                     $template = 2;
                     $line_unit = false;
@@ -1315,18 +1324,20 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             case 42: /*MOS*/
             case 60: /*WMS*/
             case 63: /*WSS*/
+            $linefooterAddress=true;
                 if ($master->isPerforma == 1) {
                     $template = 1;
                     $line_unit = false;
                     $line_jobNo = false;
                     $line_subcontractNo = false;
+                    $linePageNo=true;
 
 
-
-                    $invoiceDetails = DB::select("SELECT ClientRef, qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate");
+                    $invoiceDetails = DB::select("SELECT ClientRef, qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  SUM( qty * rate ) desc");
 
 
                 } else {
+                    $linePageNo=true;
                     $template = 2;
                     $line_unit = false;
                     $line_jobNo = false;
@@ -1336,8 +1347,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
                 break;
             default:
+                $lineApprovedBy=true;
+                $linefooterAddress=true;
                 if ($master->isPerforma == 1) {
                     $template = 1;
+                    $line_contractNo = false;
+                    $line_dueDate = false;
+                    $line_customerShortCode = false;
+
                 } else {
                     $template = 2;
                     $line_unit = false;
@@ -1372,7 +1389,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->line_subcontractNo = $line_subcontractNo;
         $customerInvoice->line_customerShortCode = $line_customerShortCode;
         $customerInvoice->line_invoiceDetails = $invoiceDetails;
-
+        $customerInvoice->lineSecondAddress = $lineSecondAddress;
+        $customerInvoice->lineApprovedBy = $lineApprovedBy;
+        $customerInvoice->linePageNo = $linePageNo;
+        $customerInvoice->linefooterAddress =  $linefooterAddress;;
         $array = array('request' => $customerInvoice);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
