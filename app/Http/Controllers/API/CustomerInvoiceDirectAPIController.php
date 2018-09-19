@@ -476,7 +476,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
-        $_post['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
+
+        if($input['invoiceDueDate'] !=''){
+            $_post['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
+        }else{
+            $_post['invoiceDueDate']=null;
+        }
+
 
         if (($_post['bookingDate'] >= $_post['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $_post['FYPeriodDateTo'])) {
 
