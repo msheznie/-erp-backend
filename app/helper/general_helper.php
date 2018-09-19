@@ -1722,6 +1722,17 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'bankCurrencyER';
                 break;
+            case 203: // Payment Master
+                $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
+                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'BPVbankCurrency';
+                $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'BPVbankCurrencyER';
+                break;
             case 14: // Logistic
                 $docInforArr["modelName"] = 'Logistic';
                 $docInforArr["transCurrencyID"] = 'customInvoiceCurrencyID';
