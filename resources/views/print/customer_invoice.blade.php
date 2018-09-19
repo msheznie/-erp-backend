@@ -249,7 +249,7 @@
                          width="180px" height="60px"></td>
 
 
-                <td width="50%" style="text-align: center">
+                <td width="60%" style="text-align: center">
                     <div class="text-center">
                         <h3 class="font-weight-bold">
                             @if ($request->company)
@@ -262,7 +262,7 @@
                     </div>
 
                 </td>
-                <td style="width: 30%"></td>
+                <td style="width: 20%"></td>
             </tr>
         </table>
     </div>
@@ -278,8 +278,9 @@
                         Details
                     </legend>
                     <br>
+
                     <table style="width: 100%; !important">
-                        @if($request->line_subcontractNo)
+                        @if($request->line_subcontractNo && !empty($request->invoicedetails) )
                             <tr>
                                 <td>{{$request->invoicedetails[0]->clientContractID}}</td>
                             </tr>
@@ -334,6 +335,7 @@
 
 
             </td>
+
             <td style="width: 10%"></td>
             <td style="width: 40%">
                 <fieldset class="scheduler-border" style="background-color: #f1f1f1">
@@ -406,7 +408,7 @@
                             </tr>
                         @endif
 
-                        @if (!$request->template)
+                       {{-- @if (!$request->template)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Rig</span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
@@ -421,7 +423,7 @@
                                 </td>
 
                                 <td>
-                                    {{--  {{  (dd($request->invoicedetails[0])) }}--}}
+
 
                                     @if($request->invoicedetails[0]->performadetails )
                                         <span>
@@ -436,14 +438,10 @@
                                             @endif </span>
                                 </td>
                                 @endif
-
+--}}
 
                             </tr>
-                            {{-- <tr>
-                                 <td width="150px"><span class="font-weight-bold">Proforma Number</span></td>
-                                 <td width="10px"><span class="font-weight-bold">-</span></td>
-                                 <td><span>{{$request->invoicedetails[0]->performadetails->performaCode}}</span></td>
-                             </tr>--}}
+
 
 
                     </table>
