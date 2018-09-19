@@ -1744,6 +1744,17 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'customInvoiceLocalER';
                 $docInforArr["defaultCurrencyER"] = 'customInvoiceRptER';
                 break;
+            case 203: // MatchingMaster
+                $docInforArr["modelName"] = 'MatchDocumentMaster';
+                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'supplierDefCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }

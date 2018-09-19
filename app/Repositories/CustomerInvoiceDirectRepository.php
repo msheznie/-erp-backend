@@ -116,44 +116,42 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
     function getAudit($id)
     {
-       /* $customerInvoiceDirect = $this->with(['company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'approved_by' => function ($query) {
-            $query->with('employee.details.designation')
-                ->where('documentSystemID', 20);
-        }, 'invoicedetails'
-        => function ($query) {
-                $query->with(['unit', 'department','billmaster'=>function ($query){
-                    $query1 = $query;
-                    $bill = $query1->first()->toArray();
-                    $Ticketno = $bill['Ticketno'];
-                    $query->with(['performatemp'=>function($query) use($Ticketno){
-                        $query->where('Ticketno',$Ticketno);
-                    }]);
-                }, 'performadetails' => function ($query) {
-                    $query->with(['freebillingmaster' => function ($query) {
-                        $query->with(['ticketmaster' => function ($query) {
-                            $query->with(['field']);
-                        }]);
-                    }]);
-                }]);
-            }
-        ])->findWithoutFail($id);*/
+
 
         $customerInvoiceDirect = $this->with(['company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 20);
         }, 'invoicedetail'
         => function ($query) {
-                $query->with(['unit', 'department','billmaster'=>function ($query){
+                $query1 = $query;
+                $bill = $query1->first();
+                $companyID=0;
+                if(!empty($bill)){
+                    $companyID = $bill->companyID;
+                }
+
+
+                $query->with(['unit', 'department','billmaster'=>function ($query) use ($companyID){
+                    $query->where('companyID',$companyID);
                     $query1 = $query;
                     $bill = $query1->first()->toArray();
                     $Ticketno = $bill['Ticketno'];
-                    $query->with(['performatemp'=>function($query) use($Ticketno) {
+                    $query->with(['ticketmaster'=> function ($query){
+                        $query->with(['field','rig']);
+                    }  ,'performatemp'=>function($query) use($Ticketno) {
                         $query->where('Ticketno',$Ticketno);
                         $query->where('sumofsumofStandbyAmount','<>',0);
                     }]);
                 },'performadetails'=> function ($query){
-                    $query->with(['freebillingmaster' => function ($query) {
-                        $query->with(['ticketmaster' => function ($query) {
+
+                    $query1 = $query;
+                    $bill = $query1->first()->toArray();
+                    $companyID = $bill['companyID'];
+
+                    $query->with(['freebillingmaster' => function ($query) use($companyID) {
+                        $query->where('companyID',$companyID);
+                        $query->with(['ticketmaster' => function ($query)  {
+
                             $query->with(['field']);
                         }]);
                     }]);
