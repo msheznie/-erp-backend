@@ -249,7 +249,7 @@
                          width="180px" height="60px"></td>
 
 
-                <td width="60%" style="text-align: center">
+                <td width="50%" style="text-align: center;white-space: nowrap">
                     <div class="text-center">
                         <h3 class="font-weight-bold">
                             @if ($request->company)
@@ -262,7 +262,7 @@
                     </div>
 
                 </td>
-                <td style="width: 20%"></td>
+                <td style="width: 30%"></td>
             </tr>
         </table>
     </div>
