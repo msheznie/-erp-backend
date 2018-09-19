@@ -1306,6 +1306,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 break;
             case 11:
                 /*FREE*/
+                $lineApprovedBy=true;
                 if ($master->isPerforma == 1) {
                     $template = 1;
                     $line_dueDate = false;
@@ -1333,7 +1334,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $linePageNo=true;
 
 
-                    $invoiceDetails = DB::select("SELECT ClientRef, qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  SUM( qty * rate ) desc");
+                    $invoiceDetails = DB::select("SELECT ClientRef, qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$master->companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  t.mitID ASC");
 
 
                 } else {
