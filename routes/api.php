@@ -853,6 +853,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
 
     Route::resource('bank_ledgers', 'BankLedgerAPIController');
+    Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
 
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
     Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');

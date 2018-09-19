@@ -124,8 +124,12 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         }, 'invoicedetail'
         => function ($query) {
                 $query1 = $query;
-                $bill = $query1->first()->toArray();
-                $companyID = $bill['companyID'];
+                $bill = $query1->first();
+                $companyID=0;
+                if(!empty($bill)){
+                    $companyID = $bill->companyID;
+                }
+
 
                 $query->with(['unit', 'department','billmaster'=>function ($query) use ($companyID){
                     $query->where('companyID',$companyID);

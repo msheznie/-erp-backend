@@ -45,7 +45,7 @@
     }
 
     td {
-        padding: 5px;
+        padding: 3px;
     }
 
     table {
@@ -62,7 +62,7 @@
     }
 
     .table th, .table td {
-        padding: 5px !important;
+        padding: 3px !important;
         vertical-align: top;
         border-bottom: 1px solid rgb(127, 127, 127) !important;
     }
@@ -186,7 +186,46 @@
 
 </style>
 
+<div class="footer">
 
+
+    <table style="width:100%;">
+        {{--  <tr>
+              <td colspan="3" style="width:100%">
+                  <hr style="background-color: black">
+              </td>
+          </tr>--}}
+        <tr>
+            <td style="width:33%;font-size: 10px;">
+                <span style="font-weight: bold; font-size: 12px ">  {{date("d/m/Y", strtotime(now()))}}</span>
+            </td>
+            {{--   <td style="width:33%;font-size: 10px;vertical-align: top;">
+                   <p><span class="font-weight-bold"><span>{!! nl2br($request->docRefNo) !!} </span></span>
+                   </p>
+               </td>
+               <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
+                   <span style="text-align: center">Page <span class="pagenum"></span></span><br>
+                   @if ($request->company)
+                       {{$request->company->CompanyName}}
+                   @endif
+               </td>--}}
+            @if($request->linePageNo)
+                <td style="width:33%; text-align: right;font-size: 12px;vertical-align: top;">
+                    <span style="text-align: right;font-weight: bold;">Page <span  class="pagenum"></span> <span  class="pagecount"></span></span><br>
+
+                </td>
+            @endif
+
+        </tr>
+        @if($request->linefooterAddress)
+            <tr>
+                <td colspan="2" style="font-size: 11px;font-style: italic">{{$request->company->CompanyAddress}}     Tel : {{$request->company->CompanyTelephone}}    , Fax : {{$request->company->CompanyFax}}    , E-mail : {{$request->company->CompanyEmail}}  </td>
+            </tr>
+        @endif
+
+
+    </table>
+</div>
 <div id="watermark">
          <span class="watermarkText">
            <h3 class="text-muted">
@@ -210,7 +249,7 @@
                          width="180px" height="60px"></td>
 
 
-                <td width="50%" style="text-align: center">
+                <td width="50%" style="text-align: center;white-space: nowrap">
                     <div class="text-center">
                         <h3 class="font-weight-bold">
                             @if ($request->company)
@@ -239,8 +278,9 @@
                         Details
                     </legend>
                     <br>
+
                     <table style="width: 100%; !important">
-                        @if($request->line_subcontractNo)
+                        @if($request->line_subcontractNo && !empty($request->invoicedetails) )
                             <tr>
                                 <td>{{$request->invoicedetails[0]->clientContractID}}</td>
                             </tr>
@@ -277,7 +317,7 @@
                         <tr>
                             <td></td>
                         </tr>
-                        <tr>
+                       {{-- <tr>
                             <td></td>
                         </tr>
                         <tr>
@@ -288,13 +328,14 @@
                         </tr>
                         <tr>
                             <td></td>
-                        </tr>
+                        </tr>--}}
                                 @endif
                     </table>
                 </fieldset>
 
 
             </td>
+
             <td style="width: 10%"></td>
             <td style="width: 40%">
                 <fieldset class="scheduler-border" style="background-color: #f1f1f1">
@@ -367,7 +408,7 @@
                             </tr>
                         @endif
 
-                        @if (!$request->template)
+                       {{-- @if (!$request->template)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Rig</span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
@@ -382,7 +423,7 @@
                                 </td>
 
                                 <td>
-                                    {{--  {{  (dd($request->invoicedetails[0])) }}--}}
+
 
                                     @if($request->invoicedetails[0]->performadetails )
                                         <span>
@@ -397,14 +438,10 @@
                                             @endif </span>
                                 </td>
                                 @endif
-
+--}}
 
                             </tr>
-                            {{-- <tr>
-                                 <td width="150px"><span class="font-weight-bold">Proforma Number</span></td>
-                                 <td width="10px"><span class="font-weight-bold">-</span></td>
-                                 <td><span>{{$request->invoicedetails[0]->performadetails->performaCode}}</span></td>
-                             </tr>--}}
+
 
 
                     </table>
@@ -416,8 +453,8 @@
     </div>
 
     <br>
-    <div class="row">
-        <b>Comments : </b> {{$request->comments}}
+    <div class="row" style="">
+        <b>Comments : </b>  {!! nl2br($request->comments) !!}
     </div>
     <div class="row">
         <div style="text-align: right"><b>Currency
@@ -441,15 +478,15 @@
                 {{$decimal = 2}}
                 {{$x=1}}
                 {{$directTraSubTotal=0}}
-                {{$numberFormatting=2}}
+                {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
                 @foreach ($request->line_invoiceDetails as $item)
                     {{$directTraSubTotal +=$item->amount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
                         <td>{{$x}}</td>
                         <td style="width: 12%">{{$item->ClientRef}}</td>
                         <td>{{$item->assetDescription}}</td>
-                        <td style="width: 8%;text-align: center">{{$item->qty}}</td>
-                        <td style="width: 10%">{{$item->rate}}</td>
+                        <td style="width: 8%;text-align: center">{{number_format($item->qty,2)}}</td>
+                        <td style="width: 10%;text-align: right">{{number_format($item->rate,$numberFormatting)}}</td>
 
                         <td style="width: 10%" class="text-right">{{number_format($item->amount,$numberFormatting)}}</td>
                     </tr>
@@ -469,7 +506,7 @@
                     <th style="width:10%;text-align: center">Details</th>
 
 
-                    <th style="width:10%;text-align: center">Amount</th>
+                    <th style="width:10%;text-align: center">Amount </th>
                 </tr>
                 </thead>
 
@@ -477,10 +514,10 @@
                 {{$decimal = 2}}
                 {{$x=1}}
                 {{$directTraSubTotal=0}}
-                {{$numberFormatting=2}}
+                {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
                 {{$request->invoicedetail->billmaster->performatemp}}
 
-                @foreach ($request->invoicedetail->billmaster->performatemp as $item)
+                @foreach ($request->invoicedetail->billmaster->performatemp->sortBy('sortOrder') as $item)
 
                     {{$directTraSubTotal +=$item->sumofsumofStandbyAmount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
@@ -513,14 +550,14 @@
                 {{$decimal = 2}}
                 {{$x=1}}
                 {{$directTraSubTotal=0}}
-                {{$numberFormatting=2}}
+                {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
                 @foreach ($request->invoicedetails as $item)
                     {{$directTraSubTotal +=$item->invoiceAmount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                         <td>{{$x}}</td>
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->glCodeDes}}</td>
-                        <td class="text-center" style="text-align: center">{{$item->invoiceQty}}</td>
+                        <td class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
                         <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                     </tr>
@@ -673,46 +710,7 @@
         </table>
     </div>
 </div>
-<div class="footer">
 
-
-    <table style="width:100%;">
-      {{--  <tr>
-            <td colspan="3" style="width:100%">
-                <hr style="background-color: black">
-            </td>
-        </tr>--}}
-        <tr>
-            <td style="width:33%;font-size: 10px;">
-              <span style="font-weight: bold; font-size: 12px ">  {{date("d/m/Y", strtotime(now()))}}</span>
-            </td>
-         {{--   <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <p><span class="font-weight-bold"><span>{!! nl2br($request->docRefNo) !!} </span></span>
-                </p>
-            </td>
-            <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
-                @if ($request->company)
-                    {{$request->company->CompanyName}}
-                @endif
-            </td>--}}
-        @if($request->linePageNo)
-            <td style="width:33%; text-align: right;font-size: 12px;vertical-align: top;">
-                <span style="text-align: right;font-weight: bold;">Page <span  class="pagenum"></span> <span  class="pagecount"></span></span><br>
-
-            </td>
-            @endif
-
-        </tr>
-@if($request->linefooterAddress)
-        <tr>
-            <td colspan="2" style="font-size: 11px;font-style: italic">{{$request->company->CompanyAddress}}     Tel : {{$request->company->CompanyTelephone}}    , Fax : {{$request->company->CompanyFax}}    , E-mail : {{$request->company->CompanyEmail}}  </td>
-        </tr>
-    @endif
-
-
-    </table>
-</div>
 
 
 
