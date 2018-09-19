@@ -137,6 +137,7 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+
         $input['bankRecAsOf'] = new Carbon($input['bankRecAsOf']);
 
         $input['documentSystemID'] = 62;
@@ -151,6 +152,13 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError('bank Account not found.!', 500);
         }
 
+        $maxAsOfDate = BankReconciliation::where('bankAccountAutoID',$input['bankAccountAutoID'])
+                                           ->max('bankRecAsOf');
+
+        if($maxAsOfDate > $input['bankRecAsOf']){
+            return $this->sendError('You cannot create bank reconciliation, Please select the as of date after '.  (new Carbon($maxAsOfDate))->format('d/m/Y') , 500);
+        }
+        
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
             $input['companyID'] = $company->CompanyID;
@@ -390,11 +398,25 @@ class BankReconciliationAPIController extends AppBaseController
             ->make(true);
     }
 
-    public function getcheckBeforeCreate(Request $request)
+    public function getCheckBeforeCreate(Request $request)
     {
+        $input = $request->all();
+        $bankAccount = BankAccount::find($input['bankAccountAutoID']);
+
+        if (empty($bankAccount)) {
+            return $this->sendError('Bank Account not found');
+        }
+
+        $checkPending = BankReconciliation::where('bankAccountAutoID',$input['bankAccountAutoID'])
+                                            ->where('approvedYN',0)
+                                            ->first();
 
 
+        if (!empty($checkPending)) {
+           // return $this->sendError("There is a bank reconciliation (" . $checkPending->bankRecPrimaryCode . ") pending for approval for the bank reconciliation you are trying to add. Please check again.", 500);
+        }
 
+        return $this->sendResponse($bankAccount->toArray(), 'successfully');
     }
 
 }

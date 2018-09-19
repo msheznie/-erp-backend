@@ -307,6 +307,7 @@ class BankLedger extends Model
 
 
     public $fillable = [
+        'bankRecAutoID',
         'companySystemID',
         'companyID',
         'documentSystemID',
@@ -371,6 +372,7 @@ class BankLedger extends Model
      * @var array
      */
     protected $casts = [
+        'bankRecAutoID' => 'integer',
         'bankLedgerAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
