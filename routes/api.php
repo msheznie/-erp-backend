@@ -766,6 +766,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('storeGRVDetailsDirect', 'GRVDetailsAPIController@storeGRVDetailsDirect');
     Route::post('updateGRVDetailsDirect', 'GRVDetailsAPIController@updateGRVDetailsDirect');
     Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL');
+    Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
     Route::get('getAllcontractbyclient', 'CustomerInvoiceDirectAPIController@getAllcontractbyclient');
     Route::post('addDirectInvoiceDetails', 'CustomerInvoiceDirectDetailAPIController@addDirectInvoiceDetails');
     Route::get('customerInvoiceAudit', 'CustomerInvoiceDirectAPIController@customerInvoiceAudit');
@@ -871,6 +872,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
     Route::resource('performa_temps', 'PerformaTempAPIController');
     Route::resource('free_billings', 'FreeBillingAPIController');
+    Route::get('getSupplierInvoiceStatusHistoryForGRV', 'GRVMasterAPIController@getSupplierInvoiceStatusHistoryForGRV');
+
 
 });
 

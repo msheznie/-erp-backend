@@ -17,6 +17,7 @@
  * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as approveGoodReceiptVoucher() For Approve GRV Master
  * -- Date: 28-June 2018 By: Nazir Description: Added new functions named as rejectGoodReceiptVoucher() For Reject GRV Master
  * -- Date: 17-august 2018 By: Nazir Description: Added new functions named as getGoodReceiptVoucherReopen() For Reopen GRV Master
+ * -- Date: 20-September 2018 By: Nazir Description: Added new functions named as getSupplierInvoiceStatusHistoryForGRV()
  */
 
 namespace App\Http\Controllers\API;
@@ -1260,6 +1261,45 @@ class GRVMasterAPIController extends AppBaseController
         $companyID = $input['companyID'];
         $grv = GRVMaster::select('grvAutoID', 'grvPrimaryCode')->where('companySystemID', $companyID)->where('approved', -1)->where('grvPrimaryCode', 'LIKE', "%{$seachText}%")->orderBy('grvAutoID', 'desc')->take(30)->get()->toArray();
         return $this->sendResponse($grv, 'Data retrieved successfully');
+    }
+
+    public function getSupplierInvoiceStatusHistoryForGRV(Request $request){
+
+        $input = $request->all();
+
+        $companySystemID = $input['companySystemID'];
+        $grvAutoID = $input['grvAutoID'];
+
+        $detail = DB::select('SELECT
+	erp_bookinvsuppmaster.bookingDate,
+	erp_bookinvsuppmaster.bookingInvCode,
+	erp_bookinvsuppmaster.comments,
+	erp_bookinvsuppmaster.supplierInvoiceNo,
+	suppliermaster.supplierName,
+	transCurrencymaster.CurrencyCode AS SupTransCur,
+	transCurrencymaster.DecimalPlaces AS SupTransDec,
+	locCurrencymaster.CurrencyCode AS LocCur,
+	locCurrencymaster.DecimalPlaces AS LocDec,
+	rptCurrencymaster.CurrencyCode AS RptCur,
+	rptCurrencymaster.DecimalPlaces AS RptDec,
+	erp_bookinvsuppdet.totTransactionAmount,
+	erp_bookinvsuppdet.totLocalAmount,
+	erp_bookinvsuppdet.totRptAmount,
+erp_bookinvsuppmaster.confirmedYN,
+erp_bookinvsuppmaster.approved,
+erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+FROM
+	erp_bookinvsuppdet
+LEFT JOIN erp_bookinvsuppmaster ON erp_bookinvsuppdet.bookingSuppMasInvAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+LEFT JOIN suppliermaster ON erp_bookinvsuppdet.supplierID = suppliermaster.supplierCodeSystem
+LEFT JOIN currencymaster AS transCurrencymaster ON erp_bookinvsuppdet.supplierTransactionCurrencyID = transCurrencymaster.currencyID
+LEFT JOIN currencymaster AS locCurrencymaster ON erp_bookinvsuppdet.localCurrencyID = locCurrencymaster.currencyID
+LEFT JOIN currencymaster AS rptCurrencymaster ON erp_bookinvsuppdet.companyReportingCurrencyID = rptCurrencymaster.currencyID
+WHERE
+	erp_bookinvsuppdet.grvAutoID = ' . $grvAutoID . '
+AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
+
+        return $this->sendResponse($detail, 'Details retrieved successfully');
     }
 
 }

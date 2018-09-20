@@ -252,8 +252,7 @@ class LogisticAPIController extends AppBaseController
             $input['customDutyFeeLocalAmount'] = 0;
         }
 
-        $input['customDutyTotalAmount'] = round($input['agenFeeRptAmount'] + $input['customDutyFeeRptAmount'],$rptDecimal);
-
+        $input['customDutyTotalAmount'] = $input['agentFee'] + $input['customDutyFeeAmount'];
 
         $logistics = $this->logisticRepository->create($input);
 
@@ -438,7 +437,7 @@ class LogisticAPIController extends AppBaseController
                 $input['serviceLineCode'] = $segment->ServiceLineCode;
             }
         }
-
+        $input['customDutyFeeCurrencyID'] = $input['agentFeeCurrencyID'];
         if(isset($input['agentFeeCurrencyID']) && $input['agentFeeCurrencyID']){
             $agentFeeConvection = \Helper::currencyConversion($input['companySystemID'], $input['agentFeeCurrencyID'], $input['agentFeeCurrencyID'], $input['agentFee']);
             $input['agentFeeLocalAmount'] = round($agentFeeConvection['localAmount'],$localDecimal);
@@ -457,7 +456,7 @@ class LogisticAPIController extends AppBaseController
             $input['customDutyFeeLocalAmount'] = 0;
         }
 
-        $input['customDutyTotalAmount'] = round($input['agenFeeRptAmount'] + $input['customDutyFeeRptAmount'],$rptDecimal);
+        $input['customDutyTotalAmount'] = $input['agentFee'] + $input['customDutyFeeAmount'];
 
         $employee = \Helper::getEmployeeInfo();
 
