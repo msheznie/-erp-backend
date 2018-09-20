@@ -938,19 +938,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', 'Already pulled');
         }
 
-        /*if bookinvoice not available create header*/
-        if ($master->bookingInvCode == '' || $master->bookingInvCode == 0) {
 
+
+        /*if bookinvoice not available create header*/
+   /*     if ($master->bookingInvCode == ' ' || $master->bookingInvCode == 0) {
+            dd($master->bookingInvCode);
+            exit;
             $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $master->companyFinanceYearID)->first();
             $serialNo = CustomerInvoiceDirect::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))->where('documentID', 'INV')->where('companySystemID', $master->companySystemID)->orderBy('serialNo', 'desc')->first();
             $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
 
-            /*header*/
+
             $bookingInvCode = ($master->companyID . '\\' . $y . '\\INV' . str_pad($serialNo->serialNo, 6, '0', STR_PAD_LEFT));
             $upMaster['serialNo'] = $serialNo->serialNo;
             $upMaster['bookingInvCode'] = $bookingInvCode;
             $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($upMaster, $custInvoiceDirectAutoID);
-        }
+        }*/
 
         /*get bank check bank details from performaDetails*/
         $bankAccountDetails = PerformaDetails::select('currencyID', 'bankID', 'accountID')->where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->first();
