@@ -116,32 +116,6 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $company = Company::find($input['companySystemID']);
-        if (empty($company)) {
-            return $this->sendError('Company not found');
-        }
-
-        $input['companyID'] = $company->CompanyID;
-
-        $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
-        if (empty($chartOfAccount)) {
-            return $this->sendError('Chart of Account not found');
-        }
-
-        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 1]);
-
-        if (count($directPaymentDetails) > 0) {
-            return $this->sendError('You cannot add item because already a bank account is added');
-        }
-
-        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 0]);
-
-        if (count($directPaymentDetails) > 0) {
-            if($chartOfAccount->isBank){
-                return $this->sendError('You cannot add a bank account as already items added');
-            }
-        }
-
         $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);
 
         if (empty($payMaster)) {
@@ -160,18 +134,58 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Selected Bank Account is not active');
         }
 
+        $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
+        if (empty($chartOfAccount)) {
+            return $this->sendError('Chart of Account not found');
+        }
+
+        if($bankAccount->chartOfAccountSystemID == $input['chartOfAccountSystemID']){
+            return $this->sendError('You are trying to select the same bank account');
+        }
+
+        $company = Company::find($input['companySystemID']);
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
+
+        $input['companyID'] = $company->CompanyID;
+
+        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 1]);
+
+        if (count($directPaymentDetails) > 0) {
+            return $this->sendError('Cannot add GL code as there is a bank GL coded added.');
+        }
+
+        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 0]);
+
+        if (count($directPaymentDetails) > 0) {
+            if($chartOfAccount->isBank){
+                return $this->sendError('Cannot add bank account GL code as there is a GL code added.');
+            }
+        }
+
         $input['glCode'] = $chartOfAccount->AccountCode;
         $input['glCodeDes'] = $chartOfAccount->AccountDescription;
         $input['glCodeIsBank'] = $chartOfAccount->isBank;
 
+        $input['supplierTransCurrencyID'] = $payMaster->supplierTransCurrencyID;
+        $input['supplierTransER'] = 1;
         $input['DPAmountCurrency'] = $payMaster->supplierTransCurrencyID;
         $input['DPAmountCurrencyER'] = 1;
         $input['localCurrency'] = $payMaster->localCurrencyID;
         $input['localCurrencyER'] = $payMaster->localCurrencyER;
         $input['comRptCurrency'] = $payMaster->companyRptCurrencyID;
         $input['comRptCurrencyER'] = $payMaster->companyRptCurrencyER;
-        $input['bankCurrencyID'] = $payMaster->BPVbankCurrency;
-        $input['bankCurrencyER'] = $payMaster->BPVbankCurrencyER;
+
+        if($chartOfAccount->isBank){
+            $account = BankAccount::where('chartOfAccountSystemID',$input['chartOfAccountSystemID'])->where('companySystemID',$input['companySystemID'])->first();
+            $input['bankCurrencyID'] = $account->accountCurrencyID;
+            $conversionAmount = \Helper::currencyConversion($input['companySystemID'], $bankAccount->accountCurrencyID, $account->accountCurrencyID,0);
+            $input['bankCurrencyER'] = $conversionAmount["transToDocER"];
+        }else {
+            $input['bankCurrencyID'] = $payMaster->BPVbankCurrency;
+            $input['bankCurrencyER'] = $payMaster->BPVbankCurrencyER;
+        }
 
         if($payMaster->BPVsupplierID){
             $input['supplierTransCurrencyID'] = $payMaster->supplierTransCurrencyID;
@@ -339,6 +353,29 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input['localAmount'] = $conversionAmount['localAmount'];
         $input['comRptAmount'] = $conversionAmount['reportingAmount'];
         $input['bankAmount'] = $conversionAmount['defaultAmount'];
+
+        if($directPaymentDetails->glCodeIsBank){
+            $trasToDefaultER = $directPaymentDetails->bankCurrencyER;
+            $bankAmount = 0;
+            if ($bankAccount->accountCurrencyID ==$directPaymentDetails->bankCurrencyID) {
+                $bankAmount = $input['DPAmount'];
+            } else {
+                if ($trasToDefaultER > $directPaymentDetails->DPAmountCurrencyER) {
+                    if ($trasToDefaultER > 1) {
+                        $bankAmount = $input['DPAmount'] / $trasToDefaultER;
+                    } else {
+                        $bankAmount = $input['DPAmount'] * $trasToDefaultER;
+                    }
+                } else {
+                    If ($trasToDefaultER > 1) {
+                        $bankAmount = $input['DPAmount'] * $trasToDefaultER;
+                    } else {
+                        $bankAmount = $input['DPAmount'] / $trasToDefaultER;
+                    }
+                }
+            }
+            $input['bankAmount'] = $bankAmount;
+        }
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
 
