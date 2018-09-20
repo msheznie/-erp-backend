@@ -665,6 +665,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
     Route::post('deleteAllPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@deleteAllPOPaymentDetail');
     Route::get('getPOPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getPOPaymentDetails');
+    Route::get('getMatchingPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getMatchingPaymentDetails');
     Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
     Route::get('getADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getADVPaymentDetails');
@@ -842,7 +843,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
     Route::post('getMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getMatchDocumentMasterView');
     Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@getMatchDocumentMasterFormData');
-    Route::get('getPaymentVoucherMatchDetail', 'MatchDocumentMasterAPIController@getPaymentVoucherMatchDetail');
+    Route::get('getPaymentVoucherMatchPullingDetail', 'MatchDocumentMasterAPIController@getPaymentVoucherMatchPullingDetail');
+    Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@getMatchDocumentMasterRecord');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
 
@@ -851,6 +853,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
     Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
+    Route::post('addPaymentVoucherMatchingPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPaymentVoucherMatchingPaymentDetail');
+    Route::post('updatePaymentVoucherMatchingDetail', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherMatchingDetail');
 
     Route::resource('bank_ledgers', 'BankLedgerAPIController');
     Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');

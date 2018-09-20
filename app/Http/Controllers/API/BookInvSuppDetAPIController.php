@@ -373,6 +373,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
             if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
                 $siDetailExistGL = GeneralLedger::where('documentSystemID', 3)
+                    ->where('companySystemID', $itemExist['grvAutoID'])
                     ->where('documentSystemCode', $itemExist['grvAutoID'])
                     ->first();
 

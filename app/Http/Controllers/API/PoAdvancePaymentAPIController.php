@@ -102,7 +102,6 @@ class PoAdvancePaymentAPIController extends AppBaseController
             return $this->sendError('Amount should be greater than 0');
         }
 
-
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
         $input['serviceLineID'] = $purchaseOrder->serviceLine;
         $input['companySystemID'] = $purchaseOrder->companySystemID;
@@ -329,7 +328,7 @@ ORDER BY
 	erp_grvmaster.grvAutoID DESC');
 
         if ($purchaseOrder->grvRecieved == 1) {
-            if (empty($input['detail']['grvAutoID'])) {
+            if (!empty($detail) && empty($input['detail']['grvAutoID'])) {
                 return $this->sendError('Please select a GRV as there is a GRV done for this PO');
             }
         }

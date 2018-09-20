@@ -10,7 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 13-September 2018 By: Nazir Description: Added new functions named as getMatchDocumentMasterFormData() For load Master View
  * -- Date: 13-September 2018 By: Nazir Description: Added new functions named as getMatchDocumentMasterView()
- * -- Date: 18-September 2018 By: Nazir Description: Added new functions named as getPaymentVoucherMatchDetail()
+ * -- Date: 18-September 2018 By: Nazir Description: Added new functions named as getPaymentVoucherMatchPullingDetail()
  */
 namespace App\Http\Controllers\API;
 
@@ -20,6 +20,7 @@ use App\Models\CurrencyMaster;
 use App\Models\DebitNote;
 use App\Models\MatchDocumentMaster;
 use App\Models\Months;
+use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierAssigned;
 use App\Models\YesNoSelection;
@@ -31,6 +32,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Response;
 
 /**
@@ -198,23 +200,23 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $input['BPVcode'] = $debitNoteMaster->debitNoteCode;
             $input['BPVdate'] = $debitNoteMaster->debitNoteDate;
             $input['BPVNarration'] = $debitNoteMaster->comments;
-            //$input['directPaymentPayeeSelectEmp'] = $debitNoteMaster->directPaymentPayeeSelectEmp;
+            $input['directPaymentPayeeSelectEmp'] = $debitNoteMaster->directPaymentPayeeSelectEmp;
             //$input['directPaymentPayee'] = $debitNoteMaster->directPaymentPayee;
-            //$input['directPayeeCurrency'] = $debitNoteMaster->directPayeeCurrency;
+            $input['directPayeeCurrency'] = $debitNoteMaster->supplierTransactionCurrencyID;
             $input['BPVsupplierID'] = $debitNoteMaster->supplierID;
             $input['supplierGLCodeSystemID'] = $debitNoteMaster->supplierGLCodeSystemID;
             $input['supplierGLCode'] = $debitNoteMaster->supplierGLCode;
             $input['supplierTransCurrencyID'] = $debitNoteMaster->supplierTransactionCurrencyID;
             $input['supplierTransCurrencyER'] = $debitNoteMaster->supplierTransactionCurrencyER;
-            //$input['supplierDefCurrencyID'] = $debitNoteMaster->supplierDefCurrencyID;
-            //$input['supplierDefCurrencyER'] = $debitNoteMaster->supplierDefCurrencyER;
+            $input['supplierDefCurrencyID'] = $debitNoteMaster->supplierTransactionCurrencyID;
+            $input['supplierDefCurrencyER'] = $debitNoteMaster->supplierTransactionCurrencyER;
             $input['localCurrencyID'] = $debitNoteMaster->localCurrencyID;
             $input['localCurrencyER'] = $debitNoteMaster->localCurrencyER;
             $input['companyRptCurrencyID'] = $debitNoteMaster->companyRptCurrencyID;
             $input['companyRptCurrencyER'] = $debitNoteMaster->companyRptCurrencyER;
             //$input['payAmountBank'] = $debitNoteMaster->payAmountBank;
             $input['payAmountSuppTrans'] = $debitNoteMaster->debitAmountTrans;
-            //$input['payAmountSuppDef'] = $debitNoteMaster->payAmountSuppDef;
+            $input['payAmountSuppDef'] = $debitNoteMaster->debitAmountTrans;
             //$input['suppAmountDocTotal'] = $debitNoteMaster->suppAmountDocTotal;
             $input['payAmountCompLocal'] = $debitNoteMaster->debitAmountLocal;
             $input['payAmountCompRpt'] = $debitNoteMaster->debitAmountRpt;
@@ -287,7 +289,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var MatchDocumentMaster $matchDocumentMaster */
-        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'company'])->findWithoutFail($id);
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'company', 'modified_by'])->findWithoutFail($id);
 
         if (empty($matchDocumentMaster)) {
             return $this->sendError('Match Document Master not found');
@@ -345,6 +347,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function update($id, UpdateMatchDocumentMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['created_by', 'confirmedByName', 'company', 'confirmed_by']);
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
 
         /** @var MatchDocumentMaster $matchDocumentMaster */
         $matchDocumentMaster = $this->matchDocumentMasterRepository->findWithoutFail($id);
@@ -353,9 +359,54 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Match Document Master not found');
         }
 
+        if (isset($input['matchingDocdate'])) {
+            if ($input['matchingDocdate']) {
+                $input['matchingDocdate'] = new Carbon($input['matchingDocdate']);
+            }
+        }
+
+        if ($matchDocumentMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('matchingDocID'))
+                ->where('matchingDocID', $id)
+                ->first();
+
+            if (empty($pvDetailExist)) {
+                return $this->sendError('PV Matching document cannot confirm without details', 500, ['type' => 'confirm']);
+            }
+
+            $checkAmount = PaySupplierInvoiceDetail::where('matchingDocID', $id)
+                ->where('supplierPaymentAmount', '<=', 0)
+                ->count();
+
+            if ($checkAmount > 0) {
+                return $this->sendError('Every item should have a matching amount', 500, ['type' => 'confirm']);
+            }
+
+            $detailAmountTot = PaySupplierInvoiceDetail::where('matchingDocID', $id)
+                ->sum('supplierPaymentAmount');
+
+            $currency = \Helper::convertAmountToLocalRpt(203, $id, $detailAmountTot);
+
+            $input['matchingAmount'] = $detailAmountTot;
+            $input['matchedAmount'] = $detailAmountTot;
+            $input['matchLocalAmount'] = \Helper::roundValue($currency['localAmount']);
+            $input['matchRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+
+            $input['matchingConfirmedYN'] = 1;
+            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;;
+            $input['matchingConfirmedByEmpID'] = $employee->empID;
+            $input['matchingConfirmedByName'] = $employee->empName;
+            $input['matchingConfirmedDate'] = \Helper::currentDateTime();
+        }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
         $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
 
-        return $this->sendResponse($matchDocumentMaster->toArray(), 'MatchDocumentMaster updated successfully');
+        return $this->sendResponse($matchDocumentMaster->toArray(), 'Match Document Master updated successfully');
     }
 
     /**
@@ -521,11 +572,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
             ->make(true);
     }
 
-    public function getPaymentVoucherMatchDetail(Request $request)
+    public function getPaymentVoucherMatchPullingDetail(Request $request)
     {
         $input = $request->all();
 
-        $companySystemID = $input['companySystemID'];
         $matchDocumentMasterAutoID = $input['matchDocumentMasterAutoID'];
 
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
@@ -533,7 +583,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
-         $output = DB::select('SELECT
+        $output = DB::select('SELECT
 	erp_accountspayableledger.apAutoID,
 	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
 	erp_accountspayableledger.supplierTransCurrencyID,
@@ -610,5 +660,20 @@ WHERE
 
         return $this->sendResponse($output, 'Data retrived successfully');
     }
+
+    public function getMatchDocumentMasterRecord(Request $request)
+    {
+        $id = $request->get('matchDocumentMasterAutoID');
+
+        /** @var MatchDocumentMaster $matchDocumentMaster */
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->with(['created_by', 'confirmed_by', 'modified_by'])->findWithoutFail($id);
+
+        if (empty($matchDocumentMaster)) {
+            return $this->sendError('Match Document Master not found');
+        }
+
+        return $this->sendResponse($matchDocumentMaster, 'Data retrieved successfully');
+    }
+
 
 }
