@@ -188,6 +188,12 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $input['invoiceType'] = $paySupplierInvoiceMaster->invoiceType;
             $input['matchInvoice'] = $paySupplierInvoiceMaster->matchInvoice;
 
+            $input['confirmedYN'] = $paySupplierInvoiceMaster->confirmedYN;
+            $input['confirmedByEmpID'] = $paySupplierInvoiceMaster->confirmedByEmpID;
+            $input['confirmedByEmpSystemID'] = $paySupplierInvoiceMaster->confirmedByEmpSystemID;
+            $input['confirmedByName'] = $paySupplierInvoiceMaster->confirmedByName;
+            $input['confirmedDate'] = $paySupplierInvoiceMaster->confirmedDate;
+
         } else if ($input['matchType'] == 2) {
             $debitNoteMaster = DebitNote::find($input['paymentAutoID']);
             if (empty($debitNoteMaster)) {
@@ -221,6 +227,12 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $input['payAmountCompLocal'] = $debitNoteMaster->debitAmountLocal;
             $input['payAmountCompRpt'] = $debitNoteMaster->debitAmountRpt;
             $input['invoiceType'] = $debitNoteMaster->documentType;
+
+            $input['confirmedYN'] = $debitNoteMaster->confirmedYN;
+            $input['confirmedByEmpID'] = $debitNoteMaster->confirmedByEmpID;
+            $input['confirmedByEmpSystemID'] = $debitNoteMaster->confirmedByEmpSystemID;
+            $input['confirmedByName'] = $debitNoteMaster->confirmedByName;
+            $input['confirmedDate'] = $debitNoteMaster->confirmedDate;
         }
 
         $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
@@ -347,7 +359,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function update($id, UpdateMatchDocumentMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'company', 'confirmed_by']);
+        $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by','modified_by']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
@@ -365,7 +377,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
         }
 
-        if ($matchDocumentMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+        if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
 
             $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('matchingDocID'))
                 ->where('matchingDocID', $id)
@@ -383,15 +395,24 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 return $this->sendError('Every item should have a matching amount', 500, ['type' => 'confirm']);
             }
 
-            $detailAmountTot = PaySupplierInvoiceDetail::where('matchingDocID', $id)
+            $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
                 ->sum('supplierPaymentAmount');
 
-            $currency = \Helper::convertAmountToLocalRpt(203, $id, $detailAmountTot);
+            $detailAmountTotLoc = PaySupplierInvoiceDetail::where('matchingDocID', $id)
+                ->sum('paymentLocalAmount');
 
-            $input['matchingAmount'] = $detailAmountTot;
-            $input['matchedAmount'] = $detailAmountTot;
-            $input['matchLocalAmount'] = \Helper::roundValue($currency['localAmount']);
-            $input['matchRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+            $detailAmountTotRpt = PaySupplierInvoiceDetail::where('matchingDocID', $id)
+                ->sum('paymentComRptAmount');
+
+            //$currency = \Helper::convertAmountToLocalRpt(203, $id, $detailAmountTot);
+
+            $input['matchingAmount'] = $detailAmountTotTran;
+            $input['matchedAmount'] = $detailAmountTotTran;
+            //$input['matchLocalAmount'] = \Helper::roundValue($currency['localAmount']);
+            //$input['matchRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+
+            $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
+            $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
 
             $input['matchingConfirmedYN'] = 1;
             $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;;
@@ -518,25 +539,19 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $invMaster->where('confirmedYN', $input['confirmedYN']);
-            }
-        }
-
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $invMaster->where('approved', $input['approved']);
+                $invMaster->where('matchingConfirmedYN', $input['confirmedYN']);
             }
         }
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $invMaster->whereMonth('bookingDate', '=', $input['month']);
+                $invMaster->whereMonth('matchingDocdate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $invMaster->whereYear('bookingDate', '=', $input['year']);
+                $invMaster->whereYear('matchingDocdate', '=', $input['year']);
             }
         }
 
@@ -551,7 +566,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $invMaster = $invMaster->where(function ($query) use ($search) {
                 $query->where('matchingDocCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
                     ->orWhereHas('supplier', function ($query) use ($search) {
                         $query->where('supplierName', 'like', "%{$search}%");
                     });
@@ -610,7 +625,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
 	CurrencyCode,
 	DecimalPlaces,
 	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
-	IFNULL(supplierInvoiceAmount-(IFNULL(sid.SumOfsupplierPaymentAmount,0) + IFNULL(md.matchedAmount,0)),0) as paymentBalancedAmount,
+	IFNULL(supplierInvoiceAmount,0) - IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
+	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
 	false as isChecked
 FROM
 	erp_accountspayableledger

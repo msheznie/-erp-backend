@@ -462,7 +462,7 @@ class MatchDocumentMaster extends Model
 
     public function confirmed_by()
     {
-        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+        return $this->belongsTo('App\Models\Employee', 'matchingConfirmedByEmpSystemID', 'employeeSystemID');
     }
 
     public function modified_by()
