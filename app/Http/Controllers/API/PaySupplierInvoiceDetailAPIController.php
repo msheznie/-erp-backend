@@ -644,6 +644,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         //calculate the total
         $existTotal = 0;
         $detailAmountTot = PaySupplierInvoiceDetail::where('matchingDocID', $input['matchingDocID'])
+            ->where('payDetailAutoID', '<>',$input['payDetailAutoID'])
             ->sum('supplierPaymentAmount');
 
         $existTotal = $detailAmountTot + $input['supplierPaymentAmount'];
