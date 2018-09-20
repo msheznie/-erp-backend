@@ -108,5 +108,9 @@ class ChartOfAccountsAssigned extends Model
     public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
+
+    public function chartofaccount(){
+        return $this->belongsTo('App\Models\ChartOfAccount','chartOfAccountSystemID','chartOfAccountSystemID');
+    }
     
 }

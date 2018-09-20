@@ -1011,7 +1011,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function getProcumentOrderByDocumentType(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1089,6 +1089,12 @@ class ProcumentOrderAPIController extends AppBaseController
         if (array_key_exists('sentToSupplier', $input)) {
             if (($input['sentToSupplier'] == 0 || $input['sentToSupplier'] == -1) && !is_null($input['sentToSupplier'])) {
                 $procumentOrders->where('sentToSupplier', $input['sentToSupplier']);
+            }
+        }
+
+        if (array_key_exists('logisticsAvailable', $input)) {
+            if (($input['logisticsAvailable'] == 0 || $input['logisticsAvailable'] == -1) && !is_null($input['logisticsAvailable'])) {
+                $procumentOrders->where('logisticsAvailable', $input['logisticsAvailable']);
             }
         }
 
@@ -1539,7 +1545,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
     public function getProcumentOrderAllAmendments(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1614,6 +1620,12 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         if (array_key_exists('sentToSupplier', $input)) {
             if (($input['sentToSupplier'] == 0 || $input['sentToSupplier'] == -1) && !is_null($input['sentToSupplier'])) {
                 $procumentOrders->where('sentToSupplier', $input['sentToSupplier']);
+            }
+        }
+
+        if (array_key_exists('logisticsAvailable', $input)) {
+            if (($input['logisticsAvailable'] == 0 || $input['logisticsAvailable'] == -1) && !is_null($input['logisticsAvailable'])) {
+                $procumentOrders->where('logisticsAvailable', $input['logisticsAvailable']);
             }
         }
 

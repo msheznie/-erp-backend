@@ -1744,7 +1744,7 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'customInvoiceLocalER';
                 $docInforArr["defaultCurrencyER"] = 'customInvoiceRptER';
                 break;
-            case 203: // MatchingMaster
+            case 204: // MatchingMaster
                 $docInforArr["modelName"] = 'MatchDocumentMaster';
                 $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
                 $docInforArr["transDefaultCurrencyID"] = 'supplierDefCurrencyID';

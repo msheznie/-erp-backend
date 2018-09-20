@@ -359,7 +359,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function update($id, UpdateMatchDocumentMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'company', 'confirmed_by']);
+        $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by','modified_by']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
