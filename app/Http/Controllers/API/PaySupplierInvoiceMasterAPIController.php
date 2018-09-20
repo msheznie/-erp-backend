@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
+use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
@@ -27,6 +28,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
+use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
@@ -276,8 +278,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
             }
 
-            if ($input['chequePaymentYN']) {
-                $input['chequePaymentYN'] = -1;
+            if (isset($input['chequePaymentYN'])) {
+                if ($input['chequePaymentYN']) {
+                    $input['chequePaymentYN'] = -1;
+                } else {
+                    $input['chequePaymentYN'] = 0;
+                }
             } else {
                 $input['chequePaymentYN'] = 0;
             }
@@ -339,7 +345,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
-        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['confirmed_by'])->findWithoutFail($id);
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['confirmed_by', 'bankaccount'])->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMaster)) {
             return $this->sendError('Pay Supplier Invoice Master not found');
@@ -465,8 +471,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
-            if ($input['chequePaymentYN']) {
-                $input['chequePaymentYN'] = -1;
+            if (isset($input['chequePaymentYN'])) {
+                if ($input['chequePaymentYN']) {
+                    $input['chequePaymentYN'] = -1;
+                } else {
+                    $input['chequePaymentYN'] = 0;
+                }
             } else {
                 $input['chequePaymentYN'] = 0;
             }
@@ -504,6 +514,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     return $this->sendError('Payment voucher date is not within financial period!', 500, ['type' => 'confirm']);
                 }
 
+                $bank = BankAccount::find($input['BPVAccount']);
+                if (empty($bank)) {
+                    return $this->sendError('Bank account not found', 500, ['type' => 'confirm']);
+                }
+
+                if (!$bank->chartOfAccountSystemID) {
+                    return $this->sendError('Bank account is not linked to gl account', 500, ['type' => 'confirm']);
+                }
+
                 if ($paySupplierInvoiceMaster->invoiceType == 2) {
                     $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('PayMasterAutoId'))
                         ->where('PayMasterAutoId', $id)
@@ -521,6 +540,36 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
                     }
 
+                    $checkAmountGreater = PaySupplierInvoiceDetail::selectRaw('SUM(supplierPaymentAmount) as supplierPaymentAmount')->where('PayMasterAutoId', $id)->first();
+
+                    if ($checkAmountGreater['supplierPaymentAmount'] < 0) {
+                        return $this->sendError('Total Amount should be equal or greater than zero', 500, ['type' => 'confirm']);
+                    }
+
+                    $pvDetailExist = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                        ->get();
+
+                    foreach ($pvDetailExist as $val) {
+                        $updatePayment = AccountsPayableLedger::find($val->apAutoID);
+                        if ($updatePayment) {
+
+                            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $val->apAutoID)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+
+                            $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $val->bookingInvSystemCode)->where('documentSystemID', $val->addedDocumentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+
+                            $machAmount = 0;
+                            if ($matchedAmount) {
+                                $machAmount = $matchedAmount["SumOfmatchedAmount"];
+                            }
+
+                            $paymentBalancedAmount = \Helper::roundValue($val->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+
+                            if (($val->supplierInvoiceAmount > $paymentBalancedAmount) && ($val->paymentBalancedAmount > 0)) {
+                                $updatePayment->selectedToPaymentInv = 0;
+                                $updatePayment->save();
+                            }
+                        }
+                    }
                 }
 
                 if ($paySupplierInvoiceMaster->invoiceType == 5) {
@@ -631,9 +680,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($paySupplierInvoiceMaster->invoiceType == 2) {
                 $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")->where('PayMasterAutoId', $id)->first();
 
-                $bankAmount = \Helper::currencyConversion($companySystemID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $totalAmount->supplierPaymentAmount, $paySupplierInvoiceMaster->BPVAccount);
+                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
 
-                $input['payAmountBank'] = \Helper::roundValue($bankAmount["bankAmount"]);
+                $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
                 $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                 $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                 $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount);
@@ -644,9 +693,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($paySupplierInvoiceMaster->invoiceType == 5) {
                 $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
 
-                $bankAmount = \Helper::currencyConversion($companySystemID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $totalAmount->paymentAmount, $paySupplierInvoiceMaster->BPVAccount);
+                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierTransAmount);
 
-                $input['payAmountBank'] = \Helper::roundValue($bankAmount["bankAmount"]);
+                $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
                 $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierTransAmount);
                 $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierDefaultAmount);
                 $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
@@ -657,14 +706,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 $totalAmount = DirectPaymentDetails::selectRaw("SUM(DPAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount")->where('directPaymentAutoID', $id)->first();
 
-                $bankAmount = \Helper::currencyConversion($companySystemID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $totalAmount->paymentAmount, $paySupplierInvoiceMaster->BPVAccount);
+                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->paymentAmount);
 
-                $input['payAmountBank'] = \Helper::roundValue($bankAmount["bankAmount"]);
-                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->comRptAmount);
-                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
+                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->paymentAmount);
+                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->paymentAmount);
                 $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
                 $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
-                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->paymentAmount);
             }
 
             $input['modifiedPc'] = gethostname();
@@ -677,7 +726,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             return $this->sendResponse($paySupplierInvoiceMaster->toArray(), 'PaySupplierInvoiceMaster updated successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError($exception->getMessage());
         }
     }
 
@@ -889,7 +938,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
     public function getBankAccount(Request $request)
     {
-        $bankAccount = BankAccount::where('bankmasterAutoID', $request["bankmasterAutoID"])->where('companySystemID', $request["companyID"])->where('isAccountActive', 1)->where('approvedYN', 1)->get();
+        $bankAccount = DB::table('erp_bankaccount')->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')->where('bankmasterAutoID', $request["bankmasterAutoID"])->where('erp_bankaccount.companySystemID', $request["companyID"])->where('isAccountActive', 1)->where('approvedYN', 1)->get();
         return $this->sendResponse($bankAccount, 'Record retrieved successfully');
     }
 
@@ -927,7 +976,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     {
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["PayMasterAutoId"]);
 
-        $output = DB::select('SELECT
+        $sql ='SELECT
 	erp_accountspayableledger.apAutoID,
 	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
 	erp_accountspayableledger.supplierTransCurrencyID,
@@ -954,7 +1003,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 	CurrencyCode,
 	DecimalPlaces,
 	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
-	IFNULL(sid.SumOfpaymentBalancedAmount,0) as paymentBalancedAmount,
+	IFNULL(supplierInvoiceAmount,0) - IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
+	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
 	false as isChecked 
 FROM
 	erp_accountspayableledger
@@ -972,32 +1022,36 @@ GROUP BY
 SELECT
 	erp_matchdocumentmaster.PayMasterAutoId,
 	erp_matchdocumentmaster.companyID,
+	erp_matchdocumentmaster.companySystemID,
 	erp_matchdocumentmaster.documentSystemID,
 	erp_matchdocumentmaster.BPVcode,
 	erp_matchdocumentmaster.BPVsupplierID,
 	erp_matchdocumentmaster.supplierTransCurrencyID,
-	erp_matchdocumentmaster.matchedAmount,
-	erp_matchdocumentmaster.matchLocalAmount,
-	erp_matchdocumentmaster.matchRptAmount,
-	erp_matchdocumentmaster.matchingConfirmedYN
+	SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
+	SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
+	SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
 FROM
 	erp_matchdocumentmaster 
 WHERE
 	erp_matchdocumentmaster.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
-	AND erp_matchdocumentmaster.documentSystemID = ' . $paySupplierInvoiceMaster->documentSystemID . '
+	AND erp_matchdocumentmaster.documentSystemID = 15
+	GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
 	) md ON md.documentSystemID = erp_accountspayableledger.documentSystemID 
 	AND md.PayMasterAutoId = erp_accountspayableledger.documentSystemCode 
 	AND md.BPVsupplierID = erp_accountspayableledger.supplierCodeSystem 
 	AND md.supplierTransCurrencyID = erp_accountspayableledger.supplierTransCurrencyID 
+	AND md.companySystemID = erp_accountspayableledger.companySystemID 
 	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
 WHERE
 	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 ) 
-	AND erp_accountspayableledger.documentDate < "' . $paySupplierInvoiceMaster->BPVdate . '" 
+	AND erp_accountspayableledger.documentDate <= "' . $paySupplierInvoiceMaster->BPVdate . '" 
 	AND erp_accountspayableledger.selectedToPaymentInv = 0 
 	AND erp_accountspayableledger.fullyInvoice <> 2 
 	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
 	AND erp_accountspayableledger.supplierCodeSystem = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' 
-	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount,DecimalPlaces) > 0 ORDER BY erp_accountspayableledger.apAutoID DESC');
+	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount,DecimalPlaces) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
+
+        $output = DB::select($sql);
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
@@ -1064,11 +1118,11 @@ WHERE
     {
         $input = $request->all();
 
-        if(!isset($input['matchType'])){
+        if (!isset($input['matchType'])) {
             return $this->sendError('Please select a match type');
         }
 
-        if($input['matchType'] == 1){
+        if ($input['matchType'] == 1) {
             $invoiceMaster = DB::select('SELECT
 	MASTER .PayMasterAutoId,
 	MASTER .BPVcode as documentCode,
@@ -1109,7 +1163,7 @@ WHERE
 AND invoiceType = 5
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
-        }elseif($input['matchType'] == 2){
+        } elseif ($input['matchType'] == 2) {
             $invoiceMaster = DB::select('SELECT
 	MASTER .debitNoteAutoID,
 	MASTER .debitNoteCode as documentCode,
@@ -1294,8 +1348,37 @@ HAVING
                         $paySupplierInvoice->save();
                     }
                 }
+
             } else {
                 /*return $this->sendError("Cheque number won\'t be generated. The bank currency and the local currency is not equal", 500);*/
+            }
+
+            if ($payInvoice->invoiceType == 2) {
+                $pvDetailExist = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                    ->get();
+                foreach ($pvDetailExist as $val) {
+                    $updatePayment = AccountsPayableLedger::find($val->apAutoID);
+                    if ($updatePayment) {
+                        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $val->apAutoID)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+
+                        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $val->bookingInvSystemCode)->where('documentSystemID', $val->addedDocumentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+
+                        $machAmount = 0;
+                        if ($matchedAmount) {
+                            $machAmount = $matchedAmount["SumOfmatchedAmount"];
+                        }
+
+                        $paymentBalancedAmount = \Helper::roundValue($val->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+
+                        if ($val->supplierInvoiceAmount == $paymentBalancedAmount) {
+                            $updatePayment->selectedToPaymentInv = 1;
+                            $updatePayment->save();
+                        } else if (($val->supplierInvoiceAmount > $paymentBalancedAmount) && ($val->paymentBalancedAmount > 0)) {
+                            $updatePayment->selectedToPaymentInv = 1;
+                            $updatePayment->save();
+                        }
+                    }
+                }
             }
 
             DB::commit();
