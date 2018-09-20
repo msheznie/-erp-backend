@@ -665,13 +665,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail');
     Route::post('deleteAllPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@deleteAllPOPaymentDetail');
     Route::get('getPOPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getPOPaymentDetails');
+    Route::get('getMatchingPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getMatchingPaymentDetails');
     Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController');
     Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
     Route::get('getADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getADVPaymentDetails');
     Route::get('getDirectPaymentDetails', 'DirectPaymentDetailsAPIController@getDirectPaymentDetails');
+    Route::post('deleteAllDirectPayment', 'DirectPaymentDetailsAPIController@deleteAllDirectPayment');
     Route::post('addADVPaymentDetail', 'AdvancePaymentDetailsAPIController@addADVPaymentDetail');
     Route::post('deleteAllADVPaymentDetail', 'AdvancePaymentDetailsAPIController@deleteAllADVPaymentDetail');
     Route::get('getADVPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForPV');
+    Route::post('paymentVoucherReopen', 'PaySupplierInvoiceMasterAPIController@paymentVoucherReopen');
     Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
     Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
     Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV');
@@ -835,10 +838,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords');
     Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown');
 
+    Route::post('deleteAllSIDirectDetail', 'DirectInvoiceDetailsAPIController@deleteAllSIDirectDetail');
 
     Route::resource('match_document_masters', 'MatchDocumentMasterAPIController');
     Route::post('getMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getMatchDocumentMasterView');
     Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@getMatchDocumentMasterFormData');
+    Route::get('getPaymentVoucherMatchPullingDetail', 'MatchDocumentMasterAPIController@getPaymentVoucherMatchPullingDetail');
+    Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@getMatchDocumentMasterRecord');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
 
@@ -847,8 +853,24 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
     Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
+    Route::post('addPaymentVoucherMatchingPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPaymentVoucherMatchingPaymentDetail');
+    Route::post('updatePaymentVoucherMatchingDetail', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherMatchingDetail');
 
+    Route::resource('bank_ledgers', 'BankLedgerAPIController');
+    Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
 
+    Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
+    Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');
+    Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
+    Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+    Route::resource('credit_notes', 'CreditNoteAPIController');
+    Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
+    Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
+    Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
+    Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
+    Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
+    Route::resource('performa_temps', 'PerformaTempAPIController');
+    Route::resource('free_billings', 'FreeBillingAPIController');
 
 });
 
@@ -890,22 +912,5 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
-Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
 
-Route::resource('credit_notes', 'CreditNoteAPIController');
-
-Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
-
-Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
-
-Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController');
-
-Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController');
-
-Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
-
-
-
-
-Route::resource('performa_temps', 'PerformaTempAPIController');
 

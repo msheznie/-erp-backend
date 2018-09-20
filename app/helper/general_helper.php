@@ -1711,6 +1711,28 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localER';
                 $docInforArr["defaultCurrencyER"] = 'supplierDefaultCurrencyER';
                 break;
+            case 202: // Direct Payment
+                $docInforArr["modelName"] = 'DirectPaymentDetails';
+                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'bankCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'comRptCurrency';
+                $docInforArr["localCurrencyID"] = 'localCurrency';
+                $docInforArr["transCurrencyER"] = 'supplierTransER';
+                $docInforArr["rptCurrencyER"] = 'comRptCurrencyER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'bankCurrencyER';
+                break;
+            case 203: // Payment Master
+                $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
+                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'BPVbankCurrency';
+                $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'BPVbankCurrencyER';
+                break;
             case 14: // Logistic
                 $docInforArr["modelName"] = 'Logistic';
                 $docInforArr["transCurrencyID"] = 'customInvoiceCurrencyID';
@@ -1721,6 +1743,17 @@ class Helper
                 $docInforArr["rptCurrencyER"] = 'customInvoiceRptER';
                 $docInforArr["localCurrencyER"] = 'customInvoiceLocalER';
                 $docInforArr["defaultCurrencyER"] = 'customInvoiceRptER';
+                break;
+            case 203: // MatchingMaster
+                $docInforArr["modelName"] = 'MatchDocumentMaster';
+                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'supplierDefCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];

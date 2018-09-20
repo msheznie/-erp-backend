@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateAdvancePaymentDetailsAPIRequest;
 use App\Http\Requests\API\UpdateAdvancePaymentDetailsAPIRequest;
 use App\Models\AdvancePaymentDetails;
+use App\Models\BankAssign;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
@@ -229,6 +230,20 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
             if (empty($advancePaymentDetails)) {
                 return $this->sendError('Advance Payment Details not found');
+            }
+
+            $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
+
+            $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID',$payMaster->BPVbank)->first();
+
+            if (empty($bankMaster)) {
+                return $this->sendError('Selected Bank is not active',500,['type' => 'amountmismatch']);
+            }
+
+            $bankAccount = \App\Models\BankAccount::isActive()->find($payMaster->BPVAccount);
+
+            if (empty($bankAccount)) {
+                return $this->sendError('Selected Bank Account is not active',500,['type' => 'amountmismatch']);
             }
 
             $advancePayment = PoAdvancePayment::find($input['poAdvPaymentID']);

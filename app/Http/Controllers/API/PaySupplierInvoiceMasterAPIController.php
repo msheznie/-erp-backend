@@ -16,14 +16,19 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
+use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DirectPaymentDetails;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
+use App\Models\EmployeesDepartment;
+use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
@@ -138,149 +143,165 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
      */
     public function store(CreatePaySupplierInvoiceMasterAPIRequest $request)
     {
-        $input = $request->all();
-        $input = $this->convertArrayToValue($input);
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input = $this->convertArrayToValue($input);
 
-        $validator = \Validator::make($request->all(), [
-            'invoiceType' => 'required',
-            'supplierTransCurrencyID' => 'required',
-            'BPVchequeNo' => 'required',
-            'BPVNarration' => 'required',
-            'BPVbank' => 'required',
-            'BPVAccount' => 'required',
-            'BPVdate' => 'required|date',
-            'BPVchequeDate' => 'required|date',
-        ]);
+            $validator = \Validator::make($request->all(), [
+                'invoiceType' => 'required',
+                'supplierTransCurrencyID' => 'required',
+                'BPVNarration' => 'required',
+                'BPVbank' => 'required',
+                'BPVAccount' => 'required',
+                'BPVdate' => 'required|date',
+                'BPVchequeDate' => 'required|date',
+            ]);
 
-        if ($validator->fails()) {//echo 'in';exit;
-            return $this->sendError($validator->messages(), 422);
-        }
-
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYear["success"]) {
-            return $this->sendError($companyFinanceYear["message"], 500);
-        } else {
-            $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
-            $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
-        }
-
-        $inputParam = $input;
-        $inputParam["departmentSystemID"] = 1;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-        if (!$companyFinancePeriod["success"]) {
-            return $this->sendError($companyFinancePeriod["message"], 500);
-        } else {
-            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
-        }
-
-        unset($inputParam);
-
-        $input['BPVdate'] = new Carbon($input['BPVdate']);
-        $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
-
-        $monthBegin = $input['FYPeriodDateFrom'];
-        $monthEnd = $input['FYPeriodDateTo'];
-
-        if (($input['BPVdate'] >= $monthBegin) && ($input['BPVdate'] <= $monthEnd)) {
-        } else {
-            return $this->sendError('Payment voucher date is not within financial period!', 500);
-        }
-
-        $company = Company::find($input['companySystemID']);
-        if ($company) {
-            $input['companyID'] = $company->CompanyID;
-        }
-
-        $documentMaster = DocumentMaster::find($input['documentSystemID']);
-        if ($documentMaster) {
-            $input['documentID'] = $documentMaster->documentID;
-        }
-
-        $lastSerial = PaySupplierInvoiceMaster::where('companySystemID', $input['companySystemID'])
-            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('PayMasterAutoId', 'desc')
-            ->first();
-
-        $lastSerialNumber = 1;
-        if ($lastSerial) {
-            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-        }
-
-        if ($companyFinanceYear["message"]) {
-            $startYear = $companyFinanceYear["message"]['bigginingDate'];
-            $finYearExp = explode('-', $startYear);
-            $finYear = $finYearExp[0];
-        } else {
-            $finYear = date("Y");
-        }
-        if ($documentMaster) {
-            $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-            $input['BPVcode'] = $documentCode;
-        }
-        $input['serialNo'] = $lastSerialNumber;
-
-        if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
-            $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
-
-            $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
-
-            if ($supDetail) {
-                $input['supplierGLCode'] = $supDetail->liabilityAccount;
-                $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+            if ($validator->fails()) {//echo 'in';exit;
+                return $this->sendError($validator->messages(), 422);
             }
-            $input['supplierTransCurrencyER'] = 1;
-            if ($supCurrency) {
-                $input['supplierDefCurrencyID'] = $supCurrency->currencyID;
-                $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 1;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            unset($inputParam);
+
+            $input['BPVdate'] = new Carbon($input['BPVdate']);
+            $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
+
+            $monthBegin = $input['FYPeriodDateFrom'];
+            $monthEnd = $input['FYPeriodDateTo'];
+
+            if (($input['BPVdate'] >= $monthBegin) && ($input['BPVdate'] <= $monthEnd)) {
+            } else {
+                return $this->sendError('Payment voucher date is not within financial period!', 500);
+            }
+
+            $company = Company::find($input['companySystemID']);
+            if ($company) {
+                $input['companyID'] = $company->CompanyID;
+            }
+
+            $documentMaster = DocumentMaster::find($input['documentSystemID']);
+            if ($documentMaster) {
+                $input['documentID'] = $documentMaster->documentID;
+            }
+
+            $lastSerial = PaySupplierInvoiceMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+                ->orderBy('PayMasterAutoId', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            if ($companyFinanceYear["message"]) {
+                $startYear = $companyFinanceYear["message"]['bigginingDate'];
+                $finYearExp = explode('-', $startYear);
+                $finYear = $finYearExp[0];
+            } else {
+                $finYear = date("Y");
+            }
+            if ($documentMaster) {
+                $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                $input['BPVcode'] = $documentCode;
+            }
+            $input['serialNo'] = $lastSerialNumber;
+
+            if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
+                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
+
+                $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
+
+                if ($supDetail) {
+                    $input['supplierGLCode'] = $supDetail->liabilityAccount;
+                    $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+                }
+                $input['supplierTransCurrencyER'] = 1;
+                if ($supCurrency) {
+                    $input['supplierDefCurrencyID'] = $supCurrency->currencyID;
+                    $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
+                    if ($currencyConversionDefaultMaster) {
+                        $input['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                    }
+                }
+                $supplier = SupplierMaster::find($input['BPVsupplierID']);
+                $input['directPaymentPayee'] = $supplier->supplierName;
+            }
+
+            $bankAccount = BankAccount::find($input['BPVAccount']);
+            if ($bankAccount) {
+                $input['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
+                $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $bankAccount->accountCurrencyID, 0);
                 if ($currencyConversionDefaultMaster) {
-                    $input['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                    $input['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
                 }
             }
-            $supplier = SupplierMaster::find($input['BPVsupplierID']);
-            $input['directPaymentPayee'] = $supplier->supplierName;
-        }
 
-        $bankAccount = BankAccount::find($input['BPVAccount']);
-        if ($bankAccount) {
-            $input['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
-            $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $bankAccount->accountCurrencyID, 0);
-            if ($currencyConversionDefaultMaster) {
-                $input['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+            $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
+            if ($companyCurrency) {
+                $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+                $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
+                if ($companyCurrencyConversion) {
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                }
             }
-        }
 
-        $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
-        if ($companyCurrency) {
-            $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-            $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
-            if ($companyCurrencyConversion) {
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            if ($input['invoiceType'] == 3) {
+                if ($input['payeeType'] == 3) {
+                    $input['directPaymentpayeeYN'] = -1;
+                }
+                if ($input['payeeType'] == 2) {
+                    $input['directPaymentPayeeSelectEmp'] = -1;
+                    $emp = Employee::find($input["directPaymentPayeeEmpID"]);
+                    $input['directPaymentPayee'] = $emp->empFullName;
+                }
             }
-        }
 
-        if ($input['invoiceType'] == 3) {
-            if ($input['payeeType'] == 3) {
-                $input['directPaymentpayeeYN'] = -1;
+            if (isset($input['chequePaymentYN'])) {
+                if ($input['chequePaymentYN']) {
+                    $input['chequePaymentYN'] = -1;
+                } else {
+                    $input['chequePaymentYN'] = 0;
+                }
+            } else {
+                $input['chequePaymentYN'] = 0;
             }
-            if ($input['payeeType'] == 2) {
-                $input['directPaymentPayeeSelectEmp'] = -1;
-                $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                $input['directPaymentPayee'] = $emp->empFullName;
-            }
+
+            $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
+
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+
+            $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->create($input);
+
+            DB::commit();
+            return $this->sendResponse($paySupplierInvoiceMasters->toArray(), 'Pay Supplier Invoice Master saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
         }
-
-        $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
-
-        $input['createdPcID'] = gethostname();
-        $input['createdUserID'] = \Helper::getEmployeeID();
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-
-        $paySupplierInvoiceMasters = $this->paySupplierInvoiceMasterRepository->create($input);
-
-        return $this->sendResponse($paySupplierInvoiceMasters->toArray(), 'Pay Supplier Invoice Master saved successfully');
     }
 
     /**
@@ -324,7 +345,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
-        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['confirmed_by'])->findWithoutFail($id);
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['confirmed_by', 'bankaccount'])->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMaster)) {
             return $this->sendError('Pay Supplier Invoice Master not found');
@@ -450,6 +471,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
+            if (isset($input['chequePaymentYN'])) {
+                if ($input['chequePaymentYN']) {
+                    $input['chequePaymentYN'] = -1;
+                } else {
+                    $input['chequePaymentYN'] = 0;
+                }
+            } else {
+                $input['chequePaymentYN'] = 0;
+            }
+
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -483,6 +514,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     return $this->sendError('Payment voucher date is not within financial period!', 500, ['type' => 'confirm']);
                 }
 
+                $bank = BankAccount::find($input['BPVAccount']);
+                if (empty($bank)) {
+                    return $this->sendError('Bank account not found', 500, ['type' => 'confirm']);
+                }
+
+                if (!$bank->chartOfAccountSystemID) {
+                    return $this->sendError('Bank account is not linked to gl account', 500, ['type' => 'confirm']);
+                }
+
                 if ($paySupplierInvoiceMaster->invoiceType == 2) {
                     $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('PayMasterAutoId'))
                         ->where('PayMasterAutoId', $id)
@@ -500,6 +540,36 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
                     }
 
+                    $checkAmountGreater = PaySupplierInvoiceDetail::selectRaw('SUM(supplierPaymentAmount) as supplierPaymentAmount')->where('PayMasterAutoId', $id)->first();
+
+                    if ($checkAmountGreater['supplierPaymentAmount'] < 0) {
+                        return $this->sendError('Total Amount should be equal or greater than zero', 500, ['type' => 'confirm']);
+                    }
+
+                    $pvDetailExist = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                        ->get();
+
+                    foreach ($pvDetailExist as $val) {
+                        $updatePayment = AccountsPayableLedger::find($val->apAutoID);
+                        if ($updatePayment) {
+
+                            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $val->apAutoID)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+
+                            $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $val->bookingInvSystemCode)->where('documentSystemID', $val->addedDocumentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+
+                            $machAmount = 0;
+                            if ($matchedAmount) {
+                                $machAmount = $matchedAmount["SumOfmatchedAmount"];
+                            }
+
+                            $paymentBalancedAmount = \Helper::roundValue($val->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+
+                            if (($val->supplierInvoiceAmount > $paymentBalancedAmount) && ($val->paymentBalancedAmount > 0)) {
+                                $updatePayment->selectedToPaymentInv = 0;
+                                $updatePayment->save();
+                            }
+                        }
+                    }
                 }
 
                 if ($paySupplierInvoiceMaster->invoiceType == 5) {
@@ -521,13 +591,42 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
 
                 if ($paySupplierInvoiceMaster->invoiceType == 3) {
-                    $pvDetailExist = DirectPaymentDetails::select(DB::raw('directPaymentAutoID'))
-                        ->where('directPaymentAutoID', $id)
-                        ->first();
+                    $pvDetailExist = DirectPaymentDetails::where('directPaymentAutoID', $id)->get();
 
                     if (empty($pvDetailExist)) {
                         return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
+
+                    $finalError = array(
+                        'required_serviceLine' => array(),
+                        'active_serviceLine' => array(),
+                    );
+
+                    $error_count = 0;
+
+                    foreach ($pvDetailExist as $item) {
+                        if ($item->serviceLineSystemID && !is_null($item->serviceLineSystemID)) {
+
+                            $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $item->serviceLineSystemID)
+                                ->where('isActive', 1)
+                                ->first();
+                            if (empty($checkDepartmentActive)) {
+                                $item->serviceLineSystemID = null;
+                                $item->serviceLineCode = null;
+                                array_push($finalError['active_serviceLine'], $item->glCode . ' | ' . $item->glCodeDes);
+                                $error_count++;
+                            }
+                        } else {
+                            array_push($finalError['required_serviceLine'], $item->glCode . ' | ' . $item->glCodeDes);
+                            $error_count++;
+                        }
+                    }
+
+                    $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+                    if ($error_count > 0) {
+                        return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                    }
+
 
                     $checkAmount = DirectPaymentDetails::where('directPaymentAutoID', $id)
                         ->where('DPAmount', '<=', 0)
@@ -542,16 +641,48 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
-                    return $this->sendError($confirm["message"],500, ['type' => 'confirm']);
+                    return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
+                }
+
+                $paySupplierInvoice = PaySupplierInvoiceMaster::find($id);
+                if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
+                    if ($input['chequePaymentYN'] == -1) {
+
+                        $bankAccount = BankAccount::find($input['BPVAccount']);
+                        $nextChequeNo = $bankAccount->chquePrintedStartingNo + 1;
+
+                        $checkChequeNoDuplicate = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('BPVbank', $input['BPVbank'])->where('BPVAccount', $input['BPVAccount'])->where('BPVchequeNo', $nextChequeNo)->first();
+
+                        if ($checkChequeNoDuplicate) {
+                            return $this->sendError('The cheque no ' . $nextChequeNo . ' is already taken in ' . $checkChequeNoDuplicate['BPVcode'] . ' Please check again.', 500, ['type' => 'confirm']);
+                        }
+
+                        if ($bankAccount->isPrintedActive == 1) {
+                            $chequeNumber = $bankAccount->chquePrintedStartingNo + 1;
+                            $input['BPVchequeNo'] = $chequeNumber;
+
+                            $bankAccount->chquePrintedStartingNo = $chequeNumber;
+                            $bankAccount->save();
+                        }
+                    } else {
+                        $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('PayMasterAutoId', 'ASC')->first();
+                        if ($chkCheque) {
+                            $input['BPVchequeNo'] = 1;
+                        } else {
+                            $input['BPVchequeNo'] = $chkCheque->BPVchequeNo + 1;
+                        }
+                    }
+                } else {
+                    /*return $this->sendError("Cheque number won\'t be generated. The bank currency and the local currency is not equal", 500);*/
                 }
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 2) {
                 $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")->where('PayMasterAutoId', $id)->first();
 
-                $bankAmount = \Helper::currencyConversion($companySystemID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $paySupplierInvoiceMaster->supplierTransCurrencyID, $totalAmount->supplierPaymentAmount, $paySupplierInvoiceMaster->BPVAccount);
+                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
 
-                $input['payAmountBank'] = \Helper::roundValue($bankAmount["bankAmount"]);
+                $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
                 $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                 $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
                 $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount);
@@ -562,9 +693,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($paySupplierInvoiceMaster->invoiceType == 5) {
                 $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
 
-                $bankAmount = \Helper::currencyConversion($companySystemID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$totalAmount->paymentAmount,$paySupplierInvoiceMaster->BPVAccount);
+                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierTransAmount);
 
-                $input['payAmountBank'] = \Helper::roundValue($bankAmount["bankAmount"]);
+                $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
                 $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierTransAmount);
                 $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierDefaultAmount);
                 $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
@@ -575,14 +706,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 $totalAmount = DirectPaymentDetails::selectRaw("SUM(DPAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount")->where('directPaymentAutoID', $id)->first();
 
-                $bankAmount = \Helper::currencyConversion($companySystemID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$paySupplierInvoiceMaster->supplierTransCurrencyID,$totalAmount->paymentAmount,$paySupplierInvoiceMaster->BPVAccount);
+                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->paymentAmount);
 
-                $input['payAmountBank'] = \Helper::roundValue($bankAmount["bankAmount"]);
-                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->comRptAmount);
-                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
+                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->paymentAmount);
+                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->paymentAmount);
                 $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
                 $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
-                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->comRptAmount);
+                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->paymentAmount);
             }
 
             $input['modifiedPc'] = gethostname();
@@ -590,11 +721,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
+
             DB::commit();
             return $this->sendResponse($paySupplierInvoiceMaster->toArray(), 'PaySupplierInvoiceMaster updated successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError($exception->getMessage());
         }
     }
 
@@ -660,7 +792,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }, 'approved_by' => function ($query) {
                 $query->with('employee');
                 $query->where('documentSystemID', 4);
-            }])->first();
+            }, 'created_by'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 
@@ -784,7 +916,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $payee = Employee::where('empCompanySystemID', $companyId)->where('discharegedYN', '<>', 2)->get();
 
-        $segment = SegmentMaster::ofCompany($subCompanies)->IsAcitve()->get();
+        $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->get();
 
         $output = array(
             'financialYears' => $financialYears,
@@ -806,7 +938,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
     public function getBankAccount(Request $request)
     {
-        $bankAccount = BankAccount::where('bankmasterAutoID', $request["bankmasterAutoID"])->where('companySystemID', $request["companyID"])->where('isAccountActive', 1)->where('approvedYN', 1)->get();
+        $bankAccount = DB::table('erp_bankaccount')->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')->where('bankmasterAutoID', $request["bankmasterAutoID"])->where('erp_bankaccount.companySystemID', $request["companyID"])->where('isAccountActive', 1)->where('approvedYN', 1)->get();
         return $this->sendResponse($bankAccount, 'Record retrieved successfully');
     }
 
@@ -825,20 +957,26 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $companySystemID = $paySupplierInvoiceMaster->companySystemID;
         $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
 
-        $bankAccount = BankAccount::where('isAccountActive', 1)->where('approvedYN', 1)->find($input['BPVAccount']);
+        $bankMaster = BankAssign::ofCompany($paySupplierInvoiceMaster->companySystemID)->isActive()->where('bankmasterAutoID', $paySupplierInvoiceMaster->BPVbank)->first();
 
-        if ($bankAccount) {
-            return $this->sendResponse($bankAccount, 'Record retrieved successfully');
-        } else {
-            return $this->sendError('Bank account is not active', 500);
+        if (empty($bankMaster)) {
+            return $this->sendError('Selected Bank is not active', 500);
         }
+
+        $bankAccount = BankAccount::isActive()->find($paySupplierInvoiceMaster->BPVAccount);
+
+        if (empty($bankAccount)) {
+            return $this->sendError('Selected Bank Account is not active', 500);
+        }
+
+        return $this->sendResponse($bankAccount, 'Record retrieved successfully');
     }
 
     public function getPOPaymentForPV(Request $request)
     {
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["PayMasterAutoId"]);
 
-        $output = DB::select('SELECT
+        $sql ='SELECT
 	erp_accountspayableledger.apAutoID,
 	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
 	erp_accountspayableledger.supplierTransCurrencyID,
@@ -865,7 +1003,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 	CurrencyCode,
 	DecimalPlaces,
 	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
-	IFNULL(sid.SumOfpaymentBalancedAmount,0) as paymentBalancedAmount,
+	IFNULL(supplierInvoiceAmount,0) - IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
+	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
 	false as isChecked 
 FROM
 	erp_accountspayableledger
@@ -883,32 +1022,36 @@ GROUP BY
 SELECT
 	erp_matchdocumentmaster.PayMasterAutoId,
 	erp_matchdocumentmaster.companyID,
+	erp_matchdocumentmaster.companySystemID,
 	erp_matchdocumentmaster.documentSystemID,
 	erp_matchdocumentmaster.BPVcode,
 	erp_matchdocumentmaster.BPVsupplierID,
 	erp_matchdocumentmaster.supplierTransCurrencyID,
-	erp_matchdocumentmaster.matchedAmount,
-	erp_matchdocumentmaster.matchLocalAmount,
-	erp_matchdocumentmaster.matchRptAmount,
-	erp_matchdocumentmaster.matchingConfirmedYN
+	SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
+	SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
+	SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
 FROM
 	erp_matchdocumentmaster 
 WHERE
 	erp_matchdocumentmaster.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
-	AND erp_matchdocumentmaster.documentSystemID = ' . $paySupplierInvoiceMaster->documentSystemID . '
+	AND erp_matchdocumentmaster.documentSystemID = 15
+	GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
 	) md ON md.documentSystemID = erp_accountspayableledger.documentSystemID 
 	AND md.PayMasterAutoId = erp_accountspayableledger.documentSystemCode 
 	AND md.BPVsupplierID = erp_accountspayableledger.supplierCodeSystem 
 	AND md.supplierTransCurrencyID = erp_accountspayableledger.supplierTransCurrencyID 
+	AND md.companySystemID = erp_accountspayableledger.companySystemID 
 	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
 WHERE
 	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 ) 
-	AND erp_accountspayableledger.documentDate < "' . $paySupplierInvoiceMaster->BPVdate . '" 
+	AND erp_accountspayableledger.documentDate <= "' . $paySupplierInvoiceMaster->BPVdate . '" 
 	AND erp_accountspayableledger.selectedToPaymentInv = 0 
 	AND erp_accountspayableledger.fullyInvoice <> 2 
 	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
 	AND erp_accountspayableledger.supplierCodeSystem = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' 
-	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount,DecimalPlaces) > 0');
+	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount,DecimalPlaces) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
+
+        $output = DB::select($sql);
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
@@ -958,8 +1101,8 @@ HAVING
 	AND ( erp_purchaseorderadvpayment.companyID = advd.companyID ) 
 WHERE
 	(
-	( ( erp_purchaseorderadvpayment.companySystemID ) = ' . $paySupplierInvoiceMaster->companySystemID . ' )
-	AND ( ( erp_purchaseorderadvpayment.supplierID ) = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' )
+	( ( erp_purchaseorderadvpayment.companySystemID ) = ' . $paySupplierInvoiceMaster->companySystemID . ' ) 
+	AND ( ( erp_purchaseorderadvpayment.supplierID ) = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' ) 
 	AND ( ( erp_purchaseorderadvpayment.currencyID ) = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' )
 	AND ( ( erp_purchaseorderadvpayment.selectedToPayment ) = 0 ) 
 	AND ( ( erp_purchaseordermaster.poCancelledYN ) = 0 ) 
@@ -975,11 +1118,11 @@ WHERE
     {
         $input = $request->all();
 
-        if(!isset($input['matchType'])){
+        if (!isset($input['matchType'])) {
             return $this->sendError('Please select a match type');
         }
 
-        if($input['matchType'] == 1){
+        if ($input['matchType'] == 1) {
             $invoiceMaster = DB::select('SELECT
 	MASTER .PayMasterAutoId,
 	MASTER .BPVcode as documentCode,
@@ -1020,7 +1163,7 @@ WHERE
 AND invoiceType = 5
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
-        }elseif($input['matchType'] == 2){
+        } elseif ($input['matchType'] == 2) {
             $invoiceMaster = DB::select('SELECT
 	MASTER .debitNoteAutoID,
 	MASTER .debitNoteCode as documentCode,
@@ -1095,6 +1238,155 @@ HAVING
         }
 
         return $this->sendResponse($invoiceMaster, 'Data retrived successfully');
+    }
+
+    public function paymentVoucherReopen(Request $request)
+    {
+
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+
+            $id = $input['PayMasterAutoId'];
+            $payInvoice = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
+            $emails = array();
+            if (empty($payInvoice)) {
+                return $this->sendError('Payment Voucher not found');
+            }
+
+            if ($payInvoice->approved == -1) {
+                return $this->sendError('You cannot reopen this Payment Voucher it is already fully approved');
+            }
+
+            if ($payInvoice->RollLevForApp_curr > 1) {
+                return $this->sendError('You cannot reopen this Payment Voucher it is already partially approved');
+            }
+
+            if ($payInvoice->confirmedYN == 0) {
+                return $this->sendError('You cannot reopen this Payment Voucher, it is not confirmed');
+            }
+
+            $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+                'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+
+            $this->paySupplierInvoiceMasterRepository->update($updateInput, $id);
+
+            $employee = \Helper::getEmployeeInfo();
+
+            $document = DocumentMaster::where('documentSystemID', $payInvoice->documentSystemID)->first();
+
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $payInvoice->BPVcode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $payInvoice->BPVcode;
+
+            $subject = $cancelDocNameSubject . ' is reopened';
+
+            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+            $documentApproval = DocumentApproved::where('companySystemID', $payInvoice->companySystemID)
+                ->where('documentSystemCode', $payInvoice->PayMasterAutoId)
+                ->where('documentSystemID', $payInvoice->documentSystemID)
+                ->where('rollLevelOrder', 1)
+                ->first();
+
+            if ($documentApproval) {
+                if ($documentApproval->approvedYN == 0) {
+                    $companyDocument = CompanyDocumentAttachment::where('companySystemID', $payInvoice->companySystemID)
+                        ->where('documentSystemID', $payInvoice->documentSystemID)
+                        ->first();
+
+                    if (empty($companyDocument)) {
+                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                    }
+
+                    $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                        ->where('companySystemID', $documentApproval->companySystemID)
+                        ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                    $approvalList = $approvalList
+                        ->with(['employee'])
+                        ->groupBy('employeeSystemID')
+                        ->get();
+
+                    foreach ($approvalList as $da) {
+                        if ($da->employee) {
+                            $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                'companySystemID' => $documentApproval->companySystemID,
+                                'docSystemID' => $documentApproval->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $documentApproval->documentSystemCode);
+                        }
+                    }
+
+                    $sendEmail = \Email::sendEmail($emails);
+                    if (!$sendEmail["success"]) {
+                        return ['success' => false, 'message' => $sendEmail["message"]];
+                    }
+                }
+            }
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $payInvoice->companySystemID)
+                ->where('documentSystemID', $payInvoice->documentSystemID)
+                ->delete();
+
+            $paySupplierInvoice = PaySupplierInvoiceMaster::find($id);
+            if ($paySupplierInvoice->BPVbankCurrency == $paySupplierInvoice->localCurrencyID && $paySupplierInvoice->supplierTransCurrencyID == $paySupplierInvoice->localCurrencyID) {
+                if ($paySupplierInvoice->chequePaymentYN == -1) {
+                    $bankAccount = BankAccount::find($paySupplierInvoice->BPVAccount);
+                    if ($bankAccount->isPrintedActive == 1) {
+                        $paySupplierInvoice->BPVchequeNo = 0;
+                        $paySupplierInvoice->save();
+                    }
+                } else {
+                    $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('PayMasterAutoId', 'ASC')->first();
+                    if ($chkCheque) {
+                        $paySupplierInvoice->BPVchequeNo = 0;
+                        $paySupplierInvoice->save();
+                    } else {
+                        $paySupplierInvoice->BPVchequeNo = 0;
+                        $paySupplierInvoice->save();
+                    }
+                }
+
+            } else {
+                /*return $this->sendError("Cheque number won\'t be generated. The bank currency and the local currency is not equal", 500);*/
+            }
+
+            if ($payInvoice->invoiceType == 2) {
+                $pvDetailExist = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                    ->get();
+                foreach ($pvDetailExist as $val) {
+                    $updatePayment = AccountsPayableLedger::find($val->apAutoID);
+                    if ($updatePayment) {
+                        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $val->apAutoID)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+
+                        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $val->bookingInvSystemCode)->where('documentSystemID', $val->addedDocumentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+
+                        $machAmount = 0;
+                        if ($matchedAmount) {
+                            $machAmount = $matchedAmount["SumOfmatchedAmount"];
+                        }
+
+                        $paymentBalancedAmount = \Helper::roundValue($val->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+
+                        if ($val->supplierInvoiceAmount == $paymentBalancedAmount) {
+                            $updatePayment->selectedToPaymentInv = 1;
+                            $updatePayment->save();
+                        } else if (($val->supplierInvoiceAmount > $paymentBalancedAmount) && ($val->paymentBalancedAmount > 0)) {
+                            $updatePayment->selectedToPaymentInv = 1;
+                            $updatePayment->save();
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher reopened successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }
