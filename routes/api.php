@@ -370,6 +370,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
     Route::post('exportPrToGrvReport', 'PurchaseRequestAPIController@exportPrToGrvReport');
 
+    Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment');
+    Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
+
+
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
     Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
     Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');

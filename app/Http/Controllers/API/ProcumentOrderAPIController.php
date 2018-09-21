@@ -50,12 +50,14 @@ use App\Http\Requests\API\CreateProcumentOrderAPIRequest;
 use App\Http\Requests\API\UpdateProcumentOrderAPIRequest;
 use App\Models\AddonCostCategories;
 use App\Models\Alert;
+use App\Models\BookInvSuppDet;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\Months;
 use App\Models\Company;
+use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PoAddons;
 use App\Models\PoAddonsRefferedBack;
 use App\Models\PoAdvancePayment;
@@ -4480,5 +4482,467 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
     }
 
+
+    public function reportPoToPayment(Request $request)
+    {
+        $input = $request->all();
+        $purchaseOrder = $this->getPoToPaymentQry($input);
+        $data = \DataTables::of($purchaseOrder)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->addColumn('grvMasters', function ($row) {
+                $grvMasters = GRVDetails::selectRaw('sum(noQty*GRVcostPerUnitLocalCur) as localAmount,
+                                        sum(noQty*GRVcostPerUnitComRptCur) as rptAmount,purchaseOrderMastertID,grvAutoID')
+                                    ->where('purchaseOrderMastertID',$row->purchaseOrderID)
+                                    ->with(['grv_master'])
+                                    ->groupBy('grvAutoID')
+                                    ->get();
+                foreach ($grvMasters as $grv){
+                    $invoices = BookInvSuppDet::selectRaw('sum(totLocalAmount) as localAmount,
+                                                 sum(totRptAmount) as rptAmount,grvAutoID')
+                                                ->where('grvAutoID',$grv->grvAutoID)
+                                                ->with(['grv_master'])
+                                                ->groupBy('grvAutoID')
+                                                ->get();
+                    $grv->invoices = $invoices;
+                }
+
+                return $grvMasters->toArray();
+            })
+            ->make(true);
+
+        return $data;
+    }
+
+    public function getPoToPaymentQry($request)
+    {
+        $input = $request;
+        $itemPrimaryCodes = [];
+        $from = "";
+        $to = "";
+        $documentSearch = "";
+        $years = [];
+
+        if (array_key_exists('itemPrimaryCodes', $input)) {
+            $itemPrimaryCodes = $input['itemPrimaryCodes'];
+        }
+
+        if (array_key_exists('dateRange', $input)) {
+            $from = ((new Carbon($input['dateRange'][0]))->addDays(1)->format('Y-m-d'));
+            $to = ((new Carbon($input['dateRange'][1]))->addDays(1)->format('Y-m-d'));
+        }
+
+        if (array_key_exists('documentSearch', $input)) {
+            $documentSearch = str_replace("\\", "\\\\", $input['documentSearch']);
+        }
+
+        if (array_key_exists('years', $input)) {
+            $years = $input['years'];
+        }
+
+        if (!array_key_exists('documentId', $input)) {
+            $input['documentId'] = 0;
+        }
+
+        $purchaseOrder = ProcumentOrder::where('companySystemID', $input['companyId'])
+                                        ->where('poConfirmedYN', 1)
+                                        ->where('poCancelledYN', 0)
+                                        ->where('approved', -1)
+                                        ->with(['supplier', 'detail' => function ($poDetail) {
+                                            $poDetail->with([
+                                                'grv_details' => function ($q) {
+                                                    $q->with(['grv_master']);
+                                                }]);
+                                        }]);
+
+        /* $purchaseOrder = PurchaseRequest::where('companySystemID', $input['companyId'])
+             ->where('PRConfirmedYN', 1)
+             ->where('cancelledYN', 0)
+             ->when(request('date_by') == 'PRRequestedDate', function ($q) use ($from, $to) {
+                 return $q->whereBetween('PRRequestedDate', [$from, $to]);
+             })
+             ->when(request('documentId') == 1, function ($q) use ($documentSearch) {
+                 $q->where('purchaseRequestCode', 'LIKE', "%{$documentSearch}%");
+             })
+             ->when(request('date_by') == 'all' && count($years) > 0, function ($q) use ($years) {
+                 $q->whereIn(DB::raw("YEAR(PRRequestedDate)"), $years);
+             })
+             ->whereHas('details', function ($prd) use ($itemPrimaryCodes, $from, $to, $documentSearch, $input) {
+
+                 if ($input['date_by'] == 'approvedDate' ||
+                     $input['date_by'] == 'grvDate' ||
+                     $input['grv'] == 'inComplete' ||
+                     $input['documentId'] == 2 ||
+                     count($input['itemPrimaryCodes']) > 0
+                 ) {
+
+                     $prd->whereHas('podetail', function ($pod) use ($from, $to, $documentSearch) {
+                         return $pod->whereHas('order', function ($po) use ($from, $to, $documentSearch) {
+                             return $po->where('poConfirmedYN', 1)
+                                 ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
+                                     return $q->whereBetween('approvedDate', [$from, $to]);
+                                 })
+                                 ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
+                                     return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
+                                 });
+                         })
+                             ->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                 return $q->whereHas('grv_details', function ($q) use ($from, $to) {
+                                     $q->whereHas('grv_master', function ($q) use ($from, $to) {
+                                         $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                             return $q->whereBetween('grvDate', [$from, $to]);
+                                         });
+                                     });
+                                 });
+                             })
+                             ->when(request('grv') == 'inComplete', function ($q) {
+                                 return $q->whereIn('goodsRecievedYN', [0, 1]);
+                             });
+                     })
+                         ->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
+                             return $q->whereIn('itemCode', $itemPrimaryCodes);
+                         });
+                 } else {
+                     $prd->with(['podetail' => function ($pod) use ($from, $to, $documentSearch) {
+                         $pod->whereHas('order', function ($po) use ($from, $to, $documentSearch) {
+                             $po->where('poConfirmedYN', 1)
+                                 ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
+                                     return $q->whereBetween('approvedDate', [$from, $to]);
+                                 })
+                                 ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
+                                     return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
+                                 });
+                         })
+                             ->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                 return $q->whereHas('grv_details', function ($q) use ($from, $to) {
+                                     $q->whereHas('grv_master', function ($q) use ($from, $to) {
+                                         $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                             return $q->whereBetween('grvDate', [$from, $to]);
+                                         });
+                                     });
+                                 });
+                             })
+                             ->when(request('grv') == 'inComplete', function ($q) {
+                                 return $q->whereIn('goodsRecievedYN', [0, 1]);
+                             });
+                     }])->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
+                         return $q->whereIn('itemCode', $itemPrimaryCodes);
+                     });
+                 }
+             })
+             ->with(['confirmed_by', 'details' => function ($prd) use ($itemPrimaryCodes, $from, $to, $documentSearch) {
+
+                 $prd->when(request('date_by') == 'approvedDate' ||
+                     request('date_by') == 'grvDate' ||
+                     request('grv') == 'inComplete' ||
+                     request('documentId') == 2 ||
+                     count(request('itemPrimaryCodes')) > 0, function ($q) use ($from, $to, $documentSearch) {
+
+                     $q->whereHas('podetail', function ($q) use ($from, $to, $documentSearch) {
+
+                         $q->when(request('date_by') == 'approvedDate' || request('documentId') == 2, function ($q) use ($from, $to, $documentSearch) {
+                             return $q->whereHas('order', function ($q) use ($from, $to, $documentSearch) {
+                                 $q->where('poConfirmedYN', 1)
+                                     ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
+                                         return $q->whereBetween('approvedDate', [$from, $to]);
+                                     })
+                                     ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
+                                         return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
+                                     });
+                             });
+                         })
+                             ->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                 $q->whereHas('grv_details', function ($q) use ($from, $to) {
+                                     $q->whereHas('grv_master', function ($q) use ($from, $to) {
+                                         return $q->whereBetween('grvDate', [$from, $to]);
+                                     });
+                                 });
+                             })
+                             ->when(request('grv') == 'inComplete', function ($q) {
+                                 return $q->whereIn('goodsRecievedYN', [0, 1]);
+                             });
+                     });
+
+                 })
+                     ->with(['uom', 'podetail' => function ($q) use ($from, $to, $documentSearch) {
+                         $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to, $documentSearch) {
+                             $q->whereHas('grv_details', function ($q) use ($from, $to) {
+                                 $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                     $q->whereHas('grv_master', function ($q) use ($from, $to) {
+                                         $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                             return $q->whereBetween('grvDate', [$from, $to]);
+                                         });
+                                     });
+                                 });
+                             });
+                         })
+                             ->whereHas('order', function ($q) use ($from, $to, $documentSearch) {
+                                 $q->where('poConfirmedYN', 1);
+                             })
+                             ->with(['order' => function ($q) use ($from, $to, $documentSearch) {
+                                 $q->where('poConfirmedYN', 1)
+                                     ->when(request('date_by') == 'approvedDate', function ($q) use ($from, $to) {
+                                         return $q->whereBetween('approvedDate', [$from, $to]);
+                                     })
+                                     ->when(request('documentId') == 2, function ($q) use ($documentSearch) {
+                                         return $q->where('purchaseOrderCode', 'LIKE', "%{$documentSearch}%");
+                                     });
+                             }, 'reporting_currency', 'grv_details' => function ($q) use ($from, $to) {
+                                 $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                     $q->whereHas('grv_master', function ($q) use ($from, $to) {
+                                         $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                             return $q->whereBetween('grvDate', [$from, $to]);
+                                         });
+                                     });
+                                 })
+                                     ->with(['grv_master' => function ($q) use ($from, $to) {
+                                         $q->when(request('date_by') == 'grvDate', function ($q) use ($from, $to) {
+                                             return $q->whereBetween('grvDate', [$from, $to]);
+                                         });
+                                     }]);
+                             }])
+                             ->when(request('grv') == 'inComplete', function ($q) {
+                                 return $q->whereIn('goodsRecievedYN', [0, 1]);
+                             });
+                     }])
+                     ->when(request('itemPrimaryCodes', false), function ($q, $itemPrimaryCodes) {
+                         return $q->whereIn('itemCode', $itemPrimaryCodes);
+                     });
+             }]);*/
+
+
+        return $purchaseOrder;
+    }
+
+
+    public function exportPoToPaymentReport(Request $request)
+    {
+        $input = $request->all();
+        $data = array();
+        $output = ($this->getPoToPaymentQry($input))->orderBy('purchaseRequestID', 'DES')->get();
+        $type = $request->type;
+        if (!empty($output)) {
+            $x = 0;
+            foreach ($output as $value) {
+                $data[$x]['Company ID'] = $value->companyID;
+                //$data[$x]['Company Name'] = $val->CompanyName;
+                $data[$x]['Service Line'] = $value->serviceLineCode;
+                $data[$x]['PR Number'] = $value->purchaseRequestCode;
+
+                if ($value->confirmed_by) {
+                    $data[$x]['Processed By'] = $value->confirmed_by->empName;
+                } else {
+                    $data[$x]['Processed By'] = '';
+                }
+
+                $data[$x]['PR Date'] = \Helper::dateFormat($value->PRRequestedDate);
+                $data[$x]['PR Comment'] = $value->comments;
+
+                if ($value->approved == -1) {
+                    $data[$x]['PR Approved'] = 'Yes';
+                } else {
+                    $data[$x]['PR Approved'] = 'No';
+                }
+
+                if (count($value->details) > 0) {
+                    $itemCount = 0;
+                    foreach ($value->details as $item) {
+
+                        if ($itemCount != 0) {
+                            $x++;
+                            $data[$x]['Company ID'] = '';
+                            //$data[$x]['Company Name'] = $val->CompanyName;
+                            $data[$x]['Service Line'] = '';
+                            $data[$x]['PR Number'] = '';
+                            $data[$x]['Processed By'] = '';
+                            $data[$x]['PR Date'] = '';
+                            $data[$x]['PR Comment'] = '';
+                            $data[$x]['PR Approved'] = '';
+                        }
+
+                        $data[$x]['Item Code'] = $item->itemPrimaryCode;
+                        $data[$x]['Item Description'] = $item->itemDescription;
+                        $data[$x]['Part Number'] = $item->partNumber;
+                        if ($item->uom) {
+                            $data[$x]['Unit'] = $item->uom->UnitShortCode;
+                        } else {
+                            $data[$x]['Unit'] = '';
+                        }
+                        $data[$x]['PR Qty'] = $item->quantityRequested;
+
+                        if (count($item->podetail) > 0) {
+                            $poCount = 0;
+                            foreach ($item->podetail as $poDetail) {
+                                if ($poCount != 0) {
+                                    $x++;
+                                    $data[$x]['Company ID'] = '';
+                                    //$data[$x]['Company Name'] = $val->CompanyName;
+                                    $data[$x]['Service Line'] = '';
+                                    $data[$x]['PR Number'] = '';
+                                    $data[$x]['Processed By'] = '';
+                                    $data[$x]['PR Date'] = '';
+                                    $data[$x]['PR Comment'] = '';
+                                    $data[$x]['PR Approved'] = '';
+                                    $data[$x]['Item Code'] = '';
+                                    $data[$x]['Item Description'] = '';
+                                    $data[$x]['Part Number'] = '';
+                                    $data[$x]['Unit'] = '';
+                                    $data[$x]['PR Qty'] = '';
+                                }
+
+                                if ($poDetail->order) {
+                                    $data[$x]['PO Number'] = $poDetail->order->purchaseOrderCode;
+                                    $data[$x]['ETA'] = \Helper::dateFormat($poDetail->order->expectedDeliveryDate);
+                                    $data[$x]['Supplier Code'] = $poDetail->order->supplierPrimaryCode;
+                                    $data[$x]['Supplier Name'] = $poDetail->order->supplierPrimaryCode;
+                                } else {
+                                    $data[$x]['PO Number'] = '';
+                                    $data[$x]['ETA'] = '';
+                                    $data[$x]['Supplier Code'] = '';
+                                    $data[$x]['Supplier Name'] = '';
+                                }
+
+                                $data[$x]['PO Qty'] = round($poDetail->noQty, 2);
+
+                                if ($poDetail->reporting_currency) {
+                                    $data[$x]['Currency'] = $poDetail->reporting_currency->CurrencyCode;
+                                } else {
+                                    $data[$x]['Currency'] = '';
+                                }
+
+
+                                $data[$x]['PO Cost'] = round($poDetail->GRVcostPerUnitComRptCur, 2);
+
+                                if ($poDetail->order) {
+                                    if ($poDetail->order->approved == -1) {
+                                        $data[$x]['PO Approved Status'] = 'Yes';
+                                    } else {
+                                        $data[$x]['PO Approved Status'] = 'No';
+                                    }
+                                } else {
+                                    $data[$x]['PO Approved Status'] = '';
+                                }
+
+                                if ($poDetail->order) {
+                                    $data[$x]['Approved Date'] = \Helper::dateFormat($poDetail->order->approvedDate);
+                                } else {
+                                    $data[$x]['Approved Date'] = '';
+                                }
+
+                                if (count($poDetail->grv_details) > 0) {
+                                    $grvCount = 0;
+                                    foreach ($poDetail->grv_details as $grvDetail) {
+                                        if ($grvCount != 0) {
+                                            $x++;
+                                            $data[$x]['Company ID'] = '';
+                                            //$data[$x]['Company Name'] = $val->CompanyName;
+                                            $data[$x]['Service Line'] = '';
+                                            $data[$x]['PR Number'] = '';
+                                            $data[$x]['Processed By'] = '';
+                                            $data[$x]['PR Date'] = '';
+                                            $data[$x]['PR Comment'] = '';
+                                            $data[$x]['PR Approved'] = '';
+                                            $data[$x]['Item Code'] = '';
+                                            $data[$x]['Item Description'] = '';
+                                            $data[$x]['Part Number'] = '';
+                                            $data[$x]['Unit'] = '';
+                                            $data[$x]['PR Qty'] = '';
+                                            $data[$x]['PO Number'] = '';
+                                            $data[$x]['ETA'] = '';
+                                            $data[$x]['Supplier Code'] = '';
+                                            $data[$x]['Supplier Name'] = '';
+                                            $data[$x]['PO Qty'] = '';
+                                            $data[$x]['Currency'] = '';
+                                            $data[$x]['PO Cost'] = '';
+                                            $data[$x]['PO Approved Status'] = '';
+                                            $data[$x]['Approved Date'] = '';
+                                        }
+
+                                        if ($grvDetail->grv_master) {
+                                            $data[$x]['Receipt Doc Number'] = $grvDetail->grv_master->grvPrimaryCode;
+                                            $data[$x]['Receipt Date'] = \Helper::dateFormat($grvDetail->grv_master->grvDate);
+                                        } else {
+                                            $data[$x]['Receipt Doc Number'] = '';
+                                            $data[$x]['Receipt Date'] = '';
+                                        }
+                                        $data[$x]['Receipt Qty'] = $grvDetail->noQty;
+
+
+                                        if ($poDetail->goodsRecievedYN == 2) {
+                                            $data[$x]['Receipt Status'] = "Fully Received";
+                                        } else if ($poDetail->goodsRecievedYN == 0) {
+                                            $data[$x]['Receipt Status'] = "Not Received";
+                                        } else if ($poDetail->goodsRecievedYN == 1) {
+                                            $data[$x]['Receipt Status'] = "Partially Received";
+                                        }
+                                        $grvCount++;
+                                    }
+                                } else {
+                                    $data[$x]['Receipt Doc Number'] = '';
+                                    $data[$x]['Receipt Date'] = '';
+                                    $data[$x]['Receipt Qty'] = '';
+                                    $data[$x]['Receipt Status'] = "Not Received";
+                                }
+                                $poCount++;
+                            }
+                        } else {
+                            $data[$x]['PO Number'] = '';
+                            $data[$x]['ETA'] = '';
+                            $data[$x]['Supplier Code'] = '';
+                            $data[$x]['Supplier Name'] = '';
+                            $data[$x]['PO Qty'] = '';
+                            $data[$x]['Currency'] = '';
+                            $data[$x]['PO Cost'] = '';
+                            $data[$x]['PO Approved Status'] = '';
+                            $data[$x]['Approved Date'] = '';
+                            $data[$x]['Receipt Doc Number'] = '';
+                            $data[$x]['Receipt Date'] = '';
+                            $data[$x]['Receipt Qty'] = '';
+                            $data[$x]['Receipt Status'] = "Not Received";
+                        }
+                        $itemCount++;
+                    }
+                } else {
+                    $data[$x]['Item Code'] = 'Item Code';
+                    $data[$x]['Item Description'] = 'Item Description';
+                    $data[$x]['Part Number'] = '';
+                    $data[$x]['Unit'] = '';
+                    $data[$x]['PR Qty'] = '';
+                    $data[$x]['PO Number'] = '';
+                    $data[$x]['ETA'] = '';
+                    $data[$x]['Supplier Code'] = '';
+                    $data[$x]['Supplier Name'] = '';
+                    $data[$x]['PO Qty'] = '';
+                    $data[$x]['Currency'] = '';
+                    $data[$x]['PO Cost'] = '';
+                    $data[$x]['PO Approved Status'] = '';
+                    $data[$x]['Approved Date'] = '';
+                    $data[$x]['Receipt Doc Number'] = '';
+                    $data[$x]['Receipt Date'] = '';
+                    $data[$x]['Receipt Qty'] = '';
+                    $data[$x]['Receipt Status'] = "Not Received";
+                }
+                $x++;
+            }
+        }
+
+        $csv = \Excel::create('pr_to_grv', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+    }
 
 }
