@@ -679,11 +679,19 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
 
-        if (ABS($input["supplierPaymentAmount"]) > $paymentBalancedAmount) {
-            return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
+        if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
+            //supplier invoice
+            if ($input["supplierPaymentAmount"] > $paymentBalancedAmount) {
+                return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
+            }
+        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15) {
+            //debit note
+            if ($input["supplierPaymentAmount"] < $paymentBalancedAmount) {
+                return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
+            }
         }
 
-        $input["paymentBalancedAmount"] = $paymentBalancedAmount - ABS($input["supplierPaymentAmount"]);
+        $input["paymentBalancedAmount"] = $paymentBalancedAmount - $input["supplierPaymentAmount"];
 
         $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], ABS($input["supplierPaymentAmount"]));
         $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
@@ -703,22 +711,34 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
 
+        $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
-        if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $paymentBalancedAmount) {
-            $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                ->update(['fullyInvoice' => 0]);
+        if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
+            if ($totalPaidAmount == 0) {
+                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                    ->update(['fullyInvoice' => 0]);
+            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
+                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                    ->update(['fullyInvoice' => 2]);
+            } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
+                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                    ->update(['fullyInvoice' => 1]);
+            }
+        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15) {
+            if ($totalPaidAmount == 0) {
+                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                    ->update(['fullyInvoice' => 0]);
+            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
+                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                    ->update(['fullyInvoice' => 2]);
+            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount < $totalPaidAmount) {
+                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                    ->update(['fullyInvoice' => 1]);
+            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) {
+                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                    ->update(['fullyInvoice' => 2]);
+            }
         }
-
-        if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $paymentBalancedAmount) && ($paySupplierInvoiceDetail->paymentBalancedAmount > 0)) {
-            $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                ->update(['fullyInvoice' => 1]);
-        }
-
-        if ($paymentBalancedAmount <= 0) {
-            $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                ->update(['fullyInvoice' => 2]);
-        }
-
         return $this->sendResponse($paySupplierInvoiceDetail->toArray(), 'PaySupplierInvoiceDetail updated successfully');
     }
 
