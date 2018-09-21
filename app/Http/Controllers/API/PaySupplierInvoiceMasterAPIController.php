@@ -522,7 +522,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 if (!$bank->chartOfAccountSystemID) {
                     return $this->sendError('Bank account is not linked to gl account', 500, ['type' => 'confirm']);
                 }
-
+                // po payment
                 if ($paySupplierInvoiceMaster->invoiceType == 2) {
                     $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('PayMasterAutoId'))
                         ->where('PayMasterAutoId', $id)
@@ -532,18 +532,18 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
 
-                    $checkAmount = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
-                        ->where('supplierPaymentAmount', '<=', 0)
-                        ->count();
-
-                    if ($checkAmount > 0) {
-                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
-                    }
-
                     $checkAmountGreater = PaySupplierInvoiceDetail::selectRaw('SUM(supplierPaymentAmount) as supplierPaymentAmount')->where('PayMasterAutoId', $id)->first();
 
                     if ($checkAmountGreater['supplierPaymentAmount'] < 0) {
                         return $this->sendError('Total Amount should be equal or greater than zero', 500, ['type' => 'confirm']);
+                    }
+
+                    $checkAmount = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                        ->where('supplierPaymentAmount', 0)
+                        ->count();
+
+                    if ($checkAmount > 0) {
+                        return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
                     }
 
                     $pvDetailExist = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
@@ -562,16 +562,24 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                 $machAmount = $matchedAmount["SumOfmatchedAmount"];
                             }
 
-                            $paymentBalancedAmount = \Helper::roundValue($val->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+                            $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
-                            if (($val->supplierInvoiceAmount > $paymentBalancedAmount) && ($val->paymentBalancedAmount > 0)) {
-                                $updatePayment->selectedToPaymentInv = 0;
-                                $updatePayment->save();
+                            if ($val->addedDocumentSystemID == 11) {
+                                if (($val->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
+                                    $updatePayment->selectedToPaymentInv = 0;
+                                    $updatePayment->save();
+                                }
+                            } else if ($val->addedDocumentSystemID == 15) {
+                                if ($val->supplierInvoiceAmount < $totalPaidAmount) {
+                                    $updatePayment->selectedToPaymentInv = 0;
+                                    $updatePayment->save();
+                                }
                             }
                         }
                     }
                 }
 
+                // Advance payment
                 if ($paySupplierInvoiceMaster->invoiceType == 5) {
                     $pvDetailExist = AdvancePaymentDetails::select(DB::raw('PayMasterAutoId'))
                         ->where('PayMasterAutoId', $id)
@@ -581,6 +589,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
 
+                    $checkAmountGreater = AdvancePaymentDetails::selectRaw('SUM(paymentAmount) as supplierPaymentAmount')->where('PayMasterAutoId', $id)->first();
+
+                    if ($checkAmountGreater['paymentAmount'] < 0) {
+                        return $this->sendError('Total Amount should be equal or greater than zero', 500, ['type' => 'confirm']);
+                    }
+
                     $checkAmount = AdvancePaymentDetails::where('PayMasterAutoId', $id)
                         ->where('paymentAmount', '<=', 0)
                         ->count();
@@ -588,8 +602,26 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     if ($checkAmount > 0) {
                         return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
                     }
+
+                    $advancePaymentDetails = AdvancePaymentDetails::where('PayMasterAutoId', $id)->get();
+                    foreach ($advancePaymentDetails as $val) {
+                        $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
+
+                        $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                            ->where('companySystemID', $advancePayment->companySystemID)
+                            ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
+                            ->where('purchaseOrderID', $advancePayment->poID)
+                            ->first();
+
+                        if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                            $advancePayment->selectedToPayment = 0;
+                            $advancePayment->save();
+                        }
+                    }
+
                 }
 
+                // Direct payment
                 if ($paySupplierInvoiceMaster->invoiceType == 3) {
                     $pvDetailExist = DirectPaymentDetails::where('directPaymentAutoID', $id)->get();
 
@@ -976,7 +1008,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     {
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["PayMasterAutoId"]);
 
-        $sql ='SELECT
+        $sql = 'SELECT
 	erp_accountspayableledger.apAutoID,
 	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
 	erp_accountspayableledger.supplierTransCurrencyID,
@@ -1079,6 +1111,7 @@ WHERE
 	erp_purchaseordermaster.localCurrencyER as localER,
 	erp_purchaseordermaster.companyReportingCurrencyID as comRptCurrencyID,
 	erp_purchaseordermaster.companyReportingER as comRptER,
+	erp_purchaseordermaster.poTotalSupplierTransactionCurrency as poTotalSupplierTransactionCurrency,
 	false as isChecked  
 FROM
 	( ( erp_purchaseorderadvpayment LEFT JOIN currencymaster ON erp_purchaseorderadvpayment.currencyID = currencymaster.currencyID ) INNER JOIN erp_purchaseordermaster ON erp_purchaseorderadvpayment.poID = erp_purchaseordermaster.purchaseOrderID )
@@ -1086,19 +1119,20 @@ FROM
 SELECT
 	erp_advancepaymentdetails.poAdvPaymentID,
 	erp_advancepaymentdetails.companyID,
+	erp_advancepaymentdetails.companySystemID,
 	erp_advancepaymentdetails.purchaseOrderID,
 	IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount 
 FROM
 	erp_advancepaymentdetails 
 GROUP BY
 	erp_advancepaymentdetails.poAdvPaymentID,
-	erp_advancepaymentdetails.companyID,
+	erp_advancepaymentdetails.companySystemID,
 	erp_advancepaymentdetails.purchaseOrderID 
 HAVING
 	( ( ( erp_advancepaymentdetails.purchaseOrderID ) IS NOT NULL ) ) 
 	) AS advd ON ( erp_purchaseorderadvpayment.poID = advd.purchaseOrderID ) 
 	AND ( erp_purchaseorderadvpayment.poAdvPaymentID = advd.poAdvPaymentID ) 
-	AND ( erp_purchaseorderadvpayment.companyID = advd.companyID ) 
+	AND ( erp_purchaseorderadvpayment.companySystemID = advd.companySystemID ) 
 WHERE
 	(
 	( ( erp_purchaseorderadvpayment.companySystemID ) = ' . $paySupplierInvoiceMaster->companySystemID . ' ) 
@@ -1377,6 +1411,25 @@ HAVING
                             $updatePayment->selectedToPaymentInv = 1;
                             $updatePayment->save();
                         }
+                    }
+                }
+            }
+
+            if ($payInvoice->invoiceType == 5) {
+
+                $advancePaymentDetails = AdvancePaymentDetails::where('PayMasterAutoId', $id)->get();
+                foreach ($advancePaymentDetails as $val) {
+                    $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
+
+                    $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                        ->where('companySystemID', $advancePayment->companySystemID)
+                        ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
+                        ->where('purchaseOrderID', $advancePayment->poID)
+                        ->first();
+
+                    if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                        $advancePayment->selectedToPayment = 1;
+                        $advancePayment->save();
                     }
                 }
             }

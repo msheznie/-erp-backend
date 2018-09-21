@@ -266,6 +266,11 @@ class BookInvSuppDet extends Model
         return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
     }
 
+    public function suppinvmaster()
+    {
+        return $this->hasOne('App\Models\BookInvSuppMaster', 'bookingSuppMasInvAutoID', 'bookingSuppMasInvAutoID');
+    }
+
 
 
 
