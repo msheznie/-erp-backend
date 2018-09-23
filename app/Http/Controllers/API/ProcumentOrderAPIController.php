@@ -1530,7 +1530,7 @@ class ProcumentOrderAPIController extends AppBaseController
         $purchaseOrderID = $input['purchaseOrderID'];
 
         $detail = DB::select('SELECT erp_grvdetails.grvAutoID,erp_grvdetails.companyID,erp_grvdetails.purchaseOrderMastertID,erp_grvmaster.grvDate,erp_grvmaster.grvPrimaryCode,erp_grvmaster.grvDoRefNo,erp_grvdetails.itemPrimaryCode,
-erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
+erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaster.grvNarration,erp_grvmaster.supplierName,erp_grvdetails.poQty AS POQty,erp_grvdetails.noQty,erp_grvmaster.approved,erp_grvmaster.grvConfirmedYN,currencymaster.CurrencyCode,currencymaster.DecimalPlaces as transDeci,erp_grvdetails.GRVcostPerUnitSupTransCur,erp_grvdetails.unitCost,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS total,erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty AS totalCost FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvdetails.grvAutoID = erp_grvmaster.grvAutoID INNER JOIN warehousemaster ON erp_grvmaster.grvLocation = warehousemaster.wareHouseSystemCode INNER JOIN currencymaster ON erp_grvdetails.supplierItemCurrencyID = currencymaster.currencyID WHERE purchaseOrderMastertID = ' . $purchaseOrderID . ' ');
 
         return $this->sendResponse($detail, 'Details retrieved successfully');
 
@@ -4566,6 +4566,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $query->groupBy('purchaseOrderMasterID');
         }, 'supplier' => function ($query){
             $query->with('country');
+        }, 'advance_detail' => function ($query) {
+            $query->selectRaw('COALESCE(SUM(reqAmount),0) as advanceSum,poID');
+            $query->groupBy('poID');
         }]);
         $output->orderBy('purchaseOrderID', 'desc');
         $output = $output->get();
@@ -4592,6 +4595,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $data[$x]['Supplier Code'] = $val->supplierPrimaryCode;
                 $data[$x]['Supplier Name'] = $val->supplierName;
                 $data[$x]['Credit Period'] = $val->creditPeriod;
+                if ($val->supplier) {
+                    $data[$x][' Supplier Country'] = $val->supplier->country->countryName;
+                }
                 $data[$x]['Expected Delivery Date'] = \Helper::dateFormat($val->expectedDeliveryDate);
                 $data[$x]['Delivery Terms'] = $val->deliveryTerms;
                 $data[$x]['Penalty Terms'] = $val->panaltyTerms;
@@ -4620,6 +4626,21 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 if ($val->reportingcurrency) {
                     $data[$x]['Reporting Amount ('.$val->reportingcurrency->CurrencyCode.')'] = $val->poTotalComRptCurrency;;
                 }
+                if ($val->advance_detail) {
+                    if(isset($val->advance_detail[0]->advanceSum)){
+                        $data[$x]['Advance Payment Available'] = 'Yes';
+                    }else{
+                        $data[$x]['Advance Payment Available'] = 'No';
+                    }
+                }
+               if ($val->advance_detail) {
+                   if(isset($val->advance_detail[0]->advanceSum)){
+                       $data[$x]['Total Advance Payment Amount'] = $val->advance_detail[0]->advanceSum;
+                   }else{
+                       $data[$x]['Total Advance Payment Amount'] = '0';
+                   }
+                }
+
   /*              if ($val->detail) {
                     $data[$x]['Transaction Total'] = $val->detail[0]->transactionSum;
                 }*/

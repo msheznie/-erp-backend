@@ -560,6 +560,11 @@ class ProcumentOrder extends Model
         return $this->hasMany('\App\Models\PoPaymentTerms','poID','purchaseOrderID');
     }
 
+    public function advance_detail()
+    {
+        return $this->hasMany('\App\Models\PoAdvancePayment','poID','purchaseOrderID');
+    }
+
 
 
 }
