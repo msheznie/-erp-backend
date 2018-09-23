@@ -348,18 +348,17 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
 
         /*if bookinvoice not available create header*/
-        if ($master->bookingInvCode == '' || $master->bookingInvCode == 0) {
+     /*   if ($master->bookingInvCode == '' || $master->bookingInvCode == 0) {
 
             $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $master->companyFinanceYearID)->first();
             $serialNo = CustomerInvoiceDirect::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))->where('documentID', 'INV')->where('companySystemID', $master->companySystemID)->orderBy('serialNo', 'desc')->first();
             $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
 
-            /*header*/
             $bookingInvCode = ($master->companyID . '\\' . $y . '\\INV' . str_pad($serialNo->serialNo, 6, '0', STR_PAD_LEFT));
             $upMaster['serialNo'] = $serialNo->serialNo;
             $upMaster['bookingInvCode'] = $bookingInvCode;
             CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($upMaster);
-        }
+        }*/
 
 
         /*  $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $master->companyID)->where('contractUID', $contractID)->first();
