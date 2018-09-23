@@ -499,8 +499,8 @@ class LogisticDetailsAPIController extends AppBaseController
                         }
 
                         $checkAllSelected = PurchaseOrderDetails::where('purchaseOrderMasterID', $newRow->POid)
-                            ->where('logisticSelectedYN', 1)
-                            ->count();
+                                                                ->where('logisticSelectedYN', 1)
+                                                                ->count();
 
                         if ($checkAllSelected == 0) {
                             $po = ProcumentOrder::fiind($newRow->POid);
