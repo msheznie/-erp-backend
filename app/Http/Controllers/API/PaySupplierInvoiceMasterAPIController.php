@@ -28,6 +28,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
+use App\Models\ExpenseClaimType;
 use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
@@ -950,6 +951,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->get();
 
+        $expenseClaimType = ExpenseClaimType::all();
+
+        $interCompanyTo = Company::where('isGroup',0)->get();
+
         $output = array(
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
@@ -962,6 +967,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             'bank' => $bank,
             'currency' => $currency,
             'segments' => $segment,
+            'expenseClaimType' => $expenseClaimType,
+            'interCompany' => $interCompanyTo,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
