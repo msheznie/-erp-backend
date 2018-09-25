@@ -829,6 +829,16 @@ class PaySupplierInvoiceMaster extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'BPVbankCurrency', 'currencyID');
     }
 
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
 
 
 }
