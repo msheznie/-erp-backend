@@ -358,6 +358,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getProcurementOrderReopen', 'ProcumentOrderAPIController@getProcurementOrderReopen');
     Route::post('getProcurementOrderReferBack', 'ProcumentOrderAPIController@getProcurementOrderReferBack');
     Route::get('getPurchasePaymentStatusHistory', 'ProcumentOrderAPIController@getPurchasePaymentStatusHistory');
+    Route::post('exportProcumentOrderMaster', 'ProcumentOrderAPIController@exportProcumentOrderMaster');
 
     Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter');
     Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis');
@@ -369,6 +370,11 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
     Route::post('exportPrToGrvReport', 'PurchaseRequestAPIController@exportPrToGrvReport');
+
+    Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment');
+    Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
+    Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
+
 
     Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
     Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
@@ -874,6 +880,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
     Route::resource('performa_temps', 'PerformaTempAPIController');
     Route::resource('free_billings', 'FreeBillingAPIController');
+    Route::get('getSupplierInvoiceStatusHistoryForGRV', 'GRVMasterAPIController@getSupplierInvoiceStatusHistoryForGRV');
+
 
 });
 
