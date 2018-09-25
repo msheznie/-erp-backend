@@ -5,7 +5,7 @@
         @page {
             margin-left: 2%;
             margin-right: 3%;
-            margin-top: 4%;
+            margin-top: 280px;
         }
 
         body {
@@ -128,10 +128,11 @@
             width: 100%;
             text-align: left;
             position: fixed;
+            height: 250px;
         }
 
         .header {
-            top: 0px;
+            top: -260px;
         }
 
         .footer {
@@ -152,7 +153,7 @@
         }
 
         .content {
-            margin-bottom: 0px;
+            margin-top: 0px;
         }
 
         .input-box {
@@ -168,7 +169,8 @@
     --}}{{--  <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>--}}{{--
 </div>--}}
 {{--<div id="watermark"></div>--}}
-<div class="content">
+
+<div class="header">
     <table style="width: 100%">
         <tr style="width:100%">
             <td style="width: 25%;">
@@ -304,6 +306,8 @@
             </td>
         </tr>
     </table>
+</div>
+<div class="content">
     <div class="row">
         <table class="table table-bordered table-striped" style="width: 100%;">
             <thead>
