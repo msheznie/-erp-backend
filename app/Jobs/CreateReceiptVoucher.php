@@ -232,7 +232,7 @@ class CreateReceiptVoucher implements ShouldQueue
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e->getMessage()));
+                Log::error($e->getMessage());
             }
 
         }
