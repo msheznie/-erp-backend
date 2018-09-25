@@ -151,17 +151,29 @@ class ProcumentOrderAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if ($input['documentSystemID'] == 5) {
-            if (isset($input['WO_PeriodFrom'])) {
-                $WO_PeriodFrom = new Carbon($input['WO_PeriodFrom'][0]);
-                $WO_PeriodTo = new Carbon($input['WO_PeriodFrom'][1]);
+        $input = $this->convertArrayToValue($input);
+        if (isset($input['WO_PeriodFrom'])) {
+            if ($input['WO_PeriodFrom']) {
+                $input['WO_PeriodFrom'] = new Carbon($input['WO_PeriodFrom']);
+                $WO_PeriodFrom =  $input['WO_PeriodFrom'];
             }
         }
 
-        $input = $this->convertArrayToValue($input);
+        if (isset($input['WO_PeriodTo'])) {
+            if ($input['WO_PeriodTo']) {
+                $input['WO_PeriodTo'] = new Carbon($input['WO_PeriodTo']);
+                $WO_PeriodTo =  $input['WO_PeriodTo'];
+            }
+        }
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        if ($input['documentSystemID'] == 5) {
+            if( $input['WO_PeriodFrom'] >  $input['WO_PeriodTo']){
+                return $this->sendError('WO Period From cannot be greater than WO Period To', 500);
+            }
+        }
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
@@ -391,11 +403,30 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+        if (isset($input['WO_PeriodFrom'])) {
+            if ($input['WO_PeriodFrom']) {
+                $input['WO_PeriodFrom'] = new Carbon($input['WO_PeriodFrom']);
+            }
+        }
+
+        if (isset($input['WO_PeriodTo'])) {
+            if ($input['WO_PeriodTo']) {
+                $input['WO_PeriodTo'] = new Carbon($input['WO_PeriodTo']);
+            }
+        }
+
         /** @var ProcumentOrder $procumentOrder */
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
+        }
+
+        if ($input['documentSystemID'] == 5 && $input['poType_N'] == 5) {
+            if( $input['WO_PeriodFrom'] >  $input['WO_PeriodTo']){
+                return $this->sendError('WO Period From cannot be greater than WO Period To');
+            }
+
         }
 
         $oldPoTotalSupplierTransactionCurrency = $procumentOrder->poTotalSupplierTransactionCurrency;
