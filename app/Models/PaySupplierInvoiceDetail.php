@@ -343,8 +343,13 @@ class PaySupplierInvoiceDetail extends Model
         
     ];
 
-    public function master()
+    public function payment_master()
     {
         return $this->hasOne('App\Models\PaySupplierInvoiceMaster', 'PayMasterAutoId', 'PayMasterAutoId');
+    }
+
+    public function matching_master()
+    {
+        return $this->hasOne('App\Models\MatchDocumentMaster', 'matchDocumentMasterAutoID', 'matchingDocID');
     }
 }

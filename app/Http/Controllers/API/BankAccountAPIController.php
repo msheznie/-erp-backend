@@ -158,6 +158,7 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $logistics = BankAccount::whereIn('companySystemID', $subCompanies)
+                               ->where('isAccountActive',1)
                                ->with(['currency']);
 
         $search = $request->input('search.value');
