@@ -337,6 +337,17 @@ class Helper
                     $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
                     $docInforArr["primarykey"] = 'PayMasterAutoId';
                     break;
+                case 62:
+                    $docInforArr["documentCodeColumnName"] = 'bankRecPrimaryCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_bankrecmaster';
+                    $docInforArr["modelName"] = 'BankReconciliation';
+                    $docInforArr["primarykey"] = 'bankRecAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
