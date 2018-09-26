@@ -151,17 +151,29 @@ class ProcumentOrderAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if ($input['documentSystemID'] == 5) {
-            if (isset($input['WO_PeriodFrom'])) {
-                $WO_PeriodFrom = new Carbon($input['WO_PeriodFrom'][0]);
-                $WO_PeriodTo = new Carbon($input['WO_PeriodFrom'][1]);
+        $input = $this->convertArrayToValue($input);
+        if (isset($input['WO_PeriodFrom'])) {
+            if ($input['WO_PeriodFrom']) {
+                $input['WO_PeriodFrom'] = new Carbon($input['WO_PeriodFrom']);
+                $WO_PeriodFrom = $input['WO_PeriodFrom'];
             }
         }
 
-        $input = $this->convertArrayToValue($input);
+        if (isset($input['WO_PeriodTo'])) {
+            if ($input['WO_PeriodTo']) {
+                $input['WO_PeriodTo'] = new Carbon($input['WO_PeriodTo']);
+                $WO_PeriodTo = $input['WO_PeriodTo'];
+            }
+        }
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        if ($input['documentSystemID'] == 5) {
+            if ($input['WO_PeriodFrom'] > $input['WO_PeriodTo']) {
+                return $this->sendError('WO Period From cannot be greater than WO Period To', 500);
+            }
+        }
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
@@ -391,11 +403,30 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+        if (isset($input['WO_PeriodFrom'])) {
+            if ($input['WO_PeriodFrom']) {
+                $input['WO_PeriodFrom'] = new Carbon($input['WO_PeriodFrom']);
+            }
+        }
+
+        if (isset($input['WO_PeriodTo'])) {
+            if ($input['WO_PeriodTo']) {
+                $input['WO_PeriodTo'] = new Carbon($input['WO_PeriodTo']);
+            }
+        }
+
         /** @var ProcumentOrder $procumentOrder */
         $procumentOrder = $this->procumentOrderRepository->findWithoutFail($id);
 
         if (empty($procumentOrder)) {
             return $this->sendError('Procurement Order not found');
+        }
+
+        if ($input['documentSystemID'] == 5 && $input['poType_N'] == 5) {
+            if ($input['WO_PeriodFrom'] > $input['WO_PeriodTo']) {
+                return $this->sendError('WO Period From cannot be greater than WO Period To');
+            }
+
         }
 
         $oldPoTotalSupplierTransactionCurrency = $procumentOrder->poTotalSupplierTransactionCurrency;
@@ -4564,7 +4595,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $output->with(['created_by', 'confirmed_by', 'currency', 'localcurrency', 'reportingcurrency', 'fcategory', 'segment', 'supplier', 'company', 'detail' => function ($query) {
             $query->selectRaw('COALESCE(SUM(GRVcostPerUnitSupTransCur),0) as transactionSum,COALESCE(SUM(GRVcostPerUnitLocalCur*noQty),0) as localSum,COALESCE(SUM(GRVcostPerUnitComRptCur*noQty),0) as rptSum,purchaseOrderMasterID');
             $query->groupBy('purchaseOrderMasterID');
-        }, 'supplier' => function ($query){
+        }, 'supplier' => function ($query) {
             $query->with('country');
         }, 'advance_detail' => function ($query) {
             $query->selectRaw('COALESCE(SUM(reqAmount),0) as advanceSum,poID');
@@ -4621,36 +4652,36 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $data[$x]['Transaction Amount'] = $val->poTotalSupplierTransactionCurrency;
                 }
                 if ($val->localcurrency) {
-                    $data[$x]['Local Amount ('.$val->localcurrency->CurrencyCode.')'] =  $val->poTotalLocalCurrency;;
+                    $data[$x]['Local Amount (' . $val->localcurrency->CurrencyCode . ')'] = $val->poTotalLocalCurrency;;
                 }
                 if ($val->reportingcurrency) {
-                    $data[$x]['Reporting Amount ('.$val->reportingcurrency->CurrencyCode.')'] = $val->poTotalComRptCurrency;;
+                    $data[$x]['Reporting Amount (' . $val->reportingcurrency->CurrencyCode . ')'] = $val->poTotalComRptCurrency;;
                 }
                 if ($val->advance_detail) {
-                    if(isset($val->advance_detail[0]->advanceSum)){
+                    if (isset($val->advance_detail[0]->advanceSum)) {
                         $data[$x]['Advance Payment Available'] = 'Yes';
-                    }else{
+                    } else {
                         $data[$x]['Advance Payment Available'] = 'No';
                     }
                 }
-               if ($val->advance_detail) {
-                   if(isset($val->advance_detail[0]->advanceSum)){
-                       $data[$x]['Total Advance Payment Amount'] = $val->advance_detail[0]->advanceSum;
-                   }else{
-                       $data[$x]['Total Advance Payment Amount'] = '0';
-                   }
+                if ($val->advance_detail) {
+                    if (isset($val->advance_detail[0]->advanceSum)) {
+                        $data[$x]['Total Advance Payment Amount'] = $val->advance_detail[0]->advanceSum;
+                    } else {
+                        $data[$x]['Total Advance Payment Amount'] = '0';
+                    }
                 }
 
-  /*              if ($val->detail) {
-                    $data[$x]['Transaction Total'] = $val->detail[0]->transactionSum;
-                }*/
+                /*              if ($val->detail) {
+                                  $data[$x]['Transaction Total'] = $val->detail[0]->transactionSum;
+                              }*/
 
-         /*       if ($val->detail) {
-                    $data[$x]['Local Total'] = $val->detail[0]->localSum;
-                }*/
-              /*  if ($val->detail) {
-                    $data[$x]['Reporting Total'] = $val->detail[0]->rptSum;
-                }*/
+                /*       if ($val->detail) {
+                           $data[$x]['Local Total'] = $val->detail[0]->localSum;
+                       }*/
+                /*  if ($val->detail) {
+                      $data[$x]['Reporting Total'] = $val->detail[0]->rptSum;
+                  }*/
                 $x++;
             }
         } else {
@@ -4700,25 +4731,39 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->with(['grv_master'])
             ->groupBy('grvAutoID')
             ->get();
+
         foreach ($grvMasters as $grv) {
             $invoices = BookInvSuppDet::selectRaw('sum(totLocalAmount) as localAmount,
                                                  sum(totRptAmount) as rptAmount,grvAutoID,bookingSuppMasInvAutoID')
                 ->where('grvAutoID', $grv->grvAutoID)
+                ->where('purchaseOrderID', $row->purchaseOrderID)
                 ->with(['suppinvmaster'])
                 ->groupBy('bookingSuppMasInvAutoID')
                 ->get();
 
             foreach ($invoices as $invoice) {
-                $payments = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
-                                                 sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,PayMasterAutoId')
+                //supplierPaymentAmount
+                $paymentsInvoice = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
+                                                 sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID')
                     ->where('bookingInvSystemCode', $invoice->bookingSuppMasInvAutoID)
-                    ->where('addedDocumentSystemID', 11)
+                    //->where('addedDocumentSystemID', 11)
                     ->where('matchingDocID', 0)
-                    ->with(['master'])
+                    ->with(['payment_master'])
                     ->groupBy('PayMasterAutoId')
                     ->get();
 
-                $invoice->payments = $payments->toArray();
+                $paymentsInvoiceMatch = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
+                                                 sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,matchingDocID')
+                    ->where('bookingInvSystemCode', $invoice->bookingSuppMasInvAutoID)
+                    //->where('addedDocumentSystemID', 11)
+                    ->where('matchingDocID', '>', 0)
+                    ->with(['matching_master'])
+                    ->groupBy('PayMasterAutoId')
+                    ->get();
+
+                $totalInvoices = $paymentsInvoice->toArray() + $paymentsInvoiceMatch->toArray();
+
+                $invoice->payments = $totalInvoices;
             }
 
             $grv->invoices = $invoices->toArray();
@@ -4733,9 +4778,19 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $from = "";
         $to = "";
 
-        if (array_key_exists('dateRange', $input) && $input['dateRange'][0] && $input['dateRange'][1]) {
-            $from = ((new Carbon($input['dateRange'][0]))->format('Y-m-d'));
-            $to = ((new Carbon($input['dateRange'][1]))->format('Y-m-d'));
+        if (array_key_exists('fromDate', $input) && $input['fromDate']) {
+            $from = ((new Carbon($input['fromDate']))->format('Y-m-d'));
+        }
+
+        if (array_key_exists('toDate', $input) && $input['toDate']) {
+            $to = ((new Carbon($input['toDate']))->format('Y-m-d'));
+        }
+
+        if (array_key_exists('toDate', $input) && array_key_exists('fromDate', $input) &&
+            $input['toDate'] && $input['fromDate'] && $to <= $from
+        ) {
+            //$from = "";
+            //$to = "";
         }
 
         $search = $input['search']['value'];
@@ -4747,6 +4802,13 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->where('poConfirmedYN', 1)
             ->where('poCancelledYN', 0)
             ->where('approved', -1)
+            ->where('documentSystemID', '!=', 5)
+            ->when($from && $to == "", function ($q) use ($from, $to) {
+                return $q->where('approvedDate', '>=', $from);
+            })
+            ->when($from == "" && $to, function ($q) use ($from, $to) {
+                return $q->where('approvedDate', '<=', $to);
+            })
             ->when($from && $to, function ($q) use ($from, $to) {
                 return $q->whereBetween('approvedDate', [$from, $to]);
             })
@@ -4797,7 +4859,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $data[$x]['Supplier Code'] = '';
                     $data[$x]['Supplier Name'] = '';
                 }
-                $data[$x]['PO Amount'] = number_format($value->poTotalComRptCurrency,2);
+                $data[$x]['PO Amount'] = number_format($value->poTotalComRptCurrency, 2);
 
                 if (count($value->grvMasters) > 0) {
                     $grvMasterCount = 0;
@@ -4814,15 +4876,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             $data[$x]['PO Amount'] = '';
                         }
 
-                        if($grv['grv_master']){
+                        if ($grv['grv_master']) {
                             $data[$x]['GRV Code'] = $grv['grv_master']['grvPrimaryCode'];
                             $data[$x]['GRV Date'] = \Helper::dateFormat($grv['grv_master']['grvDate']);
-                        }else{
+                        } else {
                             $data[$x]['GRV Code'] = '';
                             $data[$x]['GRV Date'] = '';
                         }
 
-                        $data[$x]['GRV Amount'] =  number_format($grv['rptAmount'],2);
+                        $data[$x]['GRV Amount'] = number_format($grv['rptAmount'], 2);
 
                         if (count($grv['invoices']) > 0) {
                             $invoicesCount = 0;
@@ -4849,7 +4911,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     $data[$x]['Invoice Code'] = '';
                                     $data[$x]['Invoice Date'] = '';
                                 }
-                                $data[$x]['Invoice Amount'] =  number_format($invoice['rptAmount'],2);
+                                $data[$x]['Invoice Amount'] = number_format($invoice['rptAmount'], 2);
 
                                 if (count($invoice['payments']) > 0) {
                                     $paymentsCount = 0;
@@ -4871,14 +4933,28 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             $data[$x]['Invoice Date'] = '';
                                             $data[$x]['Invoice Amount'] = '';
                                         }
-                                        if ($payment['master']) {
-                                            $data[$x]['Payment Code'] = $payment['master']['BPVcode'];
-                                            $data[$x]['Payment Date'] = \Helper::dateFormat($payment['master']['BPVdate']);
+
+                                        if ($payment['matchingDocID'] == 0) {
+                                            if (!empty($payment['payment_master'])) {
+                                                $data[$x]['Payment Code'] = $payment['payment_master']['BPVcode'];
+                                                $data[$x]['Payment Date'] = \Helper::dateFormat($payment['payment_master']['BPVdate']);
+                                            }else {
+                                                $data[$x]['Payment Code'] = '';
+                                                $data[$x]['Payment Date'] = '';
+                                            }
+                                        } else if ($payment['matchingDocID'] > 0) {
+                                            if (!empty($payment['matching_master'])) {
+                                                $data[$x]['Payment Code'] = $payment['matching_master']['matchingDocCode'];
+                                                $data[$x]['Payment Date'] = \Helper::dateFormat($payment['matching_master']['matchingDocdate']);
+                                            }else {
+                                                $data[$x]['Payment Code'] = '';
+                                                $data[$x]['Payment Date'] = '';
+                                            }
                                         } else {
                                             $data[$x]['Payment Code'] = '';
                                             $data[$x]['Payment Date'] = '';
                                         }
-                                        $data[$x]['Paid Amount'] = number_format($payment['rptAmount'],2);
+                                        $data[$x]['Paid Amount'] = number_format($payment['rptAmount'], 2);
                                         $paymentsCount++;
                                     }
                                 } else {
@@ -4888,8 +4964,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                 }
                                 $invoicesCount++;
                             }
-                        }
-                        else {
+                        } else {
                             $data[$x]['Invoice Code'] = '';
                             $data[$x]['Invoice Date'] = '';
                             $data[$x]['Invoice Amount'] = '';

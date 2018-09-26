@@ -15,6 +15,7 @@
 
 namespace App\helper;
 
+use App\Jobs\CreateReceiptVoucher;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
 use App\Jobs\GeneralLedgerInsert;
@@ -1131,6 +1132,10 @@ class Helper
                             if ($input["documentSystemID"] == 10 && !empty($sourceModel)) {
                                 $jobSI = CreateSupplierInvoice::dispatch($sourceModel);
                             }
+                            if ($input["documentSystemID"] == 4 && !empty($sourceModel)) {
+                                $jobPV = CreateReceiptVoucher::dispatch($sourceModel);
+                            }
+
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset
                                 $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
