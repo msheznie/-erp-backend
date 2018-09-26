@@ -346,7 +346,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
-        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['confirmed_by', 'bankaccount'])->findWithoutFail($id);
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['confirmed_by', 'bankaccount','financeperiod_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'financeyear_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMaster)) {
             return $this->sendError('Pay Supplier Invoice Master not found');

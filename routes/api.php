@@ -883,6 +883,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('free_billings', 'FreeBillingAPIController');
     Route::get('getSupplierInvoiceStatusHistoryForGRV', 'GRVMasterAPIController@getSupplierInvoiceStatusHistoryForGRV');
 
+    Route::resource('journalVoucherCRUD', 'JvMasterAPIController');
+    Route::resource('jv_details', 'JvDetailAPIController');
+    Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
+    Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
+    Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
+
 
 });
 
@@ -926,5 +932,4 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
-
-
+Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
