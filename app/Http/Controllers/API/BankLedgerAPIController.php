@@ -15,7 +15,10 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBankLedgerAPIRequest;
 use App\Http\Requests\API\UpdateBankLedgerAPIRequest;
 use App\Models\BankLedger;
+use App\Models\BankReconciliation;
 use App\Repositories\BankLedgerRepository;
+use App\Repositories\BankReconciliationRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -26,15 +29,16 @@ use Response;
  * Class BankLedgerController
  * @package App\Http\Controllers\API
  */
-
 class BankLedgerAPIController extends AppBaseController
 {
     /** @var  BankLedgerRepository */
     private $bankLedgerRepository;
+    private $bankReconciliationRepository;
 
-    public function __construct(BankLedgerRepository $bankLedgerRepo)
+    public function __construct(BankLedgerRepository $bankLedgerRepo, BankReconciliationRepository $bankReconciliationRepo)
     {
         $this->bankLedgerRepository = $bankLedgerRepo;
+        $this->bankReconciliationRepository = $bankReconciliationRepo;
     }
 
     /**
@@ -232,27 +236,59 @@ class BankLedgerAPIController extends AppBaseController
             return $this->sendError('Bank Ledger not found');
         }
 
+        $bankReconciliation = $this->bankReconciliationRepository->findWithoutFail($input['bankRecAutoID']);
+
+        if (empty($bankReconciliation)) {
+            return $this->sendError('Bank Reconciliation not found');
+        }
+
+
+        if ($bankReconciliation->confirmedYN == 1) {
+            return $this->sendError('You cannot edit, This document already confirmed.', 500);
+        }
+
         $employee = \Helper::getEmployeeInfo();
         $updateArray = array();
-        $updateArray['trsClearedYN'] = $input['trsClearedYN'];
 
-        if($updateArray['trsClearedYN']){
-            $updateArray['trsClearedAmount'] = $bankLedger->payAmountSuppTrans;
-            $updateArray['trsClearedByEmpName'] = $employee->empName;
-            $updateArray['trsClearedByEmpID'] = $employee->empID;
-            $updateArray['trsClearedByEmpSystemID'] = $employee->employeeSystemID;
-            $updateArray['trsClearedDate'] = now();
+        if ($input['bankClearedYN']) {
+            $updateArray['bankClearedYN'] = -1;
+        } else {
+            $updateArray['bankClearedYN'] = 0;
+        }
+
+        if ($updateArray['bankClearedYN']) {
+            $updateArray['bankClearedAmount'] = $bankLedger->payAmountBank;
+            $updateArray['bankClearedByEmpName'] = $employee->empName;
+            $updateArray['bankClearedByEmpID'] = $employee->empID;
+            $updateArray['bankClearedByEmpSystemID'] = $employee->employeeSystemID;
+            $updateArray['bankClearedDate'] = now();
             $updateArray['bankRecAutoID'] = $input['bankRecAutoID'];
-        }else{
-            $updateArray['trsClearedAmount'] = 0;
-            $updateArray['trsClearedByEmpName'] = null;
-            $updateArray['trsClearedByEmpID'] = null;
-            $updateArray['trsClearedByEmpSystemID'] = null;
-            $updateArray['trsClearedDate'] = null;
+        } else {
+            $updateArray['bankClearedAmount'] = 0;
+            $updateArray['bankClearedByEmpName'] = null;
+            $updateArray['bankClearedByEmpID'] = null;
+            $updateArray['bankClearedByEmpSystemID'] = null;
+            $updateArray['bankClearedDate'] = null;
             $updateArray['bankRecAutoID'] = null;
         }
 
         $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
+
+        $bankRecReceiptAmount = BankLedger::where('bankRecAutoID', $input['bankRecAutoID'])
+            ->where('bankClearedYN', -1)
+            ->where('payAmountBank', '<', 0)
+            ->sum('bankClearedAmount');
+
+        $bankRecPaymentAmount = BankLedger::where('bankRecAutoID', $input['bankRecAutoID'])
+            ->where('bankClearedYN', -1)
+            ->where('payAmountBank', '>', 0)
+            ->sum('bankClearedAmount');
+
+        $closingAmount = $bankReconciliation->openingBalance + ($bankRecReceiptAmount * -1) - $bankRecPaymentAmount;
+
+        $inputNew = array('closingBalance' => $closingAmount);
+        $bankReconciliationNew = $this->bankReconciliationRepository->update($inputNew, $input['bankRecAutoID']);
+
 
         return $this->sendResponse($bankLedger->toArray(), 'BankLedger updated successfully');
     }
@@ -329,10 +365,37 @@ class BankLedgerAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+        $type = '<';
+
+        if (array_key_exists('invoiceType', $input) && ($input['invoiceType'] == 1 || $input['invoiceType'] == 2)) {
+
+            if ($input['invoiceType'] == 1) {
+                $type = '<';
+            } else if ($input['invoiceType'] == 2) {
+                $type = '>';
+            }
+        }
+
+        $bankRecAsOf = '';
+        $bankReconciliation = BankReconciliation::find($input['bankRecAutoID']);
+
+        if (!empty($bankReconciliation)) {
+            $bankRecAsOf = new Carbon($bankReconciliation->bankRecAsOf);
+        }
+
         $logistics = BankLedger::whereIn('companySystemID', $subCompanies)
-                                 ->where('invoiceType',$input['invoiceType']);
-                                //->where("bankAccountAutoID",$input['bankAccountAutoID'])
-                                //->with(['month','created_by','bank_account']);
+                                ->where('payAmountBank', $type, 0)
+                                ->where("bankAccountID", $input['bankAccountAutoID'])
+                                ->where("trsClearedYN", -1)
+                                ->when($bankRecAsOf != '', function ($q) use ($bankRecAsOf) {
+                                    $q->where("documentDate", '<=', $bankRecAsOf);
+                                })
+                                ->where(function ($q) use ($input) {
+                                    $q->where(function ($q1) use ($input) {
+                                        $q1->where('bankRecAutoID', $input['bankRecAutoID'])
+                                            ->where("bankClearedYN", -1);
+                                    })->orWhere("bankClearedYN", 0);
+                                });
 
         $search = $request->input('search.value');
 

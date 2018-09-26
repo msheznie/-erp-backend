@@ -1,13 +1,14 @@
 <?php
 /**
  * =============================================
- * -- File Name : BankReconciliation.php
+ * -- File Name : AssetCapitalization.php
  * -- Project Name : ERP
- * -- Module Name :  Bank Reconciliation
- * -- Author : Mohamed Fayas
- * -- Create date : 18- September 2018
+ * -- Module Name :  Asset Management
+ * -- Author : Mubashir
+ * -- Create date : 26 - September 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
+ * --
  */
 namespace App\Models;
 
@@ -15,24 +16,13 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="BankReconciliation",
+ *      definition="AssetCapitalization",
  *      required={""},
  *      @SWG\Property(
- *          property="bankRecAutoID",
- *          description="bankRecAutoID",
+ *          property="capitalizationID",
+ *          description="capitalizationID",
  *          type="integer",
  *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="documentSystemID",
- *          description="documentSystemID",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="documentID",
- *          description="documentID",
- *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="companySystemID",
@@ -46,44 +36,67 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="bankGLAutoID",
- *          description="bankGLAutoID",
+ *          property="documentSystemID",
+ *          description="documentSystemID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="month",
- *          description="month",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="bankRecPrimaryCode",
- *          description="bankRecPrimaryCode",
+ *          property="documentID",
+ *          description="documentID",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="year",
- *          description="year",
+ *          property="companyFinanceYearID",
+ *          description="companyFinanceYearID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="openingBalance",
- *          description="openingBalance",
+ *          property="serialNo",
+ *          description="serialNo",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyFinancePeriodID",
+ *          description="companyFinancePeriodID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="narration",
+ *          description="narration",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="allocationTypeID",
+ *          description="allocationTypeID",
+ *          type="boolean"
+ *      ),
+ *      @SWG\Property(
+ *          property="faCatID",
+ *          description="faCatID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="faID",
+ *          description="faID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="assetNBVLocal",
+ *          description="assetNBVLocal",
  *          type="number",
  *          format="float"
  *      ),
  *      @SWG\Property(
- *          property="closingBalance",
- *          description="closingBalance",
+ *          property="assetNBVRpt",
+ *          description="assetNBVRpt",
  *          type="number",
  *          format="float"
- *      ),
- *      @SWG\Property(
- *          property="description",
- *          description="description",
- *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="confirmedYN",
@@ -108,8 +121,8 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="approvedYN",
- *          description="approvedYN",
+ *          property="approved",
+ *          description="approved",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -125,14 +138,8 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="RollLevForApp_curr",
- *          description="RollLevForApp_curr",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="createdPcID",
- *          description="createdPcID",
+ *          property="createdUserGroup",
+ *          description="createdUserGroup",
  *          type="string"
  *      ),
  *      @SWG\Property(
@@ -147,8 +154,8 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="modifiedPc",
- *          description="modifiedPc",
+ *          property="createdPcID",
+ *          description="createdPcID",
  *          type="string"
  *      ),
  *      @SWG\Property(
@@ -161,52 +168,63 @@ use Eloquent as Model;
  *          property="modifiedUser",
  *          description="modifiedUser",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPc",
+ *          description="modifiedPc",
+ *          type="string"
  *      )
  * )
  */
-class BankReconciliation extends Model
+class AssetCapitalization extends Model
 {
 
-    public $table = 'erp_bankrecmaster';
+    public $table = 'erp_fa_assetcapitalization';
     
-    const CREATED_AT = 'createdDateTime';
-    const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'bankRecAutoID';
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
 
+    protected $primaryKey = 'capitalizationID';
 
     public $fillable = [
-        'documentSystemID',
-        'documentID',
         'companySystemID',
         'companyID',
-        'bankGLAutoID',
-        'bankAccountAutoID',
-        'month',
+        'documentSystemID',
+        'documentID',
+        'capitalizationCode',
+        'documentDate',
+        'companyFinanceYearID',
         'serialNo',
-        'bankRecPrimaryCode',
-        'year',
-        'bankRecAsOf',
-        'openingBalance',
-        'closingBalance',
-        'description',
+        'FYBiggin',
+        'FYEnd',
+        'companyFinancePeriodID',
+        'FYPeriodDateFrom',
+        'FYPeriodDateTo',
+        'narration',
+        'allocationTypeID',
+        'faCatID',
+        'faID',
+        'assetNBVLocal',
+        'assetNBVRpt',
+        'timesReferred',
         'confirmedYN',
         'confirmedByEmpSystemID',
         'confirmedByEmpID',
         'confirmedByName',
         'confirmedDate',
-        'approvedYN',
+        'approved',
         'approvedDate',
         'approvedByUserID',
         'approvedByUserSystemID',
-        'RollLevForApp_curr',
-        'createdPcID',
+        'createdUserGroup',
         'createdUserSystemID',
         'createdUserID',
-        'modifiedPc',
+        'createdPcID',
         'modifiedUserSystemID',
         'modifiedUser',
+        'modifiedPc',
         'createdDateTime',
-        'timeStamp'
+        'timestamp'
     ];
 
     /**
@@ -215,34 +233,36 @@ class BankReconciliation extends Model
      * @var array
      */
     protected $casts = [
-        'bankRecAutoID' => 'integer',
-        'documentSystemID' => 'integer',
-        'documentID' => 'string',
+        'capitalizationID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
-        'bankGLAutoID' => 'integer',
-        'bankAccountAutoID' => 'integer',
-        'month' => 'integer',
+        'documentSystemID' => 'integer',
+        'documentID' => 'string',
+        'capitalizationCode' => 'string',
+        'companyFinanceYearID' => 'integer',
         'serialNo' => 'integer',
-        'bankRecPrimaryCode' => 'string',
-        'year' => 'integer',
-        'openingBalance' => 'float',
-        'closingBalance' => 'float',
-        'description' => 'string',
+        'companyFinancePeriodID' => 'integer',
+        'narration' => 'string',
+        'allocationTypeID' => 'boolean',
+        'faCatID' => 'integer',
+        'faID' => 'integer',
+        'assetNBVLocal' => 'float',
+        'assetNBVRpt' => 'float',
         'confirmedYN' => 'integer',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
-        'approvedYN' => 'integer',
+        'timesReferred ' => 'integer',
+        'approved' => 'integer',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
-        'RollLevForApp_curr' => 'integer',
-        'createdPcID' => 'string',
+        'createdUserGroup' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
-        'modifiedPc' => 'string',
+        'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'modifiedPc' => 'string'
     ];
 
     /**
@@ -254,20 +274,39 @@ class BankReconciliation extends Model
         
     ];
 
-    public function month(){
-        return $this->belongsTo('App\Models\Months','month','monthID');
-    }
-    public function created_by()
+    public function company()
     {
-        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+        return $this->belongsTo('App\Models\Company', 'companySystemID');
     }
-    public function bank_account()
+
+    public function detail()
     {
-        return $this->belongsTo('App\Models\BankAccount', 'bankAccountAutoID', 'bankAccountAutoID');
+        return $this->hasMany('App\Models\AssetCapitalizationDetail', 'capitalizationID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'capitalizationID');
     }
 
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
     }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID');
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID');
+    }
+
 }
