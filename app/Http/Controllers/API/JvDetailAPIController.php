@@ -14,12 +14,16 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateJvDetailAPIRequest;
 use App\Http\Requests\API\UpdateJvDetailAPIRequest;
+use App\Models\ChartOfAccount;
 use App\Models\JvDetail;
+use App\Models\JvMaster;
 use App\Repositories\JvDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\Auth;
+use App\Repositories\UserRepository;
 use Response;
 
 /**
@@ -31,10 +35,12 @@ class JvDetailAPIController extends AppBaseController
 {
     /** @var  JvDetailRepository */
     private $jvDetailRepository;
+    private $userRepository;
 
-    public function __construct(JvDetailRepository $jvDetailRepo)
+    public function __construct(JvDetailRepository $jvDetailRepo, UserRepository $userRepo)
     {
         $this->jvDetailRepository = $jvDetailRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -119,6 +125,45 @@ class JvDetailAPIController extends AppBaseController
     public function store(CreateJvDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $jvMaster = JvMaster::find($input['jvMasterAutoId']);
+
+        if (empty($jvMaster)) {
+            return $this->sendError('Journal Voucher not found');
+        }
+
+        $validator = \Validator::make($jvMaster->toArray(), [
+            'jvType' => 'required|numeric',
+            'currencyID' => 'required|numeric|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input['documentSystemID'] = $jvMaster->documentSystemID;
+        $input['documentID'] = $jvMaster->documentID;
+        $input['companySystemID'] = $jvMaster->companySystemID;
+        $input['companyID'] = $jvMaster->companyID;
+
+        $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
+        if (empty($chartOfAccount)) {
+            return $this->sendError('Chart of Account not found');
+        }
+
+        $input['glAccount'] = $chartOfAccount->AccountCode;
+        $input['glAccountDescription'] = $chartOfAccount->AccountDescription;
+
+        $input['currencyID'] = $jvMaster->currencyID;
+        $input['currencyER'] = $jvMaster->currencyER;
+
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = $user->employee['empID'];
+        $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
         $jvDetails = $this->jvDetailRepository->create($input);
 

@@ -265,7 +265,7 @@ class JvMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var JvMaster $jvMaster */
-        $jvMaster = $this->jvMasterRepository->with(['created_by', 'confirmed_by', 'company', 'modified_by', 'transactioncurrency','financeperiod_by', 'financeyear_by'])->findWithoutFail($id);
+        $jvMaster = $this->jvMasterRepository->with(['created_by', 'confirmed_by', 'company', 'modified_by', 'transactioncurrency', 'financeperiod_by', 'financeyear_by'])->findWithoutFail($id);
 
         if (empty($jvMaster)) {
             return $this->sendError('Jv Master not found');
@@ -446,11 +446,10 @@ class JvMasterAPIController extends AppBaseController
 
         $invMaster = JvMaster::where('companySystemID', $input['companySystemID']);
         //$invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with(['created_by' => function ($query) {
-        }, 'transactioncurrency' => function ($query) {
+        $invMaster->with(['created_by', 'transactioncurrency', 'detail' => function ($query) {
+            $query->selectRaw('COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,jvMasterAutoId');
+            $query->groupBy('jvMasterAutoId');
         }]);
-
-
         if (array_key_exists('jvType', $input)) {
             if (($input['jvType'] == 0 || $input['jvType'] == 1 || $input['jvType'] == 2 || $input['jvType'] == 3 || $input['jvType'] == 4 || $input['jvType'] == 5) && !is_null($input['jvType'])) {
                 $invMaster->where('jvType', $input['jvType']);

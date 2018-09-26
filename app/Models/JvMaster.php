@@ -353,5 +353,10 @@ class JvMaster extends Model
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 
+    public function detail()
+    {
+        return $this->hasMany('App\Models\JvDetail', 'jvMasterAutoId', 'jvMasterAutoId');
+    }
+
 
 }
