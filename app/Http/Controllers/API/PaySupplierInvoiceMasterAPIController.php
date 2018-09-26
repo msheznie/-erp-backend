@@ -28,6 +28,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
+use App\Models\ExpenseClaimType;
 use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
@@ -345,7 +346,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
-        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['confirmed_by', 'bankaccount'])->findWithoutFail($id);
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->with(['confirmed_by', 'bankaccount','financeperiod_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'financeyear_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($paySupplierInvoiceMaster)) {
             return $this->sendError('Pay Supplier Invoice Master not found');
@@ -950,6 +955,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $segment = SegmentMaster::ofCompany($subCompanies)->IsActive()->get();
 
+        $expenseClaimType = ExpenseClaimType::all();
+
+        $interCompanyTo = Company::where('isGroup',0)->get();
+
         $output = array(
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
@@ -962,6 +971,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             'bank' => $bank,
             'currency' => $currency,
             'segments' => $segment,
+            'expenseClaimType' => $expenseClaimType,
+            'interCompany' => $interCompanyTo,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
