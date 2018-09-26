@@ -1,0 +1,134 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="FixedAssetCategory",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="faCatID",
+ *          description="faCatID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="catDescription",
+ *          description="catDescription",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="isActive",
+ *          description="isActive",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdPcID",
+ *          description="createdPcID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserGroup",
+ *          description="createdUserGroup",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserSystemID",
+ *          description="createdUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPc",
+ *          description="modifiedPc",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserSystemID",
+ *          description="modifiedUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUser",
+ *          description="modifiedUser",
+ *          type="string"
+ *      )
+ * )
+ */
+class FixedAssetCategory extends Model
+{
+
+    public $table = 'erp_fa_category';
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
+
+
+    public $fillable = [
+        'companySystemID',
+        'companyID',
+        'catDescription',
+        'isActive',
+        'createdPcID',
+        'createdUserGroup',
+        'createdUserSystemID',
+        'createdUserID',
+        'createdDateTime',
+        'modifiedPc',
+        'modifiedUserSystemID',
+        'modifiedUser',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'faCatID' => 'integer',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
+        'catDescription' => 'string',
+        'isActive' => 'integer',
+        'createdPcID' => 'string',
+        'createdUserGroup' => 'string',
+        'createdUserSystemID' => 'integer',
+        'createdUserID' => 'string',
+        'modifiedPc' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUser' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}
