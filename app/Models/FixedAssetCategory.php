@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ActiveTrait;
 use Eloquent as Model;
 
 /**
@@ -77,6 +78,8 @@ use Eloquent as Model;
  */
 class FixedAssetCategory extends Model
 {
+
+    use ActiveTrait;
 
     public $table = 'erp_fa_category';
     

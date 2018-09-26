@@ -882,6 +882,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('free_billings', 'FreeBillingAPIController');
     Route::get('getSupplierInvoiceStatusHistoryForGRV', 'GRVMasterAPIController@getSupplierInvoiceStatusHistoryForGRV');
 
+    Route::resource('asset_capitalizations', 'AssetCapitalizationAPIController');
+    Route::post('getAllCapitalizationByCompany', 'AssetCapitalizationAPIController@getAllCapitalizationByCompany');
+    Route::get('getCapitalizationFormData', 'AssetCapitalizationAPIController@getCapitalizationFormData');
+    Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
 
 });
 
@@ -924,9 +928,6 @@ Route::get('runQueueSR', function () {
     // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
-
-
-
 
 
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
