@@ -15,6 +15,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBankAccountAPIRequest;
 use App\Http\Requests\API\UpdateBankAccountAPIRequest;
 use App\Models\BankAccount;
+use App\Models\BankLedger;
 use App\Repositories\BankAccountRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -181,6 +182,27 @@ class BankAccountAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->addColumn('amounts', function ($row) {
+               $bankBalance = BankLedger::where('companySystemID',$row->companySystemID)
+                                        ->where('bankID',$row->bankmasterAutoID)
+                                        ->where('bankAccountID',$row->bankAccountAutoID)
+                                        ->where('bankClearedYN',-1)
+                                        ->sum('bankClearedAmount');
+
+                $withTreasury = BankLedger::where('companySystemID',$row->companySystemID)
+                                            ->where('bankID',$row->bankmasterAutoID)
+                                            ->where('bankAccountID',$row->bankAccountAutoID)
+                                            ->where('bankClearedYN',0)
+                                            ->where('trsClearedYN',-1)
+                                            ->sum('trsClearedAmount');
+
+                $array = array('bankBalance' => $bankBalance,
+                    'withTreasury' => $withTreasury,
+                    'netBankBalance' => ($bankBalance + $withTreasury)
+                );
+                return $array;
+
+            })
             ->with('orderCondition', $sort)
             ->make(true);
     }

@@ -870,6 +870,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
     Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');
+    Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
     Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
     Route::resource('credit_notes', 'CreditNoteAPIController');
@@ -886,6 +887,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllCapitalizationByCompany', 'AssetCapitalizationAPIController@getAllCapitalizationByCompany');
     Route::get('getCapitalizationFormData', 'AssetCapitalizationAPIController@getCapitalizationFormData');
     Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
+
+    Route::resource('journalVoucherCRUD', 'JvMasterAPIController');
+    Route::resource('jv_details', 'JvDetailAPIController');
+    Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
+    Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
+    Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
 
 });
 
@@ -910,7 +917,6 @@ Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplier
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
-
 Route::get('getBcryptPassword/{password}', function ($password) {
     echo bcrypt($password);
 });
@@ -931,3 +937,4 @@ Route::get('runQueueSR', function () {
 
 
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
+
