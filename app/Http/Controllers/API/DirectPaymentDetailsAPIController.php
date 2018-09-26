@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : DirectPaymentDetailsAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Payment Voucher
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 18 - September 2018
+ * -- Description : This file contains the all CRUD for Direct payment detail
+ * -- REVISION HISTORY
+ * -- Date: 18 September 2018 By: Mubashir Description: Added new function updateDirectPaymentAccount(),deleteAllDirectPayment(),getDirectPaymentDetails()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDirectPaymentDetailsAPIRequest;
