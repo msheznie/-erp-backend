@@ -16,9 +16,11 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateJvMasterAPIRequest;
 use App\Http\Requests\API\UpdateJvMasterAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
+use App\Models\JvDetail;
 use App\Models\JvMaster;
 use App\Models\Months;
 use App\Models\SegmentMaster;
@@ -172,6 +174,13 @@ class JvMasterAPIController extends AppBaseController
             return $this->sendError('JV date is not within the financial period!');
         }
 
+        $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+        $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
+        $FYPeriodDateTo = $companyfinanceperiod->dateTo;
+
+        $input['FYPeriodDateFrom'] = $FYPeriodDateFrom;
+        $input['FYPeriodDateTo'] = $FYPeriodDateTo;
+
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $user->employee['empID'];
         $input['createdUserSystemID'] = $user->employee['employeeSystemID'];
@@ -324,12 +333,155 @@ class JvMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $input = array_except($input, ['company', 'created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'transactioncurrency', 'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
+
+        $input = $this->convertArrayToValue($input);
+
         /** @var JvMaster $jvMaster */
         $jvMaster = $this->jvMasterRepository->findWithoutFail($id);
 
         if (empty($jvMaster)) {
             return $this->sendError('Jv Master not found');
         }
+
+        if (isset($input['JVdate'])) {
+            if ($input['JVdate']) {
+                $input['JVdate'] = new Carbon($input['JVdate']);
+            }
+        }
+
+
+        if ($jvMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 1;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+            }
+            unset($inputParam);
+
+            $validator = \Validator::make($input, [
+                'companyFinancePeriodID' => 'required|numeric|min:1',
+                'companyFinanceYearID' => 'required|numeric|min:1',
+                'JVdate' => 'required',
+                'currencyID' => 'required|numeric|min:1',
+                'JVNarration' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $documentDate = $input['JVdate'];
+            $monthBegin = $input['FYPeriodDateFrom'];
+            $monthEnd = $input['FYPeriodDateTo'];
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            } else {
+                return $this->sendError('Document date is not within the selected financial period !', 500);
+            }
+
+            $checkItems = JvDetail::where('jvMasterAutoId', $id)
+                ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Journal Voucher should have at least one item', 500);
+            }
+
+            $checkQuantity = JvDetail::where('debitNoteAutoID', $id)
+                ->where(function ($q) {
+                    $q->where('debitAmount', '<=', 0)
+                        ->orWhereNull('creditAmount', '<=', 0)
+                        ->orWhereNull('debitAmount')
+                        ->orWhereNull('creditAmount');
+                })
+                ->count();
+            if ($checkQuantity > 0) {
+                return $this->sendError('Amount should be greater than 0 for every items', 500);
+            }
+
+            $debitNoteDetails = JvDetail::where('jvMasterAutoId', $id)->get();
+
+            $finalError = array('amount_zero' => array(),
+                'amount_neg' => array(),
+                'required_serviceLine' => array(),
+                'active_serviceLine' => array(),
+            );
+            $error_count = 0;
+
+            foreach ($debitNoteDetails as $item) {
+                $updateItem = JvDetail::find($item['jvDetailAutoID']);
+
+                if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+
+                    $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                        ->where('isActive', 1)
+                        ->first();
+                    if (empty($checkDepartmentActive)) {
+                        $updateItem->serviceLineSystemID = null;
+                        $updateItem->serviceLineCode = null;
+                        array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                        $error_count++;
+                    }
+                } else {
+                    array_push($finalError['required_serviceLine'], $updateItem->glCode);
+                    $error_count++;
+                }
+
+                if ($updateItem->debitAmount == 0 || $updateItem->creditAmount == 0) {
+                    array_push($finalError['amount_zero'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+                if ($updateItem->debitAmount < 0 || $updateItem->creditAmount < 0) {
+                    array_push($finalError['amount_neg'], $updateItem->itemPrimaryCode);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
+
+            $JvDetailDebitSum = JvDetail::where('jvMasterAutoId', $id)
+                ->sum('debitAmount');
+
+            $JvDetailCreditSum = JvDetail::where('jvMasterAutoId', $id)
+                ->sum('creditAmount');
+
+            if ($JvDetailDebitSum == $JvDetailCreditSum) {
+                return $this->sendError('Debit total not matching with credit total ', 500);
+            }
+
+            $params = array('autoID' => $id,
+                'company' => $jvMaster->companySystemID,
+                'document' => $jvMaster->documentSystemID,
+                'segment' => 0,
+                'category' => 0,
+                'amount' => $JvDetailDebitSum
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
         $jvMaster = $this->jvMasterRepository->update($input, $id);
 
@@ -406,6 +558,8 @@ class JvMasterAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get();
 
+        $segments = SegmentMaster::where("companySystemID", $companyId)
+            ->where('isActive', 1)->get();
 
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
             ->get();
@@ -427,7 +581,8 @@ class JvMasterAPIController extends AppBaseController
             'years' => $years,
             'currencies' => $currencies,
             'financialYears' => $financialYears,
-            'companyFinanceYear' => $companyFinanceYear
+            'companyFinanceYear' => $companyFinanceYear,
+            'segments' => $segments
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

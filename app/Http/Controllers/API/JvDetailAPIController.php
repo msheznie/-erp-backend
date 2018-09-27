@@ -17,6 +17,7 @@ use App\Http\Requests\API\UpdateJvDetailAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\JvDetail;
 use App\Models\JvMaster;
+use App\Models\SegmentMaster;
 use App\Repositories\JvDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -269,12 +270,38 @@ class JvDetailAPIController extends AppBaseController
     public function update($id, UpdateJvDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['segment','currency_by']);
+        $input = $this->convertArrayToValue($input);
+        $serviceLineError = array('type' => 'serviceLine');
 
         /** @var JvDetail $jvDetail */
         $jvDetail = $this->jvDetailRepository->findWithoutFail($id);
 
         if (empty($jvDetail)) {
             return $this->sendError('Jv Detail not found');
+        }
+
+        $jvMaster = JvMaster::find($input['jvMasterAutoId']);
+
+        if (empty($jvMaster)) {
+            return $this->sendError('Journal Voucher not found');
+        }
+
+        if (isset($input['serviceLineSystemID'])) {
+
+            if($input['serviceLineSystemID'] > 0) {
+                $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
+                if (empty($checkDepartmentActive)) {
+                    return $this->sendError('Department not found');
+                }
+
+                if ($checkDepartmentActive->isActive == 0) {
+                    $this->$jvDetail->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
+                    return $this->sendError('Please select an active department', 500, $serviceLineError);
+                }
+
+                $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
+            }
         }
 
         $jvDetail = $this->jvDetailRepository->update($input, $id);
