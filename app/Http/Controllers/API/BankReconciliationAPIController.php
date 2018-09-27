@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 18-September 2018 By: Fayas Description: Added new functions named as getAllBankReconciliationByBankAccount()
  * -- Date: 26-September 2018 By: Fayas Description: Added new functions named as getBankReconciliationFormData()
+ * -- Date: 27-September 2018 By: Fayas Description: Added new functions named as getBankReconciliationApprovalByUser(),getBankReconciliationApprovedByUser()
  */
 namespace App\Http\Controllers\API;
 
@@ -20,10 +21,12 @@ use App\Models\BankLedger;
 use App\Models\BankReconciliation;
 use App\Models\Company;
 use App\Models\YesNoSelection;
+use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -36,10 +39,12 @@ class BankReconciliationAPIController extends AppBaseController
 {
     /** @var  BankReconciliationRepository */
     private $bankReconciliationRepository;
+    private $bankLedgerRepository;
 
-    public function __construct(BankReconciliationRepository $bankReconciliationRepo)
+    public function __construct(BankReconciliationRepository $bankReconciliationRepo,BankLedgerRepository $bankLedgerRepo)
     {
         $this->bankReconciliationRepository = $bankReconciliationRepo;
+        $this->bankLedgerRepository = $bankLedgerRepo;
     }
 
     /**
@@ -143,6 +148,12 @@ class BankReconciliationAPIController extends AppBaseController
 
         $input['bankRecAsOf'] = new Carbon($input['bankRecAsOf']);
 
+
+         $end = (new Carbon())->endOfMonth();
+        if($input['bankRecAsOf'] > $end){
+            return $this->sendError('You cannot select a date greater than the current month last day', 500);
+        }
+
         $input['documentSystemID'] = 62;
         $input['documentID'] = 'BRC';
 
@@ -196,13 +207,12 @@ class BankReconciliationAPIController extends AppBaseController
 
 
         $openingBalance = BankLedger::selectRaw('companySystemID,bankAccountID,trsClearedYN,bankClearedYN,ABS(SUM(if(bankClearedAmount < 0,bankClearedAmount,0))) - SUM(if(bankClearedAmount > 0,bankClearedAmount,0)) as opening')
-            ->where('companySystemID', $input['companySystemID'])
-            ->where("bankAccountID", $input['bankAccountAutoID'])
-            ->where("trsClearedYN", -1)
-            ->where("bankClearedYN", -1)
-            ->where("documentDate", '<=', $input['bankRecAsOf'])
-            ->groupBy('companySystemID', 'bankAccountID')
-            ->first();
+                                    ->where('companySystemID', $input['companySystemID'])
+                                    ->where("bankAccountID", $input['bankAccountAutoID'])
+                                    ->where("trsClearedYN", -1)
+                                    ->where("bankClearedYN", -1)
+                                    ->groupBy('companySystemID', 'bankAccountID')
+                                    ->first();
         $input['openingBalance'] = $openingBalance->opening;
         $input['closingBalance'] = $openingBalance->opening;
         $bankReconciliations = $this->bankReconciliationRepository->create($input);
@@ -261,7 +271,6 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '<', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->where("documentDate", '<=', $bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -273,7 +282,6 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->where("documentDate", '<=', $bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -285,7 +293,6 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '<', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->where("documentDate", '<=', $bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -297,7 +304,6 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->where("documentDate", '<=', $bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -450,6 +456,19 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError('Bank Reconciliation not found');
         }
 
+        $bankLedgerData = BankLedger::where('bankAccountID',$bankReconciliation->bankAccountAutoID)
+                                    ->where('companySystemID',$bankReconciliation->companySystemID)
+                                    ->where('bankRecAutoID',$bankReconciliation->bankRecAutoID)
+                                    ->where('bankClearedYN',-1)
+                                    ->get();
+
+        foreach ($bankLedgerData as $data){
+            $updateArray = ['bankClearedYN' => 0,'bankClearedAmount' => 0,'bankClearedByEmpName' => null,
+            'bankClearedByEmpID' => null,'bankClearedByEmpSystemID' => null,'bankClearedDate' => null,'bankRecAutoID' => null];
+
+            $bankLedger = $this->bankLedgerRepository->update($updateArray, $data['bankLedgerAutoID']);
+        }
+
         $bankReconciliation->delete();
 
         return $this->sendResponse($id, 'Bank Reconciliation deleted successfully');
@@ -475,7 +494,7 @@ class BankReconciliationAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $logistics = BankReconciliation::whereIn('companySystemID', $subCompanies)
+        $bankReconciliation = BankReconciliation::whereIn('companySystemID', $subCompanies)
             ->where("bankAccountAutoID", $input['bankAccountAutoID'])
             ->with(['month', 'created_by', 'bank_account']);
 
@@ -483,13 +502,13 @@ class BankReconciliationAPIController extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $logistics = $logistics->where(function ($query) use ($search) {
+            $bankReconciliation = $bankReconciliation->where(function ($query) use ($search) {
                 $query->where('bankRecPrimaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('description', 'LIKE', "%{$search}%");
             });
         }
 
-        return \DataTables::eloquent($logistics)
+        return \DataTables::eloquent($bankReconciliation)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -518,7 +537,7 @@ class BankReconciliationAPIController extends AppBaseController
 
 
         if (!empty($checkPending)) {
-            // return $this->sendError("There is a bank reconciliation (" . $checkPending->bankRecPrimaryCode . ") pending for approval for the bank reconciliation you are trying to add. Please check again.", 500);
+            return $this->sendError("There is a bank reconciliation (" . $checkPending->bankRecPrimaryCode . ") pending for approval for the bank reconciliation you are trying to add. Please check again.", 500);
         }
 
         return $this->sendResponse($bankAccount->toArray(), 'successfully');
@@ -536,4 +555,143 @@ class BankReconciliationAPIController extends AppBaseController
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
+
+    public function getBankReconciliationApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $bankReconciliation = DB::table('erp_documentapproved')
+            ->select(
+                'erp_bankrecmaster.*',
+                'employees.empName As created_emp',
+                'erp_bankaccount.AccountNo As AccountNo',
+                'months.monthDes As monthDes',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $query->whereIn('employeesdepartments.documentSystemID', [62])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_bankrecmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'bankRecAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_bankrecmaster.companySystemID', $companyId)
+                    ->where('erp_bankrecmaster.approvedYN', 0)
+                    ->where('erp_bankrecmaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('months', 'month', 'months.monthID')
+            ->leftJoin('erp_bankaccount', 'erp_bankrecmaster.bankAccountAutoID', 'erp_bankaccount.bankAccountAutoID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [62])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankReconciliation = $bankReconciliation->where(function ($query) use ($search) {
+                $query->where('bankRecPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($bankReconciliation)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('bankRecAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getBankReconciliationApprovedByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $bankReconciliation = DB::table('erp_documentapproved')
+            ->select(
+                'erp_bankrecmaster.*',
+                'employees.empName As created_emp',
+                'erp_bankaccount.AccountNo As AccountNo',
+                'months.monthDes As monthDes',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_bankrecmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'bankRecAutoID')
+                    ->where('erp_bankrecmaster.companySystemID', $companyId)
+                    ->where('erp_bankrecmaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('months', 'month', 'months.monthID')
+            ->leftJoin('erp_bankaccount', 'erp_bankrecmaster.bankAccountAutoID', 'erp_bankaccount.bankAccountAutoID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [62])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankReconciliation = $bankReconciliation->where(function ($query) use ($search) {
+                $query->where('bankRecPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($bankReconciliation)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('bankRecAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
 }

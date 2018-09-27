@@ -10,17 +10,23 @@
  * -- REVISION HISTORY
  * -- Date: 03-September 2018 By:Mubashir Description: Added new functions named as getAllCapitalizationByCompany(),getAllCapitalizationByCompany()
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAssetCapitalizationAPIRequest;
 use App\Http\Requests\API\UpdateAssetCapitalizationAPIRequest;
 use App\Models\AssetCapitalization;
-use App\Models\CurrencyMaster;
+use App\Models\AssetCapitalizationDetail;
+use App\Models\Company;
+use App\Models\DocumentMaster;
 use App\Models\FixedAssetCategory;
+use App\Models\FixedAssetDepreciationPeriod;
+use App\Models\FixedAssetMaster;
 use App\Models\Months;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\AssetCapitalizationRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +38,6 @@ use Response;
  * Class AssetCapitalizationController
  * @package App\Http\Controllers\API
  */
-
 class AssetCapitalizationAPIController extends AppBaseController
 {
     /** @var  AssetCapitalizationRepository */
@@ -125,10 +130,106 @@ class AssetCapitalizationAPIController extends AppBaseController
     public function store(CreateAssetCapitalizationAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
-        $assetCapitalizations = $this->assetCapitalizationRepository->create($input);
+        DB::beginTransaction();
+        try {
+            $validator = \Validator::make($request->all(), [
+                'allocationTypeID' => 'required',
+                'narration' => 'required',
+                'documentDate' => 'required|date',
+            ]);
 
-        return $this->sendResponse($assetCapitalizations->toArray(), 'Asset Capitalization saved successfully');
+            if ($validator->fails()) {//echo 'in';exit;
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 9;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+            }
+
+            unset($inputParam);
+
+            $input['documentDate'] = new Carbon($input['documentDate']);
+
+            $monthBegin = $input['FYPeriodDateFrom'];
+            $monthEnd = $input['FYPeriodDateTo'];
+
+            if (($input['documentDate'] >= $monthBegin) && ($input['documentDate'] <= $monthEnd)) {
+            } else {
+                return $this->sendError('Capitalization date is not within financial period!', 500);
+            }
+
+            $company = Company::find($input['companySystemID']);
+            if ($company) {
+                $input['companyID'] = $company->CompanyID;
+            }
+
+            $documentMaster = DocumentMaster::find($input['documentSystemID']);
+            if ($documentMaster) {
+                $input['documentID'] = $documentMaster->documentID;
+            }
+
+            $lastSerial = AssetCapitalization::where('companySystemID', $input['companySystemID'])
+                ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+                ->orderBy('capitalizationID', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            if ($companyFinanceYear["message"]) {
+                $startYear = $companyFinanceYear["message"]['bigginingDate'];
+                $finYearExp = explode('-', $startYear);
+                $finYear = $finYearExp[0];
+            } else {
+                $finYear = date("Y");
+            }
+            if ($documentMaster) {
+                $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                $input['capitalizationCode'] = $documentCode;
+            }
+            $input['serialNo'] = $lastSerialNumber;
+
+            if ($input['allocationTypeID'] == 1) {
+                $assets = FixedAssetMaster::withoutGlobalScopes()->find($input['faID']);
+                $depreciationLocal = FixedAssetDepreciationPeriod::OfCompany([$input['companySystemID']])->OfAsset($input['faID'])->sum('depAmountLocal');
+                $depreciationRpt = FixedAssetDepreciationPeriod::OfCompany([$input['companySystemID']])->OfAsset($input['faID'])->sum('depAmountRpt');
+
+                $nbvRpt = $assets->costUnitRpt - $depreciationRpt;
+                $nbvLocal = $assets->COSTUNIT - $depreciationLocal;
+
+                $input['assetNBVLocal'] = $nbvLocal;
+                $input['assetNBVRpt'] = $nbvRpt;
+            }
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+
+            $assetCapitalizations = $this->assetCapitalizationRepository->create($input);
+            DB::commit();
+            return $this->sendResponse($assetCapitalizations->toArray(), 'Asset Capitalization saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
     }
 
     /**
@@ -172,7 +273,11 @@ class AssetCapitalizationAPIController extends AppBaseController
     public function show($id)
     {
         /** @var AssetCapitalization $assetCapitalization */
-        $assetCapitalization = $this->assetCapitalizationRepository->findWithoutFail($id);
+        $assetCapitalization = $this->assetCapitalizationRepository->with(['confirmed_by', 'financeperiod_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'financeyear_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($assetCapitalization)) {
             return $this->sendError('Asset Capitalization not found');
@@ -229,18 +334,78 @@ class AssetCapitalizationAPIController extends AppBaseController
      */
     public function update($id, UpdateAssetCapitalizationAPIRequest $request)
     {
-        $input = $request->all();
-
         /** @var AssetCapitalization $assetCapitalization */
-        $assetCapitalization = $this->assetCapitalizationRepository->findWithoutFail($id);
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input = $this->convertArrayToValue($input);
 
-        if (empty($assetCapitalization)) {
-            return $this->sendError('Asset Capitalization not found');
+            $assetCapitalization = $this->assetCapitalizationRepository->findWithoutFail($id);
+
+            if (empty($assetCapitalization)) {
+                return $this->sendError('Asset Capitalization not found');
+            }
+
+            if ($assetCapitalization->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+                $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+                if (!$companyFinanceYear["success"]) {
+                    return $this->sendError($companyFinanceYear["message"], 500, ['type' => 'confirm']);
+                } else {
+                    $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                    $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+                }
+
+                $inputParam = $input;
+                $inputParam["departmentSystemID"] = 9;
+                $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                if (!$companyFinancePeriod["success"]) {
+                    return $this->sendError($companyFinancePeriod["message"], 500, ['type' => 'confirm']);
+                } else {
+                    $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                    $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+                }
+
+                unset($inputParam);
+
+                $input['documentDate'] = new Carbon($input['documentDate']);
+
+                $monthBegin = $input['FYPeriodDateFrom'];
+                $monthEnd = $input['FYPeriodDateTo'];
+
+                if (($input['documentDate'] >= $monthBegin) && ($input['documentDate'] <= $monthEnd)) {
+                } else {
+                    return $this->sendError('Capitalization date is not within financial period!', 500, ['type' => 'confirm']);
+                }
+
+                $acDetailExist = AssetCapitalizationDetail::where('capitalizationID', $id)->get();
+
+                if (empty($acDetailExist)) {
+                    return $this->sendError('Asset capitalization document cannot confirm without details', 500, ['type' => 'confirm']);
+                }
+            }
+
+            if ($input['allocationTypeID'] == 1) {
+                $assets = FixedAssetMaster::withoutGlobalScopes()->find($input['faID']);
+                $depreciationLocal = FixedAssetDepreciationPeriod::OfCompany([$input['companySystemID']])->OfAsset($input['faID'])->sum('depAmountLocal');
+                $depreciationRpt = FixedAssetDepreciationPeriod::OfCompany([$input['companySystemID']])->OfAsset($input['faID'])->sum('depAmountRpt');
+
+                $nbvRpt = $assets->costUnitRpt - $depreciationRpt;
+                $nbvLocal = $assets->COSTUNIT - $depreciationLocal;
+
+                $input['assetNBVLocal'] = $nbvLocal;
+                $input['assetNBVRpt'] = $nbvRpt;
+            }
+            $input['modifiedPc'] = gethostname();
+            $input['modifiedUser'] = \Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+
+            $assetCapitalization = $this->assetCapitalizationRepository->update($input, $id);
+            DB::commit();
+            return $this->sendResponse($assetCapitalization->toArray(), 'AssetCapitalization updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
         }
-
-        $assetCapitalization = $this->assetCapitalizationRepository->update($input, $id);
-
-        return $this->sendResponse($assetCapitalization->toArray(), 'AssetCapitalization updated successfully');
     }
 
     /**
@@ -324,7 +489,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get();
 
-        $assetCategoryType = FixedAssetCategory::all();
+        $assetCategoryType = FixedAssetCategory::OfCompany($subCompanies)->get();
 
         $output = array(
             'financialYears' => $financialYears,
@@ -343,7 +508,7 @@ class AssetCapitalizationAPIController extends AppBaseController
     public function getAllCapitalizationByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month','year','cancelYN','confirmedYN','approved','allocationTypeID'));
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'allocationTypeID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -423,5 +588,60 @@ class AssetCapitalizationAPIController extends AppBaseController
 
     }
 
+    function getAssetByCategory(Request $request)
+    {
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+
+        $assets = FixedAssetMaster::OfCompany($subCompanies)->isDisposed()->OfCategory($request['faCatID'])->get();
+        return $this->sendResponse($assets, 'Record retrieved successfully');
+    }
+
+    function getAssetNBV(Request $request)
+    {
+        $companyId = $request['companyId'];
+
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+
+        $assets = FixedAssetMaster::withoutGlobalScopes()->find($request['faID']);
+        $depreciation = FixedAssetDepreciationPeriod::OfCompany($subCompanies)->OfAsset($request['faID'])->sum('depAmountRpt');
+
+        $nbv = $assets->costUnitRpt - $depreciation;
+
+        return $this->sendResponse(['nbv' => $nbv], 'Record retrieved successfully');
+    }
+
+    function getCapitalizationFixedAsset(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+
+
+        $items = FixedAssetMaster::OfCompany([$companyID])->isDisposed();
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%")
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
 
 }
