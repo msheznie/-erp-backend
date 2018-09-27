@@ -161,7 +161,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])->first();
 
         if ($alreadyAdded) {
-            return $this->sendError("Selected supplier invoice no is already added. Please check again", 500);
+            return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
         }
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -835,6 +835,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'erp_bookinvsuppmaster.bookingAmountTrans',
                 'erp_bookinvsuppmaster.cancelYN',
                 'erp_bookinvsuppmaster.timesReferred',
+                'erp_bookinvsuppmaster.refferedBackYN',
                 'erp_bookinvsuppmaster.confirmedYN',
                 'erp_bookinvsuppmaster.documentType',
                 'erp_bookinvsuppmaster.approved'

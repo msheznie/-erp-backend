@@ -893,6 +893,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
     Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
     Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
+    Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
 
 });
 
@@ -938,3 +939,10 @@ Route::get('runQueueSR', function () {
 
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
 
+
+
+Route::resource('book_inv_supp_master_reffered_backs', 'BookInvSuppMasterRefferedBackAPIController');
+
+Route::resource('book_inv_supp_det_reffered_backs', 'BookInvSuppDetRefferedBackAPIController');
+
+Route::resource('direct_invoice_details_reffered_backs', 'DirectInvoiceDetailsRefferedBackAPIController');

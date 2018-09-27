@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Jv Detail
  * -- REVISION HISTORY
  * -- Date: 25-September 2018 By: Nazir Description: Added new functions named as getJournalVoucherDetails()
+ * -- Date: 27-September 2018 By: Nazir Description: Added new functions named as getJournalVoucherContracts()
  */
 namespace App\Http\Controllers\API;
 
@@ -25,6 +26,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -371,5 +373,23 @@ class JvDetailAPIController extends AppBaseController
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Jv Detail retrieved successfully');
+    }
+
+    public function getJournalVoucherContracts(Request $request)
+    {
+        $input = $request->all();
+        $jvDetailAutoID = $input['jvDetailAutoID'];
+        $detail = JvDetail::where('jvDetailAutoID', $jvDetailAutoID)->first();
+        $master = JvMaster::where('jvMasterAutoId', $detail->jvMasterAutoId)->first();
+
+        $contractID = 0;
+        if ($detail->contractUID != '' && $detail->contractUID != 0) {
+            $contractID = $detail->contractUID;
+        }
+
+        $qry = "SELECT * FROM ( SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID UNION ALL SELECT contractUID, ContractNumber FROM contractmaster WHERE contractUID = $contractID ) t GROUP BY contractUID, ContractNumber";
+        $contract = DB::select($qry);
+
+        return $this->sendResponse($contract, 'Record retrived successfully');
     }
 }
