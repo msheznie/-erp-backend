@@ -886,7 +886,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('asset_capitalizations', 'AssetCapitalizationAPIController');
     Route::post('getAllCapitalizationByCompany', 'AssetCapitalizationAPIController@getAllCapitalizationByCompany');
     Route::get('getCapitalizationFormData', 'AssetCapitalizationAPIController@getCapitalizationFormData');
+    Route::get('getAssetByCategory', 'AssetCapitalizationAPIController@getAssetByCategory');
+    Route::get('getAssetNBV', 'AssetCapitalizationAPIController@getAssetNBV');
+    Route::get('getCapitalizationFixedAsset', 'AssetCapitalizationAPIController@getCapitalizationFixedAsset');
     Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
+    Route::get('getCapitalizationDetails', 'AssetCapitalizationDetailAPIController@getCapitalizationDetails');
 
     Route::resource('journalVoucherCRUD', 'JvMasterAPIController');
     Route::resource('jv_details', 'JvDetailAPIController');
@@ -938,3 +942,8 @@ Route::get('runQueueSR', function () {
 
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
 
+
+
+Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+
+Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
