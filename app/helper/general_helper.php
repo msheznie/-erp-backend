@@ -986,6 +986,19 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+
+            case 62: // Bank Reconciliation
+                $docInforArr["tableName"] = 'erp_bankrecmaster';
+                $docInforArr["modelName"] = 'BankReconciliation';
+                $docInforArr["primarykey"] = 'bankRecAutoID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
