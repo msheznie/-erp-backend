@@ -4140,6 +4140,8 @@ FROM
         $fetchSupEmail = SupplierContactDetails::where('supplierID', $procumentOrderUpdate->supplierID)
             ->get();
 
+        $supplierMaster = SupplierMaster::find($procumentOrderUpdate->supplierID);
+
         $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
             "<br>This is an auto generated email. Please do not reply to this email because we are not" .
             "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
@@ -4176,16 +4178,51 @@ FROM
             }
         }
 
-        $procumentOrderUpdate->sentToSupplier = -1;
-        $procumentOrderUpdate->sentToSupplierByEmpSystemID = $employee->employeeSystemID;
-        $procumentOrderUpdate->sentToSupplierByEmpID = $employee->empID;
-        $procumentOrderUpdate->sentToSupplierByEmpName = $employee->empName;
-        $procumentOrderUpdate->sentToSupplierDate = now();
+        if ($emailSentTo == 0) {
+            if ($supplierMaster) {
+                if (!empty($supplierMaster->supEmail)) {
+                    $emailSentTo = 1;
+                    $dataEmail['empName'] = $procumentOrderUpdate->supplierName;
+                    $dataEmail['empEmail'] = $supplierMaster->supEmail;
 
-        $procumentOrderUpdate->save();
+                    $dataEmail['companySystemID'] = $procumentOrderUpdate->companySystemID;
+                    $dataEmail['companyID'] = $procumentOrderUpdate->companyID;
+
+                    $dataEmail['docID'] = $procumentOrderUpdate->documentID;
+                    $dataEmail['docSystemID'] = $procumentOrderUpdate->documentSystemID;
+                    $dataEmail['docSystemCode'] = $procumentOrderUpdate->purchaseOrderID;
+
+                    $dataEmail['docApprovedYN'] = $procumentOrderUpdate->approved;
+                    $dataEmail['docCode'] = $procumentOrderUpdate->purchaseOrderCode;
+                    $dataEmail['ccEmailID'] = $employee->empEmail;
+
+                    $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
+
+                    $location = \DB::table('systemmanualfolder')->first();
+                    $pdfName = $location->folderDes . "emailAttachment\\po_print_" . $nowTime . ".pdf";
+
+                    $dataEmail['isEmailSend'] = 0;
+                    $dataEmail['attachmentFileName'] = $pdfName;
+                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName;
+                    $dataEmail['emailAlertMessage'] = $temp;
+                    Alert::create($dataEmail);
+                }
+            }
+
+        }
+
+        if ($emailSentTo == 1) {
+            $procumentOrderUpdate->sentToSupplier = -1;
+            $procumentOrderUpdate->sentToSupplierByEmpSystemID = $employee->employeeSystemID;
+            $procumentOrderUpdate->sentToSupplierByEmpID = $employee->empID;
+            $procumentOrderUpdate->sentToSupplierByEmpName = $employee->empName;
+            $procumentOrderUpdate->sentToSupplierDate = now();
+            $procumentOrderUpdate->save();
+        }
+
 
         if ($emailSentTo == 0) {
-            return $this->sendResponse($emailSentTo, 'Supplier email is not updated. Email notification is sent');
+            return $this->sendResponse($emailSentTo, 'Supplier email is not updated. Email notification is not sent');
         } else {
             return $this->sendResponse($emailSentTo, 'Supplier notification email sent');
         }
@@ -4938,7 +4975,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             if (!empty($payment['payment_master'])) {
                                                 $data[$x]['Payment Code'] = $payment['payment_master']['BPVcode'];
                                                 $data[$x]['Payment Date'] = \Helper::dateFormat($payment['payment_master']['BPVdate']);
-                                            }else {
+                                            } else {
                                                 $data[$x]['Payment Code'] = '';
                                                 $data[$x]['Payment Date'] = '';
                                             }
@@ -4946,7 +4983,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             if (!empty($payment['matching_master'])) {
                                                 $data[$x]['Payment Code'] = $payment['matching_master']['matchingDocCode'];
                                                 $data[$x]['Payment Date'] = \Helper::dateFormat($payment['matching_master']['matchingDocdate']);
-                                            }else {
+                                            } else {
                                                 $data[$x]['Payment Code'] = '';
                                                 $data[$x]['Payment Date'] = '';
                                             }
