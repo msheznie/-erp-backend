@@ -398,16 +398,12 @@ class JvMasterAPIController extends AppBaseController
                 return $this->sendError('Journal Voucher should have at least one item', 500);
             }
 
-            $checkQuantity = JvDetail::where('debitNoteAutoID', $id)
-                ->where(function ($q) {
-                    $q->where('debitAmount', '<=', 0)
-                        ->orWhereNull('creditAmount', '<=', 0)
-                        ->orWhereNull('debitAmount')
-                        ->orWhereNull('creditAmount');
-                })
+            $checkQuantity = JvDetail::where('jvMasterAutoId', $id)
+                ->where('debitAmount', '<=', 0)
+                ->where('creditAmount', '<=', 0)
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                return $this->sendError('Amount should be greater than 0 for debit amount or credit amount', 500);
             }
 
             $debitNoteDetails = JvDetail::where('jvMasterAutoId', $id)->get();
@@ -438,14 +434,6 @@ class JvMasterAPIController extends AppBaseController
                     $error_count++;
                 }
 
-                if ($updateItem->debitAmount == 0 || $updateItem->creditAmount == 0) {
-                    array_push($finalError['amount_zero'], $updateItem->itemPrimaryCode);
-                    $error_count++;
-                }
-                if ($updateItem->debitAmount < 0 || $updateItem->creditAmount < 0) {
-                    array_push($finalError['amount_neg'], $updateItem->itemPrimaryCode);
-                    $error_count++;
-                }
             }
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
@@ -459,7 +447,7 @@ class JvMasterAPIController extends AppBaseController
             $JvDetailCreditSum = JvDetail::where('jvMasterAutoId', $id)
                 ->sum('creditAmount');
 
-            if ($JvDetailDebitSum == $JvDetailCreditSum) {
+            if ($JvDetailDebitSum != $JvDetailCreditSum) {
                 return $this->sendError('Debit total not matching with credit total ', 500);
             }
 

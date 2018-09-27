@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * --
  */
+
 namespace App\Models;
 
 use Eloquent as Model;
@@ -180,9 +181,9 @@ class AssetCapitalization extends Model
 {
 
     public $table = 'erp_fa_assetcapitalization';
-    
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = 'capitalizationID';
 
@@ -224,6 +225,13 @@ class AssetCapitalization extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
+        'cancelYN',
+        'cancelComment',
+        'cancelDate',
+        'cancelledByEmpSystemID',
+        'canceledByEmpID',
+        'canceledByEmpName',
+        'RollLevForApp_curr',
         'timestamp'
     ];
 
@@ -262,7 +270,13 @@ class AssetCapitalization extends Model
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'cancelYN' => 'integer',
+        'cancelComment' => 'string',
+        'cancelledByEmpSystemID' => 'integer',
+        'canceledByEmpID' => 'string',
+        'canceledByEmpName' => 'string',
+        'RollLevForApp_curr' => 'integer',
     ];
 
     /**
@@ -271,17 +285,17 @@ class AssetCapitalization extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function company()
     {
-        return $this->belongsTo('App\Models\Company', 'companySystemID');
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
 
     public function detail()
     {
-        return $this->hasMany('App\Models\AssetCapitalizationDetail', 'capitalizationID');
+        return $this->hasMany('App\Models\AssetCapitalizationDetail', 'capitalizationID', 'capitalizationID');
     }
 
     public function approved_by()
@@ -301,12 +315,12 @@ class AssetCapitalization extends Model
 
     public function financeperiod_by()
     {
-        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID');
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
     }
 
     public function financeyear_by()
     {
-        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID');
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 
 }

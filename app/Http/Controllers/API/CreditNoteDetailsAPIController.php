@@ -390,7 +390,6 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $qry = "SELECT * FROM ( SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID AND clientID = $master->customerID UNION ALL SELECT contractUID, ContractNumber FROM contractmaster WHERE contractUID = $contractID ) t GROUP BY contractUID, ContractNumber";
         $contract = DB::select($qry);
 
-
         return $this->sendResponse($contract, 'Contract deleted successfully');
     }
 

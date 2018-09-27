@@ -253,22 +253,29 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppDet = $this->bookInvSuppDetRepository->update($input, $id);
 
         // balance Amount
-        $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $bookInvSuppDet->unbilledgrvAutoID . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID'))->first();
 
-        if ($unbilledGrvGroupByMaster->totTransactionAmount == $balanceAmount->SumOftotTransactionAmount) {
+        $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $bookInvSuppDet->unbilledgrvAutoID)
+            ->sum('totTransactionAmount');
 
-            $updatePRMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID)
-                ->update([
-                    'selectedForBooking' => -1,
-                    'fullyBooked' => 2
-                ]);
-        } else {
-            $updatePRMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID)
-                ->update([
-                    'selectedForBooking' => 0,
-                    'fullyBooked' => 1
-                ]);
+        $updateUnbilledGrvGroupByMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID);
+
+        if ($unbilledGrvGroupByMaster->totTransactionAmount == $getTotal) {
+
+            $updateUnbilledGrvGroupByMaster->selectedForBooking = -1;
+            $updateUnbilledGrvGroupByMaster->fullyBooked = 2;
+
+        } else if ($getTotal != 0) {
+
+            $updateUnbilledGrvGroupByMaster->selectedForBooking = -1;
+            $updateUnbilledGrvGroupByMaster->fullyBooked = 1;
+
+        } else if ($getTotal == 0) {
+
+            $updateUnbilledGrvGroupByMaster->selectedForBooking = -1;
+            $updateUnbilledGrvGroupByMaster->fullyBooked = 0;
+
         }
+        $updateUnbilledGrvGroupByMaster->save();
 
         return $this->sendResponse($bookInvSuppDet->toArray(), 'BookInvSuppDet updated successfully');
     }
@@ -320,13 +327,32 @@ class BookInvSuppDetAPIController extends AppBaseController
             return $this->sendError('Book Inv Supp Det not found');
         }
 
-        /*        $updatePRMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID)
-                    ->update([
-                        'selectedForBooking' => 0,
-                        'fullyBooked' => 1
-                    ]);*/
+        $unbilledSum = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID);
+
+        if (empty($unbilledSum)) {
+            return $this->sendError('Un billed Grv id not found');
+        }
+
+        $unbilledgrvAutoID = $bookInvSuppDet->unbilledgrvAutoID;
 
         $bookInvSuppDet->delete();
+
+        $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $unbilledgrvAutoID)
+            ->sum('totTransactionAmount');
+
+        if ($getTotal == 0) {
+            $updatePRMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID)
+                ->update([
+                    'selectedForBooking' => 0,
+                    'fullyBooked' => 0
+                ]);
+        } else {
+            $updatePRMaster = UnbilledGrvGroupBy::find($bookInvSuppDet->unbilledgrvAutoID)
+                ->update([
+                    'selectedForBooking' => 0,
+                    'fullyBooked' => 1
+                ]);
+        }
 
         return $this->sendResponse($id, 'Book Inv Supp Det deleted successfully');
     }
@@ -378,7 +404,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                     ->first();
 
                 if (empty($siDetailExistGL)) {
-                    $itemDrt = "Selected GRV ".$itemExist['grvmaster']['grvPrimaryCode']." is not updated in general ledger. Please check again";
+                    $itemDrt = "Selected GRV " . $itemExist['grvmaster']['grvPrimaryCode'] . " is not updated in general ledger. Please check again";
                     $itemExistArray[] = [$itemDrt];
                 }
             }
@@ -393,9 +419,9 @@ class BookInvSuppDetAPIController extends AppBaseController
 
                 $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $temp['unbilledgrvAutoID'] . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
 
-                if($balanceAmount){
-                    if (($groupMasterCheck->totTransactionAmount == $balanceAmount->SumOftotTransactionAmount) ||  ($balanceAmount->SumOftotTransactionAmount > $groupMasterCheck->totTransactionAmount)) {
-                        $itemDrt = "Selected ".$temp['grvmaster']['grvPrimaryCode']." GRV has been fully booked. Please check again";
+                if ($balanceAmount) {
+                    if (($groupMasterCheck->totTransactionAmount == $balanceAmount->SumOftotTransactionAmount) || ($balanceAmount->SumOftotTransactionAmount > $groupMasterCheck->totTransactionAmount)) {
+                        $itemDrt = "Selected " . $temp['grvmaster']['grvPrimaryCode'] . " GRV has been fully booked. Please check again";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
@@ -446,6 +472,11 @@ class BookInvSuppDetAPIController extends AppBaseController
                 //$prDetail_arr['totRptAmount'] = $groupMaster->totRptAmount;
                 $item = $this->bookInvSuppDetRepository->create($prDetail_arr);
             }
+
+            $updatePRMaster = UnbilledGrvGroupBy::find($new['unbilledgrvAutoID'])
+                ->update([
+                    'selectedForBooking' => -1
+                ]);
         }
 
 
