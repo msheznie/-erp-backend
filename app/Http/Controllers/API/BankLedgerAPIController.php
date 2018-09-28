@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateBankLedgerAPIRequest;
 use App\Http\Requests\API\UpdateBankLedgerAPIRequest;
 use App\Models\BankLedger;
 use App\Models\BankReconciliation;
+use App\Models\GeneralLedger;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
 use Carbon\Carbon;
@@ -294,7 +295,7 @@ class BankLedgerAPIController extends AppBaseController
 
                 $inputNew = array('closingBalance' => $closingAmount);
                 $this->bankReconciliationRepository->update($inputNew, $input['bankRecAutoID']);
-            }else if ($input['editType'] == 2) {
+            } else if ($input['editType'] == 2) {
                 if ($input['trsCollectedYN']) {
                     $updateArray['trsCollectedYN'] = -1;
                 } else {
@@ -314,12 +315,39 @@ class BankLedgerAPIController extends AppBaseController
                 }
 
                 $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
-            }else if($input['editType'] == 3){
+            } else if ($input['editType'] == 3) {
                 if ($input['trsClearedYN']) {
                     $updateArray['trsClearedYN'] = -1;
                 } else {
                     $updateArray['trsClearedYN'] = 0;
                 }
+
+                if ($updateArray['trsClearedYN'] == -1) {
+
+
+                    $checkGLAmount = GeneralLedger::where('companySystemID', $bankLedger->companySystemID)
+                        ->where('documentSystemID', $bankLedger->documentSystemID)
+                        ->where('documentSystemCode', $bankLedger->documentSystemCode)
+                        ->where('chartOfAccountSystemID', $bankLedger->payeeGLCodeID)
+                        ->first();
+
+                    if (!empty($checkGLAmount)) {
+                        $glAmount = 0;
+                        if ($bankLedger->bankCurrency == $checkGLAmount->documentLocalCurrencyID) {
+                            $glAmount = $checkGLAmount->documentLocalAmount;
+                        } else if ($bankLedger->bankCurrency == $checkGLAmount->documentRptCurrencyID) {
+                            $glAmount = $checkGLAmount->documentRptAmount;
+                        }
+
+                        //return $this->sendResponse(['payAmountBank' => $bankLedger->payAmountBank,'glAmount' => $glAmount], 'check amount successfully');
+                        if ($bankLedger->payAmountBank != $glAmount) {
+                            return $this->sendError('Bank amount is not matching with GL amount.', 500);
+                        }
+                    } else {
+                        return $this->sendError('GL data cannot be found for this document.', 500);
+                    }
+                }
+
 
                 if ($updateArray['trsClearedYN']) {
                     $updateArray['trsClearedAmount'] = $bankLedger->payAmountBank;
@@ -338,6 +366,7 @@ class BankLedgerAPIController extends AppBaseController
                 $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
             }
         }
+        $bankLedger = $this->bankLedgerRepository->findWithoutFail($id);
         return $this->sendResponse($bankLedger->toArray(), 'BankLedger updated successfully');
     }
 

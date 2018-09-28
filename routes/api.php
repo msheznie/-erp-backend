@@ -14,7 +14,7 @@
 Route::group(['middleware' => 'auth:api'], function () {
 
     /** Warehouse master Created by Fayas  */
-    Route::resource('employees', 'EmployeeAPIController');
+
     Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
@@ -870,6 +870,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
 
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
+    Route::get('bankReconciliationAudit', 'BankReconciliationAPIController@bankReconciliationAudit');
     Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');
     Route::post('getBankReconciliationApprovalByUser', 'BankReconciliationAPIController@getBankReconciliationApprovalByUser');
     Route::post('getBankReconciliationApprovedByUser', 'BankReconciliationAPIController@getBankReconciliationApprovedByUser');
