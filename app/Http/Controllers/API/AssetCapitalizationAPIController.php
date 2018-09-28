@@ -18,7 +18,10 @@ use App\Http\Requests\API\UpdateAssetCapitalizationAPIRequest;
 use App\Models\AssetCapitalization;
 use App\Models\AssetCapitalizationDetail;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
@@ -346,6 +349,9 @@ class AssetCapitalizationAPIController extends AppBaseController
                 return $this->sendError('Asset Capitalization not found');
             }
 
+            $companySystemID = $assetCapitalization->companySystemID;
+            $documentSystemID = $assetCapitalization->documentSystemID;
+
             if ($assetCapitalization->confirmedYN == 0 && $input['confirmedYN'] == 1) {
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
                 if (!$companyFinanceYear["success"]) {
@@ -382,12 +388,18 @@ class AssetCapitalizationAPIController extends AppBaseController
                 if (empty($acDetailExist)) {
                     return $this->sendError('Asset capitalization document cannot confirm without details', 500, ['type' => 'confirm']);
                 }
+
+                $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
+                }
             }
 
             if ($input['allocationTypeID'] == 1) {
                 $assets = FixedAssetMaster::withoutGlobalScopes()->find($input['faID']);
-                $depreciationLocal = FixedAssetDepreciationPeriod::OfCompany([$input['companySystemID']])->OfAsset($input['faID'])->sum('depAmountLocal');
-                $depreciationRpt = FixedAssetDepreciationPeriod::OfCompany([$input['companySystemID']])->OfAsset($input['faID'])->sum('depAmountRpt');
+                $depreciationLocal = FixedAssetDepreciationPeriod::OfCompany([$companySystemID])->OfAsset($input['faID'])->sum('depAmountLocal');
+                $depreciationRpt = FixedAssetDepreciationPeriod::OfCompany([$companySystemID])->OfAsset($input['faID'])->sum('depAmountRpt');
 
                 $nbvRpt = $assets->costUnitRpt - $depreciationRpt;
                 $nbvLocal = $assets->COSTUNIT - $depreciationLocal;
@@ -629,7 +641,6 @@ class AssetCapitalizationAPIController extends AppBaseController
         $input = $request->all();
         $companyID = $input['companyID'];
 
-
         $items = FixedAssetMaster::OfCompany([$companyID])->isDisposed();
 
         if (array_key_exists('search', $input)) {
@@ -642,6 +653,119 @@ class AssetCapitalizationAPIController extends AppBaseController
 
         $items = $items->take(20)->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+    }
+
+    function capitalizationReopen(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+
+            $id = $input['capitalizationID'];
+            $assetCapitalization = $this->assetCapitalizationRepository->findWithoutFail($id);
+            $emails = array();
+            if (empty($assetCapitalization)) {
+                return $this->sendError('Asset reclassification not found');
+            }
+
+            if ($assetCapitalization->approved == -1) {
+                return $this->sendError('You cannot reopen this Asset reclassification it is already fully approved');
+            }
+
+            if ($assetCapitalization->RollLevForApp_curr > 1) {
+                return $this->sendError('You cannot reopen this Asset reclassification it is already partially approved');
+            }
+
+            if ($assetCapitalization->confirmedYN == 0) {
+                return $this->sendError('You cannot reopen this Asset reclassification, it is not confirmed');
+            }
+
+            $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+                'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+
+            $this->assetCapitalizationRepository->update($updateInput, $id);
+
+            $employee = \Helper::getEmployeeInfo();
+
+            $document = DocumentMaster::where('documentSystemID', $assetCapitalization->documentSystemID)->first();
+
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $assetCapitalization->BPVcode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $assetCapitalization->BPVcode;
+
+            $subject = $cancelDocNameSubject . ' is reopened';
+
+            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+            $documentApproval = DocumentApproved::where('companySystemID', $assetCapitalization->companySystemID)
+                ->where('documentSystemCode', $assetCapitalization->PayMasterAutoId)
+                ->where('documentSystemID', $assetCapitalization->documentSystemID)
+                ->where('rollLevelOrder', 1)
+                ->first();
+
+            if ($documentApproval) {
+                if ($documentApproval->approvedYN == 0) {
+                    $companyDocument = CompanyDocumentAttachment::where('companySystemID', $assetCapitalization->companySystemID)
+                        ->where('documentSystemID', $assetCapitalization->documentSystemID)
+                        ->first();
+
+                    if (empty($companyDocument)) {
+                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                    }
+
+                    $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                        ->where('companySystemID', $documentApproval->companySystemID)
+                        ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                    $approvalList = $approvalList
+                        ->with(['employee'])
+                        ->groupBy('employeeSystemID')
+                        ->get();
+
+                    foreach ($approvalList as $da) {
+                        if ($da->employee) {
+                            $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                'companySystemID' => $documentApproval->companySystemID,
+                                'docSystemID' => $documentApproval->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $documentApproval->documentSystemCode);
+                        }
+                    }
+
+                    $sendEmail = \Email::sendEmail($emails);
+                    if (!$sendEmail["success"]) {
+                        return ['success' => false, 'message' => $sendEmail["message"]];
+                    }
+                }
+            }
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $assetCapitalization->companySystemID)
+                ->where('documentSystemID', $assetCapitalization->documentSystemID)
+                ->delete();
+
+            DB::commit();
+            return $this->sendResponse($assetCapitalization->toArray(), 'Payment Voucher reopened successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function getAssetCapitalizationMaster(Request $request)
+    {
+        $input = $request->all();
+
+        $output = $this->assetCapitalizationRepository
+            ->with(['confirmed_by', 'detail' => function ($query) {
+                $query->with('segment');
+            }, 'approved_by' => function ($query) {
+                $query->with('employee');
+                $query->where('documentSystemID', 63);
+            }, 'created_by'])->findWithoutFail($input['capitalizationID']);
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+
     }
 
 }

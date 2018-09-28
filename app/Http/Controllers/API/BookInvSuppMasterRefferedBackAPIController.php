@@ -278,4 +278,16 @@ class BookInvSuppMasterRefferedBackAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Book Inv Supp Master Reffered Back deleted successfully');
     }
+
+    public function getSIMasterAmendHistory(Request $request)
+    {
+        $input = $request->all();
+
+        $supplierInvoiceHistory = BookInvSuppMasterRefferedBack::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])
+            ->with(['created_by','confirmed_by','modified_by','supplier','approved_by', 'cancelled_by', 'transactioncurrency'])
+            ->get();
+
+        return $this->sendResponse($supplierInvoiceHistory, 'Invoice detail retrieved successfully');
+    }
+
 }

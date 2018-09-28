@@ -11,6 +11,7 @@
  * -- Date: 18-September 2018 By: Fayas Description: Added new functions named as getAllBankReconciliationByBankAccount()
  * -- Date: 26-September 2018 By: Fayas Description: Added new functions named as getBankReconciliationFormData()
  * -- Date: 27-September 2018 By: Fayas Description: Added new functions named as getBankReconciliationApprovalByUser(),getBankReconciliationApprovedByUser()
+ * -- Date: 28-September 2018 By: Fayas Description: Added new functions named as bankReconciliationAudit()
  */
 namespace App\Http\Controllers\API;
 
@@ -693,5 +694,20 @@ class BankReconciliationAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+    public function bankReconciliationAudit(Request $request)
+    {
+
+        $id = $request->id;
+        /** @var BankReconciliation $bankReconciliation */
+        $bankReconciliation = $this->bankReconciliationRepository->with(['bank_account.currency', 'confirmed_by','company','month'])->findWithoutFail($id);
+
+        if (empty($bankReconciliation)) {
+            return $this->sendError('Bank Reconciliation not found');
+        }
+
+        return $this->sendResponse($bankReconciliation->toArray(), 'BankReconciliation updated successfully');
+    }
+
 
 }

@@ -372,4 +372,14 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
         $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->with(['segment'])->findWhere(['capitalizationID' => $id]);
         return $this->sendResponse($assetCapitalizationDetail, 'Details retrieved successfully');
     }
+
+    public function deleteAllAssetCapitalizationDet(Request $request)
+    {
+        $assetCapitalizationDetail = AssetCapitalizationDetail::where('capitalizationID',$request->capitalizationID)->get();
+        if (empty($assetCapitalizationDetail)) {
+            return $this->sendError('Asset Capitalization Detail not found');
+        }
+        $assetCapitalizationDetail = AssetCapitalizationDetail::where('capitalizationID',$request->capitalizationID)->delete();
+        return $this->sendResponse($assetCapitalizationDetail, 'Asset Capitalization Detail deleted successfully');
+    }
 }
