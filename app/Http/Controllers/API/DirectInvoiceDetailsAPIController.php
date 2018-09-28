@@ -140,6 +140,9 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             return $this->sendError("Selected item is already added. Please check again", 500);
         }*/
 
+
+
+        $input['comments'] = $BookInvSuppMaster->comments;
         $input['companySystemID'] = $BookInvSuppMaster->companySystemID;
         $input['companyID'] = $BookInvSuppMaster->companyID;
 
