@@ -348,6 +348,17 @@ class Helper
                     $docInforArr["modelName"] = 'BankReconciliation';
                     $docInforArr["primarykey"] = 'bankRecAutoID';
                     break;
+                case 63:
+                    $docInforArr["documentCodeColumnName"] = 'capitalizationCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_fa_assetcapitalization';
+                    $docInforArr["modelName"] = 'AssetCapitalization';
+                    $docInforArr["primarykey"] = 'capitalizationID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -364,7 +375,6 @@ class Helper
                     if ($document) {
                         //check document is already confirmed
                         $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
-
 
                         if (!$isConfirm) {
                             // get current employee detail
@@ -991,6 +1001,18 @@ class Helper
                 $docInforArr["tableName"] = 'erp_bankrecmaster';
                 $docInforArr["modelName"] = 'BankReconciliation';
                 $docInforArr["primarykey"] = 'bankRecAutoID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 63: // Asset Capitlaization
+                $docInforArr["tableName"] = 'erp_fa_assetcapitalization';
+                $docInforArr["modelName"] = 'AssetCapitalization';
+                $docInforArr["primarykey"] = 'capitalizationID';
                 $docInforArr["approvedColumnName"] = 'approvedYN';
                 $docInforArr["approvedBy"] = 'approvedByUserID';
                 $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';

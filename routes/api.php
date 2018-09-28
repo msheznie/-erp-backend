@@ -893,8 +893,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAssetByCategory', 'AssetCapitalizationAPIController@getAssetByCategory');
     Route::get('getAssetNBV', 'AssetCapitalizationAPIController@getAssetNBV');
     Route::get('getCapitalizationFixedAsset', 'AssetCapitalizationAPIController@getCapitalizationFixedAsset');
+    Route::post('capitalizationReopen', 'AssetCapitalizationAPIController@capitalizationReopen');
+    Route::get('getAssetCapitalizationMaster', 'AssetCapitalizationAPIController@getAssetCapitalizationMaster');
     Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
     Route::get('getCapitalizationDetails', 'AssetCapitalizationDetailAPIController@getCapitalizationDetails');
+    Route::post('deleteAllAssetCapitalizationDet', 'AssetCapitalizationDetailAPIController@deleteAllAssetCapitalizationDet');
 
     Route::resource('journalVoucherCRUD', 'JvMasterAPIController');
     Route::resource('jv_details', 'JvDetailAPIController');
