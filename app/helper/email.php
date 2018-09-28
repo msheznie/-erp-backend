@@ -13,6 +13,7 @@
 namespace App\helper;
 
 use App\Models\Alert;
+use App\Models\AssetCapitalization;
 use App\Models\BankReconciliation;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
@@ -247,6 +248,13 @@ class email
                     if (!empty($bankRecMaster)) {
                         $data['docApprovedYN'] = $bankRecMaster->approved;
                         $data['docCode'] = $bankRecMaster->bankRecPrimaryCode;
+                    }
+                    break;
+                case 63:
+                    $assetcapitalization = AssetCapitalization::where('capitalizationID', $data['docSystemCode'])->first();
+                    if (!empty($assetcapitalization)) {
+                        $data['docApprovedYN'] = $assetcapitalization->approved;
+                        $data['docCode'] = $assetcapitalization->capitalizationCode;
                     }
                     break;
                 default:
