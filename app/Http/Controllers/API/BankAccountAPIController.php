@@ -15,6 +15,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBankAccountAPIRequest;
 use App\Http\Requests\API\UpdateBankAccountAPIRequest;
 use App\Models\BankAccount;
+use App\Models\BankLedger;
 use App\Repositories\BankAccountRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -85,6 +86,8 @@ class BankAccountAPIController extends AppBaseController
         if (empty($bankAccount)) {
             return $this->sendError('Bank Account not found');
         }
+
+        $bankAccount->amounts = $this->getBankAccountBalanceSummery($bankAccount);
 
         return $this->sendResponse($bankAccount->toArray(), 'Bank Account retrieved successfully');
     }
@@ -181,7 +184,49 @@ class BankAccountAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
+            ->addColumn('amounts', function ($row) {
+                return $this->getBankAccountBalanceSummery($row);
+            })
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    function getBankAccountBalanceSummery($row){
+        $bankBalance = BankLedger::where('companySystemID',$row->companySystemID)
+                                    ->where('bankID',$row->bankmasterAutoID)
+                                    ->where('bankAccountID',$row->bankAccountAutoID)
+                                    ->where('bankClearedYN',-1)
+                                    ->sum('bankClearedAmount');
+
+       /* $withTreasury = BankLedger::where('companySystemID',$row->companySystemID)
+                                    ->where('bankID',$row->bankmasterAutoID)
+                                    ->where('bankAccountID',$row->bankAccountAutoID)
+                                    ->where('bankClearedYN',0)
+                                    ->where('trsClearedYN',-1)
+                                    ->sum('trsClearedAmount');*/
+
+        $receiptsTotal = BankLedger::where('companySystemID',$row->companySystemID)
+                                    ->where('bankID',$row->bankmasterAutoID)
+                                    ->where('bankAccountID',$row->bankAccountAutoID)
+                                    ->where('payAmountBank','<',0)
+                                    ->where('bankClearedYN',0)
+                                    ->where('trsClearedYN',-1)
+                                    ->sum('trsClearedAmount');
+
+        $paymentsTotal = BankLedger::where('companySystemID',$row->companySystemID)
+                                    ->where('bankID',$row->bankmasterAutoID)
+                                    ->where('bankAccountID',$row->bankAccountAutoID)
+                                    ->where('payAmountBank','>',0)
+                                    ->where('bankClearedYN',0)
+                                    ->where('trsClearedYN',-1)
+                                    ->sum('trsClearedAmount');
+        $withTreasury = ($receiptsTotal * -1) - $paymentsTotal;
+        $array = array('bankBalance' => $bankBalance,
+            'withTreasury' => $withTreasury,
+            'netBankBalance' => ($bankBalance + $withTreasury),
+            'receiptsTotal' => $receiptsTotal,
+            'paymentsTotal' => $paymentsTotal,
+        );
+        return $array;
     }
 }

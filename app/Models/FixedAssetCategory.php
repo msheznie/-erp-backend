@@ -1,7 +1,18 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : FixedAssetCategory.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mubashir
+ * -- Create date : 26 - September 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
+use App\Traits\ActiveTrait;
 use Eloquent as Model;
 
 /**
@@ -78,6 +89,8 @@ use Eloquent as Model;
 class FixedAssetCategory extends Model
 {
 
+    use ActiveTrait;
+
     public $table = 'erp_fa_category';
     
     const CREATED_AT = 'created_at';
@@ -129,6 +142,19 @@ class FixedAssetCategory extends Model
     public static $rules = [
         
     ];
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCompany($query, $type)
+    {
+        return $query->whereIN('companySystemID',  $type);
+    }
 
     
 }

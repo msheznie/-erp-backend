@@ -839,7 +839,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function getAllPaymentVoucherByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('supplier', 'created_by', 'suppliercurrency', 'bankcurrency'));
+        $input = $this->convertArrayToSelectedValue($input, array('month','year','cancelYN','confirmedYN','approved','invoiceType'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -885,6 +885,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
                 $paymentVoucher->whereYear('BPVdate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('invoiceType', $input)) {
+            if ($input['invoiceType'] && !is_null($input['invoiceType'])) {
+                $paymentVoucher->where('invoiceType', $input['invoiceType']);
             }
         }
 

@@ -3,15 +3,16 @@
  * =============================================
  * -- File Name : FixedAssetMaster.php
  * -- Project Name : ERP
- * -- Module Name :  Inventory Reclassification
+ * -- Module Name :  Asset Management
  * -- Author : Mubashir
- * -- Create date : 17 - August 2018
+ * -- Create date : 27 - September 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
  * --
  */
 namespace App\Models;
 
+use App\Traits\ApproveTrait;
 use Eloquent as Model;
 
 /**
@@ -431,13 +432,16 @@ use Eloquent as Model;
  */
 class FixedAssetMaster extends Model
 {
+    use ApproveTrait;
 
     public $table = 'erp_fa_asset_master';
     
-    const CREATED_AT = 'timestamp';
-    const UPDATED_AT = 'timestamp';
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
 
-    protected $primaryKey = "faID";
+    protected $primaryKey = 'faID';
+
+
 
     public $fillable = [
         'departmentSystemID',
@@ -612,6 +616,45 @@ class FixedAssetMaster extends Model
     public static $rules = [
         
     ];
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCompany($query, $type)
+    {
+        return $query->whereIN('companySystemID',  $type);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeIsDisposed($query)
+    {
+        return $query->where('DIPOSED',  -1);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCategory($query, $category)
+    {
+        return $query->where('faCatID',  $category);
+    }
 
     
 }

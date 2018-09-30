@@ -14,7 +14,7 @@
 Route::group(['middleware' => 'auth:api'], function () {
 
     /** Warehouse master Created by Fayas  */
-    Route::resource('employees', 'EmployeeAPIController');
+
     Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
@@ -843,6 +843,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
     Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
+    Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
     Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
     Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords');
     Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown');
@@ -867,9 +868,15 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('bank_ledgers', 'BankLedgerAPIController');
     Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
+    Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
 
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
+    Route::get('bankReconciliationAudit', 'BankReconciliationAPIController@bankReconciliationAudit');
     Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');
+    Route::post('getBankReconciliationApprovalByUser', 'BankReconciliationAPIController@getBankReconciliationApprovalByUser');
+    Route::post('getBankReconciliationApprovedByUser', 'BankReconciliationAPIController@getBankReconciliationApprovedByUser');
+
+    Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
     Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
     Route::resource('credit_notes', 'CreditNoteAPIController');
@@ -882,6 +889,29 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('free_billings', 'FreeBillingAPIController');
     Route::get('getSupplierInvoiceStatusHistoryForGRV', 'GRVMasterAPIController@getSupplierInvoiceStatusHistoryForGRV');
 
+    Route::resource('asset_capitalizations', 'AssetCapitalizationAPIController');
+    Route::post('getAllCapitalizationByCompany', 'AssetCapitalizationAPIController@getAllCapitalizationByCompany');
+    Route::get('getCapitalizationFormData', 'AssetCapitalizationAPIController@getCapitalizationFormData');
+    Route::get('getAssetByCategory', 'AssetCapitalizationAPIController@getAssetByCategory');
+    Route::get('getAssetNBV', 'AssetCapitalizationAPIController@getAssetNBV');
+    Route::get('getCapitalizationFixedAsset', 'AssetCapitalizationAPIController@getCapitalizationFixedAsset');
+    Route::post('capitalizationReopen', 'AssetCapitalizationAPIController@capitalizationReopen');
+    Route::get('getAssetCapitalizationMaster', 'AssetCapitalizationAPIController@getAssetCapitalizationMaster');
+    Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
+    Route::get('getCapitalizationDetails', 'AssetCapitalizationDetailAPIController@getCapitalizationDetails');
+    Route::post('deleteAllAssetCapitalizationDet', 'AssetCapitalizationDetailAPIController@deleteAllAssetCapitalizationDet');
+
+    Route::resource('journalVoucherCRUD', 'JvMasterAPIController');
+    Route::resource('jv_details', 'JvDetailAPIController');
+    Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
+    Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
+    Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
+    Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
+
+    Route::resource('bookInvSuppRefferedbacks', 'BookInvSuppMasterRefferedBackAPIController');
+    Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
+    Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
+    Route::post('getSIMasterAmendHistory', 'BookInvSuppMasterRefferedBackAPIController@getSIMasterAmendHistory');
 
 });
 
@@ -906,7 +936,6 @@ Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplier
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
-
 Route::get('getBcryptPassword/{password}', function ($password) {
     echo bcrypt($password);
 });
@@ -926,7 +955,8 @@ Route::get('runQueueSR', function () {
 });
 
 
-
-
-
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
+
+Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+
+Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
