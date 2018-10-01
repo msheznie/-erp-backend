@@ -114,10 +114,11 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $input['poTermID'] = $input['paymentTermID'];
         $input['narration'] = $input['paymentTemDes'];
 
-        if (isset($input['comDate'])) {
+   /*     if (isset($input['comDate'])) {
             $masterDate = str_replace('/', '-', $input['comDate']);
             $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
-        }
+        }*/
+        $input['reqDate'] = date('Y-m-d H:i:s');
         $input['reqAmount'] = $input['comAmount'];
         $input['reqAmountTransCur_amount'] = $input['comAmount'];
 

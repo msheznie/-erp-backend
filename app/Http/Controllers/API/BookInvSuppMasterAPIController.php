@@ -918,6 +918,19 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMaster->RollLevForApp_curr = 1;
         $bookInvSuppMaster->save();
 
+        // delete tax details
+        $checkTaxExist = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+            ->where('documentSystemID', 11)
+            ->first();
+
+        if ($checkTaxExist) {
+            $deleteTaxDetail = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                ->where('documentSystemID', 11)
+                ->delete();
+        }
+
         $employee = \Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $bookInvSuppMaster->documentSystemID)->first();
@@ -975,6 +988,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
         }
+
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
             ->where('companySystemID', $bookInvSuppMaster->companySystemID)
