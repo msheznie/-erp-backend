@@ -40,6 +40,7 @@ use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\Months;
+use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\Company;
@@ -566,6 +567,48 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     }
                 }
 
+            }
+
+            //checking Supplier Invoice amount is greater than PO Amount validations
+            if ($input['documentType'] == 0) {
+                $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->with(['pomaster'])
+                    ->get();
+                if($checktotalExceed){
+                    foreach($checktotalExceed as $exc){
+
+                        $poMasterTotal = ProcumentOrder::find($exc->purchaseOrderID);
+
+                        $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $exc->purchaseOrderID)
+                            ->where('supplierID', $exc->supplierID)
+                            ->sum('totTransactionAmount');
+
+                        if($checkPreTotal > $poMasterTotal->poTotalSupplierTransactionCurrency){
+                            return $this->sendError('Supplier Invoice amount is greater than '.$exc->pomaster->purchaseOrderCode.' PO amount', 500);
+                        }
+                    }
+                }
+            }
+
+            //checking Supplier Invoice amount is greater than UnbilledGRV Amount validations
+            if ($input['documentType'] == 0) {
+                $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->with(['grvmaster'])
+                    ->get();
+                if($checktotalExceed){
+                    foreach($checktotalExceed as $exc){
+
+                        $unbilledGRTotal = UnbilledGrvGroupBy::find($exc->unbilledgrvAutoID);
+
+                        $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
+                            ->where('supplierID', $exc->supplierID)
+                            ->sum('totTransactionAmount');
+
+                        if($checkPreTotal > $unbilledGRTotal->totTransactionAmount ){
+                            return $this->sendError('Supplier Invoice amount is greater than UnbilledGRV amount', 500);
+                        }
+                    }
+                }
             }
 
             $directInvoiceDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
@@ -1182,13 +1225,22 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input = $request->all();
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
         $percentage = $input['percentage'];
-        $taxMasterAutoID = $input['taxMasterAutoID'];
-
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
         if (empty($bookInvSuppMaster)) {
             return $this->sendError('Supplier Invoice not found');
         }
+
+        if(!isset($input['taxMasterAutoID'])){
+            return $this->sendError('Please Select a tax');
+        }
+
+        $taxMasterAutoID = $input['taxMasterAutoID'];
+
+        if($input['percentage'] == 0){
+            return $this->sendError('Tax percentage cannot be 0');
+        }
+
 
         if ($bookInvSuppMaster->documentType == 0) {
             $invoiceDetail = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->first();
@@ -1542,6 +1594,19 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             $bookInvSuppMaster->confirmedDate = null;
             $bookInvSuppMaster->RollLevForApp_curr = 1;
             $bookInvSuppMaster->save();
+        }
+
+        // delete tax details
+        $checkTaxExist = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+            ->where('documentSystemID', 11)
+            ->first();
+
+        if ($checkTaxExist) {
+            $deleteTaxDetail = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                ->where('documentSystemID', 11)
+                ->delete();
         }
 
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice Amend successfully');

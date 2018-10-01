@@ -308,6 +308,10 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             }
         }
 
+        if( $input['DIAmount'] == ""){
+            $input['DIAmount'] = 0;
+        }
+
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['DIAmount']);
 
         $input['localAmount' ]        = $companyCurrencyConversion['localAmount'];

@@ -244,7 +244,11 @@ class BookInvSuppDetAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
-        $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $bookInvSuppDet->unbilledgrvAutoID . ' AND erp_bookinvsuppdet.bookingSupInvoiceDetAutoID != '.$bookInvSuppDet->bookingSupInvoiceDetAutoID.' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
+        if ($input['supplierInvoAmount'] == "") {
+            $input['supplierInvoAmount'] = 0;
+        }
+
+        $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $bookInvSuppDet->unbilledgrvAutoID . ' AND erp_bookinvsuppdet.bookingSupInvoiceDetAutoID != ' . $bookInvSuppDet->bookingSupInvoiceDetAutoID . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
 
         if ($balanceAmount) {
             $totalPendingAmount = ($unbilledGrvGroupByMaster->totTransactionAmount - $balanceAmount->SumOftotTransactionAmount);
