@@ -72,10 +72,10 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
-
+        $input = array_except($input, ['final_approved_by']);
+        $input = $this->convertArrayToValue($input);
 
         unset($input['company']);
-
 
         if (array_key_exists('chartOfAccountsAssignedID', $input)) {
             $chartOfAccountsAssigned = ChartOfAccountsAssigned::find($input['chartOfAccountsAssignedID']);
