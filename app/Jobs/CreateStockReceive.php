@@ -275,8 +275,8 @@ class CreateStockReceive implements ShouldQueue
                             $data['createdUserSystemID'] = $stMaster->approvedByUserSystemID;
                             $data['createdUserPC'] = gethostname();
                             $data['timestamp'] = \Helper::currentDateTime();
-                            $data['InvoiceNo'] =   $customerInvoice->customerInvoiceNo;
-                            $data['InvoiceDate'] = $customerInvoice->customerInvoiceDate;
+                            $data['invoiceNumber'] =   $customerInvoice->customerInvoiceNo;
+                            $data['invoiceDate'] = $customerInvoice->customerInvoiceDate;
 
                             $glAR = $data;
                             $glBS = $data;
