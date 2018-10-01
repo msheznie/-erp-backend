@@ -179,13 +179,13 @@ class PoPaymentTermsAPIController extends AppBaseController
                 }
             }
         } else {
-            if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin != 0) {
-                $addedDate = strtotime("+$daysin day", strtotime($purchaseOrder->expectedDeliveryDate));
+            if (!empty($purchaseOrder->createdDateTime) && $daysin != 0) {
+                $addedDate = strtotime("+$daysin day", strtotime($purchaseOrder->createdDateTime));
                 $input['comDate'] = date("Y-m-d", $addedDate);
             }
 
-            if (!empty($purchaseOrder->expectedDeliveryDate) && $daysin == 0) {
-                $input['comDate'] = $purchaseOrder->expectedDeliveryDate;
+            if (!empty($purchaseOrder->createdDateTime) && $daysin == 0) {
+                $input['comDate'] = $purchaseOrder->createdDateTime;
             }
         }
 

@@ -155,6 +155,17 @@ class LogisticAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+        $warning = 0;
+
+        $checkInvoiceNo = Logistic::where('companySystemID',$input['companySystemID'])
+                                    ->where('customInvoiceNo',$input['customInvoiceNo'])
+                                    ->first();
+        $message = 'Logistic saved successfully';
+        if(!empty($checkInvoiceNo)){
+            $warning = 1;
+            $message = 'This invoice number is already exists in '.$checkInvoiceNo->logisticDocCode.'.';
+        }
+
         if (isset($input['nextCustomDocRenewalDate']) && $input['nextCustomDocRenewalDate']) {
             $input['nextCustomDocRenewalDate'] = new Carbon($input['nextCustomDocRenewalDate']);
         }
@@ -256,7 +267,9 @@ class LogisticAPIController extends AppBaseController
 
         $logistics = $this->logisticRepository->create($input);
 
-        return $this->sendResponse($logistics->toArray(), 'Logistic saved successfully');
+        $logistics->warningMsg = $warning;
+
+        return $this->sendResponse($logistics->toArray(), $message);
     }
 
     /**
@@ -465,9 +478,23 @@ class LogisticAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
         $input['modifiedDate'] = now();
 
+        $warning = 0;
+
+        $checkInvoiceNo = Logistic::where('companySystemID',$input['companySystemID'])
+                                    ->where('logisticMasterID','!=',$logistic->logisticMasterID)
+                                    ->where('customInvoiceNo',$input['customInvoiceNo'])
+                                    ->first();
+        $message = 'Logistic updated successfully';
+        if(!empty($checkInvoiceNo)){
+            $warning = 1;
+            $message = 'This invoice number is already exists in '.$checkInvoiceNo->logisticDocCode.'.';
+        }
+
         $logistic = $this->logisticRepository->update($input, $id);
 
-        return $this->sendResponse($logistic->toArray(), 'Logistic updated successfully');
+        $logistic->warningMsg = $warning;
+
+        return $this->sendResponse($logistic->toArray(), $message);
     }
 
     /**
