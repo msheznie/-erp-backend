@@ -274,4 +274,8 @@ class BankReconciliation extends Model
     public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','bankRecAutoID');
+    }
 }

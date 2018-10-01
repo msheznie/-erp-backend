@@ -42,7 +42,7 @@ class BankReconciliationAPIController extends AppBaseController
     private $bankReconciliationRepository;
     private $bankLedgerRepository;
 
-    public function __construct(BankReconciliationRepository $bankReconciliationRepo,BankLedgerRepository $bankLedgerRepo)
+    public function __construct(BankReconciliationRepository $bankReconciliationRepo, BankLedgerRepository $bankLedgerRepo)
     {
         $this->bankReconciliationRepository = $bankReconciliationRepo;
         $this->bankLedgerRepository = $bankLedgerRepo;
@@ -150,8 +150,8 @@ class BankReconciliationAPIController extends AppBaseController
         $input['bankRecAsOf'] = new Carbon($input['bankRecAsOf']);
 
 
-         $end = (new Carbon())->endOfMonth();
-        if($input['bankRecAsOf'] > $end){
+        $end = (new Carbon())->endOfMonth();
+        if ($input['bankRecAsOf'] > $end) {
             return $this->sendError('You cannot select a date greater than the current month last day', 500);
         }
 
@@ -174,7 +174,7 @@ class BankReconciliationAPIController extends AppBaseController
 
 
         if (!empty($checkPending)) {
-             return $this->sendError("There is a bank reconciliation (" . $checkPending->bankRecPrimaryCode . ") pending for approval for the bank reconciliation you are trying to add. Please check again.", 500);
+            return $this->sendError("There is a bank reconciliation (" . $checkPending->bankRecPrimaryCode . ") pending for approval for the bank reconciliation you are trying to add. Please check again.", 500);
         }
 
         $maxAsOfDate = BankReconciliation::where('bankAccountAutoID', $input['bankAccountAutoID'])
@@ -208,12 +208,12 @@ class BankReconciliationAPIController extends AppBaseController
 
 
         $openingBalance = BankLedger::selectRaw('companySystemID,bankAccountID,trsClearedYN,bankClearedYN,ABS(SUM(if(bankClearedAmount < 0,bankClearedAmount,0))) - SUM(if(bankClearedAmount > 0,bankClearedAmount,0)) as opening')
-                                    ->where('companySystemID', $input['companySystemID'])
-                                    ->where("bankAccountID", $input['bankAccountAutoID'])
-                                    ->where("trsClearedYN", -1)
-                                    ->where("bankClearedYN", -1)
-                                    ->groupBy('companySystemID', 'bankAccountID')
-                                    ->first();
+            ->where('companySystemID', $input['companySystemID'])
+            ->where("bankAccountID", $input['bankAccountAutoID'])
+            ->where("trsClearedYN", -1)
+            ->where("bankClearedYN", -1)
+            ->groupBy('companySystemID', 'bankAccountID')
+            ->first();
         $input['openingBalance'] = $openingBalance->opening;
         $input['closingBalance'] = $openingBalance->opening;
         $bankReconciliations = $this->bankReconciliationRepository->create($input);
@@ -457,15 +457,15 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError('Bank Reconciliation not found');
         }
 
-        $bankLedgerData = BankLedger::where('bankAccountID',$bankReconciliation->bankAccountAutoID)
-                                    ->where('companySystemID',$bankReconciliation->companySystemID)
-                                    ->where('bankRecAutoID',$bankReconciliation->bankRecAutoID)
-                                    ->where('bankClearedYN',-1)
-                                    ->get();
+        $bankLedgerData = BankLedger::where('bankAccountID', $bankReconciliation->bankAccountAutoID)
+            ->where('companySystemID', $bankReconciliation->companySystemID)
+            ->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
+            ->where('bankClearedYN', -1)
+            ->get();
 
-        foreach ($bankLedgerData as $data){
-            $updateArray = ['bankClearedYN' => 0,'bankClearedAmount' => 0,'bankClearedByEmpName' => null,
-            'bankClearedByEmpID' => null,'bankClearedByEmpSystemID' => null,'bankClearedDate' => null,'bankRecAutoID' => null];
+        foreach ($bankLedgerData as $data) {
+            $updateArray = ['bankClearedYN' => 0, 'bankClearedAmount' => 0, 'bankClearedByEmpName' => null,
+                'bankClearedByEmpID' => null, 'bankClearedByEmpSystemID' => null, 'bankClearedDate' => null, 'bankRecAutoID' => null];
 
             $bankLedger = $this->bankLedgerRepository->update($updateArray, $data['bankLedgerAutoID']);
         }
@@ -700,11 +700,75 @@ class BankReconciliationAPIController extends AppBaseController
 
         $id = $request->id;
         /** @var BankReconciliation $bankReconciliation */
-        $bankReconciliation = $this->bankReconciliationRepository->with(['bank_account.currency', 'confirmed_by','company','month'])->findWithoutFail($id);
+        $bankReconciliation = $this->bankReconciliationRepository->with(['bank_account.currency', 'confirmed_by', 'company', 'month', 'approved_by' => function ($query) {
+            $query->with(['employee' => function ($q) {
+                $q->with(['details.designation']);
+            }])
+                ->where('documentSystemID', 62);
+        }])->findWithoutFail($id);
 
         if (empty($bankReconciliation)) {
             return $this->sendError('Bank Reconciliation not found');
         }
+
+        $unClearedReceipt = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
+            ->where('bankAccountID', $bankReconciliation->bankAccountAutoID)
+            ->where('postedDate', '<=', $bankReconciliation->bankRecAsOf)
+            ->where('payAmountBank', '<', 0)
+            ->where(function ($q) use ($bankReconciliation) {
+                $q->where('bankClearedYN', 0)
+                    ->orWhere(function ($q2) use ($bankReconciliation) {
+                        $q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
+                            ->where('bankClearedYN', -1);
+                    });
+            })
+            ->get();
+
+        $unClearedPayment = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
+            ->where('bankAccountID', $bankReconciliation->bankAccountAutoID)
+            ->where('postedDate', '<=', $bankReconciliation->bankRecAsOf)
+            ->where('payAmountBank', '>', 0)
+            ->where(function ($q) use ($bankReconciliation) {
+                $q->where('bankClearedYN', 0)
+                    ->orWhere(function ($q2) use ($bankReconciliation) {
+                        $q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
+                            ->where('bankClearedYN', -1);
+                    });
+            })
+            ->get();
+
+        $totalUnClearedReceipt = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
+            ->where('bankAccountID', $bankReconciliation->bankAccountAutoID)
+            ->where('postedDate', '<=', $bankReconciliation->bankRecAsOf)
+            ->where('payAmountBank', '<', 0)
+            ->where(function ($q) use ($bankReconciliation) {
+                $q->where('bankClearedYN', 0)
+                    ->orWhere(function ($q2) use ($bankReconciliation) {
+                        $q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
+                            ->where('bankClearedYN', -1);
+                    });
+            })
+            ->sum('payAmountBank');
+
+        $totalUnClearedPayment = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
+            ->where('bankAccountID', $bankReconciliation->bankAccountAutoID)
+            ->where('bankClearedYN', 0)
+            ->where('postedDate', '<=', $bankReconciliation->bankRecAsOf)
+            ->where('payAmountBank', '>', 0)
+            ->where(function ($q) use ($bankReconciliation) {
+                $q->where('bankClearedYN', 0)
+                    ->orWhere(function ($q2) use ($bankReconciliation) {
+                        $q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
+                            ->where('bankClearedYN', -1);
+                    });
+            })
+            ->sum('payAmountBank');
+
+        $bankReconciliation->unClearedReceipt = $unClearedReceipt;
+        $bankReconciliation->unClearedPayment = $unClearedPayment;
+        $bankReconciliation->totalUnClearedReceipt = $totalUnClearedReceipt;
+        $bankReconciliation->totalUnClearedPayment = $totalUnClearedPayment;
+        $bankReconciliation->bookBalance = $bankReconciliation->closingBalance + ($totalUnClearedReceipt * -1) - $totalUnClearedPayment;
 
         return $this->sendResponse($bankReconciliation->toArray(), 'BankReconciliation updated successfully');
     }

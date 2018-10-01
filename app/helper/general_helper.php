@@ -1013,7 +1013,7 @@ class Helper
                 $docInforArr["tableName"] = 'erp_fa_assetcapitalization';
                 $docInforArr["modelName"] = 'AssetCapitalization';
                 $docInforArr["primarykey"] = 'capitalizationID';
-                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedColumnName"] = 'approved';
                 $docInforArr["approvedBy"] = 'approvedByUserID';
                 $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';
@@ -1155,6 +1155,12 @@ class Helper
                                 $supplierMaster = $namespacedModel::selectRaw('supplierCodeSystem as supplierCodeSytem,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,uniqueTextcode,primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
                                 $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
                             }
+
+                            if ($input["documentSystemID"] == 63) { //Create Asset Disposal
+                                $assetDisposal = self::generateAssetDisposal($masterData);
+                            }
+
+
                             // insert the record to item ledger
 
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7])) {
@@ -1392,7 +1398,7 @@ class Helper
             }
         } catch (\Exception $e) {
             DB::rollback();
-            return ['success' => false, 'message' => $e . 'Error Occurred'];
+            return ['success' => false, 'message' => 'Error Occurred'];
         }
     }
 
@@ -1899,5 +1905,119 @@ class Helper
         );
 
         return $array;
+    }
+
+    public static function generateAssetDisposal($masterData)
+    {
+        $fixedCapital = Models\AssetCapitalization::find($masterData['autoID']);
+
+        if ($fixedCapital->allocationTypeID == 1) {
+
+            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $fixedCapital['companySystemID'])->where('bigginingDate','<',NOW())->where('endingDate','>',NOW())->first();
+
+            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $fixedCapital['companySystemID'])->where('departmentSystemID', 9)->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])->where('dateFrom','<',NOW())->where('dateTo','>',NOW())->first();
+
+            $lastSerial = Models\AssetDisposalMaster::where('companySystemID', $fixedCapital['companySystemID'])
+                ->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])
+                ->orderBy('assetdisposalMasterAutoID', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            $startYear = $companyFinanceYear['bigginingDate'];
+            $finYearExp = explode('-', $startYear);
+            $finYear = $finYearExp[0];
+
+            $documentCode = ($fixedCapital['companyID'] . '\\' . $finYear . '\\FADS' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+            $dpMaster['companySystemID'] = $fixedCapital['companySystemID'];
+            $dpMaster['companyID'] = $fixedCapital['companyID'];
+            $dpMaster['companyFinanceYearID'] = $fixedCapital['companyFinanceYearID'];
+            $dpMaster['FYBiggin'] = $companyFinanceYear['bigginingDate'];
+            $dpMaster['FYEnd'] = $companyFinanceYear['endingDate'];
+            $dpMaster['FYPeriodDateFrom'] = $companyFinancePeriod['dateFrom'];
+            $dpMaster['FYPeriodDateTo'] = $companyFinancePeriod['dateTo'];
+            $dpMaster['documentSystemID'] = 41;
+            $dpMaster['documentID'] = 'FADS';
+            $dpMaster['serialNo'] = $lastSerialNumber;
+            $dpMaster['disposalDocumentCode'] = $documentCode;
+            $dpMaster['disposalDocumentDate'] = $fixedCapital['documentDate'];
+            $dpMaster['narration'] = 'Asset Re-Allocation related to ' . $fixedCapital['capitalizationCode'];
+            $dpMaster['disposalType'] = 8;
+            $dpMaster['createdUserID'] = $fixedCapital['createdUserID'];
+            $dpMaster['createdUserSystemID'] = $fixedCapital['createdUserSystemID'];
+
+            $output = Models\AssetDisposalMaster::create($dpMaster);
+
+            $asset = Models\FixedAssetMaster::withoutGlobalScopes()->find($fixedCapital['faID']);
+
+            $depreciationLocal = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountLocal');
+            $depreciationRpt = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountRpt');
+
+            $nbvRpt = $asset->costUnitRpt - $depreciationRpt;
+            $nbvLocal = $asset->COSTUNIT - $depreciationLocal;
+
+            $dpDetail['assetdisposalMasterAutoID'] = $output['assetdisposalMasterAutoID'];
+            $dpDetail['companySystemID'] = $fixedCapital['companySystemID'];
+            $dpDetail['companyID'] = $fixedCapital['companyID'];
+            $dpDetail['serviceLineSystemID'] = $asset['serviceLineSystemID'];
+            $dpDetail['serviceLineCode'] = $asset['serviceLineCode'];
+            $dpDetail['itemCode'] = $asset['itemSystemCode'];
+            $dpDetail['faID'] = $asset['faID'];
+            $dpDetail['faCode'] = $asset['faCode'];
+            $dpDetail['faUnitSerialNo'] = $asset['faUnitSerialNo'];
+            $dpDetail['assetDescription'] = $asset['assetDescription'];
+            $dpDetail['COSTUNIT'] = $asset['COSTUNIT'];
+            $dpDetail['costUnitRpt'] = $asset['costUnitRpt'];
+            $dpDetail['netBookValueLocal'] = $nbvLocal;
+            $dpDetail['depAmountLocal'] = $depreciationLocal;
+            $dpDetail['depAmountRpt'] = $depreciationRpt;
+            $dpDetail['netBookValueRpt'] = $nbvRpt;
+            $dpDetail['COSTGLCODE'] = $asset['COSTGLCODE'];
+            $dpDetail['ACCDEPGLCODE'] = $asset['ACCDEPGLCODE'];
+            $dpDetail['DISPOGLCODE'] = $asset['DISPOGLCODE'];
+
+            $output2 = Models\AssetDisposalDetail::create($dpDetail);
+
+            $capitalizeDetail = Models\AssetCapitalizationDetail::where('capitalizationID', $masterData['autoID'])->get();
+            if ($capitalizeDetail) {
+                foreach ($capitalizeDetail as $val) {
+                    $lastSerialNumber = 1;
+                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID', $masterData['companySystemID'])->first();
+                    if ($lastSerial) {
+                        $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                    }
+
+                    $asset = Models\FixedAssetMaster::withoutGlobalScopes()->find($val['faID']);
+
+                    $documentCode = ($val["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                    $data["departmentID"] = 'AM';
+                    $data["departmentSystemID"] = null;
+                    $data["serviceLineSystemID"] = $val["serviceLineSystemID"];
+                    $data["serviceLineCode"] = $val["serviceLineCode"];
+                    $data["companySystemID"] = $val["companySystemID"];
+                    $data["companyID"] = $val["companyID"];
+                    $data["documentSystemID"] = 22;
+                    $data["documentID"] = 'FA';
+                    $data["serialNo"] = $lastSerialNumber;
+                    $data["itemCode"] = $asset["itemSystemCode"];
+                    $data["faCode"] = $documentCode;
+                    $data["assetDescription"] = 'Allocation of Logistics from ' . $output['disposalDocumentCode'] . ' related to ' . $fixedCapital['capitalizationCode'];
+                    $data["dateAQ"] = NOW();
+                    $data["dateDEP"] = NOW();
+                    $data["groupTO"] = $val['faID'];
+                    $data["COSTUNIT"] = $val["allocatedAmountLocal"];
+                    $data["costUnitRpt"] = $val["allocatedAmountRpt"];
+                    $data['createdPcID'] = gethostname();
+                    $data['createdUserID'] = \Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+
+                    $fixedAsset = Models\FixedAssetMaster::create($data);
+                }
+            }
+        }
     }
 }
