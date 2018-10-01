@@ -19,6 +19,7 @@
  * -- Date: 11-September 2018 By: Nazir Description: Added new function supplierInvoiceTaxTotal(),
  * -- Date: 12-September 2018 By: Nazir Description: Added new function printSupplierInvoice(),
  * -- Date: 12-September 2018 By: Nazir Description: Added new function getSupplierInvoiceStatusHistory(),
+ * -- Date: 28-September 2018 By: Nazir Description: Added new function getSupplierInvoiceAmend(),
  */
 
 namespace App\Http\Controllers\API;
@@ -26,21 +27,27 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
 use App\Models\BookInvSuppDet;
+use App\Models\BookInvSuppDetRefferedBack;
 use App\Models\BookInvSuppMaster;
+use App\Models\BookInvSuppMasterRefferedBack;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
 use App\Models\DirectInvoiceDetails;
+use App\Models\DirectInvoiceDetailsRefferedBack;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\Months;
+use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\Company;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Models\Taxdetail;
+use App\Models\UnbilledGrvGroupBy;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BookInvSuppMasterRepository;
@@ -394,7 +401,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->first();
 
         if ($alreadyAdded) {
-            return $this->sendError("Selected supplier invoice no is already added. Please check again", 500);
+            return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
         }
 
         $supplier = SupplierMaster::where("supplierCodeSystem", $input["supplierID"])->first();
@@ -415,6 +422,36 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $input['supplierInvoiceDate'] = new Carbon($input['supplierInvoiceDate']);
             }
         }
+
+        $amount = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('DIAmount');
+
+        $detailTaxSum = Taxdetail::select(DB::raw('sum(amount) as total'))
+            ->where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
+            ->where('documentSystemID', 11)
+            ->first();
+
+        if ($input['documentType'] == 0) {
+
+            $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                ->sum('totTransactionAmount');
+
+            $input['bookingAmountTrans'] = $grvAmountTransaction + $amount + $detailTaxSum['total'];
+
+            $currencyConverstionMasterTab = \Helper::convertAmountToLocalRpt($bookInvSuppMaster->documentSystemID, $bookInvSuppMaster->bookingSuppMasInvAutoID, $input['bookingAmountTrans']);
+
+            $input['bookingAmountLocal'] = \Helper::roundValue($currencyConverstionMasterTab['localAmount']);
+            $input['bookingAmountRpt'] = \Helper::roundValue($currencyConverstionMasterTab['reportingAmount']);
+
+        } else {
+            $input['bookingAmountTrans'] = $amount + $detailTaxSum['total'];
+
+            $currencyConverstionMaster = \Helper::convertAmountToLocalRpt($bookInvSuppMaster->documentSystemID, $bookInvSuppMaster->bookingSuppMasInvAutoID, $input['bookingAmountTrans']);
+
+            $input['bookingAmountLocal'] = \Helper::roundValue($currencyConverstionMaster['localAmount']);
+            $input['bookingAmountRpt'] = \Helper::roundValue($currencyConverstionMaster['reportingAmount']);
+        }
+
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
 
@@ -454,7 +491,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $documentDate = $input['bookingDate'];
             $monthBegin = $input['FYPeriodDateFrom'];
             $monthEnd = $input['FYPeriodDateTo'];
+
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+
             } else {
                 return $this->sendError('Document date is not within the selected financial period !', 500);
             }
@@ -505,6 +544,71 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     return $this->sendError('Amount should be greater than 0 for every items', 500);
                 }
 
+                //updating unbilled grv table all flags
+                $getBookglDetailUnbilled = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->get();
+                if ($getBookglDetailUnbilled) {
+                    foreach ($getBookglDetailUnbilled as $row) {
+
+                        $unbilledSumData = UnbilledGrvGroupBy::find($row['unbilledgrvAutoID']);
+
+                        $getTotal = BookInvSuppDet::where('unbilledgrvAutoID', $row['unbilledgrvAutoID'])
+                            ->sum('totTransactionAmount');
+
+                        if (($unbilledSumData->totTransactionAmount == $getTotal) || ($getTotal > $unbilledSumData->totTransactionAmount)) {
+
+                            $unbilledSumData->selectedForBooking = -1;
+                            $unbilledSumData->fullyBooked = 2;
+                        } else {
+                            $unbilledSumData->selectedForBooking = 0;
+                            $unbilledSumData->fullyBooked = 1;
+                        }
+                        $unbilledSumData->save();
+                    }
+                }
+
+            }
+
+            //checking Supplier Invoice amount is greater than PO Amount validations
+            if ($input['documentType'] == 0) {
+                $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->with(['pomaster'])
+                    ->get();
+                if($checktotalExceed){
+                    foreach($checktotalExceed as $exc){
+
+                        $poMasterTotal = ProcumentOrder::find($exc->purchaseOrderID);
+
+                        $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $exc->purchaseOrderID)
+                            ->where('supplierID', $exc->supplierID)
+                            ->sum('totTransactionAmount');
+
+                        if($checkPreTotal > $poMasterTotal->poTotalSupplierTransactionCurrency){
+                            return $this->sendError('Supplier Invoice amount is greater than '.$exc->pomaster->purchaseOrderCode.' PO amount', 500);
+                        }
+                    }
+                }
+            }
+
+            //checking Supplier Invoice amount is greater than UnbilledGRV Amount validations
+            if ($input['documentType'] == 0) {
+                $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->with(['grvmaster'])
+                    ->get();
+                if($checktotalExceed){
+                    foreach($checktotalExceed as $exc){
+
+                        $unbilledGRTotal = UnbilledGrvGroupBy::find($exc->unbilledgrvAutoID);
+
+                        $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
+                            ->where('supplierID', $exc->supplierID)
+                            ->sum('totTransactionAmount');
+
+                        if($checkPreTotal > $unbilledGRTotal->totTransactionAmount ){
+                            return $this->sendError('Supplier Invoice amount is greater than UnbilledGRV amount', 500);
+                        }
+                    }
+                }
             }
 
             $directInvoiceDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
@@ -558,47 +662,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
 
-            $amount = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
-                ->sum('DIAmount');
-
-            $detailTaxSum = Taxdetail::select(DB::raw('sum(amount) as total'))
-                ->where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
-                ->where('documentSystemID', 11)
-                ->first();
-
-            if ($input['documentType'] == 0) {
-                $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
-                    ->sum('totTransactionAmount');
-
-                $grvAmountLocal = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
-                    ->sum('totLocalAmount');
-
-                $grvAmountReporting = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
-                    ->sum('totRptAmount');
-
-                $input['bookingAmountTrans'] = $grvAmountTransaction + $amount + $detailTaxSum['total'];
-
-                $currencyConverstionMaster = \Helper::convertAmountToLocalRpt($bookInvSuppMaster->documentSystemID, $bookInvSuppMaster->bookingSuppMasInvAutoID, $input['bookingAmountTrans']);
-
-                $bookingAmountLocal = $currencyConverstionMaster['localAmount'] + $grvAmountLocal;
-                $bookingAmountRpt = $currencyConverstionMaster['reportingAmount'] + $grvAmountReporting;
-
-                $input['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
-                $input['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
-                //$input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                //$input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-
-            } else {
-                $input['bookingAmountTrans'] = $amount + $detailTaxSum['total'];
-
-                $currencyConverstionMaster = \Helper::convertAmountToLocalRpt($bookInvSuppMaster->documentSystemID, $bookInvSuppMaster->bookingSuppMasInvAutoID, $input['bookingAmountTrans']);
-
-                $input['bookingAmountLocal'] = \Helper::roundValue($currencyConverstionMaster['localAmount']);
-                $input['bookingAmountRpt'] = \Helper::roundValue($currencyConverstionMaster['reportingAmount']);
-                //$input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                //$input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            }
-
             $input['RollLevForApp_curr'] = 1;
 
             unset($input['confirmedYN']);
@@ -613,7 +676,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'document' => $input["documentSystemID"],
                 'segment' => 0,
                 'category' => 0,
-                'amount' => $amount
+                'amount' => $input['bookingAmountTrans']
             );
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
@@ -851,7 +914,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         return \DataTables::eloquent($invMaster)
-
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -898,6 +960,19 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMaster->confirmedDate = null;
         $bookInvSuppMaster->RollLevForApp_curr = 1;
         $bookInvSuppMaster->save();
+
+        // delete tax details
+        $checkTaxExist = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+            ->where('documentSystemID', 11)
+            ->first();
+
+        if ($checkTaxExist) {
+            $deleteTaxDetail = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                ->where('documentSystemID', 11)
+                ->delete();
+        }
 
         $employee = \Helper::getEmployeeInfo();
 
@@ -956,6 +1031,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
         }
+
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
             ->where('companySystemID', $bookInvSuppMaster->companySystemID)
@@ -1149,13 +1225,22 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input = $request->all();
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
         $percentage = $input['percentage'];
-        $taxMasterAutoID = $input['taxMasterAutoID'];
-
 
         $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
         if (empty($bookInvSuppMaster)) {
             return $this->sendError('Supplier Invoice not found');
         }
+
+        if(!isset($input['taxMasterAutoID'])){
+            return $this->sendError('Please Select a tax');
+        }
+
+        $taxMasterAutoID = $input['taxMasterAutoID'];
+
+        if($input['percentage'] == 0){
+            return $this->sendError('Tax percentage cannot be 0');
+        }
+
 
         if ($bookInvSuppMaster->documentType == 0) {
             $invoiceDetail = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->first();
@@ -1434,5 +1519,98 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
+
+    public function getSupplierInvoiceAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookingSuppMasInvAutoID);
+        if (empty($bookInvSuppMaster)) {
+            return $this->sendError('Supplier Invoice not found');
+        }
+
+        if ($bookInvSuppMaster->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this Supplier Invoice');
+        }
+
+        $supplierInvoiceArray = $bookInvSuppMaster->toArray();
+
+        $storeSupplierInvoiceHistory = BookInvSuppMasterRefferedBack::insert($supplierInvoiceArray);
+
+        $fetchBookInvoiceDetails = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+            ->get();
+
+        if (!empty($fetchBookInvoiceDetails)) {
+            foreach ($fetchBookInvoiceDetails as $bookDetail) {
+                $bookDetail['timesReferred'] = $bookInvSuppMaster->timesReferred;
+            }
+        }
+
+        $bookInvoiceDetailArray = $fetchBookInvoiceDetails->toArray();
+
+        $storeSupplierInvoiceBookDetailHistory = BookInvSuppDetRefferedBack::insert($bookInvoiceDetailArray);
+
+        $fetchBookInvoiceDirectDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
+            ->get();
+
+        if (!empty($fetchBookInvoiceDirectDetails)) {
+            foreach ($fetchBookInvoiceDirectDetails as $bookDirectDetail) {
+                $bookDirectDetail['timesReferred'] = $bookInvSuppMaster->timesReferred;
+            }
+        }
+
+        $bookInvoiceDirectDetailArray = $fetchBookInvoiceDirectDetails->toArray();
+
+        $storeSupplierInvoiceBookDirectDetailHistory = DirectInvoiceDetailsRefferedBack::insert($bookInvoiceDirectDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+            ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $bookInvSuppMaster->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+            ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $bookInvSuppMaster->refferedBackYN = 0;
+            $bookInvSuppMaster->confirmedYN = 0;
+            $bookInvSuppMaster->confirmedByEmpSystemID = null;
+            $bookInvSuppMaster->confirmedByEmpID = null;
+            $bookInvSuppMaster->confirmedByName = null;
+            $bookInvSuppMaster->confirmedDate = null;
+            $bookInvSuppMaster->RollLevForApp_curr = 1;
+            $bookInvSuppMaster->save();
+        }
+
+        // delete tax details
+        $checkTaxExist = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+            ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+            ->where('documentSystemID', 11)
+            ->first();
+
+        if ($checkTaxExist) {
+            $deleteTaxDetail = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMaster->companySystemID)
+                ->where('documentSystemID', 11)
+                ->delete();
+        }
+
+        return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice Amend successfully');
+    }
+
 
 }
