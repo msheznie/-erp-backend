@@ -105,8 +105,8 @@ class PoPaymentTermsAPIController extends AppBaseController
         }*/
         $input['inDays'] = $purchaseOrder->creditPeriod;
 
-        if (!empty($purchaseOrder->expectedDeliveryDate) && !empty($purchaseOrder->creditPeriod)) {
-            $addedDate = strtotime("+$purchaseOrder->creditPeriod day", strtotime($purchaseOrder->expectedDeliveryDate));
+        if (!empty($purchaseOrder->createdDateTime) && !empty($purchaseOrder->creditPeriod)) {
+            $addedDate = strtotime("+$purchaseOrder->creditPeriod day", strtotime($purchaseOrder->createdDateTime));
             $input['comDate'] = date("Y-m-d", $addedDate);
         } else {
             $input['comDate'] = '';
