@@ -2040,6 +2040,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                         erp_generalledger.documentSystemID = 4 -- hard code as 4
                                         AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                         AND chartofaccounts.relatedPartyYN = 0
+                                        AND chartofaccounts.isBank = 0
                                         AND (erp_generalledger.supplierCodeSystem IS NULL 
                                         OR erp_generalledger.supplierCodeSystem = 0) -- hard code filers
                                         AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '" 
