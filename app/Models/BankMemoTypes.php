@@ -9,8 +9,8 @@ use Eloquent as Model;
  *      definition="BankMemoTypes",
  *      required={""},
  *      @SWG\Property(
- *          property="bankMemoID",
- *          description="bankMemoID",
+ *          property="bankMemoTypeID",
+ *          description="bankMemoTypeID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -35,7 +35,7 @@ class BankMemoTypes extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $primaryKey  = 'bankMemoID';
+    protected $primaryKey  = 'bankMemoTypeID';
 
     public $fillable = [
         'bankMemoHeader',
@@ -48,7 +48,7 @@ class BankMemoTypes extends Model
      * @var array
      */
     protected $casts = [
-        'bankMemoID' => 'integer',
+        'bankMemoTypeID' => 'integer',
         'bankMemoHeader' => 'string',
         'sortOrder' => 'integer'
     ];
