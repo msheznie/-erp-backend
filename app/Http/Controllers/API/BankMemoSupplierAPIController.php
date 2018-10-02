@@ -17,6 +17,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBankMemoSupplierAPIRequest;
 use App\Http\Requests\API\UpdateBankMemoSupplierAPIRequest;
 use App\Models\BankMemoSupplier;
+use App\Models\BankMemoTypes;
 use App\Repositories\BankMemoSupplierRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -68,6 +69,28 @@ class BankMemoSupplierAPIController extends AppBaseController
      */
 
      public function getBankMemoBySupplierCurrency(Request $request){
+
+         $count  = BankMemoSupplier::where("supplierCurrencyID",$request['supplierCurrencyID'])
+             ->where("supplierCodeSystem",$request['supplierCodeSystem'])
+             ->count();
+
+         if($count == 0){
+
+             $employee = \Helper::getEmployeeInfo();
+             $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder','asc')->get();
+
+             foreach ($companyDefaultBankMemos as $value) {
+                 $temBankMemo = new BankMemoSupplier();
+                 $temBankMemo->memoHeader = $value['bankMemoHeader'];
+                 $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
+                 $temBankMemo->memoDetail = '';
+                 $temBankMemo->supplierCodeSystem = $request['supplierCodeSystem'];
+                 $temBankMemo->supplierCurrencyID = $request['supplierCurrencyID'];
+                 $temBankMemo->updatedByUserID = $employee->empID;
+                 $temBankMemo->updatedByUserName = $employee->empName;
+                 $temBankMemo->save();
+             }
+         }
 
          $bankMemoSuppliers = BankMemoSupplier::where("supplierCurrencyID",$request['supplierCurrencyID'])
                                                ->where("supplierCodeSystem",$request['supplierCodeSystem'])

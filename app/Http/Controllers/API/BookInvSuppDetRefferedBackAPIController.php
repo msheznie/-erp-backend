@@ -16,7 +16,6 @@ use Response;
  * Class BookInvSuppDetRefferedBackController
  * @package App\Http\Controllers\API
  */
-
 class BookInvSuppDetRefferedBackAPIController extends AppBaseController
 {
     /** @var  BookInvSuppDetRefferedBackRepository */
@@ -277,5 +276,19 @@ class BookInvSuppDetRefferedBackAPIController extends AppBaseController
         $bookInvSuppDetRefferedBack->delete();
 
         return $this->sendResponse($id, 'Book Inv Supp Det Reffered Back deleted successfully');
+    }
+
+    public function getSIDetailGRVAmendHistory(Request $request)
+    {
+        $input = $request->all();
+        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+        $timesReferred = $input['timesReferred'];
+
+        $items = BookInvSuppDetRefferedBack::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+            ->where('timesReferred', $timesReferred)
+            ->with(['pomaster', 'grvmaster', 'suppinvmaster'])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Purchase Order Details Reffered History retrieved successfully');
     }
 }

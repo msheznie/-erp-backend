@@ -8,6 +8,7 @@
  * -- Create date : 14 - March 2018
  * -- Description : This file contains the all CRUD for Chart Of Account assign.
  * -- REVISION HISTORY
+ * -- Date: 02-October 2018 By: Nazir Description: Added new functions named as getGLForJournalVoucherDirect()
  */
 
 namespace App\Http\Controllers\API;
@@ -214,6 +215,31 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->where('controllAccountYN', 0)
             ->where('controlAccountsSystemID', '<>', 1)
+            ->where('isActive', 1);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+
+    }
+
+    public function getGLForJournalVoucherDirect(request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+
+        $items = ChartOfAccountsAssigned::where('companySystemID', $companyID)
+            ->where('controllAccountYN', 0)
+            ->where('isApproved', 1)
+            ->where('isBank', 0)
+            ->where('isAssigned', -1)
             ->where('isActive', 1);
 
         if (array_key_exists('search', $input)) {

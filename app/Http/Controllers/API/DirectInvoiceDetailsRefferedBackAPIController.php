@@ -16,7 +16,6 @@ use Response;
  * Class DirectInvoiceDetailsRefferedBackController
  * @package App\Http\Controllers\API
  */
-
 class DirectInvoiceDetailsRefferedBackAPIController extends AppBaseController
 {
     /** @var  DirectInvoiceDetailsRefferedBackRepository */
@@ -277,5 +276,19 @@ class DirectInvoiceDetailsRefferedBackAPIController extends AppBaseController
         $directInvoiceDetailsRefferedBack->delete();
 
         return $this->sendResponse($id, 'Direct Invoice Details Reffered Back deleted successfully');
+    }
+
+    public function getSIDetailDirectAmendHistory(Request $request)
+    {
+        $input = $request->all();
+        $directInvoiceAutoID = $input['directInvoiceAutoID'];
+        $timesReferred = $input['timesReferred'];
+
+        $items = DirectInvoiceDetailsRefferedBack::where('directInvoiceAutoID', $directInvoiceAutoID)
+            ->where('timesReferred', $timesReferred)
+            ->with(['segment', 'chartofaccount'])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Purchase Order Details Reffered History retrieved successfully');
     }
 }

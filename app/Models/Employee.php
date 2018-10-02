@@ -90,6 +90,12 @@ class Employee extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
+    /**
+     * The attributes excluded from the model's JSON form.
+     *
+     * @var array
+     */
+    protected $hidden = ['empUserName', 'empPassword'];
 
     protected $dates = ['deleted_at'];
     protected $primaryKey = 'employeeSystemID';

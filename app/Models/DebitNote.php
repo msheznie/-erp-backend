@@ -322,7 +322,8 @@ class DebitNote extends Model
         'modifiedPc',
         'createdDateTime',
         'createdDateAndTime',
-        'timestamp'
+        'timestamp',
+        'invoiceNumber'
     ];
 
     /**
@@ -375,7 +376,8 @@ class DebitNote extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'createdDateTime' => 'string'
+        'createdDateTime' => 'string',
+        'invoiceNumber' => 'string'
     ];
 
     /**
@@ -445,6 +447,4 @@ class DebitNote extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
-
-
 }

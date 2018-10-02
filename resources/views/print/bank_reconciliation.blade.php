@@ -1,0 +1,454 @@
+<html>
+<head>
+    <title>Bank Reconciliation</title>
+    <style>
+        @page {
+            margin-left: 30px;
+            margin-right: 30px;
+            margin-top: 30px;
+            margin-bottom: 0px;
+        }
+
+        body {
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+
+        h3 {
+            font-size: 24.5px;
+        }
+
+        h6 {
+            font-size: 14px;
+        }
+
+        h4 {
+            font-size: 18px;
+        }
+
+        h6, h3 {
+            margin-top: 0px;
+            margin-bottom: 0px;
+            font-family: inherit;
+            font-weight: bold;
+            line-height: 1.2;
+            color: inherit;
+        }
+
+        table > tbody > tr > td {
+            font-size: 11.5px;
+        }
+
+        .theme-tr-head {
+            background-color: #DEDEDE !important;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .font-weight-bold {
+            font-weight: 700 !important;
+        }
+
+        tr td {
+            padding: 5px 0;
+        }
+
+        .table thead th {
+            border-bottom: none !important;
+        }
+
+        .white-space-pre-line {
+            white-space: pre-line;
+            white-space: pre;
+            word-wrap: normal;
+        }
+
+        .text-muted {
+            color: #dedede !important;
+        }
+
+        .font-weight-bold {
+            font-weight: 700 !important;
+        }
+
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #c2cfd6;
+        }
+
+        table.table-bordered {
+            border: 1px solid #000;
+        }
+
+        .table th, .table td {
+            padding: 6.4px !important;
+        }
+
+        table.table-bordered {
+            border-collapse: collapse;
+        }
+
+        table.table-bordered, .table-bordered th, .table-bordered td {
+            border: 1px solid black;
+        }
+
+        table > thead > tr > th {
+            font-size: 11.5px;
+        }
+
+        hr {
+            margin-top: 16px;
+            margin-bottom: 16px;
+            border: 0;
+            border-top: 1px solid;
+            color: #e2e3e5;
+        }
+
+        hr {
+            -webkit-box-sizing: content-box;
+            box-sizing: content-box;
+            height: 0;
+            overflow: visible;
+        }
+
+        .header,
+        .footer {
+            width: 100%;
+            text-align: left;
+            position: fixed;
+        }
+
+        .header {
+            top: 0px;
+        }
+
+        .footer {
+            bottom: 40px;
+        }
+
+        .pagenum:before {
+            content: counter(page);
+        }
+
+        #watermark {
+            position: fixed;
+            bottom: 0px;
+            right: 0px;
+            width: 200px;
+            height: 200px;
+            opacity: .1;
+        }
+
+        .content {
+            margin-bottom: 45px;
+        }
+    </style>
+</head>
+<body>
+<div class="footer">
+    {{--Footer Page <span class="pagenum"></span>--}}
+    <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>
+</div>
+<div id="watermark"></div>
+<div class="card-body content" id="print-section">
+    <table style="width: 100%">
+        <tr style="width:100%">
+            <td style="width: 30%">
+            </td>
+            <td style="width: 30%;text-align: center">
+            </td>
+            <td style="width: 40%">
+                <table>
+                    <tr>
+                        <td colspan="3">
+                            @if($entity->company)
+                                <h6 style="font-size: 18px"> {{$entity->company->CompanyName}}</h6>
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <h6 style="font-size: 18px"> Bank Reconciliation </h6>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr style="width:100%">
+            <td style="width: 30%">
+                <img src="logos/{{$entity->company->companyLogo}}" width="180px" height="60px">
+            </td>
+            <td style="width: 30%;text-align: center">
+            </td>
+            <td style="width: 40%">
+                <table>
+                    {{-- <tr>
+                         <td colspan="3">
+                             @if($entity->company)
+                                 <h6 style="font-size: 18px"> {{$entity->company->CompanyName}}</h6>
+                             @endif
+                         </td>
+                     </tr>
+                     <tr>
+                         <td colspan="3">
+                             <h6 style="font-size: 18px"> Bank Reconciliation </h6>
+                         </td>
+                     </tr>--}}
+                    <tr>
+                        <td>
+                            <span class="font-weight-bold">Document Code</span>
+                        </td>
+                        <td>
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            <span>{{$entity->bankRecPrimaryCode}}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="font-weight-bold">Currency</span>
+                        </td>
+                        <td>
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            <span>
+                                    @if($entity->bank_account)
+                                    @if($entity->bank_account->currency)
+                                        {{$entity->bank_account->currency->CurrencyCode}}
+                                    @endif
+                                @endif
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="font-weight-bold"> As of</span>
+                        </td>
+                        <td>
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            {{ \App\helper\Helper::dateFormat($entity->bankRecAsOf)}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="font-weight-bold">Month</span>
+                        </td>
+                        <td>
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($entity->month_by)
+                                {{$entity->month_by->monthDes}}
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="font-weight-bold"> Year </span>
+                        </td>
+                        <td>
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            {{$entity->year}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="font-weight-bold"> Bank </span>
+                        <td>
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($entity->bank_account)
+                                {{$entity->bank_account->bankName}} @if($entity->bank_account->bankBranch)
+                                    ({{$entity->bank_account->bankBranch}}) @endif
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="font-weight-bold"> Account No. </span>
+                        <td>
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($entity->bank_account)
+                                {{$entity->bank_account->AccountNo}}
+                            @endif
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <hr>
+    <table style="margin-top: 5px" width="100%">
+        <tr width="100%">
+            <td width="50%">
+                Closing Bank Balance
+            </td>
+            <td width="50%" class="text-right">
+                <b>{{number_format($entity->closingBalance,$decimalPlaces)}}</b>
+            </td>
+        </tr>
+    </table>
+    <hr>
+    <div style="color: #0F6AB4;margin-top: 30px">Un-Cleared Receipt</div>
+    <hr>
+    <div style="margin-top: 10px">
+        <table class="table table-bordered" style="width: 100%;">
+            <thead>
+            <tr class="theme-tr-head">
+                <th></th>
+                <th class="text-left">Document Date</th>
+                <th class="text-left">Document code</th>
+                <th class="text-left">Payee Name</th>
+                <th class="text-left">Cheque No</th>
+                <th class="text-right">Amount</th>
+                <th class="text-left"></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach ($entity->unClearedReceipt as $item)
+                <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                    <td>{{$loop->iteration}}</td>
+                    <td> {{ \App\helper\Helper::dateFormat($item->documentDate)}}</td>
+                    <td>{{$item->documentCode}}</td>
+                    <td>{{$item->payeeName}}</td>
+                    <td>{{$item->documentChequeNo}}</td>
+                    <td class="text-right">{{number_format(($item->payAmountBank * -1),$decimalPlaces)}}</td>
+                    <td></td>
+                </tr>
+            @endforeach
+            <tr>
+                <td colspan="5" class="text-right"><b>Total Un-Cleared Receipt</b></td>
+                <td></td>
+                <td class="text-right"><b>{{number_format(($entity->totalUnClearedReceipt * -1),$decimalPlaces)}}</b></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="color: #0F6AB4;margin-top: 30px"> Un-Cleared Payment</div>
+    {{--<hr>--}}
+    <div style="margin-top: 10px">
+        <table class="table table-bordered" style="width: 100%;">
+            <thead>
+            <tr class="theme-tr-head">
+                <th></th>
+                <th class="text-left">Document Date</th>
+                <th class="text-left">Document code</th>
+                <th class="text-left">Payee Name</th>
+                <th class="text-left">Cheque No</th>
+                <th class="text-right">Amount</th>
+                <th class="text-left"></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach ($entity->unClearedPayment as $item)
+                <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                    <td>{{$loop->iteration}}</td>
+                    <td> {{ \App\helper\Helper::dateFormat($item->documentDate)}}</td>
+                    <td>{{$item->documentCode}}</td>
+                    <td>{{$item->payeeName}}</td>
+                    <td>{{$item->documentChequeNo}}</td>
+                    <td class="text-right">{{number_format(($item->payAmountBank),$decimalPlaces)}}</td>
+                    <td></td>
+                </tr>
+            @endforeach
+            <tr>
+                <td colspan="5" class="text-right"><b>Total Un-Cleared Payment</b></td>
+                <td></td>
+                <td class="text-right"><b>{{number_format($entity->totalUnClearedPayment,$decimalPlaces)}}</b></td>
+            </tr>
+            <tr>
+                <td colspan="5" class="text-right"><b>Book Balance</b></td>
+                <td></td>
+                <td class="text-right"><b>{{number_format($entity->bookBalance,$decimalPlaces)}}</b></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    {{--<hr>--}}
+    <div class="row" style="margin-top: 60px;margin-left: -8px">
+        <table>
+            <tr width="100%">
+                <td width="60%">
+                    <table width="100%">
+                        <tr>
+                            <td width="70px">
+                                <span class="font-weight-bold">Confirmed By :</span>
+                            </td>
+                            <td width="400px">
+                                @if($entity->confirmed_by)
+                                    {{$entity->confirmed_by->empName}}
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td width="10%">
+
+                </td>
+                <td width="30%">
+                    <table>
+                        <tr>
+                            <td width="70px">
+                                <span class="font-weight-bold">Reviewed By :</span>
+                            </td>
+                            <td>
+                                <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="row" style="margin-top: 10px">
+        <span class="font-weight-bold">Electronically Approved By :</span>
+    </div>
+    <div style="margin-top: 10px">
+        <table>
+            <tr>
+                @foreach ($entity->approved_by as $det)
+                    <td style="padding-right: 25px">
+                        @if($det->employee)
+                            {{$det->employee->empFullName }}
+                            @if($det->employee->details)
+                                @if($det->employee->details->designation)
+                                    <br>{{$det->employee->details->designation->designation}}
+                                @endif
+                            @endif
+                        @endif
+                        <br>
+                        @if($det->employee)
+                            @if($det->approvedYN == -1)
+                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                            @elseif($det->rejectedYN == -1)
+                                {{ \App\helper\Helper::dateFormat($det->rejectedDate)}}
+                            @endif
+                        @endif
+                    </td>
+                @endforeach
+            </tr>
+        </table>
+    </div>
+</div>
+</body>
+</html>
