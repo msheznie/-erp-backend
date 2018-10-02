@@ -157,12 +157,19 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
 
             $assetCapitalizationDetails = $this->assetCapitalizationDetailRepository->create($input);
 
-            $detailSUM = AssetCapitalizationDetail::selectRAW('SUM(assetNBVLocal) as assetNBVLocal, SUM(assetNBVLocal) as assetNBVRpt')->where('capitalizationID', $input['capitalizationID'])->first();
+           $detailSUM = AssetCapitalizationDetail::selectRAW('SUM(assetNBVLocal) as assetNBVLocal, SUM(assetNBVRpt) as assetNBVRpt')->where('capitalizationID', $input['capitalizationID'])->first();
             $detail = $this->assetCapitalizationDetailRepository->findWhere(['capitalizationID' => $input['capitalizationID']]);
             if ($detail) {
                 foreach ($detail as $val) {
-                    $allocatedAmountLocal = ($val->assetNBVLocal / $detailSUM->assetNBVLocal) * $master->assetNBVLocal;
-                    $allocatedAmountRpt = ($val->assetNBVRpt / $detailSUM->assetNBVRpt) * $master->assetNBVRpt;
+                    $allocatedAmountLocal = 0;
+                    $allocatedAmountRpt = 0;
+                    if($detailSUM->assetNBVLocal){
+                        $allocatedAmountLocal = ($val->assetNBVLocal / $detailSUM->assetNBVLocal) * $master->assetNBVLocal;
+                    }
+
+                    if($detailSUM->assetNBVRpt){
+                        $allocatedAmountRpt = ($val->assetNBVRpt / $detailSUM->assetNBVRpt) * $master->assetNBVRpt;
+                    }
 
                     $detailArr["allocatedAmountLocal"] = $allocatedAmountLocal;
                     $detailArr["allocatedAmountRpt"] = $allocatedAmountRpt;
