@@ -932,6 +932,7 @@ Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
 Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
 Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
 Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
+Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');

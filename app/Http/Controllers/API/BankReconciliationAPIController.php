@@ -268,26 +268,34 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError('Bank Reconciliation not found');
         }
 
+        if (!empty($bankReconciliation)) {
+            $confirmed = $bankReconciliation->confirmedYN;
+        }
+
         $totalReceiptAmount = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
             ->where('payAmountBank', '<', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->where(function ($q) use ($bankReconciliation) {
+            ->where(function ($q) use ($bankReconciliation,$confirmed) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
                         ->where("bankClearedYN", -1);
-                })->orWhere("bankClearedYN", 0);
+                })->when($confirmed == 0, function ($q2) {
+                    $q2->orWhere("bankClearedYN", 0);
+                });
             })->sum('payAmountBank');
 
         $totalPaymentAmount = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
             ->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->where(function ($q) use ($bankReconciliation) {
+            ->where(function ($q) use ($bankReconciliation,$confirmed) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
                         ->where("bankClearedYN", -1);
-                })->orWhere("bankClearedYN", 0);
+                })->when($confirmed == 0, function ($q2) {
+                    $q2->orWhere("bankClearedYN", 0);
+                });
             })->sum('payAmountBank');
 
         $totalReceiptClearedAmount = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
@@ -700,16 +708,50 @@ class BankReconciliationAPIController extends AppBaseController
 
         $id = $request->id;
         /** @var BankReconciliation $bankReconciliation */
-        $bankReconciliation = $this->bankReconciliationRepository->with(['bank_account.currency', 'confirmed_by', 'company', 'month', 'approved_by' => function ($query) {
-            $query->with(['employee' => function ($q) {
-                $q->with(['details.designation']);
-            }])
-                ->where('documentSystemID', 62);
-        }])->findWithoutFail($id);
+        $bankReconciliation = $this->bankReconciliationRepository->getAudit($id);
 
         if (empty($bankReconciliation)) {
             return $this->sendError('Bank Reconciliation not found');
         }
+
+        $bankReconciliation = $this->getUnClearReceiptPayment($bankReconciliation);
+
+        return $this->sendResponse($bankReconciliation->toArray(), 'BankReconciliation updated successfully');
+    }
+
+    public function printBankReconciliation(Request $request)
+    {
+        $id = $request->get('id');
+        $bankReconciliation = $this->bankReconciliationRepository->getAudit($id);
+
+        if (empty($bankReconciliation)) {
+            return $this->sendError('Bank Reconciliation not found');
+        }
+
+        $bankReconciliation->docRefNo = \Helper::getCompanyDocRefNo($bankReconciliation->companySystemID, $bankReconciliation->documentSystemID);
+        $bankReconciliation = $this->getUnClearReceiptPayment($bankReconciliation);
+
+        $decimalPlaces  = 2;
+
+        if($bankReconciliation->bank_account){
+            if($bankReconciliation->bank_account->currency){
+                $decimalPlaces = $bankReconciliation->bank_account->currency->DecimalPlaces;
+            }
+        }
+
+        $array = array('entity' => $bankReconciliation,'decimalPlaces' => $decimalPlaces);
+        $time = strtotime("now");
+        $fileName = 'bank_reconciliation' . $id . '_' . $time . '.pdf';
+        $html = view('print.bank_reconciliation', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+
+    function getUnClearReceiptPayment($bankReconciliation)
+    {
 
         $unClearedReceipt = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
             ->where('bankAccountID', $bankReconciliation->bankAccountAutoID)
@@ -770,7 +812,8 @@ class BankReconciliationAPIController extends AppBaseController
         $bankReconciliation->totalUnClearedPayment = $totalUnClearedPayment;
         $bankReconciliation->bookBalance = $bankReconciliation->closingBalance + ($totalUnClearedReceipt * -1) - $totalUnClearedPayment;
 
-        return $this->sendResponse($bankReconciliation->toArray(), 'BankReconciliation updated successfully');
+        return $bankReconciliation;
+
     }
 
 
