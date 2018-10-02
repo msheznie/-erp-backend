@@ -436,8 +436,8 @@ class FixedAssetMaster extends Model
 
     public $table = 'erp_fa_asset_master';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'createdDateAndTime';
+    const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = 'faID';
 
@@ -516,6 +516,7 @@ class FixedAssetMaster extends Model
         'createdPcID',
         'modifiedUser',
         'modifiedPc',
+        'createdDateAndTime',
         'createdDateTime',
         'selectedYN',
         'assetType',
@@ -640,7 +641,7 @@ class FixedAssetMaster extends Model
 
     public function scopeIsDisposed($query)
     {
-        return $query->where('DIPOSED',  -1);
+        return $query->where('DIPOSED',  0);
     }
 
     /**
