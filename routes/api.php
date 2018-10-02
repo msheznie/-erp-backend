@@ -855,6 +855,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@getMatchDocumentMasterFormData');
     Route::get('getPaymentVoucherMatchPullingDetail', 'MatchDocumentMasterAPIController@getPaymentVoucherMatchPullingDetail');
     Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@getMatchDocumentMasterRecord');
+    Route::post('PaymentVoucherMatchingCancel', 'MatchDocumentMasterAPIController@PaymentVoucherMatchingCancel');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
 
@@ -970,3 +971,5 @@ Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPerio
 Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
 
 Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
+
+Route::resource('bank_memo_types', 'BankMemoTypesAPIController');

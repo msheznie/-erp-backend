@@ -11,6 +11,7 @@
  * -- Date: 13-September 2018 By: Nazir Description: Added new functions named as getMatchDocumentMasterFormData() For load Master View
  * -- Date: 13-September 2018 By: Nazir Description: Added new functions named as getMatchDocumentMasterView()
  * -- Date: 18-September 2018 By: Nazir Description: Added new functions named as getPaymentVoucherMatchPullingDetail()
+ * -- Date: 02-October 2018 By: Nazir Description: Added new functions named as PaymentVoucherMatchingCancel()
  */
 namespace App\Http\Controllers\API;
 
@@ -235,21 +236,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $input['confirmedDate'] = $debitNoteMaster->confirmedDate;
         }
 
-        $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
-            ->orderBy('matchDocumentMasterAutoID', 'desc')
-            ->first();
-
-        $lastSerialNumber = 1;
-        if ($lastSerial) {
-            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-        }
-        $input['serialNo'] = $lastSerialNumber;
-
-        $matchingDocCode = ($company->CompanyID . '\\' . 'MT' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-        $input['matchingDocCode'] = $matchingDocCode;
+        $input['matchingDocCode'] = 0;
         $input['matchingDocdate'] = date('Y-m-d H:i:s');
         $input['matchingType'] = 'AP';
-
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = \Helper::getEmployeeID();
@@ -377,6 +366,27 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
         }
 
+        if($input['matchingDocCode'] == 0){
+
+            $company = Company::find($input['companySystemID']);
+
+            $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                ->where('matchDocumentMasterAutoID', '<>', $input['matchDocumentMasterAutoID'])
+                ->orderBy('matchDocumentMasterAutoID', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            $matchingDocCode = ($company->CompanyID . '\\' . 'MT' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+
+            $input['serialNo'] = $lastSerialNumber;
+            $input['matchingDocCode'] = $matchingDocCode;
+        }
+
+
         if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
 
             $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('matchingDocID'))
@@ -427,7 +437,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
 
-        return $this->sendResponse($matchDocumentMaster->toArray(), 'Match Document Master updated successfully');
+        return $this->sendResponse($matchDocumentMaster->toArray(), 'Record updated successfully');
     }
 
     /**
@@ -689,6 +699,41 @@ WHERE
         }
 
         return $this->sendResponse($matchDocumentMaster, 'Data retrieved successfully');
+    }
+
+    public function PaymentVoucherMatchingCancel(Request $request)
+    {
+        $input = $request->all();
+
+        $matchDocumentMasterAutoID = $input['matchDocumentMasterAutoID'];
+
+        $MatchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
+
+        if (empty($MatchDocumentMasterData)) {
+            return $this->sendError('Match Document Master not found');
+        }
+
+        if ($MatchDocumentMasterData->matchingConfirmedYN == 1) {
+        return $this->sendError('You cannot cancel this matching, it is confirmed');
+    }
+
+        $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('matchingDocID'))
+            ->where('matchingDocID', $matchDocumentMasterAutoID)
+            ->first();
+
+        if (!empty($pvDetailExist)) {
+            return $this->sendError('Details are exist, You cannot cancel this document ');
+        }
+
+        $deleteDocument = MatchDocumentMaster::where('matchDocumentMasterAutoID', $matchDocumentMasterAutoID)
+            ->delete();
+
+        if($deleteDocument){
+            return $this->sendResponse($MatchDocumentMasterData, 'Document canceled successfully ');
+        }else{
+            return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled');
+        }
+
     }
 
 
