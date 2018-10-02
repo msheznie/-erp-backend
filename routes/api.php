@@ -970,3 +970,5 @@ Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPerio
 Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
 
 Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
+
+Route::resource('bank_memo_types', 'BankMemoTypesAPIController');
