@@ -908,10 +908,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
     Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
 
-    Route::resource('bookInvSuppRefferedbacks', 'BookInvSuppMasterRefferedBackAPIController');
+    Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
     Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
     Route::post('getSIMasterAmendHistory', 'BookInvSuppMasterRefferedBackAPIController@getSIMasterAmendHistory');
+    Route::get('getSIDetailGRVAmendHistory', 'BookInvSuppDetRefferedBackAPIController@getSIDetailGRVAmendHistory');
+    Route::get('getSIDetailDirectAmendHistory', 'DirectInvoiceDetailsRefferedBackAPIController@getSIDetailDirectAmendHistory');
 
 });
 

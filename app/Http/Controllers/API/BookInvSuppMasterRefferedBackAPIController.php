@@ -156,7 +156,11 @@ class BookInvSuppMasterRefferedBackAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BookInvSuppMasterRefferedBack $bookInvSuppMasterRefferedBack */
-        $bookInvSuppMasterRefferedBack = $this->bookInvSuppMasterRefferedBackRepository->findWithoutFail($id);
+        $bookInvSuppMasterRefferedBack = $this->bookInvSuppMasterRefferedBackRepository->with(['created_by', 'confirmed_by', 'company', 'financeperiod_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'financeyear_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($bookInvSuppMasterRefferedBack)) {
             return $this->sendError('Book Inv Supp Master Reffered Back not found');
