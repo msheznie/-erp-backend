@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateCurrencyMasterAPIRequest;
 use App\Http\Requests\API\UpdateCurrencyMasterAPIRequest;
 use App\Models\BankMemoSupplier;
 use App\Models\BankMemoSupplierMaster;
+use App\Models\BankMemoTypes;
 use App\Models\CurrencyMaster;
 use App\Repositories\CurrencyMasterRepository;
 use Illuminate\Http\Request;
@@ -138,12 +139,15 @@ class CurrencyMasterAPIController extends AppBaseController
         $supplier = SupplierMaster::where('supplierCodeSystem', $request['supplierId'])->first();
 
 
-        $companyDefaultBankMemos = BankMemoSupplierMaster::where('companySystemID', $supplier->primaryCompanySystemID)->get();
+        //$companyDefaultBankMemos = BankMemoSupplierMaster::where('companySystemID', $supplier->primaryCompanySystemID)->get();
+
+        $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder','asc')->get();
 
         foreach ($companyDefaultBankMemos as $value) {
             $temBankMemo = new BankMemoSupplier();
-            $temBankMemo->memoHeader = $value['memoHeader'];
-            $temBankMemo->memoDetail = $value['memoDetail'];
+            $temBankMemo->memoHeader = $value['bankMemoHeader'];
+            $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
+            $temBankMemo->memoDetail = '';
             $temBankMemo->supplierCodeSystem = $supplier->supplierCodeSystem;
             $temBankMemo->supplierCurrencyID = $supplierCurrency->supplierCurrencyID;
             $temBankMemo->updatedByUserID = $empId;
