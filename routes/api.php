@@ -972,3 +972,5 @@ Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
 Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
 
 Route::resource('bank_memo_types', 'BankMemoTypesAPIController');
+
+Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
