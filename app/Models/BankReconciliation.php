@@ -257,6 +257,9 @@ class BankReconciliation extends Model
     public function month(){
         return $this->belongsTo('App\Models\Months','month','monthID');
     }
+    public function month_by(){
+        return $this->belongsTo('App\Models\Months','month','monthID');
+    }
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
