@@ -774,6 +774,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('storeGRVDetailsDirect', 'GRVDetailsAPIController@storeGRVDetailsDirect');
     Route::post('updateGRVDetailsDirect', 'GRVDetailsAPIController@updateGRVDetailsDirect');
     Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL');
+    Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
     Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
     Route::get('getAllcontractbyclient', 'CustomerInvoiceDirectAPIController@getAllcontractbyclient');
     Route::post('addDirectInvoiceDetails', 'CustomerInvoiceDirectDetailAPIController@addDirectInvoiceDetails');
@@ -908,6 +909,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('jv_details', 'JvDetailAPIController');
     Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
     Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
+    Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord');
     Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
     Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
 
@@ -973,3 +975,5 @@ Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
 Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
 
 Route::resource('bank_memo_types', 'BankMemoTypesAPIController');
+
+Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');

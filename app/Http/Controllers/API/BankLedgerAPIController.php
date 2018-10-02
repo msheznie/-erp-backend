@@ -529,10 +529,10 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
-            ->where('payAmountBank', $type, 0)
-            ->where("bankAccountID", $input['bankAccountAutoID'])
-            //->where("trsClearedYN", -1)
-            ->where("bankClearedYN", 0);
+                                ->where('payAmountBank', $type, 0)
+                                ->where("bankAccountID", $input['bankAccountAutoID'])
+                                //->where("trsClearedYN", -1)
+                                ->where("bankClearedYN", 0);
 
         $search = $request->input('search.value');
 

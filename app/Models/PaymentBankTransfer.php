@@ -1,0 +1,217 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="PaymentBankTransfer",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="paymentBankTransferID",
+ *          description="paymentBankTransferID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentSystemID",
+ *          description="documentSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentID",
+ *          description="documentID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="bankTransferDocumentCode",
+ *          description="bankTransferDocumentCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="serialNumber",
+ *          description="serialNumber",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="bankMasterID",
+ *          description="bankMasterID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="bankAccountAutoID",
+ *          description="bankAccountAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedYN",
+ *          description="confirmedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByEmpSystemID",
+ *          description="confirmedByEmpSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByEmpID",
+ *          description="confirmedByEmpID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByName",
+ *          description="confirmedByName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedYN",
+ *          description="approvedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserID",
+ *          description="approvedByUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserSystemID",
+ *          description="approvedByUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="RollLevForApp_curr",
+ *          description="RollLevForApp_curr",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdPcID",
+ *          description="createdPcID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserSystemID",
+ *          description="createdUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPc",
+ *          description="modifiedPc",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserSystemID",
+ *          description="modifiedUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUser",
+ *          description="modifiedUser",
+ *          type="string"
+ *      )
+ * )
+ */
+class PaymentBankTransfer extends Model
+{
+
+    public $table = 'erp_paymentbanktransfer';
+    
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
+
+
+    public $fillable = [
+        'documentSystemID',
+        'documentID',
+        'companySystemID',
+        'bankTransferDocumentCode',
+        'serialNumber',
+        'documentDate',
+        'bankMasterID',
+        'bankAccountAutoID',
+        'confirmedYN',
+        'confirmedByEmpSystemID',
+        'confirmedByEmpID',
+        'confirmedByName',
+        'confirmedDate',
+        'approvedYN',
+        'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
+        'RollLevForApp_curr',
+        'createdPcID',
+        'createdUserSystemID',
+        'narration',
+        'createdUserID',
+        'modifiedPc',
+        'modifiedUserSystemID',
+        'modifiedUser',
+        'createdDateTime',
+        'timeStamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'paymentBankTransferID' => 'integer',
+        'documentSystemID' => 'integer',
+        'documentID' => 'string',
+        'companySystemID' => 'integer',
+        'bankTransferDocumentCode' => 'string',
+        'serialNumber' => 'integer',
+        'bankMasterID' => 'integer',
+        'bankAccountAutoID' => 'integer',
+        'confirmedYN' => 'integer',
+        'confirmedByEmpSystemID' => 'integer',
+        'confirmedByEmpID' => 'string',
+        'confirmedByName' => 'string',
+        'approvedYN' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
+        'RollLevForApp_curr' => 'integer',
+        'createdPcID' => 'string',
+        'createdUserSystemID' => 'integer',
+        'createdUserID' => 'string',
+        'modifiedPc' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUser' => 'string',
+        'narration' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}

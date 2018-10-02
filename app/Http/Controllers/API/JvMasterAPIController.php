@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for GRV Master
  * -- REVISION HISTORY
  * -- Date: 25-September 2018 By: Nazir Description: Added new functions named as getJournalVoucherMasterFormData()
+ * -- Date: 02-October 2018 By: Nazir Description: Added new functions named as getJournalVoucherMasterRecord()
  */
 
 namespace App\Http\Controllers\API;
@@ -644,5 +645,18 @@ class JvMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getJournalVoucherMasterRecord(Request $request)
+    {
+        $id = $request->get('matchDocumentMasterAutoID');
+        /** @var JvMaster $jvMaster */
+        $jvMasterData = $this->jvMasterRepository->with(['created_by', 'confirmed_by', 'modified_by'])->findWithoutFail($id);
+
+        if (empty($jvMasterData)) {
+            return $this->sendError('Jv Master not found');
+        }
+
+        return $this->sendResponse($jvMasterData, 'Jv Master retrieved successfully');
     }
 }

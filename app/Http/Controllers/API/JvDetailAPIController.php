@@ -33,7 +33,6 @@ use Response;
  * Class JvDetailController
  * @package App\Http\Controllers\API
  */
-
 class JvDetailAPIController extends AppBaseController
 {
     /** @var  JvDetailRepository */
@@ -272,7 +271,7 @@ class JvDetailAPIController extends AppBaseController
     public function update($id, UpdateJvDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment','currency_by']);
+        $input = array_except($input, ['segment', 'currency_by']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
 
@@ -289,9 +288,16 @@ class JvDetailAPIController extends AppBaseController
             return $this->sendError('Journal Voucher not found');
         }
 
+        if ($input['creditAmount'] == '') {
+            $input['creditAmount'] = 0;
+        }
+        if ($input['debitAmount'] == '') {
+            $input['debitAmount'] = 0;
+        }
+
         if (isset($input['serviceLineSystemID'])) {
 
-            if($input['serviceLineSystemID'] > 0) {
+            if ($input['serviceLineSystemID'] > 0) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
                     return $this->sendError('Department not found');
@@ -369,7 +375,7 @@ class JvDetailAPIController extends AppBaseController
         $id = $input['jvMasterAutoId'];
 
         $items = JvDetail::where('jvMasterAutoId', $id)
-            ->with(['segment','currency_by'])
+            ->with(['segment', 'currency_by'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Jv Detail retrieved successfully');
