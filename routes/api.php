@@ -897,6 +897,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getCapitalizationFixedAsset', 'AssetCapitalizationAPIController@getCapitalizationFixedAsset');
     Route::post('capitalizationReopen', 'AssetCapitalizationAPIController@capitalizationReopen');
     Route::get('getAssetCapitalizationMaster', 'AssetCapitalizationAPIController@getAssetCapitalizationMaster');
+    Route::post('getCapitalizationApprovalByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovalByUser');
+    Route::post('getCapitalizationApprovedByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovedByUser');
     Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
     Route::get('getCapitalizationDetails', 'AssetCapitalizationDetailAPIController@getCapitalizationDetails');
     Route::post('deleteAllAssetCapitalizationDet', 'AssetCapitalizationDetailAPIController@deleteAllAssetCapitalizationDet');
@@ -908,10 +910,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
     Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
 
-    Route::resource('bookInvSuppRefferedbacks', 'BookInvSuppMasterRefferedBackAPIController');
+    Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
     Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
     Route::post('getSIMasterAmendHistory', 'BookInvSuppMasterRefferedBackAPIController@getSIMasterAmendHistory');
+    Route::get('getSIDetailGRVAmendHistory', 'BookInvSuppDetRefferedBackAPIController@getSIDetailGRVAmendHistory');
+    Route::get('getSIDetailDirectAmendHistory', 'DirectInvoiceDetailsRefferedBackAPIController@getSIDetailDirectAmendHistory');
 
 });
 
@@ -961,3 +965,8 @@ Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
 Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
 
 Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
+
+
+Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
+
+Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
