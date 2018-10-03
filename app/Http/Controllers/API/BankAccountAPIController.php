@@ -221,9 +221,11 @@ class BankAccountAPIController extends AppBaseController
                                     ->where('trsClearedYN',-1)
                                     ->sum('trsClearedAmount');
         $withTreasury = ($receiptsTotal * -1) - $paymentsTotal;
-        $array = array('bankBalance' => ($bankBalance * -1) + $withTreasury,
+
+        $totalBankBalance = ($bankBalance * -1);
+        $array = array('bankBalance' => $totalBankBalance,
             'withTreasury' => $withTreasury,
-            'netBankBalance' => ($bankBalance + $withTreasury),
+            'netBankBalance' => ($totalBankBalance + $withTreasury),
             'receiptsTotal' => $receiptsTotal,
             'paymentsTotal' => $paymentsTotal,
         );
