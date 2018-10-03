@@ -26,6 +26,7 @@ use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
 use App\Models\Months;
+use App\Models\SupplierAssigned;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\AssetCapitalizationRepository;

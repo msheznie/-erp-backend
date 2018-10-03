@@ -275,7 +275,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                 ->where('purchaseOrderID', $advancePayment->poID)
                 ->first();
 
-            if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
+            if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount || $advancePayment->reqAmount < $advancePaymentDetailsSum->SumOfpaymentAmount) {
                 $updatePayment = PoAdvancePayment::find($input['poAdvPaymentID'])
                     ->update(['fullyPaid' => 2]);
             }
