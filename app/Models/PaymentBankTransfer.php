@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : PaymentBankTransfer.php
+ * -- Project Name : ERP
+ * -- Module Name :  Payment Bank Transfer
+ * -- Author : Mohamed Fayas
+ * -- Create date : 03 - October 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -138,9 +147,9 @@ class PaymentBankTransfer extends Model
 
     public $table = 'erp_paymentbanktransfer';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
-
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timeStamp';
+    protected $primaryKey  = 'paymentBankTransferID';
 
 
     public $fillable = [
