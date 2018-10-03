@@ -857,6 +857,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@getMatchDocumentMasterRecord');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
+    Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
 
     Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
     Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
