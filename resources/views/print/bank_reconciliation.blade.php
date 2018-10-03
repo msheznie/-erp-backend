@@ -275,8 +275,9 @@
                         </td>
                         <td>
                             @if($entity->bank_account)
-                                {{$entity->bank_account->bankName}} @if($entity->bank_account->bankBranch)
-                                    ({{$entity->bank_account->bankBranch}}) @endif
+                                {{$entity->bank_account->bankName}}
+                                {{--@if($entity->bank_account->bankBranch)
+                                    ({{$entity->bank_account->bankBranch}}) @endif--}}
                             @endif
                         </td>
                     </tr>
