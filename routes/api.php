@@ -860,6 +860,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('PaymentVoucherMatchingCancel', 'MatchDocumentMasterAPIController@PaymentVoucherMatchingCancel');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
+    Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
 
     Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
     Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
@@ -924,6 +925,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getSIDetailGRVAmendHistory', 'BookInvSuppDetRefferedBackAPIController@getSIDetailGRVAmendHistory');
     Route::get('getSIDetailDirectAmendHistory', 'DirectInvoiceDetailsRefferedBackAPIController@getSIDetailDirectAmendHistory');
 
+    Route::resource('bank_memo_types', 'BankMemoTypesAPIController');
+    Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
+    Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
+    Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
+
+    Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
+    Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
+
+
+    Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -977,7 +988,3 @@ Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPerio
 Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
 
 Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
-
-Route::resource('bank_memo_types', 'BankMemoTypesAPIController');
-
-Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');

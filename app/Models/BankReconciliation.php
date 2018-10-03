@@ -206,7 +206,8 @@ class BankReconciliation extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'bankMasterID'
     ];
 
     /**
@@ -234,6 +235,7 @@ class BankReconciliation extends Model
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approvedYN' => 'integer',
+        'bankMasterID' => 'integer',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'RollLevForApp_curr' => 'integer',

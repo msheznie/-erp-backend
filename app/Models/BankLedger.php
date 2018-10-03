@@ -300,10 +300,10 @@ class BankLedger extends Model
 {
 
     public $table = 'erp_bankledger';
-    
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey  = 'bankLedgerAutoID';
+    protected $primaryKey = 'bankLedgerAutoID';
 
 
     public $fillable = [
@@ -363,7 +363,12 @@ class BankLedger extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'pulledToBankTransferYN',
+        'paymentBankTransferID',
+        'bankreconciliationDate',
+        'bankRecYear',
+        'bankrecMonth'
     ];
 
     /**
@@ -421,7 +426,12 @@ class BankLedger extends Model
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'pulledToBankTransferYN' => 'integer',
+        'paymentBankTransferID' => 'integer',
+        'bankreconciliationDate' => 'string',
+        'bankRecYear' => 'integer',
+        'bankrecMonth' => 'integer'
     ];
 
     /**
@@ -430,8 +440,8 @@ class BankLedger extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    
+
 }

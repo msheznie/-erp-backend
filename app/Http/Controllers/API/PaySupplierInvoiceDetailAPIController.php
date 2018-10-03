@@ -261,8 +261,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
-        $currentPayAmount = $paySupplierInvoiceDetail->supplierPaymentAmount + $input['supplierPaymentAmount'];
-
         $machAmount = 0;
         if ($matchedAmount) {
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
@@ -300,15 +298,13 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
-
         $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
             if ($totalPaidAmount == 0) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 0]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
+            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount ||  $totalPaidAmount > $paySupplierInvoiceDetail->supplierInvoiceAmount) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 2]);
             } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
@@ -399,7 +395,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
                 if ($totalPaidAmount == 0) {
                     $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                        ->update(['fullyInvoice' => 0,'selectedToPaymentInv' => 0]);
+                        ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
                 } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
                     $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                         ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
@@ -464,7 +460,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 if ($val->addedDocumentSystemID == 11) {
                     if ($totalPaidAmount == 0) {
                         $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                            ->update(['fullyInvoice' => 0,'selectedToPaymentInv' => 0]);
+                            ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
                     } else if ($val->supplierInvoiceAmount == $totalPaidAmount) {
                         $updatePayment = AccountsPayableLedger::find($val->apAutoID)
                             ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
@@ -512,6 +508,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             $finalError = array(
                 'gl_amount_not_matching' => array(),
+                'already_exist' => array(),
             );
 
             $error_count = 0;
@@ -529,12 +526,23 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                         array_push($finalError['gl_amount_not_matching'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
                         $error_count++;
                     }
+
+                    $payDetailExistSameItem = PaySupplierInvoiceDetail::select(DB::raw('PayMasterAutoId'))
+                        ->where('PayMasterAutoId', $id)
+                        ->where('addedDocumentSystemID', $item['addedDocumentSystemID'])
+                        ->where('bookingInvSystemCode', $item['bookingInvSystemCode'])
+                        ->exists();
+
+                    if ($payDetailExistSameItem) {
+                        array_push($finalError['already_exist'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
+                        $error_count++;
+                    }
                 }
             }
 
             $confirm_error = array('type' => 'gl_amount_not_matching', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("Selected document is not updated in general ledger. Please check again.", 500, $confirm_error);
+                return $this->sendError("Error. Please check again.", 500, $confirm_error);
             }
 
             foreach ($input['detailTable'] as $new) {
@@ -658,7 +666,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         //calculate the total
         $existTotal = 0;
         $detailAmountTot = PaySupplierInvoiceDetail::where('matchingDocID', $input['matchingDocID'])
-            ->where('payDetailAutoID', '<>',$input['payDetailAutoID'])
+            ->where('payDetailAutoID', '<>', $input['payDetailAutoID'])
             ->sum('supplierPaymentAmount');
 
         $existTotal = $detailAmountTot + $input['supplierPaymentAmount'];

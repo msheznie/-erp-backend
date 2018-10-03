@@ -153,6 +153,8 @@ return [
         'priority' => 'Priority',
         'wareHouseSystemCode' => 'WareHouse',
         'companySystemID' => 'Company',
+        'documentDate' => 'Document Date',
+        'bankRecAsOf' => 'As of Date'
     ],
 
 ];

@@ -839,6 +839,11 @@ class PaySupplierInvoiceMaster extends Model
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'cancelledByEmpSystemID', 'employeeSystemID');
+    }
+
 
 
 }

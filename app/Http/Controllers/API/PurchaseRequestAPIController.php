@@ -553,7 +553,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x]['PO Number'] = $poDetail->order->purchaseOrderCode;
                                     $data[$x]['ETA'] = \Helper::dateFormat($poDetail->order->expectedDeliveryDate);
                                     $data[$x]['Supplier Code'] = $poDetail->order->supplierPrimaryCode;
-                                    $data[$x]['Supplier Name'] = $poDetail->order->supplierPrimaryCode;
+                                    $data[$x]['Supplier Name'] = $poDetail->order->supplierName;
                                 } else {
                                     $data[$x]['PO Number'] = '';
                                     $data[$x]['ETA'] = '';

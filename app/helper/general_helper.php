@@ -359,6 +359,17 @@ class Helper
                     $docInforArr["modelName"] = 'AssetCapitalization';
                     $docInforArr["primarykey"] = 'capitalizationID';
                     break;
+                case 64:
+                    $docInforArr["documentCodeColumnName"] = 'bankTransferDocumentCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_paymentbanktransfer';
+                    $docInforArr["modelName"] = 'PaymentBankTransfer';
+                    $docInforArr["primarykey"] = 'paymentBankTransferID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1021,6 +1032,20 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+
+            case 64: // Bank Transfer
+                $docInforArr["tableName"] = 'erp_paymentbanktransfer';
+                $docInforArr["modelName"] = 'PaymentBankTransfer';
+                $docInforArr["primarykey"] = 'paymentBankTransferID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
