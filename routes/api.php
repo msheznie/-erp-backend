@@ -924,6 +924,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('bank_memo_types', 'BankMemoTypesAPIController');
     Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
     Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
+    Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
 
 });
 

@@ -8,7 +8,7 @@
  * -- Create date : 03 - October 2018
  * -- Description : This file contains the all CRUD for Payment Bank Transfer
  * -- REVISION HISTORY
- * -- Date: 03 - October 2018 By: Fayas Description: Added new functions named as getCheckBeforeCreate()
+ * -- Date: 03 - October 2018 By: Fayas Description: Added new functions named as getCheckBeforeCreate(),getAllBankTransferByBankAccount()
  */
 
 namespace App\Http\Controllers\API;
@@ -131,7 +131,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
         $validator = \Validator::make($input, [
-            'description' => 'required',
+            'narration' => 'required',
             'documentDate' => 'required',
         ]);
 
@@ -242,7 +242,7 @@ class PaymentBankTransferAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PaymentBankTransfer $paymentBankTransfer */
-        $paymentBankTransfer = $this->paymentBankTransferRepository->findWithoutFail($id);
+        $paymentBankTransfer = $this->paymentBankTransferRepository->with(['bank_account.currency', 'confirmed_by'])->findWithoutFail($id);
 
         if (empty($paymentBankTransfer)) {
             return $this->sendError('Payment Bank Transfer not found');
@@ -384,5 +384,53 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         return $this->sendResponse($bankAccount->toArray(), 'Successfully');
+    }
+
+    public function getAllBankTransferByBankAccount(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $bankTransfer = PaymentBankTransfer::whereIn('companySystemID', $subCompanies)
+            ->where("bankAccountAutoID", $input['bankAccountAutoID'])
+            ->with(['created_by', 'bank_account']);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankTransfer = $bankTransfer->where(function ($query) use ($search) {
+                $query->where('bankTransferDocumentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($bankTransfer)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('paymentBankTransferID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

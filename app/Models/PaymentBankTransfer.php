@@ -222,5 +222,26 @@ class PaymentBankTransfer extends Model
         
     ];
 
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+    public function bank_account()
+    {
+        return $this->belongsTo('App\Models\BankAccount', 'bankAccountAutoID', 'bankAccountAutoID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','paymentBankTransferID');
+    }
     
 }
