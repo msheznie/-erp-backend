@@ -363,7 +363,9 @@ class BankLedger extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'pulledToBankTransferYN',
+        'paymentBankTransferID'
     ];
 
     /**
@@ -421,7 +423,9 @@ class BankLedger extends Model
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'pulledToBankTransferYN' => 'integer',
+        'paymentBankTransferID' => 'integer'
     ];
 
     /**
