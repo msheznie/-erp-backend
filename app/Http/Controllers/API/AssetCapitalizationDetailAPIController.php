@@ -157,7 +157,7 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
 
             $assetCapitalizationDetails = $this->assetCapitalizationDetailRepository->create($input);
 
-           $detailSUM = AssetCapitalizationDetail::selectRAW('SUM(assetNBVLocal) as assetNBVLocal, SUM(assetNBVRpt) as assetNBVRpt')->where('capitalizationID', $input['capitalizationID'])->first();
+           /*$detailSUM = AssetCapitalizationDetail::selectRAW('SUM(assetNBVLocal) as assetNBVLocal, SUM(assetNBVRpt) as assetNBVRpt')->where('capitalizationID', $input['capitalizationID'])->first();
             $detail = $this->assetCapitalizationDetailRepository->findWhere(['capitalizationID' => $input['capitalizationID']]);
             if ($detail) {
                 foreach ($detail as $val) {
@@ -176,7 +176,7 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
                     $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->update($detailArr, $val->capitalizationDetailID);
 
                 }
-            }
+            }*/
             DB::commit();
             return $this->sendResponse($assetCapitalizationDetails->toArray(), 'Asset Capitalization Detail saved successfully');
 
@@ -349,8 +349,8 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
 
             $assetCapitalizationDetail->delete();
 
-            $master = AssetCapitalization::find($capitalizationID);
-            $detailSUM = AssetCapitalizationDetail::selectRAW('SUM(assetNBVLocal) as assetNBVLocal, SUM(assetNBVLocal) as assetNBVRpt')->where('capitalizationID', $capitalizationID)->first();
+            /*$master = AssetCapitalization::find($capitalizationID);
+            return $detailSUM = AssetCapitalizationDetail::selectRAW('SUM(assetNBVLocal) as assetNBVLocal, SUM(assetNBVRpt) as assetNBVRpt')->where('capitalizationID', $capitalizationID)->first();
             $detail = $this->assetCapitalizationDetailRepository->findWhere(['capitalizationID' => $capitalizationID]);
             if ($detail) {
                 foreach ($detail as $val) {
@@ -362,7 +362,7 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
                     $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->update($detailArr, $val->capitalizationDetailID);
 
                 }
-            }
+            }*/
             DB::commit();
             return $this->sendResponse($id, 'Asset Capitalization Detail deleted successfully');
 
