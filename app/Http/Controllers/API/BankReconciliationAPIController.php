@@ -163,6 +163,7 @@ class BankReconciliationAPIController extends AppBaseController
         if (!empty($bankAccount)) {
             $input['bankGLAutoID'] = $bankAccount->chartOfAccountSystemID;
             $input['companySystemID'] = $bankAccount->companySystemID;
+            $input['bankMasterID'] = $bankAccount->bankmasterAutoID;
         } else {
             return $this->sendError('bank Account not found.!', 500);
         }
@@ -522,7 +523,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('bankRecAutoID', $input['order'][0]['dir']);
+                        $query->orderBy('bankRecAsOf', $input['order'][0]['dir']);
                     }
                 }
             })

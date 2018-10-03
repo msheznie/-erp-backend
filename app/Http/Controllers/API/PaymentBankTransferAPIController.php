@@ -1,11 +1,27 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : PaymentBankTransferAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Payment Bank Transfer
+ * -- Author : Mohamed Fayas
+ * -- Create date : 03 - October 2018
+ * -- Description : This file contains the all CRUD for Payment Bank Transfer
+ * -- REVISION HISTORY
+ * -- Date: 03 - October 2018 By: Fayas Description: Added new functions named as getCheckBeforeCreate(),getAllBankTransferByBankAccount()
+ */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePaymentBankTransferAPIRequest;
 use App\Http\Requests\API\UpdatePaymentBankTransferAPIRequest;
+use App\Models\BankAccount;
+use App\Models\BankLedger;
+use App\Models\Company;
 use App\Models\PaymentBankTransfer;
+use App\Repositories\BankLedgerRepository;
 use App\Repositories\PaymentBankTransferRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -16,15 +32,15 @@ use Response;
  * Class PaymentBankTransferController
  * @package App\Http\Controllers\API
  */
-
 class PaymentBankTransferAPIController extends AppBaseController
 {
     /** @var  PaymentBankTransferRepository */
     private $paymentBankTransferRepository;
-
-    public function __construct(PaymentBankTransferRepository $paymentBankTransferRepo)
+    private $bankLedgerRepository;
+    public function __construct(PaymentBankTransferRepository $paymentBankTransferRepo,BankLedgerRepository $bankLedgerRepo)
     {
         $this->paymentBankTransferRepository = $paymentBankTransferRepo;
+        $this->bankLedgerRepository = $bankLedgerRepo;
     }
 
     /**
@@ -109,6 +125,78 @@ class PaymentBankTransferAPIController extends AppBaseController
     public function store(CreatePaymentBankTransferAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+        $input['createdPcID'] = gethostname();
+        $input['createdUserID'] = $employee->empID;
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
+
+        $validator = \Validator::make($input, [
+            'narration' => 'required',
+            'documentDate' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+
+        $input['documentDate'] = new Carbon($input['documentDate']);
+
+
+        $end = (new Carbon())->endOfMonth();
+        if ($input['documentDate'] > $end) {
+            return $this->sendError('You cannot select a date greater than the current month last day', 500);
+        }
+
+        $input['documentSystemID'] = 64;
+        $input['documentID'] = 'PBT';
+
+        $bankAccount = BankAccount::find($input['bankAccountAutoID']);
+
+        if (!empty($bankAccount)) {
+            $input['bankMasterID'] = $bankAccount->bankmasterAutoID;
+            $input['companySystemID'] = $bankAccount->companySystemID;
+        } else {
+            return $this->sendError('bank Account not found.!', 500);
+        }
+
+
+        $checkPending = PaymentBankTransfer::where('bankAccountAutoID', $input['bankAccountAutoID'])
+            ->where('approvedYN', 0)
+            ->first();
+
+
+        if (!empty($checkPending)) {
+            return $this->sendError("There is a bank transfer (" . $checkPending->bankRecPrimaryCode . ") pending for approval for the bank transfer you are trying to add. Please check again.", 500);
+        }
+
+        $maxAsOfDate = PaymentBankTransfer::where('bankAccountAutoID', $input['bankAccountAutoID'])
+            ->max('documentDate');
+
+        if ($maxAsOfDate >= $input['documentDate']) {
+            return $this->sendError('You cannot create bank transfer, Please select the as of date after ' . (new Carbon($maxAsOfDate))->format('d/m/Y'), 500);
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $lastSerial = PaymentBankTransfer::where('companySystemID', $input['companySystemID'])
+            ->orderBy('paymentBankTransferID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+        $input['serialNo'] = $lastSerialNumber;
+
+
+        $code = ($input['companyID'] . '\\' . $input['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        $input['bankTransferDocumentCode'] = $code;
 
         $paymentBankTransfers = $this->paymentBankTransferRepository->create($input);
 
@@ -156,11 +244,45 @@ class PaymentBankTransferAPIController extends AppBaseController
     public function show($id)
     {
         /** @var PaymentBankTransfer $paymentBankTransfer */
-        $paymentBankTransfer = $this->paymentBankTransferRepository->findWithoutFail($id);
+        $paymentBankTransfer = $this->paymentBankTransferRepository->with(['bank_account.currency', 'confirmed_by'])->findWithoutFail($id);
 
         if (empty($paymentBankTransfer)) {
             return $this->sendError('Payment Bank Transfer not found');
         }
+
+        if (!empty($paymentBankTransfer)) {
+            $confirmed = $paymentBankTransfer->confirmedYN;
+        }
+
+        $totalPaymentAmount = BankLedger::where('companySystemID', $paymentBankTransfer->companySystemID)
+            ->where('payAmountBank', '>', 0)
+            ->where("bankAccountID", $paymentBankTransfer->bankAccountAutoID)
+            ->where("trsClearedYN", -1)
+            ->where("bankClearedYN", 0)
+            ->where(function ($q) use ($paymentBankTransfer, $confirmed) {
+                $q->where(function ($q1) use ($paymentBankTransfer) {
+                    $q1->where('paymentBankTransferID', $paymentBankTransfer->paymentBankTransferID)
+                        ->where("pulledToBankTransferYN", -1);
+                })->when($confirmed == 0, function ($q2) {
+                    $q2->orWhere("pulledToBankTransferYN", 0);
+                });
+            })->sum('payAmountBank');
+
+
+        $totalPaymentClearedAmount = BankLedger::where('companySystemID', $paymentBankTransfer->companySystemID)
+            ->where('payAmountBank', '>', 0)
+            ->where("bankAccountID", $paymentBankTransfer->bankAccountAutoID)
+            ->where("trsClearedYN", -1)
+            ->where("bankClearedYN", 0)
+            ->where(function ($q) use ($paymentBankTransfer) {
+                $q->where(function ($q1) use ($paymentBankTransfer) {
+                    $q1->where('paymentBankTransferID', $paymentBankTransfer->paymentBankTransferID)
+                        ->where("pulledToBankTransferYN", -1);
+                });
+            })->sum('payAmountBank');
+
+        $paymentBankTransfer->totalPaymentAmount = $totalPaymentAmount;
+        $paymentBankTransfer->totalPaymentClearedAmount = $totalPaymentClearedAmount;
 
         return $this->sendResponse($paymentBankTransfer->toArray(), 'Payment Bank Transfer retrieved successfully');
     }
@@ -214,6 +336,8 @@ class PaymentBankTransferAPIController extends AppBaseController
     public function update($id, UpdatePaymentBankTransferAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate',
+            'confirmed_by', 'confirmedByEmpSystemID']);
 
         /** @var PaymentBankTransfer $paymentBankTransfer */
         $paymentBankTransfer = $this->paymentBankTransferRepository->findWithoutFail($id);
@@ -222,7 +346,35 @@ class PaymentBankTransferAPIController extends AppBaseController
             return $this->sendError('Payment Bank Transfer not found');
         }
 
-        $paymentBankTransfer = $this->paymentBankTransferRepository->update($input, $id);
+        if ($paymentBankTransfer->confirmedYN == 1) {
+            return $this->sendError('This document already confirmed.', 500);
+        }
+
+        if ($paymentBankTransfer->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+
+            $checkItems = BankLedger::where('paymentBankTransferID', $id)
+                ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every bank transfer should have at least one cleared item', 500);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+            $params = array('autoID' => $id,
+                'company' => $paymentBankTransfer->companySystemID,
+                'document' => $paymentBankTransfer->documentSystemID,
+                'segment' => 0,
+                'category' => 0,
+                'amount' => 0
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
+        //  $paymentBankTransfer = $this->paymentBankTransferRepository->update($input, $id);
 
         return $this->sendResponse($paymentBankTransfer->toArray(), 'PaymentBankTransfer updated successfully');
     }
@@ -274,8 +426,88 @@ class PaymentBankTransferAPIController extends AppBaseController
             return $this->sendError('Payment Bank Transfer not found');
         }
 
+        $payments = BankLedger::where('paymentBankTransferID', $paymentBankTransfer->paymentBankTransferID)
+            ->where('companySystemID', $paymentBankTransfer->companySystemID)
+            ->where('bankAccountID', $paymentBankTransfer->bankAccountAutoID)
+            ->where('pulledToBankTransferYN', -1)
+            ->get();
+
+        foreach ($payments as $data) {
+            $updateArray = ['pulledToBankTransferYN' => 0,'paymentBankTransferID' => null];
+            $this->bankLedgerRepository->update($updateArray, $data['bankLedgerAutoID']);
+        }
+
         $paymentBankTransfer->delete();
 
         return $this->sendResponse($id, 'Payment Bank Transfer deleted successfully');
+    }
+
+    public function getCheckBeforeCreate(Request $request)
+    {
+        $input = $request->all();
+        $bankAccount = BankAccount::find($input['bankAccountAutoID']);
+
+        if (empty($bankAccount)) {
+            return $this->sendError('Bank Account not found');
+        }
+
+        $checkPending = PaymentBankTransfer::where('bankAccountAutoID', $input['bankAccountAutoID'])
+            ->where('companySystemID', $bankAccount->companySystemID)
+            ->where('approvedYN', 0)
+            ->first();
+
+        if (!empty($checkPending)) {
+            return $this->sendError("There is a bank transfer (" . $checkPending->bankTransferDocumentCode . ") pending for approval for the bank transfer you are trying to add. Please check again.", 500);
+        }
+
+        return $this->sendResponse($bankAccount->toArray(), 'Successfully');
+    }
+
+    public function getAllBankTransferByBankAccount(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $bankTransfer = PaymentBankTransfer::whereIn('companySystemID', $subCompanies)
+            ->where("bankAccountAutoID", $input['bankAccountAutoID'])
+            ->with(['created_by', 'bank_account']);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankTransfer = $bankTransfer->where(function ($query) use ($search) {
+                $query->where('bankTransferDocumentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($bankTransfer)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('paymentBankTransferID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

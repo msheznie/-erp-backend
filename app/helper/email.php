@@ -30,6 +30,7 @@ use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\ItemReturnMaster;
 use App\Models\MaterielRequest;
+use App\Models\PaymentBankTransfer;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
@@ -255,6 +256,13 @@ class email
                     if (!empty($assetcapitalization)) {
                         $data['docApprovedYN'] = $assetcapitalization->approved;
                         $data['docCode'] = $assetcapitalization->capitalizationCode;
+                    }
+                    break;
+                case 64:
+                    $paymentBankTransfer = PaymentBankTransfer::where('paymentBankTransferID', $data['docSystemCode'])->first();
+                    if (!empty($paymentBankTransfer)) {
+                        $data['docApprovedYN'] = $paymentBankTransfer->approved;
+                        $data['docCode'] = $paymentBankTransfer->bankTransferDocumentCode;
                     }
                     break;
                 default:
