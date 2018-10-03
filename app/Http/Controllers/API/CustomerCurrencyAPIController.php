@@ -157,6 +157,9 @@ class CustomerCurrencyAPIController extends AppBaseController
             if ($customer) {
                 $input['customerCode'] = $customer->CutomerCode;
             }
+            if($input['isAssigned'] == true || $input['isAssigned'] == 1){
+                $input['isAssigned'] = -1;
+            }
             $input['createdBy'] = $empId;
             $customerCurrencies = $this->customerCurrencyRepository->create($input);
         }

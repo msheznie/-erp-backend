@@ -254,5 +254,20 @@ class BookInvSuppDetRefferedBack extends Model
         
     ];
 
+    public function grvmaster()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'grvAutoID', 'grvAutoID');
+    }
+
+    public function pomaster()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
+    }
+
+    public function suppinvmaster()
+    {
+        return $this->hasOne('App\Models\BookInvSuppMaster', 'bookingSuppMasInvAutoID', 'bookingSuppMasInvAutoID');
+    }
+
     
 }

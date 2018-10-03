@@ -1,25 +1,16 @@
 <?php
-/**
- * =============================================
- * -- File Name : BankReconciliation.php
- * -- Project Name : ERP
- * -- Module Name :  Bank Reconciliation
- * -- Author : Mohamed Fayas
- * -- Create date : 18- September 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="BankReconciliation",
+ *      definition="PaymentBankTransfer",
  *      required={""},
  *      @SWG\Property(
- *          property="bankRecAutoID",
- *          description="bankRecAutoID",
+ *          property="paymentBankTransferID",
+ *          description="paymentBankTransferID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -41,49 +32,27 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="companyID",
- *          description="companyID",
+ *          property="bankTransferDocumentCode",
+ *          description="bankTransferDocumentCode",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="bankGLAutoID",
- *          description="bankGLAutoID",
+ *          property="serialNumber",
+ *          description="serialNumber",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="month",
- *          description="month",
+ *          property="bankMasterID",
+ *          description="bankMasterID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="bankRecPrimaryCode",
- *          description="bankRecPrimaryCode",
- *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="year",
- *          description="year",
+ *          property="bankAccountAutoID",
+ *          description="bankAccountAutoID",
  *          type="integer",
  *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="openingBalance",
- *          description="openingBalance",
- *          type="number",
- *          format="float"
- *      ),
- *      @SWG\Property(
- *          property="closingBalance",
- *          description="closingBalance",
- *          type="number",
- *          format="float"
- *      ),
- *      @SWG\Property(
- *          property="description",
- *          description="description",
- *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="confirmedYN",
@@ -164,31 +133,25 @@ use Eloquent as Model;
  *      )
  * )
  */
-class BankReconciliation extends Model
+class PaymentBankTransfer extends Model
 {
 
-    public $table = 'erp_bankrecmaster';
+    public $table = 'erp_paymentbanktransfer';
     
-    const CREATED_AT = 'createdDateTime';
-    const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'bankRecAutoID';
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
 
 
     public $fillable = [
         'documentSystemID',
         'documentID',
         'companySystemID',
-        'companyID',
-        'bankGLAutoID',
+        'bankTransferDocumentCode',
+        'serialNumber',
+        'documentDate',
+        'bankMasterID',
         'bankAccountAutoID',
-        'month',
-        'serialNo',
-        'bankRecPrimaryCode',
-        'year',
-        'bankRecAsOf',
-        'openingBalance',
-        'closingBalance',
-        'description',
         'confirmedYN',
         'confirmedByEmpSystemID',
         'confirmedByEmpID',
@@ -201,6 +164,7 @@ class BankReconciliation extends Model
         'RollLevForApp_curr',
         'createdPcID',
         'createdUserSystemID',
+        'narration',
         'createdUserID',
         'modifiedPc',
         'modifiedUserSystemID',
@@ -215,20 +179,14 @@ class BankReconciliation extends Model
      * @var array
      */
     protected $casts = [
-        'bankRecAutoID' => 'integer',
+        'paymentBankTransferID' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'companySystemID' => 'integer',
-        'companyID' => 'string',
-        'bankGLAutoID' => 'integer',
+        'bankTransferDocumentCode' => 'string',
+        'serialNumber' => 'integer',
+        'bankMasterID' => 'integer',
         'bankAccountAutoID' => 'integer',
-        'month' => 'integer',
-        'serialNo' => 'integer',
-        'bankRecPrimaryCode' => 'string',
-        'year' => 'integer',
-        'openingBalance' => 'float',
-        'closingBalance' => 'float',
-        'description' => 'string',
         'confirmedYN' => 'integer',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
@@ -242,7 +200,8 @@ class BankReconciliation extends Model
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUserSystemID' => 'integer',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'narration' => 'string'
     ];
 
     /**
@@ -254,31 +213,5 @@ class BankReconciliation extends Model
         
     ];
 
-    public function month(){
-        return $this->belongsTo('App\Models\Months','month','monthID');
-    }
-    public function month_by(){
-        return $this->belongsTo('App\Models\Months','month','monthID');
-    }
-    public function created_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
-    }
-    public function bank_account()
-    {
-        return $this->belongsTo('App\Models\BankAccount', 'bankAccountAutoID', 'bankAccountAutoID');
-    }
-
-    public function confirmed_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
-    }
-
-    public function company(){
-        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
-    }
-
-    public function approved_by(){
-        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','bankRecAutoID');
-    }
+    
 }
