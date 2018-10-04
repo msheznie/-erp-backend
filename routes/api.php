@@ -48,6 +48,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('supplier/add/currency', 'CurrencyMasterAPIController@addCurrencyToSupplier');
     Route::post('supplier/update/currency', 'CurrencyMasterAPIController@updateCurrencyToSupplier');
     Route::post('supplier/remove/currency', 'CurrencyMasterAPIController@removeCurrencyToSupplier');
+    Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
 
     Route::resource('supplier/assigned', 'SupplierAssignedAPIController');
 
@@ -913,6 +914,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord');
     Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
     Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
+    Route::post('journalVoucherSalaryJVDetailStore', 'JvDetailAPIController@journalVoucherSalaryJVDetailStore');
+    Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster');
+    Route::get('journalVoucherForSalaryJVDetail', 'JvMasterAPIController@journalVoucherForSalaryJVDetail');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');

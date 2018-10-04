@@ -331,8 +331,8 @@
                 <th>#</th>
                 <th>Item Code</th>
                 <th>Item Description</th>
-                <th>Unit Cost</th>
                 <th>Qty</th>
+                <th>Unit Cost</th>
                 <th>Discount</th>
                 <th>Net Amount</th>
             </tr>

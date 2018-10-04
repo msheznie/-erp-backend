@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getAllCurrencies(),getCurrenciesBySupplier(),
  * addCurrencyToSupplier(),updateCurrencyToSupplier()
+ * -- Date: 02-October 2018 By: Nazir Description: Added new functions named as getCompanyLocalCurrency()
  */
 namespace App\Http\Controllers\API;
 
@@ -19,6 +20,7 @@ use App\Models\BankMemoSupplier;
 use App\Models\BankMemoSupplierMaster;
 use App\Models\BankMemoTypes;
 use App\Models\CurrencyMaster;
+use App\Models\Company;
 use App\Repositories\CurrencyMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -97,10 +99,10 @@ class CurrencyMasterAPIController extends AppBaseController
         if ($supplier) {
             //$supplierCurrencies = SupplierCurrency::where('supplierCodeSystem','=',$supplierId)->get();
             $supplierCurrencies = DB::table('suppliercurrency')
-                                    ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
-                                    ->where('supplierCodeSystem', '=', $supplierId);
+                ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
+                ->where('supplierCodeSystem', '=', $supplierId);
             if (isset($request['isAssigned'])) {
-                $supplierCurrencies =  $supplierCurrencies->where('isAssigned', '=', $request['isAssigned']);
+                $supplierCurrencies = $supplierCurrencies->where('isAssigned', '=', $request['isAssigned']);
             }
 
             $supplierCurrencies = $supplierCurrencies->orderBy('supplierCurrencyID', 'DESC')->get();
@@ -141,7 +143,7 @@ class CurrencyMasterAPIController extends AppBaseController
 
         //$companyDefaultBankMemos = BankMemoSupplierMaster::where('companySystemID', $supplier->primaryCompanySystemID)->get();
 
-        $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder','asc')->get();
+        $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
 
         foreach ($companyDefaultBankMemos as $value) {
             $temBankMemo = new BankMemoSupplier();
@@ -278,5 +280,26 @@ class CurrencyMasterAPIController extends AppBaseController
         $currencyMaster->delete();
 
         return $this->sendResponse($id, 'Currency Master deleted successfully');
+    }
+
+    public function getCompanyLocalCurrency(Request $request)
+    {
+        $input = $request->all();
+        $localCurrency = 0;
+
+        $company = Company::where('companySystemID', $input['companyID'])->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company Master not found');
+        }
+
+        if(!empty($company->localCurrencyID)){
+            $localCurrency = $company->localCurrencyID;
+        }else{
+            return $this->sendError('Company local currency not found');
+        }
+
+        return $this->sendResponse($localCurrency, 'Data retrieved successfully');
+
     }
 }
