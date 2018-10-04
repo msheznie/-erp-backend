@@ -81,7 +81,8 @@ class CompanyAPIController extends AppBaseController
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            //$subCompanies  = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies  = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
             /**  Companies by group  Drop Down */
             $companies = Company::whereIn("companySystemID",$subCompanies)->get();
         }else{
