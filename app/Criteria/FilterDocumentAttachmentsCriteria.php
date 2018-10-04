@@ -30,8 +30,8 @@ class FilterDocumentAttachmentsCriteria implements CriteriaInterface
      */
     public function apply($model, RepositoryInterface $repository)
     {
-        return  $model->where('companySystemID',$this->request['companySystemID'])
-                        ->where('documentSystemID',$this->request['documentSystemID'])
+        return  $model->where('documentSystemID',$this->request['documentSystemID'])
                         ->where('documentSystemCode',$this->request['documentSystemCode']);
+                        //->where('companySystemID',$this->request['companySystemID']);
     }
 }

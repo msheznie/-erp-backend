@@ -929,10 +929,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
     Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
     Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
-
     Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
     Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
-
+    Route::post('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
 
     Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
 });
@@ -973,7 +972,7 @@ Route::get('runQueue', function () {
 Route::get('runQueueSR', function () {
     $stMaster = \App\Models\StockTransfer::where('stockTransferAutoID', 2920)->first();
     $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
-    // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
+    //$srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
