@@ -933,7 +933,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
     Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
     Route::post('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
-
     Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
 });
 
