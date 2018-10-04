@@ -76,5 +76,8 @@ class SupplierCurrency extends Model
         return $this->belongsTo('App\Models\CurrencyMaster','currencyID','currencyID');
     }
 
+    public function bankMemo_by(){
+        return $this->hasMany('App\Models\BankMemoSupplier','supplierCurrencyID','supplierCurrencyID');
+    }
     
 }
