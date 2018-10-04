@@ -8,7 +8,8 @@
  * -- Create date : 03 - October 2018
  * -- Description : This file contains the all CRUD for Payment Bank Transfer
  * -- REVISION HISTORY
- * -- Date: 03 - October 2018 By: Fayas Description: Added new functions named as getCheckBeforeCreate(),getAllBankTransferByBankAccount()
+ * -- Date: 03 - October 2018 By: Fayas Description: Added new functions named as getCheckBeforeCreate(),getAllBankTransferByBankAccount(),
+ *    getBankTransferApprovalByUser,getBankTransferApprovedByUser
  */
 
 namespace App\Http\Controllers\API;
@@ -24,6 +25,7 @@ use App\Repositories\PaymentBankTransferRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -169,7 +171,7 @@ class PaymentBankTransferAPIController extends AppBaseController
 
 
         if (!empty($checkPending)) {
-            return $this->sendError("There is a bank transfer (" . $checkPending->bankRecPrimaryCode . ") pending for approval for the bank transfer you are trying to add. Please check again.", 500);
+            return $this->sendError("There is a bank transfer (" . $checkPending->bankTransferDocumentCode . ") pending for approval for the bank transfer you are trying to add. Please check again.", 500);
         }
 
         $maxAsOfDate = PaymentBankTransfer::where('bankAccountAutoID', $input['bankAccountAutoID'])
@@ -498,6 +500,140 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         return \DataTables::eloquent($bankTransfer)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('paymentBankTransferID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getBankTransferApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $bankTransfer = DB::table('erp_documentapproved')
+            ->select(
+                'erp_paymentbanktransfer.*',
+                'employees.empName As created_emp',
+                'erp_bankaccount.AccountNo As AccountNo',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $query->whereIn('employeesdepartments.documentSystemID', [64])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_paymentbanktransfer', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'paymentBankTransferID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_paymentbanktransfer.companySystemID', $companyId)
+                    ->where('erp_paymentbanktransfer.approvedYN', 0)
+                    ->where('erp_paymentbanktransfer.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_bankaccount', 'erp_paymentbanktransfer.bankAccountAutoID', 'erp_bankaccount.bankAccountAutoID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [64])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankTransfer = $bankTransfer->where(function ($query) use ($search) {
+                $query->where('bankTransferDocumentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($bankTransfer)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('paymentBankTransferID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getBankTransferApprovedByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $bankTransfer = DB::table('erp_documentapproved')
+            ->select(
+                'erp_paymentbanktransfer.*',
+                'employees.empName As created_emp',
+                'erp_bankaccount.AccountNo As AccountNo',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_paymentbanktransfer', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'paymentBankTransferID')
+                    ->where('erp_paymentbanktransfer.companySystemID', $companyId)
+                    ->where('erp_paymentbanktransfer.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_bankaccount', 'erp_paymentbanktransfer.bankAccountAutoID', 'erp_bankaccount.bankAccountAutoID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [64])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankTransfer = $bankTransfer->where(function ($query) use ($search) {
+                $query->where('bankTransferDocumentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($bankTransfer)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {

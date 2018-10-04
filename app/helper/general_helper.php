@@ -1032,6 +1032,20 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+
+            case 64: // Bank Transfer
+                $docInforArr["tableName"] = 'erp_paymentbanktransfer';
+                $docInforArr["modelName"] = 'PaymentBankTransfer';
+                $docInforArr["primarykey"] = 'paymentBankTransferID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }

@@ -48,6 +48,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('supplier/add/currency', 'CurrencyMasterAPIController@addCurrencyToSupplier');
     Route::post('supplier/update/currency', 'CurrencyMasterAPIController@updateCurrencyToSupplier');
     Route::post('supplier/remove/currency', 'CurrencyMasterAPIController@removeCurrencyToSupplier');
+    Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
 
     Route::resource('supplier/assigned', 'SupplierAssignedAPIController');
 
@@ -913,6 +914,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord');
     Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
     Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
+    Route::post('journalVoucherSalaryJVDetailStore', 'JvDetailAPIController@journalVoucherSalaryJVDetailStore');
+    Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster');
+    Route::get('journalVoucherForSalaryJVDetail', 'JvMasterAPIController@journalVoucherForSalaryJVDetail');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -925,6 +929,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
     Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
     Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
+
+    Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
+    Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
+
+
     Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
 });
 
