@@ -307,7 +307,7 @@ class BankLedgerAPIController extends AppBaseController
                 $this->bankReconciliationRepository->update($inputNew, $input['bankRecAutoID']);
             } else if ($input['editType'] == 2) {
 
-                if($bankLedger->bankClearedYN == -1){
+                if ($bankLedger->bankClearedYN == -1) {
                     return $this->sendError('You cannot edit, This item already added to bank reconciliation.', 500);
                 }
 
@@ -332,11 +332,11 @@ class BankLedgerAPIController extends AppBaseController
                 $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
             } else if ($input['editType'] == 3) {
 
-                if($bankLedger->pulledToBankTransferYN == -1){
+                if ($bankLedger->pulledToBankTransferYN == -1) {
                     return $this->sendError('You cannot edit, This payment already added to bank transfer.', 500);
                 }
 
-                if($bankLedger->bankClearedYN == -1){
+                if ($bankLedger->bankClearedYN == -1) {
                     return $this->sendError('You cannot edit, This item already added to bank reconciliation.', 500);
                 }
 
@@ -386,7 +386,7 @@ class BankLedgerAPIController extends AppBaseController
                 }
 
                 $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
-            }else if ($input['editType'] == 4) {
+            } else if ($input['editType'] == 4) {
 
                 $bankTransfer = $this->paymentBankTransferRepository->findWithoutFail($input['paymentBankTransferID']);
 
@@ -576,10 +576,10 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
-                                ->where('payAmountBank', $type, 0)
-                                ->where("bankAccountID", $input['bankAccountAutoID'])
-                                //->where("trsClearedYN", -1)
-                                ->where("bankClearedYN", 0);
+            ->where('payAmountBank', $type, 0)
+            ->where("bankAccountID", $input['bankAccountAutoID'])
+            //->where("trsClearedYN", -1)
+            ->where("bankClearedYN", 0);
 
         $search = $request->input('search.value');
 
@@ -630,22 +630,26 @@ class BankLedgerAPIController extends AppBaseController
         if (!empty($paymentBankTransfer)) {
             $confirmed = $paymentBankTransfer->confirmedYN;
         }
-
+        $bankId = 1;
+        if ($paymentBankTransfer->bank_account) {
+            $bankId = $paymentBankTransfer->bank_account->accountCurrencyID;
+        }
 
         $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
-                                ->where('payAmountBank', '>', 0)
-                                ->where("bankAccountID", $input['bankAccountAutoID'])
-                                ->where("trsClearedYN", -1)
-                                ->where("bankClearedYN", 0)
-                                ->whereIn('invoiceType',[2,3,5])
-                                ->where(function ($q) use ($input, $confirmed) {
-                                    $q->where(function ($q1) use ($input) {
-                                        $q1->where('paymentBankTransferID', $input['paymentBankTransferID'])
-                                            ->where("pulledToBankTransferYN", -1);
-                                    })->when($confirmed == 0, function ($q2) {
-                                        $q2->orWhere("pulledToBankTransferYN", 0);
-                                    });
-                                });
+            ->where('payAmountBank', '>', 0)
+            ->where("bankAccountID", $input['bankAccountAutoID'])
+            ->where("trsClearedYN", -1)
+            ->where("bankClearedYN", 0)
+            ->whereIn('invoiceType', [2, 3, 5])
+            ->where("bankCurrency", $bankId)
+            ->where(function ($q) use ($input, $confirmed) {
+                $q->where(function ($q1) use ($input) {
+                    $q1->where('paymentBankTransferID', $input['paymentBankTransferID'])
+                        ->where("pulledToBankTransferYN", -1);
+                })->when($confirmed == 0, function ($q2) {
+                    $q2->orWhere("pulledToBankTransferYN", 0);
+                });
+            });
 
         $search = $request->input('search.value');
 

@@ -443,5 +443,9 @@ class BankLedger extends Model
 
     ];
 
+    public function supplier_by()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'payeeID', 'supplierCodeSystem');
+    }
 
 }
