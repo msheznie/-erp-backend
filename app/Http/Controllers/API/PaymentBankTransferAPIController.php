@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 03 - October 2018 By: Fayas Description: Added new functions named as getCheckBeforeCreate(),getAllBankTransferByBankAccount(),
  *    getBankTransferApprovalByUser,getBankTransferApprovedByUser
+ * -- Date: 04 - October 2018 By: Fayas Description: Added new functions named as exportPaymentBankTransfer()
  */
 
 namespace App\Http\Controllers\API;
@@ -504,7 +505,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('paymentBankTransferID', $input['order'][0]['dir']);
+                        $query->orderBy('documentDate', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -645,5 +646,144 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function exportPaymentBankTransfer(Request $request){
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $paymentBankTransfer = PaymentBankTransfer::with(['bank_account'])->find($input['paymentBankTransferID']);
+        $confirmed = 0;
+        if (!empty($paymentBankTransfer)) {
+            $confirmed = $paymentBankTransfer->confirmedYN;
+        }
+
+        if($paymentBankTransfer->approvedYN != -1){
+            return $this->sendError("This document is not approved. You cannot export. Please check again.", 500);
+        }
+
+
+        $bankId = 1;
+        if($paymentBankTransfer->bank_account){
+            $bankId = $paymentBankTransfer->bank_account->accountCurrencyID;
+        }
+
+        $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
+            ->where('payAmountBank', '>', 0)
+            ->where("bankAccountID", $input['bankAccountAutoID'])
+            ->where("trsClearedYN", -1)
+            ->where("bankClearedYN", 0)
+            ->where("bankCurrency", $bankId)
+            ->whereIn('invoiceType',[2,3,5])
+            ->where(function ($q) use ($input, $confirmed) {
+                $q->where(function ($q1) use ($input) {
+                    $q1->where('paymentBankTransferID', $input['paymentBankTransferID'])
+                        ->where("pulledToBankTransferYN", -1);
+                })->when($confirmed == 0, function ($q2) {
+                    $q2->orWhere("pulledToBankTransferYN", 0);
+                });
+            })
+            ->with(['supplier_by' => function($q3) use($bankId){
+                $q3->with(['supplierCurrency' => function($q4) use($bankId){
+                      $q4->where('currencyID',$bankId)
+                         ->with(['bankMemo_by']);
+                }]);
+            }]);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankLedger = $bankLedger->where(function ($query) use ($search) {
+                //$query->where('documentCode', 'LIKE', "%{$search}%")
+                 //   ->orWhere('documentNarration', 'LIKE', "%{$search}%");
+            });
+        }
+        $bankLedger = $bankLedger->orderBy('bankLedgerAutoID','desc')->get();
+        $data = array();
+        $x = 0;
+        foreach ($bankLedger as $val) {
+            $x++;
+            if($val['supplier_by']){
+                if($val['supplier_by']['supplierCurrency']){
+                    if($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']){
+
+                        $memos  = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
+                            foreach ($memos as $memo){
+                                if($memo->bankMemoTypeID == 4){
+                                    $data[$x]['Account No(13)'] = $memo->memoDetail;
+                                    break;
+                                }
+                            }
+                    }else{
+                        $data[$x]['Account No(13)'] = '';
+                    }
+                }else{
+                    $data[$x]['Account No(13)'] = '';
+                }
+            }else{
+                $data[$x]['Account No(13)'] = '';
+            }
+
+            $data[$x]['Amount(15)']        = $val->payAmountBank;
+            $data[$x]['Reference No (16)'] = $val->documentCode;
+            if($val['supplier_by']){
+                if($val['supplier_by']['supplierCurrency']){
+                    if($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']){
+                         $memos  = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
+                        foreach ($memos as $memo){
+                            if($memo->bankMemoTypeID == 1){
+                                $data[$x]['Narration1 (35)'] = $memo->memoDetail;
+                                break;
+                            }
+                        }
+                    }else{
+                        $data[$x]['Narration1 (35)'] = '';
+                    }
+                }else{
+                    $data[$x]['Narration1 (35)'] = '';
+                }
+            }else{
+                $data[$x]['Narration1 (35)'] = '';
+            }
+
+            $data[$x]['Narration2 (35)']   = $val->documentNarration;
+
+            if($val['supplier_by']){
+                $data[$x]['Mobile No'] = $val['supplier_by']['telephone'];
+                $data[$x]['EmailID'] = $val['supplier_by']['supEmail'];
+            }else{
+                $data[$x]['Mobile No'] = '';
+                $data[$x]['EmailID'] = '';
+            }
+        }
+
+        $csv = \Excel::create('payment_bank_transfer', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download('csv');
+
+        return $this->sendResponse([], 'Payment Bank Transfer export to CSV successfully');
     }
 }

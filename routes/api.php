@@ -918,6 +918,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster');
     Route::get('journalVoucherForSalaryJVDetail', 'JvMasterAPIController@journalVoucherForSalaryJVDetail');
     Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
+    Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
+    Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
+    Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -930,10 +933,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
     Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
     Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
-
     Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
     Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
-
+    Route::post('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
 
     Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
 });
@@ -956,6 +958,7 @@ Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
 Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
 Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
 Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
+Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
@@ -974,7 +977,7 @@ Route::get('runQueue', function () {
 Route::get('runQueueSR', function () {
     $stMaster = \App\Models\StockTransfer::where('stockTransferAutoID', 2920)->first();
     $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
-    // $srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
+    //$srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
