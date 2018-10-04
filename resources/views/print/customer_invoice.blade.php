@@ -245,16 +245,22 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
+                    @if($request->logo)
                     <img src="logos/{{$request->secondaryLogo =='' ? $request->company->companyLogo:$request->secondaryLogo}}"
-                         width="180px" height="60px"></td>
+                         width="180px" height="60px">
+                @endif
+                </td>
 
 
                 <td width="50%" style="text-align: center;white-space: nowrap">
                     <div class="text-center">
+
                         <h3 class="font-weight-bold">
+                            @if($request->logo)
                             @if ($request->company)
                                 {{$request->company->CompanyName}}
                             @endif
+                                @endif
                         </h3>
                         <h3 class="font-weight-bold">
                             Invoice
@@ -358,11 +364,20 @@
                                     @endif
                             </span></td>
                         </tr>
+                        @if($request->line_performaCode)
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">Proforma Invoice No</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td><span>{{$request->invoicedetail->performadetails->performaCode}}</span></td>
+                        </tr>
+                        @endif
+                        @if($request->line_seNo)
                         <tr>
                             <td width="120px"><span class="font-weight-bold">SE No</span></td>
                             <td width="10px"><span class="font-weight-bold">-</span></td>
                             <td><span>{{$request->wanNO}}</span></td>
                         </tr>
+                        @endif
                         @if($request->line_dueDate)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Due Date</span></td>
@@ -381,12 +396,15 @@
                                 <td><span>{{$request->invoicedetails[0]->clientContractID}}</span></td>
                             </tr>
                         @endif
+
+                        @if ($request->line_poNumber)
                         <tr>
                             <td width="120px"><span class="font-weight-bold">PO Number</span></td>
                             <td width="10px"><span class="font-weight-bold">-</span></td>
                             <td>{{$request->PONumber}}</td>
 
                         </tr>
+                        @endif
                         @if ($request->line_unit)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Unit</span></td>
@@ -462,6 +480,40 @@
     </div>
     <div class="row">
 
+        @if($request->linePdoinvoiceDetails)
+
+            <table class="table table-bordered table-striped table-sm" style="width: 100%;">
+                <thead>
+                <tr class="">
+
+                    <th style="text-align: center">Well</th>
+                    <th style="text-align: center">Network</th>
+                    <th style="text-align: center">SE</th>
+                    <th style="text-align: center">Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{$decimal = 2}}
+                {{$x=1}}
+                {{$directTraSubTotal=0}}
+                {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
+                @foreach ($request->linePdoinvoiceDetails as $item)
+                    {{$directTraSubTotal +=$item->wellAmount}}
+                    <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
+
+                        <td style="width: 25%">{{$item->wellNo}}</td>
+                        <td style="width: 25%">{{$item->netWorkNo}}</td>
+                        <td style="width: 25%">{{$item->SEno}}</td>
+                        <td style="width: 25%;text-align: right">{{number_format($item->wellAmount,$numberFormatting)}}</td>
+
+                    </tr>
+                    {{ $x++ }}
+                @endforeach
+                </tbody>
+
+            </table>
+            @endif
+
         @if($request->line_invoiceDetails)
             <table class="table table-bordered table-striped table-sm" style="width: 100%;">
                 <thead>
@@ -498,7 +550,7 @@
 
             @endif
 
-        @if ($request->template==1 && !$request->line_invoiceDetails)
+        @if ($request->template==1 && !$request->line_invoiceDetails && !$request->linePdoinvoiceDetails)
             <table class="table table-bordered table-striped table-sm" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">

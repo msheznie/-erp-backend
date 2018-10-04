@@ -1280,6 +1280,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
+       
+
 
         $companySystemID = $master->companySystemID;
 
@@ -1298,7 +1300,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $lineSecondAddress = false;
         $lineApprovedBy = false;
         $linePageNo = false;
+
         $linefooterAddress = false;
+        $linePdoinvoiceDetails = false;
+        $logo =true;
+        $line_performaCode = false;
 
         $customerInvoice->companySystemID = $companySystemID;
         switch ($companySystemID) {
@@ -1366,6 +1372,44 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $invoiceDetails = false;
                 }
                 break;
+            case 52: /*SGEE*/
+                $lineApprovedBy = true;
+                $linefooterAddress = true;
+
+                if ($master->isPerforma == 1) {
+
+                    if($master->customerID==79){
+                        $logo =false;
+                        $line_subcontractNo = false;
+                        $line_contractNo = true;
+                        $line_customerShortCode = true;
+                        $line_dueDate = false;
+                        $line_jobNo = false;
+                        $line_seNo = false;
+                        $lineSecondAddress = true;
+                        $line_poNumber = false;
+                        $line_performaCode =true;
+                        $linePdoinvoiceDetails = DB::select("SELECT wellNo, netWorkNo, SEno, wellAmount FROM ( SELECT performaMasterID, companyID, contractID, clientContractID FROM erp_custinvoicedirectdet WHERE custInvoiceDirectID = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN performamaster ON performamaster.companyID = '$master->companyID' AND performamaster.PerformaInvoiceNo = t.performaMasterID AND t.clientContractID = performamaster.contractID INNER JOIN performa_service_entry_wellgroup ON performamaster.PerformaMasterID = performa_service_entry_wellgroup.performaMasID");
+
+                        $template = 1;
+                    }else{
+                        $template = 2;
+                        $line_unit = false;
+                        $line_jobNo = false;
+                        $line_subcontractNo = false;
+                    }
+
+
+
+
+                } else {
+                    $template = 2;
+                    $line_unit = false;
+                    $line_jobNo = false;
+                    $line_subcontractNo = false;
+
+                }
+                break;
             default:
                 $lineApprovedBy = true;
                 $linefooterAddress = true;
@@ -1412,7 +1456,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->lineSecondAddress = $lineSecondAddress;
         $customerInvoice->lineApprovedBy = $lineApprovedBy;
         $customerInvoice->linePageNo = $linePageNo;
-        $customerInvoice->linefooterAddress = $linefooterAddress;;
+        $customerInvoice->linefooterAddress = $linefooterAddress;
+        $customerInvoice->linePdoinvoiceDetails = $linePdoinvoiceDetails;
+        $customerInvoice->line_performaCode = $line_performaCode;
+
+
+
         $array = array('request' => $customerInvoice);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
