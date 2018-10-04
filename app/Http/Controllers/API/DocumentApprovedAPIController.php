@@ -168,7 +168,7 @@ class DocumentApprovedAPIController extends AppBaseController
             $where .= " WHERE  (documentCode LIKE '%$search%' OR  comments LIKE '%$search%' OR SupplierOrCustomer LIKE '%$search%' OR DocumentValue LIKE '%$search%' )";
         }
 
-           $qry="SELECT * FROM (SELECT
+            $qry="SELECT * FROM (SELECT
 	*
 FROM
 	(
@@ -188,6 +188,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	'' AS SupplierOrCustomer,
+	2 as DecimalPlaces ,
 	'' AS DocumentCurrency,
 	0 AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -239,6 +240,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	erp_purchaseordermaster.supplierName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_purchaseordermaster.poTotalSupplierTransactionCurrency AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -291,6 +293,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_paysupplierinvoicemaster.payAmountSuppTrans AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -341,6 +344,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	suppliermaster.supplierName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_bookinvsuppmaster.bookingAmountTrans AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -391,6 +395,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	suppliermaster.supplierName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_debitnote.debitAmountTrans AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -440,6 +445,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	customermaster.CustomerName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_custinvoicedirect.bookingAmountTrans + IFNULL(VATAmount,0) AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -490,6 +496,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	customermaster.CustomerName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_creditnote.creditAmountTrans AS DocumentValue,
 	employeesdepartments.employeeID,

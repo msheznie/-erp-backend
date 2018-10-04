@@ -1033,6 +1033,54 @@ class CreditNoteAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function creditNoteReceiptStatus(Request $request){
+        $input = $request->all();
+        $creditnote = CreditNote::find($input['id']);
+
+       $data= DB::select("SELECT
+	erp_matchdocumentmaster.PayMasterAutoId as masterID,
+	erp_matchdocumentmaster.companyID,
+	erp_matchdocumentmaster.matchingDocCode as docCode,
+	erp_matchdocumentmaster.matchingDocdate as docDate,
+	erp_matchdocumentmaster.supplierTransCurrencyID as currencyID,
+	currencymaster.CurrencyCode,
+	erp_matchdocumentmaster.matchedAmount as amount,
+	erp_matchdocumentmaster.matchingConfirmedYN as confirmedYN,
+	erp_matchdocumentmaster.approved,
+	currencymaster.DecimalPlaces 
+FROM
+	erp_matchdocumentmaster
+	INNER JOIN currencymaster ON erp_matchdocumentmaster.supplierTransCurrencyID = currencymaster.currencyID 
+WHERE
+	erp_matchdocumentmaster.PayMasterAutoId = $creditnote->creditNoteAutoID 
+	AND erp_matchdocumentmaster.companyID = '$creditnote->companyID'
+	AND erp_matchdocumentmaster.documentID = '$creditnote->documentID' 
+	UNION ALL
+SELECT
+	erp_customerreceivepayment.custReceivePaymentAutoID as masterID,
+	erp_customerreceivepayment.companyID,
+IF
+	( erp_custreceivepaymentdet.matchingDocID = 0 OR erp_custreceivepaymentdet.matchingDocID IS NULL, erp_customerreceivepayment.custPaymentReceiveCode, erp_matchdocumentmaster.matchingDocCode ) AS docCode,
+IF
+	( erp_custreceivepaymentdet.matchingDocID = 0 OR erp_custreceivepaymentdet.matchingDocID IS NULL, erp_customerreceivepayment.custPaymentReceiveDate, erp_matchdocumentmaster.matchingDocdate ) AS docDate,
+	erp_custreceivepaymentdet.custTransactionCurrencyID as  currencyID,
+	currencymaster.CurrencyCode,
+	erp_custreceivepaymentdet.receiveAmountTrans as amount,
+	erp_customerreceivepayment.confirmedYN,
+	erp_customerreceivepayment.approved,
+	currencymaster.DecimalPlaces 
+FROM
+	erp_custreceivepaymentdet
+	INNER JOIN currencymaster ON erp_custreceivepaymentdet.custTransactionCurrencyID = currencymaster.currencyID
+	LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
+	LEFT JOIN erp_matchdocumentmaster ON erp_custreceivepaymentdet.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID 
+WHERE
+	erp_customerreceivepayment.companyID ='$creditnote->companyID'
+	AND erp_custreceivepaymentdet.addedDocumentID = '$creditnote->documentID'
+	AND erp_custreceivepaymentdet.bookingInvCodeSystem = $creditnote->creditNoteAutoID ");
+        return $this->sendResponse($data, 'Credit Note retrieved successfully');
+    }
+
 
 
 

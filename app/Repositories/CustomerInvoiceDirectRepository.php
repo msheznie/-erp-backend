@@ -131,7 +131,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
                 }
 
 
-                $query->with(['unit', 'department','billmaster'=>function ($query) use ($companyID){
+                $query->with(['unit', 'department','contract','billmaster'=>function ($query) use ($companyID){
                     $query->where('companyID',$companyID);
                     $query1 = $query;
                     $bill = $query1->first()->toArray();
