@@ -274,6 +274,9 @@ class BankLedgerAPIController extends AppBaseController
                     $updateArray['bankClearedByEmpSystemID'] = $employee->employeeSystemID;
                     $updateArray['bankClearedDate'] = now();
                     $updateArray['bankRecAutoID'] = $input['bankRecAutoID'];
+                    $updateArray['bankreconciliationDate'] = $bankReconciliation->bankRecAsOf;
+                    $updateArray['bankRecYear'] = $bankReconciliation->year;
+                    $updateArray['bankrecMonth'] = $bankReconciliation->month;
                 } else {
                     $updateArray['bankClearedAmount'] = 0;
                     $updateArray['bankClearedByEmpName'] = null;
@@ -281,6 +284,9 @@ class BankLedgerAPIController extends AppBaseController
                     $updateArray['bankClearedByEmpSystemID'] = null;
                     $updateArray['bankClearedDate'] = null;
                     $updateArray['bankRecAutoID'] = null;
+                    $updateArray['bankreconciliationDate'] = null;
+                    $updateArray['bankRecYear'] = null;
+                    $updateArray['bankrecMonth'] = null;
                 }
 
                 $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);

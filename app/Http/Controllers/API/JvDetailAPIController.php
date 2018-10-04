@@ -398,4 +398,85 @@ class JvDetailAPIController extends AppBaseController
 
         return $this->sendResponse($contract, 'Record retrived successfully');
     }
+
+    public function journalVoucherSalaryJVDetailStore(Request $request)
+    {
+        $input = $request->all();
+        $detail_arr = array();
+        $validator = array();
+        $jvMasterAutoId = $input['jvMasterAutoId'];
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        if(empty($input['detailTable'])){
+            return $this->sendError("No items selected to add.");
+        }
+
+        $jvMasterData = JvMaster::find($jvMasterAutoId);
+
+        if (empty($jvMasterData)) {
+            return $this->sendError('Jv Master not found');
+        }
+
+        foreach ($input['detailTable'] as $new) {
+
+            if ($new['DebitAmount'] != 0) {
+
+                $detail_arr['jvMasterAutoId'] = $jvMasterAutoId;
+                $detail_arr['documentSystemID'] = $jvMasterData->documentSystemID;
+                $detail_arr['documentID'] = $jvMasterData->documentID;
+                $detail_arr['recurringjvMasterAutoId'] = $new['accMasterID'];
+                $detail_arr['recurringjvDetailAutoID'] = $new['accruvalDetID'];
+                $detail_arr['serviceLineSystemID'] = $new['serviceLineSystemID'];
+                $detail_arr['serviceLineCode'] = $new['serviceLine'];
+                $detail_arr['companySystemID'] = $jvMasterData->companySystemID;
+                $detail_arr['companyID'] = $jvMasterData->companyID;
+                $detail_arr['chartOfAccountSystemID'] = $new['chartOfAccountSystemID'];
+                $detail_arr['glAccount'] = $new['GlCode'];
+                $detail_arr['glAccountDescription'] = $new['AccountDescription'];
+                $detail_arr['glAccountDescription'] = $new['AccountDescription'];
+                $detail_arr['debitAmount'] = $new['DebitAmount'];
+                $detail_arr['creditAmount'] = 0;
+                $detail_arr['currencyID'] = $jvMasterData->currencyID;
+                $detail_arr['currencyER'] = $jvMasterData->currencyER;
+                $detail_arr['createdPcID'] = gethostname();
+                $detail_arr['createdUserID'] = $user->employee['empID'];
+                $detail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+                $store = $this->jvDetailRepository->create($detail_arr);
+
+            }else if($new['CreditAmount'] != 0){
+                $detail_arr['jvMasterAutoId'] = $jvMasterAutoId;
+                $detail_arr['documentSystemID'] = $jvMasterData->documentSystemID;
+                $detail_arr['documentID'] = $jvMasterData->documentID;
+                $detail_arr['recurringjvMasterAutoId'] = $new['accMasterID'];
+                $detail_arr['recurringjvDetailAutoID'] = $new['accruvalDetID'];
+                $detail_arr['serviceLineSystemID'] = $new['serviceLineSystemID'];
+                $detail_arr['serviceLineCode'] = $new['serviceLine'];
+                $detail_arr['companySystemID'] = $jvMasterData->companySystemID;
+                $detail_arr['companyID'] = $jvMasterData->companyID;
+                $detail_arr['chartOfAccountSystemID'] = $new['chartOfAccountSystemID'];
+                $detail_arr['glAccount'] = $new['GlCode'];
+                $detail_arr['glAccountDescription'] = $new['AccountDescription'];
+                $detail_arr['glAccountDescription'] = $new['AccountDescription'];
+                $detail_arr['debitAmount'] = 0;
+                $detail_arr['creditAmount'] = $new['CreditAmount'];
+                $detail_arr['currencyID'] = $jvMasterData->currencyID;
+                $detail_arr['currencyER'] = $jvMasterData->currencyER;
+                $detail_arr['createdPcID'] = gethostname();
+                $detail_arr['createdUserID'] = $user->employee['empID'];
+                $detail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+                $store = $this->jvDetailRepository->create($detail_arr);
+            }
+
+        }
+
+        // updating accrual master data
+
+        return $this->sendResponse('', 'JV Details saved successfully');
+
+    }
+
 }

@@ -659,4 +659,99 @@ class JvMasterAPIController extends AppBaseController
 
         return $this->sendResponse($jvMasterData, 'Jv Master retrieved successfully');
     }
+
+    public function journalVoucherForSalaryJVMaster(Request $request)
+    {
+
+        $companySystemID = $request['companySystemID'];
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company master not found');
+        }
+
+        if ($company) {
+            $companyID = $company->CompanyID;
+        }
+
+        $output = DB::select("SELECT
+	hrms_jvmaster.accruvalMasterID,
+	hrms_jvmaster.salaryProcessMasterID,
+	hrms_jvmaster.JVCode,
+	hrms_jvmaster.accruvalNarration,
+	hrms_jvmaster.accConfirmedYN,
+	hrms_jvmaster.accJVSelectedYN,
+	hrms_jvmaster.accJVpostedYN,
+	hrms_jvmaster.accmonth
+FROM
+	hrms_jvmaster
+WHERE hrms_jvmaster.accConfirmedYN = 1
+AND hrms_jvmaster.accJVSelectedYN = 0
+AND hrms_jvmaster.accJVpostedYN = 0
+AND hrms_jvmaster.companyID = '" . $companyID . "'");
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+
+    }
+
+
+    public function journalVoucherForSalaryJVDetail(Request $request)
+    {
+        $companySystemID = $request['companyId'];
+        $accruvalMasterID = $request['accruvalMasterID'];
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company master not found');
+        }
+
+        if ($company) {
+            $companyID = $company->CompanyID;
+        }
+
+        $output = DB::select("SELECT
+	hrms_jvdetails.accruvalDetID,
+	hrms_jvdetails.accMasterID,
+	serviceline.serviceLineSystemID,
+	hrms_jvdetails.serviceLine,
+	hrms_jvdetails.GlCode,
+	hrms_jvdetails.localAmount,
+	chartofaccounts.chartOfAccountSystemID,
+	chartofaccounts.AccountDescription,
+	hrms_jvdetails.localCurrency,
+	Sum(
+
+		IF (
+			localAmount < 0,
+			localAmount * - 1,
+			0
+		)
+	) AS CreditAmount,
+	Sum(
+
+		IF (
+			localAmount > 0,
+			localAmount,
+			0
+		)
+	) AS DebitAmount
+FROM
+	hrms_jvdetails
+INNER JOIN chartofaccounts ON hrms_jvdetails.GlCode = chartofaccounts.AccountCode
+LEFT JOIN serviceline ON hrms_jvdetails.serviceLine = serviceline.ServiceLineCode
+WHERE
+	hrms_jvdetails.accMasterID = $accruvalMasterID
+AND hrms_jvdetails.companyID = '" . $companyID . "'
+GROUP BY
+	hrms_jvdetails.accMasterID,
+	hrms_jvdetails.serviceLine,
+	hrms_jvdetails.GlCode,
+	chartofaccounts.AccountDescription,
+	hrms_jvdetails.localCurrency,
+	hrms_jvdetails.companyID");
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+    }
 }

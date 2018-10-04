@@ -39,6 +39,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\GRVDetails;
 use App\Models\Months;
 use App\Models\ProcumentOrder;
 use App\Models\SegmentMaster;
@@ -584,7 +585,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             ->sum('totTransactionAmount');
 
                         if($checkPreTotal > $poMasterTotal->poTotalSupplierTransactionCurrency){
-                            return $this->sendError('Supplier Invoice amount is greater than '.$exc->pomaster->purchaseOrderCode.' PO amount', 500);
+                            return $this->sendError('Supplier Invoice amount is greater than '.$exc->pomaster->purchaseOrderCode.' PO amount. Please check again.', 500);
                         }
                     }
                 }
@@ -605,7 +606,29 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             ->sum('totTransactionAmount');
 
                         if($checkPreTotal > $unbilledGRTotal->totTransactionAmount ){
-                            return $this->sendError('Supplier Invoice amount is greater than UnbilledGRV amount', 500);
+                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Please check again.', 500);
+                        }
+                    }
+                }
+            }
+
+            //checking Supplier Invoice amount is greater than GRV Amount validations
+            if ($input['documentType'] == 0) {
+                $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->with(['grvmaster'])
+                    ->get();
+                if($checktotalExceed){
+                    foreach($checktotalExceed as $exc){
+
+                        $grvDetailSum = GRVDetails::select(DB::raw('COALESCE(SUM(landingCost_TransCur * noQty),0) as total'))
+                            ->where('grvAutoID', $exc->grvAutoID)
+                            ->first();
+
+                        $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
+                            ->sum('totTransactionAmount');
+
+                        if($checkPreTotal > $grvDetailSum['total']){
+                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Please check again.', 500);
                         }
                     }
                 }
