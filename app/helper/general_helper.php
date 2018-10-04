@@ -83,6 +83,32 @@ class Helper
     }
 
     /**
+     * Get all sub companies related to a group
+     * @param $selectedCompanyId - current company id
+     * @return array
+     */
+    public static function getSubCompaniesByGroupCompany($selectedCompanyId)
+    {
+        $companiesByGroup = Models\Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
+        $groupCompany = [];
+        if ($companiesByGroup) {
+            foreach ($companiesByGroup as $val) {
+                if ($val['isGroup'] == -1) {
+                    foreach ($val['child'] as $val1) {
+                        if ($val['isGroup'] == 0) {
+                            $groupCompany[] = array('companySystemID' => $val1["companySystemID"], 'CompanyID' => $val1["CompanyID"], 'CompanyName' => $val1["CompanyName"]);
+                        }
+                    }
+                } else {
+                    $groupCompany[] = array('companySystemID' => $val["companySystemID"], 'CompanyID' => $val["CompanyID"], 'CompanyName' => $val["CompanyName"]);
+                }
+            }
+        }
+        $groupCompany = array_column($groupCompany, 'companySystemID');
+        return $groupCompany;
+    }
+
+    /**
      * A common function to confirm document with approval creation
      * @param $params : accept parameters as an array
      * $param 1-documentSystemID : autoID
