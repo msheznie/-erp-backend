@@ -196,9 +196,11 @@
               </td>
           </tr>--}}
         <tr>
+            @if($request->footerDate)
             <td style="width:33%;font-size: 10px;">
                 <span style="font-weight: bold; font-size: 12px ">  {{date("d/m/Y", strtotime(now()))}}</span>
             </td>
+            @endif
             {{--   <td style="width:33%;font-size: 10px;vertical-align: top;">
                    <p><span class="font-weight-bold"><span>{!! nl2br($request->docRefNo) !!} </span></span>
                    </p>
@@ -391,7 +393,7 @@
                         @endif
                         @if ($request->line_contractNo)
                             <tr>
-                                <td width="120px"><span class="font-weight-bold">Contract</span></td>
+                                <td width="120px"><span class="font-weight-bold">Contract      @if($request->line_paymentTerms) Ref No @endif </span></td>
                                 <td width="10px"><span class="font-weight-bold">-</span></td>
                                 <td><span>{{$request->invoicedetails[0]->clientContractID}}</span></td>
                             </tr>
@@ -405,6 +407,16 @@
 
                         </tr>
                         @endif
+
+                        @if($request->line_paymentTerms)
+                            <tr>
+                                <td width="120px"><span class="font-weight-bold">Payment Terms</span></td>
+                                <td width="10px"><span class="font-weight-bold">-</span></td>
+                                <td>{{$request->paymentInDaysForJob}} Days</td>
+
+                            </tr>
+                            @endif
+
                         @if ($request->line_unit)
                             <tr>
                                 <td width="120px"><span class="font-weight-bold">Unit</span></td>
@@ -471,9 +483,21 @@
     </div>
 
     <br>
+    @if($request->line_rentalPeriod)
+
+        <div class="row" style="text-align: center">
+            <b>Rental Period From
+                {{\App\helper\Helper::dateFormat($request->invoicedetail->billmaster->rentalStartDate)}} -
+                {{\App\helper\Helper::dateFormat($request->invoicedetail->billmaster->rentalEndDate)}}</b>
+        </div>
+        <div class="row" style="">
+            <b>{{$request->invoicedetail->billmaster->ticketmaster->rig->RigDescription}}</span> | <span> {{$request->invoicedetail->billmaster->ticketmaster->regNo}}</b>
+        </div>
+        @else
     <div class="row" style="">
         <b>Comments : </b>  {!! nl2br($request->comments) !!}
     </div>
+    @endif
     <div class="row">
         <div style="text-align: right"><b>Currency
                 : {{empty($request->currency) ? '' : $request->currency->CurrencyCode}} </b></div>
@@ -489,7 +513,7 @@
                     <th style="text-align: center">Well</th>
                     <th style="text-align: center">Network</th>
                     <th style="text-align: center">SE</th>
-                    <th style="text-align: center">Amount</th>
+                    <th style="text-align: right">Amount</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -558,7 +582,7 @@
                     <th style="width:10%;text-align: center">Details</th>
 
 
-                    <th style="width:10%;text-align: center">Amount </th>
+                    <th style="width:10%;text-align: right">Amount </th>
                 </tr>
                 </thead>
 
@@ -595,7 +619,7 @@
                     <th style="width:60%;text-align: center">GL Code Description</th>
                     <th style="width:10%;text-align: center">QTY</th>
                     <th style="width:10%;text-align: center">Unit Rate</th>
-                    <th style="width:10%;text-align: center">Amount</th>
+                    <th style="width:10%;text-align: right">Amount</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -699,13 +723,13 @@
                 <td> - {{($request->bankaccount) ? $request->bankaccount->AccountNo : ''}}</td>
             </tr>
             <tr>
-                <td width="100px"><span class="font-weight-bold">Swift Code </span></td>
+                <td width="100px"><span class="font-weight-bold">SWIFT Code </span></td>
                 <td> - {{($request->bankaccount) ? $request->bankaccount->accountSwiftCode : ''}}</td>
             </tr>
         </table>
     </div>
 
-
+            @if(!$request->line_rentalPeriod)
     <div class="" style="margin-top: 60px;">
         <table width="100%">
 
@@ -747,12 +771,17 @@
                 </td>
             </tr>
             <tr>
+
                 @foreach ($request->approved_by as $det)
                     <td style="padding-right: 25px" class="text-center">
                         @if($det->employee)
                             {{$det->employee->empFullName }}
                         @endif
-                        <br><br>
+                        <br>
+                            @if($det->employee)
+                                {{$det->employee->details->designation->designation }}
+                            @endif
+                            <br><br>
                         @if($det->employee)
                             {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
                         @endif
@@ -761,6 +790,33 @@
             </tr>
         </table>
     </div>
+            @else
+                {{--SGG PDO ONLY--}}
+                <div class="" style="margin-top: 60px;">
+                    <table width="100%">
+
+                        <tr>
+                            <td width="15%">
+                                <span class="font-weight-bold">Prepared By :</span>
+                            </td>
+                            <td width="35%">
+                                @if($request->createduser)
+                                    {{$request->createduser->empName}}
+                                @endif
+                            </td>
+                            <td width="30%" style="">
+
+                            </td>
+                            <td width="20%" style="text-align:center; border-top: 1px solid black;margin-top: 7px;">
+                                <span class="font-weight-bold">Authorized  Signatory :</span>
+                            </td>
+
+
+                        </tr>
+
+                    </table>
+                </div>
+            @endif
 </div>
 
 
