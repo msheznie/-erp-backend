@@ -9,13 +9,21 @@
  * -- Description : This file contains the all CRUD for Bank Ledger
  * -- REVISION HISTORY
  * -- Date: 19-September 2018 By: Fayas Description: Added new functions named as getBankReconciliationsByType()
+ * -- Date: 27-September 2018 By: Fayas Description: Added new functions named as getBankAccountPaymentReceiptByType()
+ * -- Date: 03-October 2018 By: Fayas Description: Added new functions named as getPaymentsByBankTransfer()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBankLedgerAPIRequest;
 use App\Http\Requests\API\UpdateBankLedgerAPIRequest;
 use App\Models\BankLedger;
+use App\Models\BankReconciliation;
+use App\Models\GeneralLedger;
+use App\Models\PaymentBankTransfer;
 use App\Repositories\BankLedgerRepository;
+use App\Repositories\BankReconciliationRepository;
+use App\Repositories\PaymentBankTransferRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -26,15 +34,19 @@ use Response;
  * Class BankLedgerController
  * @package App\Http\Controllers\API
  */
-
 class BankLedgerAPIController extends AppBaseController
 {
     /** @var  BankLedgerRepository */
     private $bankLedgerRepository;
+    private $bankReconciliationRepository;
+    private $paymentBankTransferRepository;
 
-    public function __construct(BankLedgerRepository $bankLedgerRepo)
+    public function __construct(BankLedgerRepository $bankLedgerRepo, BankReconciliationRepository $bankReconciliationRepo,
+                                PaymentBankTransferRepository $paymentBankTransferRepo)
     {
         $this->bankLedgerRepository = $bankLedgerRepo;
+        $this->bankReconciliationRepository = $bankReconciliationRepo;
+        $this->paymentBankTransferRepository = $paymentBankTransferRepo;
     }
 
     /**
@@ -234,26 +246,174 @@ class BankLedgerAPIController extends AppBaseController
 
         $employee = \Helper::getEmployeeInfo();
         $updateArray = array();
-        $updateArray['trsClearedYN'] = $input['trsClearedYN'];
 
-        if($updateArray['trsClearedYN']){
-            $updateArray['trsClearedAmount'] = $bankLedger->payAmountSuppTrans;
-            $updateArray['trsClearedByEmpName'] = $employee->empName;
-            $updateArray['trsClearedByEmpID'] = $employee->empID;
-            $updateArray['trsClearedByEmpSystemID'] = $employee->employeeSystemID;
-            $updateArray['trsClearedDate'] = now();
-            $updateArray['bankRecAutoID'] = $input['bankRecAutoID'];
-        }else{
-            $updateArray['trsClearedAmount'] = 0;
-            $updateArray['trsClearedByEmpName'] = null;
-            $updateArray['trsClearedByEmpID'] = null;
-            $updateArray['trsClearedByEmpSystemID'] = null;
-            $updateArray['trsClearedDate'] = null;
-            $updateArray['bankRecAutoID'] = null;
+        if (array_key_exists('editType', $input)) {
+
+            if ($input['editType'] == 1) {
+
+                $bankReconciliation = $this->bankReconciliationRepository->findWithoutFail($input['bankRecAutoID']);
+
+                if (empty($bankReconciliation)) {
+                    return $this->sendError('Bank Reconciliation not found');
+                }
+
+                if ($bankReconciliation->confirmedYN == 1) {
+                    return $this->sendError('You cannot edit, This document already confirmed.', 500);
+                }
+
+                if ($input['bankClearedYN']) {
+                    $updateArray['bankClearedYN'] = -1;
+                } else {
+                    $updateArray['bankClearedYN'] = 0;
+                }
+
+                if ($updateArray['bankClearedYN']) {
+                    $updateArray['bankClearedAmount'] = $bankLedger->payAmountBank;
+                    $updateArray['bankClearedByEmpName'] = $employee->empName;
+                    $updateArray['bankClearedByEmpID'] = $employee->empID;
+                    $updateArray['bankClearedByEmpSystemID'] = $employee->employeeSystemID;
+                    $updateArray['bankClearedDate'] = now();
+                    $updateArray['bankRecAutoID'] = $input['bankRecAutoID'];
+                    $updateArray['bankreconciliationDate'] = $bankReconciliation->bankRecAsOf;
+                    $updateArray['bankRecYear'] = $bankReconciliation->year;
+                    $updateArray['bankrecMonth'] = $bankReconciliation->month;
+                } else {
+                    $updateArray['bankClearedAmount'] = 0;
+                    $updateArray['bankClearedByEmpName'] = null;
+                    $updateArray['bankClearedByEmpID'] = null;
+                    $updateArray['bankClearedByEmpSystemID'] = null;
+                    $updateArray['bankClearedDate'] = null;
+                    $updateArray['bankRecAutoID'] = null;
+                    $updateArray['bankreconciliationDate'] = null;
+                    $updateArray['bankRecYear'] = null;
+                    $updateArray['bankrecMonth'] = null;
+                }
+
+                $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
+
+                $bankRecReceiptAmount = BankLedger::where('bankRecAutoID', $input['bankRecAutoID'])
+                    ->where('bankClearedYN', -1)
+                    ->where('payAmountBank', '<', 0)
+                    ->sum('bankClearedAmount');
+
+                $bankRecPaymentAmount = BankLedger::where('bankRecAutoID', $input['bankRecAutoID'])
+                    ->where('bankClearedYN', -1)
+                    ->where('payAmountBank', '>', 0)
+                    ->sum('bankClearedAmount');
+
+                $closingAmount = $bankReconciliation->openingBalance + ($bankRecReceiptAmount * -1) - $bankRecPaymentAmount;
+
+                $inputNew = array('closingBalance' => $closingAmount);
+                $this->bankReconciliationRepository->update($inputNew, $input['bankRecAutoID']);
+            } else if ($input['editType'] == 2) {
+
+                if($bankLedger->bankClearedYN == -1){
+                    return $this->sendError('You cannot edit, This item already added to bank reconciliation.', 500);
+                }
+
+                if ($input['trsCollectedYN']) {
+                    $updateArray['trsCollectedYN'] = -1;
+                } else {
+                    $updateArray['trsCollectedYN'] = 0;
+                }
+
+                if ($updateArray['trsCollectedYN']) {
+                    $updateArray['trsCollectedByEmpName'] = $employee->empName;
+                    $updateArray['trsCollectedByEmpID'] = $employee->empID;
+                    $updateArray['trsCollectedByEmpSystemID'] = $employee->employeeSystemID;
+                    $updateArray['trsCollectedDate'] = now();
+                } else {
+                    $updateArray['trsCollectedByEmpName'] = null;
+                    $updateArray['trsCollectedByEmpID'] = null;
+                    $updateArray['trsCollectedByEmpSystemID'] = null;
+                    $updateArray['trsCollectedDate'] = null;
+                }
+
+                $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
+            } else if ($input['editType'] == 3) {
+
+                if($bankLedger->pulledToBankTransferYN == -1){
+                    return $this->sendError('You cannot edit, This payment already added to bank transfer.', 500);
+                }
+
+                if($bankLedger->bankClearedYN == -1){
+                    return $this->sendError('You cannot edit, This item already added to bank reconciliation.', 500);
+                }
+
+                if ($input['trsClearedYN']) {
+                    $updateArray['trsClearedYN'] = -1;
+                } else {
+                    $updateArray['trsClearedYN'] = 0;
+                }
+
+                if ($updateArray['trsClearedYN'] == -1) {
+
+
+                    $checkGLAmount = GeneralLedger::where('companySystemID', $bankLedger->companySystemID)
+                        ->where('documentSystemID', $bankLedger->documentSystemID)
+                        ->where('documentSystemCode', $bankLedger->documentSystemCode)
+                        ->where('chartOfAccountSystemID', $bankLedger->payeeGLCodeID)
+                        ->first();
+
+                    if (!empty($checkGLAmount)) {
+                        $glAmount = 0;
+                        if ($bankLedger->bankCurrency == $checkGLAmount->documentLocalCurrencyID) {
+                            $glAmount = $checkGLAmount->documentLocalAmount;
+                        } else if ($bankLedger->bankCurrency == $checkGLAmount->documentRptCurrencyID) {
+                            $glAmount = $checkGLAmount->documentRptAmount;
+                        }
+                        if ($bankLedger->payAmountBank != $glAmount) {
+                            return $this->sendError('Bank amount is not matching with GL amount.', 500);
+                        }
+                    } else {
+                        return $this->sendError('GL data cannot be found for this document.', 500);
+                    }
+                }
+
+
+                if ($updateArray['trsClearedYN']) {
+                    $updateArray['trsClearedAmount'] = $bankLedger->payAmountBank;
+                    $updateArray['trsClearedByEmpName'] = $employee->empName;
+                    $updateArray['trsClearedByEmpID'] = $employee->empID;
+                    $updateArray['trsClearedByEmpSystemID'] = $employee->employeeSystemID;
+                    $updateArray['trsClearedDate'] = now();
+                } else {
+                    $updateArray['trsClearedAmount'] = 0;
+                    $updateArray['trsClearedByEmpName'] = null;
+                    $updateArray['trsClearedByEmpID'] = null;
+                    $updateArray['trsClearedByEmpSystemID'] = null;
+                    $updateArray['trsClearedDate'] = null;
+                }
+
+                $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
+            }else if ($input['editType'] == 4) {
+
+                $bankTransfer = $this->paymentBankTransferRepository->findWithoutFail($input['paymentBankTransferID']);
+
+                if (empty($bankTransfer)) {
+                    return $this->sendError('Bank Transfer not found');
+                }
+
+                if ($bankTransfer->confirmedYN == 1) {
+                    return $this->sendError('You cannot edit, This document already confirmed.', 500);
+                }
+
+                if ($input['pulledToBankTransferYN']) {
+                    $updateArray['pulledToBankTransferYN'] = -1;
+                } else {
+                    $updateArray['pulledToBankTransferYN'] = 0;
+                }
+
+                if ($updateArray['pulledToBankTransferYN']) {
+                    $updateArray['paymentBankTransferID'] = $input['paymentBankTransferID'];
+                } else {
+                    $updateArray['paymentBankTransferID'] = null;
+                }
+
+                $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
+            }
         }
-
-        $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
-
+        $bankLedger = $this->bankLedgerRepository->findWithoutFail($id);
         return $this->sendResponse($bankLedger->toArray(), 'BankLedger updated successfully');
     }
 
@@ -329,22 +489,48 @@ class BankLedgerAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $logistics = BankLedger::whereIn('companySystemID', $subCompanies)
-                                 ->where('invoiceType',$input['invoiceType']);
-                                //->where("bankAccountAutoID",$input['bankAccountAutoID'])
-                                //->with(['month','created_by','bank_account']);
+        $type = '<';
+
+        if (array_key_exists('type', $input) && ($input['type'] == 1 || $input['type'] == 2)) {
+
+            if ($input['type'] == 1) {
+                $type = '<';
+            } else if ($input['type'] == 2) {
+                $type = '>';
+            }
+        }
+
+        $bankReconciliation = BankReconciliation::find($input['bankRecAutoID']);
+        $confirmed = 0;
+        if (!empty($bankReconciliation)) {
+            $confirmed = $bankReconciliation->confirmedYN;
+        }
+
+        $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
+            ->where('payAmountBank', $type, 0)
+            ->where("bankAccountID", $input['bankAccountAutoID'])
+            ->where("trsClearedYN", -1)
+            ->where(function ($q) use ($input, $confirmed) {
+                $q->where(function ($q1) use ($input) {
+                    $q1->where('bankRecAutoID', $input['bankRecAutoID'])
+                        ->where("bankClearedYN", -1);
+                })->when($confirmed == 0, function ($q2) {
+                    $q2->orWhere("bankClearedYN", 0);
+                });
+
+            });
 
         $search = $request->input('search.value');
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $logistics = $logistics->where(function ($query) use ($search) {
+            $bankLedger = $bankLedger->where(function ($query) use ($search) {
                 $query->where('documentCode', 'LIKE', "%{$search}%")
                     ->orWhere('documentNarration', 'LIKE', "%{$search}%");
             });
         }
 
-        return \DataTables::eloquent($logistics)
+        return \DataTables::eloquent($bankLedger)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -358,4 +544,130 @@ class BankLedgerAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function getBankAccountPaymentReceiptByType(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $type = '<';
+
+        if (array_key_exists('type', $input) && ($input['type'] == 1 || $input['type'] == 2)) {
+
+            if ($input['type'] == 1) {
+                $type = '<';
+            } else if ($input['type'] == 2) {
+                $type = '>';
+            }
+        }
+
+        $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
+                                ->where('payAmountBank', $type, 0)
+                                ->where("bankAccountID", $input['bankAccountAutoID'])
+                                //->where("trsClearedYN", -1)
+                                ->where("bankClearedYN", 0);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankLedger = $bankLedger->where(function ($query) use ($search) {
+                $query->where('documentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('documentNarration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($bankLedger)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('bankLedgerAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getPaymentsByBankTransfer(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $paymentBankTransfer = PaymentBankTransfer::find($input['paymentBankTransferID']);
+        $confirmed = 0;
+        if (!empty($paymentBankTransfer)) {
+            $confirmed = $paymentBankTransfer->confirmedYN;
+        }
+
+
+        $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
+                                ->where('payAmountBank', '>', 0)
+                                ->where("bankAccountID", $input['bankAccountAutoID'])
+                                ->where("trsClearedYN", -1)
+                                ->where("bankClearedYN", 0)
+                                ->whereIn('invoiceType',[2,3,5])
+                                ->where(function ($q) use ($input, $confirmed) {
+                                    $q->where(function ($q1) use ($input) {
+                                        $q1->where('paymentBankTransferID', $input['paymentBankTransferID'])
+                                            ->where("pulledToBankTransferYN", -1);
+                                    })->when($confirmed == 0, function ($q2) {
+                                        $q2->orWhere("pulledToBankTransferYN", 0);
+                                    });
+                                });
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankLedger = $bankLedger->where(function ($query) use ($search) {
+                $query->where('documentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('documentNarration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($bankLedger)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('bankLedgerAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
 }

@@ -470,8 +470,8 @@ class LogisticDetailsAPIController extends AppBaseController
                         $item['partNo'] = '';
                     }
                     $item['itemUOM'] = $new['unitOfMeasure'];
-                    $item['itemPOQtry'] = $new['poQty'];
-                    $item['itemShippingQty'] = 0;
+                    $item['itemPOQtry'] = $new['noQty'];
+                    $item['itemShippingQty'] = $new['noQty'];
                     $item['POdeliveryWarehousLocation'] = $logistic->agentDeliveryLocationID;
                     $item['GRVsystemCode'] = $new['grvAutoID'];
                     $item['GRVStatus'] = -1;
@@ -499,8 +499,8 @@ class LogisticDetailsAPIController extends AppBaseController
                         }
 
                         $checkAllSelected = PurchaseOrderDetails::where('purchaseOrderMasterID', $newRow->POid)
-                            ->where('logisticSelectedYN', 1)
-                            ->count();
+                                                                ->where('logisticSelectedYN', 1)
+                                                                ->count();
 
                         if ($checkAllSelected == 0) {
                             $po = ProcumentOrder::fiind($newRow->POid);

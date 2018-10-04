@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : DirectPaymentDetailsAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Payment Voucher
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 18 - September 2018
+ * -- Description : This file contains the all CRUD for Direct payment detail
+ * -- REVISION HISTORY
+ * -- Date: 18 September 2018 By: Mubashir Description: Added new function updateDirectPaymentAccount(),deleteAllDirectPayment(),getDirectPaymentDetails()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDirectPaymentDetailsAPIRequest;
@@ -8,6 +18,7 @@ use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\CurrencyConversion;
 use App\Models\DirectPaymentDetails;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
@@ -116,39 +127,13 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $company = Company::find($input['companySystemID']);
-        if (empty($company)) {
-            return $this->sendError('Company not found');
-        }
-
-        $input['companyID'] = $company->CompanyID;
-
-        $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
-        if (empty($chartOfAccount)) {
-            return $this->sendError('Chart of Account not found');
-        }
-
-        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 1]);
-
-        if (count($directPaymentDetails) > 0) {
-            return $this->sendError('You cannot add item because already a bank account is added');
-        }
-
-        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 0]);
-
-        if (count($directPaymentDetails) > 0) {
-            if($chartOfAccount->isBank){
-                return $this->sendError('You cannot add a bank account as already items added');
-            }
-        }
-
         $payMaster = PaySupplierInvoiceMaster::find($input['directPaymentAutoID']);
 
         if (empty($payMaster)) {
             return $this->sendError('Payment voucher not found');
         }
 
-        $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID',$payMaster->BPVbank)->first();
+        $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
 
         if (empty($bankMaster)) {
             return $this->sendError('Selected Bank is not active');
@@ -160,20 +145,74 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Selected Bank Account is not active');
         }
 
+        $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
+        if (empty($chartOfAccount)) {
+            return $this->sendError('Chart of Account not found');
+        }
+
+        $company = Company::find($input['companySystemID']);
+        if (empty($company)) {
+            return $this->sendError('Company not found');
+        }
+
+        if ($bankAccount->chartOfAccountSystemID == $input['chartOfAccountSystemID']) {
+            return $this->sendError('You are trying to select the same bank account');
+        }
+
+        if ($payMaster->expenseClaimOrPettyCash == 6 || $payMaster->expenseClaimOrPettyCash == 7) {
+            $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'relatedPartyYN' => 1]);
+            if (count($directPaymentDetails) > 0) {
+                return $this->sendError('Cannot add GL code as there is a related party GL code added.');
+            }
+
+            $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'relatedPartyYN' => 0]);
+            if (count($directPaymentDetails) > 0) {
+                if ($chartOfAccount->relatedPartyYN) {
+                    return $this->sendError('Cannot add related party GL code as there is a GL code added.');
+                }
+            }
+        }
+
+        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 1]);
+        if (count($directPaymentDetails) > 0) {
+            return $this->sendError('Cannot add GL code as there is a bank GL code added.');
+        }
+
+        $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 0]);
+
+        if (count($directPaymentDetails) > 0) {
+            if ($chartOfAccount->isBank) {
+                return $this->sendError('Cannot add bank account GL code as there is a GL code added.');
+            }
+        }
+
+        $input['companyID'] = $company->CompanyID;
+
         $input['glCode'] = $chartOfAccount->AccountCode;
         $input['glCodeDes'] = $chartOfAccount->AccountDescription;
         $input['glCodeIsBank'] = $chartOfAccount->isBank;
+        $input['relatedPartyYN'] = $chartOfAccount->relatedPartyYN;
 
+        $input['supplierTransCurrencyID'] = $payMaster->supplierTransCurrencyID;
+        $input['supplierTransER'] = 1;
         $input['DPAmountCurrency'] = $payMaster->supplierTransCurrencyID;
         $input['DPAmountCurrencyER'] = 1;
         $input['localCurrency'] = $payMaster->localCurrencyID;
         $input['localCurrencyER'] = $payMaster->localCurrencyER;
         $input['comRptCurrency'] = $payMaster->companyRptCurrencyID;
         $input['comRptCurrencyER'] = $payMaster->companyRptCurrencyER;
-        $input['bankCurrencyID'] = $payMaster->BPVbankCurrency;
-        $input['bankCurrencyER'] = $payMaster->BPVbankCurrencyER;
 
-        if($payMaster->BPVsupplierID){
+        if ($chartOfAccount->isBank) {
+            $account = BankAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->where('companySystemID', $input['companySystemID'])->first();
+            $input['bankCurrencyID'] = $account->accountCurrencyID;
+            $conversionAmount = \Helper::currencyConversion($input['companySystemID'], $bankAccount->accountCurrencyID, $account->accountCurrencyID, 0);
+            $input['bankCurrencyER'] = $conversionAmount["transToDocER"];
+        } else {
+            $input['bankCurrencyID'] = $payMaster->BPVbankCurrency;
+            $input['bankCurrencyER'] = $payMaster->BPVbankCurrencyER;
+        }
+
+        if ($payMaster->BPVsupplierID) {
             $input['supplierTransCurrencyID'] = $payMaster->supplierTransCurrencyID;
             $input['supplierTransER'] = $payMaster->supplierTransCurrencyER;
         }
@@ -305,7 +344,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Direct Payment Supp Master not found');
         }
 
-        $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID',$payMaster->BPVbank)->first();
+        $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
 
         if (empty($bankMaster)) {
             return $this->sendError('Selected Bank is not active');
@@ -339,6 +378,36 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input['localAmount'] = $conversionAmount['localAmount'];
         $input['comRptAmount'] = $conversionAmount['reportingAmount'];
         $input['bankAmount'] = $conversionAmount['defaultAmount'];
+
+        if ($directPaymentDetails->glCodeIsBank) {
+            $trasToDefaultER = $input["bankCurrencyER"];
+            $bankAmount = 0;
+            if ($bankAccount->accountCurrencyID == $directPaymentDetails->bankCurrencyID) {
+                $bankAmount = $input['DPAmount'];
+            } else {
+                if ($trasToDefaultER > $directPaymentDetails->DPAmountCurrencyER) {
+                    if ($trasToDefaultER > 1) {
+                        $bankAmount = $input['DPAmount'] / $trasToDefaultER;
+                    } else {
+                        $bankAmount = $input['DPAmount'] * $trasToDefaultER;
+                    }
+                } else {
+                    If ($trasToDefaultER > 1) {
+                        $bankAmount = $input['DPAmount'] * $trasToDefaultER;
+                    } else {
+                        $bankAmount = $input['DPAmount'] / $trasToDefaultER;
+                    }
+                }
+            }
+            if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->localCurrency) {
+                $input['localAmount'] = \Helper::roundValue($bankAmount);
+            }
+
+            if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->comRptCurrency) {
+                $input['comRptAmount'] = \Helper::roundValue($bankAmount);
+            }
+            $input['bankAmount'] = \Helper::roundValue($bankAmount);
+        }
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
 
@@ -407,13 +476,83 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         return $this->sendResponse($directPaymentDetails, 'Details retrieved successfully');
     }
 
-    public function deleteAllDirectPayment(Request $request){
+    public function deleteAllDirectPayment(Request $request)
+    {
 
         $id = $request->directPaymentAutoID;
 
-        $directPaymentDetails =DirectPaymentDetails::where('directPaymentAutoID',$id)->delete();
+        $directPaymentDetails = DirectPaymentDetails::where('directPaymentAutoID', $id)->delete();
 
         return $this->sendResponse($directPaymentDetails, 'Successfully delete');
+    }
+
+    public function updateDirectPaymentAccount(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        /** @var DirectPaymentDetails $directPaymentDetails */
+        $directPaymentDetails = $this->directPaymentDetailsRepository->findWithoutFail($input['directPaymentDetailsID']);
+
+        if (empty($directPaymentDetails)) {
+            return $this->sendError('Direct Payment Details not found');
+        }
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['toBankCurrencyID'], $input['toBankCurrencyID'], $input['toBankAmount']);
+
+        $company = Company::find($input['companySystemID']);
+        $bankAccount = BankAccount::find($input['toBankAccountID']);
+        $chartofaccount = ChartOfAccount::find($bankAccount->chartOfAccountSystemID);
+
+        $input['toCompanyLocalCurrencyID'] = $company->localCurrencyID;
+        $input['toCompanyLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        $input['toCompanyLocalCurrencyAmount'] = $companyCurrencyConversion['localAmount'];
+        $input['toCompanyRptCurrencyID'] = $company->reportingCurrency;
+        $input['toCompanyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+        $input['toCompanyRptCurrencyAmount'] = $companyCurrencyConversion['reportingAmount'];
+        $input['toBankGlCodeSystemID'] = $bankAccount->chartOfAccountSystemID;
+        $input['toBankGlCode'] = $chartofaccount->AccountCode;
+        $input['toBankGLDescription'] = $chartofaccount->AccountDescription;
+        unset($input['companySystemID']);
+
+        $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $input['directPaymentDetailsID']);
+
+        return $this->sendResponse($directPaymentDetails->toArray(), 'DirectPaymentDetails updated successfully');
+
+    }
+
+    public function getDPExchangeRateAmount(Request $request)
+    {
+        $directPaymentDetails = $this->directPaymentDetailsRepository->findWithoutFail($request->directPaymentDetailsID);
+
+        if (empty($directPaymentDetails)) {
+            return $this->sendError('Direct Payment Details not found');
+        }
+
+        $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $request->toBankCurrencyID)->first();
+        $conversion = $conversion->conversion;
+
+        $bankAmount = 0;
+        if ($request->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
+            $bankAmount = $directPaymentDetails->DPAmount;
+        } else {
+            if ($conversion > $directPaymentDetails->DPAmountCurrencyER) {
+                if ($conversion > 1) {
+                    $bankAmount = $directPaymentDetails->DPAmount / $conversion;
+                } else {
+                    $bankAmount = $directPaymentDetails->DPAmount * $conversion;
+                }
+            } else {
+                If ($conversion > 1) {
+                    $bankAmount = $directPaymentDetails->DPAmount * $conversion;
+                } else {
+                    $bankAmount = $directPaymentDetails->DPAmount / $conversion;
+                }
+            }
+        }
+
+        $output = ['toBankCurrencyER' => $conversion, 'toBankAmount' => $bankAmount];
+        return $this->sendResponse($output, 'Successfully data retrieved');
     }
 
 }

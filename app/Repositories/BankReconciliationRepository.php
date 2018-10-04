@@ -59,4 +59,14 @@ class BankReconciliationRepository extends BaseRepository
     {
         return BankReconciliation::class;
     }
+
+    public function getAudit($id)
+    {
+        return $this->with(['bank_account.currency', 'confirmed_by', 'company', 'month','month_by' ,'approved_by' => function ($query) {
+            $query->with(['employee' => function ($q) {
+                $q->with(['details.designation']);
+            }])
+                ->where('documentSystemID', 62);
+        }])->findWithoutFail($id);
+    }
 }

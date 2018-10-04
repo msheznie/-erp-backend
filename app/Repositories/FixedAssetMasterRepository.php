@@ -8,7 +8,7 @@ use InfyOm\Generator\Common\BaseRepository;
 /**
  * Class FixedAssetMasterRepository
  * @package App\Repositories
- * @version August 17, 2018, 10:25 am UTC
+ * @version September 27, 2018, 5:37 am UTC
  *
  * @method FixedAssetMaster findWithoutFail($id, $columns = ['*'])
  * @method FixedAssetMaster find($id, $columns = ['*'])

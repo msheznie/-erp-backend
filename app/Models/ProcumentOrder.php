@@ -524,6 +524,16 @@ class ProcumentOrder extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransactionCurrencyID', 'currencyID');
     }
 
+    public function localcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function reportingcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+    }
+
     public function companydocumentattachment()
     {
         return $this->hasMany('App\Models\CompanyDocumentAttachment', 'documentSystemID', 'documentSystemID');
@@ -548,6 +558,11 @@ class ProcumentOrder extends Model
     public function paymentTerms_by()
     {
         return $this->hasMany('\App\Models\PoPaymentTerms','poID','purchaseOrderID');
+    }
+
+    public function advance_detail()
+    {
+        return $this->hasMany('\App\Models\PoAdvancePayment','poID','purchaseOrderID');
     }
 
 

@@ -206,7 +206,8 @@ class BankReconciliation extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'bankMasterID'
     ];
 
     /**
@@ -234,6 +235,7 @@ class BankReconciliation extends Model
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approvedYN' => 'integer',
+        'bankMasterID' => 'integer',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'RollLevForApp_curr' => 'integer',
@@ -257,6 +259,9 @@ class BankReconciliation extends Model
     public function month(){
         return $this->belongsTo('App\Models\Months','month','monthID');
     }
+    public function month_by(){
+        return $this->belongsTo('App\Models\Months','month','monthID');
+    }
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
@@ -266,4 +271,16 @@ class BankReconciliation extends Model
         return $this->belongsTo('App\Models\BankAccount', 'bankAccountAutoID', 'bankAccountAutoID');
     }
 
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','bankRecAutoID');
+    }
 }

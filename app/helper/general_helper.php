@@ -15,6 +15,7 @@
 
 namespace App\helper;
 
+use App\Jobs\CreateReceiptVoucher;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
 use App\Jobs\GeneralLedgerInsert;
@@ -336,6 +337,39 @@ class Helper
                     $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
                     $docInforArr["primarykey"] = 'PayMasterAutoId';
                     break;
+                case 62:
+                    $docInforArr["documentCodeColumnName"] = 'bankRecPrimaryCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_bankrecmaster';
+                    $docInforArr["modelName"] = 'BankReconciliation';
+                    $docInforArr["primarykey"] = 'bankRecAutoID';
+                    break;
+                case 63:
+                    $docInforArr["documentCodeColumnName"] = 'capitalizationCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_fa_assetcapitalization';
+                    $docInforArr["modelName"] = 'AssetCapitalization';
+                    $docInforArr["primarykey"] = 'capitalizationID';
+                    break;
+                case 64:
+                    $docInforArr["documentCodeColumnName"] = 'bankTransferDocumentCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_paymentbanktransfer';
+                    $docInforArr["modelName"] = 'PaymentBankTransfer';
+                    $docInforArr["primarykey"] = 'paymentBankTransferID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -352,7 +386,6 @@ class Helper
                     if ($document) {
                         //check document is already confirmed
                         $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
-
 
                         if (!$isConfirm) {
                             // get current employee detail
@@ -974,6 +1007,45 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+
+            case 62: // Bank Reconciliation
+                $docInforArr["tableName"] = 'erp_bankrecmaster';
+                $docInforArr["modelName"] = 'BankReconciliation';
+                $docInforArr["primarykey"] = 'bankRecAutoID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 63: // Asset Capitlaization
+                $docInforArr["tableName"] = 'erp_fa_assetcapitalization';
+                $docInforArr["modelName"] = 'AssetCapitalization';
+                $docInforArr["primarykey"] = 'capitalizationID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+
+            case 64: // Bank Transfer
+                $docInforArr["tableName"] = 'erp_paymentbanktransfer';
+                $docInforArr["modelName"] = 'PaymentBankTransfer';
+                $docInforArr["primarykey"] = 'paymentBankTransferID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1108,6 +1180,12 @@ class Helper
                                 $supplierMaster = $namespacedModel::selectRaw('supplierCodeSystem as supplierCodeSytem,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,uniqueTextcode,primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
                                 $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
                             }
+
+                            if ($input["documentSystemID"] == 63) { //Create Asset Disposal
+                                $assetDisposal = self::generateAssetDisposal($masterData);
+                            }
+
+
                             // insert the record to item ledger
 
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 61, 24, 7])) {
@@ -1131,6 +1209,10 @@ class Helper
                             if ($input["documentSystemID"] == 10 && !empty($sourceModel)) {
                                 $jobSI = CreateSupplierInvoice::dispatch($sourceModel);
                             }
+                            if ($input["documentSystemID"] == 4 && !empty($sourceModel)) {
+                                $jobPV = CreateReceiptVoucher::dispatch($sourceModel);
+                            }
+
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset
                                 $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
@@ -1341,7 +1423,7 @@ class Helper
             }
         } catch (\Exception $e) {
             DB::rollback();
-            return ['success' => false, 'message' => $e . 'Error Occurred'];
+            return ['success' => false, 'message' => 'Error Occurred'];
         }
     }
 
@@ -1378,6 +1460,14 @@ class Helper
                     $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 11:
+                    $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
+                    $docInforArr["modelName"] = 'BookInvSuppMaster';
+                    $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                default:
+                    return ['success' => false, 'message' => 'Document ID not set'];
             }
             //check document exist
             $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
@@ -1391,7 +1481,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -1744,7 +1834,7 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'customInvoiceLocalER';
                 $docInforArr["defaultCurrencyER"] = 'customInvoiceRptER';
                 break;
-            case 203: // MatchingMaster
+            case 204: // MatchingMaster
                 $docInforArr["modelName"] = 'MatchDocumentMaster';
                 $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
                 $docInforArr["transDefaultCurrencyID"] = 'supplierDefCurrencyID';
@@ -1840,5 +1930,119 @@ class Helper
         );
 
         return $array;
+    }
+
+    public static function generateAssetDisposal($masterData)
+    {
+        $fixedCapital = Models\AssetCapitalization::find($masterData['autoID']);
+
+        if ($fixedCapital->allocationTypeID == 1) {
+
+            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $fixedCapital['companySystemID'])->where('bigginingDate','<',NOW())->where('endingDate','>',NOW())->first();
+
+            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $fixedCapital['companySystemID'])->where('departmentSystemID', 9)->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])->where('dateFrom','<',NOW())->where('dateTo','>',NOW())->first();
+
+            $lastSerial = Models\AssetDisposalMaster::where('companySystemID', $fixedCapital['companySystemID'])
+                ->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])
+                ->orderBy('assetdisposalMasterAutoID', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            $startYear = $companyFinanceYear['bigginingDate'];
+            $finYearExp = explode('-', $startYear);
+            $finYear = $finYearExp[0];
+
+            $documentCode = ($fixedCapital['companyID'] . '\\' . $finYear . '\\FADS' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+            $dpMaster['companySystemID'] = $fixedCapital['companySystemID'];
+            $dpMaster['companyID'] = $fixedCapital['companyID'];
+            $dpMaster['companyFinanceYearID'] = $fixedCapital['companyFinanceYearID'];
+            $dpMaster['FYBiggin'] = $companyFinanceYear['bigginingDate'];
+            $dpMaster['FYEnd'] = $companyFinanceYear['endingDate'];
+            $dpMaster['FYPeriodDateFrom'] = $companyFinancePeriod['dateFrom'];
+            $dpMaster['FYPeriodDateTo'] = $companyFinancePeriod['dateTo'];
+            $dpMaster['documentSystemID'] = 41;
+            $dpMaster['documentID'] = 'FADS';
+            $dpMaster['serialNo'] = $lastSerialNumber;
+            $dpMaster['disposalDocumentCode'] = $documentCode;
+            $dpMaster['disposalDocumentDate'] = $fixedCapital['documentDate'];
+            $dpMaster['narration'] = 'Asset Re-Allocation related to ' . $fixedCapital['capitalizationCode'];
+            $dpMaster['disposalType'] = 8;
+            $dpMaster['createdUserID'] = $fixedCapital['createdUserID'];
+            $dpMaster['createdUserSystemID'] = $fixedCapital['createdUserSystemID'];
+
+            $output = Models\AssetDisposalMaster::create($dpMaster);
+
+            $asset = Models\FixedAssetMaster::withoutGlobalScopes()->find($fixedCapital['faID']);
+
+            $depreciationLocal = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountLocal');
+            $depreciationRpt = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountRpt');
+
+            $nbvRpt = $asset->costUnitRpt - $depreciationRpt;
+            $nbvLocal = $asset->COSTUNIT - $depreciationLocal;
+
+            $dpDetail['assetdisposalMasterAutoID'] = $output['assetdisposalMasterAutoID'];
+            $dpDetail['companySystemID'] = $fixedCapital['companySystemID'];
+            $dpDetail['companyID'] = $fixedCapital['companyID'];
+            $dpDetail['serviceLineSystemID'] = $asset['serviceLineSystemID'];
+            $dpDetail['serviceLineCode'] = $asset['serviceLineCode'];
+            $dpDetail['itemCode'] = $asset['itemSystemCode'];
+            $dpDetail['faID'] = $asset['faID'];
+            $dpDetail['faCode'] = $asset['faCode'];
+            $dpDetail['faUnitSerialNo'] = $asset['faUnitSerialNo'];
+            $dpDetail['assetDescription'] = $asset['assetDescription'];
+            $dpDetail['COSTUNIT'] = $asset['COSTUNIT'];
+            $dpDetail['costUnitRpt'] = $asset['costUnitRpt'];
+            $dpDetail['netBookValueLocal'] = $nbvLocal;
+            $dpDetail['depAmountLocal'] = $depreciationLocal;
+            $dpDetail['depAmountRpt'] = $depreciationRpt;
+            $dpDetail['netBookValueRpt'] = $nbvRpt;
+            $dpDetail['COSTGLCODE'] = $asset['COSTGLCODE'];
+            $dpDetail['ACCDEPGLCODE'] = $asset['ACCDEPGLCODE'];
+            $dpDetail['DISPOGLCODE'] = $asset['DISPOGLCODE'];
+
+            $output2 = Models\AssetDisposalDetail::create($dpDetail);
+
+            $capitalizeDetail = Models\AssetCapitalizationDetail::where('capitalizationID', $masterData['autoID'])->get();
+            if ($capitalizeDetail) {
+                foreach ($capitalizeDetail as $val) {
+                    $lastSerialNumber = 1;
+                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID', $masterData['companySystemID'])->first();
+                    if ($lastSerial) {
+                        $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                    }
+
+                    $asset = Models\FixedAssetMaster::withoutGlobalScopes()->find($val['faID']);
+
+                    $documentCode = ($val["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                    $data["departmentID"] = 'AM';
+                    $data["departmentSystemID"] = null;
+                    $data["serviceLineSystemID"] = $val["serviceLineSystemID"];
+                    $data["serviceLineCode"] = $val["serviceLineCode"];
+                    $data["companySystemID"] = $val["companySystemID"];
+                    $data["companyID"] = $val["companyID"];
+                    $data["documentSystemID"] = 22;
+                    $data["documentID"] = 'FA';
+                    $data["serialNo"] = $lastSerialNumber;
+                    $data["itemCode"] = $asset["itemSystemCode"];
+                    $data["faCode"] = $documentCode;
+                    $data["assetDescription"] = 'Allocation of Logistics from ' . $output['disposalDocumentCode'] . ' related to ' . $fixedCapital['capitalizationCode'];
+                    $data["dateAQ"] = NOW();
+                    $data["dateDEP"] = NOW();
+                    $data["groupTO"] = $val['faID'];
+                    $data["COSTUNIT"] = $val["allocatedAmountLocal"];
+                    $data["costUnitRpt"] = $val["allocatedAmountRpt"];
+                    $data['createdPcID'] = gethostname();
+                    $data['createdUserID'] = \Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+
+                    $fixedAsset = Models\FixedAssetMaster::create($data);
+                }
+            }
+        }
     }
 }

@@ -1,0 +1,208 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : AssetDisposalMaster.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mubashir
+ * -- Create date : 27 - September 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="AssetDisposalMaster",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="assetdisposalMasterAutoID",
+ *          description="assetdisposalMasterAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="toCompanySystemID",
+ *          description="toCompanySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="toCompanyID",
+ *          description="toCompanyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerID",
+ *          description="customerID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="serialNo",
+ *          description="serialNo",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyFinanceYearID",
+ *          description="companyFinanceYearID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentSystemID",
+ *          description="documentSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentID",
+ *          description="documentID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="disposalDocumentCode",
+ *          description="disposalDocumentCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="narration",
+ *          description="narration",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedYN",
+ *          description="confirmedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confimedByEmpSystemID",
+ *          description="confimedByEmpSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="confimedByEmpID",
+ *          description="confimedByEmpID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="confirmedByEmpName",
+ *          description="confirmedByEmpName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedYN",
+ *          description="approvedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="disposalType",
+ *          description="disposalType",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="string"
+ *      )
+ * )
+ */
+class AssetDisposalMaster extends Model
+{
+
+    public $table = 'erp_fa_asset_disposalmaster';
+    
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
+
+    protected $primaryKey = 'assetdisposalMasterAutoID';
+
+    public $fillable = [
+        'companySystemID',
+        'companyID',
+        'toCompanySystemID',
+        'toCompanyID',
+        'customerID',
+        'serialNo',
+        'companyFinanceYearID',
+        'FYBiggin',
+        'FYEnd',
+        'FYPeriodDateFrom',
+        'FYPeriodDateTo',
+        'documentSystemID',
+        'documentID',
+        'disposalDocumentCode',
+        'disposalDocumentDate',
+        'narration',
+        'confirmedYN',
+        'confimedByEmpSystemID',
+        'confimedByEmpID',
+        'confirmedByEmpName',
+        'confirmedDate',
+        'approvedYN',
+        'approvedDate',
+        'disposalType',
+        'createdUserSystemID',
+        'createdUserID',
+        'createdDateTime',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'assetdisposalMasterAutoID' => 'integer',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
+        'toCompanySystemID' => 'integer',
+        'toCompanyID' => 'string',
+        'customerID' => 'integer',
+        'serialNo' => 'integer',
+        'companyFinanceYearID' => 'integer',
+        'documentSystemID' => 'integer',
+        'documentID' => 'string',
+        'disposalDocumentCode' => 'string',
+        'narration' => 'string',
+        'confirmedYN' => 'integer',
+        'confimedByEmpSystemID' => 'integer',
+        'confimedByEmpID' => 'string',
+        'confirmedByEmpName' => 'string',
+        'approvedYN' => 'integer',
+        'disposalType' => 'integer',
+        'createdUserSystemID' => 'integer',
+        'createdUserID' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}

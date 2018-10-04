@@ -102,6 +102,15 @@ class PoAdvancePaymentAPIController extends AppBaseController
             return $this->sendError('Amount should be greater than 0');
         }
 
+        //check record all ready exist
+        $poTermExist= PoAdvancePayment::where('poTermID', $input['paymentTermID'])
+            ->where('poID', $input['poID'])
+            ->first();
+
+        if (!empty($poTermExist)) {
+            return $this->sendError('Advance Payment all ready requested');
+        }
+
         $input['serviceLineSystemID'] = $purchaseOrder->serviceLineSystemID;
         $input['serviceLineID'] = $purchaseOrder->serviceLine;
         $input['companySystemID'] = $purchaseOrder->companySystemID;
@@ -114,10 +123,11 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $input['poTermID'] = $input['paymentTermID'];
         $input['narration'] = $input['paymentTemDes'];
 
-        if (isset($input['comDate'])) {
+   /*     if (isset($input['comDate'])) {
             $masterDate = str_replace('/', '-', $input['comDate']);
             $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
-        }
+        }*/
+        $input['reqDate'] = date('Y-m-d H:i:s');
         $input['reqAmount'] = $input['comAmount'];
         $input['reqAmountTransCur_amount'] = $input['comAmount'];
 

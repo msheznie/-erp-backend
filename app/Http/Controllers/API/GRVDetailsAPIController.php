@@ -364,7 +364,7 @@ class GRVDetailsAPIController extends AppBaseController
                     } else {
                         if ($allowPartialGRVPolicy->isYesNO == 0 && $POMaster->partiallyGRVAllowed == 0) {
                             // pre check for all items qty pulled
-                            if ($new['isChecked'] && ((int)$new['noQty'] != ($new['poQty'] - (int)$new['receivedQty']))) {
+                            if ($new['isChecked'] && ((float)$new['noQty'] != ($new['poQty'] - (float)$new['receivedQty']))) {
                                 return $this->sendError('Full order quantity should be received', 422);
                             }
                         }

@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreateAdvancePaymentDetailsAPIRequest;
 use App\Http\Requests\API\UpdateAdvancePaymentDetailsAPIRequest;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
+use App\Models\BookInvSuppDet;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
@@ -274,7 +275,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                 ->where('purchaseOrderID', $advancePayment->poID)
                 ->first();
 
-            if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
+            if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount || $advancePayment->reqAmount < $advancePaymentDetailsSum->SumOfpaymentAmount) {
                 $updatePayment = PoAdvancePayment::find($input['poAdvPaymentID'])
                     ->update(['fullyPaid' => 2]);
             }
@@ -448,6 +449,47 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+            $finalError = array(
+                'po_amount_not_matching' => array(),
+            );
+            $error_count = 0;
+
+            foreach ($input['detailTable'] as $new) {
+                if ($new['isChecked']) {
+                    $totalPOAmount = $new['poTotalSupplierTransactionCurrency'];
+                    $advancePaymentAmount = 0;
+                    $supplierInvoAmount = 0;
+
+                    $advancePayment = AdvancePaymentDetails::selectRaw('SUM(paymentAmount) as paymentAmount')->whereHas('advancepaymentmaster',function($query) use ($payMaster){
+                        $query->where('isAdvancePaymentYN',0)->where('supplierID',$payMaster->BPVsupplierID);
+                    })->where('purchaseOrderID',$new["purchaseOrderID"])->first();
+
+                    if($advancePayment){
+                        $advancePaymentAmount = $advancePayment->paymentAmount;
+                    }
+
+                    $bookInvDet = BookInvSuppDet::selectRaw('SUM(supplierInvoAmount) as supplierInvoAmount')->whereHas('suppinvmaster',function($query) use ($payMaster){
+                        $query->whereHas('paysuppdetail')->where('approved',-1)->where('supplierID',$payMaster->BPVsupplierID);
+                    })->where('companySystemID',$payMaster->companySystemID)->where('purchaseOrderID',$new["purchaseOrderID"])->first();
+
+                    if($bookInvDet){
+                        $supplierInvoAmount = $bookInvDet->supplierInvoAmount;
+                    }
+
+                    $balanceAmount = $totalPOAmount - ($advancePaymentAmount + $supplierInvoAmount);
+
+                    if($balanceAmount < 0){
+                        array_push($finalError['po_amount_not_matching'], 'PO' . ' | ' . $new['purchaseOrderCode']);
+                        $error_count++;
+                    }
+                }
+            }
+
+            $confirm_error = array('type' => 'po_amount_not_matching', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("Selected order has been already paid more than the order amount. Please check the payment status for this order.", 500, $confirm_error);
+            }
+
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
                     $tempArray = $new;
@@ -462,6 +504,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     unset($tempArray['supplierID']);
                     unset($tempArray['reqAmount']);
                     unset($tempArray['BalanceAmount']);
+                    unset($tempArray['poTotalSupplierTransactionCurrency']);
 
                     if ($tempArray) {
                         $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
@@ -486,7 +529,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             return $this->sendResponse('', 'Payment details saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError($exception->getMessage());
         }
     }
 

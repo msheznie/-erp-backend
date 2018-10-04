@@ -13,6 +13,8 @@
 namespace App\helper;
 
 use App\Models\Alert;
+use App\Models\AssetCapitalization;
+use App\Models\BankReconciliation;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
@@ -28,6 +30,7 @@ use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\ItemReturnMaster;
 use App\Models\MaterielRequest;
+use App\Models\PaymentBankTransfer;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
@@ -239,6 +242,27 @@ class email
                     if (!empty($creditNote)) {
                         $data['docApprovedYN'] = $payInv->approved;
                         $data['docCode'] = $payInv->BPVcode;
+                    }
+                    break;
+                case 62:
+                    $bankRecMaster = BankReconciliation::where('bankRecAutoID', $data['docSystemCode'])->first();
+                    if (!empty($bankRecMaster)) {
+                        $data['docApprovedYN'] = $bankRecMaster->approved;
+                        $data['docCode'] = $bankRecMaster->bankRecPrimaryCode;
+                    }
+                    break;
+                case 63:
+                    $assetcapitalization = AssetCapitalization::where('capitalizationID', $data['docSystemCode'])->first();
+                    if (!empty($assetcapitalization)) {
+                        $data['docApprovedYN'] = $assetcapitalization->approved;
+                        $data['docCode'] = $assetcapitalization->capitalizationCode;
+                    }
+                    break;
+                case 64:
+                    $paymentBankTransfer = PaymentBankTransfer::where('paymentBankTransferID', $data['docSystemCode'])->first();
+                    if (!empty($paymentBankTransfer)) {
+                        $data['docApprovedYN'] = $paymentBankTransfer->approved;
+                        $data['docCode'] = $paymentBankTransfer->bankTransferDocumentCode;
                     }
                     break;
                 default:

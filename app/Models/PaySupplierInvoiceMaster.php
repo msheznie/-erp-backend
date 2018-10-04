@@ -616,6 +616,7 @@ class PaySupplierInvoiceMaster extends Model
         'isPdcChequeYN',
         'finalSettlementYN',
         'expenseClaimOrPettyCash',
+        'interCompanyToSystemID',
         'interCompanyToID',
         'ReversedYN',
         'cancelYN',
@@ -727,6 +728,7 @@ class PaySupplierInvoiceMaster extends Model
         'isPdcChequeYN' => 'integer',
         'finalSettlementYN' => 'integer',
         'expenseClaimOrPettyCash' => 'integer',
+        'interCompanyToSystemID' => 'integer',
         'interCompanyToID' => 'string',
         'ReversedYN' => 'integer',
         'cancelYN' => 'integer',
@@ -825,6 +827,21 @@ class PaySupplierInvoiceMaster extends Model
     public function bankcurrency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'BPVbankCurrency', 'currencyID');
+    }
+
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'cancelledByEmpSystemID', 'employeeSystemID');
     }
 
 

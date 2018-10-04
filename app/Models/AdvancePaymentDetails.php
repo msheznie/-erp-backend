@@ -222,5 +222,10 @@ class AdvancePaymentDetails extends Model
         return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
     }
 
+    public function advancepaymentmaster()
+    {
+        return $this->hasOne('App\Models\PoAdvancePayment', 'poAdvPaymentID', 'poAdvPaymentID');
+    }
+
     
 }

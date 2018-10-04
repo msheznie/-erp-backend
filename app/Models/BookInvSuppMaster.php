@@ -318,6 +318,7 @@ class BookInvSuppMaster extends Model
         'approvedByUserSystemID',
         'postedDate',
         'documentType',
+        'refferedBackYN',
         'timesReferred',
         'RollLevForApp_curr',
         'interCompanyTransferYN',
@@ -379,6 +380,7 @@ class BookInvSuppMaster extends Model
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'documentType' => 'integer',
+        'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'interCompanyTransferYN' => 'integer',
@@ -487,5 +489,12 @@ class BookInvSuppMaster extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
+
+    public function paysuppdetail()
+    {
+        return $this->hasMany('App\Models\PaySupplierInvoiceDetail', 'bookingInvSystemCode', 'bookingSuppMasInvAutoID');
+    }
+
+
 
 }

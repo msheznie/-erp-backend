@@ -9,6 +9,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
 use App\Models\GeneralLedger;
+use App\Models\SegmentMaster;
 use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
 use App\Models\StockTransfer;
@@ -191,6 +192,14 @@ class CreateStockReceive implements ShouldQueue
                         $cusInvoiceDetails['custInvoiceDirectID'] = $customerInvoice->custInvoiceDirectAutoID;
                         $cusInvoiceDetails['companyID'] = $stMaster->companyID;
                         $cusInvoiceDetails['serviceLineCode'] = $stMaster->serviceLineCode;
+
+                        if($cusInvoiceDetails['serviceLineCode']){
+                            $cusInvDelServiceLine = SegmentMaster::where("ServiceLineCode", $cusInvoiceDetails['serviceLineCode'])->first();
+                            if (!empty($cusInvDelServiceLine)){
+                                $cusInvoiceDetails['serviceLineSystemID'] = $cusInvDelServiceLine->serviceLineSystemID;
+                            }
+                        }
+
                         $cusInvoiceDetails['customerID'] = $customer->customerCodeSystem;
                         $cusInvoiceDetails['comments'] = $comment;
                         $cusInvoiceDetails['unitOfMeasure'] = 7;
@@ -207,6 +216,7 @@ class CreateStockReceive implements ShouldQueue
                         $glPL = $cusInvoiceDetails;
 
                         $glPL['glCode'] = '91582';
+                        $glPL['glSystemID'] = 693;
                         $glPL['glCodeDes'] = 'Product Revenue -Intercompany';
                         $glPL['accountType'] = 'PL';
                         $glPL['invoiceAmount'] = $revenueTotalRpt;
@@ -215,6 +225,7 @@ class CreateStockReceive implements ShouldQueue
                         $glPL['comRptAmount'] = $revenueTotalRpt;
 
                         $glBS['glCode'] = '20023';
+                        $glBS['glSystemID'] = 747;
                         $glBS['glCodeDes'] = 'Intercompany stock transfer';
                         $glBS['accountType'] = 'BS';
                         $glBS['invoiceAmount'] = $totalRpt;
@@ -264,6 +275,8 @@ class CreateStockReceive implements ShouldQueue
                             $data['createdUserSystemID'] = $stMaster->approvedByUserSystemID;
                             $data['createdUserPC'] = gethostname();
                             $data['timestamp'] = \Helper::currentDateTime();
+                            $data['invoiceNumber'] =   $customerInvoice->customerInvoiceNo;
+                            $data['invoiceDate'] = $customerInvoice->customerInvoiceDate;
 
                             $glAR = $data;
                             $glBS = $data;
