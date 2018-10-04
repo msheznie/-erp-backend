@@ -917,6 +917,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherSalaryJVDetailStore', 'JvDetailAPIController@journalVoucherSalaryJVDetailStore');
     Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster');
     Route::get('journalVoucherForSalaryJVDetail', 'JvMasterAPIController@journalVoucherForSalaryJVDetail');
+    Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -987,3 +988,7 @@ Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPerio
 Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
 
 Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
+
+Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
+
+Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
