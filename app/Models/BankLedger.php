@@ -448,4 +448,13 @@ class BankLedger extends Model
         return $this->belongsTo('App\Models\SupplierMaster', 'payeeID', 'supplierCodeSystem');
     }
 
+    public function bank_account()
+    {
+        return $this->belongsTo('App\Models\BankAccount', 'bankAccountID', 'bankAccountAutoID');
+    }
+
+    public function bank_cleared_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
 }

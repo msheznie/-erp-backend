@@ -11,3 +11,5 @@ Route::resource('paymentBankTransfers', 'PaymentBankTransferController');
 Route::resource('hRMSJvDetails', 'HRMSJvDetailsController');
 
 Route::resource('hRMSJvMasters', 'HRMSJvMasterController');
+
+Route::resource('accruavalFromOPMasters', 'AccruavalFromOPMasterController');

@@ -49,6 +49,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('supplier/update/currency', 'CurrencyMasterAPIController@updateCurrencyToSupplier');
     Route::post('supplier/remove/currency', 'CurrencyMasterAPIController@removeCurrencyToSupplier');
     Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
+    Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
 
     Route::resource('supplier/assigned', 'SupplierAssignedAPIController');
 
@@ -921,6 +922,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
     Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
     Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
+    Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
+    Route::post('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -937,6 +940,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
     Route::post('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
     Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
+
+    Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
+    Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
+    Route::post('generateTMReport', 'BankReconciliationAPIController@generateTMReport');
+    Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -995,3 +1003,5 @@ Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
 Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
 
 Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
+
+Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');
