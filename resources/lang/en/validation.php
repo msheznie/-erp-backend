@@ -154,7 +154,9 @@ return [
         'wareHouseSystemCode' => 'WareHouse',
         'companySystemID' => 'Company',
         'documentDate' => 'Document Date',
-        'bankRecAsOf' => 'As of Date'
+        'bankRecAsOf' => 'As of Date',
+        'bankAccountID' => 'Bank Account',
+        'bankID' => 'Bank',
     ],
 
 ];

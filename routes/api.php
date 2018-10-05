@@ -937,6 +937,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
     Route::post('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
     Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
+
+    Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
+    Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
+    Route::post('generateTMReport', 'BankReconciliationAPIController@generateTMReport');
+    Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
