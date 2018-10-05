@@ -12,6 +12,9 @@
  * -- Date: 26-September 2018 By: Fayas Description: Added new functions named as getBankReconciliationFormData()
  * -- Date: 27-September 2018 By: Fayas Description: Added new functions named as getBankReconciliationApprovalByUser(),getBankReconciliationApprovedByUser()
  * -- Date: 28-September 2018 By: Fayas Description: Added new functions named as bankReconciliationAudit()
+ * -- Date: 05 - October 2018 By: Fayas Description: Added new functions named as getTreasuryManagementFilterData(),validateTMReport(),
+ *                                                      generateTMReport(),exportTMReport()
+ *
  */
 namespace App\Http\Controllers\API;
 
@@ -19,6 +22,7 @@ use App\Http\Requests\API\CreateBankReconciliationAPIRequest;
 use App\Http\Requests\API\UpdateBankReconciliationAPIRequest;
 use App\Models\BankAccount;
 use App\Models\BankLedger;
+use App\Models\BankMaster;
 use App\Models\BankReconciliation;
 use App\Models\Company;
 use App\Models\YesNoSelection;
@@ -277,7 +281,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '<', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->where(function ($q) use ($bankReconciliation,$confirmed) {
+            ->where(function ($q) use ($bankReconciliation, $confirmed) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
                         ->where("bankClearedYN", -1);
@@ -290,7 +294,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->where(function ($q) use ($bankReconciliation,$confirmed) {
+            ->where(function ($q) use ($bankReconciliation, $confirmed) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
                         ->where("bankClearedYN", -1);
@@ -732,15 +736,15 @@ class BankReconciliationAPIController extends AppBaseController
         $bankReconciliation->docRefNo = \Helper::getCompanyDocRefNo($bankReconciliation->companySystemID, $bankReconciliation->documentSystemID);
         $bankReconciliation = $this->getUnClearReceiptPayment($bankReconciliation);
 
-        $decimalPlaces  = 2;
+        $decimalPlaces = 2;
 
-        if($bankReconciliation->bank_account){
-            if($bankReconciliation->bank_account->currency){
+        if ($bankReconciliation->bank_account) {
+            if ($bankReconciliation->bank_account->currency) {
                 $decimalPlaces = $bankReconciliation->bank_account->currency->DecimalPlaces;
             }
         }
 
-        $array = array('entity' => $bankReconciliation,'decimalPlaces' => $decimalPlaces);
+        $array = array('entity' => $bankReconciliation, 'decimalPlaces' => $decimalPlaces);
         $time = strtotime("now");
         $fileName = 'bank_reconciliation' . $id . '_' . $time . '.pdf';
         $html = view('print.bank_reconciliation', $array);
@@ -817,5 +821,157 @@ class BankReconciliationAPIController extends AppBaseController
 
     }
 
+    public function getTreasuryManagementFilterData(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $subCompaniesByGroup = [];
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $subCompaniesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompaniesByGroup = (array)$selectedCompanyId;
+        }
+
+        $banks = BankMaster::all();
+        $bankIds = $banks->pluck('bankmasterAutoID');
+        $accounts = BankAccount::whereIn('companySystemID', $subCompaniesByGroup)->whereIN('bankmasterAutoID', $bankIds)->where('isAccountActive', 1)->get();
+        $output = array(
+            'banks' => $banks,
+            'accounts' => $accounts
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    /*validate each report*/
+    public function validateTMReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'BRC':
+                $reportTypeID = '';
+                if (isset($request->reportTypeID)) {
+                    $reportTypeID = $request->reportTypeID;
+                }
+                if ($reportTypeID == 'BRC') {
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required|date',
+                        'toDate' => 'required|date|after_or_equal:fromDate',
+                        'bankAccountID' => 'required',
+                        'bankID' => 'required',
+                        'reportTypeID' => 'required',
+                    ]);
+                }
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+            default:
+                return $this->sendError('No report ID found');
+        }
+    }
+
+    public function generateTMReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'BRC': // Bank Reconciliation
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('bankID', 'bankAccountID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getBankReconciliationReportQry($request);
+                return array('reportData' => $output,
+                    'companyName' => $checkIsGroup->CompanyName,
+                );
+                break;
+            default:
+                return $this->sendError('No report ID found');
+        }
+    }
+
+
+    public function exportReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'BRC': //// Bank Reconciliation
+                $reportTypeID = $request->reportTypeID;
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('bankID', 'bankAccountID'));
+                $data = array();
+                $output = $this->getBankReconciliationReportQry($request);
+
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+
+                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x]['Document Code'] = $val->documentCode;
+                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Narration'] = $val->documentNarration;
+                        $data[$x]['Payee Name'] = $val->payeeName;
+                        $decimal = 3;
+                        if($val['bank_account']){
+                            if($val['bank_account']['currency']){
+                                $data[$x]['Bank Currency'] = $val['bank_account']['currency']['CurrencyCode'];
+                                $decimal = $val['bank_account']['currency']['DecimalPlaces'];
+                            }else{
+                                $data[$x]['Bank Currency'] = '';
+                            }
+                        }else{
+                            $data[$x]['Bank Currency'] = '';
+                        }
+                        $data[$x]['Bank Amount'] = number_format($val->payAmountBank,$decimal);
+                        $data[$x]['Reconciliation Date'] = \Helper::dateFormat($val->bankReconciliationDate);
+                        $data[$x]['Bank Cleared By'] = $val->bankClearedByEmpName;
+                        $data[$x]['Bank Cleared Date'] = \Helper::dateFormat($val->bankClearedDate);
+                        $x++;
+                    }
+                }
+
+                $csv = \Excel::create('bank_reconciliation', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
+            default:
+                return $this->sendError('No report ID found');
+        }
+    }
+
+
+    public function getBankReconciliationReportQry($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = [];
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $items = BankLedger::whereIn('companySystemID', $companyID)
+            ->where('bankClearedYN', -1)
+            ->where('bankAccountID', $request->bankAccountID)
+            ->where('bankID', $request->bankID)
+            ->whereBetween('bankReconciliationDate', [$fromDate, $toDate])
+            ->orderBy('bankReconciliationDate', 'desc')
+            ->with(['bank_account.currency'])
+            ->get();
+
+        return $items;
+    }
 
 }
