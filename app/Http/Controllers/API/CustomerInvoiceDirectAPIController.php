@@ -218,6 +218,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
 
+         $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+        if($input['bookingDate'] > $curentDate){
+            return $this->sendResponse('e', 'Dcoument date can not be greater than current date');
+        }
+
         if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
             return $this->sendResponse($customerInvoiceDirects->toArray(), 'Customer Invoice  saved successfully');
@@ -476,6 +481,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
+        $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+        if($_post['bookingDate'] > $curentDate){
+            return $this->sendError( 'Dcoument date can not be greater than current date',500);
+        }
 
         if($input['invoiceDueDate'] !=''){
             $_post['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
@@ -1274,11 +1283,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($master->isPerforma == 1) {
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
 
+
+
         } else {
 
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
 
         }
+
+       
 
 
         $companySystemID = $master->companySystemID;
@@ -1298,7 +1311,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $lineSecondAddress = false;
         $lineApprovedBy = false;
         $linePageNo = false;
+
         $linefooterAddress = false;
+        $linePdoinvoiceDetails = false;
+        $logo =true;
+        $line_performaCode = false;
+        $line_paymentTerms =false;
+        $line_rentalPeriod = false;
+        $footerDate = true;
 
         $customerInvoice->companySystemID = $companySystemID;
         switch ($companySystemID) {
@@ -1341,10 +1361,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
                 break;
             case 31: /*IPCP*/
+
+
             case 42: /*MOS*/
             case 60: /*WMS*/
             case 63: /*WSS*/
-                $linefooterAddress = true;
+
+                if($companySystemID==31){
+                    $linefooterAddress =false;
+                }else{
+                    $linefooterAddress =true;
+                }
+
                 if ($master->isPerforma == 1) {
                     $template = 1;
                     $line_unit = false;
@@ -1364,6 +1392,55 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     $line_subcontractNo = false;
                     $line_dueDate = false;
                     $invoiceDetails = false;
+                }
+                break;
+            case 52: /*SGEE*/
+                $lineApprovedBy = true;
+                /*$linefooterAddress = true;*/
+
+                if ($master->isPerforma == 1) {
+
+                    if($master->customerID==79){
+                        $footerDate = false;
+                        $logo =false;
+                        $line_seNo = false;
+                        $line_subcontractNo = false;
+                        $line_contractNo = true;
+                        $line_customerShortCode = true;
+                        $line_dueDate = false;
+                        $line_jobNo = false;
+                        $lineSecondAddress = true;
+                        $line_poNumber = false;
+                        $line_performaCode =true;
+                        $line_paymentTerms = true;
+                        $line_rentalPeriod = true;
+                        $linePdoinvoiceDetails = DB::select("SELECT wellNo, netWorkNo, SEno, sum(wellAmount) as wellAmount FROM ( SELECT performaMasterID, companyID, contractID, clientContractID FROM erp_custinvoicedirectdet WHERE custInvoiceDirectID = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN performamaster ON performamaster.companyID = '$master->companyID' AND performamaster.PerformaInvoiceNo = t.performaMasterID AND t.clientContractID = performamaster.contractID INNER JOIN performa_service_entry_wellgroup ON performamaster.PerformaMasterID = performa_service_entry_wellgroup.performaMasID GROUP BY wellNo, netWorkNo, SEno ");
+
+                        $template = 1;
+                    }else{
+
+                        $linefooterAddress = true;
+                        $logo =true;
+                        $template = 1;
+                        $line_seNo = true;
+                        $line_unit = true;
+                        $line_jobNo = true;
+                        $line_dueDate = false;
+                        $line_subcontractNo = true;
+                        $line_contractNo = false;
+                        $line_customerShortCode = false;
+                        $linePageNo = true;
+                    }
+
+
+
+
+                } else {
+                    $template = 2;
+                    $line_unit = false;
+                    $line_jobNo = false;
+                    $line_subcontractNo = false;
+
                 }
                 break;
             default:
@@ -1397,6 +1474,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
               $detail = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $id)->first();
               $template = $detail->contract->performaTempID + 1;
           }*/
+
         $customerInvoice->line_invoiceNO = $line_invoiceNO;
         $customerInvoice->line_invoiceDate = $line_invoiceDate;
         $customerInvoice->line_seNo = $line_seNo;
@@ -1412,7 +1490,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->lineSecondAddress = $lineSecondAddress;
         $customerInvoice->lineApprovedBy = $lineApprovedBy;
         $customerInvoice->linePageNo = $linePageNo;
-        $customerInvoice->linefooterAddress = $linefooterAddress;;
+        $customerInvoice->linefooterAddress = $linefooterAddress;
+        $customerInvoice->linePdoinvoiceDetails = $linePdoinvoiceDetails;
+        $customerInvoice->line_performaCode = $line_performaCode;
+        $customerInvoice->line_paymentTerms = $line_paymentTerms;
+        $customerInvoice->line_rentalPeriod = $line_rentalPeriod;
+        $customerInvoice->logo = $logo;
+        $customerInvoice->footerDate = $footerDate;
+
+
+
         $array = array('request' => $customerInvoice);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';

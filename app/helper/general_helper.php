@@ -83,6 +83,32 @@ class Helper
     }
 
     /**
+     * Get all sub companies related to a group
+     * @param $selectedCompanyId - current company id
+     * @return array
+     */
+    public static function getSubCompaniesByGroupCompany($selectedCompanyId)
+    {
+        $companiesByGroup = Models\Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
+        $groupCompany = [];
+        if ($companiesByGroup) {
+            foreach ($companiesByGroup as $val) {
+                if ($val['isGroup'] == -1) {
+                    foreach ($val['child'] as $val1) {
+                        if ($val['isGroup'] == 0) {
+                            $groupCompany[] = array('companySystemID' => $val1["companySystemID"], 'CompanyID' => $val1["CompanyID"], 'CompanyName' => $val1["CompanyName"]);
+                        }
+                    }
+                } else {
+                    $groupCompany[] = array('companySystemID' => $val["companySystemID"], 'CompanyID' => $val["CompanyID"], 'CompanyName' => $val["CompanyName"]);
+                }
+            }
+        }
+        $groupCompany = array_column($groupCompany, 'companySystemID');
+        return $groupCompany;
+    }
+
+    /**
      * A common function to confirm document with approval creation
      * @param $params : accept parameters as an array
      * $param 1-documentSystemID : autoID
@@ -1007,7 +1033,6 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-
             case 62: // Bank Reconciliation
                 $docInforArr["tableName"] = 'erp_bankrecmaster';
                 $docInforArr["modelName"] = 'BankReconciliation';
@@ -1032,7 +1057,6 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-
             case 64: // Bank Transfer
                 $docInforArr["tableName"] = 'erp_paymentbanktransfer';
                 $docInforArr["modelName"] = 'PaymentBankTransfer';
@@ -1057,11 +1081,25 @@ class Helper
             $userMessageE = '';
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApproved) {
+
+                // get current employee detail
+                $empInfo = self::getEmployeeInfo();
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
                 if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
                     return ['success' => false, 'message' => 'Document is not confirmed'];
                 }
+
+                $policyConfirmedUserToApprove  = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                                                                    ->where('companySystemID', $isConfirmed['companySystemID'])
+                                                                    ->first();
+
+                if($policyConfirmedUserToApprove->isYesNO == 0){
+                   if($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID){
+                       return ['success' => false, 'message' => 'You cannot approve this document as you have confirmed the document'];
+                   }
+                }
+
                 //check document is already approved
                 $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
@@ -1164,8 +1202,7 @@ class Helper
                                 }
                             }
                         }
-                        // get current employee detail
-                        $empInfo = self::getEmployeeInfo();
+
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
@@ -1521,7 +1558,7 @@ class Helper
     public static function dateFormat($date)
     {
         if ($date) {
-            return date("d / m / Y", strtotime($date));
+            return date("d/m/Y", strtotime($date));
         } else {
             return '';
         }

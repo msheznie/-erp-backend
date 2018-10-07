@@ -170,6 +170,12 @@ class CreditNoteAPIController extends AppBaseController
         $input['modifiedUser'] = \Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
+
+        $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+        if($input['creditNoteDate'] > $curentDate){
+            return $this->sendError( 'Dcoument date can not be greater than current date',500);
+        }
+
         if (($input['creditNoteDate'] >= $companyfinanceperiod->dateFrom) && ($input['creditNoteDate'] <= $companyfinanceperiod->dateTo)) {
             $creditNotes = $this->creditNoteRepository->create($input);
             return $this->sendResponse($creditNotes->toArray(), 'Credit Note saved successfully');
@@ -374,7 +380,10 @@ class CreditNoteAPIController extends AppBaseController
         }
 
         $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
-
+        $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+        if($_post['creditNoteDate'] > $curentDate){
+            return $this->sendError( 'Dcoument date can not be greater than current date',500);
+        }
 
         if (($_post['creditNoteDate'] >= $input['FYPeriodDateFrom']) && ($_post['creditNoteDate'] <= $input['FYPeriodDateTo'])) {
 
@@ -1031,6 +1040,54 @@ class CreditNoteAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function creditNoteReceiptStatus(Request $request){
+        $input = $request->all();
+        $creditnote = CreditNote::find($input['id']);
+
+       $data= DB::select("SELECT
+	erp_matchdocumentmaster.PayMasterAutoId as masterID,
+	erp_matchdocumentmaster.companyID,
+	erp_matchdocumentmaster.matchingDocCode as docCode,
+	erp_matchdocumentmaster.matchingDocdate as docDate,
+	erp_matchdocumentmaster.supplierTransCurrencyID as currencyID,
+	currencymaster.CurrencyCode,
+	erp_matchdocumentmaster.matchedAmount as amount,
+	erp_matchdocumentmaster.matchingConfirmedYN as confirmedYN,
+	erp_matchdocumentmaster.approved,
+	currencymaster.DecimalPlaces 
+FROM
+	erp_matchdocumentmaster
+	INNER JOIN currencymaster ON erp_matchdocumentmaster.supplierTransCurrencyID = currencymaster.currencyID 
+WHERE
+	erp_matchdocumentmaster.PayMasterAutoId = $creditnote->creditNoteAutoID 
+	AND erp_matchdocumentmaster.companyID = '$creditnote->companyID'
+	AND erp_matchdocumentmaster.documentID = '$creditnote->documentID' 
+	UNION ALL
+SELECT
+	erp_customerreceivepayment.custReceivePaymentAutoID as masterID,
+	erp_customerreceivepayment.companyID,
+IF
+	( erp_custreceivepaymentdet.matchingDocID = 0 OR erp_custreceivepaymentdet.matchingDocID IS NULL, erp_customerreceivepayment.custPaymentReceiveCode, erp_matchdocumentmaster.matchingDocCode ) AS docCode,
+IF
+	( erp_custreceivepaymentdet.matchingDocID = 0 OR erp_custreceivepaymentdet.matchingDocID IS NULL, erp_customerreceivepayment.custPaymentReceiveDate, erp_matchdocumentmaster.matchingDocdate ) AS docDate,
+	erp_custreceivepaymentdet.custTransactionCurrencyID as  currencyID,
+	currencymaster.CurrencyCode,
+	erp_custreceivepaymentdet.receiveAmountTrans as amount,
+	erp_customerreceivepayment.confirmedYN,
+	erp_customerreceivepayment.approved,
+	currencymaster.DecimalPlaces 
+FROM
+	erp_custreceivepaymentdet
+	INNER JOIN currencymaster ON erp_custreceivepaymentdet.custTransactionCurrencyID = currencymaster.currencyID
+	LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
+	LEFT JOIN erp_matchdocumentmaster ON erp_custreceivepaymentdet.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID 
+WHERE
+	erp_customerreceivepayment.companyID ='$creditnote->companyID'
+	AND erp_custreceivepaymentdet.addedDocumentID = '$creditnote->documentID'
+	AND erp_custreceivepaymentdet.bookingInvCodeSystem = $creditnote->creditNoteAutoID ");
+        return $this->sendResponse($data, 'Credit Note retrieved successfully');
     }
 
 

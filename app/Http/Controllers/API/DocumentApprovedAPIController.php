@@ -154,6 +154,9 @@ class DocumentApprovedAPIController extends AppBaseController
         }
 
         $documentType = $input['documentType'];
+        $companies = $input['companies'];
+
+
         $filter = 'AND erp_documentapproved.documentSystemID IN (0) ';
 
 
@@ -162,13 +165,18 @@ class DocumentApprovedAPIController extends AppBaseController
             $filter = " AND erp_documentapproved.documentSystemID IN (" . implode(',', $documentType) . ")";
         }
 
+
+        if($companies){
+            $filter .= " AND erp_documentapproved.companySystemID IN (" . implode(',', $companies) . ")";
+        }
+
         $where='';
         if ($search) {
               $search = str_replace("\\", "\\\\\\\\", $search);
             $where .= " WHERE  (documentCode LIKE '%$search%' OR  comments LIKE '%$search%' OR SupplierOrCustomer LIKE '%$search%' OR DocumentValue LIKE '%$search%' )";
         }
 
-           $qry="SELECT * FROM (SELECT
+            $qry="SELECT * FROM (SELECT
 	*
 FROM
 	(
@@ -188,6 +196,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	'' AS SupplierOrCustomer,
+	2 as DecimalPlaces ,
 	'' AS DocumentCurrency,
 	0 AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -239,6 +248,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	erp_purchaseordermaster.supplierName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_purchaseordermaster.poTotalSupplierTransactionCurrency AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -291,6 +301,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_paysupplierinvoicemaster.payAmountSuppTrans AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -341,6 +352,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	suppliermaster.supplierName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_bookinvsuppmaster.bookingAmountTrans AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -391,6 +403,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	suppliermaster.supplierName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_debitnote.debitAmountTrans AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -440,6 +453,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	customermaster.CustomerName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_custinvoicedirect.bookingAmountTrans + IFNULL(VATAmount,0) AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -490,6 +504,7 @@ DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documenta
 	erp_documentapproved.docConfirmedDate,
 	employees.empName AS confirmedEmployee,
 	customermaster.CustomerName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_creditnote.creditAmountTrans AS DocumentValue,
 	employeesdepartments.employeeID,
@@ -710,6 +725,14 @@ WHERE
         $output=DB::select($qry);
 
         return $this->sendResponse($output[0]->totalCount, 'Document Approved deleted successfully');
+
+    }
+
+    public function getAllcompaniesByDepartment(Request $request){
+        $employeeSystemID = \Helper::getEmployeeSystemID();
+
+        $allCompanies = DB::select("select `companymaster`.`companySystemID`, `companymaster`.`CompanyID`, `companymaster`.`CompanyName` FROM `employeesdepartments` INNER JOIN `companymaster` ON `employeesdepartments`.`companySystemID` = `companymaster`.`companySystemID` WHERE `employeeSystemID` = $employeeSystemID AND `isGroup` = 0 GROUP BY employeesdepartments.companySystemID");
+        return $this->sendResponse($allCompanies, '');
 
     }
 

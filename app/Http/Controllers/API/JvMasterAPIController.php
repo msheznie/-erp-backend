@@ -10,6 +10,10 @@
  * -- REVISION HISTORY
  * -- Date: 25-September 2018 By: Nazir Description: Added new functions named as getJournalVoucherMasterFormData()
  * -- Date: 02-October 2018 By: Nazir Description: Added new functions named as getJournalVoucherMasterRecord()
+ * -- Date: 03-October 2018 By: Nazir Description: Added new functions named as journalVoucherForSalaryJVMaster()
+ * -- Date: 03-October 2018 By: Nazir Description: Added new functions named as journalVoucherForSalaryJVDetail()
+ * -- Date: 04-October 2018 By: Nazir Description: Added new functions named as journalVoucherForAccrualJVMaster()
+ * -- Date: 04-October 2018 By: Nazir Description: Added new functions named as journalVoucherForAccrualJVDetail()
  */
 
 namespace App\Http\Controllers\API;
@@ -658,5 +662,191 @@ class JvMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($jvMasterData, 'Jv Master retrieved successfully');
+    }
+
+    public function journalVoucherForSalaryJVMaster(Request $request)
+    {
+        $companySystemID = $request['companySystemID'];
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company master not found');
+        }
+
+        if ($company) {
+            $companyID = $company->CompanyID;
+        }
+
+        $output = DB::select("SELECT
+	hrms_jvmaster.accruvalMasterID,
+	hrms_jvmaster.salaryProcessMasterID,
+	hrms_jvmaster.JVCode,
+	hrms_jvmaster.accruvalNarration,
+	hrms_jvmaster.accConfirmedYN,
+	hrms_jvmaster.accJVSelectedYN,
+	hrms_jvmaster.accJVpostedYN,
+	hrms_jvmaster.accmonth
+FROM
+	hrms_jvmaster
+WHERE hrms_jvmaster.accConfirmedYN = 1
+AND hrms_jvmaster.accJVSelectedYN = 0
+AND hrms_jvmaster.accJVpostedYN = 0
+AND hrms_jvmaster.companyID = '" . $companyID . "'");
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+
+    }
+
+
+    public function journalVoucherForSalaryJVDetail(Request $request)
+    {
+        $companySystemID = $request['companyId'];
+        $accruvalMasterID = $request['accruvalMasterID'];
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company master not found');
+        }
+
+        if ($company) {
+            $companyID = $company->CompanyID;
+        }
+
+        $output = DB::select("SELECT
+	hrms_jvdetails.accruvalDetID,
+	hrms_jvdetails.accMasterID,
+	serviceline.serviceLineSystemID,
+	hrms_jvdetails.serviceLine,
+	hrms_jvdetails.GlCode,
+	hrms_jvdetails.localAmount,
+	chartofaccounts.chartOfAccountSystemID,
+	chartofaccounts.AccountDescription,
+	hrms_jvdetails.localCurrency,
+	Sum(
+
+		IF (
+			localAmount < 0,
+			localAmount * - 1,
+			0
+		)
+	) AS CreditAmount,
+	Sum(
+
+		IF (
+			localAmount > 0,
+			localAmount,
+			0
+		)
+	) AS DebitAmount
+FROM
+	hrms_jvdetails
+INNER JOIN chartofaccounts ON hrms_jvdetails.GlCode = chartofaccounts.AccountCode
+LEFT JOIN serviceline ON hrms_jvdetails.serviceLine = serviceline.ServiceLineCode
+WHERE
+	hrms_jvdetails.accMasterID = $accruvalMasterID
+AND hrms_jvdetails.companyID = '" . $companyID . "'
+GROUP BY
+	hrms_jvdetails.accMasterID,
+	hrms_jvdetails.serviceLine,
+	hrms_jvdetails.GlCode,
+	chartofaccounts.AccountDescription,
+	hrms_jvdetails.localCurrency,
+	hrms_jvdetails.companyID");
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+    }
+
+    public function journalVoucherForAccrualJVMaster(Request $request){
+
+        $companySystemID = $request['companySystemID'];
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company master not found');
+        }
+
+        if ($company) {
+            $companyID = $company->CompanyID;
+        }
+
+        $output = DB::select("SELECT
+	accruavalfromopmaster.accruvalMasterID,
+	accruavalfromopmaster.accrualDateAsOF,
+	accruavalfromopmaster.accmonth,
+	accruavalfromopmaster.accYear,
+	accruavalfromopmaster.accruvalNarration
+FROM
+	accruavalfromopmaster
+WHERE accruavalfromopmaster.companyID = '" . $companyID . "'
+AND accruavalfromopmaster.accConfirmedYN = 1
+AND accruavalfromopmaster.accJVpostedYN = 0");
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+    }
+
+    public function journalVoucherForAccrualJVDetail(Request $request)
+    {
+        $companySystemID = $request['companyId'];
+        $accruvalMasterID = $request['accruvalMasterID'];
+
+        $company = Company::where('companySystemID', $companySystemID)->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company master not found');
+        }
+
+        if ($company) {
+            $companyID = $company->CompanyID;
+        }
+
+        $output = DB::select("SELECT
+	accruvalfromop.accruvalDetID,
+	accruvalfromop.contractID,
+	serviceline.serviceLineSystemID,
+	accruvalfromop.serviceLine,
+	accruvalfromop.stdAmount,
+	accruvalfromop.opAmount,
+	accruvalfromop.accMasterID,
+	accruvalfromop.companyID,
+	accruvalfromop.accrualAmount,
+	accruvalfromop.GlCode,
+	chartofaccounts.chartOfAccountSystemID,
+	chartofaccounts.AccountDescription
+FROM
+	accruvalfromop
+LEFT JOIN serviceline ON accruvalfromop.serviceLine = serviceline.ServiceLineCode
+LEFT JOIN chartofaccounts ON accruvalfromop.GlCode = chartofaccounts.AccountCode
+WHERE
+	accruvalfromop.accMasterID = $accruvalMasterID
+AND accruvalfromop.companyID = '" . $companyID . "'");
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+    }
+
+    public function exportStandardJVFormat(){
+
+        $data = array();
+        $type = 'csv';
+        $x = 0;
+        $data[$x]['Gl Account']= '';
+        $data[$x]['Gl Account Description']= '';
+        $data[$x]['Client Contract']= '';
+        $data[$x]['Comments']= '';
+        $data[$x]['Debit Amount']= '';
+        $data[$x]['Credit Amount']= '';
+        $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 }

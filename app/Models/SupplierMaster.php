@@ -243,7 +243,7 @@ class SupplierMaster extends Model
     }
 
     public function supplierCurrency(){
-            return $this->hasMany('App\Models\SupplierCurrency','supplierCodeSystem','currency');
+            return $this->hasMany('App\Models\SupplierCurrency','supplierCodeSystem','supplierCodeSystem');
     }
 
     public function subCategories(){
