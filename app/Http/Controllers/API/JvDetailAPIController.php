@@ -10,11 +10,13 @@
  * -- REVISION HISTORY
  * -- Date: 25-September 2018 By: Nazir Description: Added new functions named as getJournalVoucherDetails()
  * -- Date: 27-September 2018 By: Nazir Description: Added new functions named as getJournalVoucherContracts()
+ * -- Date: 05-October 2018 By: Nazir Description: Added new functions named as journalVoucherDeleteAllAJ()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateJvDetailAPIRequest;
 use App\Http\Requests\API\UpdateJvDetailAPIRequest;
+use App\Models\AccruavalFromOPMaster;
 use App\Models\ChartOfAccount;
 use App\Models\HRMSJvDetails;
 use App\Models\HRMSJvMaster;
@@ -418,7 +420,7 @@ class JvDetailAPIController extends AppBaseController
             return $this->sendError('All ready items are added, You cannot add more.');
         }
 
-        if(empty($input['detailTable'])){
+        if (empty($input['detailTable'])) {
             return $this->sendError("No items selected to add.");
         }
 
@@ -442,18 +444,18 @@ class JvDetailAPIController extends AppBaseController
             $detail_arr['chartOfAccountSystemID'] = $new['chartOfAccountSystemID'];
             $detail_arr['glAccount'] = $new['GlCode'];
             $detail_arr['glAccountDescription'] = $new['AccountDescription'];
-            $detail_arr['comments'] = 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of '.date('F Y').'';
+            $detail_arr['comments'] = 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y') . '';
             $detail_arr['currencyID'] = $jvMasterData->currencyID;
             $detail_arr['currencyER'] = $jvMasterData->currencyER;
             $detail_arr['createdPcID'] = gethostname();
             $detail_arr['createdUserID'] = $user->employee['empID'];
             $detail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
-            if($new['DebitAmount'] != 0 && $new['CreditAmount'] != 0){
+            if ($new['DebitAmount'] != 0 && $new['CreditAmount'] != 0) {
                 $detail_arr['debitAmount'] = 0;
                 $detail_arr['creditAmount'] = 0;
                 $store = $this->jvDetailRepository->create($detail_arr);
-            }else {
+            } else {
                 if ($new['DebitAmount'] != 0) {
                     $detail_arr['debitAmount'] = $new['DebitAmount'];
                     $detail_arr['creditAmount'] = 0;
@@ -484,7 +486,7 @@ class JvDetailAPIController extends AppBaseController
         //updating JV master
         $updateJvMaster = JvMaster::find($jvMasterAutoId)
             ->update([
-                'JVNarration' => 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of '.date('F Y').''
+                'JVNarration' => 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y') . ''
             ]);
 
         return $this->sendResponse('', 'JV Details saved successfully');
@@ -513,7 +515,7 @@ class JvDetailAPIController extends AppBaseController
         if (!empty($detailExistAll)) {
 
             foreach ($detailExistAll as $cvDeatil) {
-                $accruvalMasterID =  $cvDeatil['recurringjvMasterAutoId'];
+                $accruvalMasterID = $cvDeatil['recurringjvMasterAutoId'];
 
                 // updating HRMS JvDetailtable
                 $updateHRMSJvMaster = HRMSJvDetails::find($cvDeatil['recurringjvDetailAutoID'])
@@ -526,7 +528,7 @@ class JvDetailAPIController extends AppBaseController
             }
         }
 
-        if($accruvalMasterID != 0){
+        if ($accruvalMasterID != 0) {
             // updating HRMS JvMaster table
             $updateHRMSJvMaster = HRMSJvMaster::find($accruvalMasterID)
                 ->update([
@@ -543,10 +545,11 @@ class JvDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $detail_arr = array();
+        $detail_debitArr = array();
         $validator = array();
         $jvMasterAutoId = $input['jvMasterAutoId'];
         $accruvalMasterID = $input['accruvalMasterID'];
-
+        $totalRevenueAmount = 0;
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
@@ -556,79 +559,170 @@ class JvDetailAPIController extends AppBaseController
             return $this->sendError('All ready items are added, You cannot add more.');
         }
 
-        if(empty($input['detailTable'])){
-            return $this->sendError("No items selected to add.");
-        }
-
         $jvMasterData = JvMaster::find($jvMasterAutoId);
 
         if (empty($jvMasterData)) {
             return $this->sendError('Jv Master not found');
         }
 
-        foreach ($input['detailTable'] as $new) {
+        $detailRecordGrouping = DB::select("SELECT
+	accruvalfromop.accMasterID,
+	accruvalfromop.contractID as  accrualNarration,
+	accruvalfromop.accrualDateAsOF,
+	accruvalfromop.companyID,
+	accruvalfromop.contractID,
+	serviceline.serviceLineSystemID,
+	contractmaster.serviceLineCode AS serviceLine,
+	Sum(accruvalfromop.stdAmount) AS SumOfstdAmount,
+	Sum(accruvalfromop.opAmount) AS SumOfopAmount,
+	accruvalfromop.glCodeStd,
+	accruvalfromop.glCodeOp,
+	accruvalfromop.glCodeusage,
+	accruvalfromop.glCodeLIH,
+	accruvalfromop.glCodeDBR,
+	accruavalfromopmaster.accConfirmedYN,
+	chartofaccounts.chartOfAccountSystemID,
+	accruvalfromop.GlCode,
+	chartofaccounts.AccountDescription,
+	Sum(
+		accruvalfromop.accrualAmount
+	) AS SumOfaccrualAmount
+FROM
+	accruvalfromop
+INNER JOIN accruavalfromopmaster ON accruvalfromop.accMasterID = accruavalfromopmaster.accruvalMasterID
+INNER JOIN erp_months ON accruavalfromopmaster.accmonth = erp_months.monthsID
+LEFT JOIN contractmaster ON accruvalfromop.contractID = contractmaster.ContractNumber
+LEFT JOIN serviceline ON contractmaster.serviceLineCode = serviceline.ServiceLineCode
+LEFT JOIN chartofaccounts ON accruvalfromop.GlCode = chartofaccounts.AccountCode
+WHERE
+	accruavalfromopmaster.accConfirmedYN = 1 AND accruvalfromop.companyID = '" . $jvMasterData->companyID . "' AND accMasterID = $accruvalMasterID
+GROUP BY
+	accruvalfromop.accMasterID,
+	accruvalfromop.companyID,
+	accruvalfromop.contractID,
+	contractmaster.serviceLineCode,
+	accruvalfromop.glCodeStd,
+	accruvalfromop.glCodeOp,
+	accruvalfromop.glCodeusage,
+	accruvalfromop.glCodeLIH,
+	accruvalfromop.glCodeDBR,
+	accruavalfromopmaster.accConfirmedYN,
+	accruvalfromop.GlCode");
 
-            $detail_arr['jvMasterAutoId'] = $jvMasterAutoId;
-            $detail_arr['documentSystemID'] = $jvMasterData->documentSystemID;
-            $detail_arr['documentID'] = $jvMasterData->documentID;
-            $detail_arr['recurringjvMasterAutoId'] = $new['accMasterID'];
-            $detail_arr['recurringjvDetailAutoID'] = $new['accruvalDetID'];
-            $detail_arr['serviceLineSystemID'] = $new['serviceLineSystemID'];
-            $detail_arr['serviceLineCode'] = $new['serviceLine'];
-            $detail_arr['companySystemID'] = $jvMasterData->companySystemID;
-            $detail_arr['companyID'] = $jvMasterData->companyID;
-            $detail_arr['chartOfAccountSystemID'] = $new['chartOfAccountSystemID'];
-            $detail_arr['glAccount'] = $new['GlCode'];
-            $detail_arr['glAccountDescription'] = $new['AccountDescription'];
-            $detail_arr['comments'] = 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of '.date('F Y').'';
-            $detail_arr['currencyID'] = $jvMasterData->currencyID;
-            $detail_arr['currencyER'] = $jvMasterData->currencyER;
-            $detail_arr['createdPcID'] = gethostname();
-            $detail_arr['createdUserID'] = $user->employee['empID'];
-            $detail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
+        if (!empty($detailRecordGrouping)) {
+            foreach ($detailRecordGrouping as $rowData) {
 
-            if($new['DebitAmount'] != 0 && $new['CreditAmount'] != 0){
-                $detail_arr['debitAmount'] = 0;
-                $detail_arr['creditAmount'] = 0;
-                $store = $this->jvDetailRepository->create($detail_arr);
-            }else {
-                if ($new['DebitAmount'] != 0) {
-                    $detail_arr['debitAmount'] = $new['DebitAmount'];
+                $detail_arr['jvMasterAutoId'] = $jvMasterAutoId;
+                $detail_arr['documentSystemID'] = $jvMasterData->documentSystemID;
+                $detail_arr['documentID'] = $jvMasterData->documentID;
+                $detail_arr['recurringjvMasterAutoId'] = $rowData->accMasterID;
+                $detail_arr['recurringjvDetailAutoID'] = 0;
+                $detail_arr['serviceLineSystemID'] = $rowData->serviceLineSystemID;
+                $detail_arr['serviceLineCode'] = $rowData->serviceLine;
+                $detail_arr['companySystemID'] = $jvMasterData->companySystemID;
+                $detail_arr['companyID'] = $jvMasterData->companyID;
+                $detail_arr['chartOfAccountSystemID'] = $rowData->chartOfAccountSystemID;
+                $detail_arr['glAccount'] = $rowData->GlCode;
+                $detail_arr['glAccountDescription'] = $rowData->AccountDescription;
+                $detail_arr['comments'] = 'Revenue Accrual for the month of ' . date('F Y') . '';
+                $detail_arr['currencyID'] = $jvMasterData->currencyID;
+                $detail_arr['currencyER'] = $jvMasterData->currencyER;
+                $detail_arr['createdPcID'] = gethostname();
+                $detail_arr['createdUserID'] = $user->employee['empID'];
+                $detail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+                if ($rowData->SumOfaccrualAmount < 0) {
+                    $detail_arr['debitAmount'] = $rowData->SumOfaccrualAmount * -1;
                     $detail_arr['creditAmount'] = 0;
-                    $store = $this->jvDetailRepository->create($detail_arr);
-                }
-                if ($new['CreditAmount'] != 0) {
+                } else {
                     $detail_arr['debitAmount'] = 0;
-                    $detail_arr['creditAmount'] = $new['CreditAmount'];
-                    $store = $this->jvDetailRepository->create($detail_arr);
+                    $detail_arr['creditAmount'] = $rowData->SumOfaccrualAmount;
                 }
+                $totalRevenueAmount += $rowData->SumOfaccrualAmount;
+                $store = $this->jvDetailRepository->create($detail_arr);
             }
 
-            // updating HRMS JvDetailtable
-            $updateHRMSJvMaster = HRMSJvDetails::find($new['accruvalDetID'])
-                ->update([
-                    'jvMasterAutoID' => $jvMasterAutoId
-                ]);
+            // updating hardcoded value
+            $detail_debitArr['jvMasterAutoId'] = $jvMasterAutoId;
+            $detail_debitArr['documentSystemID'] = $jvMasterData->documentSystemID;
+            $detail_debitArr['documentID'] = $jvMasterData->documentID;
+            $detail_debitArr['recurringjvMasterAutoId'] = $accruvalMasterID;
+            $detail_debitArr['recurringjvDetailAutoID'] = 0;
+            $detail_debitArr['serviceLineSystemID'] = 24;
+            $detail_debitArr['serviceLineCode'] = 'X';
+            $detail_debitArr['companySystemID'] = $jvMasterData->companySystemID;
+            $detail_debitArr['companyID'] = $jvMasterData->companyID;
+            $detail_debitArr['chartOfAccountSystemID'] = 112;
+            $detail_debitArr['glAccount'] = 21011;
+            $detail_debitArr['glAccountDescription'] = 'Accrued Income';
+            $detail_debitArr['comments'] = 'Revenue Accrual for the month of ' . date('F Y') . '';
+            $detail_debitArr['currencyID'] = $jvMasterData->currencyID;
+            $detail_debitArr['currencyER'] = $jvMasterData->currencyER;
+            $detail_debitArr['debitAmount'] = $totalRevenueAmount;
+            $detail_debitArr['creditAmount'] = 0;
+            $detail_debitArr['createdPcID'] = gethostname();
+            $detail_debitArr['createdUserID'] = $user->employee['empID'];
+            $detail_debitArr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
+            $store = $this->jvDetailRepository->create($detail_debitArr);
         }
 
-        // updating HRMS JvMaster table
-        $updateHRMSJvMaster = HRMSJvMaster::find($accruvalMasterID)
+        // updating AccruavalFromOPMaster table
+        $updateAccruavalFromOPMaster = AccruavalFromOPMaster::find($accruvalMasterID)
             ->update([
                 'jvMasterAutoID' => $jvMasterAutoId,
-                'accJVSelectedYN' => -1
+                'accJVpostedYN' => -1
             ]);
 
         //updating JV master
         $updateJvMaster = JvMaster::find($jvMasterAutoId)
             ->update([
-                'JVNarration' => 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of '.date('F Y').''
+                'JVNarration' => 'Revenue Accrual for the month of ' . date('F Y') . ''
             ]);
 
         return $this->sendResponse('', 'JV Details saved successfully');
 
     }
 
+    public function journalVoucherDeleteAllAJ(Request $request)
+    {
+        $input = $request->all();
+
+        $jvMasterAutoId = $input['jvMasterAutoId'];
+
+        $jvMaster = JvMaster::find($jvMasterAutoId);
+
+        if (empty($jvMaster)) {
+            return $this->sendError('Journal Voucher not found');
+        }
+
+        $detailExistAll = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
+            ->get();
+
+        if (empty($detailExistAll)) {
+            return $this->sendError('There are no details to delete');
+        }
+        $accruvalMasterID = 0;
+
+        if (!empty($detailExistAll)) {
+
+            foreach ($detailExistAll as $cvDeatil) {
+                $accruvalMasterID = $cvDeatil['recurringjvMasterAutoId'];
+                $deleteDetails = JvDetail::where('jvDetailAutoID', $cvDeatil['jvDetailAutoID'])->delete();
+            }
+        }
+
+        if($accruvalMasterID != 0){
+            $updateAccruavalFromOPMaster = AccruavalFromOPMaster::find($accruvalMasterID)
+                ->update([
+                    'jvMasterAutoID' => 0,
+                    'accJVpostedYN' => 0
+                ]);
+
+        }
+
+        return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
+    }
 
 
 }

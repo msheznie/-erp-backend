@@ -302,4 +302,25 @@ class CurrencyMasterAPIController extends AppBaseController
         return $this->sendResponse($localCurrency, 'Data retrieved successfully');
 
     }
+
+    public function getCompanyReportingCurrency(Request $request)
+    {
+        $input = $request->all();
+        $reportingCurrency = 0;
+
+        $company = Company::where('companySystemID', $input['companyID'])->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company Master not found');
+        }
+
+        if(!empty($company->reportingCurrency)){
+            $reportingCurrency = $company->reportingCurrency;
+        }else{
+            return $this->sendError('Company reporting currency not found');
+        }
+
+        return $this->sendResponse($reportingCurrency, 'Data retrieved successfully');
+
+    }
 }

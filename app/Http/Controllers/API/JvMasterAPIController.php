@@ -825,4 +825,28 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
+
+    public function exportStandardJVFormat(){
+
+        $data = array();
+        $type = 'csv';
+        $x = 0;
+        $data[$x]['Gl Account']= '';
+        $data[$x]['Gl Account Description']= '';
+        $data[$x]['Client Contract']= '';
+        $data[$x]['Comments']= '';
+        $data[$x]['Debit Amount']= '';
+        $data[$x]['Credit Amount']= '';
+        $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+    }
 }
