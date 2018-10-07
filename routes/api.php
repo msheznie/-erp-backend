@@ -417,7 +417,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('tax_types', 'TaxTypeAPIController');
 
-    Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+  // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
     Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable');
     Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
     Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable');
@@ -945,6 +945,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
     Route::post('generateTMReport', 'BankReconciliationAPIController@generateTMReport');
     Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

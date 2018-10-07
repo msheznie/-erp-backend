@@ -170,6 +170,12 @@ class CreditNoteAPIController extends AppBaseController
         $input['modifiedUser'] = \Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
+
+        $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+        if($input['creditNoteDate'] > $curentDate){
+            return $this->sendError( 'Dcoument date can not be greater than current date',500);
+        }
+
         if (($input['creditNoteDate'] >= $companyfinanceperiod->dateFrom) && ($input['creditNoteDate'] <= $companyfinanceperiod->dateTo)) {
             $creditNotes = $this->creditNoteRepository->create($input);
             return $this->sendResponse($creditNotes->toArray(), 'Credit Note saved successfully');
@@ -374,7 +380,10 @@ class CreditNoteAPIController extends AppBaseController
         }
 
         $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
-
+        $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+        if($_post['creditNoteDate'] > $curentDate){
+            return $this->sendError( 'Dcoument date can not be greater than current date',500);
+        }
 
         if (($_post['creditNoteDate'] >= $input['FYPeriodDateFrom']) && ($_post['creditNoteDate'] <= $input['FYPeriodDateTo'])) {
 
