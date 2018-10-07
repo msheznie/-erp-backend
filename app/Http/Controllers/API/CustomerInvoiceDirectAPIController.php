@@ -218,6 +218,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
 
+         $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+        if($input['bookingDate'] > $curentDate){
+            return $this->sendResponse('e', 'Dcoument date can not be greater than current date');
+        }
+
         if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
             return $this->sendResponse($customerInvoiceDirects->toArray(), 'Customer Invoice  saved successfully');
@@ -476,6 +481,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
+        $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+        if($_post['bookingDate'] > $curentDate){
+            return $this->sendError( 'Dcoument date can not be greater than current date',500);
+        }
 
         if($input['invoiceDueDate'] !=''){
             $_post['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
