@@ -213,6 +213,19 @@ class SupplierMaster extends Model
     ];
 
     /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCompany($query, $type)
+    {
+        return $query->whereIN('primaryCompanySystemID',  $type);
+    }
+
+    /**
      * Validation rules
      *
      * @var array

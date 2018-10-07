@@ -101,6 +101,20 @@ class DepartmentMaster extends Model
     ];
 
     /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeShowInCombo($query)
+    {
+        return $query->where('showInCombo',  -1);
+    }
+
+
+    /**
      * Validation rules
      *
      * @var array
