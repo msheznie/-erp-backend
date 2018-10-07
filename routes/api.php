@@ -945,6 +945,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
     Route::post('generateTMReport', 'BankReconciliationAPIController@generateTMReport');
     Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
+    Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
 });
 

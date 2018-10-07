@@ -31,6 +31,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -242,4 +243,6 @@ class CompanyAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Company deleted successfully');
     }
+
+
 }
