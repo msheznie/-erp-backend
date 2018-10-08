@@ -1019,3 +1019,6 @@ Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
 
 Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');
 
+
+
+Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');

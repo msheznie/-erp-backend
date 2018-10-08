@@ -1,0 +1,3 @@
+
+
+Route::resource('fixedAssetCosts', 'FixedAssetCostController');

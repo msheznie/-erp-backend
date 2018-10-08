@@ -346,6 +346,8 @@ class GeneralLedger extends Model
         'isPdcChequeYN',
         'isAddon',
         'isAllocationJV',
+        'contraYN',
+        'contracDocCode',
         'createdDateTime',
         'createdUserID',
         'createdUserSystemID',
@@ -406,6 +408,8 @@ class GeneralLedger extends Model
         'isPdcChequeYN' => 'integer',
         'isAddon' => 'integer',
         'isAllocationJV' => 'integer',
+        'contraYN' => 'integer',
+        '`contracDocCode` ' => 'string',
         'createdUserID' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserPC' => 'string'
