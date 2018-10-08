@@ -257,6 +257,10 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendError('Selected Bank Account is not active', 500, ['type' => 'amountmismatch']);
         }
 
+        if(!$input["supplierPaymentAmount"]){
+            $input["supplierPaymentAmount"] = 0;
+        }
+
         $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])->where('payDetailAutoID', '<>', $id)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
@@ -304,7 +308,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if ($totalPaidAmount == 0) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 0]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount ||  $totalPaidAmount > $paySupplierInvoiceDetail->supplierInvoiceAmount) {
+            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount || $totalPaidAmount > $paySupplierInvoiceDetail->supplierInvoiceAmount) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 2]);
             } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
@@ -509,6 +513,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $finalError = array(
                 'gl_amount_not_matching' => array(),
                 'already_exist' => array(),
+                'more_booked' => array(),
             );
 
             $error_count = 0;
@@ -527,16 +532,33 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                         $error_count++;
                     }
 
-                    $payDetailExistSameItem = PaySupplierInvoiceDetail::select(DB::raw('PayMasterAutoId'))
-                        ->where('PayMasterAutoId', $id)
-                        ->where('addedDocumentSystemID', $item['addedDocumentSystemID'])
-                        ->where('bookingInvSystemCode', $item['bookingInvSystemCode'])
-                        ->exists();
+                    $payDetailExistSameItem = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input["PayMasterAutoId"])
+                        ->where('apAutoID', $item['apAutoID'])
+                        ->first();
 
                     if ($payDetailExistSameItem) {
                         array_push($finalError['already_exist'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
                         $error_count++;
                     }
+
+                    $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
+                        ->where('apAutoID', $item['apAutoID'])
+                        ->first();
+
+                    if ($item['addedDocumentSystemID'] == 11) {
+                        //supplier invoice
+                        if ($payDetailMoreBooked->supplierPaymentAmount > $item['supplierInvoiceAmount']) {
+                            array_push($finalError['more_booked'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
+                            $error_count++;
+                        }
+                    } else if ($item['addedDocumentSystemID'] == 15) {
+                        //debit note
+                        if ($payDetailMoreBooked->supplierPaymentAmount < $item['supplierInvoiceAmount']) {
+                            array_push($finalError['more_booked'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
+                            $error_count++;
+                        }
+                    }
+
                 }
             }
 
