@@ -512,7 +512,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $assetAllocation = GRVDetails::with(['grv_master', 'item_by', 'localcurrency', 'rptcurrency'])->whereHas('item_by', function ($q) {
             $q->where('financeCategoryMaster', 3);
-            //$q->whereIN('financeCategorySub', [16, 162, 164, 166]);
+            $q->whereIN('financeCategorySub', [16, 162, 164, 166]);
         })->whereHas('grv_master', function ($q) {
             $q->where('grvConfirmedYN', 1);
             $q->where('approved', -1);
