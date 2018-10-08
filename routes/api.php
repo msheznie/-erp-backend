@@ -417,7 +417,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('tax_types', 'TaxTypeAPIController');
 
-    Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+  // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
     Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable');
     Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
     Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable');
@@ -884,6 +884,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
     Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+    Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData');
+    Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany');
     Route::resource('credit_notes', 'CreditNoteAPIController');
     Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
     Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
@@ -945,6 +947,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
     Route::post('generateTMReport', 'BankReconciliationAPIController@generateTMReport');
     Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
+    Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
+
+    Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
+    Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+    Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
+    Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
+    Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -991,7 +1000,7 @@ Route::get('runQueueSR', function () {
 
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
 
-Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+
 
 Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
 
@@ -1000,8 +1009,13 @@ Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
 
 Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
 
+Route::resource('asset_types', 'AssetTypeAPIController');
+
+Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
+
 Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
 
 Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
 
 Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');
+

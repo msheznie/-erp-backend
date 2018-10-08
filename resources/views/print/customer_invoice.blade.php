@@ -575,14 +575,15 @@
             @endif
 
         @if ($request->template==1 && !$request->line_invoiceDetails && !$request->linePdoinvoiceDetails)
+
             <table class="table table-bordered table-striped table-sm" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:1%"></th>
-                    <th style="width:10%;text-align: center">Details</th>
+                    <th style=" text-align: center">Details</th>
 
 
-                    <th style="width:10%;text-align: right">Amount </th>
+                    <th style="width:140px;text-align: right">Amount </th>
                 </tr>
                 </thead>
 
@@ -601,7 +602,7 @@
                         <td>{{$item->myStdTitle}}</td>
 
 
-                        <td class="text-right">{{number_format($item->sumofsumofStandbyAmount,$numberFormatting)}}</td>
+                        <td style="width: 100px" class="text-right">{{number_format($item->sumofsumofStandbyAmount,$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
                 @endforeach

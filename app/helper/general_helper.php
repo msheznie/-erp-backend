@@ -89,7 +89,7 @@ class Helper
      */
     public static function getSubCompaniesByGroupCompany($selectedCompanyId)
     {
-        $companiesByGroup = Models\Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
+        /*$companiesByGroup = Models\Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
         $groupCompany = [];
         if ($companiesByGroup) {
             foreach ($companiesByGroup as $val) {
@@ -98,6 +98,21 @@ class Helper
                         if ($val['isGroup'] == 0) {
                             $groupCompany[] = array('companySystemID' => $val1["companySystemID"], 'CompanyID' => $val1["CompanyID"], 'CompanyName' => $val1["CompanyName"]);
                         }
+                    }
+                } else {
+                    $groupCompany[] = array('companySystemID' => $val["companySystemID"], 'CompanyID' => $val["CompanyID"], 'CompanyName' => $val["CompanyName"]);
+                }
+            }
+        }
+        $groupCompany = array_column($groupCompany, 'companySystemID');
+        return $groupCompany;*/
+        $companiesByGroup = Models\Company::with('child')->where("masterCompanySystemIDReorting", $selectedCompanyId)->get();
+        $groupCompany = [];
+        if ($companiesByGroup) {
+            foreach ($companiesByGroup as $val) {
+                if ($val['child']) {
+                    foreach ($val['child'] as $val1) {
+                        $groupCompany[] = array('companySystemID' => $val1["companySystemID"], 'CompanyID' => $val1["CompanyID"], 'CompanyName' => $val1["CompanyName"]);
                     }
                 } else {
                     $groupCompany[] = array('companySystemID' => $val["companySystemID"], 'CompanyID' => $val["CompanyID"], 'CompanyName' => $val["CompanyName"]);

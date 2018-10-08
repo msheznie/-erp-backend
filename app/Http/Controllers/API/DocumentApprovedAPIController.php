@@ -154,12 +154,20 @@ class DocumentApprovedAPIController extends AppBaseController
         }
 
         $documentType = $input['documentType'];
+        $companies = $input['companies'];
+
+
         $filter = 'AND erp_documentapproved.documentSystemID IN (0) ';
 
 
         if (!empty($documentType)) {
 
             $filter = " AND erp_documentapproved.documentSystemID IN (" . implode(',', $documentType) . ")";
+        }
+
+
+        if($companies){
+            $filter .= " AND erp_documentapproved.companySystemID IN (" . implode(',', $companies) . ")";
         }
 
         $where='';
@@ -717,6 +725,14 @@ WHERE
         $output=DB::select($qry);
 
         return $this->sendResponse($output[0]->totalCount, 'Document Approved deleted successfully');
+
+    }
+
+    public function getAllcompaniesByDepartment(Request $request){
+        $employeeSystemID = \Helper::getEmployeeSystemID();
+
+        $allCompanies = DB::select("select `companymaster`.`companySystemID`, `companymaster`.`CompanyID`, `companymaster`.`CompanyName` FROM `employeesdepartments` INNER JOIN `companymaster` ON `employeesdepartments`.`companySystemID` = `companymaster`.`companySystemID` WHERE `employeeSystemID` = $employeeSystemID AND `isGroup` = 0 GROUP BY employeesdepartments.companySystemID");
+        return $this->sendResponse($allCompanies, '');
 
     }
 
