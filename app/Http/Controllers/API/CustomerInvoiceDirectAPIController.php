@@ -1414,7 +1414,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $line_performaCode =true;
                         $line_paymentTerms = true;
                         $line_rentalPeriod = true;
-                        $linePdoinvoiceDetails = DB::select("SELECT wellNo, netWorkNo, SEno, wellAmount FROM ( SELECT performaMasterID, companyID, contractID, clientContractID FROM erp_custinvoicedirectdet WHERE custInvoiceDirectID = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN performamaster ON performamaster.companyID = '$master->companyID' AND performamaster.PerformaInvoiceNo = t.performaMasterID AND t.clientContractID = performamaster.contractID INNER JOIN performa_service_entry_wellgroup ON performamaster.PerformaMasterID = performa_service_entry_wellgroup.performaMasID");
+                        $linePdoinvoiceDetails = DB::select("SELECT wellNo, netWorkNo, SEno, sum(wellAmount) as wellAmount FROM ( SELECT performaMasterID, companyID, contractID, clientContractID FROM erp_custinvoicedirectdet WHERE custInvoiceDirectID = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN performamaster ON performamaster.companyID = '$master->companyID' AND performamaster.PerformaInvoiceNo = t.performaMasterID AND t.clientContractID = performamaster.contractID INNER JOIN performa_service_entry_wellgroup ON performamaster.PerformaMasterID = performa_service_entry_wellgroup.performaMasID GROUP BY wellNo, netWorkNo, SEno ");
 
                         $template = 1;
                     }else{

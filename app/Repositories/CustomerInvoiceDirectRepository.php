@@ -134,8 +134,8 @@ class CustomerInvoiceDirectRepository extends BaseRepository
                 $query->with(['unit', 'department','contract','billmaster'=>function ($query) use ($companyID){
                     $query->where('companyID',$companyID);
                     $query1 = $query;
-                    $bill = $query1->first()->toArray();
-                    $Ticketno = $bill['Ticketno'];
+                    $bill = $query1->first();
+                    $Ticketno = $bill->Ticketno;
                     $query->with(['ticketmaster'=> function ($query){
                         $query->with(['field','rig']);
                     }  ,'performatemp'=>function($query) use($Ticketno) {

@@ -275,5 +275,15 @@ class GRVDetails extends Model
         return $this->belongsTo('App\Models\PurchaseOrderDetails', 'purchaseOrderDetailsID', 'purchaseOrderDetailsID');
     }
 
+    public function localcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function rptcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+    }
+
 
 }

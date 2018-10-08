@@ -1,0 +1,281 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateFixedAssetCategorySubAPIRequest;
+use App\Http\Requests\API\UpdateFixedAssetCategorySubAPIRequest;
+use App\Models\FixedAssetCategorySub;
+use App\Repositories\FixedAssetCategorySubRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class FixedAssetCategorySubController
+ * @package App\Http\Controllers\API
+ */
+
+class FixedAssetCategorySubAPIController extends AppBaseController
+{
+    /** @var  FixedAssetCategorySubRepository */
+    private $fixedAssetCategorySubRepository;
+
+    public function __construct(FixedAssetCategorySubRepository $fixedAssetCategorySubRepo)
+    {
+        $this->fixedAssetCategorySubRepository = $fixedAssetCategorySubRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/fixedAssetCategorySubs",
+     *      summary="Get a listing of the FixedAssetCategorySubs.",
+     *      tags={"FixedAssetCategorySub"},
+     *      description="Get all FixedAssetCategorySubs",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/FixedAssetCategorySub")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->fixedAssetCategorySubRepository->pushCriteria(new RequestCriteria($request));
+        $this->fixedAssetCategorySubRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $fixedAssetCategorySubs = $this->fixedAssetCategorySubRepository->all();
+
+        return $this->sendResponse($fixedAssetCategorySubs->toArray(), 'Fixed Asset Category Subs retrieved successfully');
+    }
+
+    /**
+     * @param CreateFixedAssetCategorySubAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/fixedAssetCategorySubs",
+     *      summary="Store a newly created FixedAssetCategorySub in storage",
+     *      tags={"FixedAssetCategorySub"},
+     *      description="Store FixedAssetCategorySub",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="FixedAssetCategorySub that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/FixedAssetCategorySub")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/FixedAssetCategorySub"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateFixedAssetCategorySubAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $fixedAssetCategorySubs = $this->fixedAssetCategorySubRepository->create($input);
+
+        return $this->sendResponse($fixedAssetCategorySubs->toArray(), 'Fixed Asset Category Sub saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/fixedAssetCategorySubs/{id}",
+     *      summary="Display the specified FixedAssetCategorySub",
+     *      tags={"FixedAssetCategorySub"},
+     *      description="Get FixedAssetCategorySub",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of FixedAssetCategorySub",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/FixedAssetCategorySub"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var FixedAssetCategorySub $fixedAssetCategorySub */
+        $fixedAssetCategorySub = $this->fixedAssetCategorySubRepository->findWithoutFail($id);
+
+        if (empty($fixedAssetCategorySub)) {
+            return $this->sendError('Fixed Asset Category Sub not found');
+        }
+
+        return $this->sendResponse($fixedAssetCategorySub->toArray(), 'Fixed Asset Category Sub retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateFixedAssetCategorySubAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/fixedAssetCategorySubs/{id}",
+     *      summary="Update the specified FixedAssetCategorySub in storage",
+     *      tags={"FixedAssetCategorySub"},
+     *      description="Update FixedAssetCategorySub",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of FixedAssetCategorySub",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="FixedAssetCategorySub that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/FixedAssetCategorySub")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/FixedAssetCategorySub"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateFixedAssetCategorySubAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var FixedAssetCategorySub $fixedAssetCategorySub */
+        $fixedAssetCategorySub = $this->fixedAssetCategorySubRepository->findWithoutFail($id);
+
+        if (empty($fixedAssetCategorySub)) {
+            return $this->sendError('Fixed Asset Category Sub not found');
+        }
+
+        $fixedAssetCategorySub = $this->fixedAssetCategorySubRepository->update($input, $id);
+
+        return $this->sendResponse($fixedAssetCategorySub->toArray(), 'FixedAssetCategorySub updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/fixedAssetCategorySubs/{id}",
+     *      summary="Remove the specified FixedAssetCategorySub from storage",
+     *      tags={"FixedAssetCategorySub"},
+     *      description="Delete FixedAssetCategorySub",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of FixedAssetCategorySub",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var FixedAssetCategorySub $fixedAssetCategorySub */
+        $fixedAssetCategorySub = $this->fixedAssetCategorySubRepository->findWithoutFail($id);
+
+        if (empty($fixedAssetCategorySub)) {
+            return $this->sendError('Fixed Asset Category Sub not found');
+        }
+
+        $fixedAssetCategorySub->delete();
+
+        return $this->sendResponse($id, 'Fixed Asset Category Sub deleted successfully');
+    }
+}

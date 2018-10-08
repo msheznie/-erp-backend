@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ActiveTrait;
 use Eloquent as Model;
 
 /**
@@ -81,18 +82,24 @@ use Eloquent as Model;
 class AssetFinanceCategory extends Model
 {
 
+    use ActiveTrait;
+
     public $table = 'erp_fa_financecategory';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
+    protected $primaryKey = 'faFinanceCatID';
 
     public $fillable = [
         'financeCatDescription',
+        'COSTGLCODESystemID',
         'COSTGLCODE',
+        'ACCDEPGLCODESystemID',
         'ACCDEPGLCODE',
+        'DEPGLCODESystemID',
         'DEPGLCODE',
+        'DISPOGLCODESystemID',
         'DISPOGLCODE',
         'isActive',
         'sortOrder',
@@ -113,9 +120,13 @@ class AssetFinanceCategory extends Model
     protected $casts = [
         'faFinanceCatID' => 'integer',
         'financeCatDescription' => 'string',
+        'COSTGLCODESystemID' => 'integer',
         'COSTGLCODE' => 'string',
+        'ACCDEPGLCODESystemID' => 'integer',
         'ACCDEPGLCODE' => 'string',
+        'DEPGLCODESystemID' => 'integer',
         'DEPGLCODE' => 'string',
+        'DISPOGLCODESystemID' => 'integer',
         'DISPOGLCODE' => 'string',
         'isActive' => 'integer',
         'sortOrder' => 'integer',
@@ -134,6 +145,28 @@ class AssetFinanceCategory extends Model
     public static $rules = [
         
     ];
+
+    public function costaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'COSTGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+    public function accdepaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'ACCDEPGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+    public function depaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'DEPGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+    public function disaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'DISPOGLCODESystemID','chartOfAccountSystemID');
+    }
+
+
 
     
 }
