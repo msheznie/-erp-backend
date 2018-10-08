@@ -235,19 +235,23 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
             $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
 
-            $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID',$payMaster->BPVbank)->first();
+            $bankMaster = BankAssign::ofCompany($payMaster->companySystemID)->isActive()->where('bankmasterAutoID', $payMaster->BPVbank)->first();
 
             if (empty($bankMaster)) {
-                return $this->sendError('Selected Bank is not active',500,['type' => 'amountmismatch']);
+                return $this->sendError('Selected Bank is not active', 500, ['type' => 'amountmismatch']);
             }
 
             $bankAccount = \App\Models\BankAccount::isActive()->find($payMaster->BPVAccount);
 
             if (empty($bankAccount)) {
-                return $this->sendError('Selected Bank Account is not active',500,['type' => 'amountmismatch']);
+                return $this->sendError('Selected Bank Account is not active', 500, ['type' => 'amountmismatch']);
             }
 
             $advancePayment = PoAdvancePayment::find($input['poAdvPaymentID']);
+
+            if (!$input["paymentAmount"]) {
+                $input["paymentAmount"] = 0;
+            }
 
             $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL(Sum(erp_advancepaymentdetails.paymentAmount),0) AS SumOfpaymentAmount ')
                 ->where('companySystemID', $advancePayment->companySystemID)
@@ -259,7 +263,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $balanceAmount = $advancePayment->reqAmount - $advancePaymentDetailsSum->SumOfpaymentAmount;
 
             if ($input["paymentAmount"] > $balanceAmount) {
-                return $this->sendError('Payment amount cannot be greater than requested amount', 500,['type' => 'amountmismatch']);
+                return $this->sendError('Payment amount cannot be greater than requested amount', 500, ['type' => 'amountmismatch']);
             }
 
             $conversion = \Helper::convertAmountToLocalRpt(201, $id, $input["paymentAmount"]);
@@ -295,7 +299,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             return $this->sendResponse($advancePaymentDetails->toArray(), 'AdvancePaymentDetails updated successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError($exception->getMessage(),500);
+            return $this->sendError($exception->getMessage(), 500);
         }
     }
 
@@ -460,25 +464,25 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     $advancePaymentAmount = 0;
                     $supplierInvoAmount = 0;
 
-                    $advancePayment = AdvancePaymentDetails::selectRaw('SUM(paymentAmount) as paymentAmount')->whereHas('advancepaymentmaster',function($query) use ($payMaster){
-                        $query->where('isAdvancePaymentYN',0)->where('supplierID',$payMaster->BPVsupplierID);
-                    })->where('purchaseOrderID',$new["purchaseOrderID"])->first();
+                    $advancePayment = AdvancePaymentDetails::selectRaw('SUM(paymentAmount) as paymentAmount')->whereHas('advancepaymentmaster', function ($query) use ($payMaster) {
+                        $query->where('isAdvancePaymentYN', 0)->where('supplierID', $payMaster->BPVsupplierID);
+                    })->where('purchaseOrderID', $new["purchaseOrderID"])->first();
 
-                    if($advancePayment){
+                    if ($advancePayment) {
                         $advancePaymentAmount = $advancePayment->paymentAmount;
                     }
 
-                    $bookInvDet = BookInvSuppDet::selectRaw('SUM(supplierInvoAmount) as supplierInvoAmount')->whereHas('suppinvmaster',function($query) use ($payMaster){
-                        $query->whereHas('paysuppdetail')->where('approved',-1)->where('supplierID',$payMaster->BPVsupplierID);
-                    })->where('companySystemID',$payMaster->companySystemID)->where('purchaseOrderID',$new["purchaseOrderID"])->first();
+                    $bookInvDet = BookInvSuppDet::selectRaw('SUM(supplierInvoAmount) as supplierInvoAmount')->whereHas('suppinvmaster', function ($query) use ($payMaster) {
+                        $query->whereHas('paysuppdetail')->where('approved', -1)->where('supplierID', $payMaster->BPVsupplierID);
+                    })->where('companySystemID', $payMaster->companySystemID)->where('purchaseOrderID', $new["purchaseOrderID"])->first();
 
-                    if($bookInvDet){
+                    if ($bookInvDet) {
                         $supplierInvoAmount = $bookInvDet->supplierInvoAmount;
                     }
 
                     $balanceAmount = $totalPOAmount - ($advancePaymentAmount + $supplierInvoAmount);
 
-                    if($balanceAmount < 0){
+                    if ($balanceAmount < 0) {
                         array_push($finalError['po_amount_not_matching'], 'PO' . ' | ' . $new['purchaseOrderCode']);
                         $error_count++;
                     }

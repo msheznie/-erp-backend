@@ -218,6 +218,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
 
+        $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
+        if ($input['bookingDate'] > $curentDate) {
+            return $this->sendResponse('e', 'Dcoument date can not be greater than current date');
+        }
+
         if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
             return $this->sendResponse($customerInvoiceDirects->toArray(), 'Customer Invoice  saved successfully');
@@ -341,9 +346,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
         $isPerforma = $customerInvoiceDirect->isPerforma;
         if ($isPerforma == 1) {
-            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID','companyFinancePeriodID','companyFinanceYearID'));
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID'));
         } else {
-            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID','companyFinancePeriodID','companyFinanceYearID'));
+            $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID'));
             $_post['custTransactionCurrencyID'] = $input['custTransactionCurrencyID'];
             $_post['bankID'] = $input['bankID'];
             $_post['bankAccountID'] = $input['bankAccountID'];
@@ -422,6 +427,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($input['customerInvoiceNo'] != $customerInvoiceDirect->customerInvoiceNo) {
             $_post['customerInvoiceNo'] = $input['customerInvoiceNo'];
+        } else {
+            $_post['customerInvoiceNo'] = $customerInvoiceDirect->customerInvoiceNo;
         }
 
 
@@ -466,7 +473,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
-
+        $_post['serviceStartDate'] = $customerInvoiceDirect->serviceStartDate;
+        $_post['serviceEndDate'] = $customerInvoiceDirect->serviceEndDate;
         if ($input['serviceStartDate'] != '' && $input['serviceEndDate'] != '') {
             $_post['serviceStartDate'] = Carbon::parse($input['serviceStartDate'])->format('Y-m-d') . ' 00:00:00';
             $_post['serviceEndDate'] = Carbon::parse($input['serviceEndDate'])->format('Y-m-d') . ' 00:00:00';
@@ -476,11 +484,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
+        $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
+        if ($_post['bookingDate'] > $curentDate) {
+            return $this->sendError('Dcoument date can not be greater than current date', 500);
+        }
 
-        if($input['invoiceDueDate'] !=''){
+        if ($input['invoiceDueDate'] != '') {
             $_post['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
-        }else{
-            $_post['invoiceDueDate']=null;
+        } else {
+            $_post['invoiceDueDate'] = null;
+        }
+
+        /*validaation*/
+        $_post['customerInvoiceDate'] = $customerInvoiceDirect->customerInvoiceDate;
+        if ($input['customerInvoiceDate'] != '') {
+            $_post['customerInvoiceDate'] = Carbon::parse($input['customerInvoiceDate'])->format('Y-m-d') . ' 00:00:00';
+        } else {
+            $_post['customerInvoiceDate'] = null;
         }
 
 
@@ -493,27 +513,91 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
+
+                /**/
                 if ($isPerforma != 1) {
+
 
                     $messages = [
 
                         'custTransactionCurrencyID.required' => 'Currency is required.',
                         'bankID.required' => 'Bank is required.',
-                        'bankAccountID.required' => 'Bank account is required.'
+                        'bankAccountID.required' => 'Bank account is required.',
+
+                        'customerInvoiceNo.required' => 'Customer invoice no is required.',
+                        'customerInvoiceDate.required' => 'Customer invoice date is required.',
+                        'PONumber.required' => 'Po number is required.',
+                        'servicePeriod.required' => 'Service period is required.',
+                        'serviceStartDate.required' => 'Service start date is required.',
+                        'serviceEndDate.required' => 'Service end date is required.',
+                        'bookingDate.required' => 'Document date is required.'
 
                     ];
                     $validator = \Validator::make($_post, [
                         'custTransactionCurrencyID' => 'required|numeric|min:1',
                         'bankID' => 'required|numeric|min:1',
-                        'bankAccountID' => 'required|numeric|min:1'
+                        'bankAccountID' => 'required|numeric|min:1',
+
+                        'customerInvoiceNo' => 'required',
+                        'customerInvoiceDate' => 'required',
+                        'PONumber' => 'required',
+                        'servicePeriod' => 'required',
+                        'serviceStartDate' => 'required',
+                        'serviceEndDate' => 'required',
+                        'bookingDate' => 'required'
                     ], $messages);
 
-                    if ($validator->fails()) {
-                        return $this->sendError($validator->messages(), 422);
-                    }
 
+                } else {
+
+                    $messages = [
+
+                        'customerInvoiceNo.required' => 'Customer invoice no is required.',
+                        'customerInvoiceDate.required' => 'Customer invoice date is required.',
+                        'PONumber.required' => 'Po number is required.',
+                        'servicePeriod.required' => 'Service period is required.',
+                        'serviceStartDate.required' => 'Service start date is required.',
+                        'serviceEndDate.required' => 'Service end date is required.',
+                        'bookingDate.required' => 'Document date is required.'
+
+                    ];
+                    $validator = \Validator::make($_post, [
+                        'customerInvoiceNo' => 'required',
+                        'customerInvoiceDate' => 'required',
+                        'PONumber' => 'required',
+                        'servicePeriod' => 'required',
+                        'serviceStartDate' => 'required',
+                        'serviceEndDate' => 'required',
+                        'bookingDate' => 'required'
+                    ], $messages);
 
                 }
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                /**/
+                /*                if ($isPerforma != 1) {
+
+                                    $messages = [
+
+                                        'custTransactionCurrencyID.required' => 'Currency is required.',
+                                        'bankID.required' => 'Bank is required.',
+                                        'bankAccountID.required' => 'Bank account is required.'
+
+                                    ];
+                                    $validator = \Validator::make($_post, [
+                                        'custTransactionCurrencyID' => 'required|numeric|min:1',
+                                        'bankID' => 'required|numeric|min:1',
+                                        'bankAccountID' => 'required|numeric|min:1'
+                                    ], $messages);
+
+                                    if ($validator->fails()) {
+                                        return $this->sendError($validator->messages(), 422);
+                                    }
+
+
+                                }*/
+
 
                 if (count($detail) == 0) {
                     return $this->sendError('You can not confirm. Invoice Details not found.', 500);
@@ -939,21 +1023,20 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
-
         /*if bookinvoice not available create header*/
-   /*     if ($master->bookingInvCode == ' ' || $master->bookingInvCode == 0) {
-            dd($master->bookingInvCode);
-            exit;
-            $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $master->companyFinanceYearID)->first();
-            $serialNo = CustomerInvoiceDirect::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))->where('documentID', 'INV')->where('companySystemID', $master->companySystemID)->orderBy('serialNo', 'desc')->first();
-            $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
+        /*     if ($master->bookingInvCode == ' ' || $master->bookingInvCode == 0) {
+                 dd($master->bookingInvCode);
+                 exit;
+                 $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $master->companyFinanceYearID)->first();
+                 $serialNo = CustomerInvoiceDirect::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))->where('documentID', 'INV')->where('companySystemID', $master->companySystemID)->orderBy('serialNo', 'desc')->first();
+                 $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
 
 
-            $bookingInvCode = ($master->companyID . '\\' . $y . '\\INV' . str_pad($serialNo->serialNo, 6, '0', STR_PAD_LEFT));
-            $upMaster['serialNo'] = $serialNo->serialNo;
-            $upMaster['bookingInvCode'] = $bookingInvCode;
-            $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($upMaster, $custInvoiceDirectAutoID);
-        }*/
+                 $bookingInvCode = ($master->companyID . '\\' . $y . '\\INV' . str_pad($serialNo->serialNo, 6, '0', STR_PAD_LEFT));
+                 $upMaster['serialNo'] = $serialNo->serialNo;
+                 $upMaster['bookingInvCode'] = $bookingInvCode;
+                 $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($upMaster, $custInvoiceDirectAutoID);
+             }*/
 
         /*get bank check bank details from performaDetails*/
         $bankAccountDetails = PerformaDetails::select('currencyID', 'bankID', 'accountID')->where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->first();
@@ -1275,14 +1358,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
 
 
-
         } else {
 
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
 
         }
-
-       
 
 
         $companySystemID = $master->companySystemID;
@@ -1305,9 +1385,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $linefooterAddress = false;
         $linePdoinvoiceDetails = false;
-        $logo =true;
+        $logo = true;
         $line_performaCode = false;
-        $line_paymentTerms =false;
+        $line_paymentTerms = false;
         $line_rentalPeriod = false;
         $footerDate = true;
 
@@ -1358,10 +1438,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             case 60: /*WMS*/
             case 63: /*WSS*/
 
-                if($companySystemID==31){
-                    $linefooterAddress =false;
-                }else{
-                    $linefooterAddress =true;
+                if ($companySystemID == 31) {
+                    $linefooterAddress = false;
+                } else {
+                    $linefooterAddress = true;
                 }
 
                 if ($master->isPerforma == 1) {
@@ -1391,9 +1471,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 if ($master->isPerforma == 1) {
 
-                    if($master->customerID==79){
+                    if ($master->customerID == 79) {
                         $footerDate = false;
-                        $logo =false;
+                        $logo = false;
                         $line_seNo = false;
                         $line_subcontractNo = false;
                         $line_contractNo = true;
@@ -1402,16 +1482,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $line_jobNo = false;
                         $lineSecondAddress = true;
                         $line_poNumber = false;
-                        $line_performaCode =true;
+                        $line_performaCode = true;
                         $line_paymentTerms = true;
                         $line_rentalPeriod = true;
-                        $linePdoinvoiceDetails = DB::select("SELECT wellNo, netWorkNo, SEno, wellAmount FROM ( SELECT performaMasterID, companyID, contractID, clientContractID FROM erp_custinvoicedirectdet WHERE custInvoiceDirectID = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN performamaster ON performamaster.companyID = '$master->companyID' AND performamaster.PerformaInvoiceNo = t.performaMasterID AND t.clientContractID = performamaster.contractID INNER JOIN performa_service_entry_wellgroup ON performamaster.PerformaMasterID = performa_service_entry_wellgroup.performaMasID");
+                        $linePdoinvoiceDetails = DB::select("SELECT wellNo, netWorkNo, SEno, sum(wellAmount) as wellAmount FROM ( SELECT performaMasterID, companyID, contractID, clientContractID FROM erp_custinvoicedirectdet WHERE custInvoiceDirectID = $master->custInvoiceDirectAutoID GROUP BY performaMasterID ) t INNER JOIN performamaster ON performamaster.companyID = '$master->companyID' AND performamaster.PerformaInvoiceNo = t.performaMasterID AND t.clientContractID = performamaster.contractID INNER JOIN performa_service_entry_wellgroup ON performamaster.PerformaMasterID = performa_service_entry_wellgroup.performaMasID GROUP BY wellNo, netWorkNo, SEno ");
 
                         $template = 1;
-                    }else{
+                    } else {
 
                         $linefooterAddress = true;
-                        $logo =true;
+                        $logo = true;
                         $template = 1;
                         $line_seNo = true;
                         $line_unit = true;
@@ -1422,8 +1502,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $line_customerShortCode = false;
                         $linePageNo = true;
                     }
-
-
 
 
                 } else {
@@ -1488,7 +1566,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->line_rentalPeriod = $line_rentalPeriod;
         $customerInvoice->logo = $logo;
         $customerInvoice->footerDate = $footerDate;
-
 
 
         $array = array('request' => $customerInvoice);
@@ -1657,6 +1734,49 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
         return $this->sendResponse($contract, 'Contract deleted successfully');
+    }
+
+
+    function customerInvoiceReceiptStatus(Request $request)
+    {
+        $input = $request->all();
+        $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $input['id'])->first();
+
+        $master= DB::select("SELECT
+	erp_custreceivepaymentdet.custReceivePaymentAutoID,
+	erp_custreceivepaymentdet.companyID,
+	erp_customerreceivepayment.custPaymentReceiveCode,
+	erp_customerreceivepayment.custPaymentReceiveDate,
+IF
+	(erp_custreceivepaymentdet.matchingDocID = 0 
+	OR erp_custreceivepaymentdet.matchingDocID IS NULL,
+	erp_customerreceivepayment.custPaymentReceiveCode,
+	erp_matchdocumentmaster.matchingDocCode) AS docCode,
+	
+IF
+	(erp_custreceivepaymentdet.matchingDocID = 0 
+	OR erp_custreceivepaymentdet.matchingDocID IS NULL,
+	erp_customerreceivepayment.custPaymentReceiveDate,
+	erp_matchdocumentmaster.matchingDocdate ) AS docDate,
+	erp_custreceivepaymentdet.bookingInvCodeSystem,
+	erp_custreceivepaymentdet.addedDocumentID,
+	erp_custreceivepaymentdet.custTransactionCurrencyID,
+	currencymaster.CurrencyCode,currencymaster.DecimalPlaces,
+	erp_custreceivepaymentdet.receiveAmountTrans as amount,
+	erp_customerreceivepayment.confirmedYN,
+	erp_customerreceivepayment.approved,
+	erp_matchdocumentmaster.matchingConfirmedYN 
+FROM
+	erp_custreceivepaymentdet
+	LEFT JOIN currencymaster ON erp_custreceivepaymentdet.custTransactionCurrencyID = currencymaster.currencyID
+	LEFT JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
+	LEFT JOIN erp_matchdocumentmaster ON erp_custreceivepaymentdet.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID 
+WHERE
+	erp_custreceivepaymentdet.companySystemID = $master->companySystemID
+	AND erp_custreceivepaymentdet.bookingInvCodeSystem = $master->custInvoiceDirectAutoID 
+	AND erp_custreceivepaymentdet.addedDocumentSystemID = $master->documentSystemiD");
+
+        return $this->sendResponse($master, 'Contract deleted successfully');
     }
 
 

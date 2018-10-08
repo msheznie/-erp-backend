@@ -397,7 +397,9 @@ class DirectReceiptDetailAPIController extends AppBaseController
         DB::beginTransaction();
 
         try {
+
             DirectReceiptDetail::create($inputData);
+
             $details = DirectReceiptDetail::select(DB::raw("SUM(DRAmount) as receivedAmount"), DB::raw("SUM(localAmount) as localAmount"), DB::raw("SUM(DRAmount) as bankAmount"), DB::raw("SUM(comRptAmount) as companyRptAmount"))->where('directReceiptAutoID', $directReceiptAutoID)->first()->toArray();
 
             CustomerReceivePayment::where('custReceivePaymentAutoID', $directReceiptAutoID)->update($details);
@@ -407,7 +409,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
             return $this->sendResponse('s', 'successfully created');
         } catch (\Exception $exception) {
             DB::rollback();
-            return $this->sendError('Error Occured !');
+            return $this->sendError($exception->getMessage());
         }
 
     }
@@ -427,6 +429,8 @@ class DirectReceiptDetailAPIController extends AppBaseController
             return $this->sendError('Receipt voucher detail not found',500);
         }
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $detail->directReceiptAutoID)->first();
+
+        
 
         if ($input['contractUID'] != $detail->contractUID) {
             $input['contractID']=NULL;
