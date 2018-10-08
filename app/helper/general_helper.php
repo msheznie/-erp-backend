@@ -1105,14 +1105,14 @@ class Helper
                     return ['success' => false, 'message' => 'Document is not confirmed'];
                 }
 
-                $policyConfirmedUserToApprove  = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
-                                                                    ->where('companySystemID', $isConfirmed['companySystemID'])
-                                                                    ->first();
+                $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                    ->where('companySystemID', $isConfirmed['companySystemID'])
+                    ->first();
 
-                if($policyConfirmedUserToApprove->isYesNO == 0){
-                   if($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID){
-                       return ['success' => false, 'message' => 'You cannot approve this document as you have confirmed the document'];
-                   }
+                if ($policyConfirmedUserToApprove['isYesNO'] == 0) {
+                    if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
+                        return ['success' => false, 'message' => 'You cannot approve this document as you have confirmed the document'];
+                    }
                 }
 
                 //check document is already approved
@@ -1990,9 +1990,9 @@ class Helper
 
         if ($fixedCapital->allocationTypeID == 1) {
 
-            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $fixedCapital['companySystemID'])->where('bigginingDate','<',NOW())->where('endingDate','>',NOW())->first();
+            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $fixedCapital['companySystemID'])->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
 
-            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $fixedCapital['companySystemID'])->where('departmentSystemID', 9)->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])->where('dateFrom','<',NOW())->where('dateTo','>',NOW())->first();
+            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $fixedCapital['companySystemID'])->where('departmentSystemID', 9)->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])->where('dateFrom', '<', NOW())->where('dateTo', '>', NOW())->first();
 
             $lastSerial = Models\AssetDisposalMaster::where('companySystemID', $fixedCapital['companySystemID'])
                 ->where('companyFinanceYearID', $companyFinanceYear['companyFinanceYearID'])
