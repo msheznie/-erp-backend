@@ -12,6 +12,7 @@
  * -- Date: 04-September 2018 By: Fayas Description: Added new function getAllDebitNotes(),getDebitNoteFormData()
  * -- Date: 05-September 2018 By: Fayas Description: Added new function getDebitNoteApprovedByUser(),getDebitNoteApprovalByUser()
  *                ,debitNoteReopen(),printDebitNote()
+ * -- Date: 08-October 2018 By: Nazir Description: Added new function getDebitNotePaymentStatusHistory()
  */
 namespace App\Http\Controllers\API;
 
@@ -384,6 +385,14 @@ class DebitNoteAPIController extends AppBaseController
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
 
+        $documentDate = $input['debitNoteDate'];
+        $monthBegin = $input['FYPeriodDateFrom'];
+        $monthEnd = $input['FYPeriodDateTo'];
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Document date is not within the selected financial period !', 500);
+        }
+
         if ($debitNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -532,7 +541,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $debitNote = $this->debitNoteRepository->update($input, $id);
 
-        return $this->sendResponse($debitNote->toArray(), 'DebitNote updated successfully');
+        return $this->sendResponse($debitNote->toArray(), 'Debit note updated successfully');
     }
 
     /**
@@ -1064,6 +1073,71 @@ class DebitNoteAPIController extends AppBaseController
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+    public function getDebitNotePaymentStatusHistory(Request $request)
+    {
+        $input = $request->all();
+
+        $companySystemID = $input['companySystemID'];
+        $debitNoteAutoID = $input['debitNoteAutoID'];
+
+        $debitNoteMaster = DebitNote::find($debitNoteAutoID);
+        if (empty($debitNoteMaster)) {
+            return $this->sendError('Debit Note not found');
+        }
+
+        $detail = DB::select('SELECT
+	erp_paysupplierinvoicemaster.PayMasterAutoId,
+	erp_paysupplierinvoicemaster.companyID,
+IF (
+	erp_paysupplierinvoicedetail.matchingDocID = 0
+	OR erp_paysupplierinvoicedetail.matchingDocID IS NULL,
+	erp_paysupplierinvoicemaster.BPVcode,
+	erp_matchdocumentmaster.matchingDocCode
+) AS docCode,
+IF (
+	erp_paysupplierinvoicedetail.matchingDocID = 0
+	OR erp_paysupplierinvoicedetail.matchingDocID IS NULL,
+	erp_paysupplierinvoicemaster.BPVdate,
+	erp_matchdocumentmaster.matchingDocdate
+) AS docDate,
+ erp_paysupplierinvoicedetail.supplierTransCurrencyID,
+ currencymaster.CurrencyCode,
+ currencymaster.DecimalPlaces,
+ erp_paysupplierinvoicedetail.supplierPaymentAmount,
+ erp_paysupplierinvoicemaster.confirmedYN,
+ erp_paysupplierinvoicemaster.approved
+FROM
+	erp_paysupplierinvoicedetail
+INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
+LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID
+INNER JOIN currencymaster ON erp_paysupplierinvoicedetail.supplierTransCurrencyID = currencymaster.currencyID
+WHERE
+	erp_paysupplierinvoicemaster.companySystemID = '.$companySystemID.'
+AND erp_paysupplierinvoicedetail.addedDocumentSystemID = '.$debitNoteMaster->documentSystemID.'
+AND erp_paysupplierinvoicedetail.bookingInvSystemCode = '.$debitNoteAutoID.'
+UNION ALL
+	SELECT
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.companyID,
+		erp_matchdocumentmaster.matchingDocCode,
+		erp_matchdocumentmaster.matchingDocdate,
+		erp_matchdocumentmaster.supplierTransCurrencyID,
+		currencymaster.CurrencyCode,
+		currencymaster.DecimalPlaces,
+		erp_matchdocumentmaster.matchedAmount,
+		erp_matchdocumentmaster.matchingConfirmedYN,
+		erp_matchdocumentmaster.approved
+	FROM
+		erp_matchdocumentmaster
+	INNER JOIN currencymaster ON erp_matchdocumentmaster.supplierTransCurrencyID = currencymaster.currencyID
+	WHERE
+		erp_matchdocumentmaster.PayMasterAutoId = '.$debitNoteAutoID.'
+	AND erp_matchdocumentmaster.companySystemID = '.$companySystemID.'
+	AND erp_matchdocumentmaster.documentSystemID = '.$debitNoteMaster->documentSystemID.'');
+
+        return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
 
 

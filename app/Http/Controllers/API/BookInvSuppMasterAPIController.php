@@ -453,6 +453,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['bookingAmountRpt'] = \Helper::roundValue($currencyConverstionMaster['reportingAmount']);
         }
 
+        $documentDate = $input['bookingDate'];
+        $monthBegin = $input['FYPeriodDateFrom'];
+        $monthEnd = $input['FYPeriodDateTo'];
+
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Document date is not within the selected financial period !', 500);
+        }
+
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
 
@@ -575,8 +584,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->with(['pomaster'])
                     ->get();
-                if($checktotalExceed){
-                    foreach($checktotalExceed as $exc){
+                if ($checktotalExceed) {
+                    foreach ($checktotalExceed as $exc) {
 
                         $poMasterTotal = ProcumentOrder::find($exc->purchaseOrderID);
 
@@ -584,8 +593,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             ->where('supplierID', $exc->supplierID)
                             ->sum('totTransactionAmount');
 
-                        if($checkPreTotal > $poMasterTotal->poTotalSupplierTransactionCurrency){
-                            return $this->sendError('Supplier Invoice amount is greater than '.$exc->pomaster->purchaseOrderCode.' PO amount. Please check again.', 500);
+                        if ($checkPreTotal > $poMasterTotal->poTotalSupplierTransactionCurrency) {
+                            return $this->sendError('Supplier Invoice amount is greater than ' . $exc->pomaster->purchaseOrderCode . ' PO amount. Please check again.', 500);
                         }
                     }
                 }
@@ -596,8 +605,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->with(['grvmaster'])
                     ->get();
-                if($checktotalExceed){
-                    foreach($checktotalExceed as $exc){
+                if ($checktotalExceed) {
+                    foreach ($checktotalExceed as $exc) {
 
                         $unbilledGRTotal = UnbilledGrvGroupBy::find($exc->unbilledgrvAutoID);
 
@@ -605,7 +614,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             ->where('supplierID', $exc->supplierID)
                             ->sum('totTransactionAmount');
 
-                        if($checkPreTotal > $unbilledGRTotal->totTransactionAmount ){
+                        if ($checkPreTotal > $unbilledGRTotal->totTransactionAmount) {
                             return $this->sendError('Supplier Invoice amount is greater than GRV amount. Please check again.', 500);
                         }
                     }
@@ -617,8 +626,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->with(['grvmaster'])
                     ->get();
-                if($checktotalExceed){
-                    foreach($checktotalExceed as $exc){
+                if ($checktotalExceed) {
+                    foreach ($checktotalExceed as $exc) {
 
                         $grvDetailSum = GRVDetails::select(DB::raw('COALESCE(SUM(landingCost_TransCur * noQty),0) as total'))
                             ->where('grvAutoID', $exc->grvAutoID)
@@ -627,7 +636,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
                             ->sum('totTransactionAmount');
 
-                        if($checkPreTotal > $grvDetailSum['total']){
+                        if ($checkPreTotal > $grvDetailSum['total']) {
                             return $this->sendError('Supplier Invoice amount is greater than GRV amount. Please check again.', 500);
                         }
                     }
@@ -846,6 +855,22 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
+
+    public function getInvoiceSupplierTypeBase(Request $request)
+    {
+        $companyId = $request['companyId'];
+
+        $supplierData = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"));
+        $supplierData = $supplierData->where('companySystemID', $companyId);
+        if (isset($request['invoiceType']) && $request['invoiceType'] == 1) {
+            $supplierData = $supplierData->where('isActive', 1);
+        }
+        $supplierData = $supplierData->where('isAssigned', -1);
+        $supplierData = $supplierData->get();
+
+        return $this->sendResponse($supplierData, 'Record retrieved successfully');
+    }
+
 
     public function getInvoiceMasterView(Request $request)
     {
@@ -1254,13 +1279,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
-        if(!isset($input['taxMasterAutoID'])){
+        if (!isset($input['taxMasterAutoID'])) {
             return $this->sendError('Please Select a tax');
         }
 
         $taxMasterAutoID = $input['taxMasterAutoID'];
 
-        if($input['percentage'] == 0){
+        if ($input['percentage'] == 0) {
             return $this->sendError('Tax percentage cannot be 0');
         }
 

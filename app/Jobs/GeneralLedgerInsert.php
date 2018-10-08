@@ -884,10 +884,20 @@ class GeneralLedgerInsert implements ShouldQueue
                         $taxRpt = 0;
                         $taxTrans = 0;
 
+                        $poInvoiceDirectLocalExtCharge = 0;
+                        $poInvoiceDirectRptExtCharge = 0;
+                        $poInvoiceDirectTransExtCharge = 0;
+
                         if ($tax) {
                             $taxLocal = $tax->localAmount;
                             $taxRpt = $tax->rptAmount;
                             $taxTrans = $tax->transAmount;
+                        }
+
+                        if(isset($masterData->directdetail[0])){
+                            $poInvoiceDirectLocalExtCharge = $masterData->directdetail[0]->localAmount;
+                            $poInvoiceDirectRptExtCharge = $masterData->directdetail[0]->rptAmount;
+                            $poInvoiceDirectTransExtCharge = $masterData->directdetail[0]->transAmount;
                         }
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
@@ -927,9 +937,9 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['invoiceDate'] = $masterData->supplierInvoiceDate;
 
                             if ($masterData->documentType == 0) { // check if it is supplier invoice
-                                $data['documentTransAmount'] = \Helper::roundValue($masterData->detail[0]->transAmount + $taxTrans) * -1;
-                                $data['documentLocalAmount'] = \Helper::roundValue($masterData->detail[0]->localAmount + $taxLocal) * -1;
-                                $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount + $taxRpt) * -1;
+                                $data['documentTransAmount'] = \Helper::roundValue($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) * -1;
+                                $data['documentLocalAmount'] = \Helper::roundValue($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal) * -1;
+                                $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt) * -1;
                             } else { // check if it is direct invoice
                                 $data['documentTransAmount'] = \Helper::roundValue($masterData->directdetail[0]->transAmount + $taxTrans) * -1;
                                 $data['documentLocalAmount'] = \Helper::roundValue($masterData->directdetail[0]->localAmount + $taxLocal) * -1;
@@ -954,6 +964,28 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentLocalAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount));
                                 $data['documentRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount));
                                 array_push($finalData, $data);
+
+                                if ($bs) {
+                                    foreach ($bs as $val) {
+                                        $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $val->serviceLineCode;
+                                        $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
+                                        $data['glCode'] = $val->financeGLcodebBS;
+                                        $data['glAccountType'] = $val->chartofaccount->catogaryBLorPL;
+                                        $data['documentNarration'] = $val->comments;
+                                        $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
+                                        $data['documentTransCurrencyER'] = $val->supplierTransactionER;
+                                        $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                                        $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                                        $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                                        $data['documentRptCurrencyER'] = $val->companyReportingER;
+                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
+                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        array_push($finalData, $data);
+                                    }
+                                }
                             } else {
                                 if ($bs) {
                                     foreach ($bs as $val) {
