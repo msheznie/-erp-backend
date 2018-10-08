@@ -305,7 +305,86 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\\\\\", $search);
             $filter= " AND ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%' OR erp_accountsreceivableledger.documentCode LIKE '%{$search}%' ) ";
         }
-          $qry="SELECT
+
+        $qry="
+        SELECT
+    erp_accountsreceivableledger.arAutoID,
+    erp_accountsreceivableledger.documentSystemID AS addedDocumentSystemID,
+    erp_accountsreceivableledger.documentID AS addedDocumentID,
+    erp_accountsreceivableledger.documentCodeSystem AS bookingInvSystemCode,
+    erp_accountsreceivableledger.documentCode AS bookingInvDocCode,
+    erp_accountsreceivableledger.documentDate AS bookingInvoiceDate,
+    erp_accountsreceivableledger.customerID,
+    erp_accountsreceivableledger.custTransCurrencyID,
+    erp_accountsreceivableledger.custTransER,
+    erp_accountsreceivableledger.InvoiceNo,
+    erp_accountsreceivableledger.localCurrencyID,
+    erp_accountsreceivableledger.localER,
+    erp_accountsreceivableledger.localAmount,
+    erp_accountsreceivableledger.comRptCurrencyID,
+    erp_accountsreceivableledger.comRptER,
+    erp_accountsreceivableledger.comRptAmount,
+    erp_accountsreceivableledger.companySystemID,
+    erp_accountsreceivableledger.companyID,
+
+    IFNULL( SumOfreceiveAmountTrans, 0 ) AS SumOfreceiveAmountTrans,
+    CurrencyCode,
+    DecimalPlaces,
+    IFNULL( matchedAmount, 0 ) AS matchedAmount,
+    erp_accountsreceivableledger.custInvoiceAmount-IFNULL( SumOfreceiveAmountTrans, 0 )-IFNULL( matchedAmount*-1, 0 ) as balanceAmount
+FROM
+    erp_accountsreceivableledger
+    LEFT JOIN (
+SELECT
+    erp_custreceivepaymentdet.arAutoID,
+    Sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS SumOfreceiveAmountTrans
+FROM
+    erp_custreceivepaymentdet
+WHERE
+    companySystemID = $master->companySystemID 
+GROUP BY
+    erp_custreceivepaymentdet.arAutoID
+HAVING
+    erp_custreceivepaymentdet.arAutoID IS NOT NULL
+    ) sid ON sid.arAutoID = erp_accountsreceivableledger.arAutoID
+    LEFT JOIN (
+SELECT
+    erp_matchdocumentmaster.PayMasterAutoId,
+    erp_matchdocumentmaster.companySystemID,
+    erp_matchdocumentmaster.documentSystemID,
+    erp_matchdocumentmaster.BPVsupplierID,
+    erp_matchdocumentmaster.supplierTransCurrencyID,
+    sum( erp_matchdocumentmaster.matchedAmount ) as matchedAmount,
+    sum( erp_matchdocumentmaster.matchLocalAmount ),
+    sum( erp_matchdocumentmaster.matchRptAmount )
+FROM
+    erp_matchdocumentmaster
+WHERE
+    erp_matchdocumentmaster.companySystemID = $master->companySystemID 
+    AND erp_matchdocumentmaster.documentSystemID = 19
+GROUP BY
+    erp_matchdocumentmaster.companySystemID,
+    erp_matchdocumentmaster.documentSystemID,
+    erp_matchdocumentmaster.PayMasterAutoId,
+    erp_matchdocumentmaster.BPVsupplierID,
+    erp_matchdocumentmaster.supplierTransCurrencyID
+    ) md ON md.documentSystemID = erp_accountsreceivableledger.documentSystemID
+    AND md.PayMasterAutoId = erp_accountsreceivableledger.documentCodeSystem
+    AND md.BPVsupplierID = erp_accountsreceivableledger.customerID
+    AND md.supplierTransCurrencyID = custTransCurrencyID
+    LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID
+WHERE
+erp_accountsreceivableledger.selectedToPaymentInv = 0 AND erp_accountsreceivableledger.documentDate < '{$master->custPaymentReceiveDate}' 
+{$filter}
+    AND erp_accountsreceivableledger.documentType <> 13
+    AND erp_accountsreceivableledger.fullyInvoiced <> 2
+    AND erp_accountsreceivableledger.companySystemID = $master->companySystemID 
+    AND erp_accountsreceivableledger.customerID = $master->customerID 
+    AND erp_accountsreceivableledger.custTransCurrencyID =$master->custTransactionCurrencyID 
+ORDER BY
+    erp_accountsreceivableledger.documentDate {$sort}
+        ";
+          $qry1="SELECT
 	erp_accountsreceivableledger.arAutoID,
 	erp_accountsreceivableledger.documentCodeSystem AS bookingInvSystemCode,
 	custTransCurrencyID,
