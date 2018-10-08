@@ -52,6 +52,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
 
     Route::resource('supplier/assigned', 'SupplierAssignedAPIController');
+    Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive');
 
     Route::get('contactDetailsBySupplier', 'SupplierContactDetailsAPIController@getContactDetailsBySupplier');
 
@@ -489,6 +490,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse');
     Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport');
     Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod');
+    Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY');
     Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
     Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
     Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV');
@@ -748,7 +750,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getDebitNoteFormData', 'DebitNoteAPIController@getDebitNoteFormData');
     Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
     Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
-
+    Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
 
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
@@ -756,6 +758,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails');
     Route::post('getInvoiceMasterView', 'BookInvSuppMasterAPIController@getInvoiceMasterView');
     Route::get('getInvoiceMasterFormData', 'BookInvSuppMasterAPIController@getInvoiceMasterFormData');
+    Route::get('getInvoiceSupplierTypeBase', 'BookInvSuppMasterAPIController@getInvoiceSupplierTypeBase');
 
     Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
     Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
