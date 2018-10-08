@@ -20,6 +20,7 @@ use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\FixedAssetMasterRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -137,8 +138,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         $grvDetails = GRVDetails::with(['grv_master'])->find($input['grvDetailsID']);
         $qtyRangeArr = [];
         if ($grvDetails) {
-
-            $segment = SegmentMaster::find($input['serviceLineSystemID']);
+            $input['serviceLineSystemID'] = $grvDetails->serviceLineSystemID;
+            $segment = SegmentMaster::find($grvDetails->serviceLineSystemID);
             if ($segment) {
                 $input['serviceLineCode'] = $segment->ServiceLineCode;
             }
@@ -149,6 +150,9 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
             $input["documentSystemID"] = 22;
             $input["documentID"] = 'FA';
+
+            $input['assetType'] = 1;
+            $input['supplierIDRentedAsset'] = $grvDetails->grv_master->supplierID;
 
             if (isset($input['dateAQ'])) {
                 if ($input['dateAQ']) {
@@ -181,20 +185,16 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $input['createdUserID'] = \Helper::getEmployeeID();
                         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                         $input["timestamp"] = date('Y-m-d H:i:s');
-                        $qtyRangeArr[] = $input;
                         $lastSerialNumber++;
+                        $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
                     }
                 }
             }
         }
 
-        return $qtyRangeArr;
-
-        $fixedAssetMasters = FixedAssetMaster::insert($qtyRangeArr);
-
         $assetAllocated = GRVDetails::where('grvDetailsID', $input['grvDetailsID'])->update(['assetAllocationDoneYN' => -1]);
 
-        return $this->sendResponse($fixedAssetMasters->toArray(), 'Fixed Asset Master saved successfully');
+        return $this->sendResponse([], 'Fixed Asset Master saved successfully');
     }
 
     /**
