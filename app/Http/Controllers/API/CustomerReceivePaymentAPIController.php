@@ -332,8 +332,9 @@ custTransactionCurrencyID
             return $this->sendError('Customer Receive Payment not found');
         }
 
-         $input['custPaymentReceiveDate'] =  Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00';
-         $input['custChequeDate'] =  Carbon::parse($input['custChequeDate'])->format('Y-m-d') . ' 00:00:00';
+         $input['custPaymentReceiveDate'] = ($input['custPaymentReceiveDate'] !='' ? Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00': NULL);
+
+         $input['custChequeDate'] = ($input['custChequeDate']!='' ? Carbon::parse($input['custChequeDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
 
    /*     if (($input['custPaymentReceiveDate'] >= $input['FYPeriodDateFrom']) && ($input['custPaymentReceiveDate'] <= $input['FYPeriodDateTo'])) {
 

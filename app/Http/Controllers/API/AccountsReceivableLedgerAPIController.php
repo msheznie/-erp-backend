@@ -305,7 +305,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\\\\\", $search);
             $filter= " AND ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%' OR erp_accountsreceivableledger.documentCode LIKE '%{$search}%' ) ";
         }
-         $qry="SELECT
+          $qry="SELECT
 	erp_accountsreceivableledger.arAutoID,
 	erp_accountsreceivableledger.documentCodeSystem AS bookingInvSystemCode,
 	custTransCurrencyID,
