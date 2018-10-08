@@ -427,6 +427,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($input['customerInvoiceNo'] != $customerInvoiceDirect->customerInvoiceNo) {
             $_post['customerInvoiceNo'] = $input['customerInvoiceNo'];
+        }else{
+            $_post['customerInvoiceNo'] = $customerInvoiceDirect->customerInvoiceNo;
         }
 
 
@@ -471,7 +473,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
-
+        $_post['serviceStartDate']=$customerInvoiceDirect->serviceStartDate;
+        $_post['serviceEndDate']=$customerInvoiceDirect->serviceEndDate;
         if ($input['serviceStartDate'] != '' && $input['serviceEndDate'] != '') {
             $_post['serviceStartDate'] = Carbon::parse($input['serviceStartDate'])->format('Y-m-d') . ' 00:00:00';
             $_post['serviceEndDate'] = Carbon::parse($input['serviceEndDate'])->format('Y-m-d') . ' 00:00:00';
@@ -492,6 +495,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $_post['invoiceDueDate']=null;
         }
 
+        /*validaation*/
+        $_post['customerInvoiceDate']=$customerInvoiceDirect->customerInvoiceDate;
+        if($input['customerInvoiceDate'] != ''){
+            $_post['customerInvoiceDate'] = Carbon::parse($input['customerInvoiceDate'])->format('Y-m-d') . ' 00:00:00';
+        }else{
+            $_post['customerInvoiceDate']=null;
+        }
+
 
         if (($_post['bookingDate'] >= $_post['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $_post['FYPeriodDateTo'])) {
 
@@ -502,7 +513,72 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
+
+                /**/
                 if ($isPerforma != 1) {
+
+
+                    $messages = [
+
+                        'custTransactionCurrencyID.required' => 'Currency is required.',
+                        'bankID.required' => 'Bank is required.',
+                        'bankAccountID.required' => 'Bank account is required.',
+
+                        'customerInvoiceNo.required' => 'Customer invoice no is required.',
+                        'customerInvoiceDate.required' => 'Customer invoice date is required.',
+                        'PONumber.required' => 'Po number is required.' ,
+                        'servicePeriod.required' => 'Service period is required.',
+                        'serviceStartDate.required' => 'Service start date is required.',
+                        'serviceEndDate.required' => 'Service end date is required.' ,
+                        'bookingDate.required' => 'Document date is required.'
+
+                    ];
+                    $validator = \Validator::make($_post, [
+                        'custTransactionCurrencyID' => 'required|numeric|min:1',
+                        'bankID' => 'required|numeric|min:1',
+                        'bankAccountID' => 'required|numeric|min:1',
+
+                        'customerInvoiceNo' => 'required',
+                        'customerInvoiceDate' => 'required',
+                        'PONumber' => 'required',
+                        'servicePeriod' => 'required',
+                        'serviceStartDate' => 'required',
+                        'serviceEndDate' => 'required',
+                        'bookingDate' => 'required'
+                    ], $messages);
+
+
+
+
+                }else{
+
+                    $messages = [
+
+                        'customerInvoiceNo.required' => 'Customer invoice no is required.',
+                        'customerInvoiceDate.required' => 'Customer invoice date is required.',
+                        'PONumber.required' => 'Po number is required.' ,
+                        'servicePeriod.required' => 'Service period is required.',
+                        'serviceStartDate.required' => 'Service start date is required.',
+                        'serviceEndDate.required' => 'Service end date is required.',
+                        'bookingDate.required' => 'Document date is required.'
+
+                    ];
+                    $validator = \Validator::make($_post, [
+                        'customerInvoiceNo' => 'required',
+                        'customerInvoiceDate' => 'required',
+                        'PONumber' => 'required',
+                        'servicePeriod' => 'required',
+                        'serviceStartDate' => 'required',
+                        'serviceEndDate' => 'required',
+                        'bookingDate' => 'required'
+                    ], $messages);
+
+                }
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                /**/
+/*                if ($isPerforma != 1) {
 
                     $messages = [
 
@@ -522,7 +598,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     }
 
 
-                }
+                }*/
+
 
                 if (count($detail) == 0) {
                     return $this->sendError('You can not confirm. Invoice Details not found.', 500);
