@@ -453,6 +453,25 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['bookingAmountRpt'] = \Helper::roundValue($currencyConverstionMaster['reportingAmount']);
         }
 
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        } else {
+            $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+            $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 1;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+        }
+        unset($inputParam);
+
         $documentDate = $input['bookingDate'];
         $monthBegin = $input['FYPeriodDateFrom'];
         $monthEnd = $input['FYPeriodDateTo'];
@@ -464,25 +483,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-            if (!$companyFinanceYear["success"]) {
-                return $this->sendError($companyFinanceYear["message"], 500);
-            } else {
-                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
-                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
-            }
-
-            $inputParam = $input;
-            $inputParam["departmentSystemID"] = 1;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-            if (!$companyFinancePeriod["success"]) {
-                return $this->sendError($companyFinancePeriod["message"], 500);
-            } else {
-                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
-            }
-            unset($inputParam);
 
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
@@ -498,15 +498,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
-            $documentDate = $input['bookingDate'];
-            $monthBegin = $input['FYPeriodDateFrom'];
-            $monthEnd = $input['FYPeriodDateTo'];
-
-            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
-
-            } else {
-                return $this->sendError('Document date is not within the selected financial period !', 500);
-            }
             $checkItems = 0;
             if ($input['documentType'] == 1) {
                 $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)

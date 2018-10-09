@@ -571,6 +571,7 @@ class CreditNoteAPIController extends AppBaseController
         switch ($type) {
             case 'filter':
                 $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
+                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['month'] = Months::all();
                 $output['years'] = CreditNote::select(DB::raw("YEAR(creditNoteDate) as year"))
@@ -639,6 +640,13 @@ class CreditNoteAPIController extends AppBaseController
                 $master->where('erp_creditnote.confirmedYN', $input['confirmedYN']);
             }
         }
+
+        if (array_key_exists('customerID', $input)) {
+            if (($input['customerID'] !='')) {
+                $master->where('erp_creditnote.customerID', $input['customerID']);
+            }
+        }
+
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
                 $master->where('erp_creditnote.approved', $input['approved']);
