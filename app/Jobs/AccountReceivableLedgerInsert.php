@@ -48,7 +48,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                     case 19: // Credit Note
                         $masterData = CreditNote::with(['details' => function ($query) {
                             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(creditAmount) as transAmount,creditNoteAutoID,serviceLineSystemID,serviceLineCode,clientContractID,contractUID');
-                        }])->find($masterModel["autoID"]);
+                        },'finance_period_by'])->find($masterModel["autoID"]);
 
                         $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER")->WHERE('documentSystemCode', $masterModel["autoID"])->WHERE('documentSystemID', $masterModel["documentSystemID"])->first();
 
@@ -62,6 +62,11 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $taxTrans = $tax->transAmount;
                         }
 
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if($masterData->finance_period_by->isActive == -1){
+                            $masterDocumentDate = $masterData->creditNoteDate;
+                        }
+
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
@@ -69,7 +74,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['documentID'] = $masterData->documentID;
                             $data['documentCodeSystem'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->creditNoteCode;
-                            $data['documentDate'] = $masterData->creditNoteDate;
+                            $data['documentDate'] = $masterDocumentDate;
                             $data['customerID'] = $masterData->customerID;
                             $data['InvoiceNo'] = null;
                             $data['InvoiceDate'] = null;
@@ -100,7 +105,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                     case 20: // Customer Invoice
                         $masterData = CustomerInvoiceDirect::with(['invoicedetails' => function ($query) {
                             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(invoiceAmount) as transAmount,custInvoiceDirectID,serviceLineSystemID,serviceLineCode');
-                        }])->find($masterModel["autoID"]);
+                        },'finance_period_by'])->find($masterModel["autoID"]);
 
                         $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER")->WHERE('documentSystemCode', $masterModel["autoID"])->WHERE('documentSystemID', $masterModel["documentSystemID"])->first();
 
@@ -113,6 +118,10 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $taxRpt = $tax->rptAmount;
                             $taxTrans = $tax->transAmount;
                         }
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if($masterData->finance_period_by->isActive == -1){
+                            $masterDocumentDate = $masterData->bookingDate;
+                        }
 
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
@@ -121,7 +130,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['documentID'] = $masterData->documentID;
                             $data['documentCodeSystem'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->bookingInvCode;
-                            $data['documentDate'] = $masterData->bookingDate;
+                            $data['documentDate'] = $masterDocumentDate;
                             $data['customerID'] = $masterData->customerID;
                             $data['InvoiceNo'] = null;
                             $data['InvoiceDate'] = null;

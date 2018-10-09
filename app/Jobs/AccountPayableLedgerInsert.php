@@ -51,7 +51,12 @@ class AccountPayableLedgerInsert implements ShouldQueue
                     case 15: // Debit Note
                         $masterData = DebitNote::with(['detail' => function ($query) {
                             $query->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(debitAmount) as transAmount,debitNoteAutoID");
-                        }])->find($masterModel["autoID"]);
+                        },'finance_period_by'])->find($masterModel["autoID"]);
+
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if($masterData->finance_period_by->isActive == -1){
+                            $masterDocumentDate = $masterData->debitNoteDate;
+                        }
 
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
@@ -60,7 +65,7 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $data['documentID'] = $masterData->documentID;
                             $data['documentSystemCode'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->debitNoteCode;
-                            $data['documentDate'] = $masterData->debitNoteDate;
+                            $data['documentDate'] = $masterDocumentDate;
                             $data['supplierCodeSystem'] = $masterData->supplierID;
                             $data['supplierInvoiceNo'] = 'NA';
                             $data['supplierInvoiceDate'] = $masterData->debitNoteDate;
@@ -93,7 +98,7 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $query->selectRaw("SUM(totLocalAmount) as localAmount, SUM(totRptAmount) as rptAmount,SUM(totTransactionAmount) as transAmount,bookingSuppMasInvAutoID");
                         }, 'directdetail' => function ($query) {
                             $query->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DIAmount) as transAmount,directInvoiceAutoID");
-                        }])->find($masterModel["autoID"]);
+                        },'financeperiod_by'])->find($masterModel["autoID"]);
 
                         $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER")->WHERE('documentSystemCode', $masterModel["autoID"])->WHERE('documentSystemID', $masterModel["documentSystemID"])->first();
 
@@ -107,6 +112,11 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $taxTrans = $tax->transAmount;
                         }
 
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if($masterData->financeperiod_by->isActive == -1){
+                            $masterDocumentDate = $masterData->bookingDate;
+                        }
+
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
@@ -114,7 +124,7 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $data['documentID'] = $masterData->documentID;
                             $data['documentSystemCode'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->bookingInvCode;
-                            $data['documentDate'] = $masterData->bookingDate;
+                            $data['documentDate'] = $masterDocumentDate;
                             $data['supplierCodeSystem'] = $masterData->supplierID;
                             $data['supplierInvoiceNo'] = $masterData->supplierInvoiceNo;
                             $data['supplierInvoiceDate'] = $masterData->bookingDate;
@@ -164,8 +174,12 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $query->selectRaw('SUM(paymentLocalAmount) as localAmount, SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierPaymentCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierPaymentER as transCurrencyER,PayMasterAutoId');
                         }, 'advancedetail' => function ($query) {
                             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(supplierTransAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER,PayMasterAutoId');
-                        }])->find($masterModel["autoID"]);
+                        },'financeperiod_by'])->find($masterModel["autoID"]);
 
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if($masterData->financeperiod_by->isActive == -1){
+                            $masterDocumentDate = $masterData->BPVdate;
+                        }
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
@@ -173,7 +187,7 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $data['documentID'] = $masterData->documentID;
                             $data['documentSystemCode'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->BPVcode;
-                            $data['documentDate'] = $masterData->BPVdate;
+                            $data['documentDate'] = $masterDocumentDate;
                             $data['supplierCodeSystem'] = $masterData->BPVsupplierID;
                             $data['supplierInvoiceNo'] = 'NA';
                             $data['supplierInvoiceDate'] = $masterData->BPVdate;

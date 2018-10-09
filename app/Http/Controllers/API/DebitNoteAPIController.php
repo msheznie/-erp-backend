@@ -385,6 +385,25 @@ class DebitNoteAPIController extends AppBaseController
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
         }
 
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        } else {
+            $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+            $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 1;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+        }
+        unset($inputParam);
+
         $documentDate = $input['debitNoteDate'];
         $monthBegin = $input['FYPeriodDateFrom'];
         $monthEnd = $input['FYPeriodDateTo'];
@@ -394,25 +413,6 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         if ($debitNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-            if (!$companyFinanceYear["success"]) {
-                return $this->sendError($companyFinanceYear["message"], 500);
-            } else {
-                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
-                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
-            }
-
-            $inputParam = $input;
-            $inputParam["departmentSystemID"] = 1;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-            if (!$companyFinancePeriod["success"]) {
-                return $this->sendError($companyFinancePeriod["message"], 500);
-            } else {
-                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
-            }
-            unset($inputParam);
 
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
