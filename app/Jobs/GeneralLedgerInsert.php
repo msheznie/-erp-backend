@@ -638,7 +638,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         break;
                     case 20:
                         /*customerInvoice*/
-                        $masterData = CustomerInvoiceDirect::find($masterModel["autoID"]);
+                        $masterData = CustomerInvoiceDirect::with(['finance_period_by'])->find($masterModel["autoID"]);
                         $det = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $masterModel["autoID"]);
                         $detOne = $det->first();
                         $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode")->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode', 'serviceLineCode', 'comments')->get();
@@ -647,6 +647,10 @@ class GeneralLedgerInsert implements ShouldQueue
                         $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
                         $date = new Carbon($masterData->bookingDate);
                         $time = Carbon::now();
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if($masterData->finance_period_by->isActive == -1){
+                            $masterDocumentDate = $masterData->bookingDate;
+                        }
                         $data['companySystemID'] = $masterData->companySystemID;
                         $data['companyID'] = $masterData->companyID;
                         $data['masterCompanyID'] = $company->masterComapanyID;
@@ -654,9 +658,10 @@ class GeneralLedgerInsert implements ShouldQueue
                         $data['documentSystemID'] = $masterData->documentSystemiD;
                         $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
                         $data['documentCode'] = $masterData->bookingInvCode;
-                        $data['documentDate'] = ($masterData->isPerforma == 1) ? $time : $masterData->bookingDate;
-                        $data['documentYear'] = $date->year;
-                        $data['documentMonth'] = $date->month;
+                        //$data['documentDate'] = ($masterData->isPerforma == 1) ? $time : $masterData->bookingDate;
+                        $data['documentDate'] = $masterDocumentDate;
+                        $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                        $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
                         $data['invoiceNumber'] = $masterData->customerInvoiceNo;
                         $data['invoiceDate'] = $masterData->customerInvoiceDate;
 
@@ -711,9 +716,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentSystemID'] = $masterData->documentSystemiD;
                                 $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
                                 $data['documentCode'] = $masterData->bookingInvCode;
-                                $data['documentDate'] = ($masterData->isPerforma == 1) ? $time : $masterData->bookingDate;
-                                $data['documentYear'] = $date->year;
-                                $data['documentMonth'] = $date->month;
+                                $data['documentDate'] = $masterDocumentDate;
+                                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
                                 $data['invoiceNumber'] = $masterData->customerInvoiceNo;
                                 $data['invoiceDate'] = $masterData->customerInvoiceDate;
 
@@ -759,9 +764,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['documentSystemID'] = $masterData->documentSystemiD;
                                 $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
                                 $data['documentCode'] = $masterData->bookingInvCode;
-                                $data['documentDate'] = ($masterData->isPerforma == 1) ? $time : $masterData->bookingDate;
-                                $data['documentYear'] = $date->year;
-                                $data['documentMonth'] = $date->month;
+                                $data['documentDate'] = $masterDocumentDate;
+                                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
                                 $data['invoiceNumber'] = $masterData->customerInvoiceNo;
                                 $data['invoiceDate'] = $masterData->customerInvoiceDate;
 
@@ -884,8 +889,6 @@ class GeneralLedgerInsert implements ShouldQueue
                         $taxRpt = 0;
                         $taxTrans = 0;
 
-                        $masterDocumentDate = date('Y-m-d H:i:s');
-
                         $poInvoiceDirectLocalExtCharge = 0;
                         $poInvoiceDirectRptExtCharge = 0;
                         $poInvoiceDirectTransExtCharge = 0;
@@ -901,9 +904,12 @@ class GeneralLedgerInsert implements ShouldQueue
                             $poInvoiceDirectRptExtCharge = $masterData->directdetail[0]->rptAmount;
                             $poInvoiceDirectTransExtCharge = $masterData->directdetail[0]->transAmount;
                         }
+
+                        $masterDocumentDate = date('Y-m-d H:i:s');
                         if($masterData->financeperiod_by->isActive == -1){
                             $masterDocumentDate = $masterData->bookingDate;
                         }
+
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
@@ -1118,7 +1124,7 @@ class GeneralLedgerInsert implements ShouldQueue
                     case 19: // CN - Credit Note
                         $masterData = CreditNote::with(['details' => function ($query) {
                             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(creditAmount) as transAmount,creditNoteAutoID,serviceLineSystemID,serviceLineCode,clientContractID,contractUID');
-                        }])->find($masterModel["autoID"]);
+                        }],'finance_period_by')->find($masterModel["autoID"]);
 
                         //all acoount
                         $allAc = CreditNoteDetails::with(['chartofaccount'])->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(creditAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,creditAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,clientContractID,contractUID,comments,chartOfAccountSystemID")->WHERE('creditNoteAutoID', $masterModel["autoID"])->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'clientContractID', 'comments')->get();
@@ -1137,6 +1143,11 @@ class GeneralLedgerInsert implements ShouldQueue
                             $taxTrans = $tax->transAmount;
                         }
 
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if($masterData->finance_period_by->isActive == -1){
+                            $masterDocumentDate = $masterData->creditNoteDate;
+                        }
+
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
@@ -1145,9 +1156,9 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentID'] = $masterData->documentID;
                             $data['documentSystemCode'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->creditNoteCode;
-                            $data['documentDate'] = date('Y-m-d H:i:s');
-                            $data['documentYear'] = \Helper::dateYear($masterData->creditNoteDate);
-                            $data['documentMonth'] = \Helper::dateMonth($masterData->creditNoteDate);
+                            $data['documentDate'] = $masterDocumentDate;
+                            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
                             $data['documentConfirmedDate'] = $masterData->confirmedDate;
                             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
