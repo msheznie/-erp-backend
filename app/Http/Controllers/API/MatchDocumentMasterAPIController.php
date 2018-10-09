@@ -546,7 +546,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         }
 
         $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
-        //$invMaster->where('documentSystemID', $input['documentId']);
+        $invMaster->whereIn('documentSystemID', [4,15]);
         $invMaster->with(['created_by' => function ($query) {
         }, 'supplier' => function ($query) {
         }, 'transactioncurrency' => function ($query) {
