@@ -397,6 +397,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
+        $_post['companyFinancePeriodID']=$input['companyFinancePeriodID'];
+        
         $_post['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $_post['FYEnd'] = $CompanyFinanceYear->endingDate;
         $_post['FYPeriodDateFrom'] = $FYPeriodDateFrom;

@@ -113,9 +113,29 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $id= $input['id'];
         $value = $input['value'];
+        $arAutoID = array_pluck($value, 'arAutoID');
+
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID',$input['id'])->first();
-        echo $qry="SELECT erp_accountsreceivableledger.arAutoID, erp_accountsreceivableledger.documentCodeSystem AS bookingInvSystemCode, custTransCurrencyID, erp_accountsreceivableledger.custTransER,	erp_accountsreceivableledger.InvoiceNo, erp_accountsreceivableledger.localCurrencyID, erp_accountsreceivableledger.localER, erp_accountsreceivableledger.localAmount, erp_accountsreceivableledger.comRptCurrencyID, erp_accountsreceivableledger.comRptER, erp_accountsreceivableledger.comRptAmount, erp_accountsreceivableledger.companySystemID, erp_accountsreceivableledger.companyID, erp_accountsreceivableledger.documentSystemID AS addedDocumentSystemID, erp_accountsreceivableledger.documentID AS addedDocumentID, erp_accountsreceivableledger.documentCode AS bookingInvDocCode, erp_accountsreceivableledger.documentDate AS bookingInvoiceDate, erp_accountsreceivableledger.customerID, IFNULL( SumOfreceiveAmountTrans, 0 ) AS SumOfreceiveAmountTrans, CurrencyCode, DecimalPlaces, IFNULL( SumOfcustbalanceAmount, 0 ) AS SumOfcustbalanceAmount, IFNULL( matchedAmount, 0 ) AS matchedAmount, FALSE AS isChecked FROM erp_accountsreceivableledger LEFT JOIN ( SELECT erp_custreceivepaymentdet.arAutoID, Sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS SumOfreceiveAmountTrans, Sum( erp_custreceivepaymentdet.custbalanceAmount ) AS SumOfcustbalanceAmount FROM erp_custreceivepaymentdet WHERE companySystemID = $master->companySystemID GROUP BY erp_custreceivepaymentdet.arAutoID HAVING erp_custreceivepaymentdet.arAutoID IS NOT NULL ) sid ON sid.arAutoID = erp_accountsreceivableledger.arAutoID LEFT JOIN ( SELECT erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.companyID, erp_matchdocumentmaster.documentSystemID, erp_matchdocumentmaster.BPVcode, erp_matchdocumentmaster.BPVsupplierID, erp_matchdocumentmaster.supplierTransCurrencyID, erp_matchdocumentmaster.matchedAmount, erp_matchdocumentmaster.matchLocalAmount, erp_matchdocumentmaster.matchRptAmount, erp_matchdocumentmaster.matchingConfirmedYN FROM erp_matchdocumentmaster WHERE erp_matchdocumentmaster.companySystemID = $master->companySystemID AND erp_matchdocumentmaster.documentSystemID IN ( 20, 19 ) ) md ON md.documentSystemID = erp_accountsreceivableledger.documentSystemID AND md.PayMasterAutoId = erp_accountsreceivableledger.documentCodeSystem AND md.BPVsupplierID = erp_accountsreceivableledger.customerID AND md.supplierTransCurrencyID = custTransCurrencyID LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID WHERE erp_accountsreceivableledger.arAutoID = {$value}  AND  erp_accountsreceivableledger.documentDate < '{$master->custPaymentReceiveDate}' AND erp_accountsreceivableledger.selectedToPaymentInv = 0 AND erp_accountsreceivableledger.fullyInvoiced <> 2 AND erp_accountsreceivableledger.companySystemID = $master->companySystemID AND erp_accountsreceivableledger.customerID = $master->customerID AND erp_accountsreceivableledger.custTransCurrencyID = $master->custTransactionCurrencyID HAVING ROUND( SumOfcustbalanceAmount, DecimalPlaces ) > 0 ";
-exit;
+        $detail = CustomerReceivePaymentDetail::select('bookingInvCode')->where('custReceivePaymentAutoID',$input['id'])->whereIn('arAutoID',$arAutoID)->get();
+
+        if(count($detail) > 0){
+            $names = array_pluck($detail->toArray(), 'bookingInvCode');
+            return $this->sendError('<b>Listed below document code already exist</b> <br>'.join(' <br> ',$names), 500);
+        }else{
+
+            if($value){
+                foreach($value as $item){
+                    $SumOfreceiveAmountTrans=0;
+                    $SumOfreceiveAmountTrans = $item['SumOfreceiveAmountTrans'];
+
+
+
+                }
+            }
+
+        }
+
+ exit;
         $invMaster = DB::select($qry);
         if ( 0 < count( $invMaster ) ) {
             $invMaster=$invMaster[0];
