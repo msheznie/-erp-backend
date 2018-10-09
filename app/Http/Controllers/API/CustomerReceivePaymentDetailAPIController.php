@@ -124,9 +124,34 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         }else{
 
             if($value){
+                $x=0;
                 foreach($value as $item){
-                    $SumOfreceiveAmountTrans=0;
-                    $SumOfreceiveAmountTrans = $item['SumOfreceiveAmountTrans'];
+                    $inputData[$x]['custReceivePaymentAutoID']=$id;
+                    $inputData[$x]['arAutoID']=$item['arAutoID'];
+                    $inputData[$x]['companySystemID']=$item['companySystemID'];
+                    $inputData[$x]['companyID']=$item['companyID'];
+                    $inputData[$x]['addedDocumentSystemID']=$item['addedDocumentID'];
+                    $inputData[$x]['addedDocumentID']=$item['addedDocumentID'];
+                    $inputData[$x]['bookingInvCodeSystem']=$item['bookingInvSystemCode'];
+                    $inputData[$x]['bookingInvCode']=$item['bookingInvDocCode'];
+                    $inputData[$x]['bookingDate']=$item['bookingInvoiceDate'];
+                    $inputData[$x]['comments']='';
+                    $inputData[$x]['custTransactionCurrencyID']=$item['custTransCurrencyID'];
+                    $inputData[$x]['custTransactionCurrencyER']=$item['custTransER'];
+                    $inputData[$x]['companyReportingCurrencyID']=$item['comRptCurrencyID'];
+                    $inputData[$x]['companyReportingER']=$item['comRptER'];
+                    $inputData[$x]['localCurrencyID']=$item['localCurrencyID'];
+                    $inputData[$x]['localCurrencyER']=$item['localER'];
+                    $inputData[$x]['bookingAmountTrans']=$item['SumOfreceiveAmountTrans'];
+                    $inputData[$x]['bookingAmountLocal']='';
+                    $inputData[$x]['bookingAmountRpt']='';
+                    $inputData[$x]['custReceiveCurrencyID']='';
+                    $inputData[$x]['custReceiveCurrencyER']='';
+                    $inputData[$x]['custbalanceAmount']=$item['SumOfcustbalanceAmount'];
+                    $inputData[$x]['receiveAmountTrans']='';
+                    $inputData[$x]['receiveAmountLocal']='';
+                    $inputData[$x]['receiveAmountRpt']='';
+                    $x++;
 
 
 
