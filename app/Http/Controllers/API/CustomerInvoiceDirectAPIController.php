@@ -397,6 +397,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
+        $_post['companyFinancePeriodID']=$input['companyFinancePeriodID'];
+
         $_post['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $_post['FYEnd'] = $CompanyFinanceYear->endingDate;
         $_post['FYPeriodDateFrom'] = $FYPeriodDateFrom;
@@ -796,6 +798,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $month = Months::all();
 
+        $customer = CustomerAssigned::select('*')->where('companySystemID', $companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
+
         $years = CustomerInvoiceDirect::select(DB::raw("YEAR(bookingDate) as year"))
             ->whereNotNull('bookingDate')
             ->groupby('year')
@@ -808,6 +812,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
+            'customer' => $customer,
 
         );
 
@@ -854,6 +859,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (array_key_exists('isProforma', $input)) {
             if (!is_null($input['isProforma'])) {
                 $invMaster->where('isPerforma', $input['isProforma']);
+            }
+        }
+
+        if (array_key_exists('customerID', $input)) {
+            if (($input['customerID'] !='')) {
+                $invMaster->where('erp_custinvoicedirect.customerID', $input['customerID']);
             }
         }
 

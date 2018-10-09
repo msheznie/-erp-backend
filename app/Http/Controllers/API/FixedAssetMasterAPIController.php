@@ -148,13 +148,12 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             $grvDetailsID = $input['grvDetailsID'];
             $grvDetails = GRVDetails::with(['grv_master'])->find($grvDetailsID);
-            $qtyRangeArr = [];
             if ($grvDetails) {
 
                 $assetSerialNoCount = count($input['assetSerialNo']);
 
-                $input['serviceLineSystemID'] = $grvDetails->serviceLineSystemID;
-                $segment = SegmentMaster::find($grvDetails->serviceLineSystemID);
+                $input['serviceLineSystemID'] = $grvDetails->grv_master->serviceLineSystemID;
+                $segment = SegmentMaster::find($input['serviceLineSystemID']);
                 if ($segment) {
                     $input['serviceLineCode'] = $segment->ServiceLineCode;
                 }
