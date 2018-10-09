@@ -8,6 +8,7 @@
 -- Create date : 14 - March 2018
 -- Description : This file contains the all CRUD for Supplier Assigned
 -- REVISION HISTORY
+ * -- Date: 8-October 2018 By: Nazir Description: Added new function checkSupplierIsActive(),
  */
 namespace App\Http\Controllers\API;
 
@@ -22,6 +23,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -207,4 +209,18 @@ class SupplierAssignedAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Supplier Assigned deleted successfully');
     }
+
+    public function checkSelectedSupplierIsActive(Request $request)
+    {
+        $id = $request['supplierID'];
+        $companyId = $request['companyId'];
+
+        $supplierData = SupplierAssigned::select(DB::raw("isActive"))
+            ->where('supplierCodeSytem', $id)
+            ->where('companySystemID', $companyId)
+            ->first();
+
+        return $this->sendResponse($supplierData, 'Record retrieved successfully');
+    }
+
 }

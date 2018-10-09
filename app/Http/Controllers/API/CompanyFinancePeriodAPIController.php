@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -297,6 +298,25 @@ class CompanyFinancePeriodAPIController extends AppBaseController
         $companyFinancePeriod = \Helper::companyFinancePeriod($companyId, $companyFinanceYearID, $departmentSystemID);
 
         return $this->sendResponse($companyFinancePeriod, 'Finance periods retrieved successfully');
+
+    }
+
+    public function getAllFinancePeriodBasedFY(Request $request)
+    {
+        $companyId = $request['companyId'];
+        $companyFinanceYearID = $request['companyFinanceYearID'];
+        $departmentSystemID = $request['departmentSystemID'];
+
+        //$companyFinancePeriod = \Helper::companyFinancePeriod($companyId, $companyFinanceYearID, $departmentSystemID);
+
+        $output = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
+            ->where('companySystemID', '=', $companyId)
+            ->where('companyFinanceYearID', $companyFinanceYearID)
+            ->where('departmentSystemID', $departmentSystemID)
+            ->where('isActive', -1)
+            ->get();
+
+        return $this->sendResponse($output, 'Finance periods retrieved successfully');
 
     }
 
