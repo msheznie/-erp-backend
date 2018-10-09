@@ -25,6 +25,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -128,7 +129,9 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $assetSerialNoArr = $input['assetSerialNo'];
-        $input = array_except($request->all(), 'assetSerialNo');
+        $itemImgaeArr = $input['itemImage'];
+        $itemPicture = $input['itemPicture'];
+        $input = array_except($request->all(), 'assetSerialNo', 'itemImage');
         $input = $this->convertArrayToValue($input);
         $input['assetSerialNo'] = $assetSerialNoArr;
 
@@ -140,10 +143,16 @@ class FixedAssetMasterAPIController extends AppBaseController
             $validator = \Validator::make($request->all(), [
                 'dateAQ' => 'required|date',
                 'dateDEP' => 'required|date|after_or_equal:dateAQ',
-            ],$messages);
+            ], $messages);
 
             if ($validator->fails()) {//echo 'in';exit;
                 return $this->sendError($validator->messages(), 422);
+            }
+
+            if (isset($input['itemPicture'])) {
+                if ($itemImgaeArr[0]['size'] > 31457280) {
+                    return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+                }
             }
 
             $grvDetailsID = $input['grvDetailsID'];
@@ -198,47 +207,106 @@ class FixedAssetMasterAPIController extends AppBaseController
                     $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                 }
                 if ($grvDetails["noQty"]) {
-                    $qtyRange = range(1, $grvDetails->noQty);
-                    if ($qtyRange) {
-                        foreach ($qtyRange as $key => $qty) {
-                            $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-                            if($qty <= $assetSerialNoCount){
-                                if($input['assetSerialNo'][$key]['faUnitSerialNo']) {
-                                    $input["faUnitSerialNo"] = $input['assetSerialNo'][$key]['faUnitSerialNo'];
+                    if ($grvDetails->noQty < 1) {
+                        $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+
+                        if ($input['assetSerialNo'][0]['faUnitSerialNo']) {
+                            $input["faUnitSerialNo"] = $input['assetSerialNo'][0]['faUnitSerialNo'];
+                        }
+                        $input["serialNo"] = $lastSerialNumber;
+                        $input['docOriginSystemCode'] = $grvDetails->grv_master->grvAutoID;
+                        $input['docOrigin'] = $grvDetails->grv_master->grvPrimaryCode;
+                        $input['docOriginDetailID'] = $grvDetailsID;
+                        $input["itemCode"] = $grvDetails->itemCode;
+                        $input["PARTNUMBER"] = $grvDetails->item_by->secondaryItemCode;
+                        $input["faCode"] = $documentCode;
+                        $input['createdPcID'] = gethostname();
+                        $input['createdUserID'] = \Helper::getEmployeeID();
+                        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $input["timestamp"] = date('Y-m-d H:i:s');
+                        unset($input['grvDetailsID']);
+                        unset($input['itemPicture']);
+                        $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
+
+                        if ($itemPicture) {
+                            $decodeFile = base64_decode($itemImgaeArr[0]['file']);
+                            $extension = $itemImgaeArr[0]['filetype'];
+                            $data['itemPicture'] = $input['companyID'] . '_' . $input["documentID"] . '_' . $fixedAssetMasters['faID'] . '.' . $extension;
+
+                            $path = $input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                            $data['itemPath'] = $path;
+                            Storage::disk('public')->put($path, $decodeFile);
+                            $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
+                        }
+
+                        $cost['originDocumentSystemCode'] = $grvDetails->grv_master->grvAutoID;
+                        $cost['originDocumentID'] = $grvDetails->grv_master->grvPrimaryCode;
+                        $cost['faID'] = $fixedAssetMasters['faID'];
+                        $cost['itemCode'] = $input["itemCode"];
+                        $cost['assetID'] = $fixedAssetMasters['faCode'];
+                        $cost['assetDescription'] = $fixedAssetMasters['assetDescription'];
+                        $cost['costDate'] = $input['dateAQ'];
+                        $cost['localCurrencyID'] = $grvDetails->localCurrencyID;
+                        $cost['localAmount'] = $grvDetails->landingCost_LocalCur;
+                        $cost['rptCurrencyID'] = $grvDetails->companyReportingCurrencyID;
+                        $cost['rptAmount'] = $grvDetails->landingCost_RptCur;
+                        $assetCostMastger = $this->fixedAssetCostRepository->create($cost);
+                    } else {
+                        $qtyRange = range(1, $grvDetails->noQty);
+                        if ($qtyRange) {
+                            foreach ($qtyRange as $key => $qty) {
+                                $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                                if ($qty <= $assetSerialNoCount) {
+                                    if ($input['assetSerialNo'][$key]['faUnitSerialNo']) {
+                                        $input["faUnitSerialNo"] = $input['assetSerialNo'][$key]['faUnitSerialNo'];
+                                    }
                                 }
+                                $input["serialNo"] = $lastSerialNumber;
+                                $input['docOriginSystemCode'] = $grvDetails->grv_master->grvAutoID;
+                                $input['docOrigin'] = $grvDetails->grv_master->grvPrimaryCode;
+                                $input['docOriginDetailID'] = $grvDetailsID;
+                                $input["itemCode"] = $grvDetails->itemCode;
+                                $input["PARTNUMBER"] = $grvDetails->item_by->secondaryItemCode;
+                                $input["faCode"] = $documentCode;
+                                $input['createdPcID'] = gethostname();
+                                $input['createdUserID'] = \Helper::getEmployeeID();
+                                $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                $input["timestamp"] = date('Y-m-d H:i:s');
+                                unset($input['grvDetailsID']);
+                                unset($input['itemPicture']);
+                                $lastSerialNumber++;
+                                $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
+
+                                if ($itemPicture) {
+                                    $decodeFile = base64_decode($itemImgaeArr[0]['file']);
+                                    $extension = $itemImgaeArr[0]['filetype'];
+                                    $data['itemPicture'] = $input['companyID'] . '_' . $input["documentID"] . '_' . $fixedAssetMasters['faID'] . '.' . $extension;
+
+                                    $path = $input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                                    $data['itemPath'] = $path;
+                                    Storage::disk('public')->put($path, $decodeFile);
+                                    $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
+                                }
+
+                                $cost['originDocumentSystemCode'] = $grvDetails->grv_master->grvAutoID;
+                                $cost['originDocumentID'] = $grvDetails->grv_master->grvPrimaryCode;
+                                $cost['faID'] = $fixedAssetMasters['faID'];
+                                $cost['itemCode'] = $input["itemCode"];
+                                $cost['assetID'] = $fixedAssetMasters['faCode'];
+                                $cost['assetDescription'] = $fixedAssetMasters['assetDescription'];
+                                $cost['costDate'] = $input['dateAQ'];
+                                $cost['localCurrencyID'] = $grvDetails->localCurrencyID;
+                                $cost['localAmount'] = $grvDetails->landingCost_LocalCur;
+                                $cost['rptCurrencyID'] = $grvDetails->companyReportingCurrencyID;
+                                $cost['rptAmount'] = $grvDetails->landingCost_RptCur;
+                                $assetCostMastger = $this->fixedAssetCostRepository->create($cost);
                             }
-                            $input["serialNo"] = $lastSerialNumber;
-                            $input['docOriginSystemCode'] = $grvDetails->grv_master->grvAutoID;
-                            $input['docOrigin'] = $grvDetails->grv_master->grvPrimaryCode;
-                            $input['docOriginDetailID'] = $grvDetailsID;
-                            $input["itemCode"] = $grvDetails->itemCode;
-                            $input["PARTNUMBER"] = $grvDetails->item_by->secondaryItemCode;
-                            $input["faCode"] = $documentCode;
-                            $input['createdPcID'] = gethostname();
-                            $input['createdUserID'] = \Helper::getEmployeeID();
-                            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                            $input["timestamp"] = date('Y-m-d H:i:s');
-                            unset($input['grvDetailsID']);
-                            $lastSerialNumber++;
-                            $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
-                            $cost['originDocumentSystemCode'] = $grvDetails->grv_master->grvAutoID;
-                            $cost['originDocumentID'] = $grvDetails->grv_master->grvPrimaryCode;
-                            $cost['faID'] = $fixedAssetMasters['faID'];
-                            $cost['itemCode'] = $input["itemCode"];
-                            $cost['assetID'] = $fixedAssetMasters['faCode'];
-                            $cost['assetDescription'] = $fixedAssetMasters['assetDescription'];
-                            $cost['costDate'] = $input['dateAQ'];
-                            $cost['localCurrencyID'] = $grvDetails->localCurrencyID;
-                            $cost['localAmount'] = $grvDetails->landingCost_LocalCur;
-                            $cost['rptCurrencyID'] = $grvDetails->companyReportingCurrencyID;
-                            $cost['rptAmount'] = $grvDetails->landingCost_RptCur;
-                            $assetCostMastger = $this->fixedAssetCostRepository->create($cost);
                         }
                     }
+                    $assetAllocated = GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocationDoneYN' => -1]);
+                    DB::commit();
                 }
             }
-            $assetAllocated = GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocationDoneYN' => -1]);
-            DB::commit();
             return $this->sendResponse([], 'Fixed Asset Master saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -515,6 +583,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         })->whereHas('grv_master', function ($q) {
             $q->where('grvConfirmedYN', 1);
             $q->where('approved', -1);
+        })->whereHas('localcurrency', function ($q) {
+        })->whereHas('rptcurrency', function ($q) {
         })->whereIN('companySystemID', $subCompanies)->where('assetAllocationDoneYN', 0);
 
         if (array_key_exists('cancelYN', $input)) {
@@ -552,6 +622,65 @@ class FixedAssetMasterAPIController extends AppBaseController
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('grvDetailsID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getAllCostingByCompany(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by'])->ofCompany($subCompanies);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $assetCositng->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $assetCositng->where('approved', $input['approved']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCositng = $assetCositng->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%")
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('COMMENTS', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($assetCositng)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
                     }
                 }
             })
