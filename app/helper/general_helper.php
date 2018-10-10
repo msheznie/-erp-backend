@@ -422,6 +422,17 @@ class Helper
                     $docInforArr["modelName"] = 'JvMaster';
                     $docInforArr["primarykey"] = 'jvMasterAutoId';
                     break;
+                case 22:
+                    $docInforArr["documentCodeColumnName"] = 'faCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_fa_asset_master';
+                    $docInforArr["modelName"] = 'FixedAssetMaster';
+                    $docInforArr["primarykey"] = 'faID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1125,6 +1136,18 @@ class Helper
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
                 if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
                     return ['success' => false, 'message' => 'Document is not confirmed'];
+                }
+
+                $policyConfirmedUserToApprove='';
+
+                if(in_array($input["documentSystemID"],[56,57,58,59])){
+                    $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                        ->where('companySystemID', $isConfirmed['primaryCompanySystemID'])
+                        ->first();
+                }else{
+                    $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                        ->where('companySystemID', $isConfirmed['companySystemID'])
+                        ->first();
                 }
 
                 $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
@@ -1908,6 +1931,18 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'customInvoiceLocalER';
                 $docInforArr["defaultCurrencyER"] = 'customInvoiceRptER';
                 break;
+            case 204: // MatchingMaster
+                $docInforArr["modelName"] = 'MatchDocumentMaster';
+                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'supplierDefCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'supplierTransCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
+                $docInforArr["localCurrencyER"] = 'localCurrencyER';
+                $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
+                break;
+
             case 204: // MatchingMaster
                 $docInforArr["modelName"] = 'MatchDocumentMaster';
                 $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';

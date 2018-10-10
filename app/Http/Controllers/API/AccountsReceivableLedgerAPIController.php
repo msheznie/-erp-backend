@@ -306,7 +306,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
             $filter= " AND ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%' OR erp_accountsreceivableledger.documentCode LIKE '%{$search}%' ) ";
         }
 
-         $qry="
+           $qry="
    SELECT
 	erp_accountsreceivableledger.arAutoID,
 	erp_accountsreceivableledger.documentCodeSystem AS bookingInvSystemCode,
@@ -325,7 +325,9 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
 	erp_accountsreceivableledger.documentCode AS bookingInvDocCode,
 	erp_accountsreceivableledger.documentDate AS bookingInvoiceDate,
 	erp_accountsreceivableledger.customerID,
-	IFNULL( SumOfreceiveAmountTrans, 0 ) AS SumOfreceiveAmountTrans,
+erp_accountsreceivableledger.custInvoiceAmount as SumOfreceiveAmountTrans,
+	erp_accountsreceivableledger.localAmount as SumOfreceiveAmountLocal,
+		erp_accountsreceivableledger.comRptAmount as SumOfreceiveAmountRpt,
 	CurrencyCode,
 	DecimalPlaces,
 	  erp_accountsreceivableledger.custInvoiceAmount-IFNULL( SumOfreceiveAmountTrans, 0 )-IFNULL( matchedAmount*-1, 0 ) as balanceAmount,
@@ -338,11 +340,13 @@ FROM
 SELECT
 	erp_custreceivepaymentdet.arAutoID,
 	Sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS SumOfreceiveAmountTrans,
+	Sum( erp_custreceivepaymentdet.receiveAmountLocal ) AS SumOfreceiveAmountLocal,
+	Sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS SumOfreceiveAmountRpt,
 	Sum( erp_custreceivepaymentdet.custbalanceAmount ) AS SumOfcustbalanceAmount 
 FROM
 	erp_custreceivepaymentdet 
 WHERE
-	companySystemID = 52 
+	companySystemID = $master->companySystemID 
 GROUP BY
 	erp_custreceivepaymentdet.arAutoID 
 HAVING
