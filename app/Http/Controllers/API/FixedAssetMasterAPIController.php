@@ -7,10 +7,15 @@ use App\Http\Requests\API\UpdateFixedAssetMasterAPIRequest;
 use App\Models\AssetFinanceCategory;
 use App\Models\AssetType;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\DepartmentMaster;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetCost;
+use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
 use App\Models\GRVDetails;
 use App\Models\Location;
@@ -413,7 +418,6 @@ class FixedAssetMasterAPIController extends AppBaseController
      */
     public function update($id, UpdateFixedAssetMasterAPIRequest $request)
     {
-
         $input = $request->all();
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
@@ -469,12 +473,19 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
             }
 
+            if ($fixedAssetMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+                $params = array('autoID' => $id, 'company' => $fixedAssetMaster->companySystemID, 'document' => $fixedAssetMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
+                }
+            }
+
+            /** @var FixedAssetMaster $fixedAssetMaster */
             $input['modifiedPc'] = gethostname();
             $input['modifiedUser'] = \Helper::getEmployeeID();
             $input["timestamp"] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
-
-            /** @var FixedAssetMaster $fixedAssetMaster */
 
             $fixedAssetMaster = $this->fixedAssetMasterRepository->update($input, $id);
 
@@ -488,6 +499,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 Storage::disk('public')->put($path, $decodeFile);
                 $fixedAssetMaster = $this->fixedAssetMasterRepository->update($data, $fixedAssetMaster['faID']);
             }
+
             DB::commit();
             return $this->sendResponse($fixedAssetMaster->toArray(), 'FixedAssetMaster updated successfully');
 
@@ -766,16 +778,119 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         /** @var FixedAssetMaster $fixedAssetMaster */
         $fixedAssetMaster = $this->fixedAssetMasterRepository->with('confirmed_by')->findWithoutFail($id);
+        if (empty($fixedAssetMaster)) {
+            return $this->sendError('Fixed Asset Master not found');
+        }
+
         $fixedAssetCosting = FixedAssetCost::with(['localcurrency', 'rptcurrency'])->ofFixedAsset($id)->get();
         $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO'=> $id]);
+        $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->get();
 
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
 
-        $output = ['fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset];
+        $output = ['fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset,  'depAsset' => $depAsset];
 
         return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+    }
+
+    function assetCostingReopen(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+
+            $id = $input['faID'];
+            $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
+            $emails = array();
+            if (empty($fixedAssetMaster)) {
+                return $this->sendError('Fixed Asset Master not found');
+            }
+
+
+            if ($fixedAssetMaster->approved == -1) {
+                return $this->sendError('You cannot reopen this Asset costing it is already fully approved');
+            }
+
+            if ($fixedAssetMaster->RollLevForApp_curr > 1) {
+                return $this->sendError('You cannot reopen this Asset costing it is already partially approved');
+            }
+
+            if ($fixedAssetMaster->confirmedYN == 0) {
+                return $this->sendError('You cannot reopen this Asset costing, it is not confirmed');
+            }
+
+            $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+               'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+
+            $this->fixedAssetMasterRepository->update($updateInput, $id);
+
+            $employee = \Helper::getEmployeeInfo();
+
+            $document = DocumentMaster::where('documentSystemID', $fixedAssetMaster->documentSystemID)->first();
+
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $fixedAssetMaster->faCode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $fixedAssetMaster->faCode;
+
+            $subject = $cancelDocNameSubject . ' is reopened';
+
+            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+            $documentApproval = DocumentApproved::where('companySystemID', $fixedAssetMaster->companySystemID)
+                ->where('documentSystemCode', $fixedAssetMaster->faID)
+                ->where('documentSystemID', $fixedAssetMaster->documentSystemID)
+                ->where('rollLevelOrder', 1)
+                ->first();
+
+            if ($documentApproval) {
+                if ($documentApproval->approvedYN == 0) {
+                    $companyDocument = CompanyDocumentAttachment::where('companySystemID', $fixedAssetMaster->companySystemID)
+                        ->where('documentSystemID', $fixedAssetMaster->documentSystemID)
+                        ->first();
+
+                    if (empty($companyDocument)) {
+                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                    }
+
+                    $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                        ->where('companySystemID', $documentApproval->companySystemID)
+                        ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                    $approvalList = $approvalList
+                        ->with(['employee'])
+                        ->groupBy('employeeSystemID')
+                        ->get();
+
+                    foreach ($approvalList as $da) {
+                        if ($da->employee) {
+                            $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                'companySystemID' => $documentApproval->companySystemID,
+                                'docSystemID' => $documentApproval->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $documentApproval->documentSystemCode);
+                        }
+                    }
+
+                    $sendEmail = \Email::sendEmail($emails);
+                    if (!$sendEmail["success"]) {
+                        return ['success' => false, 'message' => $sendEmail["message"]];
+                    }
+                }
+            }
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $fixedAssetMaster->companySystemID)
+                ->where('documentSystemID', $fixedAssetMaster->documentSystemID)
+                ->delete();
+
+            DB::commit();
+            return $this->sendResponse($fixedAssetMaster->toArray(), 'Payment Voucher reopened successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }

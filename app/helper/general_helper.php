@@ -411,6 +411,17 @@ class Helper
                     $docInforArr["modelName"] = 'PaymentBankTransfer';
                     $docInforArr["primarykey"] = 'paymentBankTransferID';
                     break;
+                case 22:
+                    $docInforArr["documentCodeColumnName"] = 'faCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_fa_asset_master';
+                    $docInforArr["modelName"] = 'FixedAssetMaster';
+                    $docInforArr["primarykey"] = 'faID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }

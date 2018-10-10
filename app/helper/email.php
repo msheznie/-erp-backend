@@ -24,6 +24,7 @@ use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
+use App\Models\FixedAssetMaster;
 use App\Models\GRVMaster;
 use App\Models\InventoryReclassification;
 use App\Models\ItemIssueMaster;
@@ -263,6 +264,13 @@ class email
                     if (!empty($paymentBankTransfer)) {
                         $data['docApprovedYN'] = $paymentBankTransfer->approved;
                         $data['docCode'] = $paymentBankTransfer->bankTransferDocumentCode;
+                    }
+                    break;
+                case 22:
+                    $fixedAssetMaster = FixedAssetMaster::find($data['docSystemCode']);
+                    if (!empty($fixedAssetMaster)) {
+                        $data['docApprovedYN'] = $fixedAssetMaster->approved;
+                        $data['docCode'] = $fixedAssetMaster->faCode;
                     }
                     break;
                 default:
