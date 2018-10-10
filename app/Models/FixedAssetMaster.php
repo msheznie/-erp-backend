@@ -676,5 +676,21 @@ class FixedAssetMaster extends Model
     public function sub_category_by(){
         return $this->belongsTo('App\Models\FixedAssetCategorySub','faSubCatID','faCatSubID');
     }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'PayMasterAutoId');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
     
 }

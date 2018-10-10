@@ -958,6 +958,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
     Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
     Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
+    Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
     Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
 });
 
@@ -1027,3 +1028,5 @@ Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIControlle
 
 
 Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
+
+Route::resource('asset_depreciation_periods', 'AssetDepreciationPeriodAPIController');

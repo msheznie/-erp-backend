@@ -10,6 +10,7 @@ use App\Models\Company;
 use App\Models\DepartmentMaster;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
+use App\Models\FixedAssetCost;
 use App\Models\FixedAssetMaster;
 use App\Models\GRVDetails;
 use App\Models\Location;
@@ -412,18 +413,90 @@ class FixedAssetMasterAPIController extends AppBaseController
      */
     public function update($id, UpdateFixedAssetMasterAPIRequest $request)
     {
-        $input = $request->all();
 
-        /** @var FixedAssetMaster $fixedAssetMaster */
+        $input = $request->all();
+        $itemImgaeArr = $input['itemImage'];
+        $itemPicture = $input['itemPicture'];
+        $input = array_except($request->all(), 'itemImage');
+        $input = $this->convertArrayToValue($input);
+
         $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
 
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
 
-        $fixedAssetMaster = $this->fixedAssetMasterRepository->update($input, $id);
+        DB::beginTransaction();
+        try {
+            $messages = [
+                'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+            ];
+            $validator = \Validator::make($request->all(), [
+                'dateAQ' => 'required|date',
+                'dateDEP' => 'required|date|after_or_equal:dateAQ',
+            ], $messages);
 
-        return $this->sendResponse($fixedAssetMaster->toArray(), 'FixedAssetMaster updated successfully');
+            if ($validator->fails()) {//echo 'in';exit;
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            if (isset($input['itemPicture'])) {
+                if ($itemImgaeArr[0]['size'] > 31457280) {
+                    return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+                }
+            }
+
+            $department = DepartmentMaster::find($input['departmentSystemID']);
+            if ($department) {
+                $input['departmentID'] = $department->DepartmentID;
+            }
+
+            if (isset($input['dateAQ'])) {
+                if ($input['dateAQ']) {
+                    $input['dateAQ'] = new Carbon($input['dateAQ']);
+                }
+            }
+
+            if (isset($input['dateDEP'])) {
+                if ($input['dateDEP']) {
+                    $input['dateDEP'] = new Carbon($input['dateDEP']);
+                }
+            }
+
+            if (isset($input['lastVerifiedDate'])) {
+                if ($input['lastVerifiedDate']) {
+                    $input['lastVerifiedDate'] = new Carbon($input['lastVerifiedDate']);
+                }
+            }
+
+            $input['modifiedPc'] = gethostname();
+            $input['modifiedUser'] = \Helper::getEmployeeID();
+            $input["timestamp"] = date('Y-m-d H:i:s');
+            unset($input['itemPicture']);
+
+            /** @var FixedAssetMaster $fixedAssetMaster */
+
+            $fixedAssetMaster = $this->fixedAssetMasterRepository->update($input, $id);
+
+            if ($itemPicture) {
+                $decodeFile = base64_decode($itemImgaeArr[0]['file']);
+                $extension = $itemImgaeArr[0]['filetype'];
+                $data['itemPicture'] = $input['companyID'] . '_' . $input["documentID"] . '_' . $fixedAssetMaster['faID'] . '.' . $extension;
+
+                $path = $input["documentID"] . '/' . $fixedAssetMaster['faID'] . '/' . $data['itemPicture'];
+                $data['itemPath'] = $path;
+                Storage::disk('public')->put($path, $decodeFile);
+                $fixedAssetMaster = $this->fixedAssetMasterRepository->update($data, $fixedAssetMaster['faID']);
+            }
+            DB::commit();
+            return $this->sendResponse($fixedAssetMaster->toArray(), 'FixedAssetMaster updated successfully');
+
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
+
     }
 
     /**
@@ -687,6 +760,22 @@ class FixedAssetMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getAssetCostingByID($id)
+    {
+        /** @var FixedAssetMaster $fixedAssetMaster */
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with('confirmed_by')->findWithoutFail($id);
+        $fixedAssetCosting = FixedAssetCost::with(['localcurrency', 'rptcurrency'])->ofFixedAsset($id)->get();
+        $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO'=> $id]);
+
+        if (empty($fixedAssetMaster)) {
+            return $this->sendError('Fixed Asset Master not found');
+        }
+
+        $output = ['fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset];
+
+        return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
     }
 
 }
