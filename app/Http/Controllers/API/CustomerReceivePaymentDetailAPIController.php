@@ -6,6 +6,8 @@ use App\Http\Requests\API\CreateCustomerReceivePaymentDetailAPIRequest;
 use App\Http\Requests\API\UpdateCustomerReceivePaymentDetailAPIRequest;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\CustomerReceivePayment;
+use App\Models\MatchDocumentMaster;
+use App\Models\AccountsReceivableLedger;
 use App\Repositories\CustomerReceivePaymentDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -120,22 +122,39 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         if(count($detail) > 0){
             $names = array_pluck($detail->toArray(), 'bookingInvCode');
-            return $this->sendError('<b>Listed below document code already exist</b> <br>'.join(' <br> ',$names), 500);
+            return $this->sendError('<b>Below listed invoices are already added to the current receipt.</b> <br>'.join(' <br> ',$names), 500);
         }else{
 
+
+            /*ar autoID sumamount >
+            already bookeed
+
+            */
+
+            $error['settled']=[];
+            $selectedArAutoID=[];
             if($value){
                 $x=0;
                 foreach($value as $item){
+                    $detail = CustomerReceivePaymentDetail::select(DB::raw("SUM(receiveAmountTrans) as receiveAmountTrans"))->where('arAutoID',$item['arAutoID'])->first();
+                    if($detail){
+                        if($detail->receiveAmountTrans > $item['SumOfreceiveAmountTrans'] ){
+                            $error['settled'][]=$item['bookingInvDocCode'];
+                        }
+
+                    }
+
+                    $selectedArAutoID[]=$item['arAutoID'];
+
                     $inputData[$x]['custReceivePaymentAutoID']=$id;
                     $inputData[$x]['arAutoID']=$item['arAutoID'];
                     $inputData[$x]['companySystemID']=$item['companySystemID'];
                     $inputData[$x]['companyID']=$item['companyID'];
-                    $inputData[$x]['addedDocumentSystemID']=$item['addedDocumentID'];
+                    $inputData[$x]['addedDocumentSystemID']=$item['addedDocumentSystemID'];
                     $inputData[$x]['addedDocumentID']=$item['addedDocumentID'];
                     $inputData[$x]['bookingInvCodeSystem']=$item['bookingInvSystemCode'];
                     $inputData[$x]['bookingInvCode']=$item['bookingInvDocCode'];
                     $inputData[$x]['bookingDate']=$item['bookingInvoiceDate'];
-                    $inputData[$x]['comments']='';
                     $inputData[$x]['custTransactionCurrencyID']=$item['custTransCurrencyID'];
                     $inputData[$x]['custTransactionCurrencyER']=$item['custTransER'];
                     $inputData[$x]['companyReportingCurrencyID']=$item['comRptCurrencyID'];
@@ -143,65 +162,40 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     $inputData[$x]['localCurrencyID']=$item['localCurrencyID'];
                     $inputData[$x]['localCurrencyER']=$item['localER'];
                     $inputData[$x]['bookingAmountTrans']=$item['SumOfreceiveAmountTrans'];
-                    $inputData[$x]['bookingAmountLocal']='';
-                    $inputData[$x]['bookingAmountRpt']='';
-                    $inputData[$x]['custReceiveCurrencyID']='';
-                    $inputData[$x]['custReceiveCurrencyER']='';
+                    $inputData[$x]['bookingAmountLocal']=$item['SumOfreceiveAmountLocal'];
+                    $inputData[$x]['bookingAmountRpt']=$item['SumOfreceiveAmountRpt'];
+                    $inputData[$x]['custReceiveCurrencyID']=$item['custTransCurrencyID'];
+                    $inputData[$x]['custReceiveCurrencyER']=$item['custTransER'];
                     $inputData[$x]['custbalanceAmount']=$item['SumOfcustbalanceAmount'];
-                    $inputData[$x]['receiveAmountTrans']='';
-                    $inputData[$x]['receiveAmountLocal']='';
-                    $inputData[$x]['receiveAmountRpt']='';
+                    $inputData[$x]['receiveAmountTrans']=0;
+                    $inputData[$x]['receiveAmountLocal']=0;
+                    $inputData[$x]['receiveAmountRpt']=0;
                     $x++;
 
 
 
                 }
+
+
+                if(!empty($error['settled'])){
+                    return $this->sendError('<b>Below listed invoices are already settled fully.</b> <br>'.join(' <br> ',$error['settled']), 500);
+                }
+
             }
 
-        }
-
- exit;
-        $invMaster = DB::select($qry);
-        if ( 0 < count( $invMaster ) ) {
-            $invMaster=$invMaster[0];
-            $inputData['custReceivePaymentAutoID']=$id;
-            $inputData['arAutoID']=$invMaster->arAutoID;
-            $inputData['companySystemID']=$invMaster->companySystemID;
-            $inputData['companyID']=$invMaster->companyID;
-            $inputData['addedDocumentSystemID']=$invMaster->addedDocumentID;
-            $inputData['addedDocumentID']=$invMaster->addedDocumentID;
-            $inputData['bookingInvCodeSystem']=$invMaster->bookingInvSystemCode;
-            $inputData['bookingInvCode']=$invMaster->bookingInvDocCode;
-            $inputData['bookingDate']=$invMaster->bookingInvoiceDate;
-            $inputData['comments']='';
-            $inputData['custTransactionCurrencyID']=$invMaster->custTransCurrencyID;
-            $inputData['custTransactionCurrencyER']=$invMaster->custTransER;
-            $inputData['companyReportingCurrencyID']=$invMaster->comRptCurrencyID;
-            $inputData['companyReportingER']=$invMaster->comRptER;
-            $inputData['localCurrencyID']=$invMaster->localCurrencyID;
-            $inputData['localCurrencyER']=$invMaster->localER;
-            $inputData['bookingAmountTrans']=$invMaster->SumOfreceiveAmountTrans;
-            $inputData['bookingAmountLocal']='';
-            $inputData['bookingAmountRpt']='';
-            $inputData['custReceiveCurrencyID']='';
-            $inputData['custReceiveCurrencyER']='';
-            $inputData['custbalanceAmount']=$invMaster->SumOfcustbalanceAmount;
-            $inputData['receiveAmountTrans']='';
-            $inputData['receiveAmountLocal']='';
-            $inputData['receiveAmountRpt']='';
 
 
-
-
-        }else{
-            $this->sendError('', 'Invoice not found');
         }
 
 
-        $customerReceivePaymentDetails = $this->customerReceivePaymentDetailRepository->create($input);
+
+        $customerReceivePaymentDetails = CustomerReceivePaymentDetail::insert($inputData);
+
+        AccountsReceivableLedger::whereIn('arAutoID',$selectedArAutoID)->update(array('selectedToPaymentInv'=> -1));
 
 
-        return $this->sendResponse($customerReceivePaymentDetails->toArray(), 'Customer Receive Payment Detail saved successfully');
+
+        return $this->sendResponse($customerReceivePaymentDetails, 'Customer Receive Payment Detail saved successfully');
     }
 
     /**
@@ -362,7 +356,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         if (empty($customerReceivePaymentDetail)) {
             return $this->sendError('Customer Receive Payment Detail not found');
         }
-
+        AccountsReceivableLedger::where('arAutoID',$customerReceivePaymentDetail->arAutoID)->update(array('selectedToPaymentInv'=> 0));
         $customerReceivePaymentDetail->delete();
 
         return $this->sendResponse($id, 'Customer Receive Payment Detail deleted successfully');
@@ -406,6 +400,43 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $data['receiveAmountRpt']=$currency['reportingAmount'];
 
         $customerReceivePaymentDetails = $this->customerReceivePaymentDetailRepository->create($data);
+
+        return $this->sendResponse('', 'Unallocation amount added successfully');
+    }
+
+    public function updateCustomerReciept(Request $request){
+        $input = $request->all();
+
+
+        $detail = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID',$input['custRecivePayDetAutoID'])->first();
+        if($detail->comments != $input['comments']){
+            $post['comments']=$input['comments'];
+        }
+
+        if ($input['receiveAmountTrans'] == "") {
+            $input['receiveAmountTrans'] = 0;
+        }
+
+        $post['receiveAmountTrans']=$input['receiveAmountTrans'];
+        $currency = \Helper::convertAmountToLocalRpt(21, $detail->custReceivePaymentAutoID, $input['receiveAmountTrans']);
+
+        $input['receiveAmountTrans'] = $input['receiveAmountTrans'];
+        $input['receiveAmountLocal'] = \Helper::roundValue($currency['localAmount']);
+        $input['receiveAmountRpt'] = \Helper::roundValue($currency['reportingAmount']);
+
+        $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->update($post, $input['custRecivePayDetAutoID']);
+
+        $totalReceiveAmountTrans = CustomerReceivePaymentDetail::select(DB::raw("SUM(receiveAmountTrans) as receiveAmountTrans"))->where('arAutoID',$detail['arAutoID'])->first();
+
+        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, IFNULL(Sum(erp_matchdocumentmaster.matchedAmount),0)*-1 AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvCodeSystem"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+
+
+
+        $totReceiveAmount =  $totalReceiveAmountTrans['receiveAmountTrans'] - $matchedAmount['SumOfmatchedAmount'];
+
+         $custbalanceAmount = $detail->custbalanceAmount + $totReceiveAmount;
+        $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->update(array('custbalanceAmount'=>$custbalanceAmount), $input['custRecivePayDetAutoID']);
+
 
         return $this->sendResponse('', 'Unallocation amount added successfully');
     }
