@@ -411,6 +411,17 @@ class Helper
                     $docInforArr["modelName"] = 'PaymentBankTransfer';
                     $docInforArr["primarykey"] = 'paymentBankTransferID';
                     break;
+                case 17:
+                    $docInforArr["documentCodeColumnName"] = 'JVcode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_jvmaster';
+                    $docInforArr["modelName"] = 'JvMaster';
+                    $docInforArr["primarykey"] = 'jvMasterAutoId';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1084,7 +1095,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
-
+            case 17: // Journal Voucher
+                $docInforArr["tableName"] = 'erp_jvmaster';
+                $docInforArr["modelName"] = 'JvMaster';
+                $docInforArr["primarykey"] = 'jvMasterAutoId';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }

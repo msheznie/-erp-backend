@@ -18,6 +18,7 @@ use App\Http\Requests\API\UpdateBookInvSuppDetAPIRequest;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\GeneralLedger;
+use App\Models\ProcumentOrder;
 use App\Models\UnbilledGrvGroupBy;
 use App\Repositories\BookInvSuppDetRepository;
 use Illuminate\Http\Request;
@@ -442,6 +443,24 @@ class BookInvSuppDetAPIController extends AppBaseController
             }
         }
 
+        // check with po table
+        foreach ($input['detailTable'] as $temp) {
+
+            if (isset($temp['isChecked']) && $temp['isChecked']) {
+
+                $poMasterTotal = ProcumentOrder::find($temp['purchaseOrderID']);
+
+                $checkPreTotal = BookInvSuppDet::where('purchaseOrderID', $temp['purchaseOrderID'])
+                    ->where('supplierID', $temp['supplierID'])
+                    ->sum('totTransactionAmount');
+
+                if ($checkPreTotal > $poMasterTotal->poTotalSupplierTransactionCurrency) {
+                    $itemDrt = 'Supplier Invoice amount is greater than ' . $poMasterTotal->purchaseOrderCode . ' PO amount. Please check again.';
+                    $itemExistArray[] = [$itemDrt];
+                }
+            }
+        }
+
         if (!empty($itemExistArray)) {
             return $this->sendError($itemExistArray, 422);
         }
@@ -485,12 +504,14 @@ class BookInvSuppDetAPIController extends AppBaseController
                 //$prDetail_arr['totLocalAmount'] = $groupMaster->totLocalAmount;
                 //$prDetail_arr['totRptAmount'] = $groupMaster->totRptAmount;
                 $item = $this->bookInvSuppDetRepository->create($prDetail_arr);
+
+                $updatePRMaster = UnbilledGrvGroupBy::find($new['unbilledgrvAutoID'])
+                    ->update([
+                        'selectedForBooking' => -1
+                    ]);
             }
 
-            $updatePRMaster = UnbilledGrvGroupBy::find($new['unbilledgrvAutoID'])
-                ->update([
-                    'selectedForBooking' => -1
-                ]);
+
         }
 
 
