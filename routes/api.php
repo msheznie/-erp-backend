@@ -929,7 +929,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
     Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
     Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
+    Route::post('getJournalVoucherMasterApproval', 'JvMasterAPIController@getJournalVoucherMasterApproval');
+    Route::post('getApprovedJournalVoucherForCurrentUser', 'JvMasterAPIController@getApprovedJournalVoucherForCurrentUser');
     Route::post('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
+    Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
+    Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -958,7 +962,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
     Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
     Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
+    Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
+    Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
     Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
+    Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1027,3 +1034,4 @@ Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIControlle
 
 
 Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
+

@@ -14,6 +14,8 @@
  * -- Date: 03-October 2018 By: Nazir Description: Added new functions named as journalVoucherForSalaryJVDetail()
  * -- Date: 04-October 2018 By: Nazir Description: Added new functions named as journalVoucherForAccrualJVMaster()
  * -- Date: 04-October 2018 By: Nazir Description: Added new functions named as journalVoucherForAccrualJVDetail()
+ * -- Date: 10-October 2018 By: Nazir Description: Added new functions named as getJournalVoucherMasterApproval()
+ * -- Date: 10-October 2018 By: Nazir Description: Added new functions named as getApprovedJournalVoucherForCurrentUser()
  */
 
 namespace App\Http\Controllers\API;
@@ -21,6 +23,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateJvMasterAPIRequest;
 use App\Http\Requests\API\UpdateJvMasterAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
@@ -355,27 +358,26 @@ class JvMasterAPIController extends AppBaseController
             }
         }
 
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        } else {
+            $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+            $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 1;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+        }
+        unset($inputParam);
 
         if ($jvMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
-            if (!$companyFinanceYear["success"]) {
-                return $this->sendError($companyFinanceYear["message"], 500);
-            } else {
-                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
-                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
-            }
-
-            $inputParam = $input;
-            $inputParam["departmentSystemID"] = 1;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
-            if (!$companyFinancePeriod["success"]) {
-                return $this->sendError($companyFinancePeriod["message"], 500);
-            } else {
-                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
-                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
-            }
-            unset($inputParam);
 
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
@@ -431,11 +433,11 @@ class JvMasterAPIController extends AppBaseController
                     if (empty($checkDepartmentActive)) {
                         $updateItem->serviceLineSystemID = null;
                         $updateItem->serviceLineCode = null;
-                        array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                        array_push($finalError['active_serviceLine'], $updateItem->glAccount);
                         $error_count++;
                     }
                 } else {
-                    array_push($finalError['required_serviceLine'], $updateItem->glCode);
+                    array_push($finalError['required_serviceLine'], $updateItem->glAccount);
                     $error_count++;
                 }
 
@@ -585,7 +587,7 @@ class JvMasterAPIController extends AppBaseController
     public function getJournalVoucherMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'jvType'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -758,7 +760,8 @@ GROUP BY
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
-    public function journalVoucherForAccrualJVMaster(Request $request){
+    public function journalVoucherForAccrualJVMaster(Request $request)
+    {
 
         $companySystemID = $request['companySystemID'];
 
@@ -826,17 +829,18 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
-    public function exportStandardJVFormat(){
+    public function exportStandardJVFormat()
+    {
 
         $data = array();
         $type = 'csv';
         $x = 0;
-        $data[$x]['Gl Account']= '';
-        $data[$x]['Gl Account Description']= '';
-        $data[$x]['Client Contract']= '';
-        $data[$x]['Comments']= '';
-        $data[$x]['Debit Amount']= '';
-        $data[$x]['Credit Amount']= '';
+        $data[$x]['Gl Account'] = '';
+        $data[$x]['Gl Account Description'] = '';
+        $data[$x]['Client Contract'] = '';
+        $data[$x]['Comments'] = '';
+        $data[$x]['Debit Amount'] = '';
+        $data[$x]['Credit Amount'] = '';
         $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
@@ -848,5 +852,182 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         })->download($type);
 
         return $this->sendResponse(array(), 'successfully export');
+    }
+
+    public function getJournalVoucherMasterApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
+            ->where('documentSystemID', 3)
+            ->first();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_jvmaster.jvMasterAutoId',
+            'erp_jvmaster.JVcode',
+            'erp_jvmaster.documentSystemID',
+            'erp_jvmaster.JVdate',
+            'erp_jvmaster.JVNarration',
+            'erp_jvmaster.createdDateTime',
+            'erp_jvmaster.confirmedDate',
+            'erp_jvmaster.jvType',
+            'jvDetailRec.debitSum',
+            'jvDetailRec.creditSum',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->where('employeesdepartments.documentSystemID', 17)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_jvmaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'jvMasterAutoId')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_jvmaster.companySystemID', $companyID)
+                ->where('erp_jvmaster.approved', 0)
+                ->where('erp_jvmaster.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'erp_jvmaster.currencyID', 'currencymaster.currencyID')
+            ->leftJoin(DB::raw('(SELECT COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,jvMasterAutoId FROM erp_jvdetail GROUP BY jvMasterAutoId) as jvDetailRec'), 'jvDetailRec.jvMasterAutoId', '=', 'erp_jvmaster.jvMasterAutoId')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 17)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('JVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('JVNarration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function getApprovedJournalVoucherForCurrentUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_jvmaster.bookingSuppMasInvAutoID',
+            'erp_jvmaster.bookingInvCode',
+            'erp_jvmaster.documentSystemID',
+            'erp_jvmaster.secondaryRefNo',
+            'erp_jvmaster.bookingDate',
+            'erp_jvmaster.comments',
+            'erp_jvmaster.createdDateAndTime',
+            'erp_jvmaster.confirmedDate',
+            'erp_jvmaster.bookingAmountTrans',
+            'erp_jvmaster.documentType',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'suppliermaster.supplierName As supplierName',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('erp_jvmaster', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'bookingSuppMasInvAutoID')
+                ->where('erp_jvmaster.companySystemID', $companyID)
+                ->where('erp_jvmaster.approved', -1)
+                ->where('erp_jvmaster.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'supplierTransactionCurrencyID', 'currencymaster.currencyID')
+            ->leftJoin('suppliermaster', 'supplierID', 'suppliermaster.supplierCodeSystem')
+            ->where('erp_documentapproved.documentSystemID', 11)
+            ->where('erp_documentapproved.companySystemID', $companyID)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('bookingInvCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveJournalVoucher(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectJournalVoucher(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+
     }
 }
