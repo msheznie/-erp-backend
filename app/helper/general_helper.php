@@ -1105,6 +1105,18 @@ class Helper
                     return ['success' => false, 'message' => 'Document is not confirmed'];
                 }
 
+                $policyConfirmedUserToApprove='';
+
+                if(in_array($input["documentSystemID"],[56,57,58,59])){
+                    $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                        ->where('companySystemID', $isConfirmed['primaryCompanySystemID'])
+                        ->first();
+                }else{
+                    $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                        ->where('companySystemID', $isConfirmed['companySystemID'])
+                        ->first();
+                }
+
                 $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
                     ->where('companySystemID', $isConfirmed['companySystemID'])
                     ->first();
