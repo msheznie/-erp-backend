@@ -477,6 +477,8 @@ class FixedAssetMaster extends Model
         'AUDITCATOGARY',
         'PARTNUMBER',
         'MANUFACTURE',
+        'itemPath',
+        'itemPicture',
         'IMAGE',
         'UNITASSIGN',
         'UHITASSHISTORY',
@@ -569,6 +571,8 @@ class FixedAssetMaster extends Model
         'AUDITCATOGARY' => 'integer',
         'PARTNUMBER' => 'string',
         'MANUFACTURE' => 'string',
+        'itemPath' => 'string',
+        'itemPicture' => 'string',
         'IMAGE' => 'string',
         'UNITASSIGN' => 'string',
         'UHITASSHISTORY' => 'string',
@@ -665,5 +669,12 @@ class FixedAssetMaster extends Model
         return $query->where('faCatID',  $category);
     }
 
+    public function category_by(){
+        return $this->belongsTo('App\Models\FixedAssetCategory','faCatID','faCatID');
+    }
+
+    public function sub_category_by(){
+        return $this->belongsTo('App\Models\FixedAssetCategorySub','faSubCatID','faCatSubID');
+    }
     
 }

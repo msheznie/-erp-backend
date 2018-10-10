@@ -188,12 +188,15 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $input['payAmountCompRpt'] = $paySupplierInvoiceMaster->payAmountCompRpt;
             $input['invoiceType'] = $paySupplierInvoiceMaster->invoiceType;
             $input['matchInvoice'] = $paySupplierInvoiceMaster->matchInvoice;
+            $input['matchingAmount'] = 0;
 
             $input['confirmedYN'] = $paySupplierInvoiceMaster->confirmedYN;
             $input['confirmedByEmpID'] = $paySupplierInvoiceMaster->confirmedByEmpID;
             $input['confirmedByEmpSystemID'] = $paySupplierInvoiceMaster->confirmedByEmpSystemID;
             $input['confirmedByName'] = $paySupplierInvoiceMaster->confirmedByName;
             $input['confirmedDate'] = $paySupplierInvoiceMaster->confirmedDate;
+            $input['approved'] = $paySupplierInvoiceMaster->approved;
+            $input['approvedDate'] = $paySupplierInvoiceMaster->approvedDate;
 
         } else if ($input['matchType'] == 2) {
             $debitNoteMaster = DebitNote::find($input['paymentAutoID']);
@@ -228,12 +231,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $input['payAmountCompLocal'] = $debitNoteMaster->debitAmountLocal;
             $input['payAmountCompRpt'] = $debitNoteMaster->debitAmountRpt;
             $input['invoiceType'] = $debitNoteMaster->documentType;
-
+            $input['matchingAmount'] = 0;
             $input['confirmedYN'] = $debitNoteMaster->confirmedYN;
             $input['confirmedByEmpID'] = $debitNoteMaster->confirmedByEmpID;
             $input['confirmedByEmpSystemID'] = $debitNoteMaster->confirmedByEmpSystemID;
             $input['confirmedByName'] = $debitNoteMaster->confirmedByName;
             $input['confirmedDate'] = $debitNoteMaster->confirmedDate;
+            $input['approved'] = $debitNoteMaster->approved;
+            $input['approvedDate'] = $debitNoteMaster->approvedDate;
         }
 
         $input['matchingDocCode'] = 0;
@@ -533,7 +538,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function getMatchDocumentMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'supplierID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -541,7 +546,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         }
 
         $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
-        //$invMaster->where('documentSystemID', $input['documentId']);
+        $invMaster->whereIn('documentSystemID', [4,15]);
         $invMaster->with(['created_by' => function ($query) {
         }, 'supplier' => function ($query) {
         }, 'transactioncurrency' => function ($query) {
@@ -565,9 +570,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
         }
 
-        if (array_key_exists('BPVsupplierID', $input)) {
-            if ($input['BPVsupplierID'] && !is_null($input['BPVsupplierID'])) {
-                $invMaster->where('BPVsupplierID', $input['BPVsupplierID']);
+        if (array_key_exists('supplierID', $input)) {
+            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                $invMaster->where('BPVsupplierID', $input['supplierID']);
             }
         }
 
