@@ -1109,9 +1109,9 @@ class Helper
                     ->where('companySystemID', $isConfirmed['companySystemID'])
                     ->first();
 
-                if ($policyConfirmedUserToApprove['isYesNO'] == 1) {
+                if ($policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
-                        return ['success' => false, 'message' => 'You cannot approve this document as you have confirmed the document'];
+                        return ['success' => false, 'message' => 'Not authorized!'];
                     }
                 }
 

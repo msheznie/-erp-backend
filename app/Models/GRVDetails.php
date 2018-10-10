@@ -277,12 +277,12 @@ class GRVDetails extends Model
 
     public function localcurrency()
     {
-        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+        return $this->hasOne('App\Models\CurrencyMaster', 'currencyID', 'localCurrencyID');
     }
 
     public function rptcurrency()
     {
-        return $this->belongsTo('App\Models\CurrencyMaster', 'companyReportingCurrencyID', 'currencyID');
+        return $this->hasOne('App\Models\CurrencyMaster',  'currencyID', 'companyReportingCurrencyID');
     }
 
 
