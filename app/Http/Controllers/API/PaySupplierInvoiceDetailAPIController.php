@@ -681,7 +681,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
-        if ($input['supplierPaymentAmount'] > $input['paymentBalancedAmount']) {
+        if (floatval($input['supplierPaymentAmount']) > floatval($input['paymentBalancedAmount'])) {
             return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
         }
 
