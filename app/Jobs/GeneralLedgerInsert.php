@@ -24,6 +24,8 @@ use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemReturnDetails;
 use App\Models\ItemReturnMaster;
+use App\Models\JvDetail;
+use App\Models\JvMaster;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAdvancePayment;
@@ -1608,6 +1610,85 @@ class GeneralLedgerInsert implements ShouldQueue
                             }
                         }
                         break;
+                    case 17: // JV - Journal Voucher
+                        $masterData = JvMaster::with(['detail' => function ($query) {
+                            $query->selectRaw('SUM(debitAmount) as debitAmountTot, SUM(creditAmount) as creditAmountTot,jvMasterAutoId');
+                        }],'financeperiod_by','company')->find($masterModel["autoID"]);
+
+                        $detailRecords = JvDetail::selectRaw("sum(debitAmount) as debitAmountTot, sum(creditAmount) as creditAmountTot, clientContractID, comments, chartOfAccountSystemID, serviceLineSystemID,serviceLineCode")->WHERE('jvMasterAutoId', $masterModel["autoID"])->groupBy('chartOfAccountSystemID', 'serviceLineSystemID', 'comments')->get();
+
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if($masterData->financeperiod_by->isActive == -1){
+                            $masterDocumentDate = $masterData->JVdate;
+                        }
+
+                        $time = Carbon::now();
+
+                        if (!empty($detailRecords)) {
+                            foreach ($detailRecords as $item) {
+                                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->chartOfAccountSystemID)->first();
+
+                                $data['companySystemID'] = $masterData->companySystemID;
+                                $data['companyID'] = $masterData->companyID;
+                                $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                                $data['serviceLineCode'] = $item->serviceLineCode;
+                                $data['masterCompanyID'] = $masterData->companyID;
+                                $data['documentSystemID'] = $masterData->documentSystemiD;
+                                $data['documentSystemCode'] = $masterData->jvMasterAutoId;
+                                $data['documentCode'] = $masterData->JVcode;
+                                $data['documentDate'] = $masterDocumentDate;
+                                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                                //$data['invoiceNumber'] = ;
+                                //$data['invoiceDate'] = ;
+
+                                // from customer invoice master table
+                                $data['chartOfAccountSystemID'] = $item->chartOfAccountSystemID;
+                                $data['glCode'] = $chartOfAccount->AccountCode;
+                                $data['glAccountType'] = $chartOfAccount->catogaryBLorPL;
+                                $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                                $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                                $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+                                $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                                $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                                $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                                $data['documentNarration'] = $item->comments;
+                                $data['clientContractID'] = $item->clientContractID;
+                                //$data['supplierCodeSystem'] = $item->customerID;
+
+                                $data['documentTransCurrencyID'] = $item->currencyID;
+                                $data['documentTransCurrencyER'] = $item->currencyER;
+
+                                if($item->debitAmountTot > 0){
+                                    $currencyConvertionDebit = \Helper::currencyConversion($masterData->companySystemID,$item->currencyID,$item->currencyID,$item->debitAmountTot);
+
+                                    $data['documentTransAmount'] = $item->debitAmountTot;
+                                    $data['documentLocalCurrencyID'] = $masterData->company->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = \Helper::roundValue($currencyConvertionDebit['trasToLocER']);
+                                    $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionDebit['localAmount']);
+                                    $data['documentRptCurrencyID'] = $masterData->company->reportingCurrency;
+                                    $data['documentRptCurrencyER'] = \Helper::roundValue($currencyConvertionDebit['trasToRptER']);
+                                    $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionDebit['reportingAmount']);
+
+                                }else if($item->creditAmountTot > 0){
+                                    $currencyConvertionCredit = \Helper::currencyConversion($masterData->companySystemID,$item->currencyID,$item->currencyID,$item->creditAmountTot);
+
+                                    $data['documentTransAmount'] = ABS($item->creditAmountTot) * -1;
+                                    $data['documentLocalCurrencyID'] = $masterData->company->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = \Helper::roundValue($currencyConvertionCredit['trasToLocER']);
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($currencyConvertionCredit['localAmount'])) * -1;
+                                    $data['documentRptCurrencyID'] = $masterData->company->reportingCurrency;
+                                    $data['documentRptCurrencyER'] = \Helper::roundValue($currencyConvertionCredit['trasToRptER']);
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($currencyConvertionCredit['reportingAmount'])) * -1;
+                                }
+                                $data['createdUserSystemID'] = $empID->empID;
+                                $data['createdDateTime'] = $time;
+                                $data['createdUserID'] = $empID->employeeSystemID;
+                                $data['createdUserPC'] = getenv('COMPUTERNAME');
+                                array_push($finalData, $data);
+                            }
+                        }
+
                     default:
                         Log::warning('Document ID not found ' . date('H:i:s'));
                 }

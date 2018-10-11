@@ -929,7 +929,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
     Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
     Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
+    Route::post('getJournalVoucherMasterApproval', 'JvMasterAPIController@getJournalVoucherMasterApproval');
+    Route::post('getApprovedJournalVoucherForCurrentUser', 'JvMasterAPIController@getApprovedJournalVoucherForCurrentUser');
     Route::post('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
+    Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
+    Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');

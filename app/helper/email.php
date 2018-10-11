@@ -30,6 +30,7 @@ use App\Models\InventoryReclassification;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemMaster;
 use App\Models\ItemReturnMaster;
+use App\Models\JvMaster;
 use App\Models\MaterielRequest;
 use App\Models\PaymentBankTransfer;
 use App\Models\PaySupplierInvoiceMaster;
@@ -264,6 +265,13 @@ class email
                     if (!empty($paymentBankTransfer)) {
                         $data['docApprovedYN'] = $paymentBankTransfer->approved;
                         $data['docCode'] = $paymentBankTransfer->bankTransferDocumentCode;
+                    }
+                    break;
+                case 17:
+                    $journalVoucher = JvMaster::where('jvMasterAutoId', $data['docSystemCode'])->first();
+                    if (!empty($journalVoucher)) {
+                        $data['docApprovedYN'] = $journalVoucher->approved;
+                        $data['docCode'] = $journalVoucher->JVcode;
                     }
                     break;
                 case 22:
