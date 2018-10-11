@@ -4,8 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateFixedAssetInsuranceDetailAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetInsuranceDetailAPIRequest;
+use App\Models\Company;
 use App\Models\FixedAssetInsuranceDetail;
 use App\Repositories\FixedAssetInsuranceDetailRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -109,6 +111,39 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
     public function store(CreateFixedAssetInsuranceDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $messages = [
+            'dateOfExpiry.after_or_equal' => 'Date of expiry cannot be less than Date of insurance',
+        ];
+        $validator = \Validator::make($request->all(), [
+            'dateOfInsurance' => 'required|date',
+            'dateOfExpiry' => 'required|date|after_or_equal:dateOfInsurance',
+        ], $messages);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $company = Company::find($input['companySystemID']);
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        if (isset($input['dateOfInsurance'])) {
+            if ($input['dateOfInsurance']) {
+                $input['dateOfInsurance'] = new Carbon($input['dateOfInsurance']);
+            }
+        }
+
+        if (isset($input['dateOfExpiry'])) {
+            if ($input['dateOfExpiry']) {
+                $input['dateOfExpiry'] = new Carbon($input['dateOfExpiry']);
+            }
+        }
+
+        $input['createdByUserID'] = \Helper::getEmployeeID();
+        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
         $fixedAssetInsuranceDetails = $this->fixedAssetInsuranceDetailRepository->create($input);
 
@@ -214,6 +249,32 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
     public function update($id, UpdateFixedAssetInsuranceDetailAPIRequest $request)
     {
         $input = $request->all();
+
+        $input = $this->convertArrayToValue($input);
+
+        $messages = [
+            'dateOfExpiry.after_or_equal' => 'Date of expiry cannot be less than Date of insurance',
+        ];
+        $validator = \Validator::make($request->all(), [
+            'dateOfInsurance' => 'required|date',
+            'dateOfExpiry' => 'required|date|after_or_equal:dateOfInsurance',
+        ], $messages);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        if (isset($input['dateOfInsurance'])) {
+            if ($input['dateOfInsurance']) {
+                $input['dateOfInsurance'] = new Carbon($input['dateOfInsurance']);
+            }
+        }
+
+        if (isset($input['dateOfExpiry'])) {
+            if ($input['dateOfExpiry']) {
+                $input['dateOfExpiry'] = new Carbon($input['dateOfExpiry']);
+            }
+        }
 
         /** @var FixedAssetInsuranceDetail $fixedAssetInsuranceDetail */
         $fixedAssetInsuranceDetail = $this->fixedAssetInsuranceDetailRepository->findWithoutFail($id);

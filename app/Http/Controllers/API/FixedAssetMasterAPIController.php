@@ -900,7 +900,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     }
 
 
-    public function getAssetCostApprovalByUser(Request $request)
+    public function getCostingApprovalByUser(Request $request)
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array());
@@ -922,7 +922,10 @@ class FixedAssetMasterAPIController extends AppBaseController
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
-                'documentSystemCode')
+                'documentSystemCode',
+                'erp_fa_category.catDescription as catDescription',
+                'erp_fa_categorysub.catDescription as subCatDescription'
+            )
             ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -941,6 +944,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_fa_category', 'erp_fa_category.faCatID', 'erp_fa_asset_master.faCatID')
+            ->leftJoin('erp_fa_categorysub', 'erp_fa_categorysub.faCatSubID', 'erp_fa_asset_master.faSubCatID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [22])
             ->where('erp_documentapproved.companySystemID', $companyId);
@@ -950,8 +955,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $assetCost = $assetCost->where(function ($query) use ($search) {
-                $query->where('capitalizationCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%");
+                $query->where('faCode', 'LIKE', "%{$search}%")
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
             });
         }
 
@@ -970,7 +975,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     }
 
-    public function getAssetCostApprovedByUser(Request $request)
+    public function getCostingApprovedByUser(Request $request)
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array());
@@ -992,7 +997,9 @@ class FixedAssetMasterAPIController extends AppBaseController
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
-                'documentSystemCode')
+                'documentSystemCode',
+                'erp_fa_category.catDescription as catDescription',
+                'erp_fa_categorysub.catDescription as subCatDescription')
             ->join('erp_fa_asset_master', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'faID')
                     ->where('erp_fa_asset_master.companySystemID', $companyId)
@@ -1000,6 +1007,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             })
             ->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_fa_category', 'erp_fa_category.faCatID', 'erp_fa_asset_master.faCatID')
+            ->leftJoin('erp_fa_categorysub', 'erp_fa_categorysub.faCatSubID', 'erp_fa_asset_master.faSubCatID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [22])
             ->where('erp_documentapproved.companySystemID', $companyId)
@@ -1010,8 +1019,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $assetCost = $assetCost->where(function ($query) use ($search) {
-                $query->where('capitalizationCode', 'LIKE', "%{$search}%")
-                    ->orWhere('narration', 'LIKE', "%{$search}%");
+                $query->where('faCode', 'LIKE', "%{$search}%")
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
             });
         }
 

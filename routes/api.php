@@ -963,6 +963,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
     Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
     Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
+
+    Route::post('getCostingApprovalByUser', 'FixedAssetMasterAPIController@getCostingApprovalByUser');
+    Route::post('getCostingApprovedByUser', 'FixedAssetMasterAPIController@getCostingApprovedByUser');
+
     Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
     Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
     Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
