@@ -33,6 +33,8 @@ class Location extends Model
 
     protected $dates = ['deleted_at'];
 
+    protected $primaryKey = 'locationID';
+
 
     public $fillable = [
         'locationName'
