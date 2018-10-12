@@ -966,6 +966,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('getCostingApprovalByUser', 'FixedAssetMasterAPIController@getCostingApprovalByUser');
     Route::post('getCostingApprovedByUser', 'FixedAssetMasterAPIController@getCostingApprovedByUser');
+    Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster');
 
     Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
     Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
