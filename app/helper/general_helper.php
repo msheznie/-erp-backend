@@ -1110,7 +1110,7 @@ class Helper
                 $docInforArr["tableName"] = 'erp_fa_asset_master';
                 $docInforArr["modelName"] = 'FixedAssetMaster';
                 $docInforArr["primarykey"] = 'faID';
-                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedColumnName"] = 'approved';
                 $docInforArr["approvedBy"] = 'approvedByUserID';
                 $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
                 $docInforArr["approvedDate"] = 'approvedDate';

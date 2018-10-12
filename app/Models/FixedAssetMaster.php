@@ -518,6 +518,8 @@ class FixedAssetMaster extends Model
         'confirmedDate',
         'approved',
         'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
         'lastVerifiedDate',
         'createdUserGroup',
         'createdUserSystemID',
@@ -612,6 +614,8 @@ class FixedAssetMaster extends Model
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'approved' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
         'createdUserGroup' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
@@ -696,6 +700,11 @@ class FixedAssetMaster extends Model
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function grvdetail_by()
+    {
+        return $this->belongsTo('App\Models\GRVDetails', 'docOriginDetailID', 'grvDetailsID');
     }
 
     
