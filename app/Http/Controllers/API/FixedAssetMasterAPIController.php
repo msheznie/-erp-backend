@@ -486,6 +486,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             /** @var FixedAssetMaster $fixedAssetMaster */
             $input['modifiedPc'] = gethostname();
             $input['modifiedUser'] = \Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
             $input["timestamp"] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
@@ -1038,5 +1039,16 @@ class FixedAssetMasterAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function getAssetCostingMaster(Request $request)
+    {
+        $input = $request->all();
 
+        $output = $this->fixedAssetMasterRepository
+            ->with(['confirmed_by', 'approved_by' => function ($query) {
+                $query->with('employee');
+                $query->where('documentSystemID', 22);
+            }, 'created_by', 'modified_by'])->findWithoutFail($input['faID']);
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+    }
 }
