@@ -16,8 +16,10 @@ use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
 use App\Models\FixedAssetCost;
 use App\Models\FixedAssetDepreciationPeriod;
+use App\Models\FixedAssetInsuranceDetail;
 use App\Models\FixedAssetMaster;
 use App\Models\GRVDetails;
+use App\Models\InsurancePolicyType;
 use App\Models\Location;
 use App\Models\Months;
 use App\Models\SegmentMaster;
@@ -484,6 +486,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             /** @var FixedAssetMaster $fixedAssetMaster */
             $input['modifiedPc'] = gethostname();
             $input['modifiedUser'] = \Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
             $input["timestamp"] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
@@ -597,6 +600,8 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $fixedAssetCategory = FixedAssetCategory::ofCompany($subCompanies)->get();
 
+        $insuranceType = InsurancePolicyType::all();
+
         $supplier = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
             ->whereIN('companySystemID', $subCompanies)
             ->where('isActive', 1)
@@ -618,6 +623,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             'fixedAssetCategory' => $fixedAssetCategory,
             'supplier' => $supplier,
             'location' => $location,
+            'insuranceType' => $insuranceType,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -783,14 +789,15 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $fixedAssetCosting = FixedAssetCost::with(['localcurrency', 'rptcurrency'])->ofFixedAsset($id)->get();
-        $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO'=> $id]);
+        $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO' => $id]);
         $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->get();
+        $insurance = FixedAssetInsuranceDetail::with(['policy_by', 'location_by'])->ofAsset($id)->get();
 
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
 
-        $output = ['fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset,  'depAsset' => $depAsset];
+        $output = ['fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
 
         return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
     }
@@ -822,7 +829,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
-               'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+                'confirmedDate' => null, 'RollLevForApp_curr' => 1];
 
             $this->fixedAssetMasterRepository->update($updateInput, $id);
 
@@ -893,4 +900,155 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
     }
 
+
+    public function getCostingApprovalByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $assetCost = DB::table('erp_documentapproved')
+            ->select(
+                'erp_fa_asset_master.*',
+                'employees.empName As created_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode',
+                'erp_fa_category.catDescription as catDescription',
+                'erp_fa_categorysub.catDescription as subCatDescription'
+            )
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $query->whereIn('employeesdepartments.documentSystemID', [22])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_fa_asset_master', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'faID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_fa_asset_master.companySystemID', $companyId)
+                    ->where('erp_fa_asset_master.approved', 0)
+                    ->where('erp_fa_asset_master.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_fa_category', 'erp_fa_category.faCatID', 'erp_fa_asset_master.faCatID')
+            ->leftJoin('erp_fa_categorysub', 'erp_fa_categorysub.faCatSubID', 'erp_fa_asset_master.faSubCatID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [22])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCost = $assetCost->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%")
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($assetCost)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+    public function getCostingApprovedByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $assetCost = DB::table('erp_documentapproved')
+            ->select(
+                'erp_fa_asset_master.*',
+                'employees.empName As created_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode',
+                'erp_fa_category.catDescription as catDescription',
+                'erp_fa_categorysub.catDescription as subCatDescription')
+            ->join('erp_fa_asset_master', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'faID')
+                    ->where('erp_fa_asset_master.companySystemID', $companyId)
+                    ->where('erp_fa_asset_master.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_fa_category', 'erp_fa_category.faCatID', 'erp_fa_asset_master.faCatID')
+            ->leftJoin('erp_fa_categorysub', 'erp_fa_categorysub.faCatSubID', 'erp_fa_asset_master.faSubCatID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [22])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCost = $assetCost->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%")
+                    ->orWhere('assetDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($assetCost)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getAssetCostingMaster(Request $request)
+    {
+        $input = $request->all();
+
+        $output = $this->fixedAssetMasterRepository
+            ->with(['confirmed_by', 'approved_by' => function ($query) {
+                $query->with('employee');
+                $query->where('documentSystemID', 22);
+            }, 'created_by', 'modified_by'])->findWithoutFail($input['faID']);
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
+    }
 }

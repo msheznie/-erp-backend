@@ -313,6 +313,12 @@ class AssetCapitalization extends Model
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
 
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+
     public function financeperiod_by()
     {
         return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');

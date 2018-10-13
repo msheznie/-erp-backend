@@ -769,7 +769,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             }, 'approved_by' => function ($query) {
                 $query->with('employee');
                 $query->where('documentSystemID', 63);
-            }, 'created_by'])->findWithoutFail($input['capitalizationID']);
+            }, 'created_by', 'modified_by'])->findWithoutFail($input['capitalizationID']);
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 

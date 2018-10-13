@@ -510,18 +510,23 @@ class FixedAssetMaster extends Model
         'DISPOGLCODE',
         'DISPOGLCODEdes',
         'RollLevForApp_curr',
+        'timesReferred',
+        'refferedBackYN',
         'confirmedYN',
         'confirmedByEmpSystemID',
         'confirmedByEmpID',
         'confirmedDate',
         'approved',
         'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
         'lastVerifiedDate',
         'createdUserGroup',
         'createdUserSystemID',
         'createdUserID',
         'createdPcID',
         'modifiedUser',
+        'modifiedUserSystemID',
         'modifiedPc',
         'createdDateAndTime',
         'createdDateTime',
@@ -604,15 +609,20 @@ class FixedAssetMaster extends Model
         'DISPOGLCODE' => 'string',
         'DISPOGLCODEdes' => 'string',
         'RollLevForApp_curr' => 'integer',
+        'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer',
         'confirmedYN' => 'integer',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'approved' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
         'createdUserGroup' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'createdPcID' => 'string',
         'modifiedUser' => 'string',
+        'modifiedUserSystemID' => 'integer',
         'modifiedPc' => 'string',
         'createdDateTime' => 'string',
         'selectedYN' => 'integer',
@@ -681,7 +691,7 @@ class FixedAssetMaster extends Model
 
     public function approved_by()
     {
-        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'PayMasterAutoId');
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'faID');
     }
 
     public function confirmed_by()
@@ -692,6 +702,16 @@ class FixedAssetMaster extends Model
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function grvdetail_by()
+    {
+        return $this->belongsTo('App\Models\GRVDetails', 'docOriginDetailID', 'grvDetailsID');
     }
 
     
