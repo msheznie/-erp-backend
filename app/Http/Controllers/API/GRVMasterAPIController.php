@@ -135,11 +135,10 @@ class GRVMasterAPIController extends AppBaseController
             $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod->dateTo;
         }*/
-
+        $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
-                $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
                 if($input['grvDate'] > $currentDate){
                     return $this->sendError( 'GRV date can not be greater than current date',500);
                 }
@@ -149,6 +148,10 @@ class GRVMasterAPIController extends AppBaseController
         if (isset($input['stampDate'])) {
             if ($input['stampDate']) {
                 $input['stampDate'] = new Carbon($input['stampDate']);
+            }
+
+            if($input['stampDate'] > $currentDate){
+                return $this->sendError( 'Stamp date can not be greater than current date',500);
             }
         }
 
@@ -316,12 +319,11 @@ class GRVMasterAPIController extends AppBaseController
         if ($gRVMaster->grvCancelledYN == -1) {
             return $this->sendError('Good Receipt Voucher closed. You cannot edit.', 500);
         }
-
+        $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
 
-                $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
                 if($input['grvDate'] > $currentDate){
                     return $this->sendError( 'GRV date can not be greater than current date',500);
                 }
@@ -331,6 +333,10 @@ class GRVMasterAPIController extends AppBaseController
         if (isset($input['stampDate'])) {
             if ($input['stampDate']) {
                 $input['stampDate'] = new Carbon($input['stampDate']);
+
+                if($input['stampDate'] > $currentDate){
+                    return $this->sendError( 'Stamp date can not be greater than current date',500);
+                }
             }
         }
 
