@@ -282,5 +282,31 @@ class FixedAssetDepreciationPeriod extends Model
         return $query->where('faID',  $faID);
     }
 
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfDepreciation($query, $depMasterAutoID)
+    {
+        return $query->where('depMasterAutoID',  $depMasterAutoID);
+    }
+
+
+    public function maincategory_by(){
+        return $this->belongsTo('App\Models\FixedAssetCategory','faMainCategory','faCatID');
+    }
+
+    public function financecategory_by(){
+        return $this->belongsTo('App\Models\FixedAssetCategory','faFinanceCatID','faCatID');
+    }
+
+    public function serviceline_by(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
+
     
 }

@@ -971,6 +971,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
     Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
     Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
+    Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
+    Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany');
+    Route::get('getDepreciationFormData', 'FixedAssetDepreciationMasterAPIController@getDepreciationFormData');
+    Route::get('assetDepreciationByID/{id}', 'FixedAssetDepreciationMasterAPIController@assetDepreciationByID');
 
     Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
 });
@@ -1046,3 +1050,6 @@ Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
 
 Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
 
+
+
+Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
