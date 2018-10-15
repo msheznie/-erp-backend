@@ -957,7 +957,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
     Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
-    Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
     Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
     Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
