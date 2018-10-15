@@ -139,6 +139,10 @@ class GRVMasterAPIController extends AppBaseController
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
+                $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+                if($input['grvDate'] > $currentDate){
+                    return $this->sendError( 'GRV date can not be greater than current date',500);
+                }
             }
         }
 
@@ -316,6 +320,11 @@ class GRVMasterAPIController extends AppBaseController
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
+
+                $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+                if($input['grvDate'] > $currentDate){
+                    return $this->sendError( 'GRV date can not be greater than current date',500);
+                }
             }
         }
 

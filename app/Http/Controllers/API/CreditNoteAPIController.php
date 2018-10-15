@@ -173,7 +173,7 @@ class CreditNoteAPIController extends AppBaseController
 
         $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
         if($input['creditNoteDate'] > $curentDate){
-            return $this->sendError( 'Dcoument date can not be greater than current date',500);
+            return $this->sendError( 'Document date can not be greater than current date',500);
         }
 
         if (($input['creditNoteDate'] >= $companyfinanceperiod->dateFrom) && ($input['creditNoteDate'] <= $companyfinanceperiod->dateTo)) {
