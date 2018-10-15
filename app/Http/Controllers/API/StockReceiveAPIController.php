@@ -803,7 +803,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $array = array('entity' => $stockReceive);
         $time = strtotime("now");
-        $fileName = 'stock_receive' . $id . '_' . $time . '.pdf';
+        $fileName = 'stock_receive_' . $id . '_' . $time . '.pdf';
         $html = view('print.stock_receive', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);

@@ -921,7 +921,7 @@ class StockTransferAPIController extends AppBaseController
 
         $array = array('entity' => $stockTransfer);
         $time = strtotime("now");
-        $fileName = 'stock_transfer' . $id . '_' . $time . '.pdf';
+        $fileName = 'stock_transfer_' . $id . '_' . $time . '.pdf';
         $html = view('print.stock_transfer', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);

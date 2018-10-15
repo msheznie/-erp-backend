@@ -1071,14 +1071,13 @@ class GRVMasterAPIController extends AppBaseController
         );
 
         $html = view('print.good_receipt_voucher_print_pdf', $grv);
-
-        // echo $html;
-        //exit();
+        $time = strtotime("now");
+        $fileName = 'good_receipt_voucher_' . $id . '_' . $time . '.pdf';
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
     public function pullPOAttachment(Request $request)

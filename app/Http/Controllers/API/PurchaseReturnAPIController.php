@@ -1134,7 +1134,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $array = array('entity' => $purchaseReturn);
         $time = strtotime("now");
-        $fileName = 'purchase_return' . $id . '_' . $time . '.pdf';
+        $fileName = 'purchase_return_' . $id . '_' . $time . '.pdf';
         $html = view('print.purchase_return', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);

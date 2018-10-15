@@ -794,7 +794,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $array = array('entity' => $materielReturn);
         $time = strtotime("now");
-        $fileName = 'materiel_return' . $id . '_' . $time . '.pdf';
+        $fileName = 'materiel_return_' . $id . '_' . $time . '.pdf';
         $html = view('print.materiel_return', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
