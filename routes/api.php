@@ -104,6 +104,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
     Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo');
+    Route::post('supplierBankMemoDeleteAll', 'BankMemoSupplierAPIController@supplierBankMemoDeleteAll');
 
     Route::resource('item/masters', 'ItemMasterAPIController');
     Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
