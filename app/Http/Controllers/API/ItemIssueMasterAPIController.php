@@ -770,7 +770,8 @@ class ItemIssueMasterAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
                 $query->where('itemIssueCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comment', 'LIKE', "%{$search}%");
+                    ->orWhere('comment', 'LIKE', "%{$search}%")
+                    ->orWhere('issueRefNo', 'LIKE', "%{$search}%");
             });
         }
 
