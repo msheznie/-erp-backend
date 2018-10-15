@@ -407,7 +407,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 ->count();
 
             if ($checkAmount > 0) {
-                return $this->sendError('Every item should have a matching amount', 500, ['type' => 'confirm']);
+                return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
             }
 
             $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
@@ -419,6 +419,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $detailAmountTotRpt = PaySupplierInvoiceDetail::where('matchingDocID', $id)
                 ->sum('paymentComRptAmount');
 
+
+            if ($detailAmountTotTran > $input['matchBalanceAmount']) {
+                return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
+            }
             //$currency = \Helper::convertAmountToLocalRpt(203, $id, $detailAmountTot);
 
             $input['matchingAmount'] = $detailAmountTotTran;

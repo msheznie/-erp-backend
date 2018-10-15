@@ -928,8 +928,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
     Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
     Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
+    Route::get('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
     Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
+    Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
     Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
+    Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ');
     Route::post('getJournalVoucherMasterApproval', 'JvMasterAPIController@getJournalVoucherMasterApproval');
     Route::post('getApprovedJournalVoucherForCurrentUser', 'JvMasterAPIController@getApprovedJournalVoucherForCurrentUser');
     Route::post('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');

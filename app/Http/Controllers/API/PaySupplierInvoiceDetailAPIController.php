@@ -627,6 +627,43 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
 
+        $itemExistArray = array();
+
+        //check supplier invoice all ready exist
+        foreach ($input['detailTable'] as $itemExist) {
+
+            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
+                $siDetailExistPS = PaySupplierInvoiceDetail::where('matchingDocID', $matchDocumentMasterAutoID)
+                    ->where('companySystemID', $itemExist['companySystemID'])
+                    ->where('bookingInvSystemCode', $itemExist['bookingInvSystemCode'])
+                    ->first();
+
+                if (!empty($siDetailExistPS)) {
+                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is all ready added. Please check again";
+                    $itemExistArray[] = [$itemDrt];
+                }
+            }
+        }
+
+        //check record exist in General Ledger table
+        foreach ($input['detailTable'] as $itemExist) {
+
+            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
+                $siDetailExistGL = GeneralLedger::where('documentSystemID', $itemExist['addedDocumentSystemID'])
+                    ->where('companySystemID', $itemExist['companySystemID'])
+                    ->where('documentSystemCode', $itemExist['bookingInvSystemCode'])
+                    ->first();
+
+                if (empty($siDetailExistGL)) {
+                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
+                    $itemExistArray[] = [$itemDrt];
+                }
+            }
+        }
+
+        if (!empty($itemExistArray)) {
+            return $this->sendError($itemExistArray, 422);
+        }
         DB::beginTransaction();
         try {
             foreach ($input['detailTable'] as $new) {
