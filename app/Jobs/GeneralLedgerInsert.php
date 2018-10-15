@@ -15,6 +15,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\DirectPaymentDetails;
 use App\Models\DirectReceiptDetail;
 use App\Models\Employee;
+use App\Models\FixedAssetMaster;
 use App\Models\GeneralLedger;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
@@ -1691,6 +1692,70 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['createdDateTime'] = $time;
                                 $data['createdUserID'] = $empID->employeeSystemID;
                                 $data['createdUserPC'] = getenv('COMPUTERNAME');
+                                array_push($finalData, $data);
+                            }
+                        }
+                        break;
+                    case 22: // FA - Fixed Asset Master
+                        $masterData = FixedAssetMaster::with(['grvdetail_by'])->find($masterModel["autoID"]);
+                        $companyCurrency = Company::find($masterModel["companySystemID"]);
+
+                        if ($masterData) {
+                            $data['companySystemID'] = $masterData->companySystemID;
+                            $data['companyID'] = $masterData->companyID;
+                            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
+                            $data['serviceLineCode'] = $masterData->serviceLineCode;
+                            $data['masterCompanyID'] = null;
+                            $data['documentSystemID'] = $masterData->documentSystemID;
+                            $data['documentID'] = $masterData->documentID;
+                            $data['documentSystemCode'] = $masterModel["autoID"];
+                            $data['documentCode'] = $masterData->faCode;
+                            $data['documentDate'] = date('Y-m-d H:i:s');
+                            $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
+                            $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
+                            $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                            $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                            $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+                            $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                            $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                            $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                            $data['documentNarration'] = $masterData->COMMENTS;
+                            $data['clientContractID'] = 'X';
+                            $data['contractUID'] = 159;
+                            $data['supplierCodeSystem'] = 0;
+                            $data['chartOfAccountSystemID'] = $masterData->costglCodeSystemID;
+                            $data['glCode'] = $masterData->COSTGLCODE;
+                            $data['glAccountType'] = 'BS';
+                            $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = 0;
+                            $data['documentLocalAmount'] = ABS($masterData->COSTUNIT);
+                            $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                            $data['documentRptCurrencyER'] = 0;
+                            $data['documentRptAmount'] = ABS($masterData->costUnitRpt);
+                            $data['documentTransCurrencyID'] = 0;
+                            $data['documentTransCurrencyER'] = 0;
+                            $data['documentTransAmount'] = 0;
+                            $data['holdingShareholder'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = $empID->empID;
+                            $data['createdUserSystemID'] = $empID->employeeSystemID;
+                            $data['createdUserPC'] = gethostname();
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
+
+                            if ($masterData->grvdetail_by) {
+                                $data['chartOfAccountSystemID'] = $masterData->grvdetail_by->financeGLcodebBSSystemID;
+                                $data['glCode'] = $masterData->grvdetail_by->financeGLcodebBS;
+                                $data['glAccountType'] = 'BS';
+                                $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = 0;
+                                $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
+                                $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                $data['documentRptCurrencyER'] = 0;
+                                $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
+                                $data['timestamp'] = \Helper::currentDateTime();
                                 array_push($finalData, $data);
                             }
                         }

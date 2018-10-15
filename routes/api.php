@@ -960,15 +960,21 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
     Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
-    Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
     Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
     Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
     Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
     Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
+
+    Route::post('getCostingApprovalByUser', 'FixedAssetMasterAPIController@getCostingApprovalByUser');
+    Route::post('getCostingApprovedByUser', 'FixedAssetMasterAPIController@getCostingApprovedByUser');
+    Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster');
+
     Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
     Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
     Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
+
+    Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1037,4 +1043,8 @@ Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIControlle
 
 
 Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
+
+
+
+Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
 

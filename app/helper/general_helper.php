@@ -1104,6 +1104,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 22: // Fixed Asset
+                $docInforArr["tableName"] = 'erp_fa_asset_master';
+                $docInforArr["modelName"] = 'FixedAssetMaster';
+                $docInforArr["primarykey"] = 'faID';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             case 17: // Journal Voucher
                 $docInforArr["tableName"] = 'erp_jvmaster';
                 $docInforArr["modelName"] = 'JvMaster';
@@ -1147,10 +1159,6 @@ class Helper
                         ->where('companySystemID', $isConfirmed['companySystemID'])
                         ->first();
                 }
-
-                $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
-                    ->where('companySystemID', $isConfirmed['companySystemID'])
-                    ->first();
 
                 if ($policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
@@ -1301,7 +1309,7 @@ class Helper
 
                             // insert the record to general ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 17])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17])) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);

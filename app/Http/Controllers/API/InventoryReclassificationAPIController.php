@@ -139,7 +139,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $validator = \Validator::make($request->all(), [
             'serviceLineSystemID' => 'required',
             'narration' => 'required',
-            'inventoryReclassificationDate' => 'required|date',
+            'inventoryReclassificationDate' => 'required|date|before_or_equal:today',
         ]);
 
         if ($validator->fails()) {//echo 'in';exit;
@@ -335,7 +335,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             'serviceLineSystemID' => 'required',
             'wareHouseSystemCode' => 'required',
             'narration' => 'required',
-            'inventoryReclassificationDate' => 'required|date',
+            'inventoryReclassificationDate' => 'required|date|before_or_equal:today'
         ]);
 
         if ($validator->fails()) {//echo 'in';exit;
