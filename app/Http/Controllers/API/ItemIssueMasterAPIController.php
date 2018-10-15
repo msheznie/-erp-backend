@@ -173,11 +173,10 @@ class ItemIssueMasterAPIController extends AppBaseController
             $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
         unset($inputParam);
-
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
-            'issueDate' => 'required',
+            'issueDate' => 'required|date|before_or_equal:today',
             'serviceLineSystemID' => 'required|numeric|min:1',
             'wareHouseFrom' => 'required|numeric|min:1',
             'customerSystemID' => 'required|numeric|min:1',
@@ -486,11 +485,10 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
 
             unset($inputParam);
-
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
-                'issueDate' => 'required',
+                'issueDate' => 'required|date|before_or_equal:today',
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'wareHouseFrom' => 'required|numeric|min:1',
                 'customerSystemID' => 'required|numeric|min:1',
@@ -772,7 +770,8 @@ class ItemIssueMasterAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
                 $query->where('itemIssueCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comment', 'LIKE', "%{$search}%");
+                    ->orWhere('comment', 'LIKE', "%{$search}%")
+                    ->orWhere('issueRefNo', 'LIKE', "%{$search}%");
             });
         }
 

@@ -11,6 +11,7 @@
  * -- Date: 25-September 2018 By: Nazir Description: Added new functions named as getJournalVoucherDetails()
  * -- Date: 27-September 2018 By: Nazir Description: Added new functions named as getJournalVoucherContracts()
  * -- Date: 05-October 2018 By: Nazir Description: Added new functions named as journalVoucherDeleteAllAJ()
+ * -- Date: 15-October 2018 By: Nazir Description: Added new functions named as journalVoucherDeleteAllPOAJ()
  */
 namespace App\Http\Controllers\API;
 
@@ -380,6 +381,7 @@ class JvDetailAPIController extends AppBaseController
 
         $items = JvDetail::where('jvMasterAutoId', $id)
             ->with(['segment', 'currency_by'])
+            ->orderBy('jvDetailAutoID', 'ASC')
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Jv Detail retrieved successfully');
@@ -451,21 +453,16 @@ class JvDetailAPIController extends AppBaseController
             $detail_arr['createdUserID'] = $user->employee['empID'];
             $detail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
-            if ($new['DebitAmount'] != 0 && $new['CreditAmount'] != 0) {
-                $detail_arr['debitAmount'] = 0;
+
+            if ($new['DebitAmount'] != 0) {
+                $detail_arr['debitAmount'] = $new['DebitAmount'];
                 $detail_arr['creditAmount'] = 0;
                 $store = $this->jvDetailRepository->create($detail_arr);
-            } else {
-                if ($new['DebitAmount'] != 0) {
-                    $detail_arr['debitAmount'] = $new['DebitAmount'];
-                    $detail_arr['creditAmount'] = 0;
-                    $store = $this->jvDetailRepository->create($detail_arr);
-                }
-                if ($new['CreditAmount'] != 0) {
-                    $detail_arr['debitAmount'] = 0;
-                    $detail_arr['creditAmount'] = $new['CreditAmount'];
-                    $store = $this->jvDetailRepository->create($detail_arr);
-                }
+            }
+            if ($new['CreditAmount'] != 0) {
+                $detail_arr['debitAmount'] = 0;
+                $detail_arr['creditAmount'] = $new['CreditAmount'];
+                $store = $this->jvDetailRepository->create($detail_arr);
             }
 
             // updating HRMS JvDetailtable
@@ -639,7 +636,13 @@ GROUP BY
                     $detail_arr['creditAmount'] = $rowData->SumOfaccrualAmount;
                 }
                 $totalRevenueAmount += $rowData->SumOfaccrualAmount;
-                $store = $this->jvDetailRepository->create($detail_arr);
+
+                if ($detail_arr['debitAmount'] == 0 &&  $detail_arr['creditAmount'] == 0) {
+
+                }else{
+                    $store = $this->jvDetailRepository->create($detail_arr);
+                }
+
             }
 
             // updating hardcoded value
@@ -712,7 +715,7 @@ GROUP BY
             }
         }
 
-        if($accruvalMasterID != 0){
+        if ($accruvalMasterID != 0) {
             $updateAccruavalFromOPMaster = AccruavalFromOPMaster::find($accruvalMasterID)
                 ->update([
                     'jvMasterAutoID' => 0,
@@ -720,6 +723,128 @@ GROUP BY
                 ]);
 
         }
+
+        return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
+    }
+
+    public function journalVoucherPOAccrualJVDetailStore(Request $request)
+    {
+        $input = $request->all();
+        $detail_arr = array();
+        $validator = array();
+        $totalRevenueAmount = 0;
+        $jvMasterAutoId = $input['jvMasterAutoId'];
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $checkItems = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
+            ->count();
+        if ($checkItems > 0) {
+            return $this->sendError('All ready items are added, You cannot add more.');
+        }
+
+        if (empty($input['detailTable'])) {
+            return $this->sendError("No items selected to add.");
+        }
+
+        $jvMasterData = JvMaster::find($jvMasterAutoId);
+
+        if (empty($jvMasterData)) {
+            return $this->sendError('Jv Master not found');
+        }
+
+        foreach ($input['detailTable'] as $new) {
+
+            if (isset($new['isChecked']) && $new['isChecked']) {
+                $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $new['glCodeSystemID'])->first();
+
+                $detail_arr['jvMasterAutoId'] = $jvMasterAutoId;
+                $detail_arr['documentSystemID'] = $jvMasterData->documentSystemID;
+                $detail_arr['documentID'] = $jvMasterData->documentID;
+                $detail_arr['serviceLineSystemID'] = $new['serviceLineSystemID'];
+                $detail_arr['serviceLineCode'] = $new['serviceLine'];
+                $detail_arr['companySystemID'] = $jvMasterData->companySystemID;
+                $detail_arr['companyID'] = $jvMasterData->companyID;
+                $detail_arr['chartOfAccountSystemID'] = $new['glCodeSystemID'];
+                $detail_arr['glAccount'] = $chartOfAccount['AccountCode'];
+                $detail_arr['glAccountDescription'] = $chartOfAccount['AccountDescription'];
+                $detail_arr['comments'] = $new['purchaseOrderCode'].' - '.$new['itemPrimaryCode'].' - '.$new['itemDescription'];
+                $detail_arr['currencyID'] = $jvMasterData->currencyID;
+                $detail_arr['currencyER'] = $jvMasterData->currencyER;
+                $detail_arr['createdPcID'] = gethostname();
+                $detail_arr['createdUserID'] = $user->employee['empID'];
+                $detail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
+                $detail_arr['debitAmount'] = $new['balanceCost'];
+                $detail_arr['creditAmount'] = 0;
+
+                $totalRevenueAmount += $new['balanceCost'];
+
+                $store = $this->jvDetailRepository->create($detail_arr);
+
+
+                // updating hardcoded value
+                $detail_debitArr['jvMasterAutoId'] = $jvMasterAutoId;
+                $detail_debitArr['documentSystemID'] = $jvMasterData->documentSystemID;
+                $detail_debitArr['documentID'] = $jvMasterData->documentID;
+                $detail_debitArr['recurringjvMasterAutoId'] = 0;
+                $detail_debitArr['recurringjvMasterAutoId'] = 0;
+                $detail_debitArr['clientContractID'] = 'x';
+                $detail_debitArr['serviceLineSystemID'] = $new['serviceLineSystemID'];
+                $detail_debitArr['serviceLineCode'] = $new['serviceLine'];
+                $detail_debitArr['companySystemID'] = $jvMasterData->companySystemID;
+                $detail_debitArr['companyID'] = $jvMasterData->companyID;
+                $detail_debitArr['chartOfAccountSystemID'] = 722;
+                $detail_debitArr['glAccount'] = 46019;
+                $detail_debitArr['glAccountDescription'] = 'Accrued Liability - PO accrual';
+                $detail_debitArr['comments'] = $new['serviceLine'];
+                $detail_debitArr['currencyID'] = $jvMasterData->currencyID;
+                $detail_debitArr['currencyER'] = $jvMasterData->currencyER;
+                $detail_debitArr['debitAmount'] = 0;
+                $detail_debitArr['creditAmount'] = $new['balanceCost'];
+                $detail_debitArr['createdPcID'] = gethostname();
+                $detail_debitArr['createdUserID'] = $user->employee['empID'];
+                $detail_debitArr['createdUserSystemID'] = $user->employee['employeeSystemID'];
+
+                $store = $this->jvDetailRepository->create($detail_debitArr);
+            }
+        }
+
+
+
+        return $this->sendResponse('', 'JV Details saved successfully');
+
+    }
+
+
+    public function journalVoucherDeleteAllPOAJ(Request $request)
+    {
+        $input = $request->all();
+
+        $jvMasterAutoId = $input['jvMasterAutoId'];
+
+        $jvMaster = JvMaster::find($jvMasterAutoId);
+
+        if (empty($jvMaster)) {
+            return $this->sendError('Journal Voucher not found');
+        }
+
+        $detailExistAll = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
+            ->get();
+
+        if (empty($detailExistAll)) {
+            return $this->sendError('There are no details to delete');
+        }
+        $accruvalMasterID = 0;
+
+        if (!empty($detailExistAll)) {
+
+            foreach ($detailExistAll as $cvDeatil) {
+                $accruvalMasterID = $cvDeatil['recurringjvMasterAutoId'];
+                $deleteDetails = JvDetail::where('jvDetailAutoID', $cvDeatil['jvDetailAutoID'])->delete();
+            }
+        }
+
 
         return $this->sendResponse($jvMasterAutoId, 'Details deleted successfully');
     }

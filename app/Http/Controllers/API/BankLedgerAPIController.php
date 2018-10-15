@@ -657,7 +657,8 @@ class BankLedgerAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $bankLedger = $bankLedger->where(function ($query) use ($search) {
                 $query->where('documentCode', 'LIKE', "%{$search}%")
-                    ->orWhere('documentNarration', 'LIKE', "%{$search}%");
+                    ->orWhere('documentNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('payeeName', 'LIKE', "%{$search}%");
             });
         }
 

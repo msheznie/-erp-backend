@@ -104,6 +104,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
     Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo');
+    Route::post('supplierBankMemoDeleteAll', 'BankMemoSupplierAPIController@supplierBankMemoDeleteAll');
 
     Route::resource('item/masters', 'ItemMasterAPIController');
     Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
@@ -927,13 +928,17 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
     Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
     Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
+    Route::get('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
     Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
+    Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
     Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
+    Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ');
     Route::post('getJournalVoucherMasterApproval', 'JvMasterAPIController@getJournalVoucherMasterApproval');
     Route::post('getApprovedJournalVoucherForCurrentUser', 'JvMasterAPIController@getApprovedJournalVoucherForCurrentUser');
     Route::post('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
     Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
     Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
+    Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -957,7 +962,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
     Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
-    Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
     Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
     Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');

@@ -166,7 +166,7 @@ class StockReceiveAPIController extends AppBaseController
             'locationTo' => 'required|numeric|min:1',
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
-            'receivedDate' => 'required',
+            'receivedDate' => 'required|date|before_or_equal:today',
             'companyToSystemID' => 'required|numeric|min:1',
             'companyFromSystemID' => 'required|numeric|min:1',
             'serviceLineSystemID' => 'required|numeric|min:1',
@@ -503,7 +503,7 @@ class StockReceiveAPIController extends AppBaseController
                 'locationTo' => 'required|numeric|min:1',
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
-                'receivedDate' => 'required',
+                'receivedDate' => 'required|date|before_or_equal:today',
                 'companyToSystemID' => 'required|numeric|min:1',
                 'companyFromSystemID' => 'required|numeric|min:1',
                 'serviceLineSystemID' => 'required|numeric|min:1',
@@ -803,7 +803,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $array = array('entity' => $stockReceive);
         $time = strtotime("now");
-        $fileName = 'stock_receive' . $id . '_' . $time . '.pdf';
+        $fileName = 'stock_receive_' . $id . '_' . $time . '.pdf';
         $html = view('print.stock_receive', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);

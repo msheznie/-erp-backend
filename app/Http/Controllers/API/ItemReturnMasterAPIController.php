@@ -168,7 +168,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
-            'ReturnDate' => 'required',
+            'ReturnDate' => 'required|date|before_or_equal:today',
             'serviceLineSystemID' => 'required|numeric|min:1',
             'wareHouseLocation' => 'required|numeric|min:1',
             'ReturnType' => 'required|numeric|min:1',
@@ -416,7 +416,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
-                'ReturnDate' => 'required',
+                'ReturnDate' => 'required|date|before_or_equal:today',
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'wareHouseLocation' => 'required|numeric|min:1',
                 'ReturnType' => 'required|numeric|min:1',
@@ -794,7 +794,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $array = array('entity' => $materielReturn);
         $time = strtotime("now");
-        $fileName = 'materiel_return' . $id . '_' . $time . '.pdf';
+        $fileName = 'materiel_return_' . $id . '_' . $time . '.pdf';
         $html = view('print.materiel_return', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
