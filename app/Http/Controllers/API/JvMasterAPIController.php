@@ -16,6 +16,7 @@
  * -- Date: 04-October 2018 By: Nazir Description: Added new functions named as journalVoucherForAccrualJVDetail()
  * -- Date: 10-October 2018 By: Nazir Description: Added new functions named as getJournalVoucherMasterApproval()
  * -- Date: 10-October 2018 By: Nazir Description: Added new functions named as getApprovedJournalVoucherForCurrentUser()
+ * -- Date: 14-October 2018 By: Nazir Description: Added new functions named as journalVoucherForPOAccrualJVDetail()
  */
 
 namespace App\Http\Controllers\API;
@@ -340,9 +341,8 @@ class JvMasterAPIController extends AppBaseController
     public function update($id, UpdateJvMasterAPIRequest $request)
     {
         $input = $request->all();
-
-        $input = array_except($input, ['company', 'created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'transactioncurrency', 'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID']);
-
+        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
+            'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID', 'transactioncurrency']);
         $input = $this->convertArrayToValue($input);
 
         /** @var JvMaster $jvMaster */
@@ -357,6 +357,8 @@ class JvMasterAPIController extends AppBaseController
                 $input['JVdate'] = new Carbon($input['JVdate']);
             }
         }
+
+        $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($jvMaster->currencyID);
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
@@ -376,6 +378,15 @@ class JvMasterAPIController extends AppBaseController
             $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
         }
         unset($inputParam);
+
+        $documentDate = $input['JVdate'];
+        $monthBegin = $input['FYPeriodDateFrom'];
+        $monthEnd = $input['FYPeriodDateTo'];
+
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Document date is not within the selected financial period !', 500);
+        }
 
         if ($jvMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -454,19 +465,29 @@ class JvMasterAPIController extends AppBaseController
             $JvDetailCreditSum = JvDetail::where('jvMasterAutoId', $id)
                 ->sum('creditAmount');
 
-            if ($JvDetailDebitSum != $JvDetailCreditSum) {
+            if (round($JvDetailDebitSum, $currencyDecimalPlace) != round($JvDetailCreditSum, $currencyDecimalPlace)) {
                 return $this->sendError('Debit total not matching with credit total ', 500);
             }
 
-            $params = array('autoID' => $id,
-                'company' => $jvMaster->companySystemID,
-                'document' => $jvMaster->documentSystemID,
+            $input['RollLevForApp_curr'] = 1;
+
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+            $params = array(
+                'autoID' => $id,
+                'company' => $input["companySystemID"],
+                'document' => $input["documentSystemID"],
                 'segment' => 0,
                 'category' => 0,
                 'amount' => $JvDetailDebitSum
             );
 
             $confirm = \Helper::confirmDocument($params);
+
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -952,34 +973,33 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $empID = \Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
-            'erp_jvmaster.bookingSuppMasInvAutoID',
-            'erp_jvmaster.bookingInvCode',
+            'erp_jvmaster.jvMasterAutoId',
+            'erp_jvmaster.JVcode',
             'erp_jvmaster.documentSystemID',
-            'erp_jvmaster.secondaryRefNo',
-            'erp_jvmaster.bookingDate',
-            'erp_jvmaster.comments',
-            'erp_jvmaster.createdDateAndTime',
+            'erp_jvmaster.JVdate',
+            'erp_jvmaster.JVNarration',
+            'erp_jvmaster.createdDateTime',
             'erp_jvmaster.confirmedDate',
-            'erp_jvmaster.bookingAmountTrans',
-            'erp_jvmaster.documentType',
+            'erp_jvmaster.jvType',
+            'jvDetailRec.debitSum',
+            'jvDetailRec.creditSum',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
             'currencymaster.CurrencyCode As CurrencyCode',
-            'suppliermaster.supplierName As supplierName',
             'approvalLevelID',
             'documentSystemCode',
             'employees.empName As created_user'
         )->join('erp_jvmaster', function ($query) use ($companyID, $empID) {
-            $query->on('erp_documentapproved.documentSystemCode', '=', 'bookingSuppMasInvAutoID')
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'jvMasterAutoId')
                 ->where('erp_jvmaster.companySystemID', $companyID)
                 ->where('erp_jvmaster.approved', -1)
                 ->where('erp_jvmaster.confirmedYN', 1);
         })->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
-            ->leftJoin('currencymaster', 'supplierTransactionCurrencyID', 'currencymaster.currencyID')
-            ->leftJoin('suppliermaster', 'supplierID', 'suppliermaster.supplierCodeSystem')
-            ->where('erp_documentapproved.documentSystemID', 11)
+            ->leftJoin('currencymaster', 'erp_jvmaster.currencyID', 'currencymaster.currencyID')
+            ->leftJoin(DB::raw('(SELECT COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,jvMasterAutoId FROM erp_jvdetail GROUP BY jvMasterAutoId) as jvDetailRec'), 'jvDetailRec.jvMasterAutoId', '=', 'erp_jvmaster.jvMasterAutoId')
+            ->where('erp_documentapproved.documentSystemID', 17)
             ->where('erp_documentapproved.companySystemID', $companyID)
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
@@ -988,9 +1008,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $grvMasters = $grvMasters->where(function ($query) use ($search) {
-                $query->where('bookingInvCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%")
-                    ->orWhere('supplierName', 'LIKE', "%{$search}%");
+                $query->where('JVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('JVNarration', 'LIKE', "%{$search}%");
             });
         }
 
@@ -1029,5 +1048,153 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             return $this->sendResponse(array(), $reject["message"]);
         }
 
+    }
+
+    public function generateJournalVoucher($masterData)
+    {
+        $jvMasterData = JvMaster::find($masterData['autoID']);
+
+        if ($jvMasterData->jvType == 1) {
+
+            $lastSerial = JvMaster::where('companySystemID', $jvMasterData->companySystemID)
+                ->where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
+                ->orderBy('jvMasterAutoId', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            $firstDayNextMonth = date('Y-m-d', strtotime('first day of next month'));
+
+            $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
+                ->where('companySystemID', $jvMasterData->companySystemID)
+                ->first();
+
+            if ($companyfinanceyear) {
+                $startYear = $companyfinanceyear->bigginingDate;
+                $finYearExp = explode('-', $startYear);
+                $finYear = $finYearExp[0];
+            } else {
+                $finYear = date("Y");
+            }
+
+            $jvCode = ($jvMasterData->CompanyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+            $postJv = $jvMasterData->toArray();
+            $postJv['JVcode'] = $jvCode;
+            $postJv['serialNo'] = $lastSerialNumber;
+            $postJv['JVdate'] = $firstDayNextMonth;
+
+            $storeJV = JvMaster::create($postJv);
+
+            //inserting to jv detail
+            $fetchJVDetail = JvDetail::where('jvMasterAutoId', $masterData['autoID'])->get();
+
+            if (!empty($fetchJVDetail)) {
+                foreach ($fetchJVDetail as $key => $val) {
+                    $fetchJVDetail[$key]['debitAmount'] = $val['creditAmount'];
+                    $fetchJVDetail[$key]['creditAmount'] = $val['debitAmount'];
+                }
+            }
+
+            $jvDetailArray = $fetchJVDetail->toArray();
+
+            $storeJvDetail = JvDetail::insert($jvDetailArray);
+        }
+    }
+
+    public function journalVoucherForPOAccrualJVDetail(Request $request)
+    {
+        $companySystemID = $request['companyId'];
+        $jvMasterAutoId = $request['jvMasterAutoId'];
+
+        $jvMasterData = jvMaster::find($jvMasterAutoId);
+        if (empty($jvMasterData)) {
+            return $this->sendError('Jv Master not found');
+        }
+
+        $output = DB::select("SELECT
+	pomaster.purchaseOrderID,
+	pomaster.poType,
+	pomaster.purchaseOrderCode,
+	pomaster.serviceLineSystemID,
+	pomaster.serviceLine,
+	pomaster.expectedDeliveryDate,
+	pomaster.approvedDate,
+	podetail.itemPrimaryCode,
+	podetail.itemDescription,
+	podetail.financeGLcodePL AS glCode,
+	podetail.financeGLcodePLSystemID AS glCodeSystemID,
+	pomaster.supplierName,
+	pomaster.poTotalComRptCurrency AS poCost,
+	IFNULL(grvdetail.grvSum, 0) AS grvCost,
+	(
+		pomaster.poTotalComRptCurrency - IFNULL(grvdetail.grvSum, 0)
+	) AS balanceCost
+FROM
+	erp_purchaseordermaster AS pomaster
+INNER JOIN (
+	SELECT
+		COALESCE (
+			SUM(
+				GRVcostPerUnitComRptCur * noQty
+			),
+			0
+		) AS poSum,
+		purchaseOrderMasterID,
+		itemCode,
+		itemPrimaryCode,
+		itemDescription,
+		financeGLcodePL,
+		financeGLcodePLSystemID
+	FROM
+		erp_purchaseorderdetails
+	GROUP BY
+		purchaseOrderMasterID,
+		itemCode
+) AS podetail ON podetail.purchaseOrderMasterID = pomaster.purchaseOrderID
+LEFT JOIN (
+	SELECT
+		COALESCE (
+			SUM(
+				GRVcostPerUnitComRptCur * noQty
+			),
+			0
+		) AS grvSum,
+		purchaseOrderMastertID,
+		erp_grvmaster.grvTypeID,
+		erp_grvmaster.grvAutoID
+	FROM
+		erp_grvdetails
+	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
+	WHERE
+		grvTypeID = 2
+	AND DATE(grvDate) <= '$jvMasterData->JVdate'
+	GROUP BY
+		purchaseOrderMastertID,
+		itemCode
+) AS grvdetail ON grvdetail.purchaseOrderMastertID = pomaster.purchaseOrderID
+INNER JOIN suppliermaster AS supmaster ON pomaster.supplierID = supmaster.supplierCodeSystem
+WHERE
+	pomaster.companySystemID = 11
+AND pomaster.poConfirmedYN = 1
+AND pomaster.poCancelledYN = 0
+AND pomaster.approved = - 1
+AND pomaster.poType_N <> 6
+AND pomaster.manuallyClosed = 0
+AND pomaster.financeCategory IN (2, 4)
+AND date(pomaster.approvedDate) >= '2016-05-01'
+AND date(
+	pomaster.expectedDeliveryDate
+) <= '$jvMasterData->JVdate'
+AND supmaster.companyLinkedToSystemID IS NULL
+GROUP BY
+	podetail.itemCode
+HAVING
+	round(balanceCost, 2) > 0");
+
+        return $this->sendResponse($output, 'Data retrieved successfully');
     }
 }
