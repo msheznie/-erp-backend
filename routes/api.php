@@ -980,6 +980,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
 
     Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
+
+    Route::resource('budget_masters', 'BudgetMasterAPIController');
+    Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1053,3 +1057,8 @@ Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
 
 Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
 
+
+
+
+
+Route::resource('templates_masters', 'TemplatesMasterAPIController');
