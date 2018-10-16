@@ -4,13 +4,23 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateFixedAssetDepreciationMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetDepreciationMasterAPIRequest;
+use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinanceYear;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetDepreciationPeriod;
+use App\Models\FixedAssetMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\FixedAssetDepreciationMasterRepository;
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -111,10 +121,216 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     public function store(CreateFixedAssetDepreciationMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
-        $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
+        DB::beginTransaction();
+        try {
+            $validator = \Validator::make($request->all(), [
+                'companyFinanceYearID' => 'required',
+                'companyFinancePeriodID' => 'required',
+            ]);
 
-        return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
+            if ($validator->fails()) {//echo 'in';exit;
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $alreadyExist = $this->fixedAssetDepreciationMasterRepository->findWhere(['companySystemID' => $input['companySystemID'], 'companyFinanceYearID' => $input['companyFinanceYearID'], 'companyFinancePeriodID' => $input['companyFinancePeriodID']]);
+
+            if (count($alreadyExist) > 0) {
+                return $this->sendError('Depreciation already processed for the selected month', 500);
+            }
+
+            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYear["success"]) {
+                return $this->sendError($companyFinanceYear["message"], 500);
+            } else {
+                $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+            }
+
+            $inputParam = $input;
+            $inputParam["departmentSystemID"] = 9;
+            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            if (!$companyFinancePeriod["success"]) {
+                return $this->sendError($companyFinancePeriod["message"], 500);
+            } else {
+                $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+            }
+            unset($inputParam);
+
+            $subMonth = new Carbon($input['FYPeriodDateFrom']);
+            $subMonthStart = $subMonth->subMonth()->startOfMonth()->format('Y-m-d');
+            $subMonthStartCarbon = new Carbon($subMonthStart);
+            $subMonthEnd = $subMonthStartCarbon->endOfMonth()->format('Y-m-d');
+
+            $lastMonthRun = FixedAssetDepreciationMaster::where('companySystemID', $input['companySystemID'])->where('companyFinanceYearID', $input['companyFinanceYearID'])->where('FYPeriodDateFrom', $subMonthStart)->where('FYPeriodDateTo', $subMonthEnd)->first();
+
+            if (!empty($lastMonthRun)) {
+                if ($lastMonthRun->approved == 0) {
+                    return $this->sendError('Last month depreciation is not approved. Please approve it before you run for this month', 500);
+                }
+            }
+
+            $company = Company::find($input['companySystemID']);
+            if ($company) {
+                $input['companyID'] = $company->CompanyID;
+            }
+
+            $documentMaster = DocumentMaster::find($input['documentSystemID']);
+            if ($documentMaster) {
+                $input['documentID'] = $documentMaster->documentID;
+            }
+
+            if ($companyFinanceYear["message"]) {
+                $startYear = $companyFinanceYear["message"]['bigginingDate'];
+                $finYearExp = explode('-', $startYear);
+                $finYear = $finYearExp[0];
+            } else {
+                $finYear = date("Y");
+            }
+
+            $lastSerial = FixedAssetDepreciationMaster::where('companySystemID', $input['companySystemID'])
+                ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+                ->orderBy('depMasterAutoID', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['depCode'] = $documentCode;
+            $input['serialNo'] = $lastSerialNumber;
+            $depDate = Carbon::now();
+            $input['depDate'] = $depDate;
+            $input['depMonthYear'] = $depDate->month . '/' . $depDate->year;
+            $input['depLocalCur'] = $company->localCurrencyID;
+            $input['depRptCur'] = $company->reportingCurrency;
+            $input['createdPCID'] = gethostname();
+            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
+
+            $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
+                $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+                $query->groupBy('faID');
+            }])->isDisposed()->ofCompany([$input['companySystemID']])->get();
+            $depAmountRptTotal = 0;
+            $depAmountLocalTotal = 0;
+            if ($faMaster) {
+                foreach ($faMaster as $val) {
+                    $depAmountRpt = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountRpt : 0;
+                    $depAmountLocal = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountLocal : 0;
+                    $nbvLocal = $val->COSTUNIT - $depAmountLocal;
+                    $nbvRpt = $val->costUnitRpt - $depAmountRpt;
+                    $monthlyLocal = ($val->COSTUNIT * $val->DEPpercentage) / 12;
+                    $monthlyRpt = ($val->costUnitRpt * $val->DEPpercentage) / 12;
+
+                    $data['depMasterAutoID'] = $fixedAssetDepreciationMasters['depMasterAutoID'];
+                    $data['companySystemID'] = $input['companySystemID'];
+                    $data['companyID'] = $company->CompanyID;
+                    $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                    $data['serviceLineCode'] = $val->serviceLineCode;
+                    $data['faFinanceCatID'] = $val->AUDITCATOGARY;
+                    $data['faMainCategory'] = $val->faCatID;
+                    $data['faSubCategory'] = $val->faSubCatID;
+                    $data['faID'] = $val->faID;
+                    $data['faCode'] = $val->faCode;
+                    $data['assetDescription'] = $val->assetDescription;
+
+                    $data['depDoneYN'] = -1;
+                    $data['createdPCid'] = gethostname();
+                    $data['createdBy'] = \Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+
+                    if ($depAmountRpt == 0 && $depAmountLocal == 0) {
+                        $dateDEP = Carbon::parse($val->dateDEP);
+                        if($dateDEP->lessThanOrEqualTo($depDate)){
+                            $differentMonths = CarbonPeriod::create($dateDEP->format('Y-m-d'),'1 month',$depDate->format('Y-m-d'));
+                            if($differentMonths){
+                                foreach ($differentMonths as $dt){
+                                    $data['depMonth'] = $dt;
+                                    $data['depPercent'] = $val->DEPpercentage;
+                                    $data['COSTUNIT'] = $val->COSTUNIT;
+                                    $data['costUnitRpt'] = $val->costUnitRpt;
+                                    $data['FYID'] = $input['companyFinanceYearID'];
+                                    $data['depForFYStartDate'] = $input['FYBiggin'];
+                                    $data['depForFYEndDate'] = $input['FYEnd'];
+                                    $data['FYperiodID'] = $input['companyFinancePeriodID'];
+                                    $data['depForFYperiodStartDate'] = $input['FYPeriodDateFrom'];
+                                    $data['depForFYperiodEndDate'] = $input['FYPeriodDateTo'];
+                                    $data['depMonthYear'] = $input['depMonthYear'];
+                                    $data['depAmountLocalCurr'] = $input['depLocalCur'];
+                                    $data['depAmountRptCurr'] = $input['depRptCur'];
+
+                                    if ($nbvLocal < $monthlyLocal) {
+                                        $data['depAmountLocal'] = $nbvLocal;
+                                    } else {
+                                        $data['depAmountLocal'] = $monthlyLocal;
+                                    }
+
+                                    if ($nbvRpt < $monthlyRpt) {
+                                        $data['depAmountRpt'] = $nbvRpt;
+                                    } else {
+                                        $data['depAmountRpt'] = $monthlyRpt;
+                                    }
+
+                                    $depAmountRptTotal += $data['depAmountRpt'];
+                                    $depAmountLocalTotal += $data['depAmountLocal'];
+                                    $assetDepPeriod = FixedAssetDepreciationPeriod::create($data);
+                                }
+                            }
+                        }
+                    } else {
+                        if ($nbvRpt != 0 && $nbvLocal != 0) {
+
+                            $data['depMonth'] = $val->depMonth;
+                            $data['depPercent'] = $val->DEPpercentage;
+                            $data['COSTUNIT'] = $val->COSTUNIT;
+                            $data['costUnitRpt'] = $val->costUnitRpt;
+                            $data['FYID'] = $input['companyFinanceYearID'];
+                            $data['depForFYStartDate'] = $input['FYBiggin'];
+                            $data['depForFYEndDate'] = $input['FYEnd'];
+                            $data['FYperiodID'] = $input['companyFinancePeriodID'];
+                            $data['depForFYperiodStartDate'] = $input['FYPeriodDateFrom'];
+                            $data['depForFYperiodEndDate'] = $input['FYPeriodDateTo'];
+                            $data['depMonthYear'] = $input['depMonthYear'];
+                            $data['depAmountLocalCurr'] = $input['depLocalCur'];
+                            $data['depAmountRptCurr'] = $input['depRptCur'];
+
+                            if ($nbvLocal < $monthlyLocal) {
+                                $data['depAmountLocal'] = $nbvLocal;
+                            } else {
+                                $data['depAmountLocal'] = $monthlyLocal;
+                            }
+
+                            if ($nbvRpt < $monthlyRpt) {
+                                $data['depAmountRpt'] = $nbvRpt;
+                            } else {
+                                $data['depAmountRpt'] = $monthlyRpt;
+                            }
+
+                            $depAmountRptTotal += $data['depAmountRpt'];
+                            $depAmountLocalTotal += $data['depAmountLocal'];
+
+                            $assetDepPeriod = FixedAssetDepreciationPeriod::create($data);
+                        }
+                    }
+                }
+            }
+
+            $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->update(['depAmountLocal' => $depAmountLocalTotal, 'depAmountRpt' => $depAmountRptTotal], $fixedAssetDepreciationMasters['depMasterAutoID']);
+
+            DB::commit();
+            return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
+
     }
 
     /**
@@ -216,13 +432,26 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     public function update($id, UpdateFixedAssetDepreciationMasterAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToValue($input);
         /** @var FixedAssetDepreciationMaster $fixedAssetDepreciationMaster */
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
 
         if (empty($fixedAssetDepreciationMaster)) {
             return $this->sendError('Fixed Asset Depreciation Master not found');
         }
+
+        if ($fixedAssetDepreciationMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+            $params = array('autoID' => $id, 'company' => $fixedAssetDepreciationMaster->companySystemID, 'document' => $fixedAssetDepreciationMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
+            }
+        }
+
+        /*$input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input["timestamp"] = date('Y-m-d H:i:s');*/
 
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->update($input, $id);
 
@@ -354,7 +583,6 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -362,12 +590,14 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         $companyCurrency = \Helper::companyCurrency($companyId);
 
+        $companyFinanceYear = CompanyFinanceYear::selectRaw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear")->whereIN('companySystemID', $subCompanies)->where('isActive', -1)->where('isCurrent', -1)->get();
+
         $output = array(
             'financialYears' => $financialYears,
-            'companyFinanceYear' => $companyFinanceYear,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'companyCurrency' => $companyCurrency,
+            'companyFinanceYear' => $companyFinanceYear,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -375,7 +605,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
     public function assetDepreciationByID($id)
     {
-        $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
+        $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->with(['confirmed_by'])->findWithoutFail($id);
         if (empty($fixedAssetDepreciationMaster)) {
             return $this->sendError('Fixed Asset Depreciation Master not found');
         }
@@ -385,5 +615,243 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         $output = ['master' => $fixedAssetDepreciationMaster, 'detail' => $detail];
 
         return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+    }
+
+    public function assetDepreciationMaster(Request $request)
+    {
+        $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->with(['approved_by', 'confirmed_by', 'created_by'])->findWithoutFail($request['depMasterAutoID']);
+        if (empty($fixedAssetDepreciationMaster)) {
+            return $this->sendError('Fixed Asset Depreciation Master not found');
+        }
+
+        return $this->sendResponse($fixedAssetDepreciationMaster->toArray(), 'Fixed Asset Master retrieved successfully');
+    }
+
+
+    function assetDepreciationReopen(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+
+            $id = $input['faID'];
+            $fixedAssetDep = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
+            $emails = array();
+            if (empty($fixedAssetDep)) {
+                return $this->sendError('Fixed Asset Master not found');
+            }
+
+
+            if ($fixedAssetDep->approved == -1) {
+                return $this->sendError('You cannot reopen this Asset Depreciation it is already fully approved');
+            }
+
+            if ($fixedAssetDep->RollLevForApp_curr > 1) {
+                return $this->sendError('You cannot reopen this Asset Depreciation it is already partially approved');
+            }
+
+            if ($fixedAssetDep->confirmedYN == 0) {
+                return $this->sendError('You cannot reopen this Asset Depreciation, it is not confirmed');
+            }
+
+            $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+                'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+
+            $this->fixedAssetDepreciationMasterRepository->update($updateInput, $id);
+
+            $employee = \Helper::getEmployeeInfo();
+
+            $document = DocumentMaster::where('documentSystemID', $fixedAssetDep->documentSystemID)->first();
+
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $fixedAssetDep->depCode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $fixedAssetDep->depCode;
+
+            $subject = $cancelDocNameSubject . ' is reopened';
+
+            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+            $documentApproval = DocumentApproved::where('companySystemID', $fixedAssetDep->companySystemID)
+                ->where('documentSystemCode', $fixedAssetDep->depMasterAutoID)
+                ->where('documentSystemID', $fixedAssetDep->documentSystemID)
+                ->where('rollLevelOrder', 1)
+                ->first();
+
+            if ($documentApproval) {
+                if ($documentApproval->approvedYN == 0) {
+                    $companyDocument = CompanyDocumentAttachment::where('companySystemID', $fixedAssetDep->companySystemID)
+                        ->where('documentSystemID', $fixedAssetDep->documentSystemID)
+                        ->first();
+
+                    if (empty($companyDocument)) {
+                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                    }
+
+                    $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                        ->where('companySystemID', $documentApproval->companySystemID)
+                        ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                    $approvalList = $approvalList
+                        ->with(['employee'])
+                        ->groupBy('employeeSystemID')
+                        ->get();
+
+                    foreach ($approvalList as $da) {
+                        if ($da->employee) {
+                            $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                'companySystemID' => $documentApproval->companySystemID,
+                                'docSystemID' => $documentApproval->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $documentApproval->documentSystemCode);
+                        }
+                    }
+
+                    $sendEmail = \Email::sendEmail($emails);
+                    if (!$sendEmail["success"]) {
+                        return ['success' => false, 'message' => $sendEmail["message"]];
+                    }
+                }
+            }
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $fixedAssetDep->companySystemID)
+                ->where('documentSystemID', $fixedAssetDep->documentSystemID)
+                ->delete();
+
+            DB::commit();
+            return $this->sendResponse($fixedAssetDep->toArray(), 'Asset depreciation reopened successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+
+    public function getAssetDepApprovalByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $assetCost = DB::table('erp_documentapproved')
+            ->select(
+                'erp_fa_depmaster.*',
+                'employees.empName As created_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode'
+            )
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $query->whereIn('employeesdepartments.documentSystemID', [23])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_fa_depmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'depMasterAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_fa_depmaster.companySystemID', $companyId)
+                    ->where('erp_fa_depmaster.approved', 0)
+                    ->where('erp_fa_depmaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [23])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCost = $assetCost->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($assetCost)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('depMasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+    public function getAssetDepApprovedByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $assetCost = DB::table('erp_documentapproved')
+            ->select(
+                'erp_fa_depmaster.*',
+                'employees.empName As created_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_fa_asset_master', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'depMasterAutoID')
+                    ->where('erp_fa_depmaster.companySystemID', $companyId)
+                    ->where('erp_fa_depmaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [23])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCost = $assetCost->where(function ($query) use ($search) {
+                $query->where('depCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($assetCost)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('depMasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

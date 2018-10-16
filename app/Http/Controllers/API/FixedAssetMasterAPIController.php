@@ -893,7 +893,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 ->delete();
 
             DB::commit();
-            return $this->sendResponse($fixedAssetMaster->toArray(), 'Payment Voucher reopened successfully');
+            return $this->sendResponse($fixedAssetMaster->toArray(), 'Asset Costing reopened successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

@@ -98,6 +98,7 @@ class FixedAssetCategory extends Model
 
 
 
+
     public $fillable = [
         'companySystemID',
         'companyID',

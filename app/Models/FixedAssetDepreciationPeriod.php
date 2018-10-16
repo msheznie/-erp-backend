@@ -208,6 +208,7 @@ class FixedAssetDepreciationPeriod extends Model
         'depAmountRpt',
         'depDoneYN',
         'createdBy',
+        'createdUserSystemID',
         'createdPCid',
         'createdDateTime',
         'timestamp'
@@ -244,6 +245,7 @@ class FixedAssetDepreciationPeriod extends Model
         'depAmountRpt' => 'float',
         'depDoneYN' => 'integer',
         'createdBy' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdPCid' => 'string'
     ];
 
@@ -301,7 +303,7 @@ class FixedAssetDepreciationPeriod extends Model
     }
 
     public function financecategory_by(){
-        return $this->belongsTo('App\Models\FixedAssetCategory','faFinanceCatID','faCatID');
+        return $this->belongsTo('App\Models\AssetFinanceCategory','faFinanceCatID','faFinanceCatID');
     }
 
     public function serviceline_by(){
