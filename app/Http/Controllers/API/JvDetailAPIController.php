@@ -381,6 +381,7 @@ class JvDetailAPIController extends AppBaseController
 
         $items = JvDetail::where('jvMasterAutoId', $id)
             ->with(['segment', 'currency_by'])
+            ->orderBy('jvDetailAutoID', 'ASC')
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Jv Detail retrieved successfully');

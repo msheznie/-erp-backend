@@ -938,6 +938,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
     Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
     Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
+    Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');

@@ -669,8 +669,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
                     $tempArray = $new;
-                    /* $tempArray["supplierPaymentCurrencyID"] = ;
-                     $tempArray["supplierPaymentER"] = ;*/
+                    $tempArray["supplierPaymentCurrencyID"] = $new['supplierTransCurrencyID'];
+                    $tempArray["supplierPaymentER"] = $new['supplierTransER'];
                     $tempArray["paymentSupplierDefaultAmount"] = 0;
                     $tempArray["paymentLocalAmount"] = 0;
                     $tempArray["paymentComRptAmount"] = 0;
