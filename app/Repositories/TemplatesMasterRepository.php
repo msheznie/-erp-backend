@@ -8,7 +8,7 @@ use InfyOm\Generator\Common\BaseRepository;
 /**
  * Class TemplatesMasterRepository
  * @package App\Repositories
- * @version October 16, 2018, 3:43 am UTC
+ * @version October 17, 2018, 6:26 am UTC
  *
  * @method TemplatesMaster findWithoutFail($id, $columns = ['*'])
  * @method TemplatesMaster find($id, $columns = ['*'])

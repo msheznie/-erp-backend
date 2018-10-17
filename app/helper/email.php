@@ -24,6 +24,7 @@ use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
 use App\Models\DocumentMaster;
 use App\Models\Employee;
+use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetMaster;
 use App\Models\GRVMaster;
 use App\Models\InventoryReclassification;
@@ -279,6 +280,13 @@ class email
                     if (!empty($fixedAssetMaster)) {
                         $data['docApprovedYN'] = $fixedAssetMaster->approved;
                         $data['docCode'] = $fixedAssetMaster->faCode;
+                    }
+                    break;
+                case 23:
+                    $fixedAssetDep = FixedAssetDepreciationMaster::find($data['docSystemCode']);
+                    if (!empty($fixedAssetDep)) {
+                        $data['docApprovedYN'] = $fixedAssetDep->approved;
+                        $data['docCode'] = $fixedAssetDep->depCode;
                     }
                     break;
                 default:

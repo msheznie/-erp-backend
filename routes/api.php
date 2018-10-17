@@ -979,6 +979,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
     Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
     Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
+    Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
+    Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany');
+    Route::get('getDepreciationFormData', 'FixedAssetDepreciationMasterAPIController@getDepreciationFormData');
+    Route::get('assetDepreciationByID/{id}', 'FixedAssetDepreciationMasterAPIController@assetDepreciationByID');
+    Route::get('assetDepreciationMaster', 'FixedAssetDepreciationMasterAPIController@assetDepreciationMaster');
+    Route::post('assetDepreciationReopen', 'FixedAssetDepreciationMasterAPIController@assetDepreciationReopen');
+    Route::post('getAssetDepApprovalByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovalByUser');
+    Route::post('getAssetDepApprovedByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovedByUser');
 
     Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
 
@@ -986,6 +994,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
     Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
     Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
+    Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
+    Route::resource('budjetdetails', 'BudjetdetailsAPIController');
+    Route::resource('templates_g_l_codes', 'TemplatesGLCodeAPIController');
+    Route::resource('templates_masters', 'TemplatesMasterAPIController');
+    Route::resource('templates_details', 'TemplatesDetailsAPIController');
 
 });
 
@@ -1017,10 +1030,10 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    /*$master = ['documentSystemID' => 20,'autoID' => 49294, 'companySystemID' => 52, 'employeeSystemID' => 2664];
-    $job = \App\Jobs\AccountReceivableLedgerInsert::dispatch($master);*/
-    $master = \App\Models\PaySupplierInvoiceMaster::find(76697);
-    $job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
+    $master = ['documentSystemID' => 23,'autoID' => 100000359, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    /*$master = \App\Models\PaySupplierInvoiceMaster::find(76697);
+    $job = \App\Jobs\CreateReceiptVoucher::dispatch($master);*/
 });
 
 Route::get('runQueueSR', function () {
@@ -1030,40 +1043,18 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
-
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
-
-
-
 Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
-
-
 Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
-
 Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
-
 Route::resource('asset_types', 'AssetTypeAPIController');
-
 Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
-
 Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
-
 Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
-
 Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');
-
-
-
 Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
-
-
-
 Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
+Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
 
 
 
-
-
-Route::resource('templates_masters', 'TemplatesMasterAPIController');
-
-Route::resource('budjetdetails', 'BudjetdetailsAPIController');
