@@ -130,6 +130,11 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
+
+        if (empty($BookInvSuppMaster->supplierTransactionCurrencyID)) {
+            return $this->sendError('Please select a document currency');
+        }
+
 /*        $alreadyAdded = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $BookInvSuppMaster->bookingSuppMasInvAutoID)
             ->whereHas('directdetail', function ($query) use ($input) {
                 $query->where('chartOfAccountSystemID', $input['chartOfAccountSystemID']);

@@ -475,6 +475,11 @@ class MatchDocumentMaster extends Model
         return $this->belongsTo('App\Models\SupplierMaster', 'BPVsupplierID', 'supplierCodeSystem');
     }
 
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster', 'BPVsupplierID', 'customerCodeSystem');
+    }
+
     public function approved_by()
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'matchDocumentMasterAutoID');

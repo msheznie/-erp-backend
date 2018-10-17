@@ -104,6 +104,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
     Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo');
+    Route::post('supplierBankMemoDeleteAll', 'BankMemoSupplierAPIController@supplierBankMemoDeleteAll');
 
     Route::resource('item/masters', 'ItemMasterAPIController');
     Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
@@ -850,6 +851,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
+    Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
     Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
     Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords');
     Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown');
@@ -862,9 +864,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getPaymentVoucherMatchPullingDetail', 'MatchDocumentMasterAPIController@getPaymentVoucherMatchPullingDetail');
     Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@getMatchDocumentMasterRecord');
     Route::post('PaymentVoucherMatchingCancel', 'MatchDocumentMasterAPIController@PaymentVoucherMatchingCancel');
+    Route::post('getRVMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getRVMatchDocumentMasterView');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
     Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
+
+    Route::get('getRVPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getRVPaymentVoucherMatchItems');
 
     Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails');
     Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher');
@@ -927,13 +932,17 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
     Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
     Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
+    Route::get('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
     Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
+    Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
     Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
+    Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ');
     Route::post('getJournalVoucherMasterApproval', 'JvMasterAPIController@getJournalVoucherMasterApproval');
     Route::post('getApprovedJournalVoucherForCurrentUser', 'JvMasterAPIController@getApprovedJournalVoucherForCurrentUser');
     Route::post('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
     Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
     Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
+    Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -957,7 +966,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
     Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
-    Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
     Route::get('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
     Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
@@ -981,6 +989,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAssetDepApprovedByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovedByUser');
 
     Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
+
+    Route::resource('budget_masters', 'BudgetMasterAPIController');
+    Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
+    Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
+    Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1024,36 +1038,17 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
 });
 
-
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
-
-
-
 Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
-
-
 Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
-
 Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
-
 Route::resource('asset_types', 'AssetTypeAPIController');
-
 Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
-
 Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
-
 Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
-
 Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');
-
-
-
 Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
-
-
-
 Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
-
-
-
 Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
+Route::resource('templates_masters', 'TemplatesMasterAPIController');
+Route::resource('budjetdetails', 'BudjetdetailsAPIController');

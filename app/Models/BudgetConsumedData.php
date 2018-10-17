@@ -134,8 +134,8 @@ class BudgetConsumedData extends Model
 
     public $table = 'erp_budgetconsumeddata';
     
-    const CREATED_AT = 'timestamp';
-    const UPDATED_AT = 'timestamp';
+    const CREATED_AT = NULL; //'timestamp';
+    const UPDATED_AT = NULL; //'timestamp';
 
     protected $primaryKey = 'budgetConsumedDataAutoID';
 
@@ -195,6 +195,12 @@ class BudgetConsumedData extends Model
     public static $rules = [
         
     ];
+
+    public function document_by()
+    {
+        return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID', 'documentSystemID');
+    }
+
 
     
 }

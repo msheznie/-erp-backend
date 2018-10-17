@@ -150,7 +150,6 @@ class Helper
         }
 
         DB::beginTransaction();
-
         try {
             $docInforArr = array('documentCodeColumnName' => '', 'confirmColumnName' => '', 'confirmedBy' => '', 'confirmedBySystemID' => '', 'confirmedDate' => '', 'tableName' => '', 'modelName' => '', 'primarykey' => '');
             switch ($params["document"]) { // check the document id and set relavant parameters
@@ -709,7 +708,6 @@ class Helper
                 $reportingCurrencyID = $companyCurrency->reportingCurrency;
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $locaCurrencyID)->first();
                 $trasToLocER = $conversion->conversion;
-
                 $conversion = Models\CurrencyConversion::where('masterCurrencyID', $transactionCurrencyID)->where('subCurrencyID', $reportingCurrencyID)->first();
                 $trasToRptER = $conversion->conversion;
 
@@ -1313,6 +1311,17 @@ class Helper
                                 $assetDisposal = self::generateAssetDisposal($masterData);
                             }
 
+                            if ($input["documentSystemID"] == 17) { //Create Accrual JV Reversal
+
+                                $jvMasterData = $namespacedModel::find($input["documentSystemCode"]);
+
+                                if ($jvMasterData->jvType == 1) {
+                                    $accrualJournalVoucher = self::generateAccrualJournalVoucher($input["documentSystemCode"]);
+                                }else if($jvMasterData->jvType == 5){
+                                    $POAccrualJournalVoucher = self::generatePOAccrualJournalVoucher($input["documentSystemCode"]);
+                                }
+
+                            }
 
                             // insert the record to item ledger
 
@@ -1323,7 +1332,7 @@ class Helper
 
                             // insert the record to general ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 23])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23])) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
@@ -1340,7 +1349,6 @@ class Helper
                             if ($input["documentSystemID"] == 4 && !empty($sourceModel)) {
                                 $jobPV = CreateReceiptVoucher::dispatch($sourceModel);
                             }
-
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset
                                 $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
@@ -2183,6 +2191,146 @@ class Helper
                     $fixedAsset = Models\FixedAssetMaster::create($data);
                 }
             }
+        }
+    }
+
+    public static function generateAccrualJournalVoucher($masterData)
+    {
+        $jvMasterData = Models\JvMaster::find($masterData);
+
+        if ($jvMasterData->jvType == 1) {
+
+            $lastSerial = Models\JvMaster::where('companySystemID', $jvMasterData->companySystemID)
+                ->where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
+                ->orderBy('jvMasterAutoId', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            $firstDayNextMonth = date('Y-m-d', strtotime('first day of next month'));
+
+            $companyfinanceyear = Models\CompanyFinanceYear::where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
+                ->where('companySystemID', $jvMasterData->companySystemID)
+                ->first();
+
+            if ($companyfinanceyear) {
+                $startYear = $companyfinanceyear->bigginingDate;
+                $finYearExp = explode('-', $startYear);
+                $finYear = $finYearExp[0];
+            } else {
+                $finYear = date("Y");
+            }
+
+            $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+            $postJv =  $jvMasterData->toArray();
+            $postJv['JVcode'] = $jvCode;
+            $postJv['serialNo'] = $lastSerialNumber;
+            $postJv['JVdate'] = $firstDayNextMonth;
+            $postJv['JVNarration'] = 'Reversal of Revenue Accrual for the month of ' . date('F Y') . '';
+            $postJv['confirmedYN'] = 0;
+            $postJv['confirmedByEmpSystemID'] = '';
+            $postJv['confirmedByEmpID'] = '';
+            $postJv['confirmedByName'] = '';
+            $postJv['confirmedDate'] = null;
+            $postJv['approved'] = 0;
+            $postJv['approvedDate'] = null;
+            $postJv['approvedByUserID'] = '';
+            $postJv['approvedByUserSystemID'] = '';
+            $postJv['RollLevForApp_curr'] = 1;
+
+            $storeJV = Models\JvMaster::create($postJv);
+
+            //inserting to jv detail
+            $fetchJVDetail = Models\JvDetail::where('jvMasterAutoId', $masterData)->get();
+
+            if (!empty($fetchJVDetail)) {
+                foreach ($fetchJVDetail as $key => $val) {
+                    $testDebitAmount = $fetchJVDetail[$key]['debitAmount'];
+                    $testCreditAmount = $fetchJVDetail[$key]['creditAmount'];
+                    $fetchJVDetail[$key]['jvMasterAutoId'] = $storeJV->jvMasterAutoId;
+                    $fetchJVDetail[$key]['debitAmount'] = $testCreditAmount;
+                    $fetchJVDetail[$key]['creditAmount'] = $testDebitAmount;
+                    unset($fetchJVDetail[$key]['jvDetailAutoID']);
+                }
+            }
+
+            $jvDetailArray = $fetchJVDetail->toArray();
+
+            $storeJvDetail = Models\JvDetail::insert($jvDetailArray);
+        }
+    }
+
+    public static function generatePOAccrualJournalVoucher($masterData)
+    {
+        $jvMasterData = Models\JvMaster::find($masterData);
+
+        if ($jvMasterData->jvType == 5) {
+
+            $lastSerial = Models\JvMaster::where('companySystemID', $jvMasterData->companySystemID)
+                ->where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
+                ->orderBy('jvMasterAutoId', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            $firstDayNextMonth = date('Y-m-d', strtotime('first day of next month'));
+
+            $companyfinanceyear = Models\CompanyFinanceYear::where('companyFinanceYearID', $jvMasterData->companyFinanceYearID)
+                ->where('companySystemID', $jvMasterData->companySystemID)
+                ->first();
+
+            if ($companyfinanceyear) {
+                $startYear = $companyfinanceyear->bigginingDate;
+                $finYearExp = explode('-', $startYear);
+                $finYear = $finYearExp[0];
+            } else {
+                $finYear = date("Y");
+            }
+
+            $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+            $postJv =  $jvMasterData->toArray();
+            $postJv['JVcode'] = $jvCode;
+            $postJv['serialNo'] = $lastSerialNumber;
+            $postJv['JVdate'] = $firstDayNextMonth;
+            $postJv['JVNarration'] = 'Reversal of PO accrual for the month of ' . date('F Y') . '';
+            $postJv['confirmedYN'] = 0;
+            $postJv['confirmedByEmpSystemID'] = '';
+            $postJv['confirmedByEmpID'] = '';
+            $postJv['confirmedByName'] = '';
+            $postJv['confirmedDate'] = null;
+            $postJv['approved'] = 0;
+            $postJv['approvedDate'] = null;
+            $postJv['approvedByUserID'] = '';
+            $postJv['approvedByUserSystemID'] = '';
+            $postJv['RollLevForApp_curr'] = 1;
+
+            $storeJV = Models\JvMaster::create($postJv);
+
+            //inserting to jv detail
+            $fetchJVDetail = Models\JvDetail::where('jvMasterAutoId', $masterData)->get();
+
+            if (!empty($fetchJVDetail)) {
+                foreach ($fetchJVDetail as $key => $val) {
+                    $testDebitAmount = $fetchJVDetail[$key]['debitAmount'];
+                    $testCreditAmount = $fetchJVDetail[$key]['creditAmount'];
+                    $fetchJVDetail[$key]['jvMasterAutoId'] = $storeJV->jvMasterAutoId;
+                    $fetchJVDetail[$key]['debitAmount'] = $testCreditAmount;
+                    $fetchJVDetail[$key]['creditAmount'] = $testDebitAmount;
+                    unset($fetchJVDetail[$key]['jvDetailAutoID']);
+                }
+            }
+
+            $jvDetailArray = $fetchJVDetail->toArray();
+
+            $storeJvDetail = Models\JvDetail::insert($jvDetailArray);
         }
     }
 }

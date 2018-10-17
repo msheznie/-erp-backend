@@ -9,7 +9,7 @@
 -- Create date : 14 - March 2018
 -- Description : This file contains the all CRUD for supplier bank memo.
 -- REVISION HISTORY
--- Date: 14-March 2018 By: Fayas Description: Added new functions named as getBankMemoBySupplierCurrency(),deleteBankMemo()
+-- Date: 14-March 2018 By: Fayas Description: Added new functions named as getBankMemoBySupplierCurrency(),deleteBankMemo(),supplierBankMemoDeleteAll()
 */
 
 namespace App\Http\Controllers\API;
@@ -207,7 +207,6 @@ class BankMemoSupplierAPIController extends AppBaseController
     public function destroy($id)
     {
 
-        return $id;
         /** @var BankMemoSupplier $bankMemoSupplier */
         $bankMemoSupplier = $this->bankMemoSupplierRepository->findWithoutFail($id);
 
@@ -218,5 +217,16 @@ class BankMemoSupplierAPIController extends AppBaseController
         $bankMemoSupplier->delete();
 
         return $this->sendResponse($id, 'Bank Memo Supplier deleted successfully');
+    }
+
+    public function supplierBankMemoDeleteAll(Request $request)
+    {
+
+        $bankMemoSupplier = BankMemoSupplier::where('supplierCurrencyID',$request['supplierCurrencyID'])
+                                             ->where('supplierCodeSystem',$request['supplierCodeSystem'])
+                                             ->delete();
+
+
+        return $this->sendResponse($bankMemoSupplier, 'Bank Memos Supplier deleted successfully');
     }
 }
