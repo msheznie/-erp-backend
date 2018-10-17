@@ -13,3 +13,9 @@ Route::resource('budgetMasters', 'BudgetMasterController');
 Route::resource('templatesMasters', 'TemplatesMasterController');
 
 Route::resource('budjetdetails', 'BudjetdetailsController');
+
+Route::resource('templatesGLCodes', 'TemplatesGLCodeController');
+
+Route::resource('templatesMasters', 'TemplatesMasterController');
+
+Route::resource('templatesDetails', 'TemplatesDetailsController');

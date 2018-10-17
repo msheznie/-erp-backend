@@ -985,6 +985,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
     Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
     Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
+    Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
 
 });
 
@@ -1066,3 +1067,9 @@ Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
 Route::resource('templates_masters', 'TemplatesMasterAPIController');
 
 Route::resource('budjetdetails', 'BudjetdetailsAPIController');
+
+Route::resource('templates_g_l_codes', 'TemplatesGLCodeAPIController');
+
+Route::resource('templates_masters', 'TemplatesMasterAPIController');
+
+Route::resource('templates_details', 'TemplatesDetailsAPIController');
