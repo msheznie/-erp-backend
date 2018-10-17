@@ -566,5 +566,9 @@ class ProcumentOrder extends Model
     }
 
 
+    public function document_by()
+    {
+        return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID', 'documentSystemID');
+    }
 
 }
