@@ -173,7 +173,7 @@ class StockTransferAPIController extends AppBaseController
             'locationTo' => 'required|numeric|min:1',
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
-            'tranferDate' => 'required',
+            'tranferDate' => 'required|date|before_or_equal:today',
             'companyToSystemID' => 'required|numeric|min:1',
             'companyFromSystemID' => 'required|numeric|min:1',
             'serviceLineSystemID' => 'required|numeric|min:1',
@@ -560,7 +560,7 @@ class StockTransferAPIController extends AppBaseController
                 'locationTo' => 'required|numeric|min:1',
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
-                'tranferDate' => 'required',
+                'tranferDate' => 'required|date|before_or_equal:today',
                 'companyToSystemID' => 'required|numeric|min:1',
                 'companyFromSystemID' => 'required|numeric|min:1',
                 'serviceLineSystemID' => 'required|numeric|min:1',
@@ -921,7 +921,7 @@ class StockTransferAPIController extends AppBaseController
 
         $array = array('entity' => $stockTransfer);
         $time = strtotime("now");
-        $fileName = 'stock_transfer' . $id . '_' . $time . '.pdf';
+        $fileName = 'stock_transfer_' . $id . '_' . $time . '.pdf';
         $html = view('print.stock_transfer', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);

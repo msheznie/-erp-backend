@@ -165,7 +165,7 @@ class StockAdjustmentAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
-            'stockAdjustmentDate' => 'required',
+            'stockAdjustmentDate' => 'required|date|before_or_equal:today',
             'serviceLineSystemID' => 'required|numeric|min:1',
             'location' => 'required|numeric|min:1',
             'refNo' => 'required',
@@ -419,11 +419,11 @@ class StockAdjustmentAPIController extends AppBaseController
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
-                'stockAdjustmentDate' => 'required',
+                'stockAdjustmentDate' => 'required|date|before_or_equal:today',
                 'serviceLineSystemID' => 'required|numeric|min:1',
                 'location' => 'required|numeric|min:1',
                 'refNo' => 'required',
-                'comment' => 'required',
+                'comment' => 'required'
             ]);
 
             if ($validator->fails()) {

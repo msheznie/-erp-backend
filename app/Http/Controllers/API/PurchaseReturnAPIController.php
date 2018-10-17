@@ -188,7 +188,7 @@ class PurchaseReturnAPIController extends AppBaseController
             'purchaseReturnLocation' => 'required|numeric|min:1',
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
-            'purchaseReturnDate' => 'required',
+            'purchaseReturnDate' => 'required|date|before_or_equal:today',
             'purchaseReturnRefNo' => 'required',
             'narration' => 'required',
             'serviceLineSystemID' => 'required|numeric|min:1',
@@ -476,7 +476,7 @@ class PurchaseReturnAPIController extends AppBaseController
                 'purchaseReturnLocation' => 'required|numeric|min:1',
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
-                'purchaseReturnDate' => 'required',
+                'purchaseReturnDate' => 'required|date|before_or_equal:today',
                 'purchaseReturnRefNo' => 'required',
                 'narration' => 'required',
                 'serviceLineSystemID' => 'required|numeric|min:1',
@@ -1134,7 +1134,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $array = array('entity' => $purchaseReturn);
         $time = strtotime("now");
-        $fileName = 'purchase_return' . $id . '_' . $time . '.pdf';
+        $fileName = 'purchase_return_' . $id . '_' . $time . '.pdf';
         $html = view('print.purchase_return', $array);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);

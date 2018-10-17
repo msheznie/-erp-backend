@@ -12,12 +12,14 @@
  * -- Date: 13-September 2018 By: Nazir Description: Added new functions named as getMatchDocumentMasterView()
  * -- Date: 18-September 2018 By: Nazir Description: Added new functions named as getPaymentVoucherMatchPullingDetail()
  * -- Date: 02-October 2018 By: Nazir Description: Added new functions named as PaymentVoucherMatchingCancel()
+ * -- Date: 16-October 2018 By: Nazir Description: Added new functions named as getRVMatchDocumentMasterView()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMatchDocumentMasterAPIRequest;
 use App\Http\Requests\API\UpdateMatchDocumentMasterAPIRequest;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerAssigned;
 use App\Models\DebitNote;
 use App\Models\MatchDocumentMaster;
 use App\Models\Months;
@@ -407,7 +409,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 ->count();
 
             if ($checkAmount > 0) {
-                return $this->sendError('Every item should have a matching amount', 500, ['type' => 'confirm']);
+                return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
             }
 
             $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
@@ -419,6 +421,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $detailAmountTotRpt = PaySupplierInvoiceDetail::where('matchingDocID', $id)
                 ->sum('paymentComRptAmount');
 
+
+            if ($detailAmountTotTran > $input['matchBalanceAmount']) {
+                return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
+            }
             //$currency = \Helper::convertAmountToLocalRpt(203, $id, $detailAmountTot);
 
             $input['matchingAmount'] = $detailAmountTotTran;
@@ -524,12 +530,15 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
             ->get();
 
+        $customer = CustomerAssigned::select('*')->where('companySystemID', $companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
+
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
             'currencies' => $currencies,
-            'suppliers' => $supplier
+            'suppliers' => $supplier,
+            'customer' => $customer
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -741,5 +750,71 @@ WHERE
 
     }
 
+    public function getRVMatchDocumentMasterView(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'customerID'));
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
+        $invMaster->whereIn('documentSystemID', [19,21]);
+        $invMaster->with(['created_by' => function ($query) {
+        }, 'customer' => function ($query) {
+        }, 'transactioncurrency' => function ($query) {
+        }]);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $invMaster->where('matchingConfirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $invMaster->whereMonth('matchingDocdate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $invMaster->whereYear('matchingDocdate', '=', $input['year']);
+            }
+        }
+
+        if (array_key_exists('customerID', $input)) {
+            if ($input['customerID'] && !is_null($input['customerID'])) {
+                $invMaster->where('BPVsupplierID', $input['customerID']);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $invMaster = $invMaster->where(function ($query) use ($search) {
+                $query->where('matchingDocCode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
+                    ->orWhereHas('customer', function ($query) use ($search) {
+                        $query->where('CustomerName', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        return \DataTables::eloquent($invMaster)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('matchDocumentMasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
 
 }

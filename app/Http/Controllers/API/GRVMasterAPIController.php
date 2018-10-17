@@ -135,16 +135,23 @@ class GRVMasterAPIController extends AppBaseController
             $input['FYBiggin'] = $companyFinancePeriod->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod->dateTo;
         }*/
-
+        $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
+                if($input['grvDate'] > $currentDate){
+                    return $this->sendError( 'GRV date can not be greater than current date',500);
+                }
             }
         }
 
         if (isset($input['stampDate'])) {
             if ($input['stampDate']) {
                 $input['stampDate'] = new Carbon($input['stampDate']);
+            }
+
+            if($input['stampDate'] > $currentDate){
+                return $this->sendError( 'Stamp date can not be greater than current date',500);
             }
         }
 
@@ -312,16 +319,24 @@ class GRVMasterAPIController extends AppBaseController
         if ($gRVMaster->grvCancelledYN == -1) {
             return $this->sendError('Good Receipt Voucher closed. You cannot edit.', 500);
         }
-
+        $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
+
+                if($input['grvDate'] > $currentDate){
+                    return $this->sendError( 'GRV date can not be greater than current date',500);
+                }
             }
         }
 
         if (isset($input['stampDate'])) {
             if ($input['stampDate']) {
                 $input['stampDate'] = new Carbon($input['stampDate']);
+
+                if($input['stampDate'] > $currentDate){
+                    return $this->sendError( 'Stamp date can not be greater than current date',500);
+                }
             }
         }
 
@@ -1056,14 +1071,13 @@ class GRVMasterAPIController extends AppBaseController
         );
 
         $html = view('print.good_receipt_voucher_print_pdf', $grv);
-
-        // echo $html;
-        //exit();
+        $time = strtotime("now");
+        $fileName = 'good_receipt_voucher_' . $id . '_' . $time . '.pdf';
 
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
     public function pullPOAttachment(Request $request)

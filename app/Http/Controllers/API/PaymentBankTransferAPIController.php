@@ -726,7 +726,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                         $memos  = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
                             foreach ($memos as $memo){
                                 if($memo->bankMemoTypeID == 4){
-                                    $data[$x]['Account No(13)'] = $memo->memoDetail;
+                                    $data[$x]['Account No(13)'] = preg_replace("/[^0-9]/", "", $memo->memoDetail );
                                     break;
                                 }
                             }
