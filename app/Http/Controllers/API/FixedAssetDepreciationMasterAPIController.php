@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreateFixedAssetDepreciationMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetDepreciationMasterAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
@@ -216,7 +217,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                 $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
                 $query->groupBy('faID');
-            }])->isDisposed()->ofCompany([$input['companySystemID']])->get();
+            }])->isDisposed()->ofCompany([$input['companySystemID']])->orderBy('faID','desc')->take(1)->get();
             $depAmountRptTotal = 0;
             $depAmountLocalTotal = 0;
             if ($faMaster) {
@@ -239,82 +240,60 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                     $data['faID'] = $val->faID;
                     $data['faCode'] = $val->faCode;
                     $data['assetDescription'] = $val->assetDescription;
-
+                    $data['depPercent'] = $val->DEPpercentage;
+                    $data['COSTUNIT'] = $val->COSTUNIT;
+                    $data['costUnitRpt'] = $val->costUnitRpt;
                     $data['depDoneYN'] = -1;
                     $data['createdPCid'] = gethostname();
                     $data['createdBy'] = \Helper::getEmployeeID();
                     $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['depMonthYear'] = $input['depMonthYear'];
+                    $data['depMonth'] = $val->depMonth;
+                    $data['depAmountLocalCurr'] = $input['depLocalCur'];
+                    $data['depAmountRptCurr'] = $input['depRptCur'];
+
+                    if ($nbvLocal < $monthlyLocal) {
+                        $data['depAmountLocal'] = $nbvLocal;
+                    } else {
+                        $data['depAmountLocal'] = $monthlyLocal;
+                    }
+
+                    if ($nbvRpt < $monthlyRpt) {
+                        $data['depAmountRpt'] = $nbvRpt;
+                    } else {
+                        $data['depAmountRpt'] = $monthlyRpt;
+                    }
+
+                    $depAmountRptTotal += $data['depAmountRpt'];
+                    $depAmountLocalTotal += $data['depAmountLocal'];
 
                     if ($depAmountRpt == 0 && $depAmountLocal == 0) {
                         $dateDEP = Carbon::parse($val->dateDEP);
-                        if($dateDEP->lessThanOrEqualTo($depDate)){
-                            $differentMonths = CarbonPeriod::create($dateDEP->format('Y-m-d'),'1 month',$depDate->format('Y-m-d'));
-                            if($differentMonths){
-                                foreach ($differentMonths as $dt){
-                                    $data['depMonth'] = $dt;
-                                    $data['depPercent'] = $val->DEPpercentage;
-                                    $data['COSTUNIT'] = $val->COSTUNIT;
-                                    $data['costUnitRpt'] = $val->costUnitRpt;
-                                    $data['FYID'] = $input['companyFinanceYearID'];
-                                    $data['depForFYStartDate'] = $input['FYBiggin'];
-                                    $data['depForFYEndDate'] = $input['FYEnd'];
-                                    $data['FYperiodID'] = $input['companyFinancePeriodID'];
-                                    $data['depForFYperiodStartDate'] = $input['FYPeriodDateFrom'];
-                                    $data['depForFYperiodEndDate'] = $input['FYPeriodDateTo'];
-                                    $data['depMonthYear'] = $input['depMonthYear'];
-                                    $data['depAmountLocalCurr'] = $input['depLocalCur'];
-                                    $data['depAmountRptCurr'] = $input['depRptCur'];
+                        if ($dateDEP->lessThanOrEqualTo($depDate)) {
+                            $differentMonths = CarbonPeriod::create($dateDEP->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
+                            if ($differentMonths) {
+                                foreach ($differentMonths as $dt) {
 
-                                    if ($nbvLocal < $monthlyLocal) {
-                                        $data['depAmountLocal'] = $nbvLocal;
-                                    } else {
-                                        $data['depAmountLocal'] = $monthlyLocal;
-                                    }
-
-                                    if ($nbvRpt < $monthlyRpt) {
-                                        $data['depAmountRpt'] = $nbvRpt;
-                                    } else {
-                                        $data['depAmountRpt'] = $monthlyRpt;
-                                    }
-
-                                    $depAmountRptTotal += $data['depAmountRpt'];
-                                    $depAmountLocalTotal += $data['depAmountLocal'];
+                                    $companyFinanceYearID = CompanyFinanceYear::ofCompany($input['companySystemID'])->where('bigginingDate', '<=', $dt)->where('endingDate', '>=', $dt->format('Y-m-d'))->first();
+                                    $data['FYID'] = $companyFinanceYearID->companyFinanceYearID;
+                                    $data['depForFYStartDate'] = $companyFinanceYearID->bigginingDate;
+                                    $data['depForFYEndDate'] = $companyFinanceYearID->endingDate;
+                                    $companyFinancePeriodID = CompanyFinancePeriod::ofCompany($input['companySystemID'])->ofDepartment(9)->where('dateFrom', '<=', $dt)->where('dateTo', '>=', $dt->format('Y-m-d'))->first();
+                                    $data['FYperiodID'] = $companyFinancePeriodID->companyFinancePeriodID;
+                                    $data['depForFYperiodStartDate'] = $companyFinancePeriodID->dateFrom;
+                                    $data['depForFYperiodEndDate'] = $companyFinancePeriodID->dateTo;
                                     $assetDepPeriod = FixedAssetDepreciationPeriod::create($data);
                                 }
                             }
                         }
                     } else {
                         if ($nbvRpt != 0 && $nbvLocal != 0) {
-
-                            $data['depMonth'] = $val->depMonth;
-                            $data['depPercent'] = $val->DEPpercentage;
-                            $data['COSTUNIT'] = $val->COSTUNIT;
-                            $data['costUnitRpt'] = $val->costUnitRpt;
                             $data['FYID'] = $input['companyFinanceYearID'];
                             $data['depForFYStartDate'] = $input['FYBiggin'];
                             $data['depForFYEndDate'] = $input['FYEnd'];
                             $data['FYperiodID'] = $input['companyFinancePeriodID'];
                             $data['depForFYperiodStartDate'] = $input['FYPeriodDateFrom'];
                             $data['depForFYperiodEndDate'] = $input['FYPeriodDateTo'];
-                            $data['depMonthYear'] = $input['depMonthYear'];
-                            $data['depAmountLocalCurr'] = $input['depLocalCur'];
-                            $data['depAmountRptCurr'] = $input['depRptCur'];
-
-                            if ($nbvLocal < $monthlyLocal) {
-                                $data['depAmountLocal'] = $nbvLocal;
-                            } else {
-                                $data['depAmountLocal'] = $monthlyLocal;
-                            }
-
-                            if ($nbvRpt < $monthlyRpt) {
-                                $data['depAmountRpt'] = $nbvRpt;
-                            } else {
-                                $data['depAmountRpt'] = $monthlyRpt;
-                            }
-
-                            $depAmountRptTotal += $data['depAmountRpt'];
-                            $depAmountLocalTotal += $data['depAmountLocal'];
-
                             $assetDepPeriod = FixedAssetDepreciationPeriod::create($data);
                         }
                     }
@@ -820,7 +799,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 'rollLevelOrder',
                 'approvalLevelID',
                 'documentSystemCode')
-            ->join('erp_fa_asset_master', function ($query) use ($companyId, $search) {
+            ->join('erp_fa_depmaster', function ($query) use ($companyId, $search) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'depMasterAutoID')
                     ->where('erp_fa_depmaster.companySystemID', $companyId)
                     ->where('erp_fa_depmaster.confirmedYN', 1);

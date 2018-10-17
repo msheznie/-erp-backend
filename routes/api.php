@@ -1011,10 +1011,10 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    /*$master = ['documentSystemID' => 20,'autoID' => 49294, 'companySystemID' => 52, 'employeeSystemID' => 2664];
-    $job = \App\Jobs\AccountReceivableLedgerInsert::dispatch($master);*/
-    $master = \App\Models\PaySupplierInvoiceMaster::find(76697);
-    $job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
+    $master = ['documentSystemID' => 23,'autoID' => 100000359, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    /*$master = \App\Models\PaySupplierInvoiceMaster::find(76697);
+    $job = \App\Jobs\CreateReceiptVoucher::dispatch($master);*/
 });
 
 Route::get('runQueueSR', function () {
