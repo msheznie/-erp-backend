@@ -569,7 +569,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         $companyCurrency = \Helper::companyCurrency($companyId);
 
-        $companyFinanceYear = CompanyFinanceYear::selectRaw("companyFinanceYearID,isCurrent,CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear")->whereIN('companySystemID', $subCompanies)->where('isActive', -1)->where('isCurrent', -1)->get();
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
         $output = array(
             'financialYears' => $financialYears,

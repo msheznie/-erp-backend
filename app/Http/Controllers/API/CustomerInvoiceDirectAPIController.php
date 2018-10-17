@@ -190,14 +190,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         /**/
 
-        $serialNo = CustomerInvoiceDirect::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))->where('documentID', 'INV')->where('companySystemID', $input['companyID'])->orderBy('serialNo', 'desc')->first();
+        $lastSerial = CustomerInvoiceDirect::where('companySystemID', $input['companyID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->orderBy('custInvoiceDirectAutoID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
         $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
-        $bookingInvCode = ($company['CompanyID'] . '\\' . $y . '\\INV' . str_pad($serialNo['serialNo'], 6, '0', STR_PAD_LEFT));
+        $bookingInvCode = ($company['CompanyID'] . '\\' . $y . '\\INV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
         $input['documentID'] = "INV";
         $input['documentSystemiD'] = 20;
         $input['bookingInvCode'] = $bookingInvCode;
-        $input['serialNo'] = $serialNo['serialNo'];
+        $input['serialNo'] = $lastSerialNumber;
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
         $input['FYPeriodDateFrom'] = $FYPeriodDateFrom;
