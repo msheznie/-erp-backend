@@ -20,6 +20,7 @@
  * -- Date: 12-September 2018 By: Nazir Description: Added new function printSupplierInvoice(),
  * -- Date: 12-September 2018 By: Nazir Description: Added new function getSupplierInvoiceStatusHistory(),
  * -- Date: 28-September 2018 By: Nazir Description: Added new function getSupplierInvoiceAmend(),
+ * -- Date: 17-October 2018 By: Nazir Description: Added new function supplierInvoiceTaxPercentage(),
  */
 
 namespace App\Http\Controllers\API;
@@ -397,6 +398,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
+        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($bookInvSuppMaster->supplierTransactionCurrencyID);
+
         $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])
             ->where('bookingSuppMasInvAutoID', '<>', $id)
             ->first();
@@ -605,7 +608,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             ->where('supplierID', $exc->supplierID)
                             ->sum('totTransactionAmount');
 
-                        if ($checkPreTotal > $unbilledGRTotal->totTransactionAmount) {
+                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($unbilledGRTotal->totTransactionAmount, $documentCurrencyDecimalPlace)) {
                             return $this->sendError('Supplier Invoice amount is greater than GRV amount. Please check again.', 500);
                         }
                     }
@@ -1649,6 +1652,17 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         }
 
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice Amend successfully');
+    }
+
+    public function supplierInvoiceTaxPercentage(Request $request)
+    {
+        $input = $request->all();
+
+        $taxMasterAutoID = $input['taxMasterAutoID'];
+
+        $taxMaster = DB::select('SELECT taxPercent FROM erp_taxmaster WHERE taxMasterAutoID = ' . $taxMasterAutoID . '');
+
+        return $this->sendResponse($taxMaster, 'Data retrieved successfully');
     }
 
 
