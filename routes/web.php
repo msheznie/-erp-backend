@@ -11,3 +11,5 @@ Route::resource('fixedAssetInsuranceDetails', 'FixedAssetInsuranceDetailControll
 Route::resource('budgetMasters', 'BudgetMasterController');
 
 Route::resource('templatesMasters', 'TemplatesMasterController');
+
+Route::resource('budjetdetails', 'BudjetdetailsController');

@@ -1,7 +1,7 @@
 <?php
 /**
  * =============================================
- * -- File Name : BudgetMaster.php
+ * -- File Name : Budjetdetails.php
  * -- Project Name : ERP
  * -- Module Name :  Budget
  * -- Author : Fayas
@@ -14,8 +14,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="BudgetMaster",
+ *      definition="Budjetdetails",
  *      required={""},
+ *      @SWG\Property(
+ *          property="budjetDetailsID",
+ *          description="budjetDetailsID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="budgetmasterID",
  *          description="budgetmasterID",
@@ -29,8 +35,8 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="companyID",
- *          description="companyID",
+ *          property="companyId",
+ *          description="companyId",
  *          type="string"
  *      ),
  *      @SWG\Property(
@@ -46,15 +52,31 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="serviceLineCode",
- *          description="serviceLineCode",
+ *          property="serviceLine",
+ *          description="serviceLine",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="templateMasterID",
- *          description="templateMasterID",
+ *          property="templateDetailID",
+ *          description="templateDetailID",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="chartOfAccountID",
+ *          description="chartOfAccountID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="glCode",
+ *          description="glCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="glCodeType",
+ *          description="glCodeType",
+ *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="Year",
@@ -69,6 +91,18 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="budjetAmtLocal",
+ *          description="budjetAmtLocal",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="budjetAmtRpt",
+ *          description="budjetAmtRpt",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
  *          property="createdByUserSystemID",
  *          description="createdByUserSystemID",
  *          type="integer",
@@ -78,30 +112,49 @@ use Eloquent as Model;
  *          property="createdByUserID",
  *          description="createdByUserID",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedByUserSystemID",
+ *          description="modifiedByUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedByUserID",
+ *          description="modifiedByUserID",
+ *          type="string"
  *      )
  * )
  */
-class BudgetMaster extends Model
+class Budjetdetails extends Model
 {
 
-    public $table = 'erp_budgetmaster';
+    public $table = 'erp_budjetdetails';
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
+    protected $primaryKey = 'budjetDetailsID';
 
-    protected $primaryKey = 'budgetmasterID';
 
     public $fillable = [
+        'budgetmasterID',
         'companySystemID',
-        'companyID',
+        'companyId',
         'companyFinanceYearID',
         'serviceLineSystemID',
-        'serviceLineCode',
-        'templateMasterID',
+        'serviceLine',
+        'templateDetailID',
+        'chartOfAccountID',
+        'glCode',
+        'glCodeType',
         'Year',
         'month',
+        'budjetAmtLocal',
+        'budjetAmtRpt',
         'createdByUserSystemID',
         'createdByUserID',
+        'modifiedByUserSystemID',
+        'modifiedByUserID',
         'createdDateTime',
         'timestamp'
     ];
@@ -112,17 +165,25 @@ class BudgetMaster extends Model
      * @var array
      */
     protected $casts = [
+        'budjetDetailsID' => 'integer',
         'budgetmasterID' => 'integer',
         'companySystemID' => 'integer',
-        'companyID' => 'string',
+        'companyId' => 'string',
         'companyFinanceYearID' => 'integer',
         'serviceLineSystemID' => 'integer',
-        'serviceLineCode' => 'string',
-        'templateMasterID' => 'integer',
+        'serviceLine' => 'string',
+        'templateDetailID' => 'integer',
+        'chartOfAccountID' => 'integer',
+        'glCode' => 'string',
+        'glCodeType' => 'string',
         'Year' => 'integer',
         'month' => 'integer',
+        'budjetAmtLocal' => 'float',
+        'budjetAmtRpt' => 'float',
         'createdByUserSystemID' => 'integer',
-        'createdByUserID' => 'string'
+        'createdByUserID' => 'string',
+        'modifiedByUserSystemID' => 'integer',
+        'modifiedByUserID' => 'string'
     ];
 
     /**
@@ -134,19 +195,9 @@ class BudgetMaster extends Model
         
     ];
 
-    public function segment_by()
-    {
-        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
-    }
+    public function chart_of_account()
 
-    public function template_master()
     {
-        return $this->belongsTo('App\Models\TemplatesMaster', 'templateMasterID', 'templatesMasterAutoID');
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountID','chartOfAccountSystemID');
     }
-
-    public function finance_year_by()
-    {
-        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
-    }
-
 }
