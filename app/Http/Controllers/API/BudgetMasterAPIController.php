@@ -634,7 +634,7 @@ class BudgetMasterAPIController extends AppBaseController
             $data->pending_po_amount = $pos->sum(function ($product) {
                 return $product->GRVcostPerUnitComRptCur  * $product->noQty;
             });
-            
+
         }
 
         $total = array();

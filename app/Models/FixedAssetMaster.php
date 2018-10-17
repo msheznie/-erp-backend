@@ -714,5 +714,10 @@ class FixedAssetMaster extends Model
         return $this->belongsTo('App\Models\GRVDetails', 'docOriginDetailID', 'grvDetailsID');
     }
 
+    public function depperiod_by()
+    {
+        return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
+    }
+
     
 }
