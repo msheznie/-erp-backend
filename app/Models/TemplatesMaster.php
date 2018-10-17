@@ -1,15 +1,5 @@
 <?php
-/**
- * =============================================
- * -- File Name : TemplatesMaster.php
- * -- Project Name : ERP
- * -- Module Name :  Budget
- * -- Author : Fayas
- * -- Create date : 16 - October 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- * --
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
@@ -52,10 +42,10 @@ class TemplatesMaster extends Model
 
     public $table = 'erp_templatesmaster';
     
-    const CREATED_AT = 'timestamp';
-    const UPDATED_AT = 'timestamp';
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
 
-    protected $primaryKey = 'templatesMasterAutoID';
+
 
     public $fillable = [
         'templateDescription',

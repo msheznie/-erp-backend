@@ -316,4 +316,8 @@ class PurchaseOrderDetails extends Model
         return $this->belongsTo('App\Models\PurchaseRequestDetails','purchaseRequestDetailsID','purchaseRequestDetailsID');
     }
 
+    public function setRptTotalAttribute()
+    {
+        $this->attributes['rpt_total'] = $this->GRVcostPerUnitLocalCur * $this->noQty;
+    }
 }
