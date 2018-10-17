@@ -208,6 +208,7 @@ class FixedAssetDepreciationPeriod extends Model
         'depAmountRpt',
         'depDoneYN',
         'createdBy',
+        'createdUserSystemID',
         'createdPCid',
         'createdDateTime',
         'timestamp'
@@ -244,6 +245,7 @@ class FixedAssetDepreciationPeriod extends Model
         'depAmountRpt' => 'float',
         'depDoneYN' => 'integer',
         'createdBy' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdPCid' => 'string'
     ];
 
@@ -280,6 +282,32 @@ class FixedAssetDepreciationPeriod extends Model
     public function scopeOfAsset($query, $faID)
     {
         return $query->where('faID',  $faID);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfDepreciation($query, $depMasterAutoID)
+    {
+        return $query->where('depMasterAutoID',  $depMasterAutoID);
+    }
+
+
+    public function maincategory_by(){
+        return $this->belongsTo('App\Models\FixedAssetCategory','faMainCategory','faCatID');
+    }
+
+    public function financecategory_by(){
+        return $this->belongsTo('App\Models\AssetFinanceCategory','faFinanceCatID','faFinanceCatID');
+    }
+
+    public function serviceline_by(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 
     
