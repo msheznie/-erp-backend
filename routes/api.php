@@ -1000,6 +1000,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('templates_g_l_codes', 'TemplatesGLCodeAPIController');
     Route::resource('templates_masters', 'TemplatesMasterAPIController');
     Route::resource('templates_details', 'TemplatesDetailsAPIController');
+    Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
+    Route::post('getBudgetTransferMasterByCompany', 'BudgetTransferFormAPIController@getBudgetTransferMasterByCompany');
+    Route::get('getBudgetTransferFormData', 'BudgetTransferFormAPIController@getBudgetTransferFormData');
+    Route::resource('budget_transfer_details', 'BudgetTransferFormDetailAPIController');
+    Route::get('getDetailsByBudgetTransfer', 'BudgetTransferFormDetailAPIController@getDetailsByBudgetTransfer');
+
 
 });
 
@@ -1056,6 +1062,8 @@ Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIControlle
 Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
 Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
 Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
+
+
 
 
 
