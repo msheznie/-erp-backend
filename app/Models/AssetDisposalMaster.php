@@ -160,6 +160,8 @@ class AssetDisposalMaster extends Model
         'confirmedDate',
         'approvedYN',
         'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
         'disposalType',
         'createdUserSystemID',
         'createdUserID',
@@ -190,6 +192,8 @@ class AssetDisposalMaster extends Model
         'confimedByEmpID' => 'string',
         'confirmedByEmpName' => 'string',
         'approvedYN' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
         'disposalType' => 'integer',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string'
