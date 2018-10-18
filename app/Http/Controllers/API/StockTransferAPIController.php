@@ -232,7 +232,7 @@ class StockTransferAPIController extends AppBaseController
 
         $lastSerial = StockTransfer::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('stockTransferAutoID', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;

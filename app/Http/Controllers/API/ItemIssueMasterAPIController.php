@@ -210,7 +210,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $lastSerial = ItemIssueMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('itemIssueAutoID', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;
