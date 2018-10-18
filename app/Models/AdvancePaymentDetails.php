@@ -227,5 +227,10 @@ class AdvancePaymentDetails extends Model
         return $this->hasOne('App\Models\PoAdvancePayment', 'poAdvPaymentID', 'poAdvPaymentID');
     }
 
+    public function supplier_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransCurrencyID', 'currencyID');
+    }
+
     
 }
