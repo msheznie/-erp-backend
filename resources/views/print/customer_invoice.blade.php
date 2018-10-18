@@ -112,7 +112,7 @@
 
     .footer {
         bottom: 0;
-        height: 40px;
+        height: 220px;
     }
 
     .footer {
@@ -187,46 +187,153 @@
 </style>
 
 <div class="footer">
+    @if($request->line_invoiceDetails)
+        <div class="" style="">
+            @else
+                <div class="" style="">
+                    @endif
+                    <table>
+                        <tr>
+                            <td width="100px"><span class="font-weight-bold">Bank Details :</span></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td width="100px"><span class="font-weight-bold">Bank Name </span></td>
+                            <td> - {{($request->bankaccount) ? $request->bankaccount->bankName : ''}}</td>
+                        </tr>
+                        <tr>
+                            <td width="100px"><span class="font-weight-bold">Branch </span></td>
+                            <td> - {{($request->bankaccount) ? $request->bankaccount->bankBranch : ''}}</td>
+                        </tr>
+                        <tr>
+                            <td width="100px"><span class="font-weight-bold">Ac Num </span></td>
+                            <td> - {{($request->bankaccount) ? $request->bankaccount->AccountNo : ''}}</td>
+                        </tr>
+                        <tr>
+                            <td width="100px"><span class="font-weight-bold">SWIFT Code </span></td>
+                            <td> - {{($request->bankaccount) ? $request->bankaccount->accountSwiftCode : ''}}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                @if(!$request->line_rentalPeriod)
+                    <div class="" style="margin-top: 20px">
+                        <table width="100%">
+
+                            <tr>
+                                <td width="15%">
+                                    <span class="font-weight-bold">Prepared By :</span>
+                                </td>
+                                <td width="35%">
+                                    @if($request->createduser)
+                                        {{$request->createduser->empName}}
+                                    @endif
+                                </td>
+                                <td width="15%">
+                                    <span class="font-weight-bold">Checked By :</span>
+                                </td>
+                                <td width="15%">
+                                    <div style="border-bottom: 1px solid black;width: 90px;margin-top: 7px;"></div>
+                                </td>
+
+                                @if($request->lineApprovedBy)
+                                    <td width="15%">
+                                        <span class="font-weight-bold">Approved By :</span>
+                                    </td>
+                                    <td width="15%">
+                                        <div style="border-bottom: 1px solid black;width: 90px;margin-top: 7px;"></div>
+                                    </td>
+                                @endif
+                            </tr>
+
+                        </table>
+                    </div>
 
 
-    <table style="width:100%;">
-        {{--  <tr>
-              <td colspan="3" style="width:100%">
-                  <hr style="background-color: black">
-              </td>
-          </tr>--}}
-        <tr>
-            @if($request->footerDate)
-            <td style="width:33%;font-size: 10px;">
-                <span style="font-weight: bold; font-size: 12px ">  {{date("d/m/Y", strtotime(now()))}}</span>
-            </td>
-            @endif
-            {{--   <td style="width:33%;font-size: 10px;vertical-align: top;">
-                   <p><span class="font-weight-bold"><span>{!! nl2br($request->docRefNo) !!} </span></span>
-                   </p>
-               </td>
-               <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                   <span style="text-align: center">Page <span class="pagenum"></span></span><br>
-                   @if ($request->company)
-                       {{$request->company->CompanyName}}
-                   @endif
-               </td>--}}
-            @if($request->linePageNo)
-                <td style="width:33%; text-align: right;font-size: 12px;vertical-align: top;">
-                    <span style="text-align: right;font-weight: bold;">Page <span  class="pagenum"></span> <span  class="pagecount"></span></span><br>
+                    <div class="" style="margin-top: 10px">
+                        <table style="width: 100%">
+                            <tr>
+                                <td>
+                                    <span class="font-weight-bold">Electronically Approved By :</span>
+                                </td>
+                            </tr>
+                            <tr>
 
-                </td>
-            @endif
+                                @foreach ($request->approved_by as $det)
+                                    <td style="padding-right: 25px" class="text-center">
+                                        @if($det->employee)
+                                            {{$det->employee->empFullName }}
+                                        @endif
+                                        <br>
+                                        @if($det->employee)
+                                            {{$det->employee->details->designation->designation }}
+                                        @endif
+                                        <br><br>
+                                        @if($det->employee)
+                                            {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                        @endif
+                                    </td>
+                                @endforeach
+                            </tr>
+                        </table>
+                    </div>
+                @else
+                    {{--SGG PDO ONLY--}}
+                    <div class="" style="">
+                        <table width="100%">
 
-        </tr>
-        @if($request->linefooterAddress)
-            <tr>
-                <td colspan="2" style="font-size: 11px;font-style: italic">{{$request->company->CompanyAddress}}     Tel : {{$request->company->CompanyTelephone}}    , Fax : {{$request->company->CompanyFax}}    , E-mail : {{$request->company->CompanyEmail}}  </td>
-            </tr>
-        @endif
+                            <tr>
+                                <td width="15%">
+                                    <span class="font-weight-bold">Prepared By :</span>
+                                </td>
+                                <td width="35%">
+                                    @if($request->createduser)
+                                        {{$request->createduser->empName}}
+                                    @endif
+                                </td>
+                                <td width="30%" style="">
+
+                                </td>
+                                <td width="20%" style="text-align:center; border-top: 1px solid black;margin-top: 7px;">
+                                    <span class="font-weight-bold">Authorized  Signatory :</span>
+                                </td>
 
 
-    </table>
+                            </tr>
+
+                        </table>
+                    </div>
+                @endif
+
+                <table style="width:100%;">
+
+                    <tr>
+                        @if($request->footerDate)
+                            <td style="width:33%;font-size: 10px;">
+                                <span style="font-weight: bold; font-size: 12px ">  {{date("d/m/Y", strtotime(now()))}}</span>
+                            </td>
+                        @endif
+
+                        @if($request->linePageNo)
+                            <td style="width:33%; text-align: right;font-size: 12px;vertical-align: top;">
+                                <span style="text-align: right;font-weight: bold;">Page <span  class="pagenum"></span> <span  class="pagecount"></span></span><br>
+
+                            </td>
+                        @endif
+
+                    </tr>
+                    @if($request->linefooterAddress)
+                        <tr>
+                            <td colspan="2" style="font-size: 11px;font-style: italic">{{$request->company->CompanyAddress}}     Tel : {{$request->company->CompanyTelephone}}    , Fax : {{$request->company->CompanyFax}}    , E-mail : {{$request->company->CompanyEmail}}  </td>
+                        </tr>
+                    @endif
+
+
+                </table>
+
+        </div>
+
+
 </div>
 <div id="watermark">
          <span class="watermarkText">
@@ -248,7 +355,7 @@
             <tr>
                 <td width="30%">
                     @if($request->logo)
-                    <img src="logos/{{$request->secondaryLogo =='' ? $request->company->companyLogo:$request->secondaryLogo}}"
+                    <img src="logos/{{$request->companyLogo}}"
                          width="180px" height="60px">
                 @endif
                 </td>
@@ -258,11 +365,7 @@
                     <div class="text-center">
 
                         <h3 class="font-weight-bold">
-                            @if($request->logo)
-                            @if ($request->company)
-                                {{$request->company->CompanyName}}
-                            @endif
-                                @endif
+                           {{$request->CompanyName}}
                         </h3>
                         <h3 class="font-weight-bold">
                             Invoice
@@ -701,123 +804,6 @@
             </tbody>
         </table>
     </div>
-    @if($request->line_invoiceDetails)
-    <div class="" style="">
-        @else
-            <div class="" style="margin-top: 100px">
-                @endif
-        <table>
-            <tr>
-                <td width="100px"><span class="font-weight-bold">Bank Details :</span></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td width="100px"><span class="font-weight-bold">Bank Name </span></td>
-                <td> - {{($request->bankaccount) ? $request->bankaccount->bankName : ''}}</td>
-            </tr>
-            <tr>
-                <td width="100px"><span class="font-weight-bold">Branch </span></td>
-                <td> - {{($request->bankaccount) ? $request->bankaccount->bankBranch : ''}}</td>
-            </tr>
-            <tr>
-                <td width="100px"><span class="font-weight-bold">Ac Num </span></td>
-                <td> - {{($request->bankaccount) ? $request->bankaccount->AccountNo : ''}}</td>
-            </tr>
-            <tr>
-                <td width="100px"><span class="font-weight-bold">SWIFT Code </span></td>
-                <td> - {{($request->bankaccount) ? $request->bankaccount->accountSwiftCode : ''}}</td>
-            </tr>
-        </table>
-    </div>
-
-            @if(!$request->line_rentalPeriod)
-    <div class="" style="margin-top: 60px;">
-        <table width="100%">
-
-            <tr>
-                <td width="15%">
-                    <span class="font-weight-bold">Prepared By :</span>
-                </td>
-                <td width="35%">
-                    @if($request->createduser)
-                        {{$request->createduser->empName}}
-                    @endif
-                </td>
-                <td width="15%">
-                    <span class="font-weight-bold">Checked By :</span>
-                </td>
-                <td width="15%">
-                    <div style="border-bottom: 1px solid black;width: 90px;margin-top: 7px;"></div>
-                </td>
-
-                @if($request->lineApprovedBy)
-                    <td width="15%">
-                        <span class="font-weight-bold">Approved By :</span>
-                    </td>
-                    <td width="15%">
-                        <div style="border-bottom: 1px solid black;width: 90px;margin-top: 7px;"></div>
-                    </td>
-                @endif
-            </tr>
-
-        </table>
-    </div>
-
-
-    <div class="" style="margin-top: 10px">
-        <table style="width: 100%">
-            <tr>
-                <td>
-                    <span class="font-weight-bold">Electronically Approved By :</span>
-                </td>
-            </tr>
-            <tr>
-
-                @foreach ($request->approved_by as $det)
-                    <td style="padding-right: 25px" class="text-center">
-                        @if($det->employee)
-                            {{$det->employee->empFullName }}
-                        @endif
-                        <br>
-                            @if($det->employee)
-                                {{$det->employee->details->designation->designation }}
-                            @endif
-                            <br><br>
-                        @if($det->employee)
-                            {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                        @endif
-                    </td>
-                @endforeach
-            </tr>
-        </table>
-    </div>
-            @else
-                {{--SGG PDO ONLY--}}
-                <div class="" style="margin-top: 60px;">
-                    <table width="100%">
-
-                        <tr>
-                            <td width="15%">
-                                <span class="font-weight-bold">Prepared By :</span>
-                            </td>
-                            <td width="35%">
-                                @if($request->createduser)
-                                    {{$request->createduser->empName}}
-                                @endif
-                            </td>
-                            <td width="30%" style="">
-
-                            </td>
-                            <td width="20%" style="text-align:center; border-top: 1px solid black;margin-top: 7px;">
-                                <span class="font-weight-bold">Authorized  Signatory :</span>
-                            </td>
-
-
-                        </tr>
-
-                    </table>
-                </div>
-            @endif
 </div>
 
 
