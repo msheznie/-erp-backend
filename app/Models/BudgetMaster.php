@@ -7,8 +7,6 @@
  * -- Author : Fayas
  * -- Create date : 16 - October 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- * --
  */
 namespace App\Models;
 
@@ -144,6 +142,11 @@ class BudgetMaster extends Model
     public function template_master()
     {
         return $this->belongsTo('App\Models\TemplatesMaster', 'templateMasterID', 'templatesMasterAutoID');
+    }
+
+    public function finance_year_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 
 }

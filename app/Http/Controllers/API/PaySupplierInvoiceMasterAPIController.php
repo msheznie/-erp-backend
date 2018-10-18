@@ -486,6 +486,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['chequePaymentYN'] = 0;
             }
 
+
+            $warningMessage = '';
+
+            if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
+
+            } else {
+                $input['chequePaymentYN'] = 0;
+                $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
+            }
+
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -699,7 +709,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $paySupplierInvoice = PaySupplierInvoiceMaster::find($id);
                 if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
                     if ($input['chequePaymentYN'] == -1) {
-
                         $bankAccount = BankAccount::find($input['BPVAccount']);
                         $nextChequeNo = $bankAccount->chquePrintedStartingNo + 1;
 
@@ -717,63 +726,63 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             $bankAccount->save();
                         }
                     } else {
-                        $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('PayMasterAutoId', 'ASC')->first();
+                        $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('PayMasterAutoId', 'DESC')->first();
                         if ($chkCheque) {
-                            $input['BPVchequeNo'] = 1;
-                        } else {
                             $input['BPVchequeNo'] = $chkCheque->BPVchequeNo + 1;
+                        } else {
+                            $input['BPVchequeNo'] = 1;
                         }
                     }
                 } else {
-                    /*return $this->sendError("Cheque number won\'t be generated. The bank currency and the local currency is not equal", 500);*/
+                    $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('PayMasterAutoId', 'DESC')->first();
+                    if ($chkCheque) {
+                        $input['BPVchequeNo'] = $chkCheque->BPVchequeNo + 1;
+                    } else {
+                        $input['BPVchequeNo'] = 1;
+                    }
                 }
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 2) {
                 $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")->where('PayMasterAutoId', $id)->first();
 
-                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
-
-                $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
-                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
-                $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount);
-                $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount);
-                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                if (!empty($totalAmount->supplierPaymentAmount)) {
+                    $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
+                    $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
+                    $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                    $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                    $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount);
+                    $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount);
+                    $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                }
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 5) {
                 $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
 
-                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierTransAmount);
-
-                $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
-                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierTransAmount);
-                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierDefaultAmount);
-                $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
-                $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
-                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierTransAmount);
+                if (!empty($totalAmount->supplierTransAmount)) {
+                    $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierTransAmount);
+                    $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
+                    $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierTransAmount);
+                    $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierDefaultAmount);
+                    $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
+                    $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
+                    $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierTransAmount);
+                }
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 $totalAmount = DirectPaymentDetails::selectRaw("SUM(DPAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount")->where('directPaymentAutoID', $id)->first();
 
-                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->paymentAmount);
-
-                $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
-                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->paymentAmount);
-                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->paymentAmount);
-                $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
-                $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
-                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->paymentAmount);
-            }
-
-            $warningMessage = '';
-
-            if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
-
-            } else {
-                $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
+                if (!empty($totalAmount->paymentAmount)) {
+                    $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->paymentAmount);
+                    $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
+                    $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->paymentAmount);
+                    $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->paymentAmount);
+                    $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
+                    $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
+                    $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->paymentAmount);
+                }
             }
 
             $input['modifiedPc'] = gethostname();
@@ -995,6 +1004,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $interCompanyTo = Company::where('isGroup', 0)->get();
 
+        $companyCurrency = \Helper::companyCurrency($companyId);
+
         $output = array(
             'financialYears' => $financialYears,
             'companyFinanceYear' => $companyFinanceYear,
@@ -1009,6 +1020,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             'segments' => $segment,
             'expenseClaimType' => $expenseClaimType,
             'interCompany' => $interCompanyTo,
+            'companyCurrency' => $companyCurrency,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
