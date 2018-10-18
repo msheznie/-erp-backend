@@ -1381,19 +1381,33 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $id = $request->get('id');
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
-
-        if ($master->isPerforma == 1) {
-            $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
+        $companySystemID = $master->companySystemID;
 
 
-        } else {
+        $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
+        $customerInvoice=[];
+        if($detail){
+            if ($master->isPerforma == 1) {
+                $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
 
-            $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
 
+            } else {
+
+                $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
+
+            }
+            $customerInvoice->companySystemID = $companySystemID;
+        }
+        $company= Company::where('companySystemID',$companySystemID)->first();
+        $customerInvoice->companyLogo=$company->companyLogo;
+        $customerInvoice->CompanyName=$company->CompanyName;
+        if($master->secondaryLogoCompanySystemID > 0){
+            $company= Company::where('companySystemID',$master->secondaryLogoCompanySystemID)->first();
+            $customerInvoice->CompanyName=$company->CompanyName;
+            $customerInvoice->companyLogo=$company->companyLogo;
         }
 
 
-        $companySystemID = $master->companySystemID;
 
         $line_invoiceNO = true;
         $line_invoiceDate = true;
@@ -1419,7 +1433,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $line_rentalPeriod = false;
         $footerDate = true;
 
-        $customerInvoice->companySystemID = $companySystemID;
+
         switch ($companySystemID) {
             case 7:
                 /*BO*/
