@@ -402,7 +402,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
                 if (!empty($siDetailExist)) {
                     foreach ($siDetailExist as $row) {
-                        $itemDrt = $row['grvmaster']['grvPrimaryCode'] . " already exist";
+                        $itemDrt = $row['grvPrimaryCode'] . " already exist";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
@@ -419,7 +419,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                     ->first();
 
                 if (empty($siDetailExistGL)) {
-                    $itemDrt = "Selected GRV " . $itemExist['grvmaster']['grvPrimaryCode'] . " is not updated in general ledger. Please check again";
+                    $itemDrt = "Selected GRV " . $itemExist['grvPrimaryCode'] . " is not updated in general ledger. Please check again";
                     $itemExistArray[] = [$itemDrt];
                 }
             }
@@ -436,7 +436,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
                 if ($balanceAmount) {
                     if (($groupMasterCheck->totTransactionAmount == $balanceAmount->SumOftotTransactionAmount) || ($balanceAmount->SumOftotTransactionAmount > $groupMasterCheck->totTransactionAmount)) {
-                        $itemDrt = "Selected " . $temp['grvmaster']['grvPrimaryCode'] . " GRV has been fully booked. Please check again";
+                        $itemDrt = "Selected " . $temp['grvPrimaryCode'] . " GRV has been fully booked. Please check again";
                         $itemExistArray[] = [$itemDrt];
                     }
                 }
