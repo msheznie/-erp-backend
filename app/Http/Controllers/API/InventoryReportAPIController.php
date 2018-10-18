@@ -153,6 +153,7 @@ class InventoryReportAPIController extends AppBaseController
                         ->whereIN('erp_itemledger.wareHouseSystemCode', $warehouse)
                         ->whereIN('erp_itemledger.documentSystemID', $document)
                         ->whereBetween(DB::raw("DATE(transactionDate)"), array($startDate, $endDate))
+                        ->where('itemassigned.financeCategoryMaster', 1)
                         ->orderBy('erp_itemledger.transactionDate', 'ASC');
 
 
@@ -248,6 +249,7 @@ class InventoryReportAPIController extends AppBaseController
                         ->whereIN('erp_itemledger.companySystemID', $companyID)
                         ->whereIN('erp_itemledger.wareHouseSystemCode', $warehouse)
                         ->whereIN('erp_itemledger.documentSystemID', $document)
+                        ->where('itemassigned.financeCategoryMaster', 1)
                         ->whereBetween(DB::raw("DATE(transactionDate)"), array($startDate, $endDate))
                         ->orderBy('erp_itemledger.transactionDate', 'ASC')->get();
 

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 
 /**
@@ -325,12 +326,46 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
-        /*        $detail = DB::select('SELECT prdetails.*,"" as isChecked, "" as poQty,podetails.poTakenQty FROM erp_purchaserequestdetails prdetails LEFT JOIN (SELECT erp_purchaseorderdetails.purchaseRequestDetailsID, SUM(noQty) AS poTakenQty FROM erp_purchaseorderdetails GROUP BY purchaseRequestDetailsID,itemCode) as podetails ON prdetails.purchaseRequestDetailsID = podetails.purchaseRequestDetailsID WHERE purchaseRequestID = ' . $prID . ' AND prClosedYN = 0 AND fullyOrdered != 2 AND manuallyClosed = 0');*/
+        $unbilledGrvGroupBy = DB::select('SELECT
+	grvmaster.grvPrimaryCode,
+	unbilledMaster.unbilledgrvAutoID,
+	unbilledMaster.totTransactionAmount,
+	unbilledMaster.companySystemID,
+	unbilledMaster.grvAutoID,
+	unbilledMaster.purchaseOrderID,
+	unbilledMaster.supplierID,
+    currency.DecimalPlaces,
+	(unbilledMaster.totTransactionAmount - bookdetail.SumOftotTransactionAmount) as balanceAmount
+FROM
+	erp_unbilledgrvgroupby AS unbilledMaster
+INNER JOIN currencymaster AS currency ON unbilledMaster.supplierTransactionCurrencyID = currency.currencyID
+INNER JOIN erp_grvmaster AS grvmaster ON unbilledMaster.grvAutoID = grvmaster.grvAutoID
+AND grvmaster.interCompanyTransferYN = 0
+LEFT JOIN (
+	SELECT
+		erp_bookinvsuppdet.unbilledgrvAutoID,
+		Sum(
+			erp_bookinvsuppdet.totTransactionAmount
+		) AS SumOftotTransactionAmount
+	FROM
+		erp_bookinvsuppdet
+	GROUP BY
+		erp_bookinvsuppdet.unbilledgrvAutoID
+) AS bookdetail ON bookdetail.unbilledgrvAutoID = unbilledMaster.unbilledgrvAutoID
+WHERE
+	unbilledMaster.companySystemID = '.$companyID.'
+AND unbilledMaster.fullyBooked <> 2
+AND unbilledMaster.selectedForBooking = 0
+AND unbilledMaster.supplierID = '.$bookInvSuppMaster->supplierID.'
+AND unbilledMaster.supplierTransactionCurrencyID = '.$bookInvSuppMaster->supplierTransactionCurrencyID.'
+AND DATE(unbilledMaster.grvDate) <= "'.$bookInvSuppMaster->bookingDate.'"
+AND unbilledMaster.purchaseOrderID = '.$purchaseOrderID.'
+HAVING ROUND(
+			unbilledMaster.totTransactionAmount,
+			currency.DecimalPlaces
+		) > 0 AND ROUND(balanceAmount,currency.DecimalPlaces) > 0');
 
-/*        ->whereHas('detail', function ($query) {
-        $query->havingRaw('IFNULL(SUM(totTransactionAmount),0) > ?',[0]);
-    })*/
-        $unbilledGrvGroupBy = UnbilledGrvGroupBy::whereHas('grvmaster', function ($query) {
+/*        $unbilledGrvGroupBy = UnbilledGrvGroupBy::whereHas('grvmaster', function ($query) {
             $query->where('interCompanyTransferYN', 0);
         })->with(['pomaster', 'grvmaster'])
             ->where('companySystemID', $companyID)
@@ -340,9 +375,10 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
             ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
             ->where('grvDate', '<=', $bookInvSuppMaster->bookingDate)
             ->where('purchaseOrderID', $purchaseOrderID)
-            ->get();
+            ->where('totTransactionAmount', '>', 0)
+            ->get();*/
 
-        return $this->sendResponse($unbilledGrvGroupBy->toArray(), 'Purchase Request Details retrieved successfully');
+        return $this->sendResponse($unbilledGrvGroupBy, 'Purchase Request Details retrieved successfully');
 
     }
 }
