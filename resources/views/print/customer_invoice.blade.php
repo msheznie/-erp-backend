@@ -112,7 +112,7 @@
 
     .footer {
         bottom: 0;
-        height: 200px;
+        height: 220px;
     }
 
     .footer {
