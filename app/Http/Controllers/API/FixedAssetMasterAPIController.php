@@ -1,4 +1,14 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : FixedAssetMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 08 - August 2018
+ * -- Description : This file contains the all CRUD for Asset master
+ * -- REVISION HISTORY
+ */
 
 namespace App\Http\Controllers\API;
 

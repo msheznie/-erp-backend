@@ -1000,7 +1000,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('templates_g_l_codes', 'TemplatesGLCodeAPIController');
     Route::resource('templates_masters', 'TemplatesMasterAPIController');
     Route::resource('templates_details', 'TemplatesDetailsAPIController');
-
+    Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
+    Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
+    Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
+    Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1046,8 +1049,6 @@ Route::get('runQueueSR', function () {
 
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
 Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
-Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
-Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
 Route::resource('asset_types', 'AssetTypeAPIController');
 Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
 Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
@@ -1056,6 +1057,4 @@ Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIControlle
 Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
 Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
 Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
-
-
-
+Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');

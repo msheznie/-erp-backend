@@ -1,11 +1,29 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : AssetDisposalMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 08 - August 2018
+ * -- Description : This file contains the all CRUD forAsset disposal master
+ * -- REVISION HISTORY
+ */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAssetDisposalMasterAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalMasterAPIRequest;
 use App\Models\AssetDisposalMaster;
+use App\Models\AssetDisposalType;
+use App\Models\Company;
+use App\Models\CustomerAssigned;
+use App\Models\DocumentMaster;
+use App\Models\Months;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\AssetDisposalMasterRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -16,7 +34,6 @@ use Response;
  * Class AssetDisposalMasterController
  * @package App\Http\Controllers\API
  */
-
 class AssetDisposalMasterAPIController extends AppBaseController
 {
     /** @var  AssetDisposalMasterRepository */
@@ -109,6 +126,91 @@ class AssetDisposalMasterAPIController extends AppBaseController
     public function store(CreateAssetDisposalMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $validator = \Validator::make($request->all(), [
+            'companyFinanceYearID' => 'required',
+            'companyFinancePeriodID' => 'required',
+            'narration' => 'required',
+            'toCompanySystemID' => 'required',
+            'disposalType' => 'required',
+            'disposalDocumentDate' => 'required|date',
+            'customerID' => 'required',
+        ]);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        } else {
+            $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+            $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 9;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+        }
+
+        unset($inputParam);
+
+        $input['documentDate'] = new Carbon($input['documentDate']);
+
+        $monthBegin = $input['FYPeriodDateFrom'];
+        $monthEnd = $input['FYPeriodDateTo'];
+
+        if (($input['documentDate'] >= $monthBegin) && ($input['documentDate'] <= $monthEnd)) {
+        } else {
+            return $this->sendError('Disposal date is not within financial period!', 500);
+        }
+
+        $company = Company::find($input['companySystemID']);
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+        }
+
+        $toCompany = Company::find($input['toCompanySystemID']);
+        if ($toCompany) {
+            $input['toCompanyID'] = $toCompany->CompanyID;
+        }
+
+        $documentMaster = DocumentMaster::find($input['documentSystemID']);
+        if ($documentMaster) {
+            $input['documentID'] = $documentMaster->documentID;
+        }
+
+        $lastSerial = AssetDisposalMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->orderBy('serialNo', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
+        if ($companyFinanceYear["message"]) {
+            $startYear = $companyFinanceYear["message"]['bigginingDate'];
+            $finYearExp = Carbon::parse($startYear);
+            $finYear = $finYearExp->year;
+        } else {
+            $finYear = date("Y");
+        }
+        if ($documentMaster) {
+            $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['disposalDocumentCode'] = $documentCode;
+        }
+        $input['serialNo'] = $lastSerialNumber;
+        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
         $assetDisposalMasters = $this->assetDisposalMasterRepository->create($input);
 
@@ -277,5 +379,122 @@ class AssetDisposalMasterAPIController extends AppBaseController
         $assetDisposalMaster->delete();
 
         return $this->sendResponse($id, 'Asset Disposal Master deleted successfully');
+    }
+
+
+
+    /**
+     * @param Request $request
+     * @return mixed
+     */
+    public function getAllDisposalByCompany(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'confirmedYN', 'approved'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $assetCositng = AssetDisposalMaster::with('disposal_type')->ofCompany($subCompanies);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $assetCositng->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $assetCositng->where('approvedYN', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $assetCositng->whereMonth('disposalDocumentDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $assetCositng->whereYear('disposalDocumentDate', '=', $input['year']);
+            }
+        }
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCositng = $assetCositng->where(function ($query) use ($search) {
+                $query->where('disposalDocumentCode', 'LIKE', "%{$search}%");
+                $query->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($assetCositng)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('assetdisposalMasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    /**
+     * @param Request $request
+     * @return mixed
+     */
+    public function getDisposalFormData(Request $request)
+    {
+        $companyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+        $companyCurrency = \Helper::companyCurrency($companyId);
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $disposalType = AssetDisposalType::all();
+        $customer = CustomerAssigned::ofCompany($companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
+        $month = Months::all();
+        $companies = \Helper::allCompanies();
+        $years = AssetDisposalMaster::selectRaw("YEAR(createdDateTime) as year")
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get();
+        $output = array(
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'companyCurrency' => $companyCurrency,
+            'companyFinanceYear' => $companyFinanceYear,
+            'month' => $month,
+            'years' => $years,
+            'disposalType' => $disposalType,
+            'customer' => $customer,
+            'companies' => $companies,
+        );
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }
