@@ -160,7 +160,12 @@ class AssetDisposalMaster extends Model
         'confirmedDate',
         'approvedYN',
         'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
         'disposalType',
+        'timesReferred',
+        'refferedBackYN',
+        'RollLevForApp_curr',
         'createdUserSystemID',
         'createdUserID',
         'createdDateTime',
@@ -190,7 +195,12 @@ class AssetDisposalMaster extends Model
         'confimedByEmpID' => 'string',
         'confirmedByEmpName' => 'string',
         'approvedYN' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
         'disposalType' => 'integer',
+        'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer',
+        'RollLevForApp_curr' => 'integer',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string'
     ];
@@ -203,6 +213,39 @@ class AssetDisposalMaster extends Model
     public static $rules = [
         
     ];
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCompany($query, $type)
+    {
+        return $query->whereIN('companySystemID',  $type);
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'depMasterAutoID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function disposal_type()
+    {
+        return $this->belongsTo('App\Models\AssetDisposalType', 'disposalType', 'disposalTypesID');
+    }
 
     
 }

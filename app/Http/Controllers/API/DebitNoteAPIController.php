@@ -196,7 +196,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $lastSerial = DebitNote::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('debitNoteAutoID', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;

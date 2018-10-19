@@ -17,11 +17,14 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePaySupplierInvoiceDetailAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceDetailAPIRequest;
 use App\Models\AccountsPayableLedger;
+use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
+use App\Models\BookInvSuppDet;
 use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\PoAdvancePayment;
 use App\Repositories\PaySupplierInvoiceDetailRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
@@ -257,7 +260,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendError('Selected Bank Account is not active', 500, ['type' => 'amountmismatch']);
         }
 
-        if(!$input["supplierPaymentAmount"]){
+        if (!$input["supplierPaymentAmount"]) {
             $input["supplierPaymentAmount"] = 0;
         }
 
@@ -504,22 +507,46 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
-
         $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
+        $isAdvancePaymentPaidChk = $input['isAdvancePaymentPaidChk'];
 
         DB::beginTransaction();
         try {
-
             $finalError = array(
                 'gl_amount_not_matching' => array(),
                 'already_exist' => array(),
                 'more_booked' => array(),
             );
 
-            $error_count = 0;
+            $finalError_ap = array(
+                'advance_payment_paid' => array(),
+            );
 
+            $error_count = 0;
+            $error_count_ap = 0;
             foreach ($input['detailTable'] as $item) {
                 if ($item['isChecked']) {
+                    if ($isAdvancePaymentPaidChk) { // check advance payment already paid for the PO
+                        if ($item['addedDocumentSystemID'] == 11) {
+                            $invoiceDet = BookInvSuppDet::where('bookingSuppMasInvAutoID', $item['bookingInvSystemCode'])->groupBy('purchaseOrderID')->get();
+                            if (count($invoiceDet) > 0) {
+                                foreach ($invoiceDet as $val) {
+                                    $chkRequestedAdvancePayment = PoAdvancePayment::where('poID', $val->purchaseOrderID)->groupBy('poID')->first();
+                                    if ($chkRequestedAdvancePayment) {
+                                        $chkPaidAdvancePayment = AdvancePaymentDetails::selectRaw('erp_advancepaymentdetails.purchaseOrderID, Sum(erp_advancepaymentdetails.paymentAmount) AS SumOfpaymentAmount, Sum(erp_advancepaymentdetails.supplierTransAmount) AS SumOfsupplierTransAmount, Sum(erp_advancepaymentdetails.localAmount) AS SumOflocalAmount, Sum(erp_advancepaymentdetails.comRptAmount) AS SumOfcomRptAmount,supplierTransCurrencyID')->with(['supplier_currency', 'purchaseorder_by'])->where('purchaseOrderID', $chkRequestedAdvancePayment->poID)->whereNotNull('erp_advancepaymentdetails.purchaseOrderID')->groupBy('erp_advancepaymentdetails.purchaseOrderID')->first();
+                                        if (!empty($chkPaidAdvancePayment)) {
+                                            $currencyCode = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->CurrencyCode : '';
+                                            $poCode = $chkPaidAdvancePayment->purchaseorder_by ? $chkPaidAdvancePayment->purchaseorder_by->purchaseOrderCode : '';
+                                            array_push($finalError_ap['advance_payment_paid'], 'Please note that an advance payment of ' . $currencyCode . ' ' . number_format($chkPaidAdvancePayment->SumOfpaymentAmount) . ' is paid for this supplier for the selected Purchase Order ' . $poCode);
+                                            $error_count_ap++;
+                                        }
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $item['addedDocumentSystemID'])->where('companySystemID', $item['companySystemID'])->where('documentSystemCode', $item['bookingInvSystemCode'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                     if ($glCheck) {
@@ -558,8 +585,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                             $error_count++;
                         }
                     }
-
                 }
+            }
+
+            $confirm_error = array('type' => 'advance_payment_paid', 'data' => $finalError_ap);
+            if ($error_count_ap > 0) {
+                return $this->sendError("Error. Please check again.", 500, $confirm_error);
             }
 
             $confirm_error = array('type' => 'gl_amount_not_matching', 'data' => $finalError);
@@ -569,7 +600,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
-
                     $tempArray = $new;
                     $tempArray["supplierPaymentCurrencyID"] = $payMaster["BPVbankCurrency"];
                     $tempArray["supplierPaymentER"] = $payMaster["BPVbankCurrencyER"];
@@ -578,15 +608,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     $tempArray["paymentComRptAmount"] = 0;
                     $tempArray["supplierPaymentAmount"] = 0;
                     $tempArray["PayMasterAutoId"] = $input["PayMasterAutoId"];
-
                     $tempArray['createdPcID'] = gethostname();
                     $tempArray['createdUserID'] = $user->employee['empID'];
                     $tempArray['createdUserSystemID'] = $user->employee['employeeSystemID'];
-
                     unset($tempArray['isChecked']);
                     unset($tempArray['DecimalPlaces']);
                     unset($tempArray['CurrencyCode']);
-
                     if ($tempArray) {
                         $paySupplierInvoiceDetails = $this->paySupplierInvoiceDetailRepository->create($tempArray);
                         $updatePayment = AccountsPayableLedger::find($new['apAutoID'])

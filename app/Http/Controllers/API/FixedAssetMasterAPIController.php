@@ -1,4 +1,14 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : FixedAssetMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 08 - August 2018
+ * -- Description : This file contains the all CRUD for Asset master
+ * -- REVISION HISTORY
+ */
 
 namespace App\Http\Controllers\API;
 
@@ -495,9 +505,9 @@ class FixedAssetMasterAPIController extends AppBaseController
             if ($itemPicture) {
                 $decodeFile = base64_decode($itemImgaeArr[0]['file']);
                 $extension = $itemImgaeArr[0]['filetype'];
-                $data['itemPicture'] = $input['companyID'] . '_' . $input["documentID"] . '_' . $fixedAssetMaster['faID'] . '.' . $extension;
+                $data['itemPicture'] = $fixedAssetMaster->companyID . '_' . $fixedAssetMaster->documentID . '_' . $fixedAssetMaster['faID'] . '.' . $extension;
 
-                $path = $input["documentID"] . '/' . $fixedAssetMaster['faID'] . '/' . $data['itemPicture'];
+                $path = $fixedAssetMaster->documentID . '/' . $fixedAssetMaster['faID'] . '/' . $data['itemPicture'];
                 $data['itemPath'] = $path;
                 Storage::disk('public')->put($path, $decodeFile);
                 $fixedAssetMaster = $this->fixedAssetMasterRepository->update($data, $fixedAssetMaster['faID']);

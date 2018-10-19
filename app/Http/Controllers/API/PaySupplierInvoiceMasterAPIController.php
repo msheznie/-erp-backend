@@ -206,7 +206,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             $lastSerial = PaySupplierInvoiceMaster::where('companySystemID', $input['companySystemID'])
                 ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-                ->orderBy('PayMasterAutoId', 'desc')
+                ->orderBy('serialNo', 'desc')
                 ->first();
 
             $lastSerialNumber = 1;
