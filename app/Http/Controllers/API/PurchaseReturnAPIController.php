@@ -234,7 +234,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $lastSerial = PurchaseReturn::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('purhaseReturnAutoID', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;

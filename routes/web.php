@@ -1,3 +1,1 @@
 
-
-Route::resource('assetDisposalTypes', 'AssetDisposalTypeController');

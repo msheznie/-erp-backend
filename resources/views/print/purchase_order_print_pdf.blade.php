@@ -535,7 +535,7 @@
     <div class="row">
         <table style="width:100%;" class="table table-bordered table-striped table-sm">
             <thead>
-            <tr style="border-top: 1px solid black;">
+            <tr style="border-top: 1px solid black; width: 100%">
                 <th style="text-align: center; width: 2%;">#</th>
                 <th style="text-align: center; width: 8%;">Item Code</th>
                 <th style="text-align: center; width: 34%;">Item Description</th>

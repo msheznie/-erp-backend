@@ -1004,6 +1004,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
     Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
+    Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
+    Route::post('getBudgetTransferMasterByCompany', 'BudgetTransferFormAPIController@getBudgetTransferMasterByCompany');
+    Route::get('getBudgetTransferFormData', 'BudgetTransferFormAPIController@getBudgetTransferFormData');
+    Route::resource('budget_transfer_details', 'BudgetTransferFormDetailAPIController');
+    Route::get('getDetailsByBudgetTransfer', 'BudgetTransferFormDetailAPIController@getDetailsByBudgetTransfer');
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

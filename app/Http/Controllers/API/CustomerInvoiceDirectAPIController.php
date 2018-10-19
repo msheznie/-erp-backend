@@ -350,6 +350,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
+
+      
+
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();

@@ -195,7 +195,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $lastSerial = StockReceive::where('companySystemID', $input['companySystemID'])
             ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-            ->orderBy('stockReceiveAutoID', 'desc')
+            ->orderBy('serialNo', 'desc')
             ->first();
 
         $lastSerialNumber = 1;
