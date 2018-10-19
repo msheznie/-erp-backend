@@ -150,6 +150,10 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Chart of Account not found');
         }
 
+        if($chartOfAccount->controlAccountsSystemID == 1){
+            return $this->sendError('Cannot add a revenue GL code');
+        }
+
         $company = Company::find($input['companySystemID']);
         if (empty($company)) {
             return $this->sendError('Company not found');

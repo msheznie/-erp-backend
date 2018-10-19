@@ -362,8 +362,8 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError('Budget Master not found');
         }
 
-        $reportData = Budjetdetails::select(DB::raw("SUM(budjetAmtLocal) as totalLocal,
-                                       SUM(budjetAmtRpt) as totalRpt,
+        $reportData = Budjetdetails::select(DB::raw("(SUM(budjetAmtLocal) * -1) as totalLocal,
+                                       (SUM(budjetAmtRpt) * -1) as totalRpt,
                                        chartofaccounts.AccountCode,chartofaccounts.AccountDescription,
                                        erp_templatesdetails.templateDetailDescription,
                                        erp_templatesdetails.templatesMasterAutoID,
@@ -547,8 +547,8 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError('Budget Master not found');
         }
 
-        $reportData = Budjetdetails::select(DB::raw("SUM(budjetAmtLocal) as totalLocal,
-                                       SUM(budjetAmtRpt) as totalRpt,
+        $reportData = Budjetdetails::select(DB::raw("(SUM(budjetAmtLocal) * -1) as totalLocal,
+                                       (SUM(budjetAmtRpt) * -1) as totalRpt,
                                        chartofaccounts.AccountCode,chartofaccounts.AccountDescription,
                                        erp_templatesdetails.templateDetailDescription,
                                        erp_templatesdetails.templatesMasterAutoID,

@@ -1,4 +1,14 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : FixedAssetDepreciationMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 08 - August 2018
+ * -- Description : This file contains the all CRUD for Asset depreciation
+ * -- REVISION HISTORY
+ */
 
 namespace App\Http\Controllers\API;
 
@@ -598,7 +608,10 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
     public function assetDepreciationMaster(Request $request)
     {
-        $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->with(['approved_by', 'confirmed_by', 'created_by'])->findWithoutFail($request['depMasterAutoID']);
+        $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->with(['approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 23);
+        }, 'confirmed_by', 'created_by'])->findWithoutFail($request['depMasterAutoID']);
         if (empty($fixedAssetDepreciationMaster)) {
             return $this->sendError('Fixed Asset Depreciation Master not found');
         }
