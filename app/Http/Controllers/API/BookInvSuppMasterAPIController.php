@@ -639,6 +639,32 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+            if ($input['documentType'] == 0) {
+                //updating PO Master invoicedBooked flag
+                $getPoRecords = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                    ->groupBy('purchaseOrderID')
+                    ->get();
+
+                if ($getPoRecords) {
+                    foreach ($getPoRecords as $row) {
+
+                        $poMasterTableTotal = ProcumentOrder::find($row['purchaseOrderID']);
+
+                        $getTotal = BookInvSuppDet::where('purchaseOrderID', $row['purchaseOrderID'])
+                            ->sum('totTransactionAmount');
+
+                        if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) {
+                            $poMasterTableTotal->invoicedBooked = 2;
+                        } else if ($getTotal != 0) {
+                            $poMasterTableTotal->invoicedBooked = 1;
+                        } else if ($getTotal == 0) {
+                            $poMasterTableTotal->invoicedBooked = 0;
+                        }
+                        $poMasterTableTotal->save();
+                    }
+                }
+            }
+
             $directInvoiceDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
 
             $finalError = array('amount_zero' => array(),
