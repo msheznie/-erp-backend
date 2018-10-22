@@ -1,11 +1,25 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : TemplatesDetailsAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Budget
+ * -- Author : Mohamed Fayas
+ * -- Create date : 21 - October 2018
+ * -- Description : This file contains the all CRUD for Templates Details
+ * -- REVISION HISTORY
+ * -- Date: 21-October 2018 By: Fayas Description: Added new function getTemplatesDetailsByMaster(),getAllGLCodesByTemplate
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTemplatesDetailsAPIRequest;
 use App\Http\Requests\API\UpdateTemplatesDetailsAPIRequest;
+use App\Models\BudgetTransferForm;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\TemplatesDetails;
+use App\Models\TemplatesGLCode;
 use App\Repositories\TemplatesDetailsRepository;
+use App\Repositories\TemplatesMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -16,15 +30,16 @@ use Response;
  * Class TemplatesDetailsController
  * @package App\Http\Controllers\API
  */
-
 class TemplatesDetailsAPIController extends AppBaseController
 {
     /** @var  TemplatesDetailsRepository */
     private $templatesDetailsRepository;
+    private $templatesMasterRepository;
 
-    public function __construct(TemplatesDetailsRepository $templatesDetailsRepo)
+    public function __construct(TemplatesDetailsRepository $templatesDetailsRepo, TemplatesMasterRepository $templatesMasterRepo)
     {
         $this->templatesDetailsRepository = $templatesDetailsRepo;
+        $this->templatesMasterRepository = $templatesMasterRepo;
     }
 
     /**
@@ -277,5 +292,51 @@ class TemplatesDetailsAPIController extends AppBaseController
         $templatesDetails->delete();
 
         return $this->sendResponse($id, 'Templates Details deleted successfully');
+    }
+
+    public function getTemplatesDetailsByMaster(Request $request)
+    {
+
+        $id = $request->get('id');
+
+        $budgetTransferMaster = BudgetTransferForm::find($id);
+
+        if (empty($budgetTransferMaster)) {
+            return $this->sendError('Budget Transfer not found');
+        }
+
+        $templateMaster = $this->templatesMasterRepository->findWithoutFail($budgetTransferMaster->templatesMasterAutoID);
+
+        if (empty($templateMaster)) {
+            return $this->sendError('Templates Master not found');
+        }
+
+        $details = $this->templatesDetailsRepository->findWhere(['templatesMasterAutoID' => $budgetTransferMaster->templatesMasterAutoID]);
+
+        return $this->sendResponse($details, 'Templates Details retrieved successfully');
+    }
+
+    public function getAllGLCodesByTemplate(Request $request)
+    {
+
+        $id = $request->get('id');
+        $templateDetail = $this->templatesDetailsRepository->find($id);
+
+        if (empty($templateDetail)) {
+            return $this->sendError('Templates Detail not found');
+        }
+
+        $glData = TemplatesGLCode::where('templateMasterID', $templateDetail->templatesMasterAutoID)
+            ->where('templatesDetailsAutoID', $id)
+            ->whereNotNull('chartOfAccountSystemID')
+            ->get();
+
+        $glIds = collect($glData)->pluck('chartOfAccountSystemID')->toArray();
+
+        $glCodes = ChartOfAccountsAssigned::where('companySystemID',$request->get('companySystemID'))
+                                           ->whereIn('chartOfAccountSystemID',$glIds)
+                                           ->get(['chartOfAccountSystemID','AccountCode','AccountDescription','controlAccounts']);
+
+        return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
     }
 }

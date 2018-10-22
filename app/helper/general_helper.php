@@ -443,6 +443,17 @@ class Helper
                     $docInforArr["modelName"] = 'FixedAssetDepreciationMaster';
                     $docInforArr["primarykey"] = 'depMasterAutoID';
                     break;
+                case 46:
+                    $docInforArr["documentCodeColumnName"] = 'transferVoucherNo';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_budgettransferform';
+                    $docInforArr["modelName"] = 'BudgetTransferForm';
+                    $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1151,6 +1162,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 46: // budget transfer
+                $docInforArr["tableName"] = 'erp_budgettransferform';
+                $docInforArr["modelName"] = 'BudgetTransferForm';
+                $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1602,6 +1625,12 @@ class Helper
                     $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 46:
+                    $docInforArr["tableName"] = 'erp_budgettransferform';
+                    $docInforArr["modelName"] = 'BudgetTransferForm';
+                    $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -1617,7 +1646,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11,46])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
