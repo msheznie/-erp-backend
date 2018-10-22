@@ -1000,11 +1000,17 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('templates_g_l_codes', 'TemplatesGLCodeAPIController');
     Route::resource('templates_masters', 'TemplatesMasterAPIController');
     Route::resource('templates_details', 'TemplatesDetailsAPIController');
+    Route::get('getTemplatesDetailsByMaster', 'TemplatesDetailsAPIController@getTemplatesDetailsByMaster');
+    Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
     Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
     Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
     Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
     Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
+    Route::post('getBudgetTransferApprovedByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovedByUser');
+    Route::post('getBudgetTransferApprovalByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovalByUser');
+    Route::get('getBudgetTransferAudit', 'BudgetTransferFormAPIController@getBudgetTransferAudit');
+    Route::post('budgetTransferReopen', 'BudgetTransferFormAPIController@budgetTransferReopen');
     Route::post('getBudgetTransferMasterByCompany', 'BudgetTransferFormAPIController@getBudgetTransferMasterByCompany');
     Route::get('getBudgetTransferFormData', 'BudgetTransferFormAPIController@getBudgetTransferFormData');
     Route::resource('budget_transfer_details', 'BudgetTransferFormDetailAPIController');
