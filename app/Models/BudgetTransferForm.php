@@ -164,11 +164,16 @@ class BudgetTransferForm extends Model
         'approvedByUserSystemID',
         'approvedEmpID',
         'approvedEmpName',
+        'timesReferred',
         'RollLevForApp_curr',
         'createdDateTime',
         'createdUserSystemID',
+        'templatesMasterAutoID',
         'createdUserID',
         'createdPcID',
+        'modifiedPc',
+        'modifiedUser',
+        'modifiedUserSystemID',
         'timestamp'
     ];
 
@@ -196,9 +201,14 @@ class BudgetTransferForm extends Model
         'approvedEmpID' => 'string',
         'approvedEmpName' => 'string',
         'RollLevForApp_curr' => 'integer',
+        'templatesMasterAutoID' => 'integer',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
-        'createdPcID' => 'string'
+        'createdPcID' => 'string',
+        'modifiedPc' => 'string',
+        'modifiedUser' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**
@@ -214,7 +224,10 @@ class BudgetTransferForm extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
-
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
@@ -224,4 +237,17 @@ class BudgetTransferForm extends Model
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'budgetTransferFormAutoID');
+    }
+
+
+    public function detail()
+    {
+        return $this->hasMany('App\Models\BudgetTransferFormDetail', 'budgetTransferFormAutoID', 'budgetTransferFormAutoID');
+    }
+
+
 }

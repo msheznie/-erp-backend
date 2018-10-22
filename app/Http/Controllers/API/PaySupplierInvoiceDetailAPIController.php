@@ -688,6 +688,25 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
         }
 
+        //check record total in General Ledger table
+        foreach ($input['detailTable'] as $itemExist) {
+
+            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
+
+                $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $itemExist['addedDocumentSystemID'])->where('companySystemID', $itemExist['companySystemID'])->where('documentSystemCode', $itemExist['bookingInvSystemCode'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
+
+                if ($glCheck) {
+                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                        $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
+                        $itemExistArray[] = [$itemDrt];
+                    }
+                } else {
+                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
+                    $itemExistArray[] = [$itemDrt];
+                }
+            }
+        }
+
         if (!empty($itemExistArray)) {
             return $this->sendError($itemExistArray, 422);
         }

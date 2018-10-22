@@ -425,6 +425,25 @@ class BookInvSuppDetAPIController extends AppBaseController
             }
         }
 
+        //check record total in General Ledger table
+        foreach ($input['detailTable'] as $itemExist) {
+
+            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
+
+                $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', 3)->where('companySystemID', $itemExist['companySystemID'])->where('documentSystemCode', $itemExist['grvAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
+
+                if ($glCheck) {
+                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                        $itemDrt = "Selected GRV " . $itemExist['grvPrimaryCode'] . " is not updated in general ledger. Please check again";
+                        $itemExistArray[] = [$itemDrt];
+                    }
+                } else {
+                    $itemDrt = "Selected GRV " . $itemExist['grvPrimaryCode'] . " is not updated in general ledger. Please check again";
+                    $itemExistArray[] = [$itemDrt];
+                }
+            }
+        }
+
         //check total matching
         foreach ($input['detailTable'] as $temp) {
 

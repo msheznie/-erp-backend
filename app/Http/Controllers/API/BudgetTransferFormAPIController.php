@@ -5,10 +5,12 @@
  * -- Project Name : ERP
  * -- Module Name :  Budget Transfer
  * -- Author : Mohamed Fayas
- * -- Create date : 18 - August 2018
+ * -- Create date : 18 - October 2018
  * -- Description : This file contains the all CRUD for Budget Transfer
  * -- REVISION HISTORY
- * -- Date: 08-August 2018 By: Nazir Description: Added new function getBudgetTransferMasterByCompany()
+ * -- Date: 18-October 2018 By: Fayas Description: Added new function getBudgetTransferMasterByCompany()
+ * -- Date: 22-October 2018 By: Fayas Description: Added new function getBudgetTransferAudit(),budgetTransferReopen(),
+ *                      getBudgetTransferApprovedByUser(),getBudgetTransferApprovalByUser()
  */
 
 namespace App\Http\Controllers\API;
@@ -16,16 +18,22 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBudgetTransferFormAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTransferFormAPIRequest;
 use App\Models\BudgetTransferForm;
+use App\Models\BudgetTransferFormDetail;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\Months;
 use App\Models\SegmentMaster;
+use App\Models\TemplatesMaster;
 use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetTransferFormRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -137,6 +145,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'year' => 'required|numeric|min:1',
             'comments' => 'required',
+            'templatesMasterAutoID' => 'required|numeric|min:1'
         ]);
 
         if ($validator->fails()) {
@@ -285,7 +294,92 @@ class BudgetTransferFormAPIController extends AppBaseController
             return $this->sendError('Budget Transfer Form not found');
         }
 
-        $budgetTransferForm = $this->budgetTransferFormRepository->update(array_only($input, ['comments','year']), $id);
+        $employee = \Helper::getEmployeeInfo();
+
+        if ($budgetTransferForm->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            $validator = \Validator::make($input, [
+                'year' => 'required|numeric|min:1',
+                'comments' => 'required',
+                'templatesMasterAutoID' => 'required|numeric|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $checkItems = BudgetTransferFormDetail::where('budgetTransferFormAutoID', $id)
+                ->count();
+            if ($checkItems == 0) {
+                return $this->sendError('Every budget transfer should have at least one item', 500);
+            }
+
+            $checkQuantity = BudgetTransferFormDetail::where('budgetTransferFormAutoID', $id)
+                ->where(function ($q) {
+                    $q->where('adjustmentAmountRpt', '<=', 0)
+                        ->orWhereNull('adjustmentAmountLocal', '<=', 0)
+                        ->orWhereNull('adjustmentAmountRpt')
+                        ->orWhereNull('adjustmentAmountLocal');
+                })
+                ->count();
+            if ($checkQuantity > 0) {
+                return $this->sendError('Amount should be greater than 0 for every items', 500);
+            }
+
+            $debitNoteDetails = BudgetTransferFormDetail::where('budgetTransferFormAutoID', $id)->get();
+
+            $finalError = array(
+                'balance_check' => array(),
+                'required_serviceLine_from' => array(),
+                'active_serviceLine_from' => array(),
+                'required_serviceLine_to' => array(),
+                'active_serviceLine_to' => array(),
+            );
+            $error_count = 0;
+
+            foreach ($debitNoteDetails as $item) {
+                $updateItem = BudgetTransferFormDetail::find($item['budgetTransferFormDetailAutoID']);
+
+                if ($updateItem->toServiceLineSystemID && !is_null($updateItem->toServiceLineSystemID)) {
+
+                    $checkDepartmentActiveTo = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                        ->where('isActive', 1)
+                        ->first();
+                    if (empty($checkDepartmentActiveTo)) {
+                        array_push($finalError['active_serviceLine_to'], $updateItem->glCode);
+                        $error_count++;
+                    }
+                } else {
+                    array_push($finalError['required_serviceLine_to'], $updateItem->glCode);
+                    $error_count++;
+                }
+            }
+
+            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            if ($error_count > 0) {
+               // return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+            $params = array('autoID' => $id,
+                'company' => $budgetTransferForm->companySystemID,
+                'document' => $budgetTransferForm->documentSystemID,
+                'segment' => 0,
+                'category' => 0,
+                'amount' => 0
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
+        $budgetTransferForm = $this->budgetTransferFormRepository->update(array_only($input, ['comments','year','templatesMasterAutoID','modifiedPc','modifiedUser','modifiedUserSystemID']), $id);
 
         return $this->sendResponse($budgetTransferForm->toArray(), 'Budget Transfer updated successfully');
     }
@@ -432,16 +526,304 @@ class BudgetTransferFormAPIController extends AppBaseController
         $segments = SegmentMaster::where("companySystemID", $companyId)
                                  ->where('isActive', 1)->get();
 
+        $masterTemplates = TemplatesMaster::all();
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
             'companyFinanceYear' => $companyFinanceYear,
-            'segments' => $segments
+            'segments' => $segments,
+            'masterTemplates' => $masterTemplates
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function getBudgetTransferAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $budgetTransfer = $this->budgetTransferFormRepository->getAudit($id);
+
+        if (empty($budgetTransfer)) {
+            return $this->sendError('Budget Transfer not found');
+        }
+
+        return $this->sendResponse($budgetTransfer, 'Budget Transfer audit retrieved successfully');
+    }
+
+    public function budgetTransferReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['budgetTransferFormAutoID'];
+        $budgetTransfer = $this->budgetTransferFormRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($budgetTransfer)) {
+            return $this->sendError('Budget Transfer not found');
+        }
+
+        if ($budgetTransfer->approvedYN == -1) {
+            return $this->sendError('You cannot reopen this Budget Transfer it is already fully approved');
+        }
+
+        if ($budgetTransfer->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Budget Transfer it is already partially approved');
+        }
+
+        if ($budgetTransfer->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Budget Transfer, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+
+        $this->budgetTransferFormRepository->update($updateInput, $id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $budgetTransfer->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $budgetTransfer->transferVoucherNo . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $budgetTransfer->transferVoucherNo;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $budgetTransfer->companySystemID)
+            ->where('documentSystemCode', $budgetTransfer->budgetTransferFormAutoID)
+            ->where('documentSystemID', $budgetTransfer->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $budgetTransfer->companySystemID)
+                    ->where('documentSystemID', $budgetTransfer->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $budgetTransfer->companySystemID)
+            ->where('documentSystemID', $budgetTransfer->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($budgetTransfer->toArray(), 'Budget Transfer reopened successfully');
+    }
+
+
+    public function getBudgetTransferApprovedByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approvedYN', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $debitNotes = DB::table('erp_documentapproved')
+            ->select(
+                'erp_budgettransferform.*',
+                'employees.empName As confirmed_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_budgettransferform', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'budgetTransferFormAutoID')
+                    ->where('erp_budgettransferform.companySystemID', $companyId)
+                    ->where('erp_budgettransferform.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'confirmedByEmpSystemID', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [46])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+                $debitNotes = $debitNotes->where('approvedYN', $input['approvedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $debitNotes = $debitNotes->whereMonth('createdDateTime', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $debitNotes = $debitNotes->whereYear('createdDateTime', '=', $input['year']);
+            }
+        }
+
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $debitNotes = $debitNotes->where(function ($query) use ($search) {
+                $query->where('transferVoucherNo', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'like', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($debitNotes)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('budgetTransferFormAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    
+    public function getBudgetTransferApprovalByUser(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approvedYN', 'month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $debitNotes = DB::table('erp_documentapproved')
+            ->select(
+                'erp_budgettransferform.*',
+                'employees.empName As confirmed_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+                
+                $query->whereIn('employeesdepartments.documentSystemID', [46])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_budgettransferform', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'budgetTransferFormAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_budgettransferform.companySystemID', $companyId)
+                    ->where('erp_budgettransferform.approvedYN', 0)
+                    ->where('erp_budgettransferform.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'confirmedByEmpSystemID', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [46])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $debitNotes = $debitNotes->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+                $debitNotes = $debitNotes->where('approvedYN', $input['approvedYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $debitNotes = $debitNotes->whereMonth('createdDateTime', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $debitNotes = $debitNotes->whereYear('createdDateTime', '=', $input['year']);
+            }
+        }
+
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $debitNotes = $debitNotes->where(function ($query) use ($search) {
+                $query->where('transferVoucherNo', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'like', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($debitNotes)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('budgetTransferFormAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+    
 }
