@@ -533,32 +533,32 @@
         </table>
     </div>
     <div class="row">
-        <table style="width:100%;" class="table table-bordered table-striped table-sm">
+        <table class="table table-bordered table-striped table-sm">
             <thead>
-            <tr style="border-top: 1px solid black; width: 100%">
-                <th style="text-align: center; width: 2%;">#</th>
-                <th style="text-align: center; width: 8%;">Item Code</th>
-                <th style="text-align: center; width: 34%;">Item Description</th>
-                <th style="text-align: center; width: 5%;">Sup.Part No</th>
-                <th style="text-align: center ; width: 5%;">UOM</th>
-                <th style="text-align: center ; width: 5%;">Qty</th>
-                <th style="text-align: center ; width: 10%;">Unit Cost</th>
-                <th style="text-align: center ; width: 8%;">Dis. Per Unit</th>
-                <th style="text-align: center ; width: 10%;">Net Cost Per Unit</th>
-                <th style="text-align: center ; width: 13%;">Net Amount</th>
+            <tr style="border-top: 1px solid black;">
+                <th style="text-align: center">#</th>
+                <th style="text-align: center">Item Code</th>
+                <th style="text-align: center">Item Description</th>
+                <th style="text-align: center">Sup.Part No</th>
+                <th style="text-align: center">UOM</th>
+                <th style="text-align: center">Qty</th>
+                <th style="text-align: center">Unit Cost</th>
+                <th style="text-align: center">Dis. Per Unit</th>
+                <th style="text-align: center">Net Cost Per Unit</th>
+                <th style="text-align: center">Net Amount</th>
             </tr>
             </thead>
-            <tbody>
+            <tbody style="width: 100%">
             {{ $subTotal = 0 }}
             {{ $x = 1 }}
             @foreach ($podata->detail as $det)
                 {{ $netUnitCost = 0 }}
                 {{ $subTotal += $det->netAmount }}
                 {{ $netUnitCost = $det->unitCost - $det->discountAmount }}
-                <tr style="border-bottom: 1px solid black;">
+                <tr style="border-bottom: 1px solid black; width: 100%">
                     <td>{{ $x  }}</td>
                     <td>{{$det->itemPrimaryCode}}</td>
-                    <td nobr="true">{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
+                    <td nobr="true" style="width: 30%">{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
                     <td class="text-right">{{$det->noQty}}</td>

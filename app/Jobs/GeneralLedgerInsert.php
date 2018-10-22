@@ -642,7 +642,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
                         break;
                     case 20:
-                        /*customerInvoice*/
+                        /*customer Invoice*/
                         $masterData = CustomerInvoiceDirect::with(['finance_period_by'])->find($masterModel["autoID"]);
                         $det = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $masterModel["autoID"]);
                         $detOne = $det->first();
@@ -653,9 +653,9 @@ class GeneralLedgerInsert implements ShouldQueue
                         $date = new Carbon($masterData->bookingDate);
                         $time = Carbon::now();
                         $masterDocumentDate = date('Y-m-d H:i:s');
-                        if ($masterData->finance_period_by->isActive == -1) {
+              /*          if ($masterData->finance_period_by->isActive == -1) {
                             $masterDocumentDate = $masterData->bookingDate;
-                        }
+                        }*/
                         $data['companySystemID'] = $masterData->companySystemID;
                         $data['companyID'] = $masterData->companyID;
                         $data['masterCompanyID'] = $company->masterComapanyID;
