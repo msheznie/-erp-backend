@@ -191,7 +191,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     return $this->sendError('<b>Below listed invoices are already settled fully.</b> <br>' . join(' <br> ', $error['settled']), 500);
                 }
 
-                if(!empty($error['ledger'])){
+                if (!empty($error['ledger'])) {
                     return $this->sendError('<b>Below listed invoices are not updated in general ledger.</b> <br>' . join(' <br> ', $error['ledger']), 500);
                 }
 
@@ -466,7 +466,15 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         }
         AccountsReceivableLedger::where('arAutoID', $customerReceivePaymentDetail->arAutoID)->update($ledger);
 
-
         return $this->sendResponse('', 'Unallocation amount added successfully');
     }
+
+
+    function getReceiptVoucherMatchDetails(Request $request)
+    {
+        $data = CustomerReceivePaymentDetail::where('matchingDocID', $request->matchDocumentMasterAutoID)
+            ->get();
+        return $this->sendResponse($data, 'Details saved successfully');
+    }
+
 }

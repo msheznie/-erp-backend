@@ -853,6 +853,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
     Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
     Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
+    Route::get('getReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@getReceiptVoucherMatchDetails');
     Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords');
     Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown');
 
@@ -866,6 +867,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('PaymentVoucherMatchingCancel', 'MatchDocumentMasterAPIController@PaymentVoucherMatchingCancel');
     Route::post('getRVMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getRVMatchDocumentMasterView');
     Route::get('getReceiptVoucherMatchItems', 'MatchDocumentMasterAPIController@getReceiptVoucherMatchItems');
+    Route::get('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
     Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
