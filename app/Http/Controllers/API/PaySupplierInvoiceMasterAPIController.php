@@ -1266,8 +1266,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 	currency.DecimalPlaces,
 	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
 	IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) AS SumOfsupplierPaymentAmount,
-	(
-		MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
+	(MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
 	) AS BalanceAmt
 FROM
 	erp_debitnote AS MASTER
@@ -1308,10 +1307,9 @@ LEFT JOIN (
 		erp_paysupplierinvoicedetail
 	GROUP BY
 		erp_paysupplierinvoicedetail.addedDocumentSystemID,
-		erp_paysupplierinvoicedetail.bookingInvSystemCode,
-		erp_paysupplierinvoicedetail.bookingInvDocCode
+		erp_paysupplierinvoicedetail.bookingInvSystemCode
 ) AS payInvoice ON (
-	MASTER.debitNoteAutoID = payInvoice.PayMasterAutoId
+	MASTER.debitNoteAutoID = payInvoice.bookingInvSystemCode
 	AND MASTER.documentSystemID = payInvoice.addedDocumentSystemID
 	AND MASTER.companySystemID = payInvoice.companySystemID
 )
