@@ -15,6 +15,7 @@
 
 namespace App\helper;
 
+use App\Jobs\BudgetAdjustment;
 use App\Jobs\CreateReceiptVoucher;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
@@ -1212,6 +1213,12 @@ class Helper
                     }
                 }
 
+                if ($input["documentSystemID"] == 46) {
+                    if ($isConfirmed['year'] != date("Y")) {
+                        return ['success' => false, 'message' => 'Budget transfer you are trying to approve is not for the current year. You cannot approve a budget transfer which is not for current year.'];
+                    }
+                }
+
                 //check document is already approved
                 $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
@@ -1340,7 +1347,7 @@ class Helper
 
                                 if ($jvMasterData->jvType == 1) {
                                     $accrualJournalVoucher = self::generateAccrualJournalVoucher($input["documentSystemCode"]);
-                                }else if($jvMasterData->jvType == 5){
+                                } else if ($jvMasterData->jvType == 5) {
                                     $POAccrualJournalVoucher = self::generatePOAccrualJournalVoucher($input["documentSystemCode"]);
                                 }
 
@@ -1371,6 +1378,10 @@ class Helper
                             }
                             if ($input["documentSystemID"] == 4 && !empty($sourceModel)) {
                                 $jobPV = CreateReceiptVoucher::dispatch($sourceModel);
+                            }
+
+                            if ($input["documentSystemID"] == 46 && !empty($sourceModel)) {
+                                $jobBTN = BudgetAdjustment::dispatch($sourceModel);
                             }
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset
@@ -1646,7 +1657,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11,46])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -2255,7 +2266,7 @@ class Helper
 
             $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-            $postJv =  $jvMasterData->toArray();
+            $postJv = $jvMasterData->toArray();
             $postJv['JVcode'] = $jvCode;
             $postJv['serialNo'] = $lastSerialNumber;
             $postJv['JVdate'] = $firstDayNextMonth;
@@ -2325,7 +2336,7 @@ class Helper
 
             $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-            $postJv =  $jvMasterData->toArray();
+            $postJv = $jvMasterData->toArray();
             $postJv['JVcode'] = $jvCode;
             $postJv['serialNo'] = $lastSerialNumber;
             $postJv['JVdate'] = $firstDayNextMonth;

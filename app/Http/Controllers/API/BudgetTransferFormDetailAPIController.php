@@ -201,7 +201,6 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             return $this->sendError("Selected item is already added. Please check again", 500);
         }
 
-        //return $this->sendError("Check Pass", 500);
         $checkPending = BudgetTransferFormDetail::where('fromTemplateDetailID', $input['fromTemplateDetailID'])
             ->where('fromChartOfAccountSystemID', $input['fromChartOfAccountSystemID'])
             ->whereHas('master',function ($q) use ($budgetTransferMaster) {
