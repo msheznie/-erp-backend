@@ -653,9 +653,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $getTotal = BookInvSuppDet::where('purchaseOrderID', $row['purchaseOrderID'])
                             ->sum('totTransactionAmount');
 
-                        if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)  || round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) >= round($getTotal, $documentCurrencyDecimalPlace)) {
+                        if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) {
                             $poMasterTableTotal->invoicedBooked = 2;
-                        } else if ($getTotal != 0) {
+                        } else if(round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) <= round($getTotal, $documentCurrencyDecimalPlace)){
+                            $poMasterTableTotal->invoicedBooked = 2;
+                        }else if ($getTotal != 0) {
                             $poMasterTableTotal->invoicedBooked = 1;
                         } else if ($getTotal == 0) {
                             $poMasterTableTotal->invoicedBooked = 0;
@@ -801,8 +803,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
      *      )
      * )
      */
-    public
-    function destroy($id)
+    public function destroy($id)
     {
         /** @var BookInvSuppMaster $bookInvSuppMaster */
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
@@ -816,8 +817,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $this->sendResponse($id, 'Book Inv Supp Master deleted successfully');
     }
 
-    public
-    function getInvoiceMasterRecord(Request $request)
+    public function getInvoiceMasterRecord(Request $request)
     {
         $input = $request->all();
 
