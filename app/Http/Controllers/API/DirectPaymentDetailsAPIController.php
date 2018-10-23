@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 18 September 2018 By: Mubashir Description: Added new function updateDirectPaymentAccount(),deleteAllDirectPayment(),getDirectPaymentDetails()
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDirectPaymentDetailsAPIRequest;
@@ -150,7 +151,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Chart of Account not found');
         }
 
-        if($chartOfAccount->controlAccountsSystemID == 1){
+        if ($chartOfAccount->controlAccountsSystemID == 1) {
             return $this->sendError('Cannot add a revenue GL code');
         }
 
@@ -208,9 +209,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         if ($chartOfAccount->isBank) {
             $account = BankAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->where('companySystemID', $input['companySystemID'])->first();
-            $input['bankCurrencyID'] = $account->accountCurrencyID;
-            $conversionAmount = \Helper::currencyConversion($input['companySystemID'], $bankAccount->accountCurrencyID, $account->accountCurrencyID, 0);
-            $input['bankCurrencyER'] = $conversionAmount["transToDocER"];
+            if($account) {
+                $input['bankCurrencyID'] = $account->accountCurrencyID;
+                $conversionAmount = \Helper::currencyConversion($input['companySystemID'], $bankAccount->accountCurrencyID, $account->accountCurrencyID, 0);
+                $input['bankCurrencyER'] = $conversionAmount["transToDocER"];
+            }
         } else {
             $input['bankCurrencyID'] = $payMaster->BPVbankCurrency;
             $input['bankCurrencyER'] = $payMaster->BPVbankCurrencyER;
@@ -403,13 +406,17 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                     }
                 }
             }
+
             if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->localCurrency) {
                 $input['localAmount'] = \Helper::roundValue($bankAmount);
+                $input['localCurrencyER'] = $input["bankCurrencyER"];
             }
 
             if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->comRptCurrency) {
                 $input['comRptAmount'] = \Helper::roundValue($bankAmount);
+                $input['comRptCurrencyER'] = $input["bankCurrencyER"];
             }
+
             $input['bankAmount'] = \Helper::roundValue($bankAmount);
         }
 
@@ -495,6 +502,19 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
+        $messages = [
+            'not_in' => 'The :attribute field is required.',
+        ];
+
+        $validator = \Validator::make($input, [
+            'toBankID' => 'required|not_in:0',
+            'toBankAccountID' => 'required|not_in:0',
+        ], $messages);
+
+        if ($validator->fails()) {//echo 'in';exit;
+            return $this->sendError($validator->messages(), 422);
+        }
+
         /** @var DirectPaymentDetails $directPaymentDetails */
         $directPaymentDetails = $this->directPaymentDetailsRepository->findWithoutFail($input['directPaymentDetailsID']);
 
@@ -533,30 +553,36 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             return $this->sendError('Direct Payment Details not found');
         }
 
-        $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $request->toBankCurrencyID)->first();
-        $conversion = $conversion->conversion;
+        if ($request->toBankCurrencyID) {
 
-        $bankAmount = 0;
-        if ($request->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
-            $bankAmount = $directPaymentDetails->DPAmount;
-        } else {
-            if ($conversion > $directPaymentDetails->DPAmountCurrencyER) {
-                if ($conversion > 1) {
-                    $bankAmount = $directPaymentDetails->DPAmount / $conversion;
-                } else {
-                    $bankAmount = $directPaymentDetails->DPAmount * $conversion;
-                }
+            $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $request->toBankCurrencyID)->first();
+            $conversion = $conversion->conversion;
+
+            $bankAmount = 0;
+            if ($request->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
+                $bankAmount = $directPaymentDetails->DPAmount;
             } else {
-                If ($conversion > 1) {
-                    $bankAmount = $directPaymentDetails->DPAmount * $conversion;
+                if ($conversion > $directPaymentDetails->DPAmountCurrencyER) {
+                    if ($conversion > 1) {
+                        $bankAmount = $directPaymentDetails->DPAmount / $conversion;
+                    } else {
+                        $bankAmount = $directPaymentDetails->DPAmount * $conversion;
+                    }
                 } else {
-                    $bankAmount = $directPaymentDetails->DPAmount / $conversion;
+                    If ($conversion > 1) {
+                        $bankAmount = $directPaymentDetails->DPAmount * $conversion;
+                    } else {
+                        $bankAmount = $directPaymentDetails->DPAmount / $conversion;
+                    }
                 }
             }
-        }
 
-        $output = ['toBankCurrencyER' => $conversion, 'toBankAmount' => $bankAmount];
-        return $this->sendResponse($output, 'Successfully data retrieved');
+            $output = ['toBankCurrencyER' => $conversion, 'toBankAmount' => $bankAmount];
+            return $this->sendResponse($output, 'Successfully data retrieved');
+        } else {
+            $output = ['toBankCurrencyER' => 0, 'toBankAmount' => 0];
+            return $this->sendResponse($output, 'Successfully data retrieved');
+        }
     }
 
 }

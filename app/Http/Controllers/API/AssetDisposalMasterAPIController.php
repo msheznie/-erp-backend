@@ -128,7 +128,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $validator = \Validator::make($request->all(), [
+        $validator = \Validator::make($input, [
             'companyFinanceYearID' => 'required',
             'companyFinancePeriodID' => 'required',
             'narration' => 'required',

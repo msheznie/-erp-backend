@@ -479,8 +479,9 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $finalError = array(
+            /*$finalError = array(
                 'po_amount_not_matching' => array(),
+                'adv_payment_already_exist' => array(),
             );
             $error_count = 0;
 
@@ -512,16 +513,69 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                         array_push($finalError['po_amount_not_matching'], 'PO' . ' | ' . $new['purchaseOrderCode']);
                         $error_count++;
                     }
+
+                    $alreadyExistChk = AdvancePaymentDetails::where('PayMasterAutoId', $input["PayMasterAutoId"])->where('poAdvPaymentID', $new['poAdvPaymentID'])->first();
+                    if ($alreadyExistChk) {
+                        array_push($finalError['adv_payment_already_exist'], 'PO' . ' | ' . $new['purchaseOrderCode']);
+                        $error_count++;
+                    }
+
                 }
             }
 
             $confirm_error = array('type' => 'po_amount_not_matching', 'data' => $finalError);
             if ($error_count > 0) {
                 return $this->sendError("Selected order has been already paid more than the order amount. Please check the payment status for this order.", 500, $confirm_error);
-            }
+            }*/
 
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
+
+                    $finalError = array(
+                        'po_amount_not_matching' => array(),
+                        'adv_payment_already_exist' => array(),
+                    );
+
+                    $error_count = 0;
+
+                    $totalPOAmount = $new['poTotalSupplierTransactionCurrency'];
+                    $advancePaymentAmount = 0;
+                    $supplierInvoAmount = 0;
+
+                    $advancePayment = AdvancePaymentDetails::selectRaw('SUM(paymentAmount) as paymentAmount')->whereHas('advancepaymentmaster', function ($query) use ($payMaster) {
+                        $query->where('isAdvancePaymentYN', 0)->where('supplierID', $payMaster->BPVsupplierID);
+                    })->where('purchaseOrderID', $new["purchaseOrderID"])->first();
+
+                    if ($advancePayment) {
+                        $advancePaymentAmount = $advancePayment->paymentAmount;
+                    }
+
+                    $bookInvDet = BookInvSuppDet::selectRaw('SUM(supplierInvoAmount) as supplierInvoAmount')->whereHas('suppinvmaster', function ($query) use ($payMaster) {
+                        $query->whereHas('paysuppdetail')->where('approved', -1)->where('supplierID', $payMaster->BPVsupplierID);
+                    })->where('companySystemID', $payMaster->companySystemID)->where('purchaseOrderID', $new["purchaseOrderID"])->first();
+
+                    if ($bookInvDet) {
+                        $supplierInvoAmount = $bookInvDet->supplierInvoAmount;
+                    }
+
+                    $balanceAmount = $totalPOAmount - ($advancePaymentAmount + $supplierInvoAmount);
+
+                    if ($balanceAmount < 0) {
+                        array_push($finalError['po_amount_not_matching'], 'PO' . ' | ' . $new['purchaseOrderCode']);
+                        $error_count++;
+                    }
+
+                    $alreadyExistChk = AdvancePaymentDetails::where('PayMasterAutoId', $input["PayMasterAutoId"])->where('poAdvPaymentID', $new['poAdvPaymentID'])->first();
+                    if ($alreadyExistChk) {
+                        array_push($finalError['adv_payment_already_exist'], 'PO' . ' | ' . $new['purchaseOrderCode']);
+                        $error_count++;
+                    }
+
+                    $confirm_error = array('type' => 'po_amount_not_matching', 'data' => $finalError);
+                    if ($error_count > 0) {
+                        return $this->sendError("Selected order has been already paid more than the order amount. Please check the payment status for this order.", 500, $confirm_error);
+                    }
+
                     $tempArray = $new;
                     $tempArray["PayMasterAutoId"] = $input["PayMasterAutoId"];
                     $tempArray["paymentAmount"] = $new["BalanceAmount"];
@@ -543,18 +597,31 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
                         $advancePayment = PoAdvancePayment::find($new['poAdvPaymentID']);
 
-                        if ($new["BalanceAmount"] == $advancePayment->reqAmount) {
+                        $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                            ->where('companySystemID', $advancePayment->companySystemID)
+                            ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
+                            ->where('purchaseOrderID', $advancePayment->poID)
+                            ->first();
+
+                        if ($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) {
                             $updatePayment = PoAdvancePayment::find($new['poAdvPaymentID'])
                                 ->update(['fullyPaid' => 2, 'selectedToPayment' => -1]);
                         }
 
-                        if (($advancePayment->reqAmount > $new["BalanceAmount"]) && ($new["BalanceAmount"] > 0)) {
+                        if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
                             $updatePayment = PoAdvancePayment::find($new['poAdvPaymentID'])
                                 ->update(['fullyPaid' => 1, 'selectedToPayment' => -1]);
                         }
+
+                        if ($advancePaymentDetailsSum->SumOfpaymentAmount == 0) {
+                            $updatePayment = PoAdvancePayment::find($new['poAdvPaymentID'])
+                                ->update(['fullyPaid' => 0, 'selectedToPayment' => -1]);
+                        }
+
                     }
                 }
             }
+
             DB::commit();
             return $this->sendResponse('', 'Payment details saved successfully');
         } catch (\Exception $exception) {

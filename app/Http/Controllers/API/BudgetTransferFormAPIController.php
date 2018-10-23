@@ -21,6 +21,7 @@ use App\Models\BudgetTransferForm;
 use App\Models\BudgetTransferFormDetail;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\EmployeesDepartment;
@@ -528,6 +529,15 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $masterTemplates = TemplatesMaster::all();
 
+
+        if (count($companyFinanceYear) > 0) {
+            $startYear = $companyFinanceYear[0]['financeYear'];
+            $finYearExp = explode('/',(explode('|', $startYear))[0]);
+            $financeYear = (int)$finYearExp[2];
+        } else {
+            $financeYear = date("Y");
+        }
+
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -535,7 +545,8 @@ class BudgetTransferFormAPIController extends AppBaseController
             'years' => $years,
             'companyFinanceYear' => $companyFinanceYear,
             'segments' => $segments,
-            'masterTemplates' => $masterTemplates
+            'masterTemplates' => $masterTemplates,
+            'financeYear' => $financeYear
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
