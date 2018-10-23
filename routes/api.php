@@ -1016,6 +1016,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('budget_transfer_details', 'BudgetTransferFormDetailAPIController');
     Route::get('getDetailsByBudgetTransfer', 'BudgetTransferFormDetailAPIController@getDetailsByBudgetTransfer');
 
+    Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
+    Route::resource('audit_trails', 'AuditTrailAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1053,10 +1055,8 @@ Route::get('runQueue', function () {
 });
 
 Route::get('runQueueSR', function () {
-    $stMaster = \App\Models\StockTransfer::where('stockTransferAutoID', 2920)->first();
-    $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
-    //$srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
-    //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
+    $bt = \App\Models\BudgetTransferForm::find(463);
+    $job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
 
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
@@ -1070,3 +1070,5 @@ Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
 Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
 Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
 Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
+
+
