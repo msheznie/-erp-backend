@@ -479,7 +479,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $finalError = array(
+            /*$finalError = array(
                 'po_amount_not_matching' => array(),
                 'adv_payment_already_exist' => array(),
             );
@@ -526,12 +526,12 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $confirm_error = array('type' => 'po_amount_not_matching', 'data' => $finalError);
             if ($error_count > 0) {
                 return $this->sendError("Selected order has been already paid more than the order amount. Please check the payment status for this order.", 500, $confirm_error);
-            }
+            }*/
 
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
 
-                    /*$finalError = array(
+                    $finalError = array(
                         'po_amount_not_matching' => array(),
                         'adv_payment_already_exist' => array(),
                     );
@@ -574,7 +574,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     $confirm_error = array('type' => 'po_amount_not_matching', 'data' => $finalError);
                     if ($error_count > 0) {
                         return $this->sendError("Selected order has been already paid more than the order amount. Please check the payment status for this order.", 500, $confirm_error);
-                    }*/
+                    }
 
                     $tempArray = $new;
                     $tempArray["PayMasterAutoId"] = $input["PayMasterAutoId"];
