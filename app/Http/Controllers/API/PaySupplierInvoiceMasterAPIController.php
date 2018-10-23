@@ -486,7 +486,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['chequePaymentYN'] = 0;
             }
 
-
             $warningMessage = '';
 
             if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
@@ -589,7 +588,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                     $updatePayment->fullyInvoice = 1;
                                     $updatePayment->save();
                                 }
-                            } else if ($val->addedDocumentSystemID == 15) {
+                            } else if ($val->addedDocumentSystemID == 15 || $val->addedDocumentSystemID == 24) {
                                 if ($val->supplierInvoiceAmount < $totalPaidAmount) {
                                     $updatePayment->selectedToPaymentInv = 0;
                                     $updatePayment->fullyInvoice = 1;
@@ -1066,7 +1065,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function getPOPaymentForPV(Request $request)
     {
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["PayMasterAutoId"]);
-
+        $BPVdate = Carbon::parse($paySupplierInvoiceMaster->BPVdate)->format('Y-m-d');
         $sql = 'SELECT
 	erp_accountspayableledger.apAutoID,
 	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
@@ -1094,7 +1093,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 	CurrencyCode,
 	DecimalPlaces,
 	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
-	IFNULL(supplierInvoiceAmount,0) - IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
+	IFNULL(supplierInvoiceAmount,0) - IFNULL(sid.SumOfsupplierPaymentAmount,0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
 	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
 	false as isChecked 
 FROM
@@ -1135,7 +1134,7 @@ WHERE
 	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
 WHERE
 	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 ) 
-	AND erp_accountspayableledger.documentDate <= "' . $paySupplierInvoiceMaster->BPVdate . '" 
+	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%d-%m") <= "' . $BPVdate . '" 
 	AND erp_accountspayableledger.selectedToPaymentInv = 0 
 	AND erp_accountspayableledger.fullyInvoice <> 2 
 	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
@@ -1267,8 +1266,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
 	currency.DecimalPlaces,
 	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
 	IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) AS SumOfsupplierPaymentAmount,
-	(
-		MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
+	(MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
 	) AS BalanceAmt
 FROM
 	erp_debitnote AS MASTER
@@ -1309,10 +1307,9 @@ LEFT JOIN (
 		erp_paysupplierinvoicedetail
 	GROUP BY
 		erp_paysupplierinvoicedetail.addedDocumentSystemID,
-		erp_paysupplierinvoicedetail.bookingInvSystemCode,
-		erp_paysupplierinvoicedetail.bookingInvDocCode
+		erp_paysupplierinvoicedetail.bookingInvSystemCode
 ) AS payInvoice ON (
-	MASTER.debitNoteAutoID = payInvoice.PayMasterAutoId
+	MASTER.debitNoteAutoID = payInvoice.bookingInvSystemCode
 	AND MASTER.documentSystemID = payInvoice.addedDocumentSystemID
 	AND MASTER.companySystemID = payInvoice.companySystemID
 )
@@ -1360,7 +1357,7 @@ HAVING
             }
 
             $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
-                'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+                'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1, 'BPVchequeNo' => 0];
 
             $this->paySupplierInvoiceMasterRepository->update($updateInput, $id);
 

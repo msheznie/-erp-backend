@@ -15,6 +15,7 @@
 
 namespace App\helper;
 
+use App\Jobs\BudgetAdjustment;
 use App\Jobs\CreateReceiptVoucher;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
@@ -442,6 +443,17 @@ class Helper
                     $docInforArr["tableName"] = 'erp_fa_depmaster';
                     $docInforArr["modelName"] = 'FixedAssetDepreciationMaster';
                     $docInforArr["primarykey"] = 'depMasterAutoID';
+                    break;
+                case 46:
+                    $docInforArr["documentCodeColumnName"] = 'transferVoucherNo';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_budgettransferform';
+                    $docInforArr["modelName"] = 'BudgetTransferForm';
+                    $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
@@ -1151,6 +1163,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 46: // budget transfer
+                $docInforArr["tableName"] = 'erp_budgettransferform';
+                $docInforArr["modelName"] = 'BudgetTransferForm';
+                $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1186,6 +1210,12 @@ class Helper
                 if ($policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
                         return ['success' => false, 'message' => 'Not authorized!'];
+                    }
+                }
+
+                if ($input["documentSystemID"] == 46) {
+                    if ($isConfirmed['year'] != date("Y")) {
+                        return ['success' => false, 'message' => 'Budget transfer you are trying to approve is not for the current year. You cannot approve a budget transfer which is not for current year.'];
                     }
                 }
 
@@ -1317,7 +1347,7 @@ class Helper
 
                                 if ($jvMasterData->jvType == 1) {
                                     $accrualJournalVoucher = self::generateAccrualJournalVoucher($input["documentSystemCode"]);
-                                }else if($jvMasterData->jvType == 5){
+                                } else if ($jvMasterData->jvType == 5) {
                                     $POAccrualJournalVoucher = self::generatePOAccrualJournalVoucher($input["documentSystemCode"]);
                                 }
 
@@ -1348,6 +1378,10 @@ class Helper
                             }
                             if ($input["documentSystemID"] == 4 && !empty($sourceModel)) {
                                 $jobPV = CreateReceiptVoucher::dispatch($sourceModel);
+                            }
+
+                            if ($input["documentSystemID"] == 46 && !empty($sourceModel)) {
+                                $jobBTN = BudgetAdjustment::dispatch($sourceModel);
                             }
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset
@@ -1602,6 +1636,12 @@ class Helper
                     $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 46:
+                    $docInforArr["tableName"] = 'erp_budgettransferform';
+                    $docInforArr["modelName"] = 'BudgetTransferForm';
+                    $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -1617,7 +1657,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -2226,7 +2266,7 @@ class Helper
 
             $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-            $postJv =  $jvMasterData->toArray();
+            $postJv = $jvMasterData->toArray();
             $postJv['JVcode'] = $jvCode;
             $postJv['serialNo'] = $lastSerialNumber;
             $postJv['JVdate'] = $firstDayNextMonth;
@@ -2296,7 +2336,7 @@ class Helper
 
             $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-            $postJv =  $jvMasterData->toArray();
+            $postJv = $jvMasterData->toArray();
             $postJv['JVcode'] = $jvCode;
             $postJv['serialNo'] = $lastSerialNumber;
             $postJv['JVdate'] = $firstDayNextMonth;

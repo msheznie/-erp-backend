@@ -215,6 +215,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
     Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
     Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
+    Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
     Route::get('getAssignedCompaniesByCustomer', 'CustomerMasterAPIController@getAssignedCompaniesByCustomer');
     Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
     Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
@@ -853,6 +854,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
     Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
     Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
+    Route::get('getReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@getReceiptVoucherMatchDetails');
+    Route::post('addReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@addReceiptVoucherMatchDetails');
     Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords');
     Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown');
 
@@ -866,6 +869,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('PaymentVoucherMatchingCancel', 'MatchDocumentMasterAPIController@PaymentVoucherMatchingCancel');
     Route::post('getRVMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getRVMatchDocumentMasterView');
     Route::get('getReceiptVoucherMatchItems', 'MatchDocumentMasterAPIController@getReceiptVoucherMatchItems');
+    Route::get('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
     Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
@@ -988,6 +992,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('assetDepreciationReopen', 'FixedAssetDepreciationMasterAPIController@assetDepreciationReopen');
     Route::post('getAssetDepApprovalByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovalByUser');
     Route::post('getAssetDepApprovedByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovedByUser');
+    Route::post('updateReceiptVoucherMatchDetail', 'CustomerReceivePaymentDetailAPIController@updateReceiptVoucherMatchDetail');
 
     Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
 
@@ -1000,16 +1005,25 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('templates_g_l_codes', 'TemplatesGLCodeAPIController');
     Route::resource('templates_masters', 'TemplatesMasterAPIController');
     Route::resource('templates_details', 'TemplatesDetailsAPIController');
+    Route::get('getTemplatesDetailsByMaster', 'TemplatesDetailsAPIController@getTemplatesDetailsByMaster');
+    Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
     Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
     Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
     Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
+    Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
     Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
+    Route::post('getBudgetTransferApprovedByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovedByUser');
+    Route::post('getBudgetTransferApprovalByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovalByUser');
+    Route::get('getBudgetTransferAudit', 'BudgetTransferFormAPIController@getBudgetTransferAudit');
+    Route::post('budgetTransferReopen', 'BudgetTransferFormAPIController@budgetTransferReopen');
     Route::post('getBudgetTransferMasterByCompany', 'BudgetTransferFormAPIController@getBudgetTransferMasterByCompany');
     Route::get('getBudgetTransferFormData', 'BudgetTransferFormAPIController@getBudgetTransferFormData');
     Route::resource('budget_transfer_details', 'BudgetTransferFormDetailAPIController');
     Route::get('getDetailsByBudgetTransfer', 'BudgetTransferFormDetailAPIController@getDetailsByBudgetTransfer');
 
+    Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
+    Route::resource('audit_trails', 'AuditTrailAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1047,10 +1061,8 @@ Route::get('runQueue', function () {
 });
 
 Route::get('runQueueSR', function () {
-    $stMaster = \App\Models\StockTransfer::where('stockTransferAutoID', 2920)->first();
-    $job = \App\Jobs\CreateStockReceive::dispatch($stMaster);
-    //$srMaster  = \App\Models\StockReceive::where('stockReceiveAutoID',2846)->first();
-    //$job = \App\Jobs\CreateSupplierInvoice::dispatch($srMaster);
+    $bt = \App\Models\BudgetTransferForm::find(463);
+    $job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
 
 Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
@@ -1064,3 +1076,5 @@ Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
 Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
 Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
 Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
+
+

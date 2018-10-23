@@ -124,8 +124,8 @@ class BudgetTransferFormDetail extends Model
 
     public $table = 'erp_budgettransferformdetail';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const CREATED_AT = 'timestamp';
+    const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = 'budgetTransferFormDetailAutoID';
 
@@ -205,4 +205,8 @@ class BudgetTransferFormDetail extends Model
         return $this->belongsTo('App\Models\TemplatesDetails', 'toTemplateDetailID', 'templatesDetailsAutoID');
     }
 
+    public function master()
+    {
+        return $this->belongsTo('App\Models\BudgetTransferForm', 'budgetTransferFormAutoID', 'budgetTransferFormAutoID');
+    }
 }

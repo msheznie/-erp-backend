@@ -280,7 +280,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if ($input["supplierPaymentAmount"] > $paymentBalancedAmount) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
-        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15) {
+        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
             //debit note
             if ($input["supplierPaymentAmount"] < $paymentBalancedAmount) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
@@ -318,7 +318,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 1]);
             }
-        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15) {
+        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
             if ($totalPaidAmount == 0) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 0]);
@@ -410,7 +410,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                         ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
                 }
-            } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15) {
+            } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
                 if ($totalPaidAmount == 0) {
                     $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                         ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
@@ -475,7 +475,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                         $updatePayment = AccountsPayableLedger::find($val->apAutoID)
                             ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
                     }
-                } else if ($val->addedDocumentSystemID == 15) {
+                } else if ($val->addedDocumentSystemID == 15 || $val->addedDocumentSystemID == 24) {
                     if ($totalPaidAmount == 0) {
                         $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                             ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
@@ -550,7 +550,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $item['addedDocumentSystemID'])->where('companySystemID', $item['companySystemID'])->where('documentSystemCode', $item['bookingInvSystemCode'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                     if ($glCheck) {
-                        if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                        if (round($glCheck->SumOfdocumentLocalAmount) != 0 || round($glCheck->SumOfdocumentRptAmount) != 0) {
                             array_push($finalError['gl_amount_not_matching'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
                             $error_count++;
                         }
@@ -688,6 +688,25 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
         }
 
+        //check record total in General Ledger table
+        foreach ($input['detailTable'] as $itemExist) {
+
+            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
+
+                $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $itemExist['addedDocumentSystemID'])->where('companySystemID', $itemExist['companySystemID'])->where('documentSystemCode', $itemExist['bookingInvSystemCode'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
+
+                if ($glCheck) {
+                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                        $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
+                        $itemExistArray[] = [$itemDrt];
+                    }
+                } else {
+                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
+                    $itemExistArray[] = [$itemDrt];
+                }
+            }
+        }
+
         if (!empty($itemExistArray)) {
             return $this->sendError($itemExistArray, 422);
         }
@@ -778,7 +797,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if ($input["supplierPaymentAmount"] > $paymentBalancedAmount) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
-        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15) {
+        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
             //debit note
             if ($input["supplierPaymentAmount"] < $paymentBalancedAmount) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
@@ -818,7 +837,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 1]);
             }
-        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15) {
+        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
             if ($totalPaidAmount == 0) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 0]);

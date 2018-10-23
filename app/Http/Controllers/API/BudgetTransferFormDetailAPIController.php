@@ -12,15 +12,19 @@
  */
 
 
-
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBudgetTransferFormDetailAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTransferFormDetailAPIRequest;
 use App\Models\BudgetTransferFormDetail;
+use App\Models\Budjetdetails;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\SegmentMaster;
 use App\Repositories\BudgetTransferFormDetailRepository;
+use App\Repositories\BudgetTransferFormRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -29,15 +33,16 @@ use Response;
  * Class BudgetTransferFormDetailController
  * @package App\Http\Controllers\API
  */
-
 class BudgetTransferFormDetailAPIController extends AppBaseController
 {
     /** @var  BudgetTransferFormDetailRepository */
     private $budgetTransferFormDetailRepository;
+    private $budgetTransferFormRepository;
 
-    public function __construct(BudgetTransferFormDetailRepository $budgetTransferFormDetailRepo)
+    public function __construct(BudgetTransferFormDetailRepository $budgetTransferFormDetailRepo, BudgetTransferFormRepository $budgetTransferFormRepo)
     {
         $this->budgetTransferFormDetailRepository = $budgetTransferFormDetailRepo;
+        $this->budgetTransferFormRepository = $budgetTransferFormRepo;
     }
 
     /**
@@ -122,6 +127,201 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
     public function store(CreateBudgetTransferFormDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'budgetTransferFormAutoID' => 'required',
+            'fromTemplateDetailID' => 'required|numeric|min:1',
+            'fromServiceLineSystemID' => 'required|numeric|min:1',
+            'fromChartOfAccountSystemID' => 'required|numeric|min:1',
+            'toTemplateDetailID' => 'required|numeric|min:1',
+            'toServiceLineSystemID' => 'required|numeric|min:1',
+            'toChartOfAccountSystemID' => 'required|numeric|min:1',
+            'adjustmentAmountRpt' => 'required|numeric',
+            'remarks' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+        $budgetTransferMaster = $this->budgetTransferFormRepository->find($input['budgetTransferFormAutoID']);
+
+        if (empty($budgetTransferMaster)) {
+            return $this->sendError('Budget Transfer not found');
+        }
+
+        $masterValidate = \Validator::make($budgetTransferMaster->toArray(), [
+            'year' => 'required',
+            'templatesMasterAutoID' => 'required',
+        ]);
+
+        if ($masterValidate->fails()) {
+            return $this->sendError($masterValidate->messages(), 422);
+        }
+
+        if ($input['fromTemplateDetailID'] == $input['toTemplateDetailID']
+            && $input['fromChartOfAccountSystemID'] == $input['toChartOfAccountSystemID']
+            && $input['fromServiceLineSystemID'] == $input['toServiceLineSystemID']
+        ) {
+            return $this->sendError('You cannot transfer to same account, Please select different accounts', 500);
+        }
+
+
+        $fromDataBudgetCheck = Budjetdetails::where('companySystemID', $budgetTransferMaster->companySystemID)
+                                            ->where('chartOfAccountID',$input['fromChartOfAccountSystemID'])
+                                            ->where('serviceLineSystemID',$input['fromServiceLineSystemID'])
+                                            ->where('templateDetailID',$input['fromTemplateDetailID'])
+                                            ->where('Year',$budgetTransferMaster->year)
+                                            ->count();
+
+        if($fromDataBudgetCheck == 0){
+            return $this->sendError('There is no budget added for from account', 500);
+        }
+
+
+        $toDataBudgetCheck = Budjetdetails::where('companySystemID', $budgetTransferMaster->companySystemID)
+                                            ->where('chartOfAccountID',$input['toChartOfAccountSystemID'])
+                                            ->where('serviceLineSystemID',$input['toServiceLineSystemID'])
+                                            ->where('templateDetailID',$input['toTemplateDetailID'])
+                                            ->where('Year',$budgetTransferMaster->year)
+                                            ->count();
+
+        if($toDataBudgetCheck == 0){
+            return $this->sendError('There is no budget added for to account', 500);
+        }
+
+        $checkSameEntry = $this->budgetTransferFormDetailRepository->findWhere(['budgetTransferFormAutoID' => $input['budgetTransferFormAutoID'],
+                                                                                'fromTemplateDetailID' => $input['fromTemplateDetailID'],
+                                                                                'toTemplateDetailID' => $input['toTemplateDetailID'],
+                                                                                'fromChartOfAccountSystemID' => $input['fromChartOfAccountSystemID'],
+                                                                                'toChartOfAccountSystemID' => $input['toChartOfAccountSystemID'],
+                                                                                'toServiceLineSystemID' => $input['toServiceLineSystemID'],
+                                                                                'fromServiceLineSystemID' => $input['fromServiceLineSystemID']]);
+
+        if (count($checkSameEntry) > 0) {
+            return $this->sendError("Selected item is already added. Please check again", 500);
+        }
+
+        $checkPending = BudgetTransferFormDetail::where('fromTemplateDetailID', $input['fromTemplateDetailID'])
+            ->where('fromChartOfAccountSystemID', $input['fromChartOfAccountSystemID'])
+            ->whereHas('master',function ($q) use ($budgetTransferMaster) {
+                $q->where('companySystemID', $budgetTransferMaster->companySystemID)
+                    ->where('year', $budgetTransferMaster->year)
+                    ->where('approvedYN', 0);
+            })
+            ->with(['master'])
+            ->first();
+
+        if (!empty($checkPending)) {
+            return $this->sendError("There is a Budget Transfer (" . $checkPending->master->transferVoucherNo . ") pending for approval for the item you are trying to add. Please check again.", 500);
+        }
+
+          $checkBalance = Budjetdetails::select(DB::raw("
+                                       (SUM(budjetAmtLocal) * -1) as totalLocal,
+                                       (SUM(budjetAmtRpt) * -1) as totalRpt,
+                                       chartofaccounts.AccountCode,chartofaccounts.AccountDescription,
+                                       erp_templatesdetails.templateDetailDescription,
+                                       erp_templatesdetails.templatesMasterAutoID,
+                                       erp_budjetdetails.*
+                                       ,ifnull(ca.consumed_amount,0) as consumed_amount
+                                       ,ifnull(ppo.rptAmt,0) as pending_po_amount,
+                                       (SUM(budjetAmtRpt) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance
+                                       "))
+            ->where('erp_budjetdetails.companySystemID', $budgetTransferMaster->companySystemID)
+            ->where('erp_budjetdetails.serviceLineSystemID', $input['fromServiceLineSystemID'])
+            ->where('erp_budjetdetails.Year', $budgetTransferMaster->year)
+            ->where('erp_budjetdetails.templateDetailID', $input['fromTemplateDetailID'])
+            ->where('erp_templatesdetails.templatesMasterAutoID', $budgetTransferMaster->templatesMasterAutoID)
+            ->where('erp_budjetdetails.chartOfAccountID', $input['fromChartOfAccountSystemID'])
+            ->leftJoin('chartofaccounts', 'chartOfAccountID', '=', 'chartOfAccountSystemID')
+            ->leftJoin('erp_templatesdetails', 'templateDetailID', '=', 'templatesDetailsAutoID')
+            ->leftJoin(DB::raw('(SELECT erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID,
+                                                erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year, 
+                                                Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM
+                                                erp_budgetconsumeddata WHERE erp_budgetconsumeddata.consumeYN = -1 
+                                                GROUP BY erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID, 
+                                                erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year) as ca'),
+                function ($join) {
+                    $join->on('erp_budjetdetails.companySystemID', '=', 'ca.companySystemID')
+                        ->on('erp_budjetdetails.serviceLineSystemID', '=', 'ca.serviceLineSystemID')
+                        ->on('erp_budjetdetails.Year', '=', 'ca.Year')
+                        ->on('erp_budjetdetails.chartOfAccountID', '=', 'ca.chartOfAccountID');
+                })
+            ->leftJoin(DB::raw('(SELECT erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, 
+                               erp_purchaseorderdetails.financeGLcodePLSystemID, Sum(GRVcostPerUnitLocalCur * noQty) AS localAmt, 
+                               Sum(GRVcostPerUnitComRptCur * noQty) AS rptAmt, erp_purchaseorderdetails.budgetYear FROM 
+                               erp_purchaseordermaster INNER JOIN erp_purchaseorderdetails ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID WHERE (((erp_purchaseordermaster.approved)=0) 
+                               AND ((erp_purchaseordermaster.poCancelledYN)=0))GROUP BY erp_purchaseordermaster.companySystemID, erp_purchaseordermaster.serviceLineSystemID, erp_purchaseorderdetails.financeGLcodePL, erp_purchaseorderdetails.budgetYear HAVING 
+                               (((erp_purchaseorderdetails.financeGLcodePLSystemID) Is Not Null))) as ppo'),
+                function ($join) {
+                    $join->on('erp_budjetdetails.companySystemID', '=', 'ppo.companySystemID')
+                        ->on('erp_budjetdetails.serviceLineSystemID', '=', 'ppo.serviceLineSystemID')
+                        ->on('erp_budjetdetails.Year', '=', 'ppo.budgetYear')
+                        ->on('erp_budjetdetails.chartOfAccountID', '=', 'ppo.financeGLcodePLSystemID');
+                })
+            ->groupBy(['erp_budjetdetails.companySystemID', 'erp_budjetdetails.serviceLineSystemID',
+                'erp_budjetdetails.chartOfAccountID', 'erp_budjetdetails.Year'])
+            ->get();
+
+        if (count($checkBalance) > 0) {
+            if ($input['adjustmentAmountRpt'] > $checkBalance[0]->balance) {
+                return $this->sendError('You cannot transfer more then the balance amount, Balance amount is ' . $checkBalance[0]->balance, 500);
+            }
+        }
+
+        $input['year'] = $budgetTransferMaster->year;
+
+        $fromDepartment = SegmentMaster::where('companySystemID', $budgetTransferMaster->companySystemID)
+            ->where('serviceLineSystemID', $input['fromServiceLineSystemID'])
+            ->first();
+
+        if (empty($fromDepartment)) {
+            return $this->sendError('From Department not found');
+        }
+
+        if ($fromDepartment->isActive == 0) {
+            return $this->sendError('Please select an active from department', 500);
+        }
+
+        $input['fromServiceLineCode'] = $fromDepartment->ServiceLineCode;
+
+        $toDepartment = SegmentMaster::where('companySystemID', $budgetTransferMaster->companySystemID)
+            ->where('serviceLineSystemID', $input['toServiceLineSystemID'])
+            ->first();
+
+        if (empty($toDepartment)) {
+            return $this->sendError('To Department not found');
+        }
+
+        if ($toDepartment->isActive == 0) {
+            return $this->sendError('Please select an active to department', 500);
+        }
+
+        $input['toServiceLineCode'] = $toDepartment->ServiceLineCode;
+
+        $fromChartOfAccount = ChartOfAccountsAssigned::where('companySystemID', $budgetTransferMaster->companySystemID)
+            ->where('chartOfAccountSystemID', $input['fromChartOfAccountSystemID'])
+            ->first();
+
+        if (empty($fromChartOfAccount)) {
+            return $this->sendError('From Account Code not found');
+        }
+
+        $input['FromGLCode'] = $fromChartOfAccount->AccountCode;
+        $input['FromGLCodeDescription'] = $fromChartOfAccount->AccountDescription;
+
+
+        $toChartOfAccount = ChartOfAccountsAssigned::where('companySystemID', $budgetTransferMaster->companySystemID)
+            ->where('chartOfAccountSystemID', $input['toChartOfAccountSystemID'])->first();
+
+        if (empty($toChartOfAccount)) {
+            return $this->sendError('To Account Code not found');
+        }
+
+        $input['toGLCode'] = $toChartOfAccount->AccountCode;
+        $input['toGLCodeDescription'] = $toChartOfAccount->AccountDescription;
+
+        $currency = \Helper::currencyConversion($budgetTransferMaster->companySystemID, 2, 2, $input['adjustmentAmountRpt']);
+        $input['adjustmentAmountLocal'] = $currency['localAmount'];
 
         $budgetTransferFormDetails = $this->budgetTransferFormDetailRepository->create($input);
 
@@ -298,7 +498,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $id = $input['budgetTransferFormAutoID'];
 
         $items = BudgetTransferFormDetail::where('budgetTransferFormAutoID', $id)
-            ->with(['from_segment','to_segment','from_template','to_template'])
+            ->with(['from_segment', 'to_segment', 'from_template', 'to_template'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Budget Transfer Form Detail retrieved successfully');
