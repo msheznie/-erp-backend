@@ -395,7 +395,6 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $custReceivePaymentAutoID = $input['custReceivePaymentAutoID'];
 
-
         $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->first();
         $detail = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->where('bookingInvCode', 0)->first();
         if ($detail) {
@@ -688,29 +687,29 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
-        if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
+        if ($paySupplierInvoiceDetail->addedDocumentSystemID == 19) {
             if ($totalPaidAmount == 0) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 0]);
             } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 2]);
             } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 1]);
             }
-        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15) {
+        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 20) {
             if ($totalPaidAmount == 0) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 0]);
             } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 2]);
             } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount < $totalPaidAmount) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 1]);
             } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) {
-                $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 2]);
             }
         }

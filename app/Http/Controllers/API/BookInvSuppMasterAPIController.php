@@ -653,7 +653,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $getTotal = BookInvSuppDet::where('purchaseOrderID', $row['purchaseOrderID'])
                             ->sum('totTransactionAmount');
 
-                        if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) {
+                        if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)  || round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) >= round($getTotal, $documentCurrencyDecimalPlace)) {
                             $poMasterTableTotal->invoicedBooked = 2;
                         } else if ($getTotal != 0) {
                             $poMasterTableTotal->invoicedBooked = 1;

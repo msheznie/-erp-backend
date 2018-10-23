@@ -16,7 +16,6 @@ use Response;
  * Class AssetDisposalDetailController
  * @package App\Http\Controllers\API
  */
-
 class AssetDisposalDetailAPIController extends AppBaseController
 {
     /** @var  AssetDisposalDetailRepository */
@@ -277,5 +276,14 @@ class AssetDisposalDetailAPIController extends AppBaseController
         $assetDisposalDetail->delete();
 
         return $this->sendResponse($id, 'Asset Disposal Detail deleted successfully');
+    }
+
+    function getAssetDisposalDetail(Request $request)
+    {
+        $assetDisposalDetail = AssetDisposalDetail::OfMaster($request->assetdisposalMasterAutoID)->with('segment_by')->get();
+        if (empty($assetDisposalDetail)) {
+            return $this->sendError('Asset Disposal Detail not found');
+        }
+        return $this->sendResponse($assetDisposalDetail->toArray(), 'Asset Disposal Detail retrieved successfully');
     }
 }

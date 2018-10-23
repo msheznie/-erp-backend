@@ -132,10 +132,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
             'companyFinanceYearID' => 'required',
             'companyFinancePeriodID' => 'required',
             'narration' => 'required',
-            'toCompanySystemID' => 'required',
             'disposalType' => 'required',
             'disposalDocumentDate' => 'required|date',
-            'customerID' => 'required',
         ]);
 
         if ($validator->fails()) {//echo 'in';exit;
@@ -316,6 +314,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
     public function update($id, UpdateAssetDisposalMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
 
         /** @var AssetDisposalMaster $assetDisposalMaster */
         $assetDisposalMaster = $this->assetDisposalMasterRepository->findWithoutFail($id);
@@ -380,7 +379,6 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Asset Disposal Master deleted successfully');
     }
-
 
 
     /**
@@ -497,4 +495,5 @@ class AssetDisposalMasterAPIController extends AppBaseController
         );
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
+
 }
