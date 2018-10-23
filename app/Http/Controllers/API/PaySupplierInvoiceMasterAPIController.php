@@ -1065,7 +1065,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function getPOPaymentForPV(Request $request)
     {
         $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["PayMasterAutoId"]);
-
+        $BPVdate = Carbon::parse($paySupplierInvoiceMaster->BPVdate)->format('Y-m-d');
         $sql = 'SELECT
 	erp_accountspayableledger.apAutoID,
 	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
@@ -1134,7 +1134,7 @@ WHERE
 	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
 WHERE
 	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 ) 
-	AND erp_accountspayableledger.documentDate <= "' . $paySupplierInvoiceMaster->BPVdate . '" 
+	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%d-%m") <= "' . $BPVdate . '" 
 	AND erp_accountspayableledger.selectedToPaymentInv = 0 
 	AND erp_accountspayableledger.fullyInvoice <> 2 
 	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
