@@ -240,6 +240,8 @@ class PoAddonsAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $input = array_except($input, ['category']);
+
         $input = $this->convertArrayToValue($input);
 
         /** @var PoAddons $poAddons */
@@ -317,11 +319,13 @@ class PoAddonsAPIController extends AppBaseController
         return $this->sendResponse($id, 'Po Addons deleted successfully');
     }
 
+
     public function getProcumentOrderAddons(Request $request)
     {
         $input = $request->all();
 
         $orderAddons = PoAddons::where('poId', $input['purchaseOrderID'])
+            ->with(['category'])
             ->orderBy('idpoAddons', 'DESC')
             ->get();
 
