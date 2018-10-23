@@ -336,7 +336,7 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
 	unbilledMaster.purchaseOrderID,
 	unbilledMaster.supplierID,
     currency.DecimalPlaces,
-	(unbilledMaster.totTransactionAmount - bookdetail.SumOftotTransactionAmount) as balanceAmount
+    (unbilledMaster.totTransactionAmount - (IFNULL(bookdetail.SumOftotTransactionAmount,0))) as balanceAmount
 FROM
 	erp_unbilledgrvgroupby AS unbilledMaster
 INNER JOIN currencymaster AS currency ON unbilledMaster.supplierTransactionCurrencyID = currency.currencyID
@@ -345,8 +345,11 @@ AND grvmaster.interCompanyTransferYN = 0
 LEFT JOIN (
 	SELECT
 		erp_bookinvsuppdet.unbilledgrvAutoID,
-		Sum(
-			erp_bookinvsuppdet.totTransactionAmount
+		IFNULL(
+			Sum(
+				erp_bookinvsuppdet.totTransactionAmount
+			),
+			0
 		) AS SumOftotTransactionAmount
 	FROM
 		erp_bookinvsuppdet

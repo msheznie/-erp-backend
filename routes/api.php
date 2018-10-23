@@ -854,6 +854,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
     Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
     Route::get('getReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@getReceiptVoucherMatchDetails');
+    Route::post('addReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@addReceiptVoucherMatchDetails');
     Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords');
     Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown');
 
@@ -990,6 +991,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('assetDepreciationReopen', 'FixedAssetDepreciationMasterAPIController@assetDepreciationReopen');
     Route::post('getAssetDepApprovalByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovalByUser');
     Route::post('getAssetDepApprovedByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovedByUser');
+    Route::post('updateReceiptVoucherMatchDetail', 'CustomerReceivePaymentDetailAPIController@updateReceiptVoucherMatchDetail');
 
     Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
 
