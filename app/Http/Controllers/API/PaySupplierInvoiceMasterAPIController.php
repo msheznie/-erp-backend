@@ -486,7 +486,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['chequePaymentYN'] = 0;
             }
 
-
             $warningMessage = '';
 
             if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
@@ -589,7 +588,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                     $updatePayment->fullyInvoice = 1;
                                     $updatePayment->save();
                                 }
-                            } else if ($val->addedDocumentSystemID == 15) {
+                            } else if ($val->addedDocumentSystemID == 15 || $val->addedDocumentSystemID == 24) {
                                 if ($val->supplierInvoiceAmount < $totalPaidAmount) {
                                     $updatePayment->selectedToPaymentInv = 0;
                                     $updatePayment->fullyInvoice = 1;
@@ -1094,7 +1093,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 	CurrencyCode,
 	DecimalPlaces,
 	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
-	IFNULL(supplierInvoiceAmount,0) - IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
+	IFNULL(supplierInvoiceAmount,0) - IFNULL(sid.SumOfsupplierPaymentAmount,0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
 	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
 	false as isChecked 
 FROM
@@ -1360,7 +1359,7 @@ HAVING
             }
 
             $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
-                'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+                'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1, 'BPVchequeNo' => 0];
 
             $this->paySupplierInvoiceMasterRepository->update($updateInput, $id);
 
