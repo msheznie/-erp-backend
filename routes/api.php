@@ -215,6 +215,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
     Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
     Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
+    Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
     Route::get('getAssignedCompaniesByCustomer', 'CustomerMasterAPIController@getAssignedCompaniesByCustomer');
     Route::resource('customer_assigneds', 'CustomerAssignedAPIController');
     Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
@@ -1007,6 +1008,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
     Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
     Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
+    Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
     Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
     Route::post('getBudgetTransferApprovedByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovedByUser');
