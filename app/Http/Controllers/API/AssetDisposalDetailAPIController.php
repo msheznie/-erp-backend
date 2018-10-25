@@ -8,6 +8,7 @@ use App\Models\AssetDisposalDetail;
 use App\Repositories\AssetDisposalDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -108,8 +109,39 @@ class AssetDisposalDetailAPIController extends AppBaseController
     public function store(CreateAssetDisposalDetailAPIRequest $request)
     {
         $input = $request->all();
+        DB::beginTransaction();
+        try {
 
-        $assetDisposalDetails = $this->assetDisposalDetailRepository->create($input);
+            foreach ($input['detailTable'] as $new) {
+                if ($new['isChecked']) {
+                    $tempArray = [];
+                    $tempArray["assetdisposalMasterAutoID"] = $input["assetdisposalMasterAutoID"];
+                    $tempArray["companySystemID"] = $input["companySystemID"];
+                    $tempArray["companyID"] = $input["companyID"];
+                    $tempArray["serviceLineSystemID"] = $input["serviceLineSystemID"];
+                    $tempArray["serviceLineCode"] = $input["serviceLineCode"];
+                    $tempArray["itemCode"] = $new["itemCode"];
+                    $tempArray["faID"] = $new["faID"];
+                    $tempArray["faCode"] = $new["faCode"];
+                    $tempArray["faUnitSerialNo"] = $new["faUnitSerialNo"];
+                    $tempArray["assetDescription"] = $new["assetDescription"];
+                    $tempArray["COSTUNIT"] = $new["COSTUNIT"];
+                    $tempArray["costUnitRpt"] = $new["costUnitRpt"];
+                    $tempArray["costUnitRpt"] = $new["costUnitRpt"];
+
+                    unset($tempArray['isChecked']);
+
+                    $assetDisposalDetails = $this->assetDisposalDetailRepository->create($input);
+
+                }
+            }
+
+            DB::commit();
+            return $this->sendResponse('', 'Payment details saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
 
         return $this->sendResponse($assetDisposalDetails->toArray(), 'Asset Disposal Detail saved successfully');
     }

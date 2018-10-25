@@ -511,11 +511,11 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $assets = FixedAssetMaster::with(['depperiod_by' => function ($query) use ($input) {
+        $assets = FixedAssetMaster::selectRaw('*,false as isChecked')->with(['depperiod_by' => function ($query) use ($input) {
             $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
             $query->where('companySystemID', $input['companySystemID']);
             $query->groupBy('faID');
-        }])->isDisposed()->ofCompany($input['companySystemID'])->IsSelectedForDisposal();
+        }])->isDisposed()->ofCompany([$input['companySystemID']])->isSelectedForDisposal();
 
         $search = $request->input('search.value');
 
