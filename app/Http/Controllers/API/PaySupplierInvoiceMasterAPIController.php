@@ -1168,7 +1168,7 @@ WHERE
 	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
 WHERE
 	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 ) 
-	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%d-%m") <= "' . $BPVdate . '" 
+	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '" 
 	AND erp_accountspayableledger.selectedToPaymentInv = 0 
 	AND erp_accountspayableledger.fullyInvoice <> 2 
 	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
