@@ -349,6 +349,8 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
 
         $unbilledgrvAutoID = $bookInvSuppDet->unbilledgrvAutoID;
+        $poMasterAutoID = $bookInvSuppDet->purchaseOrderID;
+        $documentCurrencyDecimalPlace =  $bookInvSuppDet->supplierTransactionCurrencyID;
 
         $bookInvSuppDet->delete();
 
@@ -368,6 +370,23 @@ class BookInvSuppDetAPIController extends AppBaseController
                     'fullyBooked' => 1
                 ]);
         }
+
+        // updating po master flag
+        $poMasterTableTotal = ProcumentOrder::find($poMasterAutoID);
+
+        $getTotal = BookInvSuppDet::where('purchaseOrderID', $poMasterAutoID)
+            ->sum('totTransactionAmount');
+
+        if (round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) == round($getTotal, $documentCurrencyDecimalPlace)) {
+            $poMasterTableTotal->invoicedBooked = 2;
+        } else if(round($poMasterTableTotal->poTotalSupplierTransactionCurrency, $documentCurrencyDecimalPlace) <= round($getTotal, $documentCurrencyDecimalPlace)){
+            $poMasterTableTotal->invoicedBooked = 2;
+        } else if ($getTotal != 0) {
+            $poMasterTableTotal->invoicedBooked = 1;
+        } else if ($getTotal == 0) {
+            $poMasterTableTotal->invoicedBooked = 0;
+        }
+        $poMasterTableTotal->save();
 
         return $this->sendResponse($id, 'Book Inv Supp Det deleted successfully');
     }
@@ -402,25 +421,9 @@ class BookInvSuppDetAPIController extends AppBaseController
 
                 if (!empty($siDetailExist)) {
                     foreach ($siDetailExist as $row) {
-                        $itemDrt = $row['grvPrimaryCode'] . " already exist";
+                        $itemDrt = "The GRV you are trying to add already added to this invoice";
                         $itemExistArray[] = [$itemDrt];
                     }
-                }
-            }
-        }
-
-        //check record exist in General Ledger table
-        foreach ($input['detailTable'] as $itemExist) {
-
-            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
-                $siDetailExistGL = GeneralLedger::where('documentSystemID', 3)
-                    ->where('companySystemID', $itemExist['companySystemID'])
-                    ->where('documentSystemCode', $itemExist['grvAutoID'])
-                    ->first();
-
-                if (empty($siDetailExistGL)) {
-                    $itemDrt = "Selected GRV " . $itemExist['grvPrimaryCode'] . " is not updated in general ledger. Please check again";
-                    $itemExistArray[] = [$itemDrt];
                 }
             }
         }
@@ -433,7 +436,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', 3)->where('companySystemID', $itemExist['companySystemID'])->where('documentSystemCode', $itemExist['grvAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
-                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         $itemDrt = "Selected GRV " . $itemExist['grvPrimaryCode'] . " is not updated in general ledger. Please check again";
                         $itemExistArray[] = [$itemDrt];
                     }

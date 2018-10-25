@@ -4142,13 +4142,19 @@ FROM
 
         $nowTime = time();
 
+        $orderAddons = PoAddons::where('poId', $procumentOrderUpdate->purchaseOrderID)
+            ->with(['category'])
+            ->orderBy('idpoAddons', 'DESC')
+            ->get();
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
             'termsCond' => $typeID,
             'numberFormatting' => $decimal,
             'title' => $documentTitle,
-            'paymentTermsView' => $paymentTermsView
+            'paymentTermsView' => $paymentTermsView,
+            'addons' => $orderAddons
 
         );
         $html = view('print.purchase_order_print_pdf', $order);
