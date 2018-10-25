@@ -14,11 +14,13 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAssetDisposalMasterAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalMasterAPIRequest;
+use App\Models\AssetDisposalDetail;
 use App\Models\AssetDisposalMaster;
 use App\Models\AssetDisposalType;
 use App\Models\Company;
 use App\Models\CustomerAssigned;
 use App\Models\DocumentMaster;
+use App\Models\FixedAssetMaster;
 use App\Models\Months;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -26,6 +28,7 @@ use App\Repositories\AssetDisposalMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -256,7 +259,11 @@ class AssetDisposalMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var AssetDisposalMaster $assetDisposalMaster */
-        $assetDisposalMaster = $this->assetDisposalMasterRepository->findWithoutFail($id);
+        $assetDisposalMaster = $this->assetDisposalMasterRepository->with(['confirmed_by', 'financeperiod_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'financeyear_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($assetDisposalMaster)) {
             return $this->sendError('Asset Disposal Master not found');
@@ -313,19 +320,83 @@ class AssetDisposalMasterAPIController extends AppBaseController
      */
     public function update($id, UpdateAssetDisposalMasterAPIRequest $request)
     {
-        $input = $request->all();
-        $input = $this->convertArrayToValue($input);
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input = $this->convertArrayToValue($input);
 
-        /** @var AssetDisposalMaster $assetDisposalMaster */
-        $assetDisposalMaster = $this->assetDisposalMasterRepository->findWithoutFail($id);
+            /** @var AssetDisposalMaster $assetDisposalMaster */
+            $assetDisposalMaster = $this->assetDisposalMasterRepository->findWithoutFail($id);
 
-        if (empty($assetDisposalMaster)) {
-            return $this->sendError('Asset Disposal Master not found');
+            if (empty($assetDisposalMaster)) {
+                return $this->sendError('Asset Disposal Master not found');
+            }
+
+            $companySystemID = $assetDisposalMaster->companySystemID;
+            $documentSystemID = $assetDisposalMaster->documentSystemID;
+
+            if ($assetDisposalMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+                $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+                if (!$companyFinanceYear["success"]) {
+                    return $this->sendError($companyFinanceYear["message"], 500, ['type' => 'confirm']);
+                } else {
+                    $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                    $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+                }
+
+                $inputParam = $input;
+                $inputParam["departmentSystemID"] = 9;
+                $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                if (!$companyFinancePeriod["success"]) {
+                    return $this->sendError($companyFinancePeriod["message"], 500, ['type' => 'confirm']);
+                } else {
+                    $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                    $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+                }
+
+                unset($inputParam);
+
+                $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
+
+                $monthBegin = $input['FYPeriodDateFrom'];
+                $monthEnd = $input['FYPeriodDateTo'];
+
+                if (($input['disposalDocumentDate'] >= $monthBegin) && ($input['disposalDocumentDate'] <= $monthEnd)) {
+                } else {
+                    return $this->sendError('Asset Disposal date is not within financial period!', 500, ['type' => 'confirm']);
+                }
+
+                $disposalDetailExist = AssetDisposalDetail::with('asset_by')->where('assetdisposalMasterAutoID', $id)->get();
+
+                if (empty($disposalDetailExist)) {
+                    return $this->sendError('Asset disposal document cannot confirm without details', 500, ['type' => 'confirm']);
+                }
+
+                foreach ($disposalDetailExist as $val) {
+                    if (empty($val->asset_by->itemCode) || $val->asset_by->itemCode == 0) {
+                        return $this->sendError('There are few assets not linked to an item code. Please link it before you confirm', 500, ['type' => 'confirm']);
+                    }
+                }
+
+                $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
+                }
+            }
+
+            $input['modifiedPc'] = gethostname();
+            $input['modifiedUser'] = \Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+
+            $assetDisposalMaster = $this->assetDisposalMasterRepository->update($input, $id);
+            DB::commit();
+            return $this->sendResponse($assetDisposalMaster->toArray(), 'AssetDisposalMaster updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
         }
-
-        $assetDisposalMaster = $this->assetDisposalMasterRepository->update($input, $id);
-
-        return $this->sendResponse($assetDisposalMaster->toArray(), 'AssetDisposalMaster updated successfully');
     }
 
     /**
@@ -494,6 +565,46 @@ class AssetDisposalMasterAPIController extends AppBaseController
             'companies' => $companies,
         );
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    function getAllAssetsForDisposal(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $assets = FixedAssetMaster::selectRaw('*,false as isChecked')->with(['depperiod_by' => function ($query) use ($input) {
+            $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+            $query->where('companySystemID', $input['companySystemID']);
+            $query->groupBy('faID');
+        }])->isDisposed()->ofCompany([$input['companySystemID']])->isSelectedForDisposal();
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assets = $assets->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%");
+                $query->orWhere('assetDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($assets)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
 }

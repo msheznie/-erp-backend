@@ -170,6 +170,9 @@ class AssetDisposalMaster extends Model
         'createdUserSystemID',
         'createdUserID',
         'createdDateTime',
+        'modifiedUserSystemID',
+        'modifiedUser',
+        'modifiedPc',
         'timestamp'
     ];
 
@@ -204,7 +207,10 @@ class AssetDisposalMaster extends Model
         'refferedBackYN' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'createdUserSystemID' => 'integer',
-        'createdUserID' => 'string'
+        'createdUserID' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUser' => 'string',
+        'modifiedPc' => 'string',
     ];
 
     /**
@@ -249,5 +255,14 @@ class AssetDisposalMaster extends Model
         return $this->belongsTo('App\Models\AssetDisposalType', 'disposalType', 'disposalTypesID');
     }
 
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
     
 }
