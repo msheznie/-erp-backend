@@ -170,6 +170,9 @@ class AssetDisposalMaster extends Model
         'createdUserSystemID',
         'createdUserID',
         'createdDateTime',
+        'modifiedUserSystemID',
+        'modifiedUser',
+        'modifiedPc',
         'timestamp'
     ];
 
@@ -204,7 +207,10 @@ class AssetDisposalMaster extends Model
         'refferedBackYN' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'createdUserSystemID' => 'integer',
-        'createdUserID' => 'string'
+        'createdUserID' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUser' => 'string',
+        'modifiedPc' => 'string',
     ];
 
     /**
