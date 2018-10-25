@@ -249,5 +249,14 @@ class AssetDisposalMaster extends Model
         return $this->belongsTo('App\Models\AssetDisposalType', 'disposalType', 'disposalTypesID');
     }
 
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
     
 }

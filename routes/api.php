@@ -1009,6 +1009,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
     Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
     Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
+    Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal');
     Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
     Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');

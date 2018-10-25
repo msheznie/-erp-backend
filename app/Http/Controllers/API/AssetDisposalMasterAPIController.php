@@ -19,6 +19,7 @@ use App\Models\AssetDisposalType;
 use App\Models\Company;
 use App\Models\CustomerAssigned;
 use App\Models\DocumentMaster;
+use App\Models\FixedAssetMaster;
 use App\Models\Months;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -256,7 +257,11 @@ class AssetDisposalMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var AssetDisposalMaster $assetDisposalMaster */
-        $assetDisposalMaster = $this->assetDisposalMasterRepository->findWithoutFail($id);
+        $assetDisposalMaster = $this->assetDisposalMasterRepository->with(['confirmed_by', 'financeperiod_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'financeyear_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($assetDisposalMaster)) {
             return $this->sendError('Asset Disposal Master not found');
@@ -494,6 +499,46 @@ class AssetDisposalMasterAPIController extends AppBaseController
             'companies' => $companies,
         );
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    function getAllAssetsForDisposal(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $assets = FixedAssetMaster::with(['depperiod_by' => function ($query) use ($input) {
+            $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+            $query->where('companySystemID', $input['companySystemID']);
+            $query->groupBy('faID');
+        }])->isDisposed()->ofCompany($input['companySystemID'])->IsSelectedForDisposal();
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assets = $assets->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%");
+                $query->orWhere('assetDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($assets)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
 }
