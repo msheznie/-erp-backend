@@ -2688,13 +2688,19 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             }
         }
 
+        $orderAddons = PoAddons::where('poId', $procumentOrder->purchaseOrderID)
+            ->with(['category'])
+            ->orderBy('idpoAddons', 'DESC')
+            ->get();
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
             'numberFormatting' => $decimal,
             'title' => $documentTitle,
             'termsCond' => $typeID,
-            'paymentTermsView' => $paymentTermsView
+            'paymentTermsView' => $paymentTermsView,
+            'addons' => $orderAddons
 
         );
 
@@ -4136,13 +4142,19 @@ FROM
 
         $nowTime = time();
 
+        $orderAddons = PoAddons::where('poId', $procumentOrderUpdate->purchaseOrderID)
+            ->with(['category'])
+            ->orderBy('idpoAddons', 'DESC')
+            ->get();
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
             'termsCond' => $typeID,
             'numberFormatting' => $decimal,
             'title' => $documentTitle,
-            'paymentTermsView' => $paymentTermsView
+            'paymentTermsView' => $paymentTermsView,
+            'addons' => $orderAddons
 
         );
         $html = view('print.purchase_order_print_pdf', $order);
@@ -4184,7 +4196,7 @@ FROM
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName;
+                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName . " ".$procumentOrderUpdate->purchaseOrderCode;
                     $dataEmail['emailAlertMessage'] = $temp;
                     Alert::create($dataEmail);
                 }
@@ -4216,7 +4228,7 @@ FROM
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName;
+                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName. " ".$procumentOrderUpdate->purchaseOrderCode ;
                     $dataEmail['emailAlertMessage'] = $temp;
                     Alert::create($dataEmail);
                 }

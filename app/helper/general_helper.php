@@ -1944,7 +1944,7 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
-            case 11: // This is for unbilled grv
+            case 11: // This is for Supplier Invoice
                 $docInforArr["modelName"] = 'BookInvSuppMaster';
                 $docInforArr["transCurrencyID"] = 'supplierTransactionCurrencyID';
                 $docInforArr["transDefaultCurrencyID"] = 'supplierTransactionCurrencyID';
@@ -2021,15 +2021,14 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
-
-            case 204: // MatchingMaster
-                $docInforArr["modelName"] = 'MatchDocumentMaster';
-                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
-                $docInforArr["transDefaultCurrencyID"] = 'supplierDefCurrencyID';
-                $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
+            case 205: // Receipt Voucher Matching
+                $docInforArr["modelName"] = 'CustomerReceivePaymentDetail';
+                $docInforArr["transCurrencyID"] = 'custTransactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'custTransactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
                 $docInforArr["localCurrencyID"] = 'localCurrencyID';
-                $docInforArr["transCurrencyER"] = 'supplierTransCurrencyER';
-                $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
+                $docInforArr["transCurrencyER"] = 'custTransactionCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyReportingER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;

@@ -569,6 +569,15 @@
                 </tr>
                 {{ $x++ }}
             @endforeach
+            @foreach ($addons as $met)
+                {{ $subTotal += $met->amount }}
+                <tr style="border-bottom: 1px solid black; width: 100%">
+                    <td colspan="2"></td>
+                    <td>{{$met->category->costCatDes}}</td>
+                    <td colspan="6"></td>
+                    <td class="text-right">{{number_format($met->amount, $numberFormatting)}}</td>
+                </tr>
+            @endforeach
             </tbody>
         </table>
     </div>

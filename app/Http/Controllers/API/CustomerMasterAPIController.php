@@ -1,19 +1,19 @@
 <?php
 /**
-=============================================
--- File Name : CustomerMasterAPIController.php
--- Project Name : ERP
--- Module Name :  Customer Master
--- Author : Mohamed Fayas
--- Create date : 19 - March 2018
--- Description : This file contains the all CRUD for Customer Master
--- REVISION HISTORY
--- Date: 19-March 2018 By: Fayas Description: Added new functions named as getAllCustomers()
--- Date: 20-March 2018 By: Fayas Description: Added new functions named as getCustomerFormData(),getAssignedCompaniesByCustomer()
--- Date: 21-June 2018 By: Fayas Description: Added new functions named as getSearchCustomerByCompany()
--- Date: 13-August 2018 By: Fayas Description: Added new functions named as getContractByCustomer()
-
+ * =============================================
+ * -- File Name : CustomerMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Customer Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 19 - March 2018
+ * -- Description : This file contains the all CRUD for Customer Master
+ * -- REVISION HISTORY
+ * -- Date: 19-March 2018 By: Fayas Description: Added new functions named as getAllCustomers()
+ * -- Date: 20-March 2018 By: Fayas Description: Added new functions named as getCustomerFormData(),getAssignedCompaniesByCustomer()
+ * -- Date: 21-June 2018 By: Fayas Description: Added new functions named as getSearchCustomerByCompany()
+ * -- Date: 13-August 2018 By: Fayas Description: Added new functions named as getContractByCustomer()
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerMasterAPIRequest;
@@ -41,14 +41,13 @@ use Illuminate\Support\Facades\Auth;
  * Class CustomerMasterController
  * @package App\Http\Controllers\API
  */
-
 class CustomerMasterAPIController extends AppBaseController
 {
     /** @var  CustomerMasterRepository */
     private $customerMasterRepository;
     private $userRepository;
 
-    public function __construct(CustomerMasterRepository $customerMasterRepo,UserRepository $userRepo)
+    public function __construct(CustomerMasterRepository $customerMasterRepo, UserRepository $userRepo)
     {
         $this->customerMasterRepository = $customerMasterRepo;
         $this->userRepository = $userRepo;
@@ -78,7 +77,8 @@ class CustomerMasterAPIController extends AppBaseController
      * @param Request $request
      * @return Response
      */
-    public function getAllCustomers(Request $request){
+    public function getAllCustomers(Request $request)
+    {
 
         $input = $request->all();
 
@@ -92,20 +92,20 @@ class CustomerMasterAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $childCompanies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $childCompanies = [$companyId];
         }
         $customerMasters = CustomerMaster::with(['country'])
-             //with(['categoryMaster', 'employee', 'supplierCurrency'])
-             //->whereIn('primaryCompanySystemID',$childCompanies)
-             ->select('customermaster.*');
+            //with(['categoryMaster', 'employee', 'supplierCurrency'])
+            //->whereIn('primaryCompanySystemID',$childCompanies)
+            ->select('customermaster.*');
 
         $search = $request->input('search.value');
-        if($search){
-            $customerMasters =   $customerMasters->where(function ($query) use($search) {
-                $query->where('CutomerCode','LIKE',"%{$search}%")
+        if ($search) {
+            $customerMasters = $customerMasters->where(function ($query) use ($search) {
+                $query->where('CutomerCode', 'LIKE', "%{$search}%")
                     ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
                     ->orWhere('CustomerName', 'LIKE', "%{$search}%");
             });
@@ -113,9 +113,8 @@ class CustomerMasterAPIController extends AppBaseController
 
         return \DataTables::eloquent($customerMasters)
             ->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('customerCodeSystem', $input['order'][0]['dir']);
                     }
                 }
@@ -134,7 +133,8 @@ class CustomerMasterAPIController extends AppBaseController
      * @param Request $request
      * @return Response
      */
-    public function getAllCustomerMasterApproval(Request $request){
+    public function getAllCustomerMasterApproval(Request $request)
+    {
 
         $input = $request->all();
 
@@ -148,9 +148,9 @@ class CustomerMasterAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $companyID = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $companyID = [$companyId];
         }
 
@@ -158,37 +158,36 @@ class CustomerMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
 
-        $customerMasters = DB::table('erp_documentapproved')->select('customermaster.*','countrymaster.countryName','erp_documentapproved.documentApprovedID','rollLevelOrder','approvalLevelID','documentSystemCode')->join('employeesdepartments',function ($query) use ($companyID,$empID) {
+        $customerMasters = DB::table('erp_documentapproved')->select('customermaster.*', 'countrymaster.countryName', 'erp_documentapproved.documentApprovedID', 'rollLevelOrder', 'approvalLevelID', 'documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
-                ->where('employeesdepartments.documentSystemID',58)
-                ->whereIn('employeesdepartments.companySystemID',$companyID)
-                ->where('employeesdepartments.employeeSystemID',$empID);
-        })->join('customermaster', function ($query) use ($companyID, $empID,$search) {
-                $query->on('erp_documentapproved.documentSystemCode', '=', 'customerCodeSystem')
-                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
-                    ->whereIn('primaryCompanySystemID', $companyID)
-                    ->where('customermaster.approvedYN', 0)
-                    ->where('customermaster.confirmedYN', 1)
-                    ->when($search != "", function ($q) use($search){
-                        $q->where(function ($query) use($search) {
-                            $query->where('CutomerCode','LIKE',"%{$search}%")
-                                ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
-                                ->orWhere('CustomerName', 'LIKE', "%{$search}%");
-                        });
+                ->where('employeesdepartments.documentSystemID', 58)
+                ->whereIn('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('customermaster', function ($query) use ($companyID, $empID, $search) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'customerCodeSystem')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->whereIn('primaryCompanySystemID', $companyID)
+                ->where('customermaster.approvedYN', 0)
+                ->where('customermaster.confirmedYN', 1)
+                ->when($search != "", function ($q) use ($search) {
+                    $q->where(function ($query) use ($search) {
+                        $query->where('CutomerCode', 'LIKE', "%{$search}%")
+                            ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
+                            ->orWhere('CustomerName', 'LIKE', "%{$search}%");
                     });
-            })->where('erp_documentapproved.approvedYN', 0)
-            ->join('countrymaster', 'customerCountry','=','countryID')
-            ->where('erp_documentapproved.rejectedYN',0)
-            ->where('erp_documentapproved.documentSystemID',58)
-            ->whereIn('erp_documentapproved.companySystemID',$companyID);
+                });
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->join('countrymaster', 'customerCountry', '=', 'countryID')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 58)
+            ->whereIn('erp_documentapproved.companySystemID', $companyID);
 
         return \DataTables::of($customerMasters)
             ->order(function ($query) use ($input) {
-                if (request()->has('order') ) {
-                    if($input['order'][0]['column'] == 0)
-                    {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
                         $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
                     }
                 }
@@ -208,7 +207,8 @@ class CustomerMasterAPIController extends AppBaseController
      * @return Response
      */
 
-    public function getCustomerFormData(Request $request){
+    public function getCustomerFormData(Request $request)
+    {
 
         $selectedCompanyId = $request['selectedCompanyId'];
 
@@ -216,13 +216,13 @@ class CustomerMasterAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
-        if($isGroup){
+        if ($isGroup) {
             //$subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-            $subCompanies  = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
+            $subCompanies = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
             /**  Companies by group  Drop Down */
-            $allCompanies = Company::whereIn("companySystemID",$subCompanies)->get();
-        }else{
-            $allCompanies = Company::where("companySystemID",$selectedCompanyId)->get();
+            $allCompanies = Company::whereIn("companySystemID", $subCompanies)->get();
+        } else {
+            $allCompanies = Company::where("companySystemID", $selectedCompanyId)->get();
         }
 
         /** Yes and No Selection */
@@ -230,9 +230,9 @@ class CustomerMasterAPIController extends AppBaseController
 
         /**Chart of Account Drop Down */
         $chartOfAccounts = ChartOfAccount::where('controllAccountYN', '=', 1)
-                                                ->where('catogaryBLorPL', '=', 'BS')
-                                                ->orderBy('AccountDescription', 'asc')
-                                                ->get();
+            ->where('catogaryBLorPL', '=', 'BS')
+            ->orderBy('AccountDescription', 'asc')
+            ->get();
 
         /**Country Drop Down */
         $country = CountryMaster::orderBy('countryName', 'asc')->get();
@@ -254,15 +254,16 @@ class CustomerMasterAPIController extends AppBaseController
      * @param Request $request
      * @return Response
      */
-    public function getAssignedCompaniesByCustomer(Request $request){
+    public function getAssignedCompaniesByCustomer(Request $request)
+    {
 
         $customerId = $request['customerId'];
         $customer = CustomerMaster::where('customerCodeSystem', '=', $customerId)->first();
         if ($customer) {
-             $customerCompanies = CustomerAssigned::where('customerCodeSystem',$customerId)
-                                    ->with(['company'])
-                                    ->orderBy('customerAssignedID','DESC')
-                                    ->get();
+            $customerCompanies = CustomerAssigned::where('customerCodeSystem', $customerId)
+                ->with(['company'])
+                ->orderBy('customerAssignedID', 'DESC')
+                ->get();
         } else {
             $customerCompanies = [];
         }
@@ -298,22 +299,22 @@ class CustomerMasterAPIController extends AppBaseController
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
 
-        $company = Company::where('companySystemID',$input['primaryCompanySystemID'])->first();
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
-        if($company){
+        if ($company) {
             $input['primaryCompanyID'] = $company->CompanyID;
         }
 
 
-        if(array_key_exists ('custGLAccountSystemID' , $input )){
-            $financePL = ChartOfAccount::where('chartOfAccountSystemID',$input['custGLAccountSystemID'])->first();
-            if($financePL){
-                $input['custGLaccount'] = $financePL->AccountCode ;
+        if (array_key_exists('custGLAccountSystemID', $input)) {
+            $financePL = ChartOfAccount::where('chartOfAccountSystemID', $input['custGLAccountSystemID'])->first();
+            if ($financePL) {
+                $input['custGLaccount'] = $financePL->AccountCode;
             }
         }
 
 
-        if( array_key_exists ('customerCodeSystem' , $input )){
+        if (array_key_exists('customerCodeSystem', $input)) {
 
             $customerMasters = CustomerMaster::where('customerCodeSystem', $input['customerCodeSystem'])->first();
 
@@ -321,11 +322,11 @@ class CustomerMasterAPIController extends AppBaseController
                 return $this->sendError('customer not found');
             }
 
-            if($customerMasters->confirmedYN == 0 && $input['confirmedYN'] == 1){
+            if ($customerMasters->confirmedYN == 0 && $input['confirmedYN'] == 1) {
                 $params = array('autoID' => $input['customerCodeSystem'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
                 $confirm = \Helper::confirmDocument($params);
-                if(!$confirm["success"]){
-                    return $this->sendError($confirm["message"],500);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"], 500);
                 }
             }
 
@@ -336,15 +337,15 @@ class CustomerMasterAPIController extends AppBaseController
             $customerMasters->modifiedPc = gethostname();
             $customerMasters->modifiedUser = $empId;
             $customerMasters->save();
-        }else{
+        } else {
 
-            $document = DocumentMaster::where('documentID','CUSTM')->first();
+            $document = DocumentMaster::where('documentID', 'CUSTM')->first();
             $input['documentSystemID'] = $document->documentSystemID;
             $input['documentID'] = $document->documentID;
 
-            $lastCustomer = CustomerMaster::orderBy('customerCodeSystem','DESC')->first();
+            $lastCustomer = CustomerMaster::orderBy('customerCodeSystem', 'DESC')->first();
             $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
-            $customerCode = 'C' .str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
+            $customerCode = 'C' . str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
 
             $input['lastSerialOrder'] = $lastSerialOrder;
             $input['CutomerCode'] = $customerCode;
@@ -356,7 +357,6 @@ class CustomerMasterAPIController extends AppBaseController
 
         return $this->sendResponse($customerMasters->toArray(), 'Customer Master saved successfully');
     }
-
 
 
     /**
@@ -371,7 +371,7 @@ class CustomerMasterAPIController extends AppBaseController
     {
         /** @var CustomerMaster $customerMaster */
         $customerMaster = $this->customerMasterRepository->with(['finalApprovedBy'])->findWithoutFail($id);
-       // $customerMasters = CustomerMaster::where('customerCodeSystem', $id)->first();
+        // $customerMasters = CustomerMaster::where('customerCodeSystem', $id)->first();
         if (empty($customerMaster)) {
             return $this->sendError('Customer Master not found');
         }
@@ -428,22 +428,24 @@ class CustomerMasterAPIController extends AppBaseController
         return $this->sendResponse($id, 'Customer Master deleted successfully');
     }
 
-    public function approveCustomer(Request $request){
+    public function approveCustomer(Request $request)
+    {
         $approve = \Helper::approveDocument($request);
-        if(!$approve["success"]){
+        if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
-        }else{
-            return $this->sendResponse(array(),$approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
         }
 
     }
 
-    public function rejectCustomer(Request $request){
+    public function rejectCustomer(Request $request)
+    {
         $reject = \Helper::rejectDocument($request);
-        if(!$reject["success"]){
+        if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
-        }else{
-            return $this->sendResponse(array(),$reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
         }
     }
 
@@ -462,23 +464,23 @@ class CustomerMasterAPIController extends AppBaseController
         $input = $request->all();
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $companies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $companies = [$companyId];
         }
 
-        $customers = CustomerAssigned::whereIn('companySystemID',$companies)
-                                            ->select(['customerCodeSystem','CustomerName','CutomerCode'])
-                                            ->when(request('search', false), function ($q, $search) {
-                                                return $q->where(function ($query) use($search) {
-                                                   return $query->where('CutomerCode','LIKE',"%{$search}%")
-                                                                    ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
-                                                                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
-                                                });
-                                            })
-                                            //->take(20)
-                                            ->get();
+        $customers = CustomerAssigned::whereIn('companySystemID', $companies)
+            ->select(['customerCodeSystem', 'CustomerName', 'CutomerCode'])
+            ->when(request('search', false), function ($q, $search) {
+                return $q->where(function ($query) use ($search) {
+                    return $query->where('CutomerCode', 'LIKE', "%{$search}%")
+                        ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
+                        ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+                });
+            })
+            //->take(20)
+            ->get();
 
 
         return $this->sendResponse($customers->toArray(), 'Customer Master retrieved successfully');
@@ -491,23 +493,37 @@ class CustomerMasterAPIController extends AppBaseController
         $input = $request->all();
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $companies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $companies = [$companyId];
         }
 
-        $contract = Contract::whereIn('companySystemID',$companies)
-            ->where('clientID',$input['customer_id'])
+        $contract = Contract::whereIn('companySystemID', $companies)
+            ->where('clientID', $input['customer_id'])
             ->when(request('search', false), function ($q, $search) {
-                return $q->where(function ($query) use($search) {
-                    return $query->where('ContractNumber','LIKE',"%{$search}%");
+                return $q->where(function ($query) use ($search) {
+                    return $query->where('ContractNumber', 'LIKE', "%{$search}%");
                 });
             })
-            ->get(['ContractNumber','contractUID']);
+            ->get(['ContractNumber', 'contractUID']);
 
 
         return $this->sendResponse($contract->toArray(), 'Contracts by Customer retrieved successfully');
+    }
+
+    public function getCustomerByCompany(Request $request)
+    {
+
+        $companySystemID = $request['companySystemID'];
+
+        $customerCompanies = CustomerAssigned::where('companySystemID', $companySystemID)
+            ->with(['company'])
+            ->orderBy('customerAssignedID', 'DESC')
+            ->get();
+
+
+        return $this->sendResponse($customerCompanies, 'customer companies retrieved successfully');
     }
 
 

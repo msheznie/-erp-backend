@@ -194,6 +194,19 @@ class AssetDisposalDetail extends Model
     ];
 
     /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfMaster($query, $id)
+    {
+        return $query->where('assetdisposalMasterAutoID',  $id);
+    }
+
+    /**
      * Validation rules
      *
      * @var array
@@ -201,6 +214,16 @@ class AssetDisposalDetail extends Model
     public static $rules = [
         
     ];
+
+    public function segment_by()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function asset_by()
+    {
+        return $this->belongsTo('App\Models\FixedAssetMaster', 'faID', 'faID');
+    }
 
     
 }

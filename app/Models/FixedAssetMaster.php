@@ -681,6 +681,19 @@ class FixedAssetMaster extends Model
         return $query->where('faCatID',  $category);
     }
 
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeIsSelectedForDisposal($query)
+    {
+        return $query->where('selectedForDisposal',  0);
+    }
+
     public function category_by(){
         return $this->belongsTo('App\Models\FixedAssetCategory','faCatID','faCatID');
     }
