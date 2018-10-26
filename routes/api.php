@@ -998,7 +998,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
     Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
     Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
+    Route::get('getBudgetFormData', 'BudgetMasterAPIController@getBudgetFormData');
+
+
     Route::resource('budjetdetails', 'BudjetdetailsAPIController');
+    Route::post('getDetailsByBudget', 'BudjetdetailsAPIController@getDetailsByBudget');
+    Route::post('removeBudgetDetails', 'BudjetdetailsAPIController@removeBudgetDetails');
+    Route::get('getBudgetDetailTotalSummary', 'BudjetdetailsAPIController@getBudgetDetailTotalSummary');
+    Route::post('bulkUpdateBudgetDetails', 'BudjetdetailsAPIController@bulkUpdateBudgetDetails');
     Route::resource('templates_g_l_codes', 'TemplatesGLCodeAPIController');
     Route::resource('templates_masters', 'TemplatesMasterAPIController');
     Route::resource('templates_details', 'TemplatesDetailsAPIController');
