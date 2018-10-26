@@ -14,6 +14,7 @@ namespace App\helper;
 
 use App\Models\Alert;
 use App\Models\AssetCapitalization;
+use App\Models\AssetDisposalMaster;
 use App\Models\BankReconciliation;
 use App\Models\BookInvSuppMaster;
 use App\Models\BudgetTransferForm;
@@ -295,6 +296,13 @@ class email
                     if (!empty($budgetTransfer)) {
                         $data['docApprovedYN'] = $budgetTransfer->approvedYN;
                         $data['docCode'] = $budgetTransfer->transferVoucherNo;
+                    }
+                    break;
+                case 41:
+                    $assetDisposal = AssetDisposalMaster::find($data['docSystemCode']);
+                    if (!empty($assetDisposal)) {
+                        $data['docApprovedYN'] = $assetDisposal->approvedYN;
+                        $data['docCode'] = $assetDisposal->disposalDocumentCode;
                     }
                     break;
                 default:

@@ -455,6 +455,17 @@ class Helper
                     $docInforArr["modelName"] = 'BudgetTransferForm';
                     $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
                     break;
+                case 41:
+                    $docInforArr["documentCodeColumnName"] = 'disposalDocumentCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confimedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_fa_asset_disposalmaster';
+                    $docInforArr["modelName"] = 'AssetDisposalMaster';
+                    $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1175,6 +1186,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 41: // Asset Disposal
+                $docInforArr["tableName"] = 'erp_fa_asset_disposalmaster';
+                $docInforArr["modelName"] = 'AssetDisposalMaster';
+                $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confimedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1362,7 +1385,7 @@ class Helper
 
                             // insert the record to general ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41])) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
@@ -1427,6 +1450,13 @@ class Helper
                                         }
                                     }
                                     $fixedAsset = Models\FixedAssetMaster::insert($qtyRangeArr);
+                                }
+                            }
+
+                            //generate customer invoice or Direct GRV
+                            if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
+                                if($sourceModel->disposalType == 1 || $sourceModel->disposalType == 6) {
+                                    $jobCI = CreateStockReceive::dispatch($sourceModel);
                                 }
                             }
 

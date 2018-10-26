@@ -154,6 +154,7 @@ class AssetDisposalMaster extends Model
         'disposalDocumentCode',
         'disposalDocumentDate',
         'narration',
+        'revenuePercentage',
         'confirmedYN',
         'confimedByEmpSystemID',
         'confimedByEmpID',
@@ -195,6 +196,7 @@ class AssetDisposalMaster extends Model
         'documentID' => 'string',
         'disposalDocumentCode' => 'string',
         'narration' => 'string',
+        'revenuePercentage' => 'integer',
         'confirmedYN' => 'integer',
         'confimedByEmpSystemID' => 'integer',
         'confimedByEmpID' => 'string',
@@ -263,6 +265,11 @@ class AssetDisposalMaster extends Model
     public function financeyear_by()
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
     
 }
