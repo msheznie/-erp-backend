@@ -103,6 +103,7 @@ class BudgetMaster extends Model
         'createdByUserSystemID',
         'createdByUserID',
         'createdDateTime',
+        'generateStatus',
         'timestamp'
     ];
 
@@ -122,6 +123,7 @@ class BudgetMaster extends Model
         'Year' => 'integer',
         'month' => 'integer',
         'createdByUserSystemID' => 'integer',
+        'generateStatus' => 'integer',
         'createdByUserID' => 'string'
     ];
 

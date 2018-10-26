@@ -112,6 +112,15 @@ class ItemMasterAPIController extends AppBaseController
         try {
             foreach ($input['items'] as $item) {
 
+                $partNo = isset($item['secondaryItemCode']) ? $item['secondaryItemCode'] : '';
+
+                $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
+                $validator = \Validator::make((array)$item, ['secondaryItemCode' => 'unique:itemmaster'], $messages);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+
                 $runningSerialOrder = $runningSerialOrder + 1;
                 $primaryCode = $code . str_pad($runningSerialOrder, $count, '0', STR_PAD_LEFT);
 
