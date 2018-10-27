@@ -119,6 +119,18 @@ class SegmentMaster extends Model
     }
 
     /**
+     * Scope a query to only include active serviceline.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeIsPublic($query)
+    {
+        return $query->where('isPublic',  1);
+    }
+
+    /**
      * Scope a query to only include users of a given type.
      *
      * @param \Illuminate\Database\Eloquent\Builder $query

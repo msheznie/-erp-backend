@@ -73,10 +73,8 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
-        $input = array_except($input, ['final_approved_by']);
+        $input = array_except($input, ['final_approved_by','company']);
         $input = $this->convertArrayToValue($input);
-
-        unset($input['company']);
 
         if (array_key_exists('chartOfAccountsAssignedID', $input)) {
             $chartOfAccountsAssigned = ChartOfAccountsAssigned::find($input['chartOfAccountsAssignedID']);
@@ -137,7 +135,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
     public function update($id, UpdateChartOfAccountsAssignedAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = array_except($input,['company']);
         /** @var ChartOfAccountsAssigned $chartOfAccountsAssigned */
         $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->findWithoutFail($id);
 

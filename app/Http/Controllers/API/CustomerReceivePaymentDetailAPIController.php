@@ -623,97 +623,98 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
-        if (floatval($input['receiveAmountTrans']) > floatval($input['custbalanceAmount'])) {
-            return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
+        if($matchDocumentMasterData->documentSystemID == 19){
+            if (floatval($input['custbalanceAmount']) > floatval($input['receiveAmountTrans'])) {
+                return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
+            }
         }
-
-        return $input;
 
         //calculate the total
         $existTotal = 0;
-        $detailAmountTot = PaySupplierInvoiceDetail::where('matchingDocID', $input['matchingDocID'])
-            ->where('payDetailAutoID', '<>', $input['payDetailAutoID'])
-            ->sum('supplierPaymentAmount');
+        $detailAmountTot = CustomerReceivePaymentDetail::where('matchingDocID', $input['matchingDocID'])
+            ->where('custReceivePaymentAutoID', '<>', $input['custReceivePaymentAutoID'])
+            ->sum('receiveAmountTrans');
 
-        $existTotal = $detailAmountTot + $input['supplierPaymentAmount'];
+        $existTotal = $detailAmountTot + $input['receiveAmountTrans'];
         if ($existTotal > $matchDocumentMasterData->matchBalanceAmount) {
             return $this->sendError('Matching amount total cannot be greater than balance amount to match', 500, ['type' => 'amountmismatch']);
         }
 
-        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])->where('payDetailAutoID', '<>', $input['payDetailAutoID'])->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+        $supplierPaidAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.arAutoID, erp_custreceivepaymentdet.receiveAmountTrans, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumOfsupplierPaymentAmount')->where('arAutoID', $input["arAutoID"])->where('custRecivePayDetAutoID', '<>', $input['custRecivePayDetAutoID'])->groupBy('erp_custreceivepaymentdet.arAutoID')->first();
 
-        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
-
-        $currentPayAmount = $paySupplierInvoiceDetail->supplierPaymentAmount + $input['supplierPaymentAmount'];
+        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvCodeSystem"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
         $machAmount = 0;
         if ($matchedAmount) {
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+        $paymentBalancedAmount = \Helper::roundValue($receiptVoucherDetails->receiveAmountTrans - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
 
-        if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
+        if ($receiptVoucherDetails->addedDocumentSystemID == 11) {
             //supplier invoice
             if ($input["supplierPaymentAmount"] > $paymentBalancedAmount) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
-        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15) {
+        } else if ($receiptVoucherDetails->addedDocumentSystemID == 15) {
             //debit note
             if ($input["supplierPaymentAmount"] < $paymentBalancedAmount) {
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
         }
 
-        $input["paymentBalancedAmount"] = $paymentBalancedAmount - $input["supplierPaymentAmount"];
+        $input["custbalanceAmount"] = $paymentBalancedAmount - $input["receiveAmountTrans"];
 
-        $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], ABS($input["supplierPaymentAmount"]));
-        $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
-        $input["paymentLocalAmount"] = $conversionAmount["localAmount"];
-        $input["paymentComRptAmount"] = $conversionAmount["reportingAmount"];
+        return   $input["custbalanceAmount"];
+        exit();
 
-        $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->update($input, $input['payDetailAutoID']);
+        $conversionAmount = \Helper::convertAmountToLocalRpt(205, $input["custRecivePayDetAutoID"], ABS($input["receiveAmountTrans"]));
+        //$input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
+        $input["receiveAmountLocal"] =  \Helper::roundValue($conversionAmount["localAmount"]);
+        $input["receiveAmountRpt"] =  \Helper::roundValue($conversionAmount["reportingAmount"]);
 
-        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+        $receiptVoucherDetails = $this->customerReceivePaymentDetailRepository->update($input, $input['custRecivePayDetAutoID']);
 
-        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+        $supplierPaidAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.arAutoID, erp_custreceivepaymentdet.receiveAmountTrans, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumOfsupplierPaymentAmount')->where('arAutoID', $input["arAutoID"])->groupBy('erp_custreceivepaymentdet.arAutoID')->first();
+
+        $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvCodeSystem"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
         $machAmount = 0;
         if ($matchedAmount) {
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+        $paymentBalancedAmount = \Helper::roundValue($receiptVoucherDetails->receiveAmountTrans - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
 
         $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
-        if ($paySupplierInvoiceDetail->addedDocumentSystemID == 19) {
+        if ($receiptVoucherDetails->addedDocumentSystemID == 19) {
             if ($totalPaidAmount == 0) {
-                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                $updatePayment = AccountsReceivableLedger::find($receiptVoucherDetails->arAutoID)
                     ->update(['fullyInvoice' => 0]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
-                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
+            } else if ($receiptVoucherDetails->supplierInvoiceAmount == $totalPaidAmount) {
+                $updatePayment = AccountsReceivableLedger::find($receiptVoucherDetails->arAutoID)
                     ->update(['fullyInvoice' => 2]);
-            } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
-                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
+            } else if (($receiptVoucherDetails->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
+                $updatePayment = AccountsReceivableLedger::find($receiptVoucherDetails->arAutoID)
                     ->update(['fullyInvoice' => 1]);
             }
-        } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 20) {
+        } else if ($receiptVoucherDetails->addedDocumentSystemID == 20) {
             if ($totalPaidAmount == 0) {
-                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
+                $updatePayment = AccountsReceivableLedger::find($receiptVoucherDetails->arAutoID)
                     ->update(['fullyInvoice' => 0]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
-                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
+            } else if ($receiptVoucherDetails->supplierInvoiceAmount == $totalPaidAmount) {
+                $updatePayment = AccountsReceivableLedger::find($receiptVoucherDetails->arAutoID)
                     ->update(['fullyInvoice' => 2]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount < $totalPaidAmount) {
-                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
+            } else if ($receiptVoucherDetails->supplierInvoiceAmount < $totalPaidAmount) {
+                $updatePayment = AccountsReceivableLedger::find($receiptVoucherDetails->arAutoID)
                     ->update(['fullyInvoice' => 1]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) {
-                $updatePayment = AccountsReceivableLedger::find($paySupplierInvoiceDetail->apAutoID)
+            } else if ($receiptVoucherDetails->supplierInvoiceAmount > $totalPaidAmount) {
+                $updatePayment = AccountsReceivableLedger::find($receiptVoucherDetails->apAutoID)
                     ->update(['fullyInvoice' => 2]);
             }
         }
-        return $this->sendResponse($paySupplierInvoiceDetail->toArray(), 'PaySupplierInvoiceDetail updated successfully');
+        return $this->sendResponse($receiptVoucherDetails->toArray(), 'Detail updated successfully');
     }
 
 

@@ -455,6 +455,17 @@ class Helper
                     $docInforArr["modelName"] = 'BudgetTransferForm';
                     $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
                     break;
+                case 41:
+                    $docInforArr["documentCodeColumnName"] = 'disposalDocumentCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confimedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_fa_asset_disposalmaster';
+                    $docInforArr["modelName"] = 'AssetDisposalMaster';
+                    $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1175,6 +1186,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 41: // Asset Disposal
+                $docInforArr["tableName"] = 'erp_fa_asset_disposalmaster';
+                $docInforArr["modelName"] = 'AssetDisposalMaster';
+                $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confimedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1213,10 +1236,10 @@ class Helper
                     }
                 }
 
-                if ($input["documentSystemID"] == 46) {
-                    if ($isConfirmed['year'] != date("Y")) {
+                if (["documentSystemID"] == 46) {
+                    if($isConfirmed['year'] != date("Y")){
                         return ['success' => false, 'message' => 'Budget transfer you are trying to approve is not for the current year. You cannot approve a budget transfer which is not for current year.'];
-                    }
+                   }
                 }
 
                 //check document is already approved
@@ -1347,7 +1370,7 @@ class Helper
 
                                 if ($jvMasterData->jvType == 1) {
                                     $accrualJournalVoucher = self::generateAccrualJournalVoucher($input["documentSystemCode"]);
-                                } else if ($jvMasterData->jvType == 5) {
+                                }else if($jvMasterData->jvType == 5){
                                     $POAccrualJournalVoucher = self::generatePOAccrualJournalVoucher($input["documentSystemCode"]);
                                 }
 
@@ -1362,7 +1385,7 @@ class Helper
 
                             // insert the record to general ledger
 
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23])) {
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41])) {
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
@@ -1427,6 +1450,13 @@ class Helper
                                         }
                                     }
                                     $fixedAsset = Models\FixedAssetMaster::insert($qtyRangeArr);
+                                }
+                            }
+
+                            //generate customer invoice or Direct GRV
+                            if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
+                                if($sourceModel->disposalType == 1 || $sourceModel->disposalType == 6) {
+                                    $jobCI = CreateStockReceive::dispatch($sourceModel);
                                 }
                             }
 
@@ -1657,7 +1687,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11,46])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -1944,7 +1974,7 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
-            case 11: // This is for unbilled grv
+            case 11: // This is for Supplier Invoice
                 $docInforArr["modelName"] = 'BookInvSuppMaster';
                 $docInforArr["transCurrencyID"] = 'supplierTransactionCurrencyID';
                 $docInforArr["transDefaultCurrencyID"] = 'supplierTransactionCurrencyID';
@@ -2021,15 +2051,14 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
-
-            case 204: // MatchingMaster
-                $docInforArr["modelName"] = 'MatchDocumentMaster';
-                $docInforArr["transCurrencyID"] = 'supplierTransCurrencyID';
-                $docInforArr["transDefaultCurrencyID"] = 'supplierDefCurrencyID';
-                $docInforArr["rptCurrencyID"] = 'companyRptCurrencyID';
+            case 205: // Receipt Voucher Matching
+                $docInforArr["modelName"] = 'CustomerReceivePaymentDetail';
+                $docInforArr["transCurrencyID"] = 'custTransactionCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'custTransactionCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'companyReportingCurrencyID';
                 $docInforArr["localCurrencyID"] = 'localCurrencyID';
-                $docInforArr["transCurrencyER"] = 'supplierTransCurrencyER';
-                $docInforArr["rptCurrencyER"] = 'companyRptCurrencyER';
+                $docInforArr["transCurrencyER"] = 'custTransactionCurrencyER';
+                $docInforArr["rptCurrencyER"] = 'companyReportingER';
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
@@ -2266,7 +2295,7 @@ class Helper
 
             $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-            $postJv = $jvMasterData->toArray();
+            $postJv =  $jvMasterData->toArray();
             $postJv['JVcode'] = $jvCode;
             $postJv['serialNo'] = $lastSerialNumber;
             $postJv['JVdate'] = $firstDayNextMonth;
@@ -2336,7 +2365,7 @@ class Helper
 
             $jvCode = ($jvMasterData->companyID . '\\' . $finYear . '\\' . $jvMasterData->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-            $postJv = $jvMasterData->toArray();
+            $postJv =  $jvMasterData->toArray();
             $postJv['JVcode'] = $jvCode;
             $postJv['serialNo'] = $lastSerialNumber;
             $postJv['JVdate'] = $firstDayNextMonth;

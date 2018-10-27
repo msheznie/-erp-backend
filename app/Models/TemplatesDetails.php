@@ -67,6 +67,7 @@ class TemplatesDetails extends Model
         'controlAccountSubID',
         'sortOrder',
         'cashflowid',
+        'controlAccountSystemID',
         'timestamp'
     ];
 
@@ -82,7 +83,8 @@ class TemplatesDetails extends Model
         'controlAccountID' => 'string',
         'controlAccountSubID' => 'integer',
         'sortOrder' => 'float',
-        'cashflowid' => 'integer'
+        'cashflowid' => 'integer',
+        'controlAccountSystemID' => 'integer'
     ];
 
     /**
@@ -94,5 +96,9 @@ class TemplatesDetails extends Model
         
     ];
 
+    public function gl_codes()
+    {
+        return $this->hasMany('App\Models\TemplatesGLCode', 'templatesDetailsAutoID', 'templatesDetailsAutoID');
+    }
     
 }

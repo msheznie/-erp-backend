@@ -319,8 +319,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['DIAmount']);
 
-        $input['localAmount' ]        = $companyCurrencyConversion['localAmount'];
-        $input['comRptAmount']        = $companyCurrencyConversion['reportingAmount'];
+        $input['localAmount' ]        = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+        $input['comRptAmount']        = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
         $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
         $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
 

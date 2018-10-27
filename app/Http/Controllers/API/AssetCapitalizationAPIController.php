@@ -752,7 +752,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                 ->delete();
 
             DB::commit();
-            return $this->sendResponse($assetCapitalization->toArray(), 'Payment Voucher reopened successfully');
+            return $this->sendResponse($assetCapitalization->toArray(), 'Asset capitalization reopened successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

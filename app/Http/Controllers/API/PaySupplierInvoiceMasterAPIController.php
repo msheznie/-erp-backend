@@ -579,17 +579,30 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
                             if ($val->addedDocumentSystemID == 11) {
-                                if ($val->supplierInvoiceAmount == $totalPaidAmount || $totalPaidAmount > $val->supplierInvoiceAmount) {
+                                if ($totalPaidAmount == 0) {
+                                    $updatePayment->selectedToPaymentInv = 0;
+                                    $updatePayment->fullyInvoice = 0;
+                                    $updatePayment->save();
+                                } else if ($val->supplierInvoiceAmount == $totalPaidAmount || $totalPaidAmount > $val->supplierInvoiceAmount) {
                                     $updatePayment->selectedToPaymentInv = -1;
                                     $updatePayment->fullyInvoice = 2;
                                     $updatePayment->save();
-                                } else {
+                                } else if (($val->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
                                     $updatePayment->selectedToPaymentInv = 0;
                                     $updatePayment->fullyInvoice = 1;
                                     $updatePayment->save();
                                 }
                             } else if ($val->addedDocumentSystemID == 15 || $val->addedDocumentSystemID == 24) {
-                                if ($val->supplierInvoiceAmount < $totalPaidAmount) {
+
+                                if ($totalPaidAmount == 0) {
+                                    $updatePayment->selectedToPaymentInv = 0;
+                                    $updatePayment->fullyInvoice = 0;
+                                    $updatePayment->save();
+                                } else if ($val->supplierInvoiceAmount == $totalPaidAmount) {
+                                    $updatePayment->selectedToPaymentInv = -1;
+                                    $updatePayment->fullyInvoice = 2;
+                                    $updatePayment->save();
+                                } else if ($val->supplierInvoiceAmount < $totalPaidAmount) {
                                     $updatePayment->selectedToPaymentInv = 0;
                                     $updatePayment->fullyInvoice = 1;
                                     $updatePayment->save();
@@ -753,6 +766,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount);
                     $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount);
                     $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                } else {
+                    $input['payAmountBank'] = 0;
+                    $input['payAmountSuppTrans'] = 0;
+                    $input['payAmountSuppDef'] = 0;
+                    $input['payAmountCompLocal'] = 0;
+                    $input['payAmountCompRpt'] = 0;
+                    $input['suppAmountDocTotal'] = 0;
                 }
             }
 
@@ -767,6 +787,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
                     $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
                     $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierTransAmount);
+                } else {
+                    $input['payAmountBank'] = 0;
+                    $input['payAmountSuppTrans'] = 0;
+                    $input['payAmountSuppDef'] = 0;
+                    $input['payAmountCompLocal'] = 0;
+                    $input['payAmountCompRpt'] = 0;
+                    $input['suppAmountDocTotal'] = 0;
                 }
             }
 
@@ -781,6 +808,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
                     $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
                     $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->paymentAmount);
+                } else {
+                    $input['payAmountBank'] = 0;
+                    $input['payAmountSuppTrans'] = 0;
+                    $input['payAmountSuppDef'] = 0;
+                    $input['payAmountCompLocal'] = 0;
+                    $input['payAmountCompRpt'] = 0;
+                    $input['suppAmountDocTotal'] = 0;
                 }
             }
 
@@ -1134,7 +1168,7 @@ WHERE
 	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
 WHERE
 	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 ) 
-	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%d-%m") <= "' . $BPVdate . '" 
+	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '" 
 	AND erp_accountspayableledger.selectedToPaymentInv = 0 
 	AND erp_accountspayableledger.fullyInvoice <> 2 
 	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 

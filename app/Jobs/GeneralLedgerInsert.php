@@ -1766,7 +1766,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         $masterData = FixedAssetDepreciationMaster::find($masterModel["autoID"]);
 
-                        $debit = DB::table('erp_fa_assetdepreciationperiods')->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.dispglCodeSystemID,erp_fa_asset_master.DISPOGLCODE,SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL')->join('erp_fa_asset_master','erp_fa_asset_master.faID','erp_fa_assetdepreciationperiods.faID')->join('chartofaccounts','chartOfAccountSystemID','dispglCodeSystemID')->where('depMasterAutoID',$masterModel["autoID"])->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID','erp_fa_asset_master.dispglCodeSystemID')->get();
+                        $debit = DB::table('erp_fa_assetdepreciationperiods')->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.depglCodeSystemID,erp_fa_asset_master.DEPGLCODE,SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL')->join('erp_fa_asset_master','erp_fa_asset_master.faID','erp_fa_assetdepreciationperiods.faID')->join('chartofaccounts','chartOfAccountSystemID','depglCodeSystemID')->where('depMasterAutoID',$masterModel["autoID"])->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID','erp_fa_asset_master.depglCodeSystemID')->get();
 
                         $credit = DB::table('erp_fa_assetdepreciationperiods')->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.accdepglCodeSystemID,erp_fa_asset_master.ACCDEPGLCODE,SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL')->join('erp_fa_asset_master','erp_fa_asset_master.faID','erp_fa_assetdepreciationperiods.faID')->join('chartofaccounts','chartOfAccountSystemID','dispglCodeSystemID')->where('depMasterAutoID',$masterModel["autoID"])->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID','erp_fa_asset_master.accdepglCodeSystemID')->get();
 
@@ -1794,8 +1794,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $data['clientContractID'] = 'X';
                                 $data['contractUID'] = 159;
                                 $data['supplierCodeSystem'] = 0;
-                                $data['chartOfAccountSystemID'] = $val->dispglCodeSystemID;
-                                $data['glCode'] = $val->DISPOGLCODE;
+                                $data['chartOfAccountSystemID'] = $val->depglCodeSystemID;
+                                $data['glCode'] = $val->DEPGLCODE;
                                 $data['glAccountType'] = $val->catogaryBLorPL;
                                 $data['documentLocalCurrencyID'] = $val->depAmountLocalCurr;
                                 $data['documentLocalCurrencyER'] = 0;

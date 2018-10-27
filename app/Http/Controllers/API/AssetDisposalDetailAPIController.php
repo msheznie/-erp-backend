@@ -5,9 +5,12 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateAssetDisposalDetailAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalDetailAPIRequest;
 use App\Models\AssetDisposalDetail;
+use App\Models\AssetDisposalMaster;
+use App\Models\FixedAssetMaster;
 use App\Repositories\AssetDisposalDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -108,10 +111,78 @@ class AssetDisposalDetailAPIController extends AppBaseController
     public function store(CreateAssetDisposalDetailAPIRequest $request)
     {
         $input = $request->all();
+        $assetDisposalMaster = AssetDisposalMaster::find($input["assetdisposalMasterAutoID"]);
+        DB::beginTransaction();
+        try {
+            $finalError = array(
+                'disposal_asset_already_exist' => array(),
+            );
+            $error_count = 0;
 
-        $assetDisposalDetails = $this->assetDisposalDetailRepository->create($input);
+            foreach ($input['detailTable'] as $new) {
+                if ($new['isChecked']) {
+                    $alreadyExistChk = AssetDisposalDetail::OfMaster($input["assetdisposalMasterAutoID"])->where('faID', $new['faID'])->first();
+                    if ($alreadyExistChk) {
+                        array_push($finalError['disposal_asset_already_exist'], 'FA' . ' | ' . $new['faCode']);
+                        $error_count++;
+                    }
+                }
+            }
 
-        return $this->sendResponse($assetDisposalDetails->toArray(), 'Asset Disposal Detail saved successfully');
+            $confirm_error = array('type' => 'disposal_asset_already_exist', 'data' => $finalError);
+            if ($error_count > 0) {
+                return $this->sendError("Error", 500, $confirm_error);
+            }
+
+            foreach ($input['detailTable'] as $new) {
+                if ($new['isChecked']) {
+                    $depAmountLocal = 0;
+                    $depAmountRpt = 0;
+                    if (count($new['depperiod_by']) > 0) {
+                        $depAmountLocal = $new['depperiod_by'][0]['depAmountLocal'];
+                    } else {
+                        $depAmountLocal = 0;
+                    }
+                    if (count($new['depperiod_by']) > 0) {
+                        $depAmountRpt = $new['depperiod_by'][0]['depAmountRpt'];
+                    } else {
+                        $depAmountRpt = 0;
+                    }
+                    count($new['depperiod_by']) > 0 ? $new['depperiod_by'][0]['depAmountRpt'] : 0;
+                    $tempArray["assetdisposalMasterAutoID"] = $input["assetdisposalMasterAutoID"];
+                    $tempArray["companySystemID"] = $new["companySystemID"];
+                    $tempArray["companyID"] = $new["companyID"];
+                    $tempArray["serviceLineSystemID"] = $new["serviceLineSystemID"];
+                    $tempArray["serviceLineCode"] = $new["serviceLineCode"];
+                    $tempArray["itemCode"] = $new["itemCode"];
+                    $tempArray["faID"] = $new["faID"];
+                    $tempArray["faCode"] = $new["faCode"];
+                    $tempArray["faUnitSerialNo"] = $new["faUnitSerialNo"];
+                    $tempArray["assetDescription"] = $new["assetDescription"];
+                    $tempArray["COSTUNIT"] = $new["COSTUNIT"];
+                    $tempArray["costUnitRpt"] = $new["costUnitRpt"];
+                    $tempArray["depAmountLocal"] = $depAmountLocal;
+                    $tempArray["depAmountRpt"] = $depAmountRpt;
+                    $tempArray["netBookValueLocal"] = $new["COSTUNIT"] - $depAmountLocal;
+                    $tempArray["netBookValueRpt"] = $new["costUnitRpt"] - $depAmountRpt;
+                    $tempArray["COSTGLCODESystemID"] = $new["costglCodeSystemID"];
+                    $tempArray["COSTGLCODE"] = $new["COSTGLCODE"];
+                    $tempArray["ACCDEPGLCODESystemID"] = $new["accdepglCodeSystemID"];
+                    $tempArray["ACCDEPGLCODE"] = $new["ACCDEPGLCODE"];
+                    $tempArray["DISPOGLCODESystemID"] = $new["dispglCodeSystemID"];
+                    $tempArray["DISPOGLCODE"] = $new["ACCDEPGLCODE"];
+                    $assetDisposalDetails = $this->assetDisposalDetailRepository->create($tempArray);
+
+                    $updateAsset = FixedAssetMaster::find($new["faID"])
+                        ->update(['DIPOSED' => -1, 'selectedForDisposal' => -1, 'disposedDate' => $assetDisposalMaster->disposalDocumentDate, 'assetdisposalMasterAutoID' => $input["assetdisposalMasterAutoID"]]);
+                }
+            }
+            DB::commit();
+            return $this->sendResponse('', 'Asset Disposal Detail saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
     /**
@@ -267,15 +338,26 @@ class AssetDisposalDetailAPIController extends AppBaseController
     public function destroy($id)
     {
         /** @var AssetDisposalDetail $assetDisposalDetail */
-        $assetDisposalDetail = $this->assetDisposalDetailRepository->findWithoutFail($id);
+        DB::beginTransaction();
+        try {
+            $assetDisposalDetail = $this->assetDisposalDetailRepository->findWithoutFail($id);
+            $assetDisposalDetail2 = $this->assetDisposalDetailRepository->findWithoutFail($id);
 
-        if (empty($assetDisposalDetail)) {
-            return $this->sendError('Asset Disposal Detail not found');
+            if (empty($assetDisposalDetail)) {
+                return $this->sendError('Asset Disposal Detail not found');
+            }
+
+            $assetDisposalDetail->delete();
+
+            $updateAsset = FixedAssetMaster::find($assetDisposalDetail2->faID)
+                ->update(['DIPOSED' => 0, 'selectedForDisposal' => 0, 'disposedDate' => null, 'assetdisposalMasterAutoID' => null]);
+            DB::commit();
+            return $this->sendResponse($id, 'Asset Disposal Detail deleted successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
         }
 
-        $assetDisposalDetail->delete();
-
-        return $this->sendResponse($id, 'Asset Disposal Detail deleted successfully');
     }
 
     function getAssetDisposalDetail(Request $request)
@@ -285,5 +367,33 @@ class AssetDisposalDetailAPIController extends AppBaseController
             return $this->sendError('Asset Disposal Detail not found');
         }
         return $this->sendResponse($assetDisposalDetail->toArray(), 'Asset Disposal Detail retrieved successfully');
+    }
+
+    public function deleteAllDisposalDetail(Request $request)
+    {
+        $assetdisposalMasterAutoID = $request->assetdisposalMasterAutoID;
+
+        DB::beginTransaction();
+        try {
+            $assetDisposalDetail = $this->assetDisposalDetailRepository->findWhere(['assetdisposalMasterAutoID' => $assetdisposalMasterAutoID]);
+
+            if (empty($assetDisposalDetail)) {
+                return $this->sendError('Asset Disposal Detail not found');
+            }
+
+            foreach ($assetDisposalDetail as $val) {
+                $detail = $this->assetDisposalDetailRepository->find($val->assetDisposalDetailAutoID);
+                $detail->delete();
+
+                $updateAsset = FixedAssetMaster::find($val->faID)
+                    ->update(['DIPOSED' => 0, 'selectedForDisposal' => 0, 'disposedDate' => null, 'assetdisposalMasterAutoID' => null]);
+            }
+
+            DB::commit();
+            return $this->sendResponse($assetdisposalMasterAutoID, 'Asset Disposal Detail deleted successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Error Occurred');
+        }
     }
 }

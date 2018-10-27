@@ -57,7 +57,7 @@ class TemplatesGLCode extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
+    protected $primaryKey = 'templatesGLCodeAutoID';
 
     public $fillable = [
         'templateMasterID',
@@ -93,5 +93,18 @@ class TemplatesGLCode extends Model
         
     ];
 
-    
+    public function chart_of_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccountsAssigned', 'chartOfAccountSystemID', 'chartOfAccountSystemID');
+    }
+
+    public function template_detail()
+    {
+        return $this->belongsTo('App\Models\TemplatesDetails', 'templatesDetailsAutoID', 'templatesDetailsAutoID');
+    }
+
+    public function budget_detail()
+    {
+        return $this->hasMany('App\Models\Budjetdetails', 'templateDetailID', 'templatesDetailsAutoID');
+    }
 }
