@@ -14,19 +14,27 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAssetDisposalMasterAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalMasterAPIRequest;
+use App\Models\AssetDisposalDetail;
 use App\Models\AssetDisposalMaster;
 use App\Models\AssetDisposalType;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetMaster;
 use App\Models\Months;
+use App\Models\SupplierAssigned;
+use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\AssetDisposalMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -261,7 +269,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        }, 'created_by', 'modified_by'])->findWithoutFail($id);
 
         if (empty($assetDisposalMaster)) {
             return $this->sendError('Asset Disposal Master not found');
@@ -318,19 +326,135 @@ class AssetDisposalMasterAPIController extends AppBaseController
      */
     public function update($id, UpdateAssetDisposalMasterAPIRequest $request)
     {
-        $input = $request->all();
-        $input = $this->convertArrayToValue($input);
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input = $this->convertArrayToValue($input);
 
-        /** @var AssetDisposalMaster $assetDisposalMaster */
-        $assetDisposalMaster = $this->assetDisposalMasterRepository->findWithoutFail($id);
+            /** @var AssetDisposalMaster $assetDisposalMaster */
+            $assetDisposalMaster = $this->assetDisposalMasterRepository->findWithoutFail($id);
 
-        if (empty($assetDisposalMaster)) {
-            return $this->sendError('Asset Disposal Master not found');
+            if (empty($assetDisposalMaster)) {
+                return $this->sendError('Asset Disposal Master not found');
+            }
+
+            $companySystemID = $assetDisposalMaster->companySystemID;
+            $documentSystemID = $assetDisposalMaster->documentSystemID;
+
+            if ($assetDisposalMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+                $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+                if (!$companyFinanceYear["success"]) {
+                    return $this->sendError($companyFinanceYear["message"], 500, ['type' => 'confirm']);
+                } else {
+                    $input['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
+                    $input['FYEnd'] = $companyFinanceYear["message"]->endingDate;
+                }
+
+                $inputParam = $input;
+                $inputParam["departmentSystemID"] = 9;
+                $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                if (!$companyFinancePeriod["success"]) {
+                    return $this->sendError($companyFinancePeriod["message"], 500, ['type' => 'confirm']);
+                } else {
+                    $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+                    $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+                }
+
+                unset($inputParam);
+
+                $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
+
+                $monthBegin = $input['FYPeriodDateFrom'];
+                $monthEnd = $input['FYPeriodDateTo'];
+
+                if (($input['disposalDocumentDate'] >= $monthBegin) && ($input['disposalDocumentDate'] <= $monthEnd)) {
+                } else {
+                    return $this->sendError('Asset Disposal date is not within financial period!', 500, ['type' => 'confirm']);
+                }
+
+                //For customer check
+                $customermaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
+
+                if (empty($customermaster)) {
+                    return $this->sendError('There is no customer created to the selected company. Please create a customer', 500, ['type' => 'confirm']);
+                }
+
+                //if the customer is assigned
+                $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isAssigned', '-1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
+
+                if (empty($customer)) {
+                    return $this->sendError('There is no customer assgigned to the selected company. Please assign the customer', 500, ['type' => 'confirm']);
+                }
+                //checking selected customer is active
+                $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isActive', '1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
+
+                if (empty($customer)) {
+                    return $this->sendError('Assigned customer is not active', 500, ['type' => 'confirm']);
+                }
+
+                //For supplier check
+                $suppliermaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
+
+                if (empty($suppliermaster)) {
+                    return $this->sendError('There is no supplier created to the selected company. Please create a supplier', 500, ['type' => 'confirm']);
+                }
+
+                //If the supplier is not assigned
+                $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isAssigned', '-1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
+
+                if (empty($supplier)) {
+                    return $this->sendError('There is no supplier assgigned to the selected company. Please assign the supplier', 500, ['type' => 'confirm']);
+                }
+
+                //checking selected supplier is active
+                $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isActive', '1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
+
+                if (empty($supplier)) {
+                    return $this->sendError('Assigned supplier is not active', 500, ['type' => 'confirm']);
+                }
+
+                $disposalDetailExist = AssetDisposalDetail::with('asset_by')->where('assetdisposalMasterAutoID', $id)->get();
+
+                if (empty($disposalDetailExist)) {
+                    return $this->sendError('Asset disposal document cannot confirm without details', 500, ['type' => 'confirm']);
+                }
+
+                $finalError = array(
+                    'itemcode_not_exist' => array(),
+                );
+                $error_count = 0;
+
+                foreach ($disposalDetailExist as $val) {
+                    if (empty($val->asset_by->itemCode) || $val->asset_by->itemCode == 0) {
+                        array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $$val->asset_by->itemCode->faCode);
+                        $error_count++;
+                    }
+                }
+
+                $confirm_error = array('type' => 'itemcode_not_exist', 'data' => $finalError);
+                if ($error_count > 0) {
+                    return $this->sendError("There are few assets not linked to an item code. Please link it before you confirm", 500, $confirm_error);
+                }
+
+                $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
+                $confirm = \Helper::confirmDocument($params);
+                if (!$confirm["success"]) {
+                    return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
+                }
+            }
+
+            $input['modifiedPc'] = gethostname();
+            $input['modifiedUser'] = \Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+
+            $assetDisposalMaster = $this->assetDisposalMasterRepository->update($input, $id);
+            DB::commit();
+            return $this->sendResponse($assetDisposalMaster->toArray(), 'AssetDisposalMaster updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
         }
-
-        $assetDisposalMaster = $this->assetDisposalMasterRepository->update($input, $id);
-
-        return $this->sendResponse($assetDisposalMaster->toArray(), 'AssetDisposalMaster updated successfully');
     }
 
     /**
@@ -410,7 +534,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $assetCositng = AssetDisposalMaster::with('disposal_type')->ofCompany($subCompanies);
+        $assetCositng = AssetDisposalMaster::with(['disposal_type', 'created_by'])->ofCompany($subCompanies);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -540,5 +664,236 @@ class AssetDisposalMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+    function disposalReopen(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+
+            $id = $input['assetdisposalMasterAutoID'];
+            $assetDisposal = $this->assetDisposalMasterRepository->findWithoutFail($id);
+            $emails = array();
+            if (empty($assetDisposal)) {
+                return $this->sendError('Asset disposal not found');
+            }
+
+            if ($assetDisposal->approved == -1) {
+                return $this->sendError('You cannot reopen this Asset disposal it is already fully approved');
+            }
+
+            if ($assetDisposal->RollLevForApp_curr > 1) {
+                return $this->sendError('You cannot reopen this Asset disposal it is already partially approved');
+            }
+
+            if ($assetDisposal->confirmedYN == 0) {
+                return $this->sendError('You cannot reopen this Asset disposal, it is not confirmed');
+            }
+
+            $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+                'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+
+            $this->assetDisposalMasterRepository->update($updateInput, $id);
+
+            $employee = \Helper::getEmployeeInfo();
+
+            $document = DocumentMaster::where('documentSystemID', $assetDisposal->documentSystemID)->first();
+
+            $cancelDocNameBody = $document->documentDescription . ' <b>' . $assetDisposal->disposalDocumentCode . '</b>';
+            $cancelDocNameSubject = $document->documentDescription . ' ' . $assetDisposal->disposalDocumentCode;
+
+            $subject = $cancelDocNameSubject . ' is reopened';
+
+            $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+            $documentApproval = DocumentApproved::where('companySystemID', $assetDisposal->companySystemID)
+                ->where('documentSystemCode', $assetDisposal->assetdisposalMasterAutoID)
+                ->where('documentSystemID', $assetDisposal->documentSystemID)
+                ->where('rollLevelOrder', 1)
+                ->first();
+
+            if ($documentApproval) {
+                if ($documentApproval->approvedYN == 0) {
+                    $companyDocument = CompanyDocumentAttachment::where('companySystemID', $assetDisposal->companySystemID)
+                        ->where('documentSystemID', $assetDisposal->documentSystemID)
+                        ->first();
+
+                    if (empty($companyDocument)) {
+                        return ['success' => false, 'message' => 'Policy not found for this document'];
+                    }
+
+                    $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                        ->where('companySystemID', $documentApproval->companySystemID)
+                        ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                    $approvalList = $approvalList
+                        ->with(['employee'])
+                        ->groupBy('employeeSystemID')
+                        ->get();
+
+                    foreach ($approvalList as $da) {
+                        if ($da->employee) {
+                            $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                                'companySystemID' => $documentApproval->companySystemID,
+                                'docSystemID' => $documentApproval->documentSystemID,
+                                'alertMessage' => $subject,
+                                'emailAlertMessage' => $body,
+                                'docSystemCode' => $documentApproval->documentSystemCode);
+                        }
+                    }
+
+                    $sendEmail = \Email::sendEmail($emails);
+                    if (!$sendEmail["success"]) {
+                        return ['success' => false, 'message' => $sendEmail["message"]];
+                    }
+                }
+            }
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                ->where('companySystemID', $assetDisposal->companySystemID)
+                ->where('documentSystemID', $assetDisposal->documentSystemID)
+                ->delete();
+
+            DB::commit();
+            return $this->sendResponse($assetDisposal->toArray(), 'Asset disposal reopened successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function getDisposalApprovalByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $capitalization = DB::table('erp_documentapproved')
+            ->select(
+                'erp_fa_asset_disposalmaster.*',
+                'employees.empName As created_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'erp_fa_asset_disposaltypes.typeDescription',
+                'documentSystemCode')
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $query->whereIn('employeesdepartments.documentSystemID', [63])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_fa_asset_disposalmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'assetdisposalMasterAutoID')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_fa_asset_disposalmaster.companySystemID', $companyId)
+                    ->where('erp_fa_asset_disposalmaster.approvedYN', 0)
+                    ->where('erp_fa_asset_disposalmaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_fa_asset_disposaltypes', 'disposalTypesID', 'disposalType')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [41])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $capitalization = $capitalization->where(function ($query) use ($search) {
+                $query->where('disposalDocumentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($capitalization)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('assetdisposalMasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+    public function getDisposalApprovedByUser(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array());
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $search = $request->input('search.value');
+        $capitalization = DB::table('erp_documentapproved')
+            ->select(
+                'erp_fa_asset_disposalmaster.*',
+                'employees.empName As created_emp',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'erp_fa_asset_disposaltypes.typeDescription',
+                'documentSystemCode')
+            ->join('erp_fa_asset_disposalmaster', function ($query) use ($companyId, $search) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'assetdisposalMasterAutoID')
+                    ->where('erp_fa_asset_disposalmaster.companySystemID', $companyId)
+                    ->where('erp_fa_asset_disposalmaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('erp_fa_asset_disposaltypes', 'disposalTypesID', 'disposalType')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [41])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $capitalization = $capitalization->where(function ($query) use ($search) {
+                $query->where('disposalDocumentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($capitalization)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('assetdisposalMasterAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
 
 }

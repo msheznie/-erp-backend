@@ -10,19 +10,27 @@
  * -- REVISION HISTORY
  * -- Date: 16 -October 2018 By: Fayas Description: Added new function getBudgetsByCompany(),reportBudgetGLCodeWise(),budgetGLCodeWiseDetails()
  * -- Date: 17 -October 2018 By: Fayas Description: Added new function reportBudgetTemplateCategoryWise()
+ * -- Date: 23 -October 2018 By: Fayas Description: Added new function getBudgetFormData()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBudgetMasterAPIRequest;
 use App\Http\Requests\API\UpdateBudgetMasterAPIRequest;
+use App\Jobs\AddBudgetDetails;
 use App\Models\BudgetConsumedData;
 use App\Models\BudgetMaster;
 use App\Models\Budjetdetails;
 use App\Models\Company;
+use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
-use App\Models\ProcumentOrder;
+use App\Models\Months;
 use App\Models\PurchaseOrderDetails;
+use App\Models\SegmentMaster;
 use App\Models\TemplatesGLCode;
+use App\Models\TemplatesMaster;
+use App\Models\Year;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -127,9 +135,75 @@ class BudgetMasterAPIController extends AppBaseController
     public function store(CreateBudgetMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $employee = \Helper::getEmployeeInfo();
 
-        $budgetMasters = $this->budgetMasterRepository->create($input);
+        $input['createdByUserID'] = $employee->empID;
+        $input['createdByUserSystemID'] = $employee->employeeSystemID;
 
+        $validator = \Validator::make($input, [
+            'serviceLineSystemID' => 'required|numeric|min:1',
+            'companySystemID' => 'required',
+            'templateMasterID' => 'required|numeric|min:1',
+            'Year' => 'required|numeric|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $segment = SegmentMaster::find($input['serviceLineSystemID']);
+        if (empty($segment)) {
+            return $this->sendError('Service Line not found', 500);
+        }
+
+        if ($segment->isActive == 0) {
+            return $this->sendError('Please select a active Service Line', 500);
+        }
+        $input['serviceLineCode'] = $segment->ServiceLineCode;
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if (empty($segment)) {
+            return $this->sendError('Company not found', 500);
+        }
+
+        $input['companyID'] = $company->CompanyID;
+
+        $companyFinanceYear = CompanyFinanceYear::where('companySystemID', $input['companySystemID'])
+            ->whereYear('bigginingDate', '=', $input['Year'])
+            ->first();
+        if (empty($companyFinanceYear)) {
+            return $this->sendError('Selected year is not added to any financial year.', 500);
+        }
+
+        $input['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
+
+
+        $checkAlreadyExist = BudgetMaster::where('companySystemID', $input['companySystemID'])
+            ->where('serviceLineSystemID', $input['serviceLineSystemID'])
+            ->where('Year', $input['Year'])
+            ->where('templateMasterID', $input['templateMasterID'])
+            ->count();
+        if ($checkAlreadyExist > 0) {
+            return $this->sendError('Already created budgets for selected template.', 500);
+        }
+
+        $months = Months::all();
+
+        $glData = TemplatesGLCode::where('templateMasterID', $input['templateMasterID'])
+            ->whereNotNull('chartOfAccountSystemID')
+            ->whereHas('chart_of_account', function ($q) use ($input) {
+                $q->where('companySystemID', $input['companySystemID'])
+                    ->where('isActive', 1)
+                    ->where('isAssigned', -1);
+            })
+            ->get();
+
+        foreach ($months as $month) {
+            $input['month'] = $month->monthID;
+            $budgetMasters = $this->budgetMasterRepository->create($input);
+            AddBudgetDetails::dispatch($budgetMasters,$glData);
+        }
         return $this->sendResponse($budgetMasters->toArray(), 'Budget Master saved successfully');
     }
 
@@ -174,7 +248,7 @@ class BudgetMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BudgetMaster $budgetMaster */
-        $budgetMaster = $this->budgetMasterRepository->findWithoutFail($id);
+        $budgetMaster = $this->budgetMasterRepository->with(['segment_by', 'template_master', 'finance_year_by'])->findWithoutFail($id);
 
         if (empty($budgetMaster)) {
             return $this->sendError('Budget Master not found');
@@ -302,7 +376,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         $input = $request->all();
 
-        //$input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'serviceLineSystemID', 'approved', 'Year', 'templateMasterID', 'Year'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -320,7 +394,16 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
         $budgets = BudgetMaster::whereIn('companySystemID', $subCompanies)
-            ->with(['segment_by', 'template_master']);
+            ->with(['segment_by', 'template_master'])
+            ->when(request('serviceLineSystemID') && !is_null($input['serviceLineSystemID']), function ($q) use ($input) {
+                return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            })
+            ->when(request('templateMasterID') && !is_null($input['templateMasterID']), function ($q) use ($input) {
+                return $q->where('templateMasterID', $input['templateMasterID']);
+            })
+            ->when(request('Year') && !is_null($input['Year']), function ($q) use ($input) {
+                return $q->where('Year', $input['Year']);
+            });
 
         $search = $request->input('search.value');
         if ($search) {
@@ -494,7 +577,7 @@ class BudgetMasterAPIController extends AppBaseController
                     ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                     ->where('approved', 0)
                     ->where('poCancelledYN', 0);
-                 })
+            })
                 ->where('budgetYear', $input['Year'])
                 ->join(DB::raw('(SELECT
                                                     erp_templatesglcode.templatesDetailsAutoID,
@@ -619,12 +702,12 @@ class BudgetMasterAPIController extends AppBaseController
                 ->whereIn('chartOfAccountID', $glIds)
                 ->sum('consumedRptAmount');
 
-             $pos = PurchaseOrderDetails::whereHas('order', function ($q) use ($data, $glIds) {
+            $pos = PurchaseOrderDetails::whereHas('order', function ($q) use ($data, $glIds) {
                 $q->where('companySystemID', $data['companySystemID'])
                     ->where('serviceLineSystemID', $data['serviceLineSystemID'])
                     ->where('approved', 0)
                     ->where('poCancelledYN', 0);
-                 })
+            })
                 ->where('budgetYear', $data['Year'])
                 ->whereIn('financeGLcodePLSystemID', $glIds)
                 ->whereNotNull('financeGLcodePLSystemID')
@@ -632,7 +715,7 @@ class BudgetMasterAPIController extends AppBaseController
                 ->get();
 
             $data->pending_po_amount = $pos->sum(function ($product) {
-                return $product->GRVcostPerUnitComRptCur  * $product->noQty;
+                return $product->GRVcostPerUnitComRptCur * $product->noQty;
             });
 
         }
@@ -660,4 +743,48 @@ class BudgetMasterAPIController extends AppBaseController
         return $this->sendResponse($data, 'details retrieved successfully');
     }
 
+    public function getBudgetFormData(Request $request)
+    {
+        $companyId = $request['companyId'];
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $month = Months::all();
+
+        $years = Year::orderBy('year', 'desc')->get();
+
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+
+        $segments = SegmentMaster::where("companySystemID", $companyId)
+            ->when(request('isFilter') == 0, function ($q) {
+                return $q->where('isActive', 1);
+            })
+            ->get();
+
+        $masterTemplates = TemplatesMaster::all();
+
+        if (count($companyFinanceYear) > 0) {
+            $startYear = $companyFinanceYear[0]['financeYear'];
+            $finYearExp = explode('/', (explode('|', $startYear))[0]);
+            $financeYear = (int)$finYearExp[2];
+        } else {
+            $financeYear = date("Y");
+        }
+
+        $output = array(
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'month' => $month,
+            'years' => $years,
+            'companyFinanceYear' => $companyFinanceYear,
+            'segments' => $segments,
+            'masterTemplates' => $masterTemplates,
+            'financeYear' => $financeYear
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
 }

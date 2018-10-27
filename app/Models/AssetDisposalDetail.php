@@ -220,5 +220,10 @@ class AssetDisposalDetail extends Model
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 
+    public function asset_by()
+    {
+        return $this->belongsTo('App\Models\FixedAssetMaster', 'faID', 'faID');
+    }
+
     
 }

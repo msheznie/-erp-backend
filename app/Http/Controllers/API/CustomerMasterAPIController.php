@@ -518,12 +518,14 @@ class CustomerMasterAPIController extends AppBaseController
         $companySystemID = $request['companySystemID'];
 
         $customerCompanies = CustomerAssigned::where('companySystemID', $companySystemID)
-            ->with(['company'])
+            ->with(['company','customer_master' => function($query){
+                $query->select('customerCodeSystem','companyLinkedToSystemID');
+            }])
             ->orderBy('customerAssignedID', 'DESC')
             ->get();
 
 
-        return $this->sendResponse($customerCompanies, 'customer companies retrieved successfully');
+        return $this->sendResponse($customerCompanies->toArray(), 'customer companies retrieved successfully');
     }
 
 

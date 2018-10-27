@@ -14,6 +14,8 @@
  * -- Date: 02-October 2018 By: Nazir Description: Added new functions named as PaymentVoucherMatchingCancel()
  * -- Date: 16-October 2018 By: Nazir Description: Added new functions named as getRVMatchDocumentMasterView()
  * -- Date: 22-October 2018 By: Nazir Description: Added new functions named as getReceiptVoucherPullingDetail()
+ * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as receiptVoucherMatchingCancel()
+ * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as updateReceiptVoucherMatching()
  */
 namespace App\Http\Controllers\API;
 
@@ -23,6 +25,7 @@ use App\Models\CreditNote;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DebitNote;
 use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
@@ -578,6 +581,108 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $detailAmountTotRpt = PaySupplierInvoiceDetail::where('matchingDocID', $id)
                 ->sum('paymentComRptAmount');
+
+
+            if ($detailAmountTotTran > $input['matchBalanceAmount']) {
+                return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
+            }
+            //$currency = \Helper::convertAmountToLocalRpt(203, $id, $detailAmountTot);
+
+            $input['matchingAmount'] = $detailAmountTotTran;
+            $input['matchedAmount'] = $detailAmountTotTran;
+            //$input['matchLocalAmount'] = \Helper::roundValue($currency['localAmount']);
+            //$input['matchRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+
+            $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
+            $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
+
+            $input['matchingConfirmedYN'] = 1;
+            $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;;
+            $input['matchingConfirmedByEmpID'] = $employee->empID;
+            $input['matchingConfirmedByName'] = $employee->empName;
+            $input['matchingConfirmedDate'] = \Helper::currentDateTime();
+        }
+
+        $input['modifiedPc'] = gethostname();
+        $input['modifiedUser'] = $employee->empID;
+        $input['modifiedUserSystemID'] = $employee->employeeSystemID;
+
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
+
+        return $this->sendResponse($matchDocumentMaster->toArray(), 'Record updated successfully');
+    }
+
+
+    public function updateReceiptVoucherMatching(Request $request)
+    {
+        $input = $request->all();
+        $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by']);
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $id =  $input['matchDocumentMasterAutoID'];
+
+        /** @var MatchDocumentMaster $matchDocumentMaster */
+        $matchDocumentMaster = $this->matchDocumentMasterRepository->findWithoutFail($id);
+
+        if (empty($matchDocumentMaster)) {
+            return $this->sendError('Match Document Master not found');
+        }
+
+        if (isset($input['matchingDocdate'])) {
+            if ($input['matchingDocdate']) {
+                $input['matchingDocdate'] = new Carbon($input['matchingDocdate']);
+            }
+        }
+
+
+        if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
+
+            if ($input['matchingDocCode'] == 0) {
+
+                $company = Company::find($input['companySystemID']);
+
+                $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('matchDocumentMasterAutoID', '<>', $input['matchDocumentMasterAutoID'])
+                    ->orderBy('matchDocumentMasterAutoID', 'desc')
+                    ->first();
+
+                $lastSerialNumber = 1;
+                if ($lastSerial) {
+                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                }
+
+                $matchingDocCode = ($company->CompanyID . '\\' . 'MT' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+
+                $input['serialNo'] = $lastSerialNumber;
+                $input['matchingDocCode'] = $matchingDocCode;
+            }
+
+            $pvDetailExist = CustomerReceivePaymentDetail::select(DB::raw('matchingDocID'))
+                ->where('matchingDocID', $id)
+                ->first();
+
+            if (empty($pvDetailExist)) {
+                return $this->sendError('Matching document cannot confirm without details', 500, ['type' => 'confirm']);
+            }
+
+            $checkAmount = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                ->where('receiveAmountTrans', '<=', 0)
+                ->count();
+
+            if ($checkAmount > 0) {
+                return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
+            }
+
+            $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                ->sum('receiveAmountTrans');
+
+            $detailAmountTotLoc = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                ->sum('receiveAmountLocal');
+
+            $detailAmountTotRpt = CustomerReceivePaymentDetail::where('matchingDocID', $id)
+                ->sum('receiveAmountRpt');
 
 
             if ($detailAmountTotTran > $input['matchBalanceAmount']) {
@@ -1279,6 +1384,42 @@ ORDER BY
 	erp_accountsreceivableledger.arAutoID DESC');
 
         return $this->sendResponse($output, 'Data retrived successfully');
+    }
+
+
+    public function receiptVoucherMatchingCancel(Request $request)
+    {
+        $input = $request->all();
+
+        $matchDocumentMasterAutoID = $input['matchDocumentMasterAutoID'];
+
+        $MatchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
+
+        if (empty($MatchDocumentMasterData)) {
+            return $this->sendError('Match Document Master not found');
+        }
+
+        if ($MatchDocumentMasterData->matchingConfirmedYN == 1) {
+            return $this->sendError('You cannot cancel this matching, it is confirmed');
+        }
+
+        $pvDetailExist = CustomerReceivePaymentDetail::select(DB::raw('matchingDocID'))
+            ->where('matchingDocID', $matchDocumentMasterAutoID)
+            ->first();
+
+        if (!empty($pvDetailExist)) {
+            return $this->sendError('Details are exist, You cannot cancel this document ');
+        }
+
+        $deleteDocument = MatchDocumentMaster::where('matchDocumentMasterAutoID', $matchDocumentMasterAutoID)
+            ->delete();
+
+        if ($deleteDocument) {
+            return $this->sendResponse($MatchDocumentMasterData, 'Document canceled successfully ');
+        } else {
+            return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled');
+        }
+
     }
 
 }

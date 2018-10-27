@@ -327,15 +327,15 @@ class TemplatesDetailsAPIController extends AppBaseController
         }
 
         $glData = TemplatesGLCode::where('templateMasterID', $templateDetail->templatesMasterAutoID)
-            ->where('templatesDetailsAutoID', $id)
-            ->whereNotNull('chartOfAccountSystemID')
-            ->get();
+                                    ->where('templatesDetailsAutoID', $id)
+                                    ->whereNotNull('chartOfAccountSystemID')
+                                    ->get();
 
         $glIds = collect($glData)->pluck('chartOfAccountSystemID')->toArray();
 
-        $glCodes = ChartOfAccountsAssigned::where('companySystemID',$request->get('companySystemID'))
-                                           ->whereIn('chartOfAccountSystemID',$glIds)
-                                           ->get(['chartOfAccountSystemID','AccountCode','AccountDescription','controlAccounts']);
+        $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))
+            ->whereIn('chartOfAccountSystemID', $glIds)
+            ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
 
         return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
     }

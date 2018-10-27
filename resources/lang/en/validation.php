@@ -166,7 +166,8 @@ return [
         'toServiceLineSystemID' => 'To Department',
         'toChartOfAccountSystemID' => 'To Account Code',
         'adjustmentAmountRpt' => 'Amount ',
-        'remarks' => 'Remarks'
+        'remarks' => 'Remarks',
+        'templateMasterID' => 'Template'
     ],
 
 ];

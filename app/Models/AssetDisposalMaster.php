@@ -154,6 +154,7 @@ class AssetDisposalMaster extends Model
         'disposalDocumentCode',
         'disposalDocumentDate',
         'narration',
+        'revenuePercentage',
         'confirmedYN',
         'confimedByEmpSystemID',
         'confimedByEmpID',
@@ -170,6 +171,9 @@ class AssetDisposalMaster extends Model
         'createdUserSystemID',
         'createdUserID',
         'createdDateTime',
+        'modifiedUserSystemID',
+        'modifiedUser',
+        'modifiedPc',
         'timestamp'
     ];
 
@@ -192,6 +196,7 @@ class AssetDisposalMaster extends Model
         'documentID' => 'string',
         'disposalDocumentCode' => 'string',
         'narration' => 'string',
+        'revenuePercentage' => 'integer',
         'confirmedYN' => 'integer',
         'confimedByEmpSystemID' => 'integer',
         'confimedByEmpID' => 'string',
@@ -204,7 +209,10 @@ class AssetDisposalMaster extends Model
         'refferedBackYN' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'createdUserSystemID' => 'integer',
-        'createdUserID' => 'string'
+        'createdUserID' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUser' => 'string',
+        'modifiedPc' => 'string',
     ];
 
     /**
@@ -257,6 +265,11 @@ class AssetDisposalMaster extends Model
     public function financeyear_by()
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
     
 }
