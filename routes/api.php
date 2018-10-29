@@ -850,6 +850,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
     Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
+    Route::get('getReceiptVoucherMasterRecord', 'CustomerReceivePaymentAPIController@getReceiptVoucherMasterRecord');
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
     Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
@@ -1022,7 +1023,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
     Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
     Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
+    Route::post('disposalReopen', 'AssetDisposalMasterAPIController@disposalReopen');
+    Route::post('getDisposalApprovalByUser', 'AssetDisposalMasterAPIController@getDisposalApprovalByUser');
+    Route::post('getDisposalApprovedByUser', 'AssetDisposalMasterAPIController@getDisposalApprovedByUser');
     Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal');
+    Route::post('getDisposalApprovalByUser', 'AssetDisposalMasterAPIController@getDisposalApprovalByUser');
+    Route::post('getDisposalApprovedByUser', 'AssetDisposalMasterAPIController@getDisposalApprovedByUser');
     Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
     Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');

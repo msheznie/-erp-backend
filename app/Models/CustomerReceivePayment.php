@@ -572,7 +572,7 @@ class CustomerReceivePayment extends Model
 
     public function details()
     {
-        return $this->hasMany('App\Models\CustomerReceivePaymentDetail', 'custReceivePaymentAutoID', 'custReceivePaymentAutoID');
+        return $this->hasMany('App\Models\CustomerReceivePaymentDetail', 'custReceivePaymentAutoID','custReceivePaymentAutoID');
     }
 
     public function directdetails()
@@ -608,5 +608,25 @@ class CustomerReceivePayment extends Model
     public function rptCurrency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'companyRptCurrencyID', 'currencyID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'custReceivePaymentAutoID');
     }
 }
