@@ -273,6 +273,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $input['supplierDefaultAmount'] = $conversion['defaultAmount'];
             $input['localAmount'] = $conversion['localAmount'];
             $input['comRptAmount'] = $conversion['reportingAmount'];
+            $input['supplierTransAmount'] = $input["paymentAmount"];
 
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->update($input, $id);
 
