@@ -16,6 +16,7 @@
 namespace App\helper;
 
 use App\Jobs\BudgetAdjustment;
+use App\Jobs\CreateCustomerInvoice;
 use App\Jobs\CreateReceiptVoucher;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
@@ -459,7 +460,7 @@ class Helper
                     $docInforArr["documentCodeColumnName"] = 'disposalDocumentCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
                     $docInforArr["confirmedBy"] = 'confirmedByEmpName';
-                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedByEmpID"] = 'confimedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confimedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
                     $docInforArr["tableName"] = 'erp_fa_asset_disposalmaster';
@@ -1456,7 +1457,7 @@ class Helper
                             //generate customer invoice or Direct GRV
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
                                 if($sourceModel->disposalType == 1 || $sourceModel->disposalType == 6) {
-                                    $jobCI = CreateStockReceive::dispatch($sourceModel);
+                                    $jobCI = CreateCustomerInvoice::dispatch($sourceModel);
                                 }
                             }
 
