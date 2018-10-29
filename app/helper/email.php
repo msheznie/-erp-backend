@@ -16,6 +16,7 @@ use App\Models\Alert;
 use App\Models\AssetCapitalization;
 use App\Models\BankReconciliation;
 use App\Models\BookInvSuppMaster;
+use App\Models\BudgetMaster;
 use App\Models\BudgetTransferForm;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
@@ -295,6 +296,13 @@ class email
                     if (!empty($budgetTransfer)) {
                         $data['docApprovedYN'] = $budgetTransfer->approvedYN;
                         $data['docCode'] = $budgetTransfer->transferVoucherNo;
+                    }
+                    break;
+                case 65:
+                    $budget = BudgetMaster::find($data['docSystemCode']);
+                    if (!empty($budget)) {
+                        $data['docApprovedYN'] = $budget->approvedYN;
+                        $data['docCode'] = $budget->budgetmasterID;
                     }
                     break;
                 default:

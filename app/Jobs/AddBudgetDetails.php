@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Months;
 use App\Repositories\BudgetMasterRepository;
 use App\Repositories\BudjetdetailsRepository;
 use Illuminate\Bus\Queueable;
@@ -33,7 +34,7 @@ class AddBudgetDetails implements ShouldQueue
      *
      * @return void
      */
-    public function handle(BudjetdetailsRepository $budjetdetailsRepo, BudgetMasterRepository $budgetMasterRepo)
+    public function handle(BudjetdetailsRepository $budgetDetailsRepo, BudgetMasterRepository $budgetMasterRepo)
     {
         $budgetMasters = $this->budget;
         $glData = $this->glData;
@@ -41,53 +42,58 @@ class AddBudgetDetails implements ShouldQueue
         Log::info('Budget Details Jobs Start');
         if ($budgetMasters) {
             Log::info('Inside the if Start');
-            foreach ($glData as $gl) {
-                $detail = array(
-                    'budgetmasterID' => $budgetMasters->budgetmasterID,
-                    'companySystemID' => $budgetMasters->companySystemID,
-                    'companyId' => $budgetMasters->companyID,
-                    'companyFinanceYearID' => $budgetMasters->companyFinanceYearID,
+
+            $months = Months::all();
+
+            foreach ($months as $month) {
+                foreach ($glData as $gl) {
+                    $detail = array(
+                        'budgetmasterID' => $budgetMasters->budgetmasterID,
+                        'companySystemID' => $budgetMasters->companySystemID,
+                        'companyId' => $budgetMasters->companyID,
+                        'companyFinanceYearID' => $budgetMasters->companyFinanceYearID,
+                        'serviceLineSystemID' => $budgetMasters->serviceLineSystemID,
+                        'serviceLine' => $budgetMasters->serviceLineCode,
+                        'templateDetailID' => $gl['templatesDetailsAutoID'],
+                        'chartOfAccountID' => $gl['chart_of_account']['chartOfAccountSystemID'],
+                        'glCode' => $gl['chart_of_account']['AccountCode'],
+                        'glCodeType' => $gl['chart_of_account']['controlAccounts'],
+                        'Year' => $budgetMasters->Year,
+                        'month' => $month->monthID, //$budgetMasters->month,
+                        'budjetAmtLocal' => 0,
+                        'budjetAmtRpt' => 0,
+                        'createdByUserSystemID' => $budgetMasters->createdByUserSystemID,
+                        'createdByUserID' => $budgetMasters->createdByUserID
+                    );
+                    $budgetDetailsRepo->create($detail);
+                }
+
+                $budgets = $budgetMasterRepo->findWhere(['companySystemID' => $budgetMasters->companySystemID,
                     'serviceLineSystemID' => $budgetMasters->serviceLineSystemID,
-                    'serviceLine' => $budgetMasters->serviceLineCode,
-                    'templateDetailID' => $gl['templatesDetailsAutoID'],
-                    'chartOfAccountID' => $gl['chart_of_account']['chartOfAccountSystemID'],
-                    'glCode' => $gl['chart_of_account']['AccountCode'],
-                    'glCodeType' => $gl['chart_of_account']['controlAccounts'],
                     'Year' => $budgetMasters->Year,
-                    'month' => $budgetMasters->month,
-                    'budjetAmtLocal' => 0,
-                    'budjetAmtRpt' => 0,
-                    'createdByUserSystemID' => $budgetMasters->createdByUserSystemID,
-                    'createdByUserID' => $budgetMasters->createdByUserID
-                );
-                $budjetdetailsRepo->create($detail);
+                    'templateMasterID' => $budgetMasters->templateMasterID,
+                ]);
+
+                Log::info('budgets count' . count($budgets));
+                Log::info($budgets);
+                $percentage = 8; //100 / 12;
+                foreach ($budgets as $budget){
+                    Log::info('Budget Id'. $budget->budgetmasterID);
+                    $updatedPercentage = ($budget->generateStatus + $percentage);
+
+                    if( $updatedPercentage > 100){
+                        $updatedPercentage = 100;
+                    }
+
+                    if($updatedPercentage == 96){
+                        $updatedPercentage = 100;
+                    }
+
+                    $budgetMasterRepo->update(['generateStatus' => $updatedPercentage],$budget->budgetmasterID);
+                }
             }
 
-
-            $budgets = $budgetMasterRepo->findWhere(['companySystemID' => $budgetMasters->companySystemID,
-                                                        'serviceLineSystemID' => $budgetMasters->serviceLineSystemID,
-                                                        'Year' => $budgetMasters->Year,
-                                                        'templateMasterID' => $budgetMasters->templateMasterID,
-                                                      ]);
-            Log::info('budgets count' . count($budgets));
-            Log::info($budgets);
-            $percentage = 8; //100 / 12;
-            foreach ($budgets as $budget){
-                Log::info('Budget Id'. $budget->budgetmasterID);
-                $updatedPercentage = ($budget->generateStatus + $percentage);
-
-                if( $updatedPercentage > 100){
-                    $updatedPercentage = 100;
-                }
-
-                if($updatedPercentage == 96){
-                    $updatedPercentage = 100;
-                }
-
-                $budgetMasterRepo->update(['generateStatus' => $updatedPercentage],$budget->budgetmasterID);
-            }
-
-            Log::info('Inside the if End ' . $percentage);
+            Log::info('Inside the if End ');
         }
     }
 }

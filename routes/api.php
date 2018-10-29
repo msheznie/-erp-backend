@@ -1000,6 +1000,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('budget_masters', 'BudgetMasterAPIController');
     Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
+    Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen');
+    Route::post('getBudgetApprovedByUser', 'BudgetMasterAPIController@getBudgetApprovedByUser');
+    Route::post('getBudgetApprovalByUser', 'BudgetMasterAPIController@getBudgetApprovalByUser');
+    Route::get('getBudgetAudit', 'BudgetMasterAPIController@getBudgetAudit');
     Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
     Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
     Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');

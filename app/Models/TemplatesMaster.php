@@ -52,7 +52,8 @@ class TemplatesMaster extends Model
         'templateType',
         'templateReportName',
         'isActive',
-        'timestamp'
+        'timestamp',
+        'isBudgetUpload'
     ];
 
     /**
@@ -65,7 +66,8 @@ class TemplatesMaster extends Model
         'templateDescription' => 'string',
         'templateType' => 'string',
         'templateReportName' => 'string',
-        'isActive' => 'integer'
+        'isActive' => 'integer',
+        'isBudgetUpload' => 'integer'
     ];
 
     /**

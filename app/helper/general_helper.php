@@ -455,6 +455,17 @@ class Helper
                     $docInforArr["modelName"] = 'BudgetTransferForm';
                     $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
                     break;
+                case 65:
+                    $docInforArr["documentCodeColumnName"] = 'budgetmasterID';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_budgetmaster';
+                    $docInforArr["modelName"] = 'BudgetMaster';
+                    $docInforArr["primarykey"] = 'budgetmasterID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1175,6 +1186,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 65: // budget
+                $docInforArr["tableName"] = 'erp_budgetmaster';
+                $docInforArr["modelName"] = 'BudgetMaster';
+                $docInforArr["primarykey"] = 'budgetmasterID';
+                $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -1640,6 +1663,12 @@ class Helper
                     $docInforArr["tableName"] = 'erp_budgettransferform';
                     $docInforArr["modelName"] = 'BudgetTransferForm';
                     $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 65: // budget
+                    $docInforArr["tableName"] = 'erp_budgetmaster';
+                    $docInforArr["modelName"] = 'BudgetMaster';
+                    $docInforArr["primarykey"] = 'budgetmasterID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                 default:
