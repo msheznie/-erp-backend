@@ -41,4 +41,13 @@ class BudgetMasterRepository extends BaseRepository
     {
         return BudgetMaster::class;
     }
+
+    public function getAudit($id)
+    {
+        return $this->with(['approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 65);
+        }, 'company','confirmed_by', 'created_by', 'modified_by'])
+            ->findWithoutFail($id);
+    }
 }

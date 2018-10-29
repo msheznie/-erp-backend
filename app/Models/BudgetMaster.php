@@ -104,7 +104,16 @@ class BudgetMaster extends Model
         'createdByUserID',
         'createdDateTime',
         'generateStatus',
-        'timestamp'
+        'timestamp',
+        'confirmedYN',
+        'confirmedByEmpSystemID',
+        'confirmedByEmpID',
+        'confirmedDate',
+        'approvedYN',
+        'approvedByUserID',
+        'approvedByUserSystemID',
+        'approvedDate',
+        'RollLevForApp_curr'
     ];
 
     /**
@@ -124,7 +133,16 @@ class BudgetMaster extends Model
         'month' => 'integer',
         'createdByUserSystemID' => 'integer',
         'generateStatus' => 'integer',
-        'createdByUserID' => 'string'
+        'createdByUserID' => 'string',
+        'confirmedYN' => 'integer',
+        'confirmedByEmpSystemID' => 'integer',
+        'confirmedByEmpID' => 'string',
+        'confirmedDate' => 'string',
+        'approvedYN' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
+        'approvedDate' => 'string',
+        'RollLevForApp_curr' => 'integer'
     ];
 
     /**
@@ -150,5 +168,27 @@ class BudgetMaster extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdByUserSystemID', 'employeeSystemID');
+    }
 
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','budgetmasterID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
 }

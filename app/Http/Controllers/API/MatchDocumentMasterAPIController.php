@@ -329,7 +329,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['supplierGLCode'] = $customerReceivePaymentMaster->customerGLCode;
                 $input['supplierTransCurrencyID'] = $customerReceivePaymentMaster->custTransactionCurrencyID;
                 $input['supplierTransCurrencyER'] = $customerReceivePaymentMaster->custTransactionCurrencyER;
-           /*     $input['supplierDefCurrencyID'] = $customerReceivePaymentMaster->supplierDefCurrencyID;
+           /*   $input['supplierDefCurrencyID'] = $customerReceivePaymentMaster->supplierDefCurrencyID;
                 $input['supplierDefCurrencyER'] = $customerReceivePaymentMaster->supplierDefCurrencyER;*/
                 $input['localCurrencyID'] = $customerReceivePaymentMaster->localCurrencyID;
                 $input['localCurrencyER'] = $customerReceivePaymentMaster->localCurrencyER;
@@ -636,28 +636,27 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
         }
 
+        if ($input['matchingDocCode'] == 0) {
+
+            $company = Company::find($input['companySystemID']);
+
+            $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                ->where('matchDocumentMasterAutoID', '<>', $input['matchDocumentMasterAutoID'])
+                ->orderBy('matchDocumentMasterAutoID', 'desc')
+                ->first();
+
+            $lastSerialNumber = 1;
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            $matchingDocCode = ($company->CompanyID . '\\' . 'MT' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+
+            $input['serialNo'] = $lastSerialNumber;
+            $input['matchingDocCode'] = $matchingDocCode;
+        }
 
         if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
-
-            if ($input['matchingDocCode'] == 0) {
-
-                $company = Company::find($input['companySystemID']);
-
-                $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
-                    ->where('matchDocumentMasterAutoID', '<>', $input['matchDocumentMasterAutoID'])
-                    ->orderBy('matchDocumentMasterAutoID', 'desc')
-                    ->first();
-
-                $lastSerialNumber = 1;
-                if ($lastSerial) {
-                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-                }
-
-                $matchingDocCode = ($company->CompanyID . '\\' . 'MT' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-
-                $input['serialNo'] = $lastSerialNumber;
-                $input['matchingDocCode'] = $matchingDocCode;
-            }
 
             $pvDetailExist = CustomerReceivePaymentDetail::select(DB::raw('matchingDocID'))
                 ->where('matchingDocID', $id)
@@ -711,7 +710,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         $matchDocumentMaster = $this->matchDocumentMasterRepository->update($input, $id);
 
-        return $this->sendResponse($matchDocumentMaster->toArray(), 'Record updated successfully');
+        return $this->sendResponse($matchDocumentMaster->toArray(), 'Receipt voucher matching updated successfully');
     }
 
     /**
