@@ -329,7 +329,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['supplierGLCode'] = $customerReceivePaymentMaster->customerGLCode;
                 $input['supplierTransCurrencyID'] = $customerReceivePaymentMaster->custTransactionCurrencyID;
                 $input['supplierTransCurrencyER'] = $customerReceivePaymentMaster->custTransactionCurrencyER;
-           /*     $input['supplierDefCurrencyID'] = $customerReceivePaymentMaster->supplierDefCurrencyID;
+           /*   $input['supplierDefCurrencyID'] = $customerReceivePaymentMaster->supplierDefCurrencyID;
                 $input['supplierDefCurrencyER'] = $customerReceivePaymentMaster->supplierDefCurrencyER;*/
                 $input['localCurrencyID'] = $customerReceivePaymentMaster->localCurrencyID;
                 $input['localCurrencyER'] = $customerReceivePaymentMaster->localCurrencyER;
