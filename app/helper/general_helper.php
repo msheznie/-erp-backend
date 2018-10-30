@@ -16,6 +16,7 @@
 namespace App\helper;
 
 use App\Jobs\BudgetAdjustment;
+use App\Jobs\CreateCustomerInvoice;
 use App\Jobs\CreateReceiptVoucher;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
@@ -455,11 +456,22 @@ class Helper
                     $docInforArr["modelName"] = 'BudgetTransferForm';
                     $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
                     break;
+                case 65:
+                    $docInforArr["documentCodeColumnName"] = 'budgetmasterID';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_budgetmaster';
+                    $docInforArr["modelName"] = 'BudgetMaster';
+                    $docInforArr["primarykey"] = 'budgetmasterID';
+                    break;
                 case 41:
                     $docInforArr["documentCodeColumnName"] = 'disposalDocumentCode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
                     $docInforArr["confirmedBy"] = 'confirmedByEmpName';
-                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedByEmpID"] = 'confimedByEmpID';
                     $docInforArr["confirmedBySystemID"] = 'confimedByEmpSystemID';
                     $docInforArr["confirmedDate"] = 'confirmedDate';
                     $docInforArr["tableName"] = 'erp_fa_asset_disposalmaster';
@@ -1186,6 +1198,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 65: // budget
+                $docInforArr["tableName"] = 'erp_budgetmaster';
+                $docInforArr["modelName"] = 'BudgetMaster';
+                $docInforArr["primarykey"] = 'budgetmasterID';
+                 $docInforArr["approvedColumnName"] = 'approvedYN';
+                $docInforArr["approvedBy"] = 'approvedByUserID';
+                $docInforArr["approvedBySystemID"] = 'approvedByUserSystemID';
+                $docInforArr["approvedDate"] = 'approvedDate';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmedYN";
+                $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
             case 41: // Asset Disposal
                 $docInforArr["tableName"] = 'erp_fa_asset_disposalmaster';
                 $docInforArr["modelName"] = 'AssetDisposalMaster';
@@ -1456,7 +1480,7 @@ class Helper
                             //generate customer invoice or Direct GRV
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
                                 if($sourceModel->disposalType == 1 || $sourceModel->disposalType == 6) {
-                                    $jobCI = CreateStockReceive::dispatch($sourceModel);
+                                    $jobCI = CreateCustomerInvoice::dispatch($sourceModel);
                                 }
                             }
 
@@ -1670,6 +1694,12 @@ class Helper
                     $docInforArr["tableName"] = 'erp_budgettransferform';
                     $docInforArr["modelName"] = 'BudgetTransferForm';
                     $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 65: // budget
+                    $docInforArr["tableName"] = 'erp_budgetmaster';
+                    $docInforArr["modelName"] = 'BudgetMaster';
+                    $docInforArr["primarykey"] = 'budgetmasterID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                 default:

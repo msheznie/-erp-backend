@@ -135,6 +135,7 @@ class AssetDisposalMaster extends Model
     const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = 'assetdisposalMasterAutoID';
+    protected $with = ['confirmed_by','created_by', 'modified_by','confirmed_by'];
 
     public $fillable = [
         'companySystemID',
@@ -244,7 +245,7 @@ class AssetDisposalMaster extends Model
 
     public function confirmed_by()
     {
-        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+        return $this->belongsTo('App\Models\Employee', 'confimedByEmpSystemID', 'employeeSystemID');
     }
 
     public function created_by()
