@@ -851,6 +851,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
     Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
     Route::get('getReceiptVoucherMasterRecord', 'CustomerReceivePaymentAPIController@getReceiptVoucherMasterRecord');
+    Route::post('receiptVoucherReopen', 'CustomerReceivePaymentAPIController@receiptVoucherReopen');
+
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
     Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
