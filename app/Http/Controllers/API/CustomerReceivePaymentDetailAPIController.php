@@ -136,7 +136,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $arAutoID = array_pluck($value, 'arAutoID');
 
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['id'])->first();
-        $detail = CustomerReceivePaymentDetail::select('bookingInvCode')->where('custReceivePaymentAutoID', $input['id'])->whereIn('arAutoID', $arAutoID)->get();
+        $detail = CustomerReceivePaymentDetail::select('bookingInvCode')
+            ->where('custReceivePaymentAutoID', $input['id'])
+            ->whereIn('arAutoID', $arAutoID)
+            ->get();
 
         if (count($detail) > 0) {
             $names = array_pluck($detail->toArray(), 'bookingInvCode');
