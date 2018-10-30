@@ -884,6 +884,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
+        $BPVdate = Carbon::parse($matchDocumentMasterData->BPVdate)->format('Y-m-d');
+
         $output = DB::select('SELECT
 	erp_accountspayableledger.apAutoID,
 	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
@@ -911,7 +913,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 	CurrencyCode,
 	DecimalPlaces,
 	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
-	IFNULL(supplierInvoiceAmount,0) - IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
+	IFNULL(supplierInvoiceAmount,0) - IFNULL(sid.SumOfsupplierPaymentAmount,0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
 	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
 	false as isChecked
 FROM
@@ -953,12 +955,12 @@ WHERE
 	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID
 WHERE
 	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 )
-	AND erp_accountspayableledger.documentDate <= "' . $matchDocumentMasterData->BPVdate . '"
+	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '"
 	AND erp_accountspayableledger.selectedToPaymentInv = 0
 	AND erp_accountspayableledger.fullyInvoice <> 2
 	AND erp_accountspayableledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . '
 	AND erp_accountspayableledger.supplierCodeSystem = ' . $matchDocumentMasterData->BPVsupplierID . '
-	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $matchDocumentMasterData->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount,DecimalPlaces) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC');
+	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $matchDocumentMasterData->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount,2) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC');
 
         return $this->sendResponse($output, 'Data retrived successfully');
     }
