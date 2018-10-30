@@ -695,7 +695,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 if ($paySupplierInvoiceMaster->invoiceType == 3) {
                     $pvDetailExist = DirectPaymentDetails::where('directPaymentAutoID', $id)->get();
 
-                    if (empty($pvDetailExist)) {
+                    if (count($pvDetailExist) == 0) {
                         return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
 
