@@ -189,7 +189,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
         $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
-        $bank = BankAssign::select('bankmasterAutoID')->where('companyID', $company['CompanyID'])->where('isDefault', -1)->first();
+        $bank = BankAssign::select('bankmasterAutoID')
+            ->where('companyID', $company['CompanyID'])
+            ->where('isDefault', -1)
+            ->first();
+
         if ($bank) {
             $input['bankID'] = $bank->bankmasterAutoID;
             $bankAccount = BankAccount::where('companyID', $company['CompanyID'])->where('bankmasterAutoID', $bank->bankmasterAutoID)->where('isDefault', 1)->where('accountCurrencyID', $myCurr)->first();
@@ -202,14 +206,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         }
 
-
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
         $input['createdUserID'] = \Helper::getEmployeeID();
         $input['createdPcID'] = getenv('COMPUTERNAME');
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
         $input['modifiedUser'] = \Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
-
 
         if ($input['documentType'] == 13) {
             /* Customer Invoice Receipt*/

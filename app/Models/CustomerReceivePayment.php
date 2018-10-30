@@ -475,6 +475,7 @@ class CustomerReceivePayment extends Model
         'timestamp',
         'modifiedUserSystemID',
         'createdUserSystemID',
+        'refferedBackYN',
         'timesReferred',
         'companyFinancePeriodID',
         'customerGLCodeSystemID'
@@ -556,6 +557,7 @@ class CustomerReceivePayment extends Model
         'modifiedPc' => 'string',
         'modifiedUserSystemID' => 'integer',
         'createdUserSystemID' => 'integer',
+        'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
         'companyFinancePeriodID' => 'integer',
         'customerGLCodeSystemID' => 'integer'
