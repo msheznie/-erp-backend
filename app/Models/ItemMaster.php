@@ -170,6 +170,10 @@ class ItemMaster extends Model
         return $this->hasOne('App\Models\Unit','UnitID','unit');
     }
 
+    public function unit_by(){
+        return $this->hasOne('App\Models\Unit','UnitID','unit');
+    }
+
     public function financeMainCategory(){
         return $this->hasOne('App\Models\FinanceItemCategoryMaster','itemCategoryID','financeCategoryMaster');
     }
