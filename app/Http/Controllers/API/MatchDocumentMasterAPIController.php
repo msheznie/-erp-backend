@@ -884,7 +884,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
-        $BPVdate = Carbon::parse($matchDocumentMasterData->BPVdate)->format('Y-m-d');
+        $matchingDocdate = Carbon::parse($matchDocumentMasterData->matchingDocdate)->format('Y-m-d');
 
         $output = DB::select('SELECT
 	erp_accountspayableledger.apAutoID,
@@ -955,14 +955,14 @@ WHERE
 	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID
 WHERE
 	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 )
-	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '"
+	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $matchingDocdate . '"
 	AND erp_accountspayableledger.selectedToPaymentInv = 0
 	AND erp_accountspayableledger.fullyInvoice <> 2
 	AND erp_accountspayableledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . '
 	AND erp_accountspayableledger.supplierCodeSystem = ' . $matchDocumentMasterData->BPVsupplierID . '
 	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $matchDocumentMasterData->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount,2) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC');
 
-        return $this->sendResponse($output, 'Data retrived successfully');
+        return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
     public function getMatchDocumentMasterRecord(Request $request)
@@ -1285,6 +1285,8 @@ HAVING
             return $this->sendError('Matching document not found');
         }
 
+        $matchingDocdate = Carbon::parse($matchDocumentMasterData->matchingDocdate)->format('Y-m-d');
+
         $output = DB::select('SELECT
 	erp_accountsreceivableledger.arAutoID,
 	erp_accountsreceivableledger.documentCodeSystem AS bookingInvCodeSystem,
@@ -1370,7 +1372,7 @@ AND md.companySystemID = erp_accountsreceivableledger.companySystemID
 LEFT JOIN currencymaster ON erp_accountsreceivableledger.custTransCurrencyID = currencymaster.currencyID
 WHERE
 	erp_accountsreceivableledger.documentType IN (11, 12)
-AND date(erp_accountsreceivableledger.documentDate) <= "' . $matchDocumentMasterData->BPVdate . '"
+AND date(erp_accountsreceivableledger.documentDate) <= "' . $matchingDocdate . '"
 AND erp_accountsreceivableledger.selectedToPaymentInv = 0
 AND erp_accountsreceivableledger.fullyInvoiced <> 2
 AND erp_accountsreceivableledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . '
@@ -1379,7 +1381,7 @@ AND erp_accountsreceivableledger.custTransCurrencyID = ' . $matchDocumentMasterD
 HAVING
 	ROUND(
 		balanceMemAmount,
-		DecimalPlaces
+		2
 	) != 0
 ORDER BY
 	erp_accountsreceivableledger.arAutoID DESC');

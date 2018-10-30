@@ -10,7 +10,7 @@ trait ApproveTrait
      *
      * @return void
      */
-    public static function bootActiveTrait()
+    public static function bootApproveTrait()
     {
         static::addGlobalScope(new ApproveScope());
     }
