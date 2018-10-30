@@ -101,6 +101,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('bank_memo_suppliers', 'BankMemoSupplierAPIController');
 
     Route::get('getBankMemoBySupplierCurrency', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrency');
+    Route::post('addBulkMemos', 'BankMemoSupplierAPIController@addBulkMemos');
+    Route::post('exportSupplierCurrencyMemos', 'BankMemoSupplierAPIController@exportSupplierCurrencyMemos');
 
     Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
     Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo');
@@ -851,6 +853,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
     Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
     Route::get('getReceiptVoucherMasterRecord', 'CustomerReceivePaymentAPIController@getReceiptVoucherMasterRecord');
+    Route::post('receiptVoucherReopen', 'CustomerReceivePaymentAPIController@receiptVoucherReopen');
+
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
     Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');

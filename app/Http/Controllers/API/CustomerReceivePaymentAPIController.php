@@ -1,9 +1,22 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : CustomerReceivePaymentAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  CustomerReceivePayment
+ * -- Author : Mohamed Nazir
+ * -- Create date : 29 - October 2018
+ * -- Description : This file contains the all CRUD for Receipt Voucher
+ * -- REVISION HISTORY
+ * -- Date: 29-October 2018 By: Nazir Description: Added new function getReceiptVoucherMasterRecord(),
+ * -- Date: 29-October 2018 By: Nazir Description: Added new function receiptVoucherReopen(),
+ */
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerReceivePaymentAPIRequest;
 use App\Http\Requests\API\UpdateCustomerReceivePaymentAPIRequest;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerAssigned;
 use App\Models\CurrencyMaster;
@@ -11,6 +24,9 @@ use App\Models\customercurrency;
 use App\Models\Company;
 use App\Models\CustomerMaster;
 use App\Models\BankAccount;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\SegmentMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\CustomerReceivePaymentDetail;
@@ -742,5 +758,107 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
+    }
+
+    public function receiptVoucherReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $custReceivePaymentAutoID = $input['custReceivePaymentAutoID'];
+
+        $custReceivePaymentMaster = CustomerReceivePayment::find($custReceivePaymentAutoID);
+
+        $emails = array();
+        if (empty($custReceivePaymentMaster)) {
+            return $this->sendError('Customer receive payment not found');
+        }
+
+        if ($custReceivePaymentMaster->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this receipt voucher it is already partially approved');
+        }
+
+        if ($custReceivePaymentMaster->approved == -1) {
+            return $this->sendError('You cannot reopen this receipt voucher it is already fully approved');
+        }
+
+        if ($custReceivePaymentMaster->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this receipt voucher, it is not confirmed');
+        }
+
+        // updating fields
+        $custReceivePaymentMaster->confirmedYN = 0;
+        $custReceivePaymentMaster->confirmedByEmpSystemID = null;
+        $custReceivePaymentMaster->confirmedByEmpID = null;
+        $custReceivePaymentMaster->confirmedByName = null;
+        $custReceivePaymentMaster->confirmedDate = null;
+        $custReceivePaymentMaster->RollLevForApp_curr = 1;
+        $custReceivePaymentMaster->save();
+
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $custReceivePaymentMaster->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $custReceivePaymentMaster->bookingInvCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $custReceivePaymentMaster->bookingInvCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $custReceivePaymentMaster->companySystemID)
+            ->where('documentSystemCode', $custReceivePaymentMaster->bookingSuppMasInvAutoID)
+            ->where('documentSystemID', $custReceivePaymentMaster->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $custReceivePaymentMaster->companySystemID)
+                    ->where('documentSystemID', $custReceivePaymentMaster->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
+            ->where('companySystemID', $custReceivePaymentMaster->companySystemID)
+            ->where('documentSystemID', $custReceivePaymentMaster->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($custReceivePaymentMaster->toArray(), 'Supplier Invoice reopened successfully');
     }
 }

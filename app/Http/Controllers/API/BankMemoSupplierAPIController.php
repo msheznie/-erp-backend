@@ -1,16 +1,17 @@
 <?php
 
 /**
-  =============================================
--- File Name : BankMemoSupplierAPIController.php
--- Project Name : ERP
--- Module Name :  Supplier Bank Memo
--- Author : Mohamed Fayas
--- Create date : 14 - March 2018
--- Description : This file contains the all CRUD for supplier bank memo.
--- REVISION HISTORY
--- Date: 14-March 2018 By: Fayas Description: Added new functions named as getBankMemoBySupplierCurrency(),deleteBankMemo(),supplierBankMemoDeleteAll()
-*/
+ * =============================================
+ * -- File Name : BankMemoSupplierAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Supplier Bank Memo
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for supplier bank memo.
+ * -- REVISION HISTORY
+ * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getBankMemoBySupplierCurrency(),deleteBankMemo(),supplierBankMemoDeleteAll()
+ * -- Date: 30-October 2018 By: Fayas Description: Added new functions named as addBulkMemos(),exportSupplierCurrencyMemos()
+ */
 
 namespace App\Http\Controllers\API;
 
@@ -31,13 +32,13 @@ use Response;
  * Class BankMemoSupplierController
  * @package App\Http\Controllers\API
  */
-
 class BankMemoSupplierAPIController extends AppBaseController
 {
     /** @var  BankMemoSupplierRepository */
     private $bankMemoSupplierRepository;
     private $userRepository;
-    public function __construct(BankMemoSupplierRepository $bankMemoSupplierRepo,UserRepository $userRepo)
+
+    public function __construct(BankMemoSupplierRepository $bankMemoSupplierRepo, UserRepository $userRepo)
     {
         $this->bankMemoSupplierRepository = $bankMemoSupplierRepo;
         $this->userRepository = $userRepo;
@@ -68,36 +69,82 @@ class BankMemoSupplierAPIController extends AppBaseController
      * @return Response
      */
 
-     public function getBankMemoBySupplierCurrency(Request $request){
+    public function getBankMemoBySupplierCurrency(Request $request)
+    {
 
-         $count  = BankMemoSupplier::where("supplierCurrencyID",$request['supplierCurrencyID'])
-             ->where("supplierCodeSystem",$request['supplierCodeSystem'])
-             ->count();
+        $count = BankMemoSupplier::where("supplierCurrencyID", $request['supplierCurrencyID'])
+            ->where("supplierCodeSystem", $request['supplierCodeSystem'])
+            ->count();
 
-         if($count == 0){
+        $bankMemoSuppliers = BankMemoSupplier::where("supplierCurrencyID", $request['supplierCurrencyID'])
+            ->where("supplierCodeSystem", $request['supplierCodeSystem'])
+            ->get();
 
-             $employee = \Helper::getEmployeeInfo();
-             $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder','asc')->get();
+        $data = array('bankMemos' => $bankMemoSuppliers->toArray(), 'count' => $count);
 
-             foreach ($companyDefaultBankMemos as $value) {
-                 $temBankMemo = new BankMemoSupplier();
-                 $temBankMemo->memoHeader = $value['bankMemoHeader'];
-                 $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
-                 $temBankMemo->memoDetail = '';
-                 $temBankMemo->supplierCodeSystem = $request['supplierCodeSystem'];
-                 $temBankMemo->supplierCurrencyID = $request['supplierCurrencyID'];
-                 $temBankMemo->updatedByUserID = $employee->empID;
-                 $temBankMemo->updatedByUserName = $employee->empName;
-                 $temBankMemo->save();
-             }
-         }
+        return $this->sendResponse($data, 'Bank Memo Suppliers retrieved successfully');
+    }
 
-         $bankMemoSuppliers = BankMemoSupplier::where("supplierCurrencyID",$request['supplierCurrencyID'])
-                                               ->where("supplierCodeSystem",$request['supplierCodeSystem'])
-                                               ->get();
+    public function exportSupplierCurrencyMemos(Request $request)
+    {
 
-         return $this->sendResponse($bankMemoSuppliers->toArray(), 'Bank Memo Suppliers retrieved successfully');
-     }
+        $bankMemoSuppliers = BankMemoSupplier::where("supplierCurrencyID", $request['supplierCurrencyID'])
+            ->where("supplierCodeSystem", $request['supplierCodeSystem'])
+            ->get();
+        $type = $request->get('type');
+        if ($bankMemoSuppliers) {
+            $x = 0;
+            foreach ($bankMemoSuppliers as $val) {
+                $data[$x]['Header Text'] = $val->memoHeader;
+                $data[$x]['Detail Text'] = $val->memoDetail;
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+         \Excel::create('supplier_currency_memos', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse($data, 'Bank Memo Suppliers retrieved successfully');
+    }
+
+
+    public function addBulkMemos(Request $request)
+    {
+
+
+        $companyDefaultBankMemos = $request->get('memos');
+        $createdArray = array();
+
+        $employee = \Helper::getEmployeeInfo();
+        // $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder','asc')->get();
+        foreach ($companyDefaultBankMemos as $value) {
+
+            if($value['isChecked']){
+                $temBankMemo = new BankMemoSupplier();
+                $temBankMemo->memoHeader = $value['bankMemoHeader'];
+                $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
+                $temBankMemo->memoDetail = '';
+                $temBankMemo->supplierCodeSystem = $request['supplierCodeSystem'];
+                $temBankMemo->supplierCurrencyID = $request['supplierCurrencyID'];
+                $temBankMemo->updatedByUserID = $employee->empID;
+                $temBankMemo->updatedByUserName = $employee->empName;
+                $temBankMemo->save();
+                array_push($createdArray,$temBankMemo);
+            }
+        }
+
+        return $this->sendResponse($createdArray, 'Bank Memo Suppliers saved successfully');
+    }
+
 
     /**
      * Store a newly created BankMemoSupplier in storage.
@@ -119,9 +166,9 @@ class BankMemoSupplierAPIController extends AppBaseController
         $input['updatedByUserID'] = $empId;
         $input['updatedByUserName'] = $empName;
 
-        if( array_key_exists ('bankMemoID' , $input )){
-            $bankMemoSuppliers = $this->bankMemoSupplierRepository->update($input,$input['bankMemoID']);
-        }else{
+        if (array_key_exists('bankMemoID', $input)) {
+            $bankMemoSuppliers = $this->bankMemoSupplierRepository->update($input, $input['bankMemoID']);
+        } else {
             $bankMemoSuppliers = $this->bankMemoSupplierRepository->create($input);
         }
 
@@ -185,7 +232,7 @@ class BankMemoSupplierAPIController extends AppBaseController
     {
 
         /** @var BankMemoSupplier $bankMemoSupplier */
-        $bankMemoSupplier =  BankMemoSupplier::where('bankMemoID',$request['bankMemoID'])->first();
+        $bankMemoSupplier = BankMemoSupplier::where('bankMemoID', $request['bankMemoID'])->first();
 
         if (empty($bankMemoSupplier)) {
             return $this->sendError('Bank Memo Supplier not found');
@@ -222,9 +269,9 @@ class BankMemoSupplierAPIController extends AppBaseController
     public function supplierBankMemoDeleteAll(Request $request)
     {
 
-        $bankMemoSupplier = BankMemoSupplier::where('supplierCurrencyID',$request['supplierCurrencyID'])
-                                             ->where('supplierCodeSystem',$request['supplierCodeSystem'])
-                                             ->delete();
+        $bankMemoSupplier = BankMemoSupplier::where('supplierCurrencyID', $request['supplierCurrencyID'])
+            ->where('supplierCodeSystem', $request['supplierCodeSystem'])
+            ->delete();
 
 
         return $this->sendResponse($bankMemoSupplier, 'Bank Memos Supplier deleted successfully');
