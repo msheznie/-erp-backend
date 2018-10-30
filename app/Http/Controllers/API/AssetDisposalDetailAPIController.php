@@ -170,7 +170,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
                     $tempArray["ACCDEPGLCODESystemID"] = $new["accdepglCodeSystemID"];
                     $tempArray["ACCDEPGLCODE"] = $new["ACCDEPGLCODE"];
                     $tempArray["DISPOGLCODESystemID"] = $new["dispglCodeSystemID"];
-                    $tempArray["DISPOGLCODE"] = $new["ACCDEPGLCODE"];
+                    $tempArray["DISPOGLCODE"] = $new["DISPOGLCODE"];
                     $assetDisposalDetails = $this->assetDisposalDetailRepository->create($tempArray);
 
                     $updateAsset = FixedAssetMaster::find($new["faID"])
