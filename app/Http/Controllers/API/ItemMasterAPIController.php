@@ -14,6 +14,7 @@
  * -- Date: 10-April 2018 By: Fayas Description: Added a new function itemMasterBulkCreate().
  * -- Date: 05-June 2018 By: Mubashir Description: Modified getAllItemsMaster() to handle filters from local storage
  * -- Date: 17-July 2018 By: Fayas Description: Added new functions named as getItemMasterAudit()
+ * -- Date: 30-October 2018 By: Fayas Description: Added new functions named as exportItemMaster()
  */
 
 
@@ -92,7 +93,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
-        if(empty($company)){
+        if (empty($company)) {
             return $this->sendError('Primary Company not found');
         }
 
@@ -149,7 +150,7 @@ class ItemMasterAPIController extends AppBaseController
 
                 $itemMaster = $this->itemMasterRepository->create($item);
 
-                if($input['itemConfirmedYN'] == true) {
+                if ($input['itemConfirmedYN'] == true) {
                     $params = array('autoID' => $itemMaster->itemCodeSystem, 'company' => $item["primaryCompanySystemID"], 'document' => $item["documentSystemID"]);
                     $confirm = \Helper::confirmDocument($params);
                     if (!$confirm["success"]) {
@@ -167,7 +168,7 @@ class ItemMasterAPIController extends AppBaseController
             DB::commit();
 
             return $this->sendResponse($createdItems, 'Item Master saved successfully');
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
         }
 
@@ -185,25 +186,104 @@ class ItemMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input,array('financeCategoryMaster','financeCategorySub','isActive','itemApprovedYN','itemConfirmedYN'));
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $search = $request->input('search.value');
+        $itemMasters = ($this->getAllItemsQry($input,$search));
+
+        return \DataTables::eloquent($itemMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+    }
+
+    public function exportItemMaster(Request $request)
+    {
+
+        $input = $request->all();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
+        $search = $request->input('search.value');
+        $items = ($this->getAllItemsQry($input,$search))->orderBy('itemCodeSystem', $sort)->get();
+        $type = $request->get('type');
+        if ($items) {
+            $x = 0;
+            foreach ($items as $val) {
+                $data[$x]['Item Code'] = $val['primaryCode'];
+                $data[$x]['Part Number'] = $val['secondaryItemCode'];
+                $data[$x]['Item Description'] = $val['itemDescription'];
+
+                if($val['unit_by']){
+                    $data[$x]['UOM'] = $val['unit_by']['UnitShortCode'];
+                }else{
+                    $data[$x]['UOM'] = '-';
+                }
+
+                if($val['financeMainCategory']){
+                    $data[$x]['Category'] = $val['financeMainCategory']['categoryDescription'];
+                }else{
+                    $data[$x]['Category'] = '-';
+                }
+
+                if($val['financeSubCategory']){
+                    $data[$x]['Sub Category'] = $val['financeSubCategory']['categoryDescription'];
+                    $data[$x]['Sub Category'] = $val['financeSubCategory']['financeGLcodePL'];
+                }else{
+                    $data[$x]['Sub Category'] = '-';
+                    $data[$x]['Gl Code'] = '-';
+                }
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        \Excel::create('item_master', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+    }
+
+    public function getAllItemsQry($request,$search)
+    {
+
+        $input = $request;
+        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
 
         $companyId = $input['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $childCompanies = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $childCompanies = [$companyId];
         }
 
-        $itemMasters = ItemMaster::with(['unit', 'financeMainCategory', 'financeSubCategory']);
-                                  //->whereIn('primaryCompanySystemID',$childCompanies);
+        $itemMasters = ItemMaster::with(['unit','unit_by','financeMainCategory', 'financeSubCategory']);
+        //->whereIn('primaryCompanySystemID',$childCompanies);
 
         if (array_key_exists('financeCategoryMaster', $input)) {
             if ($input['financeCategoryMaster'] > 0 && !is_null($input['financeCategoryMaster'])) {
@@ -234,7 +314,6 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
-        $search = $request->input('search.value');
         if($search){
             $itemMasters =   $itemMasters->where(function ($query) use($search) {
                 $query->where('primaryCode','LIKE',"%{$search}%")
@@ -243,19 +322,7 @@ class ItemMasterAPIController extends AppBaseController
             });
         }
 
-        return \DataTables::eloquent($itemMasters)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('itemCodeSystem', $input['order'][0]['dir']);
-                    }
-                }
-            })
-            ->addIndexColumn()
-            ->with('orderCondition', $sort)
-            ->addColumn('Actions', 'Actions', "Actions")
-            ->make(true);
-        ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
+        return $itemMasters;
     }
 
     /**
@@ -280,16 +347,16 @@ class ItemMasterAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
-        if($isGroup){
+        if ($isGroup) {
             $companyID = \Helper::getGroupCompany($companyId);
-        }else{
+        } else {
             $companyID = [$companyId];
         }
 
 
         $empID = \Helper::getEmployeeSystemID();
         $search = $request->input('search.value');
-        $itemMasters = DB::table('erp_documentapproved')->select('itemmaster.*','erp_documentapproved.documentApprovedID','financeitemcategorymaster.categoryDescription as financeitemcategorydescription','financeitemcategorysub.categoryDescription as financeitemcategorysubdescription','units.UnitShortCode','rollLevelOrder','financeGLcodePL','approvalLevelID','documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+        $itemMasters = DB::table('erp_documentapproved')->select('itemmaster.*', 'erp_documentapproved.documentApprovedID', 'financeitemcategorymaster.categoryDescription as financeitemcategorydescription', 'financeitemcategorysub.categoryDescription as financeitemcategorysubdescription', 'units.UnitShortCode', 'rollLevelOrder', 'financeGLcodePL', 'approvalLevelID', 'documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
@@ -297,19 +364,19 @@ class ItemMasterAPIController extends AppBaseController
                 ->whereIn('employeesdepartments.companySystemID', $companyID)
                 ->where('employeesdepartments.employeeSystemID', $empID);
         })
-            ->join('itemmaster', function ($query) use ($companyID, $empID,$search) {
-            $query->on('itemCodeSystem', '=', 'documentSystemCode')
-                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
-                ->whereIn('itemmaster.primaryCompanySystemID', $companyID)
-                ->where('itemApprovedYN', 0)
-                ->when($search != "", function ($q) use($search){
-                    $q->where(function ($query) use($search) {
-                        $query->where('primaryCode', 'LIKE', "%{$search}%")
-                            ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
-                            ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+            ->join('itemmaster', function ($query) use ($companyID, $empID, $search) {
+                $query->on('itemCodeSystem', '=', 'documentSystemCode')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->whereIn('itemmaster.primaryCompanySystemID', $companyID)
+                    ->where('itemApprovedYN', 0)
+                    ->when($search != "", function ($q) use ($search) {
+                        $q->where(function ($query) use ($search) {
+                            $query->where('primaryCode', 'LIKE', "%{$search}%")
+                                ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                                ->orWhere('itemDescription', 'LIKE', "%{$search}%");
+                        });
                     });
-                });
-        })
+            })
             ->leftJoin('units', 'UnitID', '=', 'unit')
             ->leftJoin('financeitemcategorymaster', 'itemCategoryID', '=', 'financeCategoryMaster')
             ->leftJoin('financeitemcategorysub', 'itemCategorySubID', '=', 'financeCategorySub')
@@ -348,18 +415,18 @@ class ItemMasterAPIController extends AppBaseController
 
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
-        if($isGroup){
-             //$subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-             $subCompanies  = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
-        }else{
+        if ($isGroup) {
+            //$subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
+        } else {
             $subCompanies = [$selectedCompanyId];
         }
 
         /**  Companies by group  Drop Down */
-        $companiesByGroup = Company::whereIn("companySystemID",$subCompanies)->get();
+        $companiesByGroup = Company::whereIn("companySystemID", $subCompanies)->get();
 
         /** all Company  Drop Down */
-        $allCompanies = Company::whereIn("companySystemID",$subCompanies)->get();
+        $allCompanies = Company::whereIn("companySystemID", $subCompanies)->get();
 
         /** all FinanceItemCategoryMaster Drop Down */
         $itemCategory = FinanceItemCategoryMaster::all();
@@ -374,12 +441,11 @@ class ItemMasterAPIController extends AppBaseController
         $units = Unit::all();
 
         $wareHouseBinLocations = [];
-        if(isset($request['warehouseSystemCode'])){
-            $wareHouseBinLocations = WarehouseBinLocation::where('companySystemID',$selectedCompanyId)
-                                                          ->where('wareHouseSystemCode',$request['warehouseSystemCode'])
-                                                          ->get();
+        if (isset($request['warehouseSystemCode'])) {
+            $wareHouseBinLocations = WarehouseBinLocation::where('companySystemID', $selectedCompanyId)
+                ->where('wareHouseSystemCode', $request['warehouseSystemCode'])
+                ->get();
         }
-
 
 
         $output = array('companiesByGroup' => $companiesByGroup,
@@ -466,7 +532,7 @@ class ItemMasterAPIController extends AppBaseController
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
         $messages = array('secondaryItemCode.unique' => 'Mfg. Part No ' . $partNo . ' already exists');
         $validator = \Validator::make($input, [
-            'secondaryItemCode' =>  Rule::unique('itemmaster')->ignore($input['itemCodeSystem'], 'itemCodeSystem')
+            'secondaryItemCode' => Rule::unique('itemmaster')->ignore($input['itemCodeSystem'], 'itemCodeSystem')
         ], $messages);
 
         if ($validator->fails()) {
@@ -492,7 +558,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
 
-        if($company){
+        if ($company) {
             $input['primaryCompanyID'] = $company->CompanyID;
         }
 
@@ -509,8 +575,8 @@ class ItemMasterAPIController extends AppBaseController
         if ($itemMaster->itemConfirmedYN == 0 && $input['itemConfirmedYN'] == 1) {
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
             $confirm = \Helper::confirmDocument($params);
-            if(!$confirm["success"]){
-                return $this->sendError($confirm["message"],500);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
             }
         }
         foreach ($input as $key => $value) {
@@ -654,9 +720,9 @@ class ItemMasterAPIController extends AppBaseController
         $id = $request->get('id');
 
         $materielRequest = $this->itemMasterRepository
-            ->with(['created_by','confirmed_by','modified_by','approved_by' => function ($query) {
+            ->with(['created_by', 'confirmed_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
-                    ->where('documentSystemID',57);
+                    ->where('documentSystemID', 57);
             }])
             ->findWithoutFail($id);
 

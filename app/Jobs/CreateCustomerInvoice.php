@@ -93,7 +93,7 @@ class CreateCustomerInvoice implements ShouldQueue
 
                 if ($serviceLine) {
                     $customerInvoiceData['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
-                    $customerInvoiceData['serviceLineCode'] = $serviceLine->serviceLineCode;
+                    $customerInvoiceData['serviceLineCode'] = $serviceLine->ServiceLineCode;
                 }
 
                 if ($fromCompanyFinancePeriod) {
@@ -114,6 +114,7 @@ class CreateCustomerInvoice implements ShouldQueue
                 if (!empty($customer)) {
                     $customerInvoiceData['customerID'] = $customer->customerCodeSystem;
                     $customerInvoiceData['customerGLCode'] = $customer->custGLaccount;
+                    $customerInvoiceData['customerGLSystemID'] = $customer->custGLAccountSystemID;
                     $customerInvoiceData['customerInvoiceNo'] = $dpMaster->disposalDocumentCode;
                     $customerInvoiceData['customerInvoiceDate'] = $today;
                 }
@@ -159,7 +160,7 @@ class CreateCustomerInvoice implements ShouldQueue
                 $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
                 $customerInvoiceData['confirmedYN'] = 1;
                 $customerInvoiceData['confirmedByEmpSystemID'] = $dpMaster->confimedByEmpSystemID;
-                $customerInvoiceData['confirmedByEmpID'] = $dpMaster->confirmedByEmpID;
+                $customerInvoiceData['confirmedByEmpID'] = $dpMaster->confimedByEmpID;
                 $customerInvoiceData['confirmedByName'] = $dpMaster->confirmedByEmpName;
                 $customerInvoiceData['confirmedDate'] = $dpMaster->confirmedDate;
                 $customerInvoiceData['approved'] = -1;
@@ -169,7 +170,7 @@ class CreateCustomerInvoice implements ShouldQueue
                 $customerInvoiceData['createdUserSystemID'] = $dpMaster->confirmedByEmpSystemID;
                 $customerInvoiceData['createdUserID'] = $dpMaster->confirmedByEmpID;
                 $customerInvoiceData['createdPcID'] = $dpMaster->modifiedPc;
-
+                Log::info($customerInvoiceData);
                 $customerInvoice = $customerInvoiceRep->create($customerInvoiceData);
 
                 $cusInvoiceDetails = array();
@@ -177,7 +178,7 @@ class CreateCustomerInvoice implements ShouldQueue
                 $cusInvoiceDetails['companyID'] = $dpMaster->toCompanyID;
                 if ($serviceLine) {
                     $cusInvoiceDetails['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
-                    $cusInvoiceDetails['serviceLineCode'] = $serviceLine->serviceLineCode;
+                    $cusInvoiceDetails['serviceLineCode'] = $serviceLine->ServiceLineCode;
                 }
                 $cusInvoiceDetails['customerID'] = $customer->customerCodeSystem;
                 $chartofAccount = ChartOfAccount::find(557);
@@ -202,10 +203,10 @@ class CreateCustomerInvoice implements ShouldQueue
                 $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmount);
                 $cusInvoiceDetails['invoiceAmount'] = \Helper::roundValue($localAmount);
                 $cusInvoiceDetails['unitCost'] = \Helper::roundValue($localAmount);
-
+                Log::info($cusInvoiceDetails);
                 $customerInvoiceDet = $customerInvoiceDetailRep->create($cusInvoiceDetails);
 
-                $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confirmedByEmpSystemID];
+                $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confimedByEmpSystemID];
                 $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel);
                 $dpMaster->bookingInvCode = $bookingInvCode;
                 $grvInsert = CreateDirectGRV::dispatch($dpMaster);

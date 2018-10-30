@@ -686,7 +686,7 @@ class BudgetMasterAPIController extends AppBaseController
             ->where('erp_templatesdetails.templatesMasterAutoID', $budgetMaster->templateMasterID)
             ->leftJoin('chartofaccounts', 'chartOfAccountID', '=', 'chartOfAccountSystemID')
             ->join('erp_templatesdetails', 'templateDetailID', '=', 'templatesDetailsAutoID')
-            ->join(DB::raw('(SELECT
+           /* ->join(DB::raw('(SELECT
                                     erp_templatesglcode.templatesDetailsAutoID,
                                     erp_templatesglcode.templateMasterID,
                                     erp_templatesglcode.chartOfAccountSystemID,
@@ -697,7 +697,7 @@ class BudgetMasterAPIController extends AppBaseController
                 function ($join) {
                     $join->on('erp_budjetdetails.templateDetailID', '=', 'tem_gl.templatesDetailsAutoID')
                         ->on('erp_templatesdetails.templatesMasterAutoID', '=', 'tem_gl.templateMasterID');
-                })
+                })*/
             /* ->join(DB::raw('(SELECT erp_budgetconsumeddata.companySystemID, erp_budgetconsumeddata.serviceLineSystemID,
                                                  erp_budgetconsumeddata.chartOfAccountID, erp_budgetconsumeddata.Year,
                                                  Sum(erp_budgetconsumeddata.consumedRptAmount) AS consumed_amount FROM
@@ -758,6 +758,7 @@ class BudgetMasterAPIController extends AppBaseController
                 return $product->GRVcostPerUnitComRptCur * $product->noQty;
             });
 
+            $data->balance =  $data->totalRpt - ($data->consumed_amount + $data->pending_po_amount);
         }
 
         $total = array();
