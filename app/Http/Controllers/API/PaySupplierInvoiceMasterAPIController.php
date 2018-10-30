@@ -20,6 +20,7 @@ use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
@@ -271,6 +272,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($input['invoiceType'] == 3) {
                 if ($input['payeeType'] == 3) {
                     $input['directPaymentpayeeYN'] = -1;
+                    $input['directPaymentPayeeSelectEmp'] = 0;
+                    $input['directPaymentPayeeEmpID'] = null;
                 }
                 if ($input['payeeType'] == 2) {
                     $input['directPaymentPayeeSelectEmp'] = -1;
@@ -422,25 +425,32 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $companySystemID = $paySupplierInvoiceMaster->companySystemID;
             $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
 
-            if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
-                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
+            if ($input['payeeType'] == 1) {
+                if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
+                    $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
 
-                $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
+                    $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
 
-                if ($supDetail) {
-                    $input['supplierGLCode'] = $supDetail->liabilityAccount;
-                    $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
-                }
-                $input['supplierTransCurrencyER'] = 1;
-                if ($supCurrency) {
-                    $input['supplierDefCurrencyID'] = $supCurrency->currencyID;
-                    $currencyConversionDefaultMaster = \Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
-                    if ($currencyConversionDefaultMaster) {
-                        $input['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                    if ($supDetail) {
+                        $input['supplierGLCode'] = $supDetail->liabilityAccount;
+                        $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
                     }
+                    $input['supplierTransCurrencyER'] = 1;
+                    if ($supCurrency) {
+                        $input['supplierDefCurrencyID'] = $supCurrency->currencyID;
+                        $currencyConversionDefaultMaster = \Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
+                        if ($currencyConversionDefaultMaster) {
+                            $input['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                        }
+                    }
+                    $supplier = SupplierMaster::find($input['BPVsupplierID']);
+                    $input['directPaymentPayee'] = $supplier->supplierName;
                 }
-                $supplier = SupplierMaster::find($input['BPVsupplierID']);
-                $input['directPaymentPayee'] = $supplier->supplierName;
+            }
+
+            $interCompany = Company::find($input['interCompanyToSystemID']);
+            if ($interCompany) {
+                $input['interCompanyToID'] = $interCompany->CompanyID;
             }
 
             $bankAccount = BankAccount::find($input['BPVAccount']);
@@ -466,11 +476,29 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 if ($input['payeeType'] == 3) {
                     $input['directPaymentpayeeYN'] = -1;
+                    $input['directPaymentPayeeSelectEmp'] = 0;
+                    $input['directPaymentPayeeEmpID'] = null;
+                    $input['supplierGLCode'] = null;
+                    $input['supplierGLCodeSystemID'] = null;
+                    $input['supplierDefCurrencyID'] = null;
+                    $input['supplierDefCurrencyER'] = null;
+                    $input['BPVsupplierID'] = null;
                 }
                 if ($input['payeeType'] == 2) {
                     $input['directPaymentPayeeSelectEmp'] = -1;
                     $emp = Employee::find($input["directPaymentPayeeEmpID"]);
                     $input['directPaymentPayee'] = $emp->empFullName;
+                    $input['directPaymentpayeeYN'] = 0;
+                    $input['supplierGLCode'] = null;
+                    $input['supplierGLCodeSystemID'] = null;
+                    $input['supplierDefCurrencyID'] = null;
+                    $input['supplierDefCurrencyER'] = null;
+                    $input['BPVsupplierID'] = null;
+                }
+                if ($input['payeeType'] == 1) {
+                    $input['directPaymentpayeeYN'] = 0;
+                    $input['directPaymentPayeeSelectEmp'] = 0;
+                    $input['directPaymentPayeeEmpID'] = null;
                 }
             }
 
@@ -680,7 +708,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     foreach ($pvDetailExist as $item) {
                         if ($item->serviceLineSystemID && !is_null($item->serviceLineSystemID)) {
-
                             $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $item->serviceLineSystemID)
                                 ->where('isActive', 1)
                                 ->first();
@@ -693,6 +720,17 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         } else {
                             array_push($finalError['required_serviceLine'], $item->glCode . ' | ' . $item->glCodeDes);
                             $error_count++;
+                        }
+
+                        if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
+                            if (empty($item->toBankID) && empty($item->toBankAccountID)) {
+                                return $this->sendError("Bank and Bank account is not selected for " . $paySupplierInvoiceMaster->interCompanyToID, 500, ['type' => 'confirm']);
+                            }
+
+                            $chartofAccount = ChartOfAccount::where('interCompanySystemID',$paySupplierInvoiceMaster->companySystemID)->get();
+                            if(count($chartofAccount) == 0){
+                                return $this->sendError("There is no inter company GL code created for " . $paySupplierInvoiceMaster->companyID, 500, ['type' => 'confirm']);
+                            }
                         }
                     }
 

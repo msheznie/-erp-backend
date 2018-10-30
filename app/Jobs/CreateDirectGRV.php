@@ -54,13 +54,13 @@ class CreateDirectGRV implements ShouldQueue
             $directGRV["grvTypeID"] = 1;
             $directGRV["grvType"] = 'DIG';
             $directGRV["companySystemID"] = $dpMaster->toCompanySystemID;
-            $directGRV["companyID"] = $dpMaster->toCompanySystemID;
+            $directGRV["companyID"] = $dpMaster->toCompanyID;
 
             $serviceLine = SegmentMaster::ofCompany([$dpMaster->toCompanySystemID])->isPublic()->first();
 
             if ($serviceLine) {
                 $directGRV["serviceLineSystemID"] = $serviceLine->serviceLineSystemID;
-                $directGRV["serviceLineCode"] = $serviceLine->serviceLineCode;
+                $directGRV["serviceLineCode"] = $serviceLine->ServiceLineCode;
             }
 
             $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->toCompanySystemID)
@@ -71,7 +71,7 @@ class CreateDirectGRV implements ShouldQueue
 
             $today = NOW();
             $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode. ',' .$dpMaster->bookingInvCode;
-
+            $fromCompanyFinanceYear = '';
             if (!empty($fromCompanyFinancePeriod)) {
                 $fromCompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
                     ->where('companySystemID', $dpMaster->toCompanySystemID)
@@ -109,7 +109,6 @@ class CreateDirectGRV implements ShouldQueue
             $grvCode = ($dpMaster->toCompanyID . '\\' . $grvFinYear . '\\' . $directGRV['documentID'] . str_pad($grvInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
             $directGRV['grvPrimaryCode'] = $grvCode;
             $directGRV['grvDate'] = $today;
-
             $directGRV['grvNarration'] = $comment;
 
             $supplier = SupplierMaster::where('companyLinkedToSystemID', $dpMaster->companySystemID)->first();
@@ -154,7 +153,7 @@ class CreateDirectGRV implements ShouldQueue
             $directGRV['interCompanyTransferYN'] = -1;
             $directGRV['FromCompanyID'] = $dpMaster->companyID;
             $directGRV['FromCompanySystemID'] = $dpMaster->companySystemID;
-
+            Log::info($directGRV);
             $grvMaster = $grvMasterRepo->create($directGRV);
 
             $disposalDetail = AssetDisposalDetail::with(['item_by' => function ($query) {
@@ -167,8 +166,8 @@ class CreateDirectGRV implements ShouldQueue
                     $directGRVDet['companySystemID'] = $dpMaster->toCompanySystemID;
                     $directGRVDet['companyID'] = $dpMaster->toCompanyID;
                     if ($serviceLine) {
-                        $directGRVDet["serviceLineSystemID"] = $serviceLine->serviceLineSystemID;
-                        $directGRVDet["serviceLineCode"] = $serviceLine->serviceLineCode;
+                        //$directGRVDet["serviceLineSystemID"] = $serviceLine->serviceLineSystemID;
+                        $directGRVDet["serviceLineCode"] = $serviceLine->ServiceLineCode;
                     }
                     $directGRVDet['itemCode'] = $val->itemCode;
                     $directGRVDet['itemPrimaryCode'] = $val->item_by->primaryCode;
@@ -218,9 +217,9 @@ class CreateDirectGRV implements ShouldQueue
                     $directGRVDet['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
 
                     $directGRVDet['createdPcID'] = gethostname();
-                    $directGRVDet['createdUserSystemID'] = $dpMaster->confirmedByEmpSystemID;
-                    $directGRVDet['createdUserID'] = $dpMaster->confirmedByEmpID;
-
+                    $directGRVDet['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
+                    $directGRVDet['createdUserID'] = $dpMaster->confimedByEmpID;
+                    Log::info($directGRVDet);
                     $item = $grvDetailsRepository->create($directGRVDet);
                 }
                 DB::commit();
