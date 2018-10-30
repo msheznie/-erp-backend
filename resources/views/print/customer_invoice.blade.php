@@ -335,7 +335,7 @@
 
 
 </div>
-<div id="watermark">
+{{--<div id="watermark">
          <span class="watermarkText">
            <h3 class="text-muted">
                @if($request->confirmedYN == 0 && $request->approved == 0)
@@ -347,7 +347,7 @@
 
            </h3>
          </span>
-</div>
+</div>--}}
 
 <div class="content">
     <div class="row">

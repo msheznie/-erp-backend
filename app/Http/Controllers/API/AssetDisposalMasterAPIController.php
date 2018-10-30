@@ -692,8 +692,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 return $this->sendError('You cannot reopen this Asset disposal, it is not confirmed');
             }
 
-            $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
-                'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+            $updateInput = ['confirmedYN' => 0, 'confimedByEmpSystemID' => null, 'confimedByEmpID' => null,
+                'confirmedByEmpName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
 
             $this->assetDisposalMasterRepository->update($updateInput, $id);
 
