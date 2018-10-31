@@ -1447,8 +1447,8 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($masterData->invoiceType == 3) { //Direct Payment
 
-                                $masterLocal = $dpTotal->transAmount / $masterData->localCurrencyER;
-                                $masterRpt = $dpTotal->rptAmount / $masterData->companyRptCurrencyER;
+                                $masterLocal = $masterData->payAmountCompLocal;
+                                $masterRpt = $masterData->payAmountCompRpt;
                                 $data['serviceLineSystemID'] = 24;
                                 $data['serviceLineCode'] = 'X';
                                 $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
