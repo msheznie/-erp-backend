@@ -142,8 +142,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-
-
         if ($input['tempType'] == 'PVM') {
 
             if (!isset($input['paymentAutoID'])) {
@@ -1090,124 +1088,83 @@ WHERE
         }
 
         if ($input['matchType'] == 1) {
-            $invoiceMaster = DB::select('SELECT
-	erp_custreceivepaymentdet.custReceivePaymentAutoID,
-	erp_customerreceivepayment.documentID,
-	erp_custreceivepaymentdet.companyID,
-	erp_customerreceivepayment.custPaymentReceiveCode as docMatchedCode,
-	erp_customerreceivepayment.custPaymentReceiveDate as docMatchedDate,
-	erp_custreceivepaymentdet.bookingInvCodeSystem,
-	erp_custreceivepaymentdet.bookingInvCode,
-	erp_customerreceivepayment.customerID,
-	erp_customerreceivepayment.customerGLCode,
-	erp_customerreceivepayment.custTransactionCurrencyID,
-	erp_customerreceivepayment.custTransactionCurrencyER,
-	erp_customerreceivepayment.localCurrencyID,
-	erp_customerreceivepayment.localCurrencyER,
-	erp_customerreceivepayment.companyRptCurrencyID,
-	erp_customerreceivepayment.companyRptCurrencyER,
-	Sum(
-		erp_custreceivepaymentdet.receiveAmountTrans
-	) AS SumOfreceiveAmountTrans,
-	Sum(
-		erp_custreceivepaymentdet.receiveAmountLocal
-	) AS SumOfreceiveAmountLocal,
-	Sum(
-		erp_custreceivepaymentdet.receiveAmountRpt
-	) AS SumOfreceiveAmountRpt,
-	erp_customerreceivepayment.confirmedYN,
-	erp_customerreceivepayment.confirmedByEmpID,
-	erp_customerreceivepayment.confirmedByName,
-	erp_customerreceivepayment.confirmedDate,
-	erp_customerreceivepayment.matchInvoice,
-	erp_customerreceivepayment.documentType,
-	erp_customerreceivepayment.approved,
-	erp_customerreceivepayment.approvedDate,
-	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
-	(
-		erp_custreceivepaymentdet.receiveAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0)
-	) AS BalanceAmt,
-		currency.CurrencyCode,
-	currency.DecimalPlaces
+            $invoiceMaster = DB::select("SELECT
+   erp_customerreceivepayment.custReceivePaymentAutoID as masterAutoID,
+   erp_customerreceivepayment.documentSystemID,
+   erp_customerreceivepayment.companySystemID,
+   erp_customerreceivepayment.companyID,
+   erp_customerreceivepayment.custPaymentReceiveCode as docMatchedCode,
+   erp_customerreceivepayment.custPaymentReceiveDate as docMatchedDate,
+   erp_customerreceivepayment.customerID,
+   Sum(
+       erp_custreceivepaymentdet.receiveAmountTrans
+   ) AS SumOfreceiveAmountTrans,
+   Sum(
+       erp_custreceivepaymentdet.receiveAmountLocal
+   ) AS SumOfreceiveAmountLocal,
+   Sum(
+       erp_custreceivepaymentdet.receiveAmountRpt
+   ) AS SumOfreceiveAmountRpt,
+   IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
+   ROUND((
+       erp_custreceivepaymentdet.receiveAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0)
+   ),currency.DecimalPlaces) AS BalanceAmt,
+       currency.CurrencyCode,
+   currency.DecimalPlaces
 FROM
-	erp_custreceivepaymentdet
-INNER JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
+   erp_customerreceivepayment
+INNER JOIN erp_custreceivepaymentdet ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
 INNER JOIN currencymaster AS currency ON currency.currencyID = erp_customerreceivepayment.custTransactionCurrencyID
 LEFT JOIN (
-	SELECT
-		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID,
-		erp_matchdocumentmaster.companySystemID,
-		erp_matchdocumentmaster.BPVcode,
-		COALESCE (
-			SUM(
-				erp_matchdocumentmaster.matchingAmount
-			),
-			0
-		) AS SumOfmatchingAmount
-	FROM
-		erp_matchdocumentmaster
-	GROUP BY
-		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentID,
-		erp_matchdocumentmaster.companyID,
-		erp_matchdocumentmaster.BPVcode
+   SELECT
+       erp_matchdocumentmaster.PayMasterAutoId,
+       erp_matchdocumentmaster.documentSystemID,
+       erp_matchdocumentmaster.companySystemID,
+       erp_matchdocumentmaster.BPVcode,
+       COALESCE (
+           SUM(
+               erp_matchdocumentmaster.matchingAmount
+           ),
+           0
+       ) AS SumOfmatchingAmount
+   FROM
+       erp_matchdocumentmaster
+   GROUP BY
+       erp_matchdocumentmaster.PayMasterAutoId,
+       erp_matchdocumentmaster.documentSystemID,
+       erp_matchdocumentmaster.companySystemID
 ) AS advd ON (
-	erp_custreceivepaymentdet.custReceivePaymentAutoID = advd.PayMasterAutoId
-	AND erp_custreceivepaymentdet.addedDocumentSystemID = advd.documentSystemID
-	AND erp_custreceivepaymentdet.companySystemID = advd.companySystemID
+   erp_customerreceivepayment.custReceivePaymentAutoID = advd.PayMasterAutoId
+   AND erp_customerreceivepayment.documentSystemID = advd.documentSystemID
+   AND erp_customerreceivepayment.companySystemID = advd.companySystemID
 )
 WHERE
-	erp_custreceivepaymentdet.companySystemID = ' . $input['companySystemID'] . '
-AND erp_custreceivepaymentdet.bookingInvCode = 0
+   erp_custreceivepaymentdet.companySystemID = " . $input['companySystemID'] . "
+AND erp_custreceivepaymentdet.bookingInvCode = '0'
 AND erp_customerreceivepayment.approved = -1
-AND customerID = ' . $input['BPVsupplierID'] . '
+AND customerID = " . $input['BPVsupplierID'] . "
+AND erp_customerreceivepayment.matchInvoice < 2
 GROUP BY
-	erp_custreceivepaymentdet.custReceivePaymentAutoID,
-	erp_customerreceivepayment.documentID,
-	erp_custreceivepaymentdet.companyID,
-	erp_customerreceivepayment.custPaymentReceiveCode,
-	erp_customerreceivepayment.custPaymentReceiveDate,
-	erp_customerreceivepayment.customerID,
-	erp_customerreceivepayment.customerGLCode,
-	erp_customerreceivepayment.custTransactionCurrencyID,
-	erp_customerreceivepayment.custTransactionCurrencyER,
-	erp_customerreceivepayment.localCurrencyID,
-	erp_customerreceivepayment.localCurrencyER,
-	erp_customerreceivepayment.companyRptCurrencyID,
-	erp_customerreceivepayment.companyRptCurrencyER,
-	erp_customerreceivepayment.confirmedYN,
-	erp_customerreceivepayment.confirmedByEmpID,
-	erp_customerreceivepayment.confirmedByName,
-	erp_customerreceivepayment.confirmedDate,
-	erp_customerreceivepayment.matchInvoice,
-	erp_customerreceivepayment.documentType,
-	erp_customerreceivepayment.approved,
-	erp_customerreceivepayment.approvedDate
+   erp_custreceivepaymentdet.custReceivePaymentAutoID,
+   erp_customerreceivepayment.documentSystemID,
+   erp_custreceivepaymentdet.companySystemID,
+   erp_customerreceivepayment.customerID
 HAVING
-	(
-		ROUND(
-			BalanceAmt,
-			currency.DecimalPlaces
-		) > 0
-	)');
+   (
+       ROUND(
+           BalanceAmt,
+           1
+       ) > 0
+   )");
         } elseif ($input['matchType'] == 2) {
-            $invoiceMaster = DB::select('SELECT
-	erp_custreceivepaymentdet.custReceivePaymentAutoID,
-	erp_creditnote.documentID,
-	erp_custreceivepaymentdet.companyID,
-	erp_creditnote.creditNoteCode as docMatchedCode,
-	erp_creditnote.creditNoteDate as docMatchedDate,
-	erp_custreceivepaymentdet.bookingInvCodeSystem,
-	erp_custreceivepaymentdet.bookingInvCode,
+            $invoiceMaster = DB::select("SELECT
+	erp_creditnote.creditNoteAutoID as masterAutoID,
+	erp_creditnote.documentSystemID,
+	erp_creditnote.companySystemID,
+	erp_creditnote.companyID,
+	erp_creditnote.creditNoteCode AS docMatchedCode,
+	erp_creditnote.creditNoteDate AS docMatchedDate,
 	erp_creditnote.customerID,
-	erp_creditnote.customerGLCode,
-	erp_creditnote.customerCurrencyID,
-	erp_creditnote.customerCurrencyER,
-	erp_creditnote.localCurrencyID,
-	erp_creditnote.localCurrencyER,
-	erp_creditnote.companyReportingCurrencyID,
-	erp_creditnote.companyReportingER,
 	Sum(
 		erp_custreceivepaymentdet.receiveAmountTrans
 	) AS SumOfreceiveAmountTrans,
@@ -1218,14 +1175,17 @@ HAVING
 		erp_custreceivepaymentdet.receiveAmountRpt
 	) AS SumOfreceiveAmountRpt,
 	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
-	(
-		erp_custreceivepaymentdet.receiveAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0)
+	ROUND(
+		(
+			erp_custreceivepaymentdet.receiveAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0)
+		),
+		currency.DecimalPlaces
 	) AS BalanceAmt,
-		currency.CurrencyCode,
+	currency.CurrencyCode,
 	currency.DecimalPlaces
 FROM
-	erp_custreceivepaymentdet
-INNER JOIN erp_creditnote ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_creditnote.creditNoteAutoID
+	erp_creditnote
+INNER JOIN erp_custreceivepaymentdet ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_creditnote.creditNoteAutoID
 INNER JOIN currencymaster AS currency ON currency.currencyID = erp_creditnote.customerCurrencyID
 LEFT JOIN (
 	SELECT
@@ -1243,32 +1203,26 @@ LEFT JOIN (
 		erp_matchdocumentmaster
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentID,
-		erp_matchdocumentmaster.companyID,
-		erp_matchdocumentmaster.BPVcode
+		erp_matchdocumentmaster.documentSystemID,
+		erp_matchdocumentmaster.companySystemID
 ) AS advd ON (
-	erp_custreceivepaymentdet.custReceivePaymentAutoID = advd.PayMasterAutoId
-	AND erp_custreceivepaymentdet.addedDocumentSystemID = advd.documentSystemID
-	AND erp_custreceivepaymentdet.companySystemID = advd.companySystemID
+	erp_creditnote.creditNoteAutoID = advd.PayMasterAutoId
+	AND erp_creditnote.documentSystemiD = advd.documentSystemID
+	AND erp_creditnote.companySystemID = advd.companySystemID
 )
 WHERE
-	erp_custreceivepaymentdet.companySystemID = ' . $input['companySystemID'] . '
-AND erp_custreceivepaymentdet.bookingInvCode = 0
-AND erp_creditnote.approved = -1
+	erp_creditnote.companySystemID = " . $input['companySystemID'] . "
+AND erp_custreceivepaymentdet.bookingInvCode = '0'
+AND erp_creditnote.approved = - 1
 AND erp_creditnote.matchInvoice <> 2
-AND customerID = ' . $input['BPVsupplierID'] . '
+AND customerID = " . $input['BPVsupplierID'] . "
 GROUP BY
 	erp_custreceivepaymentdet.custReceivePaymentAutoID,
-	erp_creditnote.documentID,
-	erp_custreceivepaymentdet.companyID,
-	erp_creditnote.creditNoteCode
+	erp_creditnote.documentSystemiD,
+	erp_custreceivepaymentdet.companySystemID,
+	erp_creditnote.customerID
 HAVING
-	(
-		ROUND(
-			BalanceAmt,
-			currency.DecimalPlaces
-		) > 0
-	)');
+	(ROUND(BalanceAmt, 1) > 0)");
         }
 
         return $this->sendResponse($invoiceMaster, 'Data retrived successfully');
