@@ -448,9 +448,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
             }
 
-            $interCompany = Company::find($input['interCompanyToSystemID']);
-            if ($interCompany) {
-                $input['interCompanyToID'] = $interCompany->CompanyID;
+            if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
+                if (isset($input['interCompanyToSystemID'])) {
+                    $interCompany = Company::find($input['interCompanyToSystemID']);
+                    if ($interCompany) {
+                        $input['interCompanyToID'] = $interCompany->CompanyID;
+                    }
+                }
+            }else{
+                $input['interCompanyToSystemID'] = null;
+                $input['interCompanyToID'] = null;
             }
 
             $bankAccount = BankAccount::find($input['BPVAccount']);

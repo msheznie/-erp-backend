@@ -175,7 +175,7 @@ class CreateCustomerInvoice implements ShouldQueue
 
                 $cusInvoiceDetails = array();
                 $cusInvoiceDetails['custInvoiceDirectID'] = $customerInvoice->custInvoiceDirectAutoID;
-                $cusInvoiceDetails['companyID'] = $dpMaster->toCompanyID;
+                $cusInvoiceDetails['companyID'] = $dpMaster->companyID;
                 if ($serviceLine) {
                     $cusInvoiceDetails['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
                     $cusInvoiceDetails['serviceLineCode'] = $serviceLine->ServiceLineCode;
@@ -208,7 +208,7 @@ class CreateCustomerInvoice implements ShouldQueue
 
                 $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confimedByEmpSystemID];
                 $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel);
-                $dpMaster->bookingInvCode = $bookingInvCode;
+                $dpMaster['bookingInvCode'] = $bookingInvCode;
                 $grvInsert = CreateDirectGRV::dispatch($dpMaster);
 
                 DB::commit();
