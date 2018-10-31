@@ -575,7 +575,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             }
 
-            //checking Supplier Invoice amount is greater than PO Amount validations
+/*            //checking Supplier Invoice amount is greater than PO Amount validations
             if ($input['documentType'] == 0) {
                 $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->with(['pomaster'])
@@ -589,12 +589,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             ->where('supplierID', $exc->supplierID)
                             ->sum('totTransactionAmount');
 
-                        if ($checkPreTotal > $poMasterTotal->poTotalSupplierTransactionCurrency) {
+                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > $poMasterTotal->poTotalSupplierTransactionCurrency) {
                             return $this->sendError('Supplier Invoice amount is greater than ' . $exc->pomaster->purchaseOrderCode . ' PO amount. Please check again.', 500);
                         }
                     }
                 }
-            }
+            }*/
 
             //checking Supplier Invoice amount is greater than UnbilledGRV Amount validations
             if ($input['documentType'] == 0) {
@@ -632,7 +632,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
                             ->sum('totTransactionAmount');
 
-                        if ($checkPreTotal > $grvDetailSum['total']) {
+                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($grvDetailSum['total'], $documentCurrencyDecimalPlace)) {
                             return $this->sendError('Supplier Invoice amount is greater than GRV amount. Please check again.', 500);
                         }
                     }
@@ -727,7 +727,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $error_count++;
                 }
             }
-
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
@@ -914,8 +913,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     }
 
 
-    public
-    function getInvoiceMasterView(Request $request)
+    public function getInvoiceMasterView(Request $request)
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType'));
@@ -1018,8 +1016,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->make(true);
     }
 
-    public
-    function supplierInvoiceReopen(Request $request)
+    public function supplierInvoiceReopen(Request $request)
     {
         $input = $request->all();
 

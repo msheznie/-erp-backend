@@ -1288,11 +1288,11 @@ WHERE
 
         if ($input['matchType'] == 1) {
             $invoiceMaster = DB::select('SELECT
-	MASTER .PayMasterAutoId,
-	MASTER .BPVcode as documentCode,
-	MASTER .BPVdate as docDate,
-	MASTER .payAmountSuppTrans as transAmount,
-	MASTER .BPVsupplierID,
+	MASTER.PayMasterAutoId as masterAutoID,
+	MASTER.BPVcode as documentCode,
+	MASTER.BPVdate as docDate,
+	MASTER.payAmountSuppTrans as transAmount,
+	MASTER.BPVsupplierID,
 	currency.CurrencyCode,
 	currency.DecimalPlaces,
 	IFNULL(advd.SumOfmatchingAmount, 0) as SumOfmatchingAmount,
@@ -1329,11 +1329,11 @@ AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         } elseif ($input['matchType'] == 2) {
             $invoiceMaster = DB::select('SELECT
-	MASTER .debitNoteAutoID,
-	MASTER .debitNoteCode as documentCode,
-	MASTER .debitNoteDate as docDate,
-	MASTER .debitAmountTrans as transAmount,
-	MASTER .supplierID,
+	MASTER.debitNoteAutoID as masterAutoID,
+	MASTER.debitNoteCode as documentCode,
+	MASTER.debitNoteDate as docDate,
+	MASTER.debitAmountTrans as transAmount,
+	MASTER.supplierID,
 	currency.CurrencyCode,
 	currency.DecimalPlaces,
 	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
