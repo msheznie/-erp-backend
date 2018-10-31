@@ -11,6 +11,7 @@
  * -- Date: 19-September 2018 By: Fayas Description: Added new functions named as getBankReconciliationsByType()
  * -- Date: 27-September 2018 By: Fayas Description: Added new functions named as getBankAccountPaymentReceiptByType()
  * -- Date: 03-October 2018 By: Fayas Description: Added new functions named as getPaymentsByBankTransfer()
+ * -- Date: 30-October 2018 By: Fayas Description: Added new functions named as getChequePrintingItems()
  */
 namespace App\Http\Controllers\API;
 
@@ -650,6 +651,73 @@ class BankLedgerAPIController extends AppBaseController
                     $q2->orWhere("pulledToBankTransferYN", 0);
                 });
             });
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankLedger = $bankLedger->where(function ($query) use ($search) {
+                $query->where('documentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('documentNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('payeeName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($bankLedger)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('bankLedgerAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getChequePrintingItems(Request $request)
+    {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        //$paymentBankTransfer = PaymentBankTransfer::find($input['paymentBankTransferID']);
+        $confirmed = 0;
+        /*if (!empty($paymentBankTransfer)) {
+            $confirmed = $paymentBankTransfer->confirmedYN;
+        }*/
+        $bankId = 1;
+        /*if ($paymentBankTransfer->bank_account) {
+            $bankId = $paymentBankTransfer->bank_account->accountCurrencyID;
+        }*/
+
+        $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
+            ->where('payAmountBank', '>', 0)
+            ->whereIn('invoiceType', [2, 3, 5])
+            ->where("bankCurrency", $bankId)
+            ->where(function ($q) use ($input, $confirmed) {
+                $q->where(function ($q1) use ($input) {
+                    $q1->where("pulledToBankTransferYN", -1);
+                })->when($confirmed == 0, function ($q2) {
+                    $q2->orWhere("pulledToBankTransferYN", 0);
+                });
+            })->with(['bank_currency_by']);
 
         $search = $request->input('search.value');
 
