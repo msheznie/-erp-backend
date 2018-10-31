@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\PaySupplierInvoiceMaster;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -39,6 +40,17 @@ class BankLedgerInsert implements ShouldQueue
             try {
                 switch ($masterModel["documentSystemID"]) {
                     case 4: // Payment Voucher
+                        $masterData = PaySupplierInvoiceMaster::find($masterModel["autoID"]);
+
+                        $data['companySystemID'] = $masterData->companySystemID;
+                        $data['companyID'] = $masterData->companyID;
+                        $data['documentSystemID'] = $masterData->documentSystemID;
+                        $data['documentID'] = $masterData->documentID;
+                        $data['documentSystemCode'] = $masterModel["autoID"];
+                        $data['documentCode'] = $masterData->debitNoteCode;
+                        $data['documentDate'] = $masterDocumentDate;
+                        $data['supplierCodeSystem'] = $masterData->supplierID;
+                        $data['supplierInvoiceNo'] = 'NA';
                         break;
                 }
             } catch (\Exception $e) {
