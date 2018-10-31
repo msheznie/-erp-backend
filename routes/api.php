@@ -896,6 +896,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
     Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
 
+    Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
+    //Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
+
+
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
     Route::get('bankReconciliationAudit', 'BankReconciliationAPIController@bankReconciliationAudit');
     Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');

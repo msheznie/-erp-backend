@@ -457,4 +457,10 @@ class BankLedger extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
+
+    public function bank_currency_by()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'bankCurrency','currencyID');
+    }
+
 }
