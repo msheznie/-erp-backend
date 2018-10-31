@@ -1080,8 +1080,8 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 Route::get('runQueue', function () {
     //$master = ['documentSystemID' => 41,'autoID' => 241, 'companySystemID' => 31, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-    //$master = \App\Models\PaySupplierInvoiceMaster::find(76721);
-    //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
+    $master = \App\Models\PaySupplierInvoiceMaster::find(76697);
+    $job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$master = \App\Models\AssetDisposalMaster::find(241);
     //$job = \App\Jobs\CreateDirectGRV::dispatch($master);
 });
