@@ -50,6 +50,7 @@ class BankMemoSupplier extends Model
         'updatedByUserID',
         'updatedByUserName',
         'updatedDate',
+        'bankMemoTypeID',
         'timestamp'
     ];
 
@@ -64,6 +65,7 @@ class BankMemoSupplier extends Model
         'memoDetail' => 'string',
         'supplierCodeSystem' => 'integer',
         'supplierCurrencyID' => 'integer',
+        'bankMemoTypeID' => 'integer',
         'updatedByUserID' => 'string',
         'updatedByUserName' => 'string'
     ];
@@ -77,5 +79,11 @@ class BankMemoSupplier extends Model
         
     ];
 
-    
+    public function scopeOrderBySort($q){
+
+        return $q->join('erp_bankmemotypes', 'erp_bankmemosupplier.bankMemoTypeID', '=', 'erp_bankmemotypes.bankMemoTypeID')
+            ->addSelect('erp_bankmemosupplier.*', 'erp_bankmemotypes.sortOrder')
+            ->orderBy('erp_bankmemotypes.sortOrder', 'asc');
+    }
+
 }

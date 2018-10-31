@@ -77,8 +77,9 @@ class BankMemoSupplierAPIController extends AppBaseController
             ->count();
 
         $bankMemoSuppliers = BankMemoSupplier::where("supplierCurrencyID", $request['supplierCurrencyID'])
-            ->where("supplierCodeSystem", $request['supplierCodeSystem'])
-            ->get();
+                                                ->where("supplierCodeSystem", $request['supplierCodeSystem'])
+                                                ->orderBySort()
+                                                ->get();
 
         $data = array('bankMemos' => $bankMemoSuppliers->toArray(), 'count' => $count);
 

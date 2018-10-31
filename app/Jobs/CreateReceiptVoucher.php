@@ -9,6 +9,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CustomerReceivePayment;
 use App\Models\DirectPaymentDetails;
+use App\Models\SegmentMaster;
 use App\Repositories\CustomerReceivePaymentRepository;
 use App\Repositories\DirectPaymentDetailsRepository;
 use App\Repositories\DirectReceiptDetailRepository;
@@ -91,41 +92,29 @@ class CreateReceiptVoucher implements ShouldQueue
                         $receivePayment['custPaymentReceiveCode'] = $docCode;
                         $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
                         $receivePayment['narration'] = $pvMaster->BPVNarration;
-
                         $receivePayment['intercompanyPaymentID'] = $pvMaster->PayMasterAutoId;
+                        $receivePayment['intercompanyPaymentCode'] = $pvMaster->BPVcode;
                         $receivePayment['expenseClaimOrPettyCash'] = $pvMaster->expenseClaimOrPettyCash;
-
-                        $receivePayment['bankID'] = $pvMaster->BPVbank;
-                        $receivePayment['bankAccount'] = $pvMaster->BPVAccount;
-                        $receivePayment['bankCurrency'] = $pvMaster->BPVbankCurrency;
-                        $receivePayment['bankCurrencyER'] = $pvMaster->BPVbankCurrencyER;
 
                         $dpdetails2 = DirectPaymentDetails::where('directPaymentAutoID',$pvMaster->PayMasterAutoId)->first();
                         if($dpdetails2) {
                             $receivePayment['custTransactionCurrencyID'] = $dpdetails2->toBankCurrencyID;
                             $receivePayment['custTransactionCurrencyER'] = 1;
-
                             $receivePayment['localCurrencyID'] = $dpdetails2->toCompanyLocalCurrencyID;
                             $receivePayment['localCurrencyER'] = $dpdetails2->toCompanyLocalCurrencyER;
-
                             $receivePayment['companyRptCurrencyID'] = $dpdetails2->toCompanyRptCurrencyID;
                             $receivePayment['companyRptCurrencyER'] = $dpdetails2->toCompanyRptCurrencyER;
-
                             $receivePayment['bankAmount'] = $dpdetails2->toBankAmount;
                             $receivePayment['receivedAmount'] = $dpdetails2->toBankAmount;
                             $receivePayment['localAmount'] = $dpdetails2->toCompanyLocalCurrencyAmount;
                             $receivePayment['companyRptAmount'] = $dpdetails2->toCompanyRptCurrencyAmount;
+                            $receivePayment['bankID'] = $dpdetails2->toBankID;
+                            $receivePayment['bankAccount'] = $dpdetails2->toBankAccountID;
+                            $receivePayment['bankCurrency'] = $dpdetails2->toBankCurrencyID;
+                            $receivePayment['bankCurrencyER'] = 1;
                         }
-                        $receivePayment['documentType'] = $pvMaster->invoiceType;
 
-                        $receivePayment['confirmedYN'] = 1;
-                        $receivePayment['confirmedByEmpSystemID'] = $pvMaster->confirmedByEmpSystemID;
-                        $receivePayment['confirmedByEmpID'] = $pvMaster->confirmedByEmpID;;
-                        $receivePayment['confirmedByName'] = $pvMaster->confirmedByName;;
-                        $receivePayment['confirmedDate'] = NOW();
-                        $receivePayment['approved'] = -1;
-                        $receivePayment['approvedDate'] = NOW();
-                        $receivePayment['postedDate'] = NOW();
+                        $receivePayment['documentType'] = 14;
                         $receivePayment['createdUserSystemID'] = $pvMaster->confirmedByEmpSystemID;
                         $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
                         $receivePayment['createdPcID'] = gethostname();
@@ -140,8 +129,12 @@ class CreateReceiptVoucher implements ShouldQueue
                                 $receivePaymentDetail['directReceiptAutoID'] = $custRecMaster->custReceivePaymentAutoID;
                                 $receivePaymentDetail['companySystemID'] = $pvMaster->interCompanyToSystemID;
                                 $receivePaymentDetail['companyID'] = $company->CompanyID;
-                                $receivePaymentDetail['serviceLineSystemID'] = $val->serviceLineSystemID;
-                                $receivePaymentDetail['serviceLineCode'] = $val->serviceLineCode;
+
+                                $serviceLine = SegmentMaster::ofCompany([$pvMaster->interCompanyToSystemID])->isPublic()->first();
+                                if ($serviceLine) {
+                                    $receivePaymentDetail['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
+                                    $receivePaymentDetail['serviceLineCode'] = $serviceLine->ServiceLineCode;
+                                }
 
                                 $receivePaymentDetail['chartOfAccountSystemID'] = $chartofAccount->chartOfAccountSystemID;
                                 $receivePaymentDetail['glCode'] = $chartofAccount->AccountCode;
@@ -160,6 +153,10 @@ class CreateReceiptVoucher implements ShouldQueue
                                 Log::info($receivePaymentDetail);
                                 $custRecMaster = $ddr->create($receivePaymentDetail);
                             }
+
+                            $params = array('autoID' => $custRecMaster->custReceivePaymentAutoID, 'company' => $pvMaster->interCompanyToSystemID, 'document' => 21, 'segment' => '', 'category' => '', 'amount' => 0);
+                            $confirm = \Helper::confirmDocument($params);
+                            Log::info($confirm["message"]);
                         }
                     } else {
                         $dpdetails = $dpdetail->findWhere(['directPaymentAutoID' => $pvMaster->PayMasterAutoId, 'glCodeIsBank' => 1]);
@@ -185,20 +182,15 @@ class CreateReceiptVoucher implements ShouldQueue
                                 $receivePayment['custPaymentReceiveCode'] = $pvMaster->BPVcode;
                                 $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
                                 $receivePayment['narration'] = $pvMaster->BPVNarration;
-
                                 $account = BankAccount::where('chartOfAccountSystemID', $val->chartOfAccountSystemID)->where('companySystemID', $pvMaster->companySystemID)->first();
-
                                 $receivePayment['bankID'] = $account->bankmasterAutoID;
                                 $receivePayment['bankAccount'] = $account->bankAccountAutoID;
                                 $receivePayment['bankCurrency'] = $val->bankCurrencyID;
                                 $receivePayment['bankCurrencyER'] = $val->bankCurrencyER;
-
                                 $receivePayment['localCurrencyID'] = $val->localCurrency;
                                 $receivePayment['localCurrencyER'] = $val->localCurrencyER;
-
                                 $receivePayment['companyRptCurrencyID'] = $val->comRptCurrency;
                                 $receivePayment['companyRptCurrencyER'] = $val->comRptCurrencyER;
-
                                 $receivePayment['bankAmount'] = $val->bankAmount;
 
                                 if ($val->bankCurrencyID == $val->localCurrency) {

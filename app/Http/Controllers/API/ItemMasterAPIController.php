@@ -243,7 +243,7 @@ class ItemMasterAPIController extends AppBaseController
 
                 if($val['financeSubCategory']){
                     $data[$x]['Sub Category'] = $val['financeSubCategory']['categoryDescription'];
-                    $data[$x]['Sub Category'] = $val['financeSubCategory']['financeGLcodePL'];
+                    $data[$x]['Gl Code'] = $val['financeSubCategory']['financeGLcodePL'];
                 }else{
                     $data[$x]['Sub Category'] = '-';
                     $data[$x]['Gl Code'] = '-';

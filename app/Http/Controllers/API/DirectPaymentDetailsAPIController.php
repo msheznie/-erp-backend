@@ -165,6 +165,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         }
 
         if ($payMaster->expenseClaimOrPettyCash == 6 || $payMaster->expenseClaimOrPettyCash == 7) {
+
+            if(empty($payMaster->interCompanyToSystemID)){
+                return $this->sendError('Please select a company to');
+            }
+
             $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'relatedPartyYN' => 1]);
             if (count($directPaymentDetails) > 0) {
                 return $this->sendError('Cannot add GL code as there is a related party GL code added.');
@@ -176,6 +181,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                     return $this->sendError('Cannot add related party GL code as there is a GL code added.');
                 }
             }
+
         }
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 1]);
