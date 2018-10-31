@@ -478,6 +478,8 @@ class ItemReturnMasterAPIController extends AppBaseController
 
                 $itemIssuesCount =  ItemIssueMaster::where('itemIssueAutoID',$detail['issueCodeSystem'])
                                                     ->where('companySystemID',$input['companySystemID'])
+                                                    ->where('serviceLineSystemID', $input['serviceLineSystemID'])
+                                                    ->where('wareHouseFrom', $input['wareHouseLocation'])
                                                     ->where('approved',-1)
                                                     ->whereHas('details',function ($q) use($detail){
                                                         $q->where('itemCodeSystem',$detail['itemCodeSystem']);
