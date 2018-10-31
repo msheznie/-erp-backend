@@ -358,13 +358,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input['custChequeDate'] = ($input['custChequeDate'] != '' ? Carbon::parse($input['custChequeDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
 
-        /*     if (($input['custPaymentReceiveDate'] >= $input['FYPeriodDateFrom']) && ($input['custPaymentReceiveDate'] <= $input['FYPeriodDateTo'])) {
-
-             } else {
-                 return $this->sendError('Document Date should be between financial period start date and end date.', 500);
-
-             }*/
-
         if ($input['documentType'] == 13) {
             /*customer reciept*/
             $detail = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->get();
@@ -534,33 +527,58 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
-                'debitNoteDate' => 'required',
-                'supplierID' => 'required|numeric|min:1',
-                'supplierTransactionCurrencyID' => 'required|numeric|min:1',
-                'comments' => 'required',
+                'custPaymentReceiveDate' => 'required',
+                'custTransactionCurrencyID' => 'required|numeric|min:1',
+                'narration' => 'required',
             ]);
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
 
-            $documentDate = $input['debitNoteDate'];
+            $documentDate = $input['custPaymentReceiveDate'];
             $monthBegin = $input['FYPeriodDateFrom'];
             $monthEnd = $input['FYPeriodDateTo'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Document date is not within the selected financial period !', 500);
+                return $this->sendError('Voucher date is not within the selected financial period !', 500);
             }
 
-            $checkItems = DebitNoteDetails::where('debitNoteAutoID', $id)
-                ->count();
-            if ($checkItems == 0) {
-                return $this->sendError('Every debit note should have at least one item', 500);
+            if ($input['documentType'] == 13) {
+
+                $customerReceivePaymentDetailCount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->count();
+                if ($customerReceivePaymentDetailCount == 0) {
+                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                }
+            } else if ($input['documentType'] == 14) {
+                $checkDirectItemsCount = DirectReceiptDetail::where('directReceiptAutoID', $id)
+                    ->count();
+                if ($checkDirectItemsCount == 0) {
+                    return $this->sendError('Every receipt voucher should have at least one item', 500);
+                }
             }
 
-            $checkQuantity = DebitNoteDetails::where('debitNoteAutoID', $id)
+            if ($input['documentType'] == 13) {
+
+                $checkQuantity = CustomerReceivePaymentDetail::where('directReceiptAutoID', $id)
+                    ->where(function ($q) {
+                        $q->where('DRAmount', '<=', 0)
+                            ->orWhereNull('localAmount', '<=', 0)
+                            ->orWhereNull('comRptAmount', '<=', 0)
+                            ->orWhereNull('debitAmount')
+                            ->orWhereNull('localAmount')
+                            ->orWhereNull('comRptAmount');
+                    })
+                    ->count();
+                if ($checkQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
+            }
+
+            $checkQuantity = DirectReceiptDetail::where('directReceiptAutoID', $id)
                 ->where(function ($q) {
-                    $q->where('debitAmount', '<=', 0)
+                    $q->where('DRAmount', '<=', 0)
                         ->orWhereNull('localAmount', '<=', 0)
                         ->orWhereNull('comRptAmount', '<=', 0)
                         ->orWhereNull('debitAmount')
@@ -571,8 +589,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if ($checkQuantity > 0) {
                 return $this->sendError('Amount should be greater than 0 for every items', 500);
             }
-
-            $debitNoteDetails = DebitNoteDetails::where('debitNoteAutoID', $id)->get();
+            
+            $directReceiptDetail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
 
             $finalError = array('amount_zero' => array(),
                 'amount_neg' => array(),
@@ -581,9 +599,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             );
             $error_count = 0;
 
-            foreach ($debitNoteDetails as $item) {
+            foreach ($directReceiptDetail as $item) {
 
-                $updateItem = DebitNoteDetails::find($item['debitNoteDetailsID']);
+                $updateItem = DirectReceiptDetail::find($item['debitNoteDetailsID']);
 
                 if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
 
@@ -624,18 +642,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
 
-            $amount = DebitNoteDetails::where('debitNoteAutoID', $id)
-                ->sum('debitAmount');
-
-            $input['debitAmountTrans'] = $amount;
-
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
-
-            $input['debitAmountLocal'] = $companyCurrencyConversion['localAmount'];
-            $input['debitAmountRpt'] = $companyCurrencyConversion['reportingAmount'];
-            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-            $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-
             $input['RollLevForApp_curr'] = 1;
             $params = array('autoID' => $id,
                 'company' => $debitNote->companySystemID,
@@ -657,10 +663,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
-
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
-        return $this->sendResponse($customerReceivePayment->toArray(), 'CustomerReceivePayment updated successfully');
+        return $this->sendResponse($customerReceivePayment->toArray(), 'Customer Receive Payment updated successfully');
     }
 
     /**
