@@ -231,5 +231,20 @@ class AssetDisposalDetail extends Model
         return $this->belongsTo('App\Models\ItemMaster', 'itemCode', 'itemCodeSystem');
     }
 
+    public function accumilated_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'ACCDEPGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+    public function cost_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'COSTGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+    public function disposal_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'DISPOGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
 
 }

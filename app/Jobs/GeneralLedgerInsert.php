@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AdvancePaymentDetails;
+use App\Models\AssetDisposalDetail;
 use App\Models\AssetDisposalMaster;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
@@ -1869,101 +1870,105 @@ class GeneralLedgerInsert implements ShouldQueue
                     case 41: // FADS - Fixed Asset Disposal
                         $masterData = AssetDisposalMaster::find($masterModel["autoID"]);
 
-                        $debit = DB::table('erp_fa_assetdepreciationperiods')->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.depglCodeSystemID,erp_fa_asset_master.DEPGLCODE,SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL')->join('erp_fa_asset_master','erp_fa_asset_master.faID','erp_fa_assetdepreciationperiods.faID')->join('chartofaccounts','chartOfAccountSystemID','depglCodeSystemID')->where('depMasterAutoID',$masterModel["autoID"])->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID','erp_fa_asset_master.depglCodeSystemID')->get();
+                        $disposal = AssetDisposalDetail::with('disposal_account')->selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt,DISPOGLCODESystemID,DISPOGLCODE,serviceLineSystemID,serviceLineCode')->OfMaster($masterModel["autoID"])->groupBy('DISPOGLCODESystemID','serviceLineSystemID')->get();
 
-                        $credit = DB::table('erp_fa_assetdepreciationperiods')->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.accdepglCodeSystemID,erp_fa_asset_master.ACCDEPGLCODE,SUM(depAmountLocal) as sumDepAmountLocal, SUM(depAmountRpt) as sumDepAmountRpt,catogaryBLorPL')->join('erp_fa_asset_master','erp_fa_asset_master.faID','erp_fa_assetdepreciationperiods.faID')->join('chartofaccounts','chartOfAccountSystemID','dispglCodeSystemID')->where('depMasterAutoID',$masterModel["autoID"])->groupBy('erp_fa_assetdepreciationperiods.serviceLineSystemID','erp_fa_asset_master.accdepglCodeSystemID')->get();
+                        $depreciation = AssetDisposalDetail::with('accumilated_account')->selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt,ACCDEPGLCODESystemID,ACCDEPGLCODE,serviceLineSystemID,serviceLineCode')->OfMaster($masterModel["autoID"])->groupBy('ACCDEPGLCODESystemID','serviceLineSystemID')->get();
 
-                        if ($debit) {
-                            foreach ($debit as $val) {
-                                $data['companySystemID'] = $val->companySystemID;
-                                $data['companyID'] = $val->companyID;
-                                $data['serviceLineSystemID'] = $val->serviceLineSystemID;
-                                $data['serviceLineCode'] = $val->serviceLineCode;
-                                $data['masterCompanyID'] = null;
-                                $data['documentSystemID'] = $masterData->documentSystemID;
-                                $data['documentID'] = $masterData->documentID;
-                                $data['documentSystemCode'] = $masterModel["autoID"];
-                                $data['documentCode'] = $masterData->depCode;
-                                $data['documentDate'] = $val->depForFYperiodEndDate;
-                                $data['documentYear'] = \Helper::dateYear( $val->depForFYperiodEndDate);
-                                $data['documentMonth'] = \Helper::dateMonth( $val->depForFYperiodEndDate);
-                                $data['documentConfirmedDate'] = $masterData->confirmedDate;
-                                $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
-                                $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
-                                $data['documentFinalApprovedDate'] = $masterData->approvedDate;
-                                $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
-                                $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-                                $data['documentNarration'] = null;
-                                $data['clientContractID'] = 'X';
-                                $data['contractUID'] = 159;
-                                $data['supplierCodeSystem'] = 0;
-                                $data['chartOfAccountSystemID'] = $val->depglCodeSystemID;
-                                $data['glCode'] = $val->DEPGLCODE;
-                                $data['glAccountType'] = $val->catogaryBLorPL;
-                                $data['documentLocalCurrencyID'] = $val->depAmountLocalCurr;
-                                $data['documentLocalCurrencyER'] = 0;
-                                $data['documentLocalAmount'] = ABS($val->sumDepAmountLocal);
-                                $data['documentRptCurrencyID'] = $val->depAmountRptCurr;
-                                $data['documentRptCurrencyER'] = 0;
-                                $data['documentRptAmount'] = ABS($val->sumDepAmountRpt);
-                                $data['documentTransCurrencyID'] = 0;
-                                $data['documentTransCurrencyER'] = 0;
-                                $data['documentTransAmount'] = 0;
-                                $data['holdingShareholder'] = null;
-                                $data['holdingPercentage'] = 0;
-                                $data['nonHoldingPercentage'] = 0;
-                                $data['createdDateTime'] = \Helper::currentDateTime();
-                                $data['createdUserID'] = $empID->empID;
-                                $data['createdUserSystemID'] = $empID->employeeSystemID;
-                                $data['createdUserPC'] = gethostname();
-                                $data['timestamp'] = \Helper::currentDateTime();
-                                array_push($finalData, $data);
-                            }
+                        $cost = AssetDisposalDetail::with('cost_account')->selectRaw('SUM(COSTUNIT) as COSTUNIT, SUM(costUnitRpt) as costUnitRpt,COSTGLCODESystemID,serviceLineSystemID,COSTGLCODE,serviceLineCode')->OfMaster($masterModel["autoID"])->groupBy('COSTGLCODESystemID','serviceLineSystemID')->get();
 
-                            if ($credit) {
-                                foreach ($credit as $val) {
-                                    $data['companySystemID'] = $val->companySystemID;
-                                    $data['companyID'] = $val->companyID;
+                        $companyCurrency = Company::find($masterModel["companySystemID"]);
+
+                        if ($masterData) {
+                            $data['companySystemID'] = $masterData->companySystemID;
+                            $data['companyID'] = $masterData->companyID;
+                            $data['masterCompanyID'] = null;
+                            $data['documentSystemID'] = $masterData->documentSystemID;
+                            $data['documentID'] = $masterData->documentID;
+                            $data['documentSystemCode'] = $masterModel["autoID"];
+                            $data['documentCode'] = $masterData->disposalDocumentCode;
+                            $data['documentDate'] = $masterData->disposalDocumentDate;
+                            $data['documentYear'] = \Helper::dateYear( $masterData->disposalDocumentDate);
+                            $data['documentMonth'] = \Helper::dateMonth( $masterData->disposalDocumentDate);
+                            $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                            $data['documentConfirmedBy'] = $masterData->confimedByEmpID;
+                            $data['documentConfirmedByEmpSystemID'] = $masterData->confimedByEmpSystemID;
+                            $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                            $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                            $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                            $data['documentNarration'] = $masterData->narration;
+                            $data['clientContractID'] = 'X';
+                            $data['contractUID'] = 159;
+                            $data['supplierCodeSystem'] = 0;
+                            $data['holdingShareholder'] = null;
+                            $data['holdingPercentage'] = 0;
+                            $data['nonHoldingPercentage'] = 0;
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = $empID->empID;
+                            $data['createdUserSystemID'] = $empID->employeeSystemID;
+                            $data['createdUserPC'] = gethostname();
+                            $data['timestamp'] = \Helper::currentDateTime();
+
+                            if($disposal) {
+                                foreach ($disposal as $val) {
                                     $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                                     $data['serviceLineCode'] = $val->serviceLineCode;
-                                    $data['masterCompanyID'] = null;
-                                    $data['documentSystemID'] = $masterData->documentSystemID;
-                                    $data['documentID'] = $masterData->documentID;
-                                    $data['documentSystemCode'] = $masterModel["autoID"];
-                                    $data['documentCode'] = $masterData->depCode;
-                                    $data['documentDate'] = $val->depForFYperiodEndDate;
-                                    $data['documentYear'] = \Helper::dateYear( $val->depForFYperiodEndDate);
-                                    $data['documentMonth'] = \Helper::dateMonth( $val->depForFYperiodEndDate);
-                                    $data['documentConfirmedDate'] = $masterData->confirmedDate;
-                                    $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
-                                    $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
-                                    $data['documentFinalApprovedDate'] = $masterData->approvedDate;
-                                    $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
-                                    $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-                                    $data['documentNarration'] = null;
-                                    $data['clientContractID'] = 'X';
-                                    $data['contractUID'] = 159;
-                                    $data['supplierCodeSystem'] = 0;
-                                    $data['chartOfAccountSystemID'] = $val->accdepglCodeSystemID;
-                                    $data['glCode'] = $val->ACCDEPGLCODE;
-                                    $data['glAccountType'] = $val->catogaryBLorPL;
-                                    $data['documentLocalCurrencyID'] = $val->depAmountLocalCurr;
+                                    $data['chartOfAccountSystemID'] = $val->DISPOGLCODESystemID;
+                                    $data['glCode'] = $val->DISPOGLCODE;
+                                    $data['glAccountType'] = $val->disposal_account->catogaryBLorPL;
+                                    $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = 0;
-                                    $data['documentLocalAmount'] = ABS($val->sumDepAmountLocal) * -1;
-                                    $data['documentRptCurrencyID'] = $val->depAmountRptCurr;
+                                    $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
                                     $data['documentRptCurrencyER'] = 0;
-                                    $data['documentRptAmount'] = ABS($val->sumDepAmountRpt) * -1;
                                     $data['documentTransCurrencyID'] = 0;
                                     $data['documentTransCurrencyER'] = 0;
                                     $data['documentTransAmount'] = 0;
-                                    $data['holdingShareholder'] = null;
-                                    $data['holdingPercentage'] = 0;
-                                    $data['nonHoldingPercentage'] = 0;
-                                    $data['createdDateTime'] = \Helper::currentDateTime();
-                                    $data['createdUserID'] = $empID->empID;
-                                    $data['createdUserSystemID'] = $empID->employeeSystemID;
-                                    $data['createdUserPC'] = gethostname();
-                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    if($val->netBookValueLocal > 0){
+                                        $data['documentLocalAmount'] = ABS($val->netBookValueLocal);
+                                        $data['documentRptAmount'] = ABS($val->netBookValueRpt);
+                                    }else{
+                                        $data['documentLocalAmount'] = $val->netBookValueLocal;
+                                        $data['documentRptAmount'] = $val->netBookValueRpt;
+                                    }
+                                    array_push($finalData, $data);
+                                }
+                            }
+
+                            if($depreciation) {
+                                foreach ($depreciation as $val) {
+                                    $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $val->serviceLineCode;
+                                    $data['chartOfAccountSystemID'] = $val->ACCDEPGLCODESystemID;
+                                    $data['glCode'] = $val->ACCDEPGLCODE;
+                                    $data['glAccountType'] = $val->accumilated_account->catogaryBLorPL;
+                                    $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = 0;
+                                    $data['documentLocalAmount'] = ABS($val->depAmountLocal);
+                                    $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                    $data['documentRptCurrencyER'] = 0;
+                                    $data['documentRptAmount'] = ABS($val->depAmountRpt);
+                                    $data['documentTransCurrencyID'] = 0;
+                                    $data['documentTransCurrencyER'] = 0;
+                                    $data['documentTransAmount'] = 0;
+                                    array_push($finalData, $data);
+                                }
+                            }
+
+                            if($cost) {
+                                foreach ($cost as $val) {
+                                    $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $val->serviceLineCode;
+                                    $data['chartOfAccountSystemID'] = $val->COSTGLCODESystemID;
+                                    $data['glCode'] = $val->COSTGLCODE;
+                                    $data['glAccountType'] = $val->cost_account->catogaryBLorPL;
+                                    $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = 0;
+                                    $data['documentLocalAmount'] = ABS($val->COSTUNIT) * -1;
+                                    $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                    $data['documentRptCurrencyER'] = 0;
+                                    $data['documentRptAmount'] = ABS($val->costUnitRpt) * -1;
+                                    $data['documentTransCurrencyID'] = 0;
+                                    $data['documentTransCurrencyER'] = 0;
+                                    $data['documentTransAmount'] = 0;
                                     array_push($finalData, $data);
                                 }
                             }
