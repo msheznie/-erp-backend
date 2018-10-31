@@ -448,9 +448,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
             }
 
-            $interCompany = Company::find($input['interCompanyToSystemID']);
-            if ($interCompany) {
-                $input['interCompanyToID'] = $interCompany->CompanyID;
+            if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
+                if (isset($input['interCompanyToSystemID'])) {
+                    $interCompany = Company::find($input['interCompanyToSystemID']);
+                    if ($interCompany) {
+                        $input['interCompanyToID'] = $interCompany->CompanyID;
+                    }
+                }
+            }else{
+                $input['interCompanyToSystemID'] = null;
+                $input['interCompanyToID'] = null;
             }
 
             $bankAccount = BankAccount::find($input['BPVAccount']);
@@ -843,8 +850,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
                     $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->paymentAmount);
                     $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->paymentAmount);
-                    $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
-                    $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
+                    $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
+                    $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                     $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->paymentAmount);
                 } else {
                     $input['payAmountBank'] = 0;
