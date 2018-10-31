@@ -672,7 +672,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
         }
 
-        //check record exist in General Ledger table
+/*        //check record exist in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {
 
             if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
@@ -686,7 +686,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     $itemExistArray[] = [$itemDrt];
                 }
             }
-        }
+        }*/
 
         //check record total in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {
@@ -829,13 +829,13 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
             if ($totalPaidAmount == 0) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 0]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount) {
+                    ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
+            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount  || $totalPaidAmount > $paySupplierInvoiceDetail->supplierInvoiceAmount) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 2]);
+                    ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => -1]);
             } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 1]);
+                    ->update(['fullyInvoice' => 1, 'selectedToPaymentInv' => 0]);
             }
         } else if ($paySupplierInvoiceDetail->addedDocumentSystemID == 15 || $paySupplierInvoiceDetail->addedDocumentSystemID == 24) {
             if ($totalPaidAmount == 0) {
@@ -849,7 +849,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     ->update(['fullyInvoice' => 1]);
             } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
-                    ->update(['fullyInvoice' => 2]);
+                    ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => 0]);
             }
         }
         return $this->sendResponse($paySupplierInvoiceDetail->toArray(), 'PaySupplierInvoiceDetail updated successfully');

@@ -1549,8 +1549,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
-    public
-    function getSupplierInvoiceStatusHistory(Request $request)
+    public function getSupplierInvoiceStatusHistory(Request $request)
     {
         $input = $request->all();
 
