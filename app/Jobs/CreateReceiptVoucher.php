@@ -93,7 +93,7 @@ class CreateReceiptVoucher implements ShouldQueue
                         $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
                         $receivePayment['narration'] = $pvMaster->BPVNarration;
                         $receivePayment['intercompanyPaymentID'] = $pvMaster->PayMasterAutoId;
-                        $receivePayment['intercompanyPaymentCode '] = $pvMaster->BPVcode;
+                        $receivePayment['intercompanyPaymentCode'] = $pvMaster->BPVcode;
                         $receivePayment['expenseClaimOrPettyCash'] = $pvMaster->expenseClaimOrPettyCash;
 
                         $dpdetails2 = DirectPaymentDetails::where('directPaymentAutoID',$pvMaster->PayMasterAutoId)->first();
