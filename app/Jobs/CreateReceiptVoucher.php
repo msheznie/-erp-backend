@@ -178,62 +178,52 @@ class CreateReceiptVoucher implements ShouldQueue
                                 $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
 
                                 $receivePayment['PayMasterAutoId'] = $pvMaster->PayMasterAutoId;
-                                $receivePayment['serialNo'] = $pvMaster->serialNo;
-                                $receivePayment['custPaymentReceiveCode'] = $pvMaster->BPVcode;
+                                $BRVLastSerial = CustomerReceivePayment::where('companySystemID', $pvMaster->interCompanyToSystemID)
+                                    ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
+                                    ->where('documentSystemID', 4)
+                                    ->where('serialNo', '>', 0)
+                                    ->orderBy('serialNo', 'desc')
+                                    ->first();
+
+                                $cusInvLastSerialNumber = 1;
+                                if ($BRVLastSerial) {
+                                    $cusInvLastSerialNumber = intval($BRVLastSerial->serialNo) + 1;
+                                }
+                                $receivePayment['serialNo'] = $cusInvLastSerialNumber;
+
+                                if ($companyFinanceYear) {
+                                    $cusStartYear = $companyFinanceYear->bigginingDate;
+                                    $cusFinYearExp = explode('-', $cusStartYear);
+                                    $cusFinYear = $cusFinYearExp[0];
+                                } else {
+                                    $cusFinYear = date("Y");
+                                }
+                                $docCode = ($pvMaster->companyID . '\\' . $cusFinYear . '\\' . $receivePayment['documentID'] . str_pad($cusInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+                                $receivePayment['custPaymentReceiveCode'] = $docCode;
                                 $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
                                 $receivePayment['narration'] = $pvMaster->BPVNarration;
+
+                                $receivePayment['custTransactionCurrencyID'] = $val->bankCurrencyID;
+                                $receivePayment['custTransactionCurrencyER'] = 1;
+
                                 $account = BankAccount::where('chartOfAccountSystemID', $val->chartOfAccountSystemID)->where('companySystemID', $pvMaster->companySystemID)->first();
+
                                 $receivePayment['bankID'] = $account->bankmasterAutoID;
                                 $receivePayment['bankAccount'] = $account->bankAccountAutoID;
                                 $receivePayment['bankCurrency'] = $val->bankCurrencyID;
-                                $receivePayment['bankCurrencyER'] = $val->bankCurrencyER;
+                                $receivePayment['bankCurrencyER'] = 1;
+
+                                $companyCurrencyConversion = \Helper::currencyConversion($pvMaster->companySystemID, $val->bankCurrencyID,$val->bankCurrencyID, $val->bankAmount);
+
                                 $receivePayment['localCurrencyID'] = $val->localCurrency;
-                                $receivePayment['localCurrencyER'] = $val->localCurrencyER;
+                                $receivePayment['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                                 $receivePayment['companyRptCurrencyID'] = $val->comRptCurrency;
-                                $receivePayment['companyRptCurrencyER'] = $val->comRptCurrencyER;
+                                $receivePayment['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                                 $receivePayment['bankAmount'] = $val->bankAmount;
-
-                                if ($val->bankCurrencyID == $val->localCurrency) {
-                                    $receivePayment['localAmount'] = $val->bankAmount;
-                                } else {
-                                    $trasToDefaultER = $pvMaster->companyRptCurrencyER;
-                                    $amount = 0;
-                                    if ($trasToDefaultER > $val->bankCurrencyER) {
-                                        if ($trasToDefaultER > 1) {
-                                            $amount = $val->bankAmount / $trasToDefaultER;
-                                        } else {
-                                            $amount = $val->bankAmount * $trasToDefaultER;
-                                        }
-                                    } else {
-                                        If ($trasToDefaultER > 1) {
-                                            $amount = $val->bankAmount * $trasToDefaultER;
-                                        } else {
-                                            $amount = $val->bankAmount / $trasToDefaultER;
-                                        }
-                                    }
-                                    $receivePayment['localAmount'] = $amount;
-                                }
-
-                                if ($val->bankCurrencyID == $val->comRptCurrency) {
-                                    $receivePayment['companyRptAmount'] = $val->comRptAmount;
-                                } else {
-                                    $trasToDefaultER = $pvMaster->localCurrencyER;
-                                    $amount = 0;
-                                    if ($trasToDefaultER > $val->bankCurrencyER) {
-                                        if ($trasToDefaultER > 1) {
-                                            $amount = $val->bankAmount / $trasToDefaultER;
-                                        } else {
-                                            $amount = $val->bankAmount * $trasToDefaultER;
-                                        }
-                                    } else {
-                                        If ($trasToDefaultER > 1) {
-                                            $amount = $val->bankAmount * $trasToDefaultER;
-                                        } else {
-                                            $amount = $val->bankAmount / $trasToDefaultER;
-                                        }
-                                    }
-                                    $receivePayment['companyRptAmount'] = $amount;
-                                }
+                                $receivePayment['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+                                $receivePayment['companyRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+                                $receivePayment['receivedAmount'] = $val->bankAmount;
 
                                 $receivePayment['confirmedYN'] = 1;
                                 $receivePayment['confirmedByEmpSystemID'] = $pvMaster->confirmedByEmpSystemID;
