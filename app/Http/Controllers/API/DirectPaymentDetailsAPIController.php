@@ -418,11 +418,41 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->localCurrency) {
                 $input['localAmount'] = \Helper::roundValue($bankAmount);
                 $input['localCurrencyER'] = $input["bankCurrencyER"];
+            }else{
+                $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $directPaymentDetails->localCurrency)->first();
+                if ($conversion->conversion > 1) {
+                    if ($conversion->conversion > 1) {
+                        $input['localAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                    } else {
+                        $input['localAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                    }
+                } else {
+                    if ($conversion->conversion > 1) {
+                        $input['localAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                    } else {
+                        $input['localAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                    }
+                }
             }
 
             if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->comRptCurrency) {
                 $input['comRptAmount'] = \Helper::roundValue($bankAmount);
                 $input['comRptCurrencyER'] = $input["bankCurrencyER"];
+            }else{
+                $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $directPaymentDetails->comRptCurrency)->first();
+                if ($conversion->conversion > 1) {
+                    if ($conversion->conversion > 1) {
+                        $input['comRptAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                    } else {
+                        $input['comRptAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                    }
+                } else {
+                    if ($conversion->conversion > 1) {
+                        $input['comRptAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                    } else {
+                        $input['comRptAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                    }
+                }
             }
 
             $input['bankAmount'] = \Helper::roundValue($bankAmount);
