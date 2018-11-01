@@ -247,6 +247,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
                 $supplier = SupplierMaster::find($input['BPVsupplierID']);
                 $input['directPaymentPayee'] = $supplier->supplierName;
+            } else {
+                $input['supplierTransCurrencyER'] = 1;
+                $input['supplierDefCurrencyID'] = $input['supplierTransCurrencyID'];
+                $input['supplierDefCurrencyER'] = 1;
             }
 
             $bankAccount = BankAccount::find($input['BPVAccount']);
@@ -445,8 +449,17 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     }
                     $supplier = SupplierMaster::find($input['BPVsupplierID']);
                     $input['directPaymentPayee'] = $supplier->supplierName;
+                }else{
+                    $input['supplierTransCurrencyER'] = 1;
+                    $input['supplierDefCurrencyID'] = $input['supplierTransCurrencyID'];
+                    $input['supplierDefCurrencyER'] = 1;
                 }
+            } else {
+                $input['supplierTransCurrencyER'] = 1;
+                $input['supplierDefCurrencyID'] = $input['supplierTransCurrencyID'];
+                $input['supplierDefCurrencyER'] = 1;
             }
+
 
             if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
                 if (isset($input['interCompanyToSystemID'])) {
@@ -455,7 +468,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $input['interCompanyToID'] = $interCompany->CompanyID;
                     }
                 }
-            }else{
+            } else {
                 $input['interCompanyToSystemID'] = null;
                 $input['interCompanyToID'] = null;
             }
@@ -734,8 +747,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                 return $this->sendError("Bank and Bank account is not selected for " . $paySupplierInvoiceMaster->interCompanyToID, 500, ['type' => 'confirm']);
                             }
 
-                            $chartofAccount = ChartOfAccount::where('interCompanySystemID',$paySupplierInvoiceMaster->companySystemID)->get();
-                            if(count($chartofAccount) == 0){
+                            $chartofAccount = ChartOfAccount::where('interCompanySystemID', $paySupplierInvoiceMaster->companySystemID)->get();
+                            if (count($chartofAccount) == 0) {
                                 return $this->sendError("There is no inter company GL code created for " . $paySupplierInvoiceMaster->companyID, 500, ['type' => 'confirm']);
                             }
                         }
