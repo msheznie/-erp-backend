@@ -270,7 +270,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
-                $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+                $totalPaidAmount = (($supplierPaidAmountSum["SumOfsupplierPaymentAmount"]  * -1) + $machAmount);
 
                 if ($debitNoteMaster->debitAmountTrans == $totalPaidAmount || $totalPaidAmount > $debitNoteMaster->debitAmountTrans){
                     return $this->sendError('Debit note amount is more than document value, please check again' , 500);
@@ -713,7 +713,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $DebitNoteMaster = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
 
                 //when adding a new matching, checking whether debit amount more than the document value
-                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, addedDocumentSystemID, bookingInvSystemCode, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.supplierInvoiceAmount, addedDocumentSystemID, bookingInvSystemCode, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
                     ->where('addedDocumentSystemID',  $DebitNoteMaster->documentSystemID)
                     ->where('bookingInvSystemCode',  $DebitNoteMaster->debitNoteAutoID)
                     ->groupBy('addedDocumentSystemID', 'bookingInvSystemCode')
@@ -726,7 +726,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
-                $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+                $totalPaidAmount = (($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] * -1) + $machAmount );
 
                 if ($totalPaidAmount == 0) {
                     $DebitNoteMaster->matchInvoice = 0;
