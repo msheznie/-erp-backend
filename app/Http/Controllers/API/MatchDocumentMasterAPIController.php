@@ -565,26 +565,19 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
         }
 
-        if ($input['matchingDocCode'] == 0) {
+        $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
+            ->sum('supplierPaymentAmount');
 
-            $company = Company::find($input['companySystemID']);
+        $detailAmountTotLoc = PaySupplierInvoiceDetail::where('matchingDocID', $id)
+            ->sum('paymentLocalAmount');
 
-            $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
-                ->where('matchDocumentMasterAutoID', '<>', $input['matchDocumentMasterAutoID'])
-                ->orderBy('matchDocumentMasterAutoID', 'desc')
-                ->first();
+        $detailAmountTotRpt = PaySupplierInvoiceDetail::where('matchingDocID', $id)
+            ->sum('paymentComRptAmount');
 
-            $lastSerialNumber = 1;
-            if ($lastSerial) {
-                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-            }
-
-            $matchingDocCode = ($company->CompanyID . '\\' . 'MT' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-
-            $input['serialNo'] = $lastSerialNumber;
-            $input['matchingDocCode'] = $matchingDocCode;
-        }
-
+        $input['matchingAmount'] = $detailAmountTotTran;
+        $input['matchedAmount'] = $detailAmountTotTran;
+        $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
+        $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
 
         if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
 
@@ -593,7 +586,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 ->first();
 
             if (empty($pvDetailExist)) {
-                return $this->sendError('PV Matching document cannot confirm without details', 500, ['type' => 'confirm']);
+                return $this->sendError('Matching document cannot confirm without details', 500, ['type' => 'confirm']);
             }
 
             $checkAmount = PaySupplierInvoiceDetail::where('matchingDocID', $id)
@@ -602,6 +595,27 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             if ($checkAmount > 0) {
                 return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
+            }
+
+            if ($input['matchingDocCode'] == 0) {
+
+                $company = Company::find($input['companySystemID']);
+
+                $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('matchDocumentMasterAutoID', '<>', $input['matchDocumentMasterAutoID'])
+                    ->where('matchingType', 'AP')
+                    ->orderBy('serialNo', 'desc')
+                    ->first();
+
+                $lastSerialNumber = 1;
+                if ($lastSerial) {
+                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                }
+
+                $matchingDocCode = ($company->CompanyID . '\\' . 'MT' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+
+                $input['serialNo'] = $lastSerialNumber;
+                $input['matchingDocCode'] = $matchingDocCode;
             }
 
             $itemExistArray = array();
@@ -716,25 +730,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
                 ->sum('supplierPaymentAmount');
 
-            $detailAmountTotLoc = PaySupplierInvoiceDetail::where('matchingDocID', $id)
-                ->sum('paymentLocalAmount');
-
-            $detailAmountTotRpt = PaySupplierInvoiceDetail::where('matchingDocID', $id)
-                ->sum('paymentComRptAmount');
-
-
             if ($detailAmountTotTran > $input['matchBalanceAmount']) {
                 return $this->sendError('Detail amount cannot be greater than balance amount to match', 500, ['type' => 'confirm']);
             }
-            //$currency = \Helper::convertAmountToLocalRpt(203, $id, $detailAmountTot);
-
-            $input['matchingAmount'] = $detailAmountTotTran;
-            $input['matchedAmount'] = $detailAmountTotTran;
-            //$input['matchLocalAmount'] = \Helper::roundValue($currency['localAmount']);
-            //$input['matchRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
-
-            $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
-            $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
 
             $input['matchingConfirmedYN'] = 1;
             $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;;
@@ -782,7 +780,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             $lastSerial = MatchDocumentMaster::where('companySystemID', $input['companySystemID'])
                 ->where('matchDocumentMasterAutoID', '<>', $input['matchDocumentMasterAutoID'])
-                ->orderBy('matchDocumentMasterAutoID', 'desc')
+                ->where('matchingType', 'AR')
+                ->orderBy('serialNo', 'desc')
                 ->first();
 
             $lastSerialNumber = 1;
