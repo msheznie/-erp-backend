@@ -2073,6 +2073,9 @@ class GeneralLedgerInsert implements ShouldQueue
                         if (in_array($masterModel["documentSystemID"], [19, 20])) {
                             $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel);
                         }
+                        if (in_array($masterModel["documentSystemID"], [4])) {
+                            //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterModel);
+                        }
                     }
                     DB::commit();
                 }
