@@ -897,7 +897,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
 
     Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
-    //Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
+    Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData');
+    Route::post('updatePrintChequeItems', 'BankLedgerAPIController@updatePrintChequeItems');
 
 
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
@@ -1073,6 +1074,7 @@ Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
 Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
 Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
 Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
+Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');

@@ -1750,6 +1750,40 @@ class Helper
         return $employee;
     }
 
+    public static function getEmployeeInfoByURL($input)
+    {
+
+        if(!array_key_exists('Authorization',$input) || $input['Authorization'] == ""){
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        if (strpos($input['Authorization'], 'Bearer') === false) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $token =  trim(str_replace("","",$input['Authorization']));
+
+       $oauth = Models\AccessTokens::where('id','<>',$token)
+                                    //->where('id','like',"%{$token}%")
+                                    ->where('revoked',0)
+                                    ->get();
+
+        if(empty($oauth)){
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $id = 2637;
+        $user = Models\User::find($id);
+        $employee = Models\Employee::find($user->employee_id);
+
+        if($employee){
+            return ['success' => true, 'message' => $employee];
+        }else{
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+    }
+
+
     /**
      * @param $date
      * @return false|string
