@@ -552,7 +552,11 @@ class ProcumentOrder extends Model
      **/
     public function status()
     {
-        return $this->hasMany('\App\Models\PurchaseOrderStatus','purchaseOrderID','purchaseOrderID');
+        return $this->hasMany('\App\Models\PurchaseOrderStatus','purchaseOrderID','purchaseOrderID')->orderBy('purchaseOrderID', 'desc');
+    }
+
+    public function status_one(){
+        return $this->hasOne('\App\Models\PurchaseOrderStatus','purchaseOrderID','purchaseOrderID')->orderBy('purchaseOrderID', 'desc');
     }
 
     public function paymentTerms_by()

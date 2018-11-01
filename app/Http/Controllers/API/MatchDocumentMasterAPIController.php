@@ -179,10 +179,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 if ($glCheck) {
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
-                        return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again');
+                        return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again', 500);
                     }
                 } else {
-                    return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again');
+                    return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again' , 500);
                 }
 
                 //when adding a new matching, checking whether advance payment more than the document value
@@ -194,7 +194,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 }
 
                 if ($paySupplierInvoiceMaster->payAmountSuppTrans == $machAmount || $machAmount > $paySupplierInvoiceMaster->payAmountSuppTrans){
-                    return $this->sendError('Advance payment amount is more than document value, please check again');
+                    return $this->sendError('Advance payment amount is more than document value, please check again' , 500);
                 }
 
                 $input['matchingType'] = 'AP';
@@ -246,10 +246,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 if ($glCheck) {
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
-                        return $this->sendError('Selected debit note is not updated in general ledger. Please check again');
+                        return $this->sendError('Selected debit note is not updated in general ledger. Please check again' , 500);
                     }
                 } else {
-                    return $this->sendError('Selected debit note is not updated in general ledger. Please check again');
+                    return $this->sendError('Selected debit note is not updated in general ledger. Please check again' , 500);
                 }
 
                 //when adding a new matching, checking whether debit amount more than the document value
@@ -265,7 +265,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
                 if ($debitNoteMaster->debitAmountTrans == $totalPaidAmount || $totalPaidAmount > $debitNoteMaster->debitAmountTrans){
-                    return $this->sendError('Debit note amount is more than document value, please check again');
+                    return $this->sendError('Debit note amount is more than document value, please check again' , 500);
                 }
 
                 $input['matchingType'] = 'AP';
@@ -338,11 +338,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $customerReceivePaymentMaster->documentSystemID)->where('companySystemID', $customerReceivePaymentMaster->companySystemID)->where('documentSystemCode', $input['custReceivePaymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
-                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
-                        return $this->sendError('Selected customer receive payment is not updated in general ledger. Please check again');
+                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
+                        return $this->sendError('Selected customer receive payment is not updated in general ledger. Please check again' , 500);
                     }
                 } else {
-                    return $this->sendError('Selected customer receive payment is not updated in general ledger. Please check again');
+                    return $this->sendError('Selected customer receive payment is not updated in general ledger. Please check again' , 500);
                 }
 
                 $input['matchingType'] = 'AR';
@@ -391,7 +391,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $creditNoteMaster->documentSystemiD)->where('companySystemID', $creditNoteMaster->companySystemID)->where('documentSystemCode', $input['custReceivePaymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
-                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         return $this->sendError('Selected credit note is not updated in general ledger. Please check again', 500);
                     }
                 } else {
@@ -604,8 +604,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 return $this->sendError('Matching amount cannot be 0', 500, ['type' => 'confirm']);
             }
 
+            $itemExistArray = array();
+
             // updating flags in accounts payable ledger
-            $pvDetailExist = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+            $pvDetailExist = PaySupplierInvoiceDetail::where('matchingDocID', $id)
                 ->get();
 
             foreach ($pvDetailExist as $val) {
@@ -639,6 +641,26 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         }
                     }
                 }
+            }
+
+            foreach ($pvDetailExist as $item) {
+
+                $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
+                    ->where('apAutoID', $item['apAutoID'])
+                    ->first();
+
+                if ($item['addedDocumentSystemID'] == 11) {
+                    //supplier invoice
+                    if ($payDetailMoreBooked->supplierPaymentAmount > $item['supplierInvoiceAmount']) {
+
+                        $itemDrt = "Selected invoice " . $item['bookingInvDocCode'] . " booked more than the invoice amount.";
+                        $itemExistArray[] = [$itemDrt];
+                    }
+                }
+            }
+
+            if (!empty($itemExistArray)) {
+                return $this->sendError($itemExistArray, 422);
             }
 
             //updating master table

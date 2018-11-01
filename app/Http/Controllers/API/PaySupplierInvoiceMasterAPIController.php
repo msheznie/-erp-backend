@@ -543,6 +543,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
             }
 
+            $input['BPVdate'] = new Carbon($input['BPVdate']);
+            $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
+
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -564,9 +567,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
 
                 unset($inputParam);
-
-                $input['BPVdate'] = new Carbon($input['BPVdate']);
-                $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
 
                 $monthBegin = $input['FYPeriodDateFrom'];
                 $monthEnd = $input['FYPeriodDateTo'];

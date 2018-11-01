@@ -490,7 +490,7 @@ class BudgetMasterAPIController extends AppBaseController
                                        erp_templatesdetails.templateDetailDescription,
                                        erp_templatesdetails.templatesMasterAutoID,
                                        erp_budjetdetails.*,ifnull(ca.consumed_amount,0) as consumed_amount,ifnull(ppo.rptAmt,0) as pending_po_amount,
-                                       (SUM(budjetAmtRpt) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance,ifnull(adj.SumOfadjustmentRptAmount,0) AS adjusted_amount"))
+                                       ((SUM(budjetAmtRpt) * -1) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance,ifnull(adj.SumOfadjustmentRptAmount,0) AS adjusted_amount"))
             ->where('erp_budjetdetails.companySystemID', $budgetMaster->companySystemID)
             ->where('erp_budjetdetails.serviceLineSystemID', $budgetMaster->serviceLineSystemID)
             ->where('erp_budjetdetails.Year', $budgetMaster->Year)
@@ -678,7 +678,7 @@ class BudgetMasterAPIController extends AppBaseController
                                        erp_budjetdetails.*
                                         /*,ifnull(ca.consumed_amount,0) as consumed_amount
                                          ,ifnull(ppo.rptAmt,0) as pending_po_amount,
-                                       (SUM(budjetAmtRpt) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance*/
+                                       ((SUM(budjetAmtRpt) * -1) - (ifnull(ca.consumed_amount,0) + ifnull(ppo.rptAmt,0))) AS balance*/
                                        "))
             ->where('erp_budjetdetails.companySystemID', $budgetMaster->companySystemID)
             ->where('erp_budjetdetails.serviceLineSystemID', $budgetMaster->serviceLineSystemID)
@@ -732,22 +732,23 @@ class BudgetMasterAPIController extends AppBaseController
         foreach ($reportData as $data) {
 
             $glData = TemplatesGLCode::where('templateMasterID', $budgetMaster->templateMasterID)
-                ->where('templatesDetailsAutoID', $data['templateDetailID'])
-                ->whereNotNull('chartOfAccountSystemID')->get();
+                                            ->where('templatesDetailsAutoID', $data['templateDetailID'])
+                                            ->whereNotNull('chartOfAccountSystemID')->get();
 
             $glIds = collect($glData)->pluck('chartOfAccountSystemID')->toArray();
             $data->consumed_amount = BudgetConsumedData::where('companySystemID', $data['companySystemID'])
-                ->where('serviceLineSystemID', $data['serviceLineSystemID'])
-                ->where('Year', $data['Year'])
-                ->whereIn('chartOfAccountID', $glIds)
-                ->sum('consumedRptAmount');
+                                                        ->where('serviceLineSystemID', $data['serviceLineSystemID'])
+                                                        ->where('Year', $data['Year'])
+                                                        ->whereIn('chartOfAccountID', $glIds)
+                                                        ->where('consumeYN', -1)
+                                                        ->sum('consumedRptAmount');
 
             $pos = PurchaseOrderDetails::whereHas('order', function ($q) use ($data, $glIds) {
                 $q->where('companySystemID', $data['companySystemID'])
                     ->where('serviceLineSystemID', $data['serviceLineSystemID'])
                     ->where('approved', 0)
                     ->where('poCancelledYN', 0);
-            })
+                 })
                 ->where('budgetYear', $data['Year'])
                 ->whereIn('financeGLcodePLSystemID', $glIds)
                 ->whereNotNull('financeGLcodePLSystemID')
@@ -758,7 +759,7 @@ class BudgetMasterAPIController extends AppBaseController
                 return $product->GRVcostPerUnitComRptCur * $product->noQty;
             });
 
-            $data->balance =  $data->totalRpt - ($data->consumed_amount + $data->pending_po_amount);
+            $data->balance =  ($data->totalRpt * -1) - ($data->consumed_amount + $data->pending_po_amount);
         }
 
         $total = array();
