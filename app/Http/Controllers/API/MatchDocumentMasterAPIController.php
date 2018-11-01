@@ -170,6 +170,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             if ($input['matchType'] == 1) {
 
                 $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($input['paymentAutoID']);
+
                 if (empty($paySupplierInvoiceMaster)) {
                     return $this->sendError('Pay Supplier Invoice Master not found');
                 }
@@ -177,11 +178,23 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)->where('documentSystemCode', $input['paymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
-                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again');
                     }
                 } else {
                     return $this->sendError('Selected payment voucher is not updated in general ledger. Please check again');
+                }
+
+                //when adding a new matching, checking whether advance payment more than the document value
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input['paymentAutoID'])->where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+
+                $machAmount = 0;
+                if ($matchedAmount) {
+                    $machAmount = $matchedAmount["SumOfmatchedAmount"];
+                }
+
+                if ($paySupplierInvoiceMaster->payAmountSuppTrans == $machAmount || $machAmount > $paySupplierInvoiceMaster->payAmountSuppTrans){
+                    return $this->sendError('Advance payment amount is more than document value, please check again');
                 }
 
                 $input['matchingType'] = 'AP';
@@ -228,15 +241,33 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 if (empty($debitNoteMaster)) {
                     return $this->sendError('Debit Note not found');
                 }
+                //when adding a new matching, checking whether debit note added in general ledger
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $debitNoteMaster->documentSystemID)->where('companySystemID', $debitNoteMaster->companySystemID)->where('documentSystemCode', $input['paymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
-                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         return $this->sendError('Selected debit note is not updated in general ledger. Please check again');
                     }
                 } else {
                     return $this->sendError('Selected debit note is not updated in general ledger. Please check again');
                 }
+
+                //when adding a new matching, checking whether debit amount more than the document value
+                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('PayMasterAutoId', $input['paymentAutoID'])->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input['paymentAutoID'])->where('documentSystemID', $debitNoteMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+
+                $machAmount = 0;
+                if ($matchedAmount) {
+                    $machAmount = $matchedAmount["SumOfmatchedAmount"];
+                }
+
+                $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+
+                if ($debitNoteMaster->debitAmountTrans == $totalPaidAmount || $totalPaidAmount > $debitNoteMaster->debitAmountTrans){
+                    return $this->sendError('Debit note amount is more than document value, please check again');
+                }
+
                 $input['matchingType'] = 'AP';
                 $input['PayMasterAutoId'] = $input['paymentAutoID'];
                 $input['documentSystemID'] = $debitNoteMaster->documentSystemID;
