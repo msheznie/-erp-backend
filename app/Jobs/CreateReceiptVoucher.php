@@ -48,6 +48,8 @@ class CreateReceiptVoucher implements ShouldQueue
         if ($pvMaster->invoiceType == 3) {
             DB::beginTransaction();
             try {
+                Log::info('started');
+                Log::info($pvMaster->PayMasterAutoId);
                 $dpdetails = $dpdetail->findWhere(['directPaymentAutoID' => $pvMaster->PayMasterAutoId]);
                 if (count($dpdetails) > 0) {
                     if ($pvMaster->expenseClaimOrPettyCash == 6 || $pvMaster->expenseClaimOrPettyCash == 7) {
@@ -215,11 +217,13 @@ class CreateReceiptVoucher implements ShouldQueue
                                 $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
                                 $receivePayment['createdPcID'] = gethostname();
 
-                                Log::info($receivePayment);
                                 $custRecMaster = $crp->create($receivePayment);
+                                Log::info($receivePayment);
                             }
                         }
                     }
+                    $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
+                    //$jobPV = BankLedgerInsert::dispatch($masterData);
                 }
 
                 Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));

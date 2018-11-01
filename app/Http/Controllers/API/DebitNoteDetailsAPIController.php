@@ -171,7 +171,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
 
         if (!empty($checkWhether)) {
-            return $this->sendError("There is a Debit Note (" . $checkWhether->debitNoteCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            //return $this->sendError("There is a Debit Note (" . $checkWhether->debitNoteCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
         }
 
         $company = Company::where('companySystemID', $companySystemID)->first();
