@@ -522,8 +522,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
         }
 
-        $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
-            ->sum('totTransactionAmount');
+        $checkPreTotal = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('DRAmount');
 
         if ($customerReceivePayment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
