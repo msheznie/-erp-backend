@@ -381,7 +381,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     ->update(['fullyPaid' => 0, 'selectedToPayment' => 0]);
             }
 
-            $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $advancePaymentDetails2->PayMasterAutoId)->first();
+            /*$totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $advancePaymentDetails2->PayMasterAutoId)->first();
 
             $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierTransAmount);
 
@@ -392,7 +392,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
             $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierTransAmount);
 
-            $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $advancePaymentDetails2->PayMasterAutoId);
+            $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $advancePaymentDetails2->PayMasterAutoId);*/
 
             DB::commit();
             return $this->sendResponse($id, 'Advance Payment Details deleted successfully');
