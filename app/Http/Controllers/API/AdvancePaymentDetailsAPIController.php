@@ -7,6 +7,7 @@ use App\Http\Requests\API\UpdateAdvancePaymentDetailsAPIRequest;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppDet;
+use App\Models\Company;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
@@ -581,6 +582,20 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     $tempArray["PayMasterAutoId"] = $input["PayMasterAutoId"];
                     $tempArray["paymentAmount"] = $new["BalanceAmount"];
                     $tempArray["supplierTransAmount"] = $tempArray["paymentAmount"];
+                    $tempArray["supplierTransCurrencyID"] = $new["currencyID"];
+                    $tempArray["supplierTransER"] = 1;
+                    $tempArray["supplierDefaultCurrencyID"] = $new["currencyID"];
+                    $tempArray["supplierDefaultCurrencyER"] = 1;
+
+                    $companyCurrencyConversion = \Helper::currencyConversion($new['companySystemID'], $new['currencyID'], $new['currencyID'], 0);
+
+                    $company = Company::where('companySystemID', $new['companySystemID'])->first();
+
+                    $tempArray["localCurrencyID"] = $company->localCurrencyID;
+                    $tempArray["localER"] = $companyCurrencyConversion['trasToLocER'];
+
+                    $tempArray["comRptCurrencyID"] = $company->reportingCurrency;
+                    $tempArray["comRptER"] = $companyCurrencyConversion['trasToRptER'];
 
                     unset($tempArray['isChecked']);
                     unset($tempArray['DecimalPlaces']);
