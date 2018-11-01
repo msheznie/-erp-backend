@@ -478,6 +478,17 @@ class Helper
                     $docInforArr["modelName"] = 'AssetDisposalMaster';
                     $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
                     break;
+                case 21:
+                    $docInforArr["documentCodeColumnName"] = 'custPaymentReceiveCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedByName';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'erp_customerreceivepayment';
+                    $docInforArr["modelName"] = 'CustomerReceivePayment';
+                    $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }

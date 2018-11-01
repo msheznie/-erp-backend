@@ -12,6 +12,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Response;
 
 /**
@@ -293,6 +294,8 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
             return $this->sendError('Supplier Invoice not found');
         }
 
+        $bookingDate = Carbon::parse($bookInvSuppMaster->bookingDate)->format('Y-m-d');
+
         $unbilledGrvGroupBy = UnbilledGrvGroupBy::whereHas('grvmaster', function ($query) {
             $query->where('approved', -1);
             $query->where('grvCancelledYN', 0);
@@ -304,7 +307,7 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
             ->where('fullyBooked', '<>', 2)
             ->where('supplierID', $bookInvSuppMaster->supplierID)
             ->where('supplierTransactionCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)
-            ->where('grvDate', '<=', $bookInvSuppMaster->bookingDate)
+            ->whereDate('grvDate', '<=', $bookingDate)
             ->groupBy('purchaseOrderID')
             ->orderBy('purchaseOrderID', 'DESC')
             ->get();
@@ -326,6 +329,8 @@ class UnbilledGrvGroupByAPIController extends AppBaseController
         if (empty($bookInvSuppMaster)) {
             return $this->sendError('Supplier Invoice not found');
         }
+
+        $bookingDate = Carbon::parse($bookInvSuppMaster->bookingDate)->format('Y-m-d');
 
         $unbilledGrvGroupBy = DB::select('SELECT
 	grvmaster.grvPrimaryCode,
@@ -362,7 +367,7 @@ AND unbilledMaster.fullyBooked <> 2
 AND unbilledMaster.selectedForBooking = 0
 AND unbilledMaster.supplierID = ' . $bookInvSuppMaster->supplierID . '
 AND unbilledMaster.supplierTransactionCurrencyID = ' . $bookInvSuppMaster->supplierTransactionCurrencyID . '
-AND DATE(unbilledMaster.grvDate) <= "' . $bookInvSuppMaster->bookingDate . '"
+AND DATE_FORMAT(unbilledMaster.grvDate,"%Y-%m-%d") <= "' . $bookingDate . '"
 AND unbilledMaster.purchaseOrderID = ' . $purchaseOrderID . '
 HAVING ROUND(
 			unbilledMaster.totTransactionAmount,

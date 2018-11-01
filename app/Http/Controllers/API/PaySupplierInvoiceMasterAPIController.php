@@ -247,6 +247,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
                 $supplier = SupplierMaster::find($input['BPVsupplierID']);
                 $input['directPaymentPayee'] = $supplier->supplierName;
+            } else {
+                $input['supplierTransCurrencyER'] = 1;
+                $input['supplierDefCurrencyID'] = $input['supplierTransCurrencyID'];
+                $input['supplierDefCurrencyER'] = 1;
             }
 
             $bankAccount = BankAccount::find($input['BPVAccount']);
@@ -445,12 +449,28 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     }
                     $supplier = SupplierMaster::find($input['BPVsupplierID']);
                     $input['directPaymentPayee'] = $supplier->supplierName;
+                }else{
+                    $input['supplierTransCurrencyER'] = 1;
+                    $input['supplierDefCurrencyID'] = $input['supplierTransCurrencyID'];
+                    $input['supplierDefCurrencyER'] = 1;
                 }
+            } else {
+                $input['supplierTransCurrencyER'] = 1;
+                $input['supplierDefCurrencyID'] = $input['supplierTransCurrencyID'];
+                $input['supplierDefCurrencyER'] = 1;
             }
 
-            $interCompany = Company::find($input['interCompanyToSystemID']);
-            if ($interCompany) {
-                $input['interCompanyToID'] = $interCompany->CompanyID;
+
+            if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
+                if (isset($input['interCompanyToSystemID'])) {
+                    $interCompany = Company::find($input['interCompanyToSystemID']);
+                    if ($interCompany) {
+                        $input['interCompanyToID'] = $interCompany->CompanyID;
+                    }
+                }
+            } else {
+                $input['interCompanyToSystemID'] = null;
+                $input['interCompanyToID'] = null;
             }
 
             $bankAccount = BankAccount::find($input['BPVAccount']);
@@ -523,6 +543,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
             }
 
+            $input['BPVdate'] = new Carbon($input['BPVdate']);
+            $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
+
             if ($paySupplierInvoiceMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -544,9 +567,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
 
                 unset($inputParam);
-
-                $input['BPVdate'] = new Carbon($input['BPVdate']);
-                $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
 
                 $monthBegin = $input['FYPeriodDateFrom'];
                 $monthEnd = $input['FYPeriodDateTo'];
@@ -727,8 +747,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                 return $this->sendError("Bank and Bank account is not selected for " . $paySupplierInvoiceMaster->interCompanyToID, 500, ['type' => 'confirm']);
                             }
 
-                            $chartofAccount = ChartOfAccount::where('interCompanySystemID',$paySupplierInvoiceMaster->companySystemID)->get();
-                            if(count($chartofAccount) == 0){
+                            $chartofAccount = ChartOfAccount::where('interCompanySystemID', $paySupplierInvoiceMaster->companySystemID)->get();
+                            if (count($chartofAccount) == 0) {
                                 return $this->sendError("There is no inter company GL code created for " . $paySupplierInvoiceMaster->companyID, 500, ['type' => 'confirm']);
                             }
                         }
@@ -843,8 +863,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
                     $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->paymentAmount);
                     $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->paymentAmount);
-                    $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
-                    $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
+                    $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
+                    $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                     $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->paymentAmount);
                 } else {
                     $input['payAmountBank'] = 0;
@@ -1288,11 +1308,11 @@ WHERE
 
         if ($input['matchType'] == 1) {
             $invoiceMaster = DB::select('SELECT
-	MASTER .PayMasterAutoId,
-	MASTER .BPVcode as documentCode,
-	MASTER .BPVdate as docDate,
-	MASTER .payAmountSuppTrans as transAmount,
-	MASTER .BPVsupplierID,
+	MASTER.PayMasterAutoId as masterAutoID,
+	MASTER.BPVcode as documentCode,
+	MASTER.BPVdate as docDate,
+	MASTER.payAmountSuppTrans as transAmount,
+	MASTER.BPVsupplierID,
 	currency.CurrencyCode,
 	currency.DecimalPlaces,
 	IFNULL(advd.SumOfmatchingAmount, 0) as SumOfmatchingAmount,
@@ -1329,11 +1349,11 @@ AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         } elseif ($input['matchType'] == 2) {
             $invoiceMaster = DB::select('SELECT
-	MASTER .debitNoteAutoID,
-	MASTER .debitNoteCode as documentCode,
-	MASTER .debitNoteDate as docDate,
-	MASTER .debitAmountTrans as transAmount,
-	MASTER .supplierID,
+	MASTER.debitNoteAutoID as masterAutoID,
+	MASTER.debitNoteCode as documentCode,
+	MASTER.debitNoteDate as docDate,
+	MASTER.debitAmountTrans as transAmount,
+	MASTER.supplierID,
 	currency.CurrencyCode,
 	currency.DecimalPlaces,
 	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,

@@ -341,6 +341,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $companySystemID = $assetDisposalMaster->companySystemID;
             $documentSystemID = $assetDisposalMaster->documentSystemID;
 
+            $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
+
             if ($assetDisposalMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -362,8 +364,6 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 }
 
                 unset($inputParam);
-
-                $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
 
                 $monthBegin = $input['FYPeriodDateFrom'];
                 $monthEnd = $input['FYPeriodDateTo'];
@@ -394,22 +394,22 @@ class AssetDisposalMasterAPIController extends AppBaseController
                         return $this->sendError('Assigned customer is not active', 500, ['type' => 'confirm']);
                     }
 
-                    //For supplier check
-                    $suppliermaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
+                    //For supplier companySystemID
+                    $suppliermaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->companySystemID)->first();
 
                     if (empty($suppliermaster)) {
                         return $this->sendError('There is no supplier created to the selected company. Please create a supplier', 500, ['type' => 'confirm']);
                     }
 
                     //If the supplier is not assigned
-                    $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isAssigned', '-1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
+                    $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->companySystemID)->where('isAssigned', '-1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
 
                     if (empty($supplier)) {
                         return $this->sendError('There is no supplier assgigned to the selected company. Please assign the supplier', 500, ['type' => 'confirm']);
                     }
 
                     //checking selected supplier is active
-                    $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isActive', '1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
+                    $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->companySystemID)->where('isActive', '1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
 
                     if (empty($supplier)) {
                         return $this->sendError('Assigned supplier is not active', 500, ['type' => 'confirm']);
