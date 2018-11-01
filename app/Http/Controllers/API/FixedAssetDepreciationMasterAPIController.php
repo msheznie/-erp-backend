@@ -276,9 +276,6 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                             $data['depAmountRpt'] = $monthlyRpt;
                         }
 
-                        $depAmountRptTotal += $data['depAmountRpt'];
-                        $depAmountLocalTotal += $data['depAmountLocal'];
-
                         if ($depAmountRpt == 0 && $depAmountLocal == 0) {
                             $dateDEP = Carbon::parse($val->dateDEP);
                             if ($dateDEP->lessThanOrEqualTo($depDate)) {
@@ -294,8 +291,6 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                                             $data['FYperiodID'] = $companyFinancePeriodID->companyFinancePeriodID;
                                             $data['depForFYperiodStartDate'] = $companyFinancePeriodID->dateFrom;
                                             $data['depForFYperiodEndDate'] = $companyFinancePeriodID->dateTo;
-                                            $depAmountRptTotal += $data['depAmountRpt'];
-                                            $depAmountLocalTotal += $data['depAmountLocal'];
                                             $assetDepPeriod = FixedAssetDepreciationPeriod::create($data);
                                         }
                                     }
@@ -316,7 +311,9 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 }
             }
 
-            $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->update(['depAmountLocal' => $depAmountLocalTotal, 'depAmountRpt' => $depAmountRptTotal], $depMasterAutoID);
+            $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
+
+            $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt], $depMasterAutoID);
 
             DB::commit();
             return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
