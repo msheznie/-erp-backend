@@ -188,14 +188,14 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         $lastSerial = PaymentBankTransfer::where('companySystemID', $input['companySystemID'])
-            ->orderBy('paymentBankTransferID', 'desc')
-            ->first();
+                                        ->orderBy('paymentBankTransferID', 'desc')
+                                        ->first();
 
         $lastSerialNumber = 1;
         if ($lastSerial) {
-            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            $lastSerialNumber = intval($lastSerial->serialNumber) + 1;
         }
-        $input['serialNo'] = $lastSerialNumber;
+        $input['serialNumber'] = $lastSerialNumber;
 
 
         $code = ($input['companyID'] . '\\' . $input['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
