@@ -294,6 +294,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                                             $data['FYperiodID'] = $companyFinancePeriodID->companyFinancePeriodID;
                                             $data['depForFYperiodStartDate'] = $companyFinancePeriodID->dateFrom;
                                             $data['depForFYperiodEndDate'] = $companyFinancePeriodID->dateTo;
+                                            $depAmountRptTotal += $data['depAmountRpt'];
+                                            $depAmountLocalTotal += $data['depAmountLocal'];
                                             $assetDepPeriod = FixedAssetDepreciationPeriod::create($data);
                                         }
                                     }
