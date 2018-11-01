@@ -449,8 +449,17 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     }
                     $supplier = SupplierMaster::find($input['BPVsupplierID']);
                     $input['directPaymentPayee'] = $supplier->supplierName;
+                }else{
+                    $input['supplierTransCurrencyER'] = 1;
+                    $input['supplierDefCurrencyID'] = $input['supplierTransCurrencyID'];
+                    $input['supplierDefCurrencyER'] = 1;
                 }
+            } else {
+                $input['supplierTransCurrencyER'] = 1;
+                $input['supplierDefCurrencyID'] = $input['supplierTransCurrencyID'];
+                $input['supplierDefCurrencyER'] = 1;
             }
+
 
             if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
                 if (isset($input['interCompanyToSystemID'])) {
