@@ -672,21 +672,21 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
         }
 
-/*        //check record exist in General Ledger table
-        foreach ($input['detailTable'] as $itemExist) {
+        /*        //check record exist in General Ledger table
+                foreach ($input['detailTable'] as $itemExist) {
 
-            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
-                $siDetailExistGL = GeneralLedger::where('documentSystemID', $itemExist['addedDocumentSystemID'])
-                    ->where('companySystemID', $itemExist['companySystemID'])
-                    ->where('documentSystemCode', $itemExist['bookingInvSystemCode'])
-                    ->first();
+                    if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
+                        $siDetailExistGL = GeneralLedger::where('documentSystemID', $itemExist['addedDocumentSystemID'])
+                            ->where('companySystemID', $itemExist['companySystemID'])
+                            ->where('documentSystemCode', $itemExist['bookingInvSystemCode'])
+                            ->first();
 
-                if (empty($siDetailExistGL)) {
-                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                    $itemExistArray[] = [$itemDrt];
-                }
-            }
-        }*/
+                        if (empty($siDetailExistGL)) {
+                            $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
+                            $itemExistArray[] = [$itemDrt];
+                        }
+                    }
+                }*/
 
         //check record total in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {
@@ -696,13 +696,29 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $itemExist['addedDocumentSystemID'])->where('companySystemID', $itemExist['companySystemID'])->where('documentSystemCode', $itemExist['bookingInvSystemCode'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
-                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
                         $itemExistArray[] = [$itemDrt];
                     }
                 } else {
                     $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
                     $itemExistArray[] = [$itemDrt];
+                }
+            }
+        }
+
+        foreach ($input['detailTable'] as $item) {
+            $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
+                ->where('apAutoID', $item['apAutoID'])
+                ->first();
+
+            if ($item['addedDocumentSystemID'] == 11) {
+                //supplier invoice
+                if ($payDetailMoreBooked->supplierPaymentAmount > $item['supplierInvoiceAmount']) {
+
+                    $itemDrt = "Selected invoice " . $item['bookingInvDocCode'] . " booked more than the invoice amount.";
+                    $itemExistArray[] = [$itemDrt];
+
                 }
             }
         }
@@ -830,7 +846,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if ($totalPaidAmount == 0) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 0, 'selectedToPaymentInv' => 0]);
-            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount  || $totalPaidAmount > $paySupplierInvoiceDetail->supplierInvoiceAmount) {
+            } else if ($paySupplierInvoiceDetail->supplierInvoiceAmount == $totalPaidAmount || $totalPaidAmount > $paySupplierInvoiceDetail->supplierInvoiceAmount) {
                 $updatePayment = AccountsPayableLedger::find($paySupplierInvoiceDetail->apAutoID)
                     ->update(['fullyInvoice' => 2, 'selectedToPaymentInv' => -1]);
             } else if (($paySupplierInvoiceDetail->supplierInvoiceAmount > $totalPaidAmount) && ($totalPaidAmount > 0)) {

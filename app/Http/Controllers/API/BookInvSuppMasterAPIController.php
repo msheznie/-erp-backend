@@ -1616,8 +1616,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
 
-    public
-    function getSupplierInvoiceAmend(Request $request)
+    public function getSupplierInvoiceAmend(Request $request)
     {
         $input = $request->all();
 
