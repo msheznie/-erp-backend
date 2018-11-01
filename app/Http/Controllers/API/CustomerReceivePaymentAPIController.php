@@ -522,6 +522,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
         }
 
+        $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
+            ->sum('totTransactionAmount');
+
         if ($customerReceivePayment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
             $validator = \Validator::make($input, [
@@ -589,60 +592,63 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if ($checkQuantity > 0) {
                 return $this->sendError('Amount should be greater than 0 for every items', 500);
             }
-            
-            $directReceiptDetail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
 
-            $finalError = array('amount_zero' => array(),
-                'amount_neg' => array(),
-                'required_serviceLine' => array(),
-                'active_serviceLine' => array(),
-            );
-            $error_count = 0;
+            if ($input['documentType'] == 14) {
+                $directReceiptDetail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
 
-            foreach ($directReceiptDetail as $item) {
+                $finalError = array('amount_zero' => array(),
+                    'amount_neg' => array(),
+                    'required_serviceLine' => array(),
+                    'active_serviceLine' => array(),
+                );
+                $error_count = 0;
 
-                $updateItem = DirectReceiptDetail::find($item['debitNoteDetailsID']);
+                foreach ($directReceiptDetail as $item) {
 
-                if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+                    $updateItem = DirectReceiptDetail::find($item['directReceiptDetailsID']);
 
-                    $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
-                        ->where('isActive', 1)
-                        ->first();
-                    if (empty($checkDepartmentActive)) {
-                        $updateItem->serviceLineSystemID = null;
-                        $updateItem->serviceLineCode = null;
-                        array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                    if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+
+                        $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                            ->where('isActive', 1)
+                            ->first();
+                        if (empty($checkDepartmentActive)) {
+                            $updateItem->serviceLineSystemID = null;
+                            $updateItem->serviceLineCode = null;
+                            array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                            $error_count++;
+                        }
+                    } else {
+                        array_push($finalError['required_serviceLine'], $updateItem->glCode);
                         $error_count++;
                     }
-                } else {
-                    array_push($finalError['required_serviceLine'], $updateItem->glCode);
-                    $error_count++;
+
+                    $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
+
+                    $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+                    $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    $updateItem->save();
+
+                    if ($updateItem->debitAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
+                        array_push($finalError['amount_zero'], $updateItem->itemPrimaryCode);
+                        $error_count++;
+                    }
+                    if ($updateItem->debitAmount < 0 || $updateItem->localAmount < 0 || $updateItem->comRptAmount < 0) {
+                        array_push($finalError['amount_neg'], $updateItem->itemPrimaryCode);
+                        $error_count++;
+                    }
                 }
 
-                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
-
-                $input['localAmount'] = $companyCurrencyConversion['localAmount'];
-                $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                $updateItem->save();
-
-                if ($updateItem->debitAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
-                    array_push($finalError['amount_zero'], $updateItem->itemPrimaryCode);
-                    $error_count++;
+                $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+                if ($error_count > 0) {
+                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
                 }
-                if ($updateItem->debitAmount < 0 || $updateItem->localAmount < 0 || $updateItem->comRptAmount < 0) {
-                    array_push($finalError['amount_neg'], $updateItem->itemPrimaryCode);
-                    $error_count++;
-                }
-            }
-
-            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
-            if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
 
             $input['RollLevForApp_curr'] = 1;
+
             $params = array('autoID' => $id,
                 'company' => $debitNote->companySystemID,
                 'document' => $debitNote->documentSystemID,
