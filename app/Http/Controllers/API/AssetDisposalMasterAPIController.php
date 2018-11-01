@@ -341,6 +341,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $companySystemID = $assetDisposalMaster->companySystemID;
             $documentSystemID = $assetDisposalMaster->documentSystemID;
 
+            $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
+
             if ($assetDisposalMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -362,8 +364,6 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 }
 
                 unset($inputParam);
-
-                $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
 
                 $monthBegin = $input['FYPeriodDateFrom'];
                 $monthEnd = $input['FYPeriodDateTo'];
