@@ -353,6 +353,8 @@ class AssetCapitalizationAPIController extends AppBaseController
             $companySystemID = $assetCapitalization->companySystemID;
             $documentSystemID = $assetCapitalization->documentSystemID;
 
+            $input['documentDate'] = new Carbon($input['documentDate']);
+
             if ($assetCapitalization->confirmedYN == 0 && $input['confirmedYN'] == 1) {
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
                 if (!$companyFinanceYear["success"]) {
@@ -373,8 +375,6 @@ class AssetCapitalizationAPIController extends AppBaseController
                 }
 
                 unset($inputParam);
-
-                $input['documentDate'] = new Carbon($input['documentDate']);
 
                 $monthBegin = $input['FYPeriodDateFrom'];
                 $monthEnd = $input['FYPeriodDateTo'];

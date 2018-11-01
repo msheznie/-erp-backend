@@ -176,31 +176,9 @@ class CreateReceiptVoucher implements ShouldQueue
                                 $companyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
                                 $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
                                 $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
-
                                 $receivePayment['PayMasterAutoId'] = $pvMaster->PayMasterAutoId;
-                                $BRVLastSerial = CustomerReceivePayment::where('companySystemID', $pvMaster->interCompanyToSystemID)
-                                    ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
-                                    ->where('documentSystemID', 4)
-                                    ->where('serialNo', '>', 0)
-                                    ->orderBy('serialNo', 'desc')
-                                    ->first();
-
-                                $cusInvLastSerialNumber = 1;
-                                if ($BRVLastSerial) {
-                                    $cusInvLastSerialNumber = intval($BRVLastSerial->serialNo) + 1;
-                                }
-                                $receivePayment['serialNo'] = $cusInvLastSerialNumber;
-
-                                if ($companyFinanceYear) {
-                                    $cusStartYear = $companyFinanceYear->bigginingDate;
-                                    $cusFinYearExp = explode('-', $cusStartYear);
-                                    $cusFinYear = $cusFinYearExp[0];
-                                } else {
-                                    $cusFinYear = date("Y");
-                                }
-                                $docCode = ($pvMaster->companyID . '\\' . $cusFinYear . '\\' . $receivePayment['documentID'] . str_pad($cusInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
-
-                                $receivePayment['custPaymentReceiveCode'] = $docCode;
+                                $receivePayment['serialNo'] = $pvMaster->serialNo;
+                                $receivePayment['custPaymentReceiveCode'] = $pvMaster->BPVcode;
                                 $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
                                 $receivePayment['narration'] = $pvMaster->BPVNarration;
 

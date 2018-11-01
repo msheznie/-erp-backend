@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ActiveTrait;
 use App\Traits\ApproveTrait;
 use Eloquent as Model;
 
@@ -84,7 +85,7 @@ use Eloquent as Model;
 class FixedAssetCategorySub extends Model
 {
 
-    use ApproveTrait;
+    use ActiveTrait;
 
     public $table = 'erp_fa_categorysub';
     
