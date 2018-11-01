@@ -708,7 +708,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $paySupplierInvoice->save();
                 }
 
-            }elseif($matchDocumentMaster->documentSystemID == 16){
+            }elseif($matchDocumentMaster->documentSystemID == 15){
 
                 $DebitNoteMaster = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
 
