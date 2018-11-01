@@ -253,9 +253,17 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 }
 
                 //when adding a new matching, checking whether debit amount more than the document value
-                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('PayMasterAutoId', $input['paymentAutoID'])->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                    ->where('addedDocumentSystemID',  $debitNoteMaster->documentSystemID)
+                    ->where('bookingInvSystemCode',  $debitNoteMaster->debitNoteAutoID)
+                    ->groupBy('erp_paysupplierinvoicedetail.addedDocumentSystemID, erp_paysupplierinvoicedetail.bookingInvSystemCode')
+                    ->first();
 
-                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input['paymentAutoID'])->where('documentSystemID', $debitNoteMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')
+                    ->where('PayMasterAutoId', $input['paymentAutoID'])
+                    ->where('documentSystemID', $debitNoteMaster->documentSystemID)
+                    ->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')
+                    ->first();
 
                 $machAmount = 0;
                 if ($matchedAmount) {
