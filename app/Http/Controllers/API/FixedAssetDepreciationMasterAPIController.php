@@ -223,6 +223,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $input['createdUserID'] = \Helper::getEmployeeID();
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
+            $depMasterAutoID = $fixedAssetDepreciationMasters['depMasterAutoID'];
 
             $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                 $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
@@ -313,7 +314,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 }
             }
 
-            $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->update(['depAmountLocal' => $depAmountLocalTotal, 'depAmountRpt' => $depAmountRptTotal], $fixedAssetDepreciationMasters['depMasterAutoID']);
+            $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->update(['depAmountLocal' => $depAmountLocalTotal, 'depAmountRpt' => $depAmountRptTotal], $depMasterAutoID);
 
             DB::commit();
             return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
