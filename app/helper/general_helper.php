@@ -1268,7 +1268,7 @@ class Helper
 
                 if ($policyConfirmedUserToApprove['isYesNO'] == 0) {
                     if ($isConfirmed[$docInforArr["confirmedEmpSystemID"]] == $empInfo->employeeSystemID) {
-                        //return ['success' => false, 'message' => 'Not authorized!'];
+                        return ['success' => false, 'message' => 'Not authorized!'];
                     }
                 }
 
