@@ -15,6 +15,7 @@
 
 namespace App\helper;
 
+use App\Jobs\BankLedgerInsert;
 use App\Jobs\BudgetAdjustment;
 use App\Jobs\CreateCustomerInvoice;
 use App\Jobs\CreateReceiptVoucher;
@@ -2659,12 +2660,14 @@ class Helper
                             }
                         }
                     }
-                    $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
-                    //$jobPV = BankLedgerInsert::dispatch($masterData);
                 }
 
                 Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
                 DB::commit();
+
+                $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
+                $jobPV = BankLedgerInsert::dispatch($masterData);
+
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($e->getMessage());

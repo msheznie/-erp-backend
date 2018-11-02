@@ -1381,7 +1381,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                         array_push($finalData, $data);
                                     }
 
-                                    $diffTrans = $si->transAmount - $masterData->payAmountBank;
+                                    $diffTrans = $si->transAmount - $masterData->payAmountSuppTrans;
                                     $diffLocal = $si->localAmount - $masterData->payAmountCompLocal;
                                     $diffRpt = $si->rptAmount - $masterData->payAmountCompRpt;
 

@@ -264,6 +264,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $input["supplierPaymentAmount"] = 0;
         }
 
+
+        if($input["isPullAmount"] == 1){
+            $input["supplierPaymentAmount"] = $paySupplierInvoiceDetail->paymentBalancedAmount;
+        }
+
         $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])->where('payDetailAutoID', '<>', $id)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
@@ -273,7 +278,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+        $paymentBalancedAmount = $paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
             //supplier invoice
