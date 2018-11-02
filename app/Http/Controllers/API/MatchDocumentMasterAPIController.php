@@ -253,16 +253,24 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 }
 
                 //when adding a new matching, checking whether debit amount more than the document value
-                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('PayMasterAutoId', $input['paymentAutoID'])->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, addedDocumentSystemID, bookingInvSystemCode, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                    ->where('addedDocumentSystemID',  $debitNoteMaster->documentSystemID)
+                    ->where('bookingInvSystemCode',  $debitNoteMaster->debitNoteAutoID)
+                    ->groupBy('addedDocumentSystemID', 'bookingInvSystemCode')
+                    ->first();
 
-                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input['paymentAutoID'])->where('documentSystemID', $debitNoteMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')
+                    ->where('PayMasterAutoId', $input['paymentAutoID'])
+                    ->where('documentSystemID', $debitNoteMaster->documentSystemID)
+                    ->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')
+                    ->first();
 
                 $machAmount = 0;
                 if ($matchedAmount) {
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
-                $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+                $totalPaidAmount = (($supplierPaidAmountSum["SumOfsupplierPaymentAmount"]  * -1) + $machAmount);
 
                 if ($debitNoteMaster->debitAmountTrans == $totalPaidAmount || $totalPaidAmount > $debitNoteMaster->debitAmountTrans){
                     return $this->sendError('Debit note amount is more than document value, please check again' , 500);
@@ -700,11 +708,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $paySupplierInvoice->save();
                 }
 
-            }elseif($matchDocumentMaster->documentSystemID == 16){
+            }elseif($matchDocumentMaster->documentSystemID == 15){
 
                 $DebitNoteMaster = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
 
-                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+                //when adding a new matching, checking whether debit amount more than the document value
+                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.supplierInvoiceAmount, addedDocumentSystemID, bookingInvSystemCode, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                    ->where('addedDocumentSystemID',  $DebitNoteMaster->documentSystemID)
+                    ->where('bookingInvSystemCode',  $DebitNoteMaster->debitNoteAutoID)
+                    ->groupBy('addedDocumentSystemID', 'bookingInvSystemCode')
+                    ->first();
 
                 $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)->where('documentSystemID', $matchDocumentMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
@@ -713,7 +726,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
-                $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+                $totalPaidAmount = (($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] * -1) + $machAmount );
 
                 if ($totalPaidAmount == 0) {
                     $DebitNoteMaster->matchInvoice = 0;
