@@ -97,7 +97,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['companyID'] = $custReceivePayment->companyID;
                                 $data['documentSystemID'] = $custReceivePayment->documentSystemID;
                                 $data['documentID'] = $custReceivePayment->documentID;
-                                $data['documentSystemCode'] = $masterModel["autoID"];
+                                $data['documentSystemCode'] = $custReceivePayment->custReceivePaymentAutoID;
                                 $data['documentCode'] = $custReceivePayment->custPaymentReceiveCode;
                                 $data['documentDate'] = $custReceivePayment->custPaymentReceiveDate;
                                 $data['postedDate'] = $custReceivePayment->postedDate;
@@ -127,7 +127,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['payAmountSuppTrans'] = $custReceivePayment->bankAmount;
                                 $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
                                 $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
-                                $data['invoiceType'] = 3;
+                                $data['invoiceType'] = $custReceivePayment->documentType;
                                 $data['createdUserID'] = $empID->empID;
                                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                                 $data['createdPcID'] = gethostname();
@@ -135,7 +135,51 @@ class BankLedgerInsert implements ShouldQueue
                                 array_push($finalData, $data);
                             }
                         }
+                        break;
+                    case 21: // Receipt Voucher
+                        $custReceivePayment = CustomerReceivePayment::find($masterModel["autoID"]);
+                        if($custReceivePayment){
+                            $data['companySystemID'] = $custReceivePayment->companySystemID;
+                            $data['companyID'] = $custReceivePayment->companyID;
+                            $data['documentSystemID'] = $custReceivePayment->documentSystemID;
+                            $data['documentID'] = $custReceivePayment->documentID;
+                            $data['documentSystemCode'] = $custReceivePayment->custReceivePaymentAutoID;
+                            $data['documentCode'] = $custReceivePayment->custPaymentReceiveCode;
+                            $data['documentDate'] = $custReceivePayment->custPaymentReceiveDate;
+                            $data['postedDate'] = $custReceivePayment->postedDate;
+                            $data['documentNarration'] = $custReceivePayment->narration;
+                            $data['bankID'] = $custReceivePayment->bankID;
+                            $data['bankAccountID'] = $custReceivePayment->bankAccount;
+                            $data['bankCurrency'] = $custReceivePayment->bankCurrency;
+                            $data['bankCurrencyER'] = $custReceivePayment->bankCurrencyER;
+                            $data['documentChequeNo'] = $custReceivePayment->custChequeNo;
+                            $data['documentChequeDate'] = $custReceivePayment->custChequeDate;
+                            $data['payeeID'] = $custReceivePayment->customerID;
 
+                            $payee = CustomerMaster::find($custReceivePayment->customerID);
+                            if($payee){
+                                $data['payeeCode'] = $payee->CutomerCode;
+                            }
+                            $data['payeeName'] = $custReceivePayment->PayeeName;
+                            $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
+                            $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
+                            $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;
+                            $data['supplierTransCurrencyER'] = $custReceivePayment->custTransactionCurrencyER;
+                            $data['localCurrencyID'] = $custReceivePayment->localCurrencyID;
+                            $data['localCurrencyER'] = $custReceivePayment->localCurrencyER;
+                            $data['companyRptCurrencyID'] = $custReceivePayment->companyRptCurrencyID;
+                            $data['companyRptCurrencyER'] = $custReceivePayment->companyRptCurrencyER;
+                            $data['payAmountBank'] = $custReceivePayment->bankAmount;
+                            $data['payAmountSuppTrans'] = $custReceivePayment->bankAmount;
+                            $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
+                            $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
+                            $data['invoiceType'] = $custReceivePayment->documentType;
+                            $data['createdUserID'] = $empID->empID;
+                            $data['createdUserSystemID'] = $empID->employeeSystemID;
+                            $data['createdPcID'] = gethostname();
+                            $data['timestamp'] = NOW();
+                            array_push($finalData, $data);
+                        }
                         break;
                     default:
                         Log::warning('Document ID not found ' . date('H:i:s'));
