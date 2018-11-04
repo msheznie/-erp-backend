@@ -519,29 +519,46 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         // calculating header total
-        $checkPreDirectTotal = DirectReceiptDetail::where('directReceiptAutoID', $id)
+        $checkPreDirectSumTrans = DirectReceiptDetail::where('directReceiptAutoID', $id)
             ->sum('DRAmount');
 
+        $checkPreDirectSumLocal = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('localAmount');
+
+        $checkPreDirectSumReport = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('comRptAmount');
+
+        $masterHeaderSumTrans = 0;
+        $masterHeaderSumLocal = 0;
+        $masterHeaderSumReport = 0;
         if($input['documentType'] == 13){
 
-            $customerReceiveAmountTransaction = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+            $customerReceiveAmountTrans = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
                 ->sum('receiveAmountTrans');
 
-            $input['receivedAmount'] = $checkPreDirectTotal + $customerReceiveAmountTransaction ;
+            $customerReceiveAmountLocal = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                ->sum('receiveAmountLocal');
 
-            $currencyConverstionMasterTab = \Helper::convertAmountToLocalRpt($customerReceivePayment->documentSystemID, $customerReceivePayment->custReceivePaymentAutoID, $input['receivedAmount']);
+            $customerReceiveAmountReport = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                ->sum('receiveAmountRpt');
 
-            $input['localAmount'] = \Helper::roundValue($currencyConverstionMasterTab['localAmount']);
-            $input['companyRptAmount'] = \Helper::roundValue($currencyConverstionMasterTab['reportingAmount']);
+            $masterHeaderSumTrans = $checkPreDirectSumTrans + $customerReceiveAmountTrans ;
+            $masterHeaderSumLocal = $checkPreDirectSumLocal + $customerReceiveAmountLocal ;
+            $masterHeaderSumReport = $checkPreDirectSumReport + $customerReceiveAmountReport;
+
+            $input['receivedAmount'] = \Helper::roundValue($masterHeaderSumTrans);
+            $input['localAmount'] = \Helper::roundValue($masterHeaderSumLocal);
+            $input['companyRptAmount'] = \Helper::roundValue($masterHeaderSumReport);
 
         }else if($input['documentType'] == 14) {
 
-            $input['receivedAmount'] = $checkPreDirectTotal ;
+            $masterHeaderSumTrans = $checkPreDirectSumTrans ;
+            $masterHeaderSumLocal = $checkPreDirectSumLocal ;
+            $masterHeaderSumReport = $checkPreDirectSumReport ;
 
-            $currencyConverstionMaster = \Helper::convertAmountToLocalRpt($customerReceivePayment->documentSystemID, $customerReceivePayment->custReceivePaymentAutoID,  $input['receivedAmount']);
-
-            $input['localAmount'] = \Helper::roundValue($currencyConverstionMaster['localAmount']);
-            $input['companyRptAmount'] = \Helper::roundValue($currencyConverstionMaster['reportingAmount']);
+            $input['receivedAmount'] = \Helper::roundValue($masterHeaderSumTrans);
+            $input['localAmount'] = \Helper::roundValue($masterHeaderSumLocal);
+            $input['companyRptAmount'] = \Helper::roundValue($masterHeaderSumReport);
         }
 
         if ($customerReceivePayment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -588,7 +605,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         $q->where('DRAmount', '<=', 0)
                             ->orWhereNull('localAmount', '<=', 0)
                             ->orWhereNull('comRptAmount', '<=', 0)
-                            ->orWhereNull('debitAmount')
+                            ->orWhereNull('DRAmount')
                             ->orWhereNull('localAmount')
                             ->orWhereNull('comRptAmount');
                     })
@@ -603,7 +620,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $q->where('DRAmount', '<=', 0)
                         ->orWhereNull('localAmount', '<=', 0)
                         ->orWhereNull('comRptAmount', '<=', 0)
-                        ->orWhereNull('debitAmount')
+                        ->orWhereNull('DRAmount')
                         ->orWhereNull('localAmount')
                         ->orWhereNull('comRptAmount');
                 })
@@ -642,7 +659,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         $error_count++;
                     }
 
-                    $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
+                    $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->DRAmountCurrency, $updateItem->DRAmountCurrency, $updateItem->DRAmount);
 
                     $input['localAmount'] = $companyCurrencyConversion['localAmount'];
                     $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
@@ -650,12 +667,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                     $updateItem->save();
 
-                    if ($updateItem->debitAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
+                    if ($updateItem->DRAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
                         array_push($finalError['amount_zero'], $updateItem->itemPrimaryCode);
-                        $error_count++;
-                    }
-                    if ($updateItem->debitAmount < 0 || $updateItem->localAmount < 0 || $updateItem->comRptAmount < 0) {
-                        array_push($finalError['amount_neg'], $updateItem->itemPrimaryCode);
                         $error_count++;
                     }
                 }
@@ -669,11 +682,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['RollLevForApp_curr'] = 1;
 
             $params = array('autoID' => $id,
-                'company' => $debitNote->companySystemID,
-                'document' => $debitNote->documentSystemID,
+                'company' => $customerReceivePayment->companySystemID,
+                'document' => $customerReceivePayment->documentSystemID,
                 'segment' => 0,
                 'category' => 0,
-                'amount' => $amount
+                'amount' => $input['receivedAmount']
             );
 
             $confirm = \Helper::confirmDocument($params);

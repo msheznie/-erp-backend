@@ -1148,21 +1148,25 @@ WHERE
             return $this->sendError('You cannot cancel this matching, it is confirmed');
         }
 
+        if ($MatchDocumentMasterData->matchingDocCode != '0') {
+            return $this->sendError('You cannot cancel this matching, document code is created');
+        }
+
         $pvDetailExist = PaySupplierInvoiceDetail::select(DB::raw('matchingDocID'))
             ->where('matchingDocID', $matchDocumentMasterAutoID)
             ->first();
 
         if (!empty($pvDetailExist)) {
-            return $this->sendError('Details are exist, You cannot cancel this document ');
+            return $this->sendError('Cannot cancel. Delete the invoices added to the detail and try again.');
         }
 
         $deleteDocument = MatchDocumentMaster::where('matchDocumentMasterAutoID', $matchDocumentMasterAutoID)
             ->delete();
 
         if ($deleteDocument) {
-            return $this->sendResponse($MatchDocumentMasterData, 'Document canceled successfully ');
+            return $this->sendResponse($MatchDocumentMasterData, 'Document canceled successfully');
         } else {
-            return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled');
+            return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled, try again');
         }
 
     }
