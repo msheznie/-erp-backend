@@ -28,9 +28,9 @@ class SupplierCritical extends Model
 
     public $table = 'suppliercritical';
     
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
-
+    const CREATED_AT = 'timestamp';
+    const UPDATED_AT = 'timestamp';
+    protected $primaryKey  = 'suppliercriticalID';
 
     protected $dates = ['deleted_at'];
 

@@ -848,9 +848,19 @@ class BankLedgerAPIController extends AppBaseController
 
         foreach ($bankLedger as $item) {
 
-            $amountSplit = payAmountBank;
+            $amountSplit = explode(".",$item->payAmountBank);
+            $intAmt = 0;
+            $floatAmt = 00;
 
-            $item['amount_word'] = ucwords($f->format(round($item->payAmountBank, 0)));
+            if(count($amountSplit) == 1){
+                $intAmt = $amountSplit[0];
+                $floatAmt = 00;
+            }else if(count($amountSplit) == 2){
+                $intAmt = $amountSplit[0];
+                $floatAmt = $amountSplit[1];
+            }
+
+            $item['amount_word'] = ucwords($f->format($intAmt));
             if ($item['supplier_by']) {
                 if ($item['supplier_by']['supplierCurrency']) {
                     if ($item['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
@@ -860,6 +870,7 @@ class BankLedgerAPIController extends AppBaseController
                 }
             }
             $item['decimalPlaces'] = 2;
+            $item['floatAmt'] = (string)$floatAmt;
             if($item['bank_currency_by']){
                 $item['decimalPlaces'] = $item['bank_currency_by']['DecimalPlaces'];
             }
