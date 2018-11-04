@@ -239,6 +239,10 @@ class BudjetdetailsAPIController extends AppBaseController
             return $this->sendError('Budjetdetails not found');
         }
 
+        if(!$input['budjetAmtRpt']){
+            $input['budjetAmtRpt'] = 0;
+        }
+
         $currencyConvection = \Helper::currencyConversion($budjetdetails->companySystemID, 2, 2, $input['budjetAmtRpt']);
 
         $input['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);
@@ -494,7 +498,9 @@ class BudjetdetailsAPIController extends AppBaseController
             if (empty($budgetDetail)) {
                 return $this->sendError('Budget details not found');
             }
-
+            if(!$item['budjetAmtRpt']){
+                $item['budjetAmtRpt'] = 0;
+            }
             $currencyConvection = \Helper::currencyConversion($item['companySystemID'], 2, 2, $item['budjetAmtRpt']);
 
             $item['budjetAmtLocal'] = round($currencyConvection['localAmount'], 3);

@@ -101,6 +101,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('bank_memo_suppliers', 'BankMemoSupplierAPIController');
 
     Route::get('getBankMemoBySupplierCurrency', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrency');
+    Route::post('addBulkMemos', 'BankMemoSupplierAPIController@addBulkMemos');
+    Route::post('exportSupplierCurrencyMemos', 'BankMemoSupplierAPIController@exportSupplierCurrencyMemos');
 
     Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
     Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo');
@@ -108,6 +110,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('item/masters', 'ItemMasterAPIController');
     Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
+    Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
     Route::resource('units', 'UnitAPIController');
     Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
 
@@ -850,6 +853,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
     Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
+    Route::get('getReceiptVoucherMasterRecord', 'CustomerReceivePaymentAPIController@getReceiptVoucherMasterRecord');
+    Route::post('receiptVoucherReopen', 'CustomerReceivePaymentAPIController@receiptVoucherReopen');
+
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
     Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
@@ -889,6 +895,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('bank_ledgers', 'BankLedgerAPIController');
     Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
     Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
+
+    Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
+    Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData');
+    Route::post('updatePrintChequeItems', 'BankLedgerAPIController@updatePrintChequeItems');
+
 
     Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
     Route::get('bankReconciliationAudit', 'BankReconciliationAPIController@bankReconciliationAudit');
@@ -1000,6 +1011,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('budget_masters', 'BudgetMasterAPIController');
     Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
+    Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen');
+    Route::post('getBudgetApprovedByUser', 'BudgetMasterAPIController@getBudgetApprovedByUser');
+    Route::post('getBudgetApprovalByUser', 'BudgetMasterAPIController@getBudgetApprovalByUser');
+    Route::get('getBudgetAudit', 'BudgetMasterAPIController@getBudgetAudit');
     Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
     Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
     Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
@@ -1022,8 +1037,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getDisposalApprovalByUser', 'AssetDisposalMasterAPIController@getDisposalApprovalByUser');
     Route::post('getDisposalApprovedByUser', 'AssetDisposalMasterAPIController@getDisposalApprovedByUser');
     Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal');
-    Route::post('getDisposalApprovalByUser', 'AssetDisposalMasterAPIController@getDisposalApprovalByUser');
-    Route::post('getDisposalApprovedByUser', 'AssetDisposalMasterAPIController@getDisposalApprovedByUser');
     Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
     Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
@@ -1061,6 +1074,7 @@ Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
 Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
 Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
 Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
+Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
@@ -1070,10 +1084,13 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 23,'autoID' => 100000359, 'companySystemID' => 52, 'employeeSystemID' => 2664];
-    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-    /*$master = \App\Models\PaySupplierInvoiceMaster::find(76697);
-    $job = \App\Jobs\CreateReceiptVoucher::dispatch($master);*/
+    $master = ['documentSystemID' => 4,'autoID' => 76727, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    //$master = \App\Models\PaySupplierInvoiceMaster::find(76727);
+    //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
+    $job = \App\Jobs\BankLedgerInsert::dispatch($master);
+    //$master = \App\Models\AssetDisposalMaster::find(241);
+    //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
 });
 
 Route::get('runQueueSR', function () {

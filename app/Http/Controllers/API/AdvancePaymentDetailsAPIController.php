@@ -7,6 +7,7 @@ use App\Http\Requests\API\UpdateAdvancePaymentDetailsAPIRequest;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppDet;
+use App\Models\Company;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\PoAdvancePayment;
 use App\Models\ProcumentOrder;
@@ -273,6 +274,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $input['supplierDefaultAmount'] = $conversion['defaultAmount'];
             $input['localAmount'] = $conversion['localAmount'];
             $input['comRptAmount'] = $conversion['reportingAmount'];
+            $input['supplierTransAmount'] = $input["paymentAmount"];
 
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->update($input, $id);
 
@@ -380,19 +382,6 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     ->update(['fullyPaid' => 0, 'selectedToPayment' => 0]);
             }
 
-            $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $advancePaymentDetails2->PayMasterAutoId)->first();
-
-            $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierTransAmount);
-
-            $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
-            $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierTransAmount);
-            $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierDefaultAmount);
-            $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->localAmount);
-            $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->comRptAmount);
-            $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierTransAmount);
-
-            $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $advancePaymentDetails2->PayMasterAutoId);
-
             DB::commit();
             return $this->sendResponse($id, 'Advance Payment Details deleted successfully');
         } catch (\Exception $exception) {
@@ -479,55 +468,6 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            /*$finalError = array(
-                'po_amount_not_matching' => array(),
-                'adv_payment_already_exist' => array(),
-            );
-            $error_count = 0;
-
-            foreach ($input['detailTable'] as $new) {
-                if ($new['isChecked']) {
-                    $totalPOAmount = $new['poTotalSupplierTransactionCurrency'];
-                    $advancePaymentAmount = 0;
-                    $supplierInvoAmount = 0;
-
-                    $advancePayment = AdvancePaymentDetails::selectRaw('SUM(paymentAmount) as paymentAmount')->whereHas('advancepaymentmaster', function ($query) use ($payMaster) {
-                        $query->where('isAdvancePaymentYN', 0)->where('supplierID', $payMaster->BPVsupplierID);
-                    })->where('purchaseOrderID', $new["purchaseOrderID"])->first();
-
-                    if ($advancePayment) {
-                        $advancePaymentAmount = $advancePayment->paymentAmount;
-                    }
-
-                    $bookInvDet = BookInvSuppDet::selectRaw('SUM(supplierInvoAmount) as supplierInvoAmount')->whereHas('suppinvmaster', function ($query) use ($payMaster) {
-                        $query->whereHas('paysuppdetail')->where('approved', -1)->where('supplierID', $payMaster->BPVsupplierID);
-                    })->where('companySystemID', $payMaster->companySystemID)->where('purchaseOrderID', $new["purchaseOrderID"])->first();
-
-                    if ($bookInvDet) {
-                        $supplierInvoAmount = $bookInvDet->supplierInvoAmount;
-                    }
-
-                    $balanceAmount = $totalPOAmount - ($advancePaymentAmount + $supplierInvoAmount);
-
-                    if ($balanceAmount < 0) {
-                        array_push($finalError['po_amount_not_matching'], 'PO' . ' | ' . $new['purchaseOrderCode']);
-                        $error_count++;
-                    }
-
-                    $alreadyExistChk = AdvancePaymentDetails::where('PayMasterAutoId', $input["PayMasterAutoId"])->where('poAdvPaymentID', $new['poAdvPaymentID'])->first();
-                    if ($alreadyExistChk) {
-                        array_push($finalError['adv_payment_already_exist'], 'PO' . ' | ' . $new['purchaseOrderCode']);
-                        $error_count++;
-                    }
-
-                }
-            }
-
-            $confirm_error = array('type' => 'po_amount_not_matching', 'data' => $finalError);
-            if ($error_count > 0) {
-                return $this->sendError("Selected order has been already paid more than the order amount. Please check the payment status for this order.", 500, $confirm_error);
-            }*/
-
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
 
@@ -580,6 +520,20 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     $tempArray["PayMasterAutoId"] = $input["PayMasterAutoId"];
                     $tempArray["paymentAmount"] = $new["BalanceAmount"];
                     $tempArray["supplierTransAmount"] = $tempArray["paymentAmount"];
+                    $tempArray["supplierTransCurrencyID"] = $new["currencyID"];
+                    $tempArray["supplierTransER"] = 1;
+                    $tempArray["supplierDefaultCurrencyID"] = $new["currencyID"];
+                    $tempArray["supplierDefaultCurrencyER"] = 1;
+
+                    $companyCurrencyConversion = \Helper::currencyConversion($new['companySystemID'], $new['currencyID'], $new['currencyID'], 0);
+
+                    $company = Company::where('companySystemID', $new['companySystemID'])->first();
+
+                    $tempArray["localCurrencyID"] = $company->localCurrencyID;
+                    $tempArray["localER"] = $companyCurrencyConversion['trasToLocER'];
+
+                    $tempArray["comRptCurrencyID"] = $company->reportingCurrency;
+                    $tempArray["comRptER"] = $companyCurrencyConversion['trasToRptER'];
 
                     unset($tempArray['isChecked']);
                     unset($tempArray['DecimalPlaces']);

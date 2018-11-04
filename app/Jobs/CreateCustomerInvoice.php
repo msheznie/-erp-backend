@@ -60,7 +60,7 @@ class CreateCustomerInvoice implements ShouldQueue
                 ->first();
 
             $today = NOW();
-            $comment = "Inter Company Asset transfer " . $dpMaster->disposalDocumentCode;
+            $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode;
 
             if (!empty($fromCompanyFinancePeriod)) {
                 $fromCompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
@@ -93,7 +93,7 @@ class CreateCustomerInvoice implements ShouldQueue
 
                 if ($serviceLine) {
                     $customerInvoiceData['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
-                    $customerInvoiceData['serviceLineCode'] = $serviceLine->serviceLineCode;
+                    $customerInvoiceData['serviceLineCode'] = $serviceLine->ServiceLineCode;
                 }
 
                 if ($fromCompanyFinancePeriod) {
@@ -114,6 +114,7 @@ class CreateCustomerInvoice implements ShouldQueue
                 if (!empty($customer)) {
                     $customerInvoiceData['customerID'] = $customer->customerCodeSystem;
                     $customerInvoiceData['customerGLCode'] = $customer->custGLaccount;
+                    $customerInvoiceData['customerGLSystemID'] = $customer->custGLAccountSystemID;
                     $customerInvoiceData['customerInvoiceNo'] = $dpMaster->disposalDocumentCode;
                     $customerInvoiceData['customerInvoiceDate'] = $today;
                 }
@@ -124,19 +125,15 @@ class CreateCustomerInvoice implements ShouldQueue
 
                 $fromCompany = Company::where('companySystemID', $dpMaster->companySystemID)->first();
 
-                if ($fromCompany) {
-                    $companyCurrencyConversion = \Helper::currencyConversion($dpMaster->companySystemID, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
-                    $customerInvoiceData['companyReportingCurrencyID'] = $fromCompany->reportingCurrency;
-                    $customerInvoiceData['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                $companyCurrencyConversion = \Helper::currencyConversion($dpMaster->companySystemID, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
+                $customerInvoiceData['companyReportingCurrencyID'] = $fromCompany->reportingCurrency;
+                $customerInvoiceData['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
 
-                    $customerInvoiceData['localCurrencyID'] = $fromCompany->localCurrencyID;
-                    $customerInvoiceData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $customerInvoiceData['localCurrencyID'] = $fromCompany->localCurrencyID;
+                $customerInvoiceData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
-                    $customerInvoiceData['custTransactionCurrencyID'] = $fromCompany->localCurrencyID;
-                    $customerInvoiceData['custTransactionCurrencyER'] = 1;
-                }
-
-                $disposalDetailSUM = AssetDisposalDetail::selectRaw('SUM(COSTUNIT) as ‌sumOfCOSTUNIT,SUM(costUnitRpt) as ‌sumOfCOSTUNITRPT,SUM(depAmountLocal) as sumOfdepAmountLocal‌,SUM(depAmountRpt) as sumOfdepAmountRpt‌')->OfMaster($dpMaster->assetdisposalMasterAutoID)->first();
+                $customerInvoiceData['custTransactionCurrencyID'] = $fromCompany->localCurrencyID;
+                $customerInvoiceData['custTransactionCurrencyER'] = 1;
 
                 $disposalDetail = AssetDisposalDetail::OfMaster($dpMaster->assetdisposalMasterAutoID)->get();
 
@@ -148,22 +145,22 @@ class CreateCustomerInvoice implements ShouldQueue
                         if ($val->netBookValueLocal == 0) {
                             $localAmount += $val->COSTUNIT * ($dpMaster->revenuePercentage / 100);
                         } else {
-                            $localAmount += (($disposalDetailSUM->‌sumOfCOSTUNIT - $disposalDetailSUM->sumOfdepAmountLocal‌) + ((($disposalDetailSUM->‌sumOfCOSTUNIT - $disposalDetailSUM->sumOfdepAmountLocal‌)) * ($dpMaster->revenuePercentage / 100)));
+                            $localAmount += (($val->COSTUNIT - $val->depAmountLocal‌) + ((($val->COSTUNIT - $val->depAmountLocal‌)) * ($dpMaster->revenuePercentage / 100)));
                         }
                         if ($val->netBookValueRpt == 0) {
                             $comRptAmount += $val->costUnitRpt * ($dpMaster->revenuePercentage / 100);
                         } else {
-                            $comRptAmount += (($disposalDetailSUM->‌sumOfCOSTUNITRPT - $disposalDetailSUM->sumOfdepAmountRpt‌) + ((($disposalDetailSUM->‌sumOfCOSTUNITRPT - $disposalDetailSUM->sumOfdepAmountRpt‌)) * ($dpMaster->revenuePercentage / 100)));
+                            $comRptAmount += (($val->costUnitRpt - $val->depAmountRpt‌) + ((($val->costUnitRpt - $val->depAmountRpt‌)) * ($dpMaster->revenuePercentage / 100)));
                         }
                     }
                 }
 
-                $customerInvoiceData['bookingAmountTrans'] = $localAmount;
-                $customerInvoiceData['bookingAmountLocal'] = $localAmount;
-                $customerInvoiceData['bookingAmountRpt'] = $comRptAmount;
+                $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount);
+                $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
+                $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
                 $customerInvoiceData['confirmedYN'] = 1;
                 $customerInvoiceData['confirmedByEmpSystemID'] = $dpMaster->confimedByEmpSystemID;
-                $customerInvoiceData['confirmedByEmpID'] = $dpMaster->confirmedByEmpID;
+                $customerInvoiceData['confirmedByEmpID'] = $dpMaster->confimedByEmpID;
                 $customerInvoiceData['confirmedByName'] = $dpMaster->confirmedByEmpName;
                 $customerInvoiceData['confirmedDate'] = $dpMaster->confirmedDate;
                 $customerInvoiceData['approved'] = -1;
@@ -173,15 +170,15 @@ class CreateCustomerInvoice implements ShouldQueue
                 $customerInvoiceData['createdUserSystemID'] = $dpMaster->confirmedByEmpSystemID;
                 $customerInvoiceData['createdUserID'] = $dpMaster->confirmedByEmpID;
                 $customerInvoiceData['createdPcID'] = $dpMaster->modifiedPc;
-
+                Log::info($customerInvoiceData);
                 $customerInvoice = $customerInvoiceRep->create($customerInvoiceData);
 
                 $cusInvoiceDetails = array();
                 $cusInvoiceDetails['custInvoiceDirectID'] = $customerInvoice->custInvoiceDirectAutoID;
-                $cusInvoiceDetails['companyID'] = $dpMaster->toCompanyID;
+                $cusInvoiceDetails['companyID'] = $dpMaster->companyID;
                 if ($serviceLine) {
                     $cusInvoiceDetails['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
-                    $cusInvoiceDetails['serviceLineCode'] = $serviceLine->serviceLineCode;
+                    $cusInvoiceDetails['serviceLineCode'] = $serviceLine->ServiceLineCode;
                 }
                 $cusInvoiceDetails['customerID'] = $customer->customerCodeSystem;
                 $chartofAccount = ChartOfAccount::find(557);
@@ -189,6 +186,7 @@ class CreateCustomerInvoice implements ShouldQueue
                 $cusInvoiceDetails['glCode'] = $chartofAccount->AccountCode;
                 $cusInvoiceDetails['glCodeDes'] = $chartofAccount->AccountDescription;
                 $cusInvoiceDetails['accountType'] = $chartofAccount->catogaryBLorPL;
+                $comment = "Inter Company Asset transfer " . $dpMaster->disposalDocumentCode;
                 $cusInvoiceDetails['comments'] = $comment;
                 $cusInvoiceDetails['unitOfMeasure'] = 7;
                 $cusInvoiceDetails['invoiceQty'] = 1;
@@ -201,15 +199,17 @@ class CreateCustomerInvoice implements ShouldQueue
                 $cusInvoiceDetails['clientContractID'] = 0;
                 $cusInvoiceDetails['performaMasterID'] = 0;
 
-                $cusInvoiceDetails['localAmount'] = $localAmount;
-                $cusInvoiceDetails['comRptAmount'] = $comRptAmount;
-                $cusInvoiceDetails['invoiceAmount'] = $localAmount;
-                $cusInvoiceDetails['unitCost'] = $localAmount;
-
+                $cusInvoiceDetails['localAmount'] = \Helper::roundValue($localAmount);
+                $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmount);
+                $cusInvoiceDetails['invoiceAmount'] = \Helper::roundValue($localAmount);
+                $cusInvoiceDetails['unitCost'] = \Helper::roundValue($localAmount);
+                Log::info($cusInvoiceDetails);
                 $customerInvoiceDet = $customerInvoiceDetailRep->create($cusInvoiceDetails);
 
-                $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confirmedByEmpSystemID];
+                $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confimedByEmpSystemID];
                 $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel);
+                $dpMaster['bookingInvCode'] = $bookingInvCode;
+                $grvInsert = CreateDirectGRV::dispatch($dpMaster);
 
                 DB::commit();
             }

@@ -365,6 +365,17 @@ class BankLedger extends Model
         'createdDateTime',
         'timestamp',
         'pulledToBankTransferYN',
+        'chequePaymentYN',
+        'chequePrintedYN',
+        'chequePrintedDateTime',
+        'chequePrintedByEmpSystemID',
+        'chequePrintedByEmpID',
+        'chequePrintedByEmpName',
+        'chequeSentToTreasury',
+        'chequeSentToTreasuryDate',
+        'chequeSentToTreasuryByEmpSystemID',
+        'chequeSentToTreasuryByEmpID',
+        'chequeSentToTreasuryByEmpName',
         'paymentBankTransferID',
         'bankreconciliationDate',
         'bankRecYear',
@@ -431,7 +442,18 @@ class BankLedger extends Model
         'paymentBankTransferID' => 'integer',
         'bankreconciliationDate' => 'string',
         'bankRecYear' => 'integer',
-        'bankrecMonth' => 'integer'
+        'bankrecMonth' => 'integer',
+        'chequePaymentYN' => 'integer',
+        'chequePrintedYN' => 'integer',
+        'chequePrintedDateTime' => 'string',
+        'chequePrintedByEmpSystemID' => 'integer',
+        'chequePrintedByEmpID' => 'string',
+        'chequePrintedByEmpName' => 'string',
+        'chequeSentToTreasury' => 'integer',
+        'chequeSentToTreasuryDate' => 'string',
+        'chequeSentToTreasuryByEmpSystemID' => 'integer',
+        'chequeSentToTreasuryByEmpID' => 'string',
+        'chequeSentToTreasuryByEmpName' => 'string'
     ];
 
     /**
@@ -456,5 +478,15 @@ class BankLedger extends Model
     public function bank_cleared_by()
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function bank_currency_by()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'bankCurrency', 'currencyID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
 }

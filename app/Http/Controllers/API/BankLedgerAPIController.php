@@ -11,12 +11,16 @@
  * -- Date: 19-September 2018 By: Fayas Description: Added new functions named as getBankReconciliationsByType()
  * -- Date: 27-September 2018 By: Fayas Description: Added new functions named as getBankAccountPaymentReceiptByType()
  * -- Date: 03-October 2018 By: Fayas Description: Added new functions named as getPaymentsByBankTransfer()
+ * -- Date: 30-October 2018 By: Fayas Description: Added new functions named as getChequePrintingItems()
+ * -- Date: 31-October 2018 By: Fayas Description: Added new functions named as getChequePrintingFormData(),printChequeItems()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBankLedgerAPIRequest;
 use App\Http\Requests\API\UpdateBankLedgerAPIRequest;
+use App\Models\BankAccount;
 use App\Models\BankLedger;
+use App\Models\BankMaster;
 use App\Models\BankReconciliation;
 use App\Models\GeneralLedger;
 use App\Models\PaymentBankTransfer;
@@ -674,5 +678,225 @@ class BankLedgerAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getChequePrintingItems(Request $request)
+    {
+        $input = $request->all();
+        $search = $request->input('search.value');
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $bankLedger = $this->chequeListQrt($input, $search, 0);
+
+        return \DataTables::eloquent($bankLedger)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('bankLedgerAutoID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function chequeListQrt($request, $search, $chequePrintedYN)
+    {
+        $input = $request;
+        $input = $this->convertArrayToSelectedValue($input, array('bankID', 'bankAccountID', 'invoiceType'));
+        $selectedCompanyId = $request['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+
+        $validator = \Validator::make($input, [
+            'bankID' => 'required',
+            'bankAccountID' => 'required',
+            'invoiceType' => 'required',
+            'option' => 'required'
+        ]);
+
+        if (!$validator->fails() && $input['bankID'] > 0 && $input['bankAccountID'] > 0 &&
+            in_array($input['invoiceType'], [2, 3, 5])
+            && in_array($input['option'], [0, -1])
+        ) {
+        } else {
+            $input['chequePaymentYN'] = -99;
+            $input['invoiceType'] = -99;
+            $input['bankID'] = -99;
+            $input['bankAccountID'] = -99;
+            $input['option'] = -99;
+        }
+
+        $bankAccount = BankAccount::where('bankmasterAutoID', $input['bankID'])
+            ->where('bankAccountAutoID', $input['bankAccountID'])
+            ->with(['currency'])
+            ->first();
+
+        $bank_currency_id = 2;
+        if ($bankAccount && $bankAccount->currency) {
+            $bank_currency_id = $bankAccount->currency->currencyID;
+        }
+
+        $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
+            //->where("chequePrintedYN", $chequePrintedYN)
+            ->where("chequePaymentYN", $input['option'])
+            ->when(request('invoiceType') && in_array($input['invoiceType'], $input), function ($q) use ($input) {
+                return $q->where('invoiceType', $input['invoiceType']);
+            })
+            ->when(request('bankID'), function ($q) use ($input) {
+                return $q->where('bankID', $input['bankID']);
+            })
+            ->when(request('bankAccountID'), function ($q) use ($input) {
+                return $q->where('bankAccountID', $input['bankAccountID']);
+            })
+            ->with(['bank_currency_by', 'company', 'bank_account', 'supplier_by' => function ($q3) use ($bank_currency_id) {
+                $q3->with(['supplierCurrency' => function ($q4) use ($bank_currency_id) {
+                    $q4->where('currencyID', $bank_currency_id)
+                        ->with(['bankMemo_by']);
+                }]);
+            }]);
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $bankLedger = $bankLedger->where(function ($query) use ($search) {
+                $query->where('documentCode', 'LIKE', "%{$search}%")
+                    ->orWhere('documentNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('payeeName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $bankLedger;
+    }
+
+    public function updatePrintChequeItems(Request $request)
+    {
+        $input = $request->all();
+        $search = $request->input('search.value');
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $employee = \Helper::getEmployeeInfo();
+        $bankLedger = $this->chequeListQrt($input, $search, 0)
+            ->when($input['chequeNumberRange'], function ($q) use ($input) {
+                $q->where('documentChequeNo', '>=', $input['chequeNumberRangeFrom'])
+                    ->where('documentChequeNo', '<=', $input['chequeNumberRangeTo']);
+            })
+            ->orderBy('bankLedgerAutoID', $sort)
+            ->get();
+
+        if (count($bankLedger) == 0) {
+            return $this->sendError('No any item found for print', 500);
+        }
+
+        foreach ($bankLedger as $item) {
+            $temArray = array();
+            $temArray['chequePrintedYN'] = -1;
+            $temArray['chequePrintedDateTime'] = now();
+            $temArray['chequePrintedByEmpSystemID'] = $employee->employeeSystemID;
+            $temArray['chequePrintedByEmpID'] = $employee->empID;
+            $temArray['chequePrintedByEmpName'] = $employee->empName;
+            $this->bankLedgerRepository->update($temArray, $item->bankLedgerAutoID);
+        }
+
+        return $this->sendResponse($bankLedger->toArray(), 'updated successfully');
+    }
+
+    public function printChequeItems(Request $request)
+    {
+        $input = $request->all();
+
+        /*return $checkAuth = \Helper::getEmployeeInfoByURL($input);
+        if (!$checkAuth["success"]) {
+            return $this->sendError($checkAuth["message"], 500);
+        }
+        $employee = $checkAuth["message"];*/
+        $search = $request->input('search.value');
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $bankLedger = $this->chequeListQrt($input, $search, -1)
+            ->when($input['chequeNumberRange'], function ($q) use ($input) {
+                $q->where('documentChequeNo', '>=', $input['chequeNumberRangeFrom'])
+                    ->where('documentChequeNo', '<=', $input['chequeNumberRangeTo']);
+            })
+            ->orderBy('bankLedgerAutoID', $sort)
+            ->get();
+
+        if (count($bankLedger) == 0) {
+            return $this->sendError('Not found', 500);
+        }
+        $time = strtotime("now");
+        $fileName = 'cheque' . $time . '.pdf';
+        $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+        foreach ($bankLedger as $item) {
+
+            $amountSplit = payAmountBank;
+
+            $item['amount_word'] = ucwords($f->format(round($item->payAmountBank, 0)));
+            if ($item['supplier_by']) {
+                if ($item['supplier_by']['supplierCurrency']) {
+                    if ($item['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
+                        $memos = $item['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
+                       $item->memos = $memos;
+                    }
+                }
+            }
+            $item['decimalPlaces'] = 2;
+            if($item['bank_currency_by']){
+                $item['decimalPlaces'] = $item['bank_currency_by']['DecimalPlaces'];
+            }
+
+        }
+
+        $array = array('entities' => $bankLedger, 'date' => now());
+        $html = view('print.cheque', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+        //$materielIssue->docRefNo = \Helper::getCompanyDocRefNo($input['companySystemID'], $materielIssue->documentSystemID);
+        //'landscape'
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+    }
+
+
+    public function getChequePrintingFormData(Request $request)
+    {
+        $selectedCompanyId = $request['companyId'];
+        $subCompaniesByGroup = [];
+        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $subCompaniesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompaniesByGroup = (array)$selectedCompanyId;
+        }
+
+        $banks = BankMaster::all();
+        $bankIds = $banks->pluck('bankmasterAutoID');
+        $accounts = BankAccount::whereIn('companySystemID', $subCompaniesByGroup)
+            ->whereIN('bankmasterAutoID', $bankIds)
+            ->where('isAccountActive', 1)
+            ->get();
+        $output = array(
+            'banks' => $banks,
+            'accounts' => $accounts
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
     }
 }

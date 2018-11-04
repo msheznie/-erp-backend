@@ -575,7 +575,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             }
 
-            //checking Supplier Invoice amount is greater than PO Amount validations
+/*            //checking Supplier Invoice amount is greater than PO Amount validations
             if ($input['documentType'] == 0) {
                 $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                     ->with(['pomaster'])
@@ -589,12 +589,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             ->where('supplierID', $exc->supplierID)
                             ->sum('totTransactionAmount');
 
-                        if ($checkPreTotal > $poMasterTotal->poTotalSupplierTransactionCurrency) {
+                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > $poMasterTotal->poTotalSupplierTransactionCurrency) {
                             return $this->sendError('Supplier Invoice amount is greater than ' . $exc->pomaster->purchaseOrderCode . ' PO amount. Please check again.', 500);
                         }
                     }
                 }
-            }
+            }*/
 
             //checking Supplier Invoice amount is greater than UnbilledGRV Amount validations
             if ($input['documentType'] == 0) {
@@ -632,7 +632,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
                             ->sum('totTransactionAmount');
 
-                        if ($checkPreTotal > $grvDetailSum['total']) {
+                        if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($grvDetailSum['total'], $documentCurrencyDecimalPlace)) {
                             return $this->sendError('Supplier Invoice amount is greater than GRV amount. Please check again.', 500);
                         }
                     }
@@ -727,7 +727,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $error_count++;
                 }
             }
-
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
@@ -835,8 +834,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
-    public
-    function getInvoiceMasterFormData(Request $request)
+    public function getInvoiceMasterFormData(Request $request)
     {
         $companyId = $request['companyId'];
 
@@ -897,8 +895,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
-    public
-    function getInvoiceSupplierTypeBase(Request $request)
+    public function getInvoiceSupplierTypeBase(Request $request)
     {
         $companyId = $request['companyId'];
 
@@ -914,8 +911,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     }
 
 
-    public
-    function getInvoiceMasterView(Request $request)
+    public function getInvoiceMasterView(Request $request)
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType'));
@@ -1018,8 +1014,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->make(true);
     }
 
-    public
-    function supplierInvoiceReopen(Request $request)
+    public function supplierInvoiceReopen(Request $request)
     {
         $input = $request->all();
 
@@ -1133,8 +1128,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice reopened successfully');
     }
 
-    public
-    function getInvoiceMasterApproval(Request $request)
+    public function getInvoiceMasterApproval(Request $request)
     {
         $input = $request->all();
 
@@ -1220,8 +1214,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->make(true);
     }
 
-    public
-    function getApprovedInvoiceForCurrentUser(Request $request)
+    public function getApprovedInvoiceForCurrentUser(Request $request)
     {
         $input = $request->all();
 
@@ -1292,8 +1285,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->make(true);
     }
 
-    public
-    function approveSupplierInvoice(Request $request)
+    public function approveSupplierInvoice(Request $request)
     {
         $approve = \Helper::approveDocument($request);
         if (!$approve["success"]) {
@@ -1304,8 +1296,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
     }
 
-    public
-    function rejectSupplierInvoice(Request $request)
+    public function rejectSupplierInvoice(Request $request)
     {
         $reject = \Helper::rejectDocument($request);
         if (!$reject["success"]) {
@@ -1316,8 +1307,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
     }
 
-    public
-    function saveSupplierInvoiceTaxDetails(Request $request)
+    public function saveSupplierInvoiceTaxDetails(Request $request)
     {
         $input = $request->all();
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
@@ -1456,8 +1446,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
     }
 
-    public
-    function supplierInvoiceTaxTotal(Request $request)
+    public function supplierInvoiceTaxTotal(Request $request)
     {
         $input = $request->all();
 
@@ -1472,8 +1461,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     }
 
 
-    public
-    function printSupplierInvoice(Request $request)
+    public function printSupplierInvoice(Request $request)
     {
         $id = $request->get('bookingSuppMasInvAutoID');
 
@@ -1552,8 +1540,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
-    public
-    function getSupplierInvoiceStatusHistory(Request $request)
+    public function getSupplierInvoiceStatusHistory(Request $request)
     {
         $input = $request->all();
 
@@ -1620,8 +1607,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
 
-    public
-    function getSupplierInvoiceAmend(Request $request)
+    public function getSupplierInvoiceAmend(Request $request)
     {
         $input = $request->all();
 

@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * --
  */
+
 namespace App\Models;
 
 use Eloquent as Model;
@@ -136,7 +137,7 @@ class AssetDisposalDetail extends Model
 {
 
     public $table = 'erp_fa_asset_disposaldetail';
-    
+
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
 
@@ -203,7 +204,7 @@ class AssetDisposalDetail extends Model
 
     public function scopeOfMaster($query, $id)
     {
-        return $query->where('assetdisposalMasterAutoID',  $id);
+        return $query->where('assetdisposalMasterAutoID', $id);
     }
 
     /**
@@ -212,7 +213,7 @@ class AssetDisposalDetail extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function segment_by()
@@ -225,5 +226,25 @@ class AssetDisposalDetail extends Model
         return $this->belongsTo('App\Models\FixedAssetMaster', 'faID', 'faID');
     }
 
-    
+    public function item_by()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemCode', 'itemCodeSystem');
+    }
+
+    public function accumilated_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'ACCDEPGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+    public function cost_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'COSTGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+    public function disposal_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'DISPOGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+
 }

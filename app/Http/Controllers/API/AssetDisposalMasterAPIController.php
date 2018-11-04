@@ -265,11 +265,11 @@ class AssetDisposalMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var AssetDisposalMaster $assetDisposalMaster */
-        $assetDisposalMaster = $this->assetDisposalMasterRepository->with(['confirmed_by', 'financeperiod_by' => function ($query) {
+        $assetDisposalMaster = $this->assetDisposalMasterRepository->with(['financeperiod_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }, 'created_by', 'modified_by'])->findWithoutFail($id);
+        }])->findWithoutFail($id);
 
         if (empty($assetDisposalMaster)) {
             return $this->sendError('Asset Disposal Master not found');
@@ -341,6 +341,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $companySystemID = $assetDisposalMaster->companySystemID;
             $documentSystemID = $assetDisposalMaster->documentSystemID;
 
+            $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
+
             if ($assetDisposalMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -363,8 +365,6 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
                 unset($inputParam);
 
-                $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
-
                 $monthBegin = $input['FYPeriodDateFrom'];
                 $monthEnd = $input['FYPeriodDateTo'];
 
@@ -373,45 +373,47 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     return $this->sendError('Asset Disposal date is not within financial period!', 500, ['type' => 'confirm']);
                 }
 
-                //For customer check
-                $customermaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
+                if ($assetDisposalMaster->disposalType == 1 || $assetDisposalMaster->disposalType == 6) {
+                    //For customer check
+                    $customermaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
 
-                if (empty($customermaster)) {
-                    return $this->sendError('There is no customer created to the selected company. Please create a customer', 500, ['type' => 'confirm']);
-                }
+                    if (empty($customermaster)) {
+                        return $this->sendError('There is no customer created to the selected company. Please create a customer', 500, ['type' => 'confirm']);
+                    }
 
-                //if the customer is assigned
-                $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isAssigned', '-1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
+                    //if the customer is assigned
+                    $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isAssigned', '-1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
 
-                if (empty($customer)) {
-                    return $this->sendError('There is no customer assgigned to the selected company. Please assign the customer', 500, ['type' => 'confirm']);
-                }
-                //checking selected customer is active
-                $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isActive', '1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
+                    if (empty($customer)) {
+                        return $this->sendError('There is no customer assgigned to the selected company. Please assign the customer', 500, ['type' => 'confirm']);
+                    }
+                    //checking selected customer is active
+                    $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isActive', '1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
 
-                if (empty($customer)) {
-                    return $this->sendError('Assigned customer is not active', 500, ['type' => 'confirm']);
-                }
+                    if (empty($customer)) {
+                        return $this->sendError('Assigned customer is not active', 500, ['type' => 'confirm']);
+                    }
 
-                //For supplier check
-                $suppliermaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
+                    //For supplier companySystemID
+                    $suppliermaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->companySystemID)->first();
 
-                if (empty($suppliermaster)) {
-                    return $this->sendError('There is no supplier created to the selected company. Please create a supplier', 500, ['type' => 'confirm']);
-                }
+                    if (empty($suppliermaster)) {
+                        return $this->sendError('There is no supplier created to the selected company. Please create a supplier', 500, ['type' => 'confirm']);
+                    }
 
-                //If the supplier is not assigned
-                $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isAssigned', '-1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
+                    //If the supplier is not assigned
+                    $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->companySystemID)->where('isAssigned', '-1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
 
-                if (empty($supplier)) {
-                    return $this->sendError('There is no supplier assgigned to the selected company. Please assign the supplier', 500, ['type' => 'confirm']);
-                }
+                    if (empty($supplier)) {
+                        return $this->sendError('There is no supplier assgigned to the selected company. Please assign the supplier', 500, ['type' => 'confirm']);
+                    }
 
-                //checking selected supplier is active
-                $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isActive', '1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
+                    //checking selected supplier is active
+                    $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->companySystemID)->where('isActive', '1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
 
-                if (empty($supplier)) {
-                    return $this->sendError('Assigned supplier is not active', 500, ['type' => 'confirm']);
+                    if (empty($supplier)) {
+                        return $this->sendError('Assigned supplier is not active', 500, ['type' => 'confirm']);
+                    }
                 }
 
                 $disposalDetailExist = AssetDisposalDetail::with('asset_by')->where('assetdisposalMasterAutoID', $id)->get();
@@ -690,8 +692,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 return $this->sendError('You cannot reopen this Asset disposal, it is not confirmed');
             }
 
-            $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
-                'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
+            $updateInput = ['confirmedYN' => 0, 'confimedByEmpSystemID' => null, 'confimedByEmpID' => null,
+                'confirmedByEmpName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
 
             $this->assetDisposalMasterRepository->update($updateInput, $id);
 
@@ -791,7 +793,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                     ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
 
-                $query->whereIn('employeesdepartments.documentSystemID', [63])
+                $query->whereIn('employeesdepartments.documentSystemID', [41])
                     ->where('employeesdepartments.companySystemID', $companyId)
                     ->where('employeesdepartments.employeeSystemID', $empID);
             })

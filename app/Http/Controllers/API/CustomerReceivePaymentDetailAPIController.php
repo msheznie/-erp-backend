@@ -136,7 +136,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $arAutoID = array_pluck($value, 'arAutoID');
 
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['id'])->first();
-        $detail = CustomerReceivePaymentDetail::select('bookingInvCode')->where('custReceivePaymentAutoID', $input['id'])->whereIn('arAutoID', $arAutoID)->get();
+        $detail = CustomerReceivePaymentDetail::select('bookingInvCode')
+            ->where('custReceivePaymentAutoID', $input['id'])
+            ->whereIn('arAutoID', $arAutoID)
+            ->get();
 
         if (count($detail) > 0) {
             $names = array_pluck($detail->toArray(), 'bookingInvCode');
@@ -636,6 +639,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->sum('receiveAmountTrans');
 
         $existTotal = $detailAmountTot + $input['receiveAmountTrans'];
+
         if ($existTotal > $matchDocumentMasterData->matchBalanceAmount) {
             return $this->sendError('Matching amount total cannot be greater than balance amount to match', 500, ['type' => 'amountmismatch']);
         }
@@ -649,24 +653,24 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $paymentBalancedAmount = \Helper::roundValue($receiptVoucherDetails->receiveAmountTrans - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
-
-        if ($receiptVoucherDetails->addedDocumentSystemID == 11) {
-            //supplier invoice
-            if ($input["supplierPaymentAmount"] > $paymentBalancedAmount) {
-                return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
-            }
-        } else if ($receiptVoucherDetails->addedDocumentSystemID == 15) {
-            //debit note
-            if ($input["supplierPaymentAmount"] < $paymentBalancedAmount) {
-                return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
-            }
-        }
+       $paymentBalancedAmount = \Helper::roundValue($receiptVoucherDetails->receiveAmountTrans - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+        /*
+                if ($receiptVoucherDetails->addedDocumentSystemID == 11) {
+                    //supplier invoice
+                    if ($input["supplierPaymentAmount"] > $paymentBalancedAmount) {
+                        return $this->sendError('Receipt amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
+                    }
+                } else if ($receiptVoucherDetails->addedDocumentSystemID == 15) {
+                    //debit note
+                    if ($input["supplierPaymentAmount"] < $paymentBalancedAmount) {
+                        return $this->sendError('Receipt amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
+                    }
+                }*/
 
         $input["custbalanceAmount"] = $paymentBalancedAmount - $input["receiveAmountTrans"];
 
-        return   $input["custbalanceAmount"];
-        exit();
+        //return   $input["custbalanceAmount"];
+        //exit();
 
         $conversionAmount = \Helper::convertAmountToLocalRpt(205, $input["custRecivePayDetAutoID"], ABS($input["receiveAmountTrans"]));
         //$input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);

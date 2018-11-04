@@ -165,6 +165,11 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         }
 
         if ($payMaster->expenseClaimOrPettyCash == 6 || $payMaster->expenseClaimOrPettyCash == 7) {
+
+            if(empty($payMaster->interCompanyToSystemID)){
+                return $this->sendError('Please select a company to');
+            }
+
             $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'relatedPartyYN' => 1]);
             if (count($directPaymentDetails) > 0) {
                 return $this->sendError('Cannot add GL code as there is a related party GL code added.');
@@ -176,6 +181,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                     return $this->sendError('Cannot add related party GL code as there is a GL code added.');
                 }
             }
+
         }
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->findWhere(['directPaymentAutoID' => $input['directPaymentAutoID'], 'glCodeIsBank' => 1]);
@@ -412,11 +418,41 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->localCurrency) {
                 $input['localAmount'] = \Helper::roundValue($bankAmount);
                 $input['localCurrencyER'] = $input["bankCurrencyER"];
+            }else{
+                $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $directPaymentDetails->localCurrency)->first();
+                if ($conversion->conversion > 1) {
+                    if ($conversion->conversion > 1) {
+                        $input['localAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                    } else {
+                        $input['localAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                    }
+                } else {
+                    if ($conversion->conversion > 1) {
+                        $input['localAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                    } else {
+                        $input['localAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                    }
+                }
             }
 
             if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->comRptCurrency) {
                 $input['comRptAmount'] = \Helper::roundValue($bankAmount);
                 $input['comRptCurrencyER'] = $input["bankCurrencyER"];
+            }else{
+                $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $directPaymentDetails->comRptCurrency)->first();
+                if ($conversion->conversion > 1) {
+                    if ($conversion->conversion > 1) {
+                        $input['comRptAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                    } else {
+                        $input['comRptAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                    }
+                } else {
+                    if ($conversion->conversion > 1) {
+                        $input['comRptAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                    } else {
+                        $input['comRptAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                    }
+                }
             }
 
             $input['bankAmount'] = \Helper::roundValue($bankAmount);
