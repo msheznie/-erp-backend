@@ -14,6 +14,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateFixedAssetDepreciationMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetDepreciationMasterAPIRequest;
+use App\Jobs\CreateDepreciation;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
@@ -224,98 +225,14 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
             $depMasterAutoID = $fixedAssetDepreciationMasters['depMasterAutoID'];
+            DB::commit();
 
-            $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
-                $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
-                $query->groupBy('faID');
-            }])->isDisposed()->ofCompany([$input['companySystemID']])->orderBy('faID', 'desc')->get();
-            $depAmountRptTotal = 0;
-            $depAmountLocalTotal = 0;
-            if ($faMaster) {
-                foreach ($faMaster as $val) {
-                    $depAmountRpt = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountRpt : 0;
-                    $depAmountLocal = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountLocal : 0;
-                    $nbvLocal = $val->COSTUNIT - $depAmountLocal;
-                    $nbvRpt = $val->costUnitRpt - $depAmountRpt;
-                    $monthlyLocal = ($val->COSTUNIT * ($val->DEPpercentage / 100)) / 12;
-                    $monthlyRpt = ($val->costUnitRpt * ($val->DEPpercentage / 100)) / 12;
-
-                    if ($nbvLocal != 0 || $nbvRpt != 0) {
-                        $data['depMasterAutoID'] = $fixedAssetDepreciationMasters['depMasterAutoID'];
-                        $data['companySystemID'] = $input['companySystemID'];
-                        $data['companyID'] = $company->CompanyID;
-                        $data['serviceLineSystemID'] = $val->serviceLineSystemID;
-                        $data['serviceLineCode'] = $val->serviceLineCode;
-                        $data['faFinanceCatID'] = $val->AUDITCATOGARY;
-                        $data['faMainCategory'] = $val->faCatID;
-                        $data['faSubCategory'] = $val->faSubCatID;
-                        $data['faID'] = $val->faID;
-                        $data['faCode'] = $val->faCode;
-                        $data['assetDescription'] = $val->assetDescription;
-                        $data['depPercent'] = $val->DEPpercentage;
-                        $data['COSTUNIT'] = $val->COSTUNIT;
-                        $data['costUnitRpt'] = $val->costUnitRpt;
-                        $data['depDoneYN'] = -1;
-                        $data['createdPCid'] = gethostname();
-                        $data['createdBy'] = \Helper::getEmployeeID();
-                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                        $data['depMonthYear'] = $input['depMonthYear'];
-                        $data['depMonth'] = $val->depMonth;
-                        $data['depAmountLocalCurr'] = $input['depLocalCur'];
-                        $data['depAmountRptCurr'] = $input['depRptCur'];
-
-                        if ($nbvLocal < $monthlyLocal) {
-                            $data['depAmountLocal'] = $nbvLocal;
-                        } else {
-                            $data['depAmountLocal'] = $monthlyLocal;
-                        }
-
-                        if ($nbvRpt < $monthlyRpt) {
-                            $data['depAmountRpt'] = $nbvRpt;
-                        } else {
-                            $data['depAmountRpt'] = $monthlyRpt;
-                        }
-
-                        if ($depAmountRpt == 0 && $depAmountLocal == 0) {
-                            $dateDEP = Carbon::parse($val->dateDEP);
-                            if ($dateDEP->lessThanOrEqualTo($depDate)) {
-                                $differentMonths = CarbonPeriod::create($dateDEP->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
-                                if ($differentMonths) {
-                                    foreach ($differentMonths as $dt) {
-                                        $companyFinanceYearID = CompanyFinanceYear::ofCompany($input['companySystemID'])->where('bigginingDate', '<=', $dt)->where('endingDate', '>=', $dt->format('Y-m-d'))->first();
-                                        if ($companyFinanceYearID) {
-                                            $data['FYID'] = $companyFinanceYearID->companyFinanceYearID;
-                                            $data['depForFYStartDate'] = $companyFinanceYearID->bigginingDate;
-                                            $data['depForFYEndDate'] = $companyFinanceYearID->endingDate;
-                                            $companyFinancePeriodID = CompanyFinancePeriod::ofCompany($input['companySystemID'])->ofDepartment(9)->where('dateFrom', '<=', $dt)->where('dateTo', '>=', $dt->format('Y-m-d'))->first();
-                                            $data['FYperiodID'] = $companyFinancePeriodID->companyFinancePeriodID;
-                                            $data['depForFYperiodStartDate'] = $companyFinancePeriodID->dateFrom;
-                                            $data['depForFYperiodEndDate'] = $companyFinancePeriodID->dateTo;
-                                            $assetDepPeriod = FixedAssetDepreciationPeriod::create($data);
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            if ($nbvRpt != 0 && $nbvLocal != 0) {
-                                $data['FYID'] = $input['companyFinanceYearID'];
-                                $data['depForFYStartDate'] = $input['FYBiggin'];
-                                $data['depForFYEndDate'] = $input['FYEnd'];
-                                $data['FYperiodID'] = $input['companyFinancePeriodID'];
-                                $data['depForFYperiodStartDate'] = $input['FYPeriodDateFrom'];
-                                $data['depForFYperiodEndDate'] = $input['FYPeriodDateTo'];
-                                $assetDepPeriod = FixedAssetDepreciationPeriod::create($data);
-                            }
-                        }
-                    }
-                }
+            if ($fixedAssetDepreciationMasters)
+            {
+                $job = CreateDepreciation::dispatch($depMasterAutoID);
             }
 
-            $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
 
-            $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt], $depMasterAutoID);
-
-            DB::commit();
             return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();

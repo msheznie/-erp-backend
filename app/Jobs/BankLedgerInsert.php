@@ -194,8 +194,13 @@ class BankLedgerInsert implements ShouldQueue
                 }
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($e->getMessage());
+                Log::error($this->failed($e));
             }
         }
+    }
+
+    public function failed($exception)
+    {
+        return $exception->getMessage();
     }
 }

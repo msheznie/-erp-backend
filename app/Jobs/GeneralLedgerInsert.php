@@ -1326,6 +1326,10 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             if ($masterData->invoiceType == 2) { //Supplier Payment
                                 if ($si) {
+                                    $transAmountTotal = 0;
+                                    $localAmountTotal = 0;
+                                    $rptAmountTotal = 0;
+
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
                                     $data['chartOfAccountSystemID'] = $masterData->supplierGLCodeSystemID;
@@ -1344,6 +1348,10 @@ class GeneralLedgerInsert implements ShouldQueue
                                     array_push($finalData, $data);
 
                                     if ($masterData->BPVbankCurrency == $masterData->supplierTransCurrencyID) {
+                                        $transAmountTotal = $si->transAmount;
+                                        $localAmountTotal = $si->localAmount;
+                                        $rptAmountTotal = $si->rptAmount;
+
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
                                         $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
@@ -1363,6 +1371,11 @@ class GeneralLedgerInsert implements ShouldQueue
                                     } else {
                                         //convert amount in currency conversion
                                         $convertAmount = \Helper::convertAmountToLocalRpt(203, $masterModel["autoID"], $si->transAmount);
+
+                                        $transAmountTotal = $si->transAmount;
+                                        $localAmountTotal = $convertAmount["localAmount"];
+                                        $rptAmountTotal = $convertAmount["reportingAmount"];
+
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
                                         $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
@@ -1381,9 +1394,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                         array_push($finalData, $data);
                                     }
 
-                                    $diffTrans = $si->transAmount - $masterData->payAmountSuppTrans;
-                                    $diffLocal = $si->localAmount - $masterData->payAmountCompLocal;
-                                    $diffRpt = $si->rptAmount - $masterData->payAmountCompRpt;
+                                    $diffTrans = $transAmountTotal - $masterData->payAmountSuppTrans;
+                                    $diffLocal = $localAmountTotal - $masterData->payAmountCompLocal;
+                                    $diffRpt = $rptAmountTotal - $masterData->payAmountCompRpt;
 
                                     if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal)) != 0 || ABS(round($diffRpt)) != 0) {
                                         $company = Company::find($masterData->companySystemID);
