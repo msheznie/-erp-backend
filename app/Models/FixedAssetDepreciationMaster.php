@@ -241,4 +241,9 @@ class FixedAssetDepreciationMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
 
+    public function depperiod_by()
+    {
+        return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'depMasterAutoID', 'depMasterAutoID');
+    }
+
 }

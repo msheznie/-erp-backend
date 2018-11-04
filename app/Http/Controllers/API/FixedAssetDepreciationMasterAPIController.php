@@ -522,7 +522,10 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $assetCositng = FixedAssetDepreciationMaster::ofCompany($subCompanies);
+        $assetCositng = FixedAssetDepreciationMaster::with(['depperiod_by' => function ($query) use ($input) {
+            $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,depMasterAutoID');
+            $query->groupBy('depMasterAutoID');
+        }])->ofCompany($subCompanies);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
