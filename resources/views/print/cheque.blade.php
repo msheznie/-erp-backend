@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Cheques</title>
+    <title>Bank Transfer</title>
     <style>
         @page {
             margin-left: 30px;
@@ -146,7 +146,7 @@
 
         .content {
             margin-bottom: 45px;
-            padding-top: 200px;
+            padding-top: 180px;
             padding-left: 50px;
         }
 
@@ -176,103 +176,107 @@
 <div id="watermark"></div>
 
 @foreach ($entities as $entity)
-    @if($loop->last)
+   {{-- @if($loop->last)
         <div class="card-body content">
-        @else
-        <div class="card-body content page-break">
-    @endif
-        <table style="width: 100%">
-            <tr style="width: 100%">
-                <td valign="top" style="width: 100%">
-                    <h6>
-                        <span class="font-weight-bold">Doc Ref No</span>
-                        <span style="margin-left: 10px">{{$entity->documentCode}}</span>
-                    </h6>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <h6> {{ \App\helper\Helper::dateFormat($date)}} </h6>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <br>
-                    <b>The Manager</b><br>
-                    @if($entity->bank_account)
-                        <b>{{$entity->bank_account->bankName}}</b> <br>
-                        <b>{{$entity->bank_account->bankBranch}}</b>
-                    @else
-                        <br><br>
-                    @endif
-                    <br><br><br>
+            @else--}}
+                <div class="card-body content " class="{{ $loop->last ? '' : 'page-break' }}">
+                 {{--   @endif--}}
+                    <table style="width: 100%">
+                        <tr style="width: 100%">
+                            <td valign="top" style="width: 100%">
+                                <h6>
+                                    <span class="font-weight-bold">Doc Ref No</span>
+                                    <span style="margin-left: 10px">{{$entity->documentCode}}</span>
+                                </h6>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <h6> {{ \App\helper\Helper::dateFormat($date)}} </h6>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br>
+                                <b>The Manager</b><br>
+                                @if($entity->bank_account)
+                                    <b>{{$entity->bank_account->bankName}}</b> <br>
+                                    <b>{{$entity->bank_account->bankBranch}}</b>
+                                @else
+                                    <br><br>
+                                @endif
+                                <br><br><br>
 
-                    Dear Sir,<br><br>
-                    <u><b>Sub : FUND TRANSFER,</b></u> <br> <br>
-                    By debiting our Account No.
-                    <b>@if($entity->bank_account){{$entity->bank_account->AccountNo}}@endif</b>
-                    kindly transfer a sum
-                    of
-                    <b>@if($entity->bank_currency_by) {{$entity->bank_currency_by->CurrencyCode}}@endif {{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>
-                    [@if($entity->bank_currency_by) {{$entity->bank_currency_by->CurrencyCode}}@endif {{$entity->amount_word}}
-                    and
-                    00/@if($entity->decimalPlaces == 3)1000 @else 100 @endif] to the
-                    following account as detailed below.<br>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    @foreach($entity->memos as $memo)
-                        @if($memo->memoDetail)
-                          {{$memo->memoHeader}} : {{$memo->memoDetail}}<br>
-                        @endif
-                    @endforeach
-                    {{--@if($entity->supplier_by)
-                        @if ($entity->supplier_by->supplierCurrency)
-                            @if ($entity->supplier_by->supplierCurrency[0]->bankMemo_by)
-                                {{$entity->supplier_by->supplierCurrency[0]->bankMemo_by['memoDetail']}}
-                            @endif
-                        @endif
-                    @endif--}}
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    Yours faithfully,<br>
-                    <b>For :</b><br/><br/>
-                    @if($entity->company)
-                        <b> {{$entity->company->CompanyName}} </b>
-                    @endif
+                                Dear Sir,<br><br>
+                                <u><b>Sub : FUND TRANSFER</b></u> <br> <br>
+                                By debiting our Account No.
+                                <b>@if($entity->bank_account){{$entity->bank_account->AccountNo}}@endif</b>
+                                kindly transfer a sum
+                                of
+                                <b>@if($entity->bank_currency_by) {{$entity->bank_currency_by->CurrencyCode}}@endif {{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>
+                                [@if($entity->bank_currency_by) {{$entity->bank_currency_by->CurrencyCode}}@endif {{$entity->amount_word}}
+                                and
+                                {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif] to the
+                                following account as detailed below.<br>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <table style="width: 100%">
+                                    @foreach($entity->memos as $memo)
+                                        @if($memo->memoDetail)
+                                            <tr style="width: 100%">
+                                                <td valign="top" style="width:30%">
+                                                    {{$memo->memoHeader}} : <br>
+                                                </td>
+                                                <td style="width: 2%">:</td>
+                                                <td valign="top" style="width: 68%">
+                                                    {{$memo->memoDetail}}<br>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    @endforeach
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Yours faithfully,<br>
+                                <b>For :</b><br/><br/>
+                                @if($entity->company)
+                                    <i><b> {{$entity->company->CompanyName}} </b></i>
+                                @endif
 
-                    <br><br><br><br>
-                </td>
-            </tr>
-        </table>
-        <table style="width: 100%">
-            <tr style="width: 100%">
-                <td valign="top" style="width: 50%">
-                    _________________________
-                </td>
-                <td valign="top" style="width: 50%">
-                    __________________________
-                </td>
-            </tr>
-            <tr style="width: 100%">
-                <td valign="top" style="width: 50%">
-                    <b>Authorized Signatory</b>
-                </td>
-                <td valign="top" style="width: 50%">
-                    <b>Authorized Signatory</b>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <br><br><br>
-                    Prepared By: {{$entity->chequePrintedByEmpName}}
-                </td>
-            </tr>
-        </table>
-    </div>
-@endforeach
+                                <br><br><br><br>
+                            </td>
+                        </tr>
+                    </table>
+                    <table style="width: 100%">
+                        <tr style="width: 100%">
+                            <td valign="top" style="width: 50%">
+                                _________________________
+                            </td>
+                            <td valign="top" style="width: 50%">
+                                __________________________
+                            </td>
+                        </tr>
+                        <tr style="width: 100%">
+                            <td valign="top" style="width: 50%">
+                                <b>Authorized Signatory</b>
+                            </td>
+                            <td valign="top" style="width: 50%">
+                                <b>Authorized Signatory</b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <br><br><br>
+                                Prepared By: {{$entity->chequePrintedByEmpName}}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+        @endforeach
 </body>
 </html>

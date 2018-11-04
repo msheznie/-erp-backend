@@ -166,4 +166,14 @@ class SupplierAssigned extends Model
     public function supplierCurrency(){
         return $this->hasMany('App\Models\SupplierCurrency','supplierCodeSystem','currency');
     }
+
+    public function critical()
+    {
+        return $this->belongsTo('App\Models\SupplierCritical', 'isCriticalYN', 'suppliercriticalID');
+    }
+
+    public function country()
+    {
+        return $this->belongsTo('App\Models\CountryMaster','supplierCountryID','countryID');
+    }
 }
