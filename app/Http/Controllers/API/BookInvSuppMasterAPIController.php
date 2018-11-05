@@ -429,33 +429,57 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
-        $amount = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+        // calculating header total;
+        $directAmountTrans = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
             ->sum('DIAmount');
 
-        $detailTaxSum = Taxdetail::select(DB::raw('sum(amount) as total'))
-            ->where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
-            ->where('documentSystemID', 11)
-            ->first();
+        $directAmountLocal = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('localAmount');
 
+        $directAmountReport = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+            ->sum('comRptAmount');
+
+        $detailTaxSumTrans = Taxdetail::where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
+            ->where('documentSystemID', 11)
+            ->sum('amount');
+
+        $detailTaxSumLocal = Taxdetail::where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
+            ->where('documentSystemID', 11)
+            ->sum('localAmount');
+
+        $detailTaxSumReport = Taxdetail::where('documentSystemCode', $bookInvSuppMaster->bookingSuppMasInvAutoID)
+            ->where('documentSystemID', 11)
+            ->sum('rptAmount');
+
+        $bookingAmountTrans = 0;
+        $bookingAmountLocal = 0;
+        $bookingAmountRpt = 0;
         if ($input['documentType'] == 0) {
 
             $grvAmountTransaction = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
                 ->sum('totTransactionAmount');
+            $grvAmountLocal = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                ->sum('totLocalAmount');
+            $grvAmountReport = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
+                ->sum('totRptAmount');
 
-            $input['bookingAmountTrans'] = $grvAmountTransaction + $amount + $detailTaxSum['total'];
+            $bookingAmountTrans = $grvAmountTransaction + $directAmountTrans + $detailTaxSumTrans;
+            $bookingAmountLocal = $grvAmountLocal + $directAmountLocal + $detailTaxSumLocal;
+            $bookingAmountRpt = $grvAmountReport + $directAmountReport + $detailTaxSumReport;
 
-            $currencyConverstionMasterTab = \Helper::convertAmountToLocalRpt($bookInvSuppMaster->documentSystemID, $bookInvSuppMaster->bookingSuppMasInvAutoID, $input['bookingAmountTrans']);
-
-            $input['bookingAmountLocal'] = \Helper::roundValue($currencyConverstionMasterTab['localAmount']);
-            $input['bookingAmountRpt'] = \Helper::roundValue($currencyConverstionMasterTab['reportingAmount']);
+            $input['bookingAmountTrans'] = \Helper::roundValue($bookingAmountTrans);
+            $input['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
+            $input['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
 
         } else {
-            $input['bookingAmountTrans'] = $amount + $detailTaxSum['total'];
 
-            $currencyConverstionMaster = \Helper::convertAmountToLocalRpt($bookInvSuppMaster->documentSystemID, $bookInvSuppMaster->bookingSuppMasInvAutoID, $input['bookingAmountTrans']);
+            $bookingAmountTrans = $directAmountTrans + $detailTaxSumTrans;
+            $bookingAmountLocal = $directAmountLocal + $detailTaxSumLocal;
+            $bookingAmountRpt = $directAmountReport + $detailTaxSumReport;
 
-            $input['bookingAmountLocal'] = \Helper::roundValue($currencyConverstionMaster['localAmount']);
-            $input['bookingAmountRpt'] = \Helper::roundValue($currencyConverstionMaster['reportingAmount']);
+            $input['bookingAmountTrans'] = \Helper::roundValue($bookingAmountTrans);
+            $input['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
+            $input['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
         }
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);

@@ -2143,6 +2143,17 @@ class Helper
                 $docInforArr["localCurrencyER"] = 'localCurrencyER';
                 $docInforArr["defaultCurrencyER"] = 'localCurrencyER';
                 break;
+            case 206: // Receipt Voucher
+                $docInforArr["modelName"] = 'AccountsReceivableLedger';
+                $docInforArr["transCurrencyID"] = 'custTransCurrencyID';
+                $docInforArr["transDefaultCurrencyID"] = 'custTransCurrencyID';
+                $docInforArr["rptCurrencyID"] = 'comRptCurrencyID';
+                $docInforArr["localCurrencyID"] = 'localCurrencyID';
+                $docInforArr["transCurrencyER"] = 'custTransER';
+                $docInforArr["rptCurrencyER"] = 'comRptER';
+                $docInforArr["localCurrencyER"] = 'localER';
+                $docInforArr["defaultCurrencyER"] = 'localER';
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
