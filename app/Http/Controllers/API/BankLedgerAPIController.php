@@ -24,6 +24,7 @@ use App\Models\BankMaster;
 use App\Models\BankReconciliation;
 use App\Models\GeneralLedger;
 use App\Models\PaymentBankTransfer;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
 use App\Repositories\PaymentBankTransferRepository;
@@ -749,7 +750,7 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
-            //->where("chequePrintedYN", $chequePrintedYN)
+            ->where("chequePrintedYN", $chequePrintedYN)
             ->where("chequePaymentYN", $input['option'])
             ->when(request('invoiceType') && in_array($input['invoiceType'], $input), function ($q) use ($input) {
                 return $q->where('invoiceType', $input['invoiceType']);
@@ -804,7 +805,7 @@ class BankLedgerAPIController extends AppBaseController
 
         foreach ($bankLedger as $item) {
             $temArray = array();
-            $temArray['chequePrintedYN'] = -1;
+            $temArray['chequePrintedYN'] = 1;
             $temArray['chequePrintedDateTime'] = now();
             $temArray['chequePrintedByEmpSystemID'] = $employee->employeeSystemID;
             $temArray['chequePrintedByEmpID'] = $employee->empID;
@@ -831,7 +832,7 @@ class BankLedgerAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $bankLedger = $this->chequeListQrt($input, $search, -1)
+        $bankLedger = $this->chequeListQrt($input, $search, 1)
             ->when($input['chequeNumberRange'], function ($q) use ($input) {
                 $q->where('documentChequeNo', '>=', $input['chequeNumberRangeFrom'])
                     ->where('documentChequeNo', '<=', $input['chequeNumberRangeTo']);
@@ -847,6 +848,9 @@ class BankLedgerAPIController extends AppBaseController
         $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
 
         foreach ($bankLedger as $item) {
+
+            $temArray['chequePrintedYN'] = -1;
+            //$this->bankLedgerRepository->update($temArray, $item->bankLedgerAutoID);
 
             $amountSplit = explode(".",$item->payAmountBank);
             $intAmt = 0;
@@ -875,15 +879,42 @@ class BankLedgerAPIController extends AppBaseController
                 $item['decimalPlaces'] = $item['bank_currency_by']['DecimalPlaces'];
             }
 
+            $temDetails = PaySupplierInvoiceMaster::where('PayMasterAutoId', $item['documentSystemCode'])
+                                                  ->first();
+
+            if(!empty($temDetails)){
+                if($input['invoiceType'] == 2){
+                    $item['details'] = $temDetails->supplierdetail;
+                }else if($input['invoiceType'] == 3){
+                    $item['details'] = $temDetails->directdetail;
+                }else if($input['invoiceType'] == 5){
+                    $item['details'] = $temDetails->advancedetail;
+                }else{
+                    $item['details'] = [];
+                }
+            }else{
+                $item['details'] = [];
+            }
         }
 
+        //return $bankLedger;
+        $htmlName = '';
+        if($input['option']  == -1){
+            $htmlName = 'cheque';
+        }else if($input['option']  ==  0){
+            $htmlName = 'bank_transfer';
+        }
         $array = array('entities' => $bankLedger, 'date' => now());
-        $html = view('print.cheque', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-        //$materielIssue->docRefNo = \Helper::getCompanyDocRefNo($input['companySystemID'], $materielIssue->documentSystemID);
-        //'landscape'
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        if($htmlName){
+            $html = view('print.'.$htmlName, $array);
+            $pdf = \App::make('dompdf.wrapper');
+            $pdf->loadHTML($html);
+            //$materielIssue->docRefNo = \Helper::getCompanyDocRefNo($input['companySystemID'], $materielIssue->documentSystemID);
+            //'landscape'
+            return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        }else{
+            return $this->sendError('Error', 500);
+        }
     }
 
 

@@ -1437,7 +1437,11 @@ class Helper
                             }
                             if ($input["documentSystemID"] == 4 && !empty($sourceModel)) {
                                 //$jobPV = CreateReceiptVoucher::dispatch($sourceModel);
-                                $jobPV = self::generateCustomerReceiptVoucher($sourceModel);
+                                if($sourceModel->invoiceType == 3) {
+                                    $jobPV = self::generateCustomerReceiptVoucher($sourceModel);
+                                }else{
+                                    $bankLedger = BankLedgerInsert::dispatch($masterData);
+                                }
                             }
 
                             if ($input["documentSystemID"] == 46 && !empty($sourceModel)) {
