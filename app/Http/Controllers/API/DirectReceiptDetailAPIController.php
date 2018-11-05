@@ -290,13 +290,12 @@ class DirectReceiptDetailAPIController extends AppBaseController
         if (empty($directReceiptDetail)) {
             return $this->sendError('Direct Receipt Detail not found');
         }
-       $masterID= $directReceiptDetail->directReceiptAutoID;
+        $masterID = $directReceiptDetail->directReceiptAutoID;
 
         $directReceiptDetail->delete();
         $details = DirectReceiptDetail::select(DB::raw("IFNULL(SUM(DRAmount),0) as receivedAmount"), DB::raw("IFNULL(SUM(localAmount),0) as localAmount"), DB::raw("IFNULL(SUM(DRAmount),0) as bankAmount"), DB::raw("IFNULL(SUM(comRptAmount),0) as companyRptAmount"))->where('directReceiptAutoID', $id)->first()->toArray();
 
         CustomerReceivePayment::where('custReceivePaymentAutoID', $masterID)->update($details);
-
 
 
         return $this->sendResponse($id, 'Direct Receipt Detail deleted successfully');
@@ -308,7 +307,7 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $id = $input['id'];
         $detail['detail'] = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
 
-        $detail['custreceiptVocuherDetail'] = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID',$id)->get();
+        $detail['custreceiptVocuherDetail'] = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->get();
         return $this->sendResponse($detail, 'Direct Receipt Detail deleted successfully');
     }
 
@@ -355,22 +354,19 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $glCode = $input['glCode'];;
 
 
-
-
-
         /*get master*/
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $directReceiptAutoID)->first();
-        if($master->custChequeDate == ''){
-            return $this->sendError('Cheque date field is required.',500);
+        if ($master->custChequeDate == '') {
+            return $this->sendError('Cheque date field is required.', 500);
         }
-        $bankGL= BankAccount::select('chartOfAccountSystemID')->where('bankAccountAutoID',$master->bankAccount)->first();
+        $bankGL = BankAccount::select('chartOfAccountSystemID')->where('bankAccountAutoID', $master->bankAccount)->first();
         $company = Company::where('companySystemID', $companySystemID)->first();
 
 
-        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID','controlAccounts')->where('chartOfAccountSystemID', $glCode)->first();
+        $chartOfAccount = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')->where('chartOfAccountSystemID', $glCode)->first();
 
-        if($bankGL->chartOfAccountSystemID == $chartOfAccount->chartOfAccountSystemID){
-            return $this->sendError('Cannot add. You are trying to select the same account.',500);
+        if ($bankGL->chartOfAccountSystemID == $chartOfAccount->chartOfAccountSystemID) {
+            return $this->sendError('Cannot add. You are trying to select the same account.', 500);
         }
 
 
@@ -420,20 +416,19 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
         $id = $input['directReceiptDetailsID'];
-        array_except($input,'directReceiptDetailsID');
+        array_except($input, 'directReceiptDetailsID');
 
         $detail = DirectReceiptDetail::where('directReceiptDetailsID', $id)->first();
 
 
         if (empty($detail)) {
-            return $this->sendError('Receipt voucher detail not found',500);
+            return $this->sendError('Receipt voucher detail not found', 500);
         }
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $detail->directReceiptAutoID)->first();
 
-        
 
         if ($input['contractUID'] != $detail->contractUID) {
-            $input['contractID']=NULL;
+            $input['contractID'] = NULL;
             $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $detail->companyID)->where('contractUID', $input['contractUID'])->first();
             $input['contractID'] = $contract->ContractNumber;
 
@@ -449,39 +444,33 @@ class DirectReceiptDetailAPIController extends AppBaseController
             $input['contractUID'] = NULL;
         }
 
-
-
         if ($input['DRAmount'] != $detail->DRAmount) {
-            $myCurr = $master->bankCurrency;               /*currencyID*/
+            $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
             $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
 
             $input['DRAmountCurrency'] = $master->custTransactionCurrencyID;
             $input['DDRAmountCurrencyER'] = $master->custTransactionCurrencyER;
-            $totalAmount =$input['DRAmount'];
+            $totalAmount = $input['DRAmount'];
             $input['DRAmount'] = round($input['DRAmount'], $decimal);
             /**/
-            $currency = \Helper::convertAmountToLocalRpt($master->documentSystemID,$detail->directReceiptAutoID,$totalAmount);
-            $input["comRptAmount"]=$currency['reportingAmount'];
-            $input["localAmount"]=$currency['localAmount'];
-
-
+            $currency = \Helper::convertAmountToLocalRpt($master->documentSystemID, $detail->directReceiptAutoID, $totalAmount);
+            $input["comRptAmount"] = \Helper::roundValue($currency['reportingAmount']);
+            $input["localAmount"] = \Helper::roundValue($currency['localAmount']);
 
         }
-
 
         DB::beginTransaction();
 
         try {
 
-            $x=DirectReceiptDetail::where('directReceiptDetailsID', $id)->update($input);
+            $x = DirectReceiptDetail::where('directReceiptDetailsID', $id)->update($input);
             $details = DirectReceiptDetail::select(DB::raw("IFNULL(SUM(DRAmount),0) as receivedAmount"), DB::raw("IFNULL(SUM(localAmount),0) as localAmount"), DB::raw("IFNULL(SUM(DRAmount),0) as bankAmount"), DB::raw("IFNULL(SUM(comRptAmount),0) as companyRptAmount"))->where('directReceiptAutoID', $detail->directReceiptAutoID)->first()->toArray();
 
             CustomerReceivePayment::where('custReceivePaymentAutoID', $detail->directReceiptAutoID)->update($details);
 
 
-
             DB::commit();
-            return $this->sendResponse('s', 'successfully created');
+            return $this->sendResponse('s', 'successfully updated');
         } catch (\Exception $exception) {
             DB::rollback();
             return $this->sendError($exception);
