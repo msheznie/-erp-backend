@@ -212,7 +212,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             $input['serialNo'] = $lastSerialNumber;
 
             if ($input['allocationTypeID'] == 1) {
-                $assets = FixedAssetMaster::withoutGlobalScopes()->find($input['faID']);
+                $assets = FixedAssetMaster::find($input['faID']);
                 $depreciationLocal = FixedAssetDepreciationPeriod::OfCompany([$input['companySystemID']])->OfAsset($input['faID'])->sum('depAmountLocal');
                 $depreciationRpt = FixedAssetDepreciationPeriod::OfCompany([$input['companySystemID']])->OfAsset($input['faID'])->sum('depAmountRpt');
 
@@ -404,7 +404,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             }
 
             if ($input['allocationTypeID'] == 1) {
-                $assets = FixedAssetMaster::withoutGlobalScopes()->find($input['faID']);
+                $assets = FixedAssetMaster::find($input['faID']);
                 $depreciationLocal = FixedAssetDepreciationPeriod::OfCompany([$companySystemID])->OfAsset($input['faID'])->sum('depAmountLocal');
                 $depreciationRpt = FixedAssetDepreciationPeriod::OfCompany([$companySystemID])->OfAsset($input['faID'])->sum('depAmountRpt');
 
@@ -619,7 +619,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             $subCompanies = [$companyId];
         }
 
-        $assets = FixedAssetMaster::OfCompany($subCompanies)->isDisposed()->OfCategory($request['faCatID'])->get();
+        $assets = FixedAssetMaster::OfCompany($subCompanies)->isDisposed()->OfCategory($request['faCatID'])->isApproved()->get();
         return $this->sendResponse($assets, 'Record retrieved successfully');
     }
 
@@ -635,7 +635,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             $subCompanies = [$companyId];
         }
 
-        $assets = FixedAssetMaster::withoutGlobalScopes()->find($request['faID']);
+        $assets = FixedAssetMaster::find($request['faID']);
         $depreciation = FixedAssetDepreciationPeriod::OfCompany($subCompanies)->OfAsset($request['faID'])->sum('depAmountRpt');
 
         $nbv = $assets->costUnitRpt - $depreciation;
@@ -648,7 +648,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         $input = $request->all();
         $companyID = $input['companyID'];
 
-        $items = FixedAssetMaster::OfCompany([$companyID])->isDisposed();
+        $items = FixedAssetMaster::OfCompany([$companyID])->isDisposed()->isApproved();
 
         if (array_key_exists('search', $input)) {
             $search = $input['search'];

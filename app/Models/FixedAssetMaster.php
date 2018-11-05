@@ -432,7 +432,7 @@ use Eloquent as Model;
  */
 class FixedAssetMaster extends Model
 {
-    use ApproveTrait;
+    //use ApproveTrait;
 
     public $table = 'erp_fa_asset_master';
     
@@ -692,6 +692,19 @@ class FixedAssetMaster extends Model
     public function scopeIsSelectedForDisposal($query)
     {
         return $query->where('selectedForDisposal',  0);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeIsApproved($query)
+    {
+        return $query->where('approved',  -1);
     }
 
     public function category_by(){
