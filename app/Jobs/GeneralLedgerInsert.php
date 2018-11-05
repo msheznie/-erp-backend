@@ -1272,7 +1272,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
                         break;
                     case 4: // PV - Payment Voucher
-                        $masterData = PaySupplierInvoiceMaster::with(['bank', 'financeperiod_by'])->find($masterModel["autoID"]);
+                        $masterData = PaySupplierInvoiceMaster::with(['bank', 'financeperiod_by', 'transactioncurrency', 'localcurrency', 'rptcurrency'])->find($masterModel["autoID"]);
 
                         //get balancesheet account
                         $si = PaySupplierInvoiceDetail::selectRaw("SUM(paymentLocalAmount) as localAmount, SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierPaymentCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierPaymentER as transCurrencyER")->WHERE('PayMasterAutoId', $masterModel["autoID"])->first();
@@ -1402,7 +1402,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
                                     $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
 
-                                    if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal)) != 0 || ABS(round($diffRpt)) != 0) {
+                                    if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal,$masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt,$masterData->rptcurrency->DecimalPlaces)) != 0) {
                                         $company = Company::find($masterData->companySystemID);
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
@@ -1574,7 +1574,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $diffLocal = $convertedLocalAmount - $masterLocal;
                                 $diffRpt = $convertedRpt - $masterRpt;
 
-                                if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal)) != 0 || ABS(round($diffRpt)) != 0) {
+                                if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal,$masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt,$masterData->rptcurrency->DecimalPlaces)) != 0) {
                                     $company = Company::find($masterData->companySystemID);
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';

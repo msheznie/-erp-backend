@@ -2286,7 +2286,7 @@ class Helper
 
             $output = Models\AssetDisposalMaster::create($dpMaster);
 
-            $asset = Models\FixedAssetMaster::withoutGlobalScopes()->find($fixedCapital['faID']);
+            $asset = Models\FixedAssetMaster::find($fixedCapital['faID']);
 
             $depreciationLocal = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountLocal');
             $depreciationRpt = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountRpt');
@@ -2325,7 +2325,7 @@ class Helper
                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                     }
 
-                    $asset = Models\FixedAssetMaster::withoutGlobalScopes()->find($val['faID']);
+                    $asset = Models\FixedAssetMaster::find($val['faID']);
 
                     $documentCode = ($val["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
                     $data["departmentID"] = 'AM';

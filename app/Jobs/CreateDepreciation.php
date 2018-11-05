@@ -51,7 +51,7 @@ class CreateDepreciation implements ShouldQueue
                 $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                     $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
                     $query->groupBy('faID');
-                }])->isDisposed()->ofCompany([$depMaster->companySystemID])->orderBy('faID', 'desc')->get();
+                }])->isDisposed()->ofCompany([$depMaster->companySystemID])->isApproved()->orderBy('faID', 'desc')->get();
                 $depAmountRptTotal = 0;
                 $depAmountLocalTotal = 0;
                 if ($faMaster) {
