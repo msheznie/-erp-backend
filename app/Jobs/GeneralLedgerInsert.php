@@ -1330,6 +1330,10 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $localAmountTotal = 0;
                                     $rptAmountTotal = 0;
 
+                                    $masterTransAmountTotal = $si->transAmount;
+                                    $masterLocalAmountTotal = $si->localAmount;
+                                    $masterRptAmountTotal = $si->rptAmount;
+
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
                                     $data['chartOfAccountSystemID'] = $masterData->supplierGLCodeSystemID;
@@ -1394,9 +1398,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                         array_push($finalData, $data);
                                     }
 
-                                    $diffTrans = $transAmountTotal - $masterData->payAmountSuppTrans;
-                                    $diffLocal = $localAmountTotal - $masterData->payAmountCompLocal;
-                                    $diffRpt = $rptAmountTotal - $masterData->payAmountCompRpt;
+                                    $diffTrans = $transAmountTotal - $masterTransAmountTotal;
+                                    $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
+                                    $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
 
                                     if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal)) != 0 || ABS(round($diffRpt)) != 0) {
                                         $company = Company::find($masterData->companySystemID);
@@ -1407,13 +1411,21 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['glAccountType'] = 'BS';
                                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
                                         $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
-                                        $data['documentTransAmount'] = \Helper::roundValue($diffTrans) * -1;
+
+                                        if ($diffTrans > 0 || $diffLocal > 0 || $diffRpt > 0) {
+                                            $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans));
+                                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal));
+                                            $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt));
+                                        } else {
+                                            $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * -1;
+                                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * -1;
+                                            $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * -1;
+                                        }
+
                                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                        $data['documentLocalAmount'] = \Helper::roundValue($diffLocal) * -1;
                                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                        $data['documentRptAmount'] = \Helper::roundValue($diffRpt) * -1;
                                         $data['timestamp'] = \Helper::currentDateTime();
                                         array_push($finalData, $data);
                                     }
@@ -1571,13 +1583,22 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['glAccountType'] = 'BS';
                                     $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
                                     $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue($diffTrans) * -1;
+
+                                    if ($diffTrans > 0 || $diffLocal > 0 || $diffRpt > 0) {
+                                        $data['documentTransAmount'] = \Helper::roundValue($diffTrans);
+                                        $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
+                                        $data['documentRptAmount'] = \Helper::roundValue($diffRpt);
+                                    } else {
+                                        $data['documentTransAmount'] = \Helper::roundValue($diffTrans) * -1;
+                                        $data['documentLocalAmount'] = \Helper::roundValue($diffLocal) * -1;
+                                        $data['documentRptAmount'] = \Helper::roundValue($diffRpt) * -1;
+                                    }
+
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($diffLocal) * -1;
                                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($diffRpt) * -1;
+
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
