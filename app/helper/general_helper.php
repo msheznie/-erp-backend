@@ -1437,7 +1437,11 @@ class Helper
                             }
                             if ($input["documentSystemID"] == 4 && !empty($sourceModel)) {
                                 //$jobPV = CreateReceiptVoucher::dispatch($sourceModel);
-                                $jobPV = self::generateCustomerReceiptVoucher($sourceModel);
+                                if($sourceModel->invoiceType == 3) {
+                                    $jobPV = self::generateCustomerReceiptVoucher($sourceModel);
+                                }else{
+                                    $bankLedger = BankLedgerInsert::dispatch($masterData);
+                                }
                             }
 
                             if ($input["documentSystemID"] == 46 && !empty($sourceModel)) {
@@ -2282,7 +2286,7 @@ class Helper
 
             $output = Models\AssetDisposalMaster::create($dpMaster);
 
-            $asset = Models\FixedAssetMaster::withoutGlobalScopes()->find($fixedCapital['faID']);
+            $asset = Models\FixedAssetMaster::find($fixedCapital['faID']);
 
             $depreciationLocal = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountLocal');
             $depreciationRpt = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountRpt');
@@ -2321,7 +2325,7 @@ class Helper
                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                     }
 
-                    $asset = Models\FixedAssetMaster::withoutGlobalScopes()->find($val['faID']);
+                    $asset = Models\FixedAssetMaster::find($val['faID']);
 
                     $documentCode = ($val["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
                     $data["departmentID"] = 'AM';

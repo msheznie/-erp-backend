@@ -641,7 +641,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
             $query->where('companySystemID', $input['companySystemID']);
             $query->groupBy('faID');
-        }])->isDisposed()->ofCompany([$input['companySystemID']])->isSelectedForDisposal();
+        }])->isDisposed()->ofCompany([$input['companySystemID']])->isSelectedForDisposal()->isApproved();
 
         $search = $request->input('search.value');
 

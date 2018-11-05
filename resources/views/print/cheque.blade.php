@@ -25,14 +25,13 @@
         h6, h3 {
             margin-top: 0px;
             margin-bottom: 0px;
-            font-family: inherit;
             font-weight: bold;
             line-height: 1.2;
             color: inherit;
         }
 
         table > tbody > tr > td {
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .theme-tr-head {
@@ -87,7 +86,7 @@
         }
 
         .table th, .table td {
-            padding: 6.4px !important;
+            padding: 3px !important;
         }
 
         table.table-bordered {
@@ -101,10 +100,11 @@
         table.table-bordered, .table-bordered th, .table-bordered td.details {
             border: 1px solid #e2e3e5;
             font-size: 10.5px !important;
+            padding: 0 !important;
         }
 
         table.header-part, .header-part th, .header-part td {
-            font-size: 13px !important;
+            font-size: 12px !important;
         }
 
         table > thead > tr > th {
@@ -137,7 +137,7 @@
         }
 
         .footer {
-            bottom: 40px;
+            bottom: 280px;
         }
 
         .pagenum:before {
@@ -155,9 +155,9 @@
 
         .content {
             margin-bottom: 45px;
-            padding-top: 40px;
-            padding-left: 40px;
-            padding-right: 40px;
+            padding-top: 20px;
+            padding-left: 0px;
+            padding-right: 5px;
         }
 
         .border-top-remov {
@@ -182,20 +182,43 @@
         }
     </style>
 </head>
-<body onload="window.print()">
-<div class="footer">
-    {{--Footer Page <span class="pagenum"></span>--}}
-    {{-- <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>--}}
-</div>
-<div id="watermark"></div>
+{{--<body onload="window.print()">--}}
+<body>
 
 @foreach ($entities as $entity)
+    <div class="footer">
+        <table class="header-part" style="width: 100%">
+            <tr style="width: 100%">
+                <td valign="top" style="width: 50%"></td>
+                <td valign="top" style="width: 50%;padding-left: 160px" class="text-center">
+                    <b> {{ \App\helper\Helper::dateFormat($date)}} </b><br><br>
+                </td>
+            </tr>
+            <tr style="width: 100%">
+                <td valign="top" style="width: 50%;padding-right: 10px" class="text-right"><b>{{$entity->payeeName}}</b></td>
+                <td valign="top" style="width: 50%" class="text-center"></td>
+            </tr>
+            <tr style="width: 100%">
+                <td valign="top" style="width: 50%" class="text-right">
+                    <b>  {{$entity->amount_word}} and {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)
+                            1000 @else 100 @endif </b>
+                </td>
+                <td valign="top" style="width: 50%;padding-left: 70px" class="text-center"></td>
+            </tr>
+            <tr style="width: 100%">
+                <td valign="top" style="width: 50%" class="text-center"></td>
+                <td valign="top" style="width: 50%;padding-left: 80px" class="text-center">
+                    <b>{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>
+                </td>
+            </tr>
+        </table>
+    </div>
     <div class="card-body content {{ $loop->last ? '' : 'page-break' }}">
         <div style="margin-top: 10px">
             <table class="header-part" style="width: 100%">
                 <tr style="width: 100%">
-                    <td valign="top" style="width: 70%"></td>
-                    <td valign="top" style="width: 30%">
+                    <td valign="top" style="width: 80%"></td>
+                    <td valign="top" style="width: 20%">
                         <b>
                             {{$entity->documentCode}}
                         </b>
@@ -209,13 +232,13 @@
                 </tr>
             </table>
         </div>
-        <div style="margin-top: 150px">
+        <div style="margin-top: 155px">
             @if($entity->details && $entity->invoiceType == 2)
                 <table class="table table-bordered details" style="width: 100%;">
                     <tbody>
                     @foreach ($entity->details as $item)
-                        <tr style="width: 100%;" class="border-less">
-                          {{--  <td class="border-less">{{$loop->iteration}}</td>--}}
+                        <tr style="width: 100%;padding: 0 !important;" class="border-less">
+                            {{--  <td class="border-less">{{$loop->iteration}}</td>--}}
                             <td class="border-less">{{\App\helper\Helper::dateFormat($item['bookingInvoiceDate'])}}</td>
                             <td class="border-less">{{$item['bookingInvDocCode']}}</td>
                             <td class="border-less">{{$item['supplierInvoiceNo']}}</td>
@@ -226,68 +249,42 @@
                 </table>
             @endif
 
-                @if($entity->details && $entity->invoiceType == 5)
-                    <table class="table table-bordered details" style="width: 100%;">
-                        <tbody>
-                        @foreach ($entity->details as $item)
-                            <tr style="width: 100%;" class="border-less">
-                                {{--  <td class="border-less">{{$loop->iteration}}</td>--}}
-                                <td class="border-less"> - </td>
-                                <td class="border-less">{{$item['purchaseOrderCode']}}</td>
-                                <td class="border-less"> - </td>
-                                <td class="border-less text-right">{{number_format($item['supplierTransAmount'],$entity->decimalPlaces)}}</td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                @endif
-                @if($entity->details && $entity->invoiceType == 3)
-                    <table class="table table-bordered details" style="width: 100%;">
-                        <tbody>
-                        @foreach ($entity->details as $item)
-                            <tr style="width: 100%;" class="border-less">
-                                {{--  <td class="border-less">{{$loop->iteration}}</td>--}}
-                                <td class="border-less"> - </td>
-                                <td class="border-less">{{$item['glCode']}}</td>
-                                <td class="border-less"> - </td>
-                                <td class="border-less text-right">{{number_format($item['DPAmount'],$entity->decimalPlaces)}}</td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                @endif
+            @if($entity->details && $entity->invoiceType == 5)
+                <table class="table table-bordered details" style="width: 100%;">
+                    <tbody>
+                    @foreach ($entity->details as $item)
+                        <tr style="width: 100%;" class="border-less">
+                            {{--  <td class="border-less">{{$loop->iteration}}</td>--}}
+                            <td class="border-less"> -</td>
+                            <td class="border-less">{{$item['purchaseOrderCode']}}</td>
+                            <td class="border-less"> -</td>
+                            <td class="border-less text-right">{{number_format($item['supplierTransAmount'],$entity->decimalPlaces)}}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            @endif
+            @if($entity->details && $entity->invoiceType == 3)
+                <table class="table table-bordered details" style="width: 100%;">
+                    <tbody>
+                    @foreach ($entity->details as $item)
+                        <tr style="width: 100%;" class="border-less">
+                            {{--  <td class="border-less">{{$loop->iteration}}</td>--}}
+                            <td class="border-less"> -</td>
+                            <td class="border-less">{{$item['glCode']}}</td>
+                            <td class="border-less"> -</td>
+                            <td class="border-less text-right">{{number_format($item['DPAmount'],$entity->decimalPlaces)}}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            @endif
         </div>
         <div style="margin-top: 100px">
             <table class="header-part" style="width: 100%">
                 <tr style="width: 100%">
                     <td valign="top" style="width: 70%"><b>Settlement of Supplier Invoices</b></td>
                     <td valign="top" style="width: 30%" class="text-right">
-                        <b>{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>
-                    </td>
-                </tr>
-                <tr style="width: 100%">
-                    <td valign="top" style="width: 50%">
-                        <br> <br> <br> <br> <br> <br> <br><br> <br> <br>
-                    </td>
-                    <td valign="top" style="width: 50%" class="text-right"></td>
-                </tr>
-                <tr style="width: 100%">
-                    <td valign="top" style="width: 50%"></td>
-                    <td valign="top" style="width: 50%" class="text-right">
-                        <b> {{ \App\helper\Helper::dateFormat($date)}} </b>
-                    </td>
-                </tr>
-                <tr style="width: 100%">
-                    <td valign="top" style="width: 50%" class="text-right"><b>{{$entity->payeeName}}</b></td>
-                    <td valign="top" style="width: 50%" class="text-right">
-                    </td>
-                </tr>
-                <tr style="width: 100%">
-                    <td valign="top" style="width: 50%" class="text-right">
-                        <b>  {{$entity->amount_word}} and {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)
-                                1000 @else 100 @endif </b>
-                    </td>
-                    <td valign="top" style="width: 50%" class="text-right">
                         <b>{{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>
                     </td>
                 </tr>

@@ -850,7 +850,7 @@ class BankLedgerAPIController extends AppBaseController
         foreach ($bankLedger as $item) {
 
             $temArray['chequePrintedYN'] = -1;
-            $this->bankLedgerRepository->update($temArray, $item->bankLedgerAutoID);
+            //$this->bankLedgerRepository->update($temArray, $item->bankLedgerAutoID);
 
             $amountSplit = explode(".",$item->payAmountBank);
             $intAmt = 0;
@@ -880,16 +880,18 @@ class BankLedgerAPIController extends AppBaseController
             }
 
             $temDetails = PaySupplierInvoiceMaster::where('PayMasterAutoId', $item['documentSystemCode'])
-                                                  //->with(['supplierdetail'])
                                                   ->first();
 
-
-            if($input['invoiceType'] == 2){
-                $item['details'] = $temDetails->supplierdetail;
-            }else if($input['invoiceType'] == 3){
-                $item['details'] = $temDetails->directdetail;
-            }else if($input['invoiceType'] == 5){
-                $item['details'] = $temDetails->advancedetail;
+            if(!empty($temDetails)){
+                if($input['invoiceType'] == 2){
+                    $item['details'] = $temDetails->supplierdetail;
+                }else if($input['invoiceType'] == 3){
+                    $item['details'] = $temDetails->directdetail;
+                }else if($input['invoiceType'] == 5){
+                    $item['details'] = $temDetails->advancedetail;
+                }else{
+                    $item['details'] = [];
+                }
             }else{
                 $item['details'] = [];
             }
