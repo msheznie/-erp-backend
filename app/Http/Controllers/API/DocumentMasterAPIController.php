@@ -1,15 +1,16 @@
 <?php
 
 namespace App\Http\Controllers\API;
+
 /**
-=============================================
--- File Name : DocumentMasterAPIController.php
--- Project Name : ERP
--- Module Name :  Document Master
--- Author : Mohamed Fayas
--- Create date : 14 - March 2018
--- Description : This file contains the all CRUD for Document Master
--- REVISION HISTORY
+ * =============================================
+ * -- File Name : DocumentMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Document Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 14 - March 2018
+ * -- Description : This file contains the all CRUD for Document Master
+ * -- REVISION HISTORY
  */
 use App\Http\Requests\API\CreateDocumentMasterAPIRequest;
 use App\Http\Requests\API\UpdateDocumentMasterAPIRequest;
@@ -25,7 +26,6 @@ use Response;
  * Class DocumentMasterController
  * @package App\Http\Controllers\API
  */
-
 class DocumentMasterAPIController extends AppBaseController
 {
     /** @var  DocumentMasterRepository */
@@ -136,13 +136,15 @@ class DocumentMasterAPIController extends AppBaseController
         return $this->sendResponse($id, 'Document Master deleted successfully');
     }
 
-    public function getAllDocuments(){
+    public function getAllDocuments()
+    {
         $document = \Helper::getAllDocuments();
         return $this->sendResponse($document, 'record retrieved successfully');
     }
-    public function getAllApprovalDocuments(){
 
-        $document=  DocumentMaster::select('*')->whereIn('departmentSystemID',[1,3,4])->whereIn('documentSystemID',[1, 2, 4, 5, 11, 50, 51, 52, 15, 19, 20])->get()->toArray();
+    public function getAllApprovalDocuments()
+    {
+        $document = DocumentMaster::select('*')->whereIn('departmentSystemID', [1, 3, 4])->whereIn('documentSystemID', [1, 2, 4, 5, 11, 50, 51, 52, 15, 19, 20, 21])->get()->toArray();
         return $this->sendResponse($document, 'record retrieved successfully');
     }
 }

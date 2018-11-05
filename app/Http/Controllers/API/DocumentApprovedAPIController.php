@@ -166,17 +166,17 @@ class DocumentApprovedAPIController extends AppBaseController
         }
 
 
-        if($companies){
+        if ($companies) {
             $filter .= " AND erp_documentapproved.companySystemID IN (" . implode(',', $companies) . ")";
         }
 
-        $where='';
+        $where = '';
         if ($search) {
-              $search = str_replace("\\", "\\\\\\\\", $search);
+            $search = str_replace("\\", "\\\\\\\\", $search);
             $where .= " WHERE  (documentCode LIKE '%$search%' OR  comments LIKE '%$search%' OR SupplierOrCustomer LIKE '%$search%' OR DocumentValue LIKE '%$search%' )";
         }
 
-            $qry="SELECT * FROM (SELECT
+        $qry = "SELECT * FROM (SELECT
 	*
 FROM
 	(
@@ -534,9 +534,58 @@ WHERE
 	AND erp_documentapproved.documentSystemID IN ( 19 ) 
 	AND employeesdepartments.employeeSystemID = $employeeSystemID 
 	) AS PendingCreditNoteApprovals
+	UNION All
+	SELECT
+	*
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),IF(preRollapprovedDate !='',preRollapprovedDate,erp_documentapproved.docConfirmedDate)) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_customerreceivepayment.narration,
+	erp_documentapproved.docConfirmedDate,
+	employees.empName AS confirmedEmployee,
+	customermaster.CustomerName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	erp_customerreceivepayment.receivedAmount AS DocumentValue,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	erp_customerreceivepayment.documentType AS documentType
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_customerreceivepayment ON erp_customerreceivepayment.companySystemID = erp_documentapproved.companySystemID
+	AND erp_customerreceivepayment.documentSystemID = erp_documentapproved.documentSystemID
+	AND erp_customerreceivepayment.custReceivePaymentAutoID = erp_documentapproved.documentSystemCode
+	AND erp_customerreceivepayment.RollLevForApp_curr = erp_documentapproved.rollLevelOrder
+	AND erp_customerreceivepayment.confirmedYN = 1
+	AND erp_customerreceivepayment.approved = 0
+	LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_customerreceivepayment.customerID
+	INNER JOIN currencymaster ON currencymaster.currencyID = erp_customerreceivepayment.custTransactionCurrencyID
+WHERE
+	erp_documentapproved.approvedYN = 0
+	AND erp_documentapproved.rejectedYN = 0
+	AND erp_documentapproved.approvalGroupID > 0
+    $filter
+	AND erp_documentapproved.documentSystemID IN ( 21 )
+	AND employeesdepartments.employeeSystemID = $employeeSystemID
+	) AS PendingReceiptVoucherApprovals
 	)t INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID $where ORDER BY docConfirmedDate $sort";
-
-
 
 
         $output = DB::select($qry);
@@ -556,9 +605,10 @@ WHERE
             ->make(true);
     }
 
-    function getTotalCountOfApproval(){
-        $employeeSystemID= \Helper::getEmployeeSystemID();
-        $qry="
+    function getTotalCountOfApproval()
+    {
+        $employeeSystemID = \Helper::getEmployeeSystemID();
+        $qry = "
         SELECT IFNULL(SUM(totalCount),0) as totalCount FROM (
 SELECT
 *
@@ -722,13 +772,14 @@ WHERE
 
 
 ";
-        $output=DB::select($qry);
+        $output = DB::select($qry);
 
         return $this->sendResponse($output[0]->totalCount, 'Document Approved deleted successfully');
 
     }
 
-    public function getAllcompaniesByDepartment(Request $request){
+    public function getAllcompaniesByDepartment(Request $request)
+    {
         $employeeSystemID = \Helper::getEmployeeSystemID();
 
         $allCompanies = DB::select("select `companymaster`.`companySystemID`, `companymaster`.`CompanyID`, `companymaster`.`CompanyName` FROM `employeesdepartments` INNER JOIN `companymaster` ON `employeesdepartments`.`companySystemID` = `companymaster`.`companySystemID` WHERE `employeeSystemID` = $employeeSystemID AND `isGroup` = 0 GROUP BY employeesdepartments.companySystemID");
