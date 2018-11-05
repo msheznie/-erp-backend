@@ -409,7 +409,7 @@ class DebitNoteAPIController extends AppBaseController
         $monthEnd = $input['FYPeriodDateTo'];
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Document date is not within the selected financial period !', 500);
+           // return $this->sendError('Document date is not within the selected financial period !', 500);
         }
 
         if ($debitNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -436,7 +436,8 @@ class DebitNoteAPIController extends AppBaseController
             }
 
             $checkItems = DebitNoteDetails::where('debitNoteAutoID', $id)
-                ->count();
+                                           ->count();
+
             if ($checkItems == 0) {
                 return $this->sendError('Every debit note should have at least one item', 500);
             }
