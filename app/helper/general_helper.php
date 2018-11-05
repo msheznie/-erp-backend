@@ -2678,10 +2678,10 @@ class Helper
                 }
 
                 Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
-                DB::commit();
-
                 $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
                 $jobPV = BankLedgerInsert::dispatch($masterData);
+
+                DB::commit();
 
             } catch (\Exception $e) {
                 DB::rollback();

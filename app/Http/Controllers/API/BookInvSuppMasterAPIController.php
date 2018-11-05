@@ -181,7 +181,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         $inputParam = $input;
-        $inputParam["departmentSystemID"] = 10;
+        $inputParam["departmentSystemID"] = 1;
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);

@@ -49,11 +49,11 @@ class BankLedgerInsert implements ShouldQueue
                 $empID = Employee::find($masterModel['employeeSystemID']);
                 switch ($masterModel["documentSystemID"]) {
                     case 4: // Payment Voucher
-                        $masterData = PaySupplierInvoiceMaster::find($masterModel["autoID"]);
-                        $postedDate = GeneralLedger::where('documentSystemID', $masterData->documentSystemID)
-                            ->where('companySystemID', $masterData->companySystemID)
-                            ->where('documentSystemCode', $masterModel["autoID"])
-                            ->first();
+                        $masterData = PaySupplierInvoiceMaster::with('financeperiod_by')->find($masterModel["autoID"]);
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if ($masterData->financeperiod_by->isActive == -1) {
+                            $masterDocumentDate = $masterData->BPVdate;
+                        }
                         $data['companySystemID'] = $masterData->companySystemID;
                         $data['companyID'] = $masterData->companyID;
                         $data['documentSystemID'] = $masterData->documentSystemID;
@@ -61,7 +61,7 @@ class BankLedgerInsert implements ShouldQueue
                         $data['documentSystemCode'] = $masterModel["autoID"];
                         $data['documentCode'] = $masterData->BPVcode;
                         $data['documentDate'] = $masterData->BPVdate;
-                        $data['postedDate'] = $postedDate->documentDate;
+                        $data['postedDate'] = $masterDocumentDate;
                         $data['documentNarration'] = $masterData->BPVNarration;
                         $data['bankID'] = $masterData->BPVbank;
                         $data['bankAccountID'] = $masterData->BPVAccount;
@@ -105,7 +105,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['documentSystemCode'] = $custReceivePayment->custReceivePaymentAutoID;
                                 $data['documentCode'] = $custReceivePayment->custPaymentReceiveCode;
                                 $data['documentDate'] = $custReceivePayment->custPaymentReceiveDate;
-                                $data['postedDate'] = $custReceivePayment->postedDate;
+                                $data['postedDate'] = $masterDocumentDate;
                                 $data['documentNarration'] = $custReceivePayment->narration;
                                 $data['bankID'] = $custReceivePayment->bankID;
                                 $data['bankAccountID'] = $custReceivePayment->bankAccount;
