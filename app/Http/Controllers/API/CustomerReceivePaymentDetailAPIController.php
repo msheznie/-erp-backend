@@ -146,12 +146,6 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             return $this->sendError('<b>Below listed invoices are already added to the current receipt.</b> <br>' . join(' <br> ', $names), 500);
         } else {
 
-
-            /*ar autoID sumamount >
-            already bookeed
-
-            */
-
             $error['settled'] = [];
             $selectedArAutoID = [];
             if ($value) {
@@ -202,9 +196,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     $inputData[$x]['receiveAmountRpt'] = 0;
                     $x++;
 
-
                 }
-
 
                 if (!empty($error['settled'])) {
                     return $this->sendError('<b>Below listed invoices are already settled fully.</b> <br>' . join(' <br> ', $error['settled']), 500);
@@ -225,7 +217,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         AccountsReceivableLedger::whereIn('arAutoID', $selectedArAutoID)->update(array('selectedToPaymentInv' => -1));
 
 
-        return $this->sendResponse($customerReceivePaymentDetails, 'Customer Receive Payment Detail saved successfully');
+        return $this->sendResponse($customerReceivePaymentDetails, 'Customer Receive Payment Detail added successfully');
     }
 
     /**
@@ -386,6 +378,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         if (empty($customerReceivePaymentDetail)) {
             return $this->sendError('Customer Receive Payment Detail not found');
         }
+
         AccountsReceivableLedger::where('arAutoID', $customerReceivePaymentDetail->arAutoID)->update(array('selectedToPaymentInv' => 0, 'fullyInvoiced' => 1));
         $customerReceivePaymentDetail->delete();
 
@@ -400,9 +393,11 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->first();
         $detail = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->where('bookingInvCode', 0)->first();
+
         if ($detail) {
             return $this->sendError('Unallocation detail is already exist');
         }
+
         $receiveAmountTrans = $input['receiveAmountTrans'];
 
         $data['custReceivePaymentAutoID'] = $custReceivePaymentAutoID;
@@ -437,7 +432,6 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     {
         $input = $request->all();
 
-
         $detail = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID', $input['custRecivePayDetAutoID'])->first();
         if ($detail->comments != $input['comments']) {
             $post['comments'] = $input['comments'];
@@ -448,41 +442,48 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         }
 
         /*if payment greater than blance amount */
-        $totalPaidAmount = CustomerReceivePaymentDetail::select(DB::raw("SUM(receiveAmountTrans) as receiveAmountTrans"))->where('arAutoID', $detail['arAutoID'])->first();
+        /*$totalPaidAmount = CustomerReceivePaymentDetail::select(DB::raw("SUM(receiveAmountTrans) as receiveAmountTrans"))->where('arAutoID', $detail['arAutoID'])->first();
 
         $totalinvoiceamount = $detail->bookingAmountTrans - ($totalPaidAmount->receiveAmountTrans + $input['receiveAmountTrans']);
         if ($totalinvoiceamount < 0) {
-            return $this->sendError('You can not enter amount greater than invoice amount', 500);
+            return $this->sendError('You cannot enter amount greater than balance amounat', 500);
         }
         /**/
 
-
-        $post['receiveAmountTrans'] = $input['receiveAmountTrans'];
-        $currency = \Helper::convertAmountToLocalRpt(21, $detail->custReceivePaymentAutoID, $input['receiveAmountTrans']);
-
-        $input['receiveAmountTrans'] = $input['receiveAmountTrans'];
+        $currency = \Helper::convertAmountToLocalRpt(206, $input['arAutoID'], $input['receiveAmountTrans']);
         $input['receiveAmountLocal'] = \Helper::roundValue($currency['localAmount']);
         $input['receiveAmountRpt'] = \Helper::roundValue($currency['reportingAmount']);
 
-        $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->update($post, $input['custRecivePayDetAutoID']);
+        $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->update($input, $input['custRecivePayDetAutoID']);
 
-        $totalReceiveAmountTrans = CustomerReceivePaymentDetail::select(DB::raw("SUM(receiveAmountTrans) as receiveAmountTrans"))->where('arAutoID', $detail['arAutoID'])->first();
+        $detailUpdateBalance = CustomerReceivePaymentDetail::find($input['custRecivePayDetAutoID']);
+
+        $totalReceiveAmountTrans = CustomerReceivePaymentDetail::where('arAutoID', $input['arAutoID'])
+            ->sum('receiveAmountTrans');
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, IFNULL(Sum(erp_matchdocumentmaster.matchedAmount),0)*-1 AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvCodeSystem"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
-
         $totReceiveAmount = $totalReceiveAmountTrans['receiveAmountTrans'] - $matchedAmount['SumOfmatchedAmount'];
 
-        $custbalanceAmount = $detail->bookingAmountTrans - $totReceiveAmount;
-        $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->update(array('custbalanceAmount' => $custbalanceAmount), $input['custRecivePayDetAutoID']);
+        $custbalanceAmount = $detailUpdateBalance->bookingAmountTrans - $totReceiveAmount;
 
+        $detailUpdateBalance->custbalanceAmount = $custbalanceAmount;
+        $detailUpdateBalance->save();
 
-        if ($totalinvoiceamount == 0) {
-            $ledger['fullyInvoiced'] = 2;
-        } else {
-            $ledger['fullyInvoiced'] = 1;
+        //updating Accounts receivable Ledger
+        $arLedgerUpdate = AccountsReceivableLedger::find($input['arAutoID']);
+
+        if ($totReceiveAmount == 0) {
+            $arLedgerUpdate->fullyInvoiced = 0;
+            $arLedgerUpdate->selectedToPaymentInv = 0;
+        } else if ($detailUpdateBalance->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount > $detailUpdateBalance->bookingAmountTrans) {
+            $arLedgerUpdate->fullyInvoiced = 2;
+            $arLedgerUpdate->selectedToPaymentInv = -1;
+        } else if (($detailUpdateBalance->bookingAmountTrans > $totReceiveAmount) && ($totReceiveAmount > 0)) {
+            $arLedgerUpdate->fullyInvoiced = 1;
+            $arLedgerUpdate->selectedToPaymentInv = 0;
         }
-        AccountsReceivableLedger::where('arAutoID', $customerReceivePaymentDetail->arAutoID)->update($ledger);
+        $arLedgerUpdate->save();
 
         return $this->sendResponse('', 'Unallocation amount added successfully');
     }
