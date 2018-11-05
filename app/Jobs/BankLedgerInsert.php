@@ -6,6 +6,7 @@ use App\Models\BankLedger;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\Employee;
+use App\Models\GeneralLedger;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierMaster;
 use Illuminate\Bus\Queueable;
@@ -49,6 +50,10 @@ class BankLedgerInsert implements ShouldQueue
                 switch ($masterModel["documentSystemID"]) {
                     case 4: // Payment Voucher
                         $masterData = PaySupplierInvoiceMaster::find($masterModel["autoID"]);
+                        $postedDate = GeneralLedger::where('documentSystemID', $masterData->documentSystemID)
+                            ->where('companySystemID', $masterData->companySystemID)
+                            ->where('documentSystemCode', $masterModel["autoID"])
+                            ->first();
                         $data['companySystemID'] = $masterData->companySystemID;
                         $data['companyID'] = $masterData->companyID;
                         $data['documentSystemID'] = $masterData->documentSystemID;
@@ -56,7 +61,7 @@ class BankLedgerInsert implements ShouldQueue
                         $data['documentSystemCode'] = $masterModel["autoID"];
                         $data['documentCode'] = $masterData->BPVcode;
                         $data['documentDate'] = $masterData->BPVdate;
-                        $data['postedDate'] = $masterData->postedDate;
+                        $data['postedDate'] = $postedDate->documentDate;
                         $data['documentNarration'] = $masterData->BPVNarration;
                         $data['bankID'] = $masterData->BPVbank;
                         $data['bankAccountID'] = $masterData->BPVAccount;
