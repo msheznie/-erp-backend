@@ -1053,6 +1053,18 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
     Route::resource('audit_trails', 'AuditTrailAPIController');
+
+    Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
+    Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
+    Route::resource('asset_types', 'AssetTypeAPIController');
+    Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
+    Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
+    Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
+    Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');
+    Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
+    Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
+    Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
+    Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1085,13 +1097,14 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 4,'autoID' => 76732, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    //$master = ['documentSystemID' => 4,'autoID' => 76732, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-    //$master = \App\Models\PaySupplierInvoiceMaster::find(76732);
+    $master = \App\Models\PaySupplierInvoiceMaster::find(76734);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
-    $job = \App\Jobs\BankLedgerInsert::dispatch($master);
+    //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
     //$master = \App\Models\AssetDisposalMaster::find(241);
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
+    $job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
 });
 
 Route::get('runQueueSR', function () {
@@ -1099,16 +1112,6 @@ Route::get('runQueueSR', function () {
     $job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
 
-Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
-Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
-Route::resource('asset_types', 'AssetTypeAPIController');
-Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
-Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
-Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
-Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');
-Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
-Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
-Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
-Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
+
 
 
