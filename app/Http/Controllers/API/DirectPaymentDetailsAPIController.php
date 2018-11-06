@@ -458,8 +458,39 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $input['bankAmount'] = \Helper::roundValue($bankAmount);
         }
 
-        $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
+        if ($directPaymentDetails->toBankCurrencyID) {
+            $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $directPaymentDetails->toBankCurrencyID)->first();
+            $conversion = $conversion->conversion;
+            $bankAmount2 = 0;
+            if ($directPaymentDetails->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
+                $bankAmount2 = $input['DPAmount'];
+            } else {
+                if ($conversion > $directPaymentDetails->DPAmountCurrencyER) {
+                    if ($conversion > 1) {
+                        $bankAmount2 = $input['DPAmount'] / $conversion;
+                    } else {
+                        $bankAmount2 = $input['DPAmount'] * $conversion;
+                    }
+                } else {
+                    If ($conversion > 1) {
+                        $bankAmount2 = $input['DPAmount'] * $conversion;
+                    } else {
+                        $bankAmount2 = $input['DPAmount'] / $conversion;
+                    }
+                }
+            }
 
+            $companyCurrencyConversion = \Helper::currencyConversion($directPaymentDetails->companySystemID, $directPaymentDetails->toBankCurrencyID, $directPaymentDetails->toBankCurrencyID, $bankAmount2);
+
+            $input['toCompanyLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $input['toCompanyLocalCurrencyAmount'] = $companyCurrencyConversion['localAmount'];
+            $input['toCompanyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['toCompanyRptCurrencyAmount'] = $companyCurrencyConversion['reportingAmount'];
+            $input['toBankCurrencyER'] = $conversion;
+            $input['toBankAmount'] = $bankAmount2;
+        }
+
+        $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
         return $this->sendResponse($directPaymentDetails->toArray(), 'DirectPaymentDetails updated successfully');
     }
 
