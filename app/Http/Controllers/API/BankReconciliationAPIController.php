@@ -156,7 +156,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $end = (new Carbon())->endOfMonth();
         if ($input['bankRecAsOf'] > $end) {
-            return $this->sendError('You cannot select a date greater than the current month last day', 500);
+           // return $this->sendError('You cannot select a date greater than the current month last day', 500);
         }
 
         $input['documentSystemID'] = 62;
@@ -213,14 +213,21 @@ class BankReconciliationAPIController extends AppBaseController
 
 
         $openingBalance = BankLedger::selectRaw('companySystemID,bankAccountID,trsClearedYN,bankClearedYN,ABS(SUM(if(bankClearedAmount < 0,bankClearedAmount,0))) - SUM(if(bankClearedAmount > 0,bankClearedAmount,0)) as opening')
-            ->where('companySystemID', $input['companySystemID'])
-            ->where("bankAccountID", $input['bankAccountAutoID'])
-            ->where("trsClearedYN", -1)
-            ->where("bankClearedYN", -1)
-            ->groupBy('companySystemID', 'bankAccountID')
-            ->first();
-        $input['openingBalance'] = $openingBalance->opening;
-        $input['closingBalance'] = $openingBalance->opening;
+                                    ->where('companySystemID', $input['companySystemID'])
+                                    ->where("bankAccountID", $input['bankAccountAutoID'])
+                                    ->where("trsClearedYN", -1)
+                                    ->where("bankClearedYN", -1)
+                                    ->groupBy('companySystemID', 'bankAccountID')
+                                    ->first();
+
+        if(!empty($openingBalance)){
+            $input['openingBalance'] = $openingBalance->opening;
+            $input['closingBalance'] = $openingBalance->opening;
+        }else{
+            $input['openingBalance'] = 0;
+            $input['closingBalance'] = 0;
+        }
+
         $bankReconciliations = $this->bankReconciliationRepository->create($input);
 
         return $this->sendResponse($bankReconciliations->toArray(), 'Bank Reconciliation saved successfully');
