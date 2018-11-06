@@ -760,4 +760,9 @@ class FixedAssetMaster extends Model
         return $this->belongsTo('App\Models\AssetType','assetType','typeID');
     }
 
+    public function group_to()
+    {
+        return $this->belongsTo('App\Models\FixedAssetMaster','groupTO','faID');
+    }
+
 }
