@@ -1053,6 +1053,11 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
     Route::resource('audit_trails', 'AuditTrailAPIController');
+
+    Route::post('generateAssetInsuranceReport', 'FixedAssetMasterAPIController@generateAssetInsuranceReport');
+    Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport');
+
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

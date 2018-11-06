@@ -432,7 +432,7 @@ use Eloquent as Model;
  */
 class FixedAssetMaster extends Model
 {
-    use ApproveTrait;
+    //use ApproveTrait;
 
     public $table = 'erp_fa_asset_master';
     
@@ -732,5 +732,19 @@ class FixedAssetMaster extends Model
         return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
     }
 
-    
+    public function department()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function finance_category()
+    {
+        return $this->belongsTo('App\Models\AssetFinanceCategory','AUDITCATOGARY','faFinanceCatID');
+    }
+
+    public function asset_type()
+    {
+        return $this->belongsTo('App\Models\AssetType','assetType','typeID');
+    }
+
 }
