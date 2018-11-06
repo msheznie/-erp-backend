@@ -525,6 +525,7 @@ class Helper
                                     $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                                     if (!$docAttachment) {
                                         return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
+
                                     }
                                 }
                             } else {
@@ -1437,9 +1438,9 @@ class Helper
                             }
                             if ($input["documentSystemID"] == 4 && !empty($sourceModel)) {
                                 //$jobPV = CreateReceiptVoucher::dispatch($sourceModel);
-                                if($sourceModel->invoiceType == 3) {
+                                if ($sourceModel->invoiceType == 3) {
                                     $jobPV = self::generateCustomerReceiptVoucher($sourceModel);
-                                }else{
+                                } else {
                                     $bankLedger = BankLedgerInsert::dispatch($masterData);
                                 }
                             }
@@ -1770,7 +1771,7 @@ class Helper
     public static function getEmployeeInfoByURL($input)
     {
 
-        if(!array_key_exists('Authorization',$input) || $input['Authorization'] == ""){
+        if (!array_key_exists('Authorization', $input) || $input['Authorization'] == "") {
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
@@ -1778,14 +1779,14 @@ class Helper
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
-        $token =  trim(str_replace("","",$input['Authorization']));
+        $token = trim(str_replace("", "", $input['Authorization']));
 
-       $oauth = Models\AccessTokens::where('id','<>',$token)
-                                    //->where('id','like',"%{$token}%")
-                                    ->where('revoked',0)
-                                    ->get();
+        $oauth = Models\AccessTokens::where('id', '<>', $token)
+            //->where('id','like',"%{$token}%")
+            ->where('revoked', 0)
+            ->get();
 
-        if(empty($oauth)){
+        if (empty($oauth)) {
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
@@ -1793,9 +1794,9 @@ class Helper
         $user = Models\User::find($id);
         $employee = Models\Employee::find($user->employee_id);
 
-        if($employee){
+        if ($employee) {
             return ['success' => true, 'message' => $employee];
-        }else{
+        } else {
             return ['success' => false, 'message' => 'Unauthorized'];
         }
     }
@@ -2606,11 +2607,12 @@ class Helper
                                 $receivePaymentDetail['comRptCurrencyER'] = $val->toCompanyRptCurrencyER;
                                 $receivePaymentDetail['comRptAmount'] = $val->toCompanyRptCurrencyAmount;
                                 Log::info($receivePaymentDetail);
-                                $custRecMaster = Models\DirectReceiptDetail::create($receivePaymentDetail);
+                                $custRecDetail = Models\DirectReceiptDetail::create($receivePaymentDetail);
                             }
 
+                            DB::commit();
                             $params = array('autoID' => $custRecMaster->custReceivePaymentAutoID, 'company' => $pvMaster->interCompanyToSystemID, 'document' => 21, 'segment' => '', 'category' => '', 'amount' => 0);
-                            $confirm = \Helper::confirmDocument($params);
+                            $confirm = self::confirmWithoutRuleDocument($params);
                             Log::info($confirm["message"]);
                         }
                     } else {
@@ -2672,12 +2674,12 @@ class Helper
 
                                 $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
                                 Log::info($receivePayment);
+                                DB::commit();
                             }
                         }
                     }
                 }
 
-                DB::commit();
                 Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
                 $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
                 $jobPV = BankLedgerInsert::dispatch($masterData);
@@ -2685,6 +2687,411 @@ class Helper
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($e->getMessage());
+            }
+        }
+    }
+
+
+    /**
+     * A common function to confirm document with approval creation
+     * @param $params : accept parameters as an array
+     * $param 1-documentSystemID : autoID
+     * $param 2-company : company
+     * $param 3-document : document
+     * $param 4-segment : segment
+     * $param 5-category : category
+     * $param 6-amount : amount
+     * no return values
+     */
+    public static function confirmWithoutRuleDocument($params)
+    {
+        /** check document is already confirmed*/
+        if (!array_key_exists('autoID', $params)) {
+            return ['success' => false, 'message' => 'Parameter documentSystemID is missing'];
+        }
+
+        if (!array_key_exists('company', $params)) {
+            return ['success' => false, 'message' => 'Parameter company is missing'];
+        }
+
+        if (!array_key_exists('document', $params)) {
+            return ['success' => false, 'message' => 'Parameter document is missing'];
+        }
+
+
+        $docInforArr = array('documentCodeColumnName' => '', 'confirmColumnName' => '', 'confirmedBy' => '', 'confirmedBySystemID' => '', 'confirmedDate' => '', 'tableName' => '', 'modelName' => '', 'primarykey' => '');
+        switch ($params["document"]) { // check the document id and set relavant parameters
+            case 1:
+            case 50:
+            case 51:
+                $docInforArr["documentCodeColumnName"] = 'purchaseRequestCode';
+                $docInforArr["confirmColumnName"] = 'PRConfirmedYN';
+                $docInforArr["confirmedBy"] = 'PRConfirmedBy';
+                $docInforArr["confirmedByEmpID"] = 'PRConfirmedByEmpName';
+                $docInforArr["confirmedBySystemID"] = 'PRConfirmedBySystemID';
+                $docInforArr["confirmedDate"] = 'PRConfirmedDate';
+                $docInforArr["tableName"] = 'erp_purchaserequest';
+                $docInforArr["modelName"] = 'PurchaseRequest';
+                $docInforArr["primarykey"] = 'purchaseRequestID';
+                break;
+            case 2:
+            case 5:
+            case 52:
+                $docInforArr["documentCodeColumnName"] = 'purchaseOrderCode';
+                $docInforArr["confirmColumnName"] = 'poConfirmedYN';
+                $docInforArr["confirmedBy"] = 'poConfirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'poConfirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'poConfirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'poConfirmedDate';
+                $docInforArr["tableName"] = 'erp_purchaseordermaster';
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'purchaseOrderID';
+                break;
+            case 56:
+                $docInforArr["documentCodeColumnName"] = 'primarySupplierCode';
+                $docInforArr["confirmColumnName"] = 'supplierConfirmedYN';
+                $docInforArr["confirmedBy"] = 'supplierConfirmedEmpName';
+                $docInforArr["confirmedByEmpID"] = 'supplierConfirmedEmpID';
+                $docInforArr["confirmedBySystemID"] = 'supplierConfirmedEmpSystemID';
+                $docInforArr["confirmedDate"] = 'supplierConfirmedDate';
+                $docInforArr["tableName"] = 'suppliermaster';
+                $docInforArr["modelName"] = 'SupplierMaster';
+                $docInforArr["primarykey"] = 'supplierCodeSystem';
+                break;
+            case 57:
+                $docInforArr["documentCodeColumnName"] = 'primaryCode';
+                $docInforArr["confirmColumnName"] = 'itemConfirmedYN';
+                $docInforArr["confirmedBy"] = 'itemConfirmedByEMPName';
+                $docInforArr["confirmedByEmpID"] = 'itemConfirmedByEMPID';
+                $docInforArr["confirmedBySystemID"] = 'itemConfirmedByEMPSystemID';
+                $docInforArr["confirmedDate"] = 'itemConfirmedDate';
+                $docInforArr["tableName"] = 'itemmaster';
+                $docInforArr["modelName"] = 'ItemMaster';
+                $docInforArr["primarykey"] = 'itemCodeSystem';
+                break;
+            case 58:
+                $docInforArr["documentCodeColumnName"] = 'CutomerCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'customermaster';
+                $docInforArr["modelName"] = 'CustomerMaster';
+                $docInforArr["primarykey"] = 'customerCodeSystem';
+                break;
+            case 59:
+                $docInforArr["documentCodeColumnName"] = 'AccountCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedEmpDate';
+                $docInforArr["tableName"] = 'chartofaccounts';
+                $docInforArr["modelName"] = 'ChartOfAccount';
+                $docInforArr["primarykey"] = 'chartOfAccountSystemID';
+                break;
+            case 9:
+                $docInforArr["documentCodeColumnName"] = 'RequestCode';
+                $docInforArr["confirmColumnName"] = 'ConfirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedEmpName';
+                $docInforArr["confirmedByEmpID"] = 'ConfirmedBy';
+                $docInforArr["confirmedBySystemID"] = 'ConfirmedBySystemID';
+                $docInforArr["confirmedDate"] = 'ConfirmedDate';
+                $docInforArr["tableName"] = 'erp_request';
+                $docInforArr["modelName"] = 'MaterielRequest';
+                $docInforArr["primarykey"] = 'RequestID';
+                break;
+            case 3:
+                $docInforArr["documentCodeColumnName"] = 'grvPrimaryCode';
+                $docInforArr["confirmColumnName"] = 'grvConfirmedYN';
+                $docInforArr["confirmedBy"] = 'grvConfirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'grvConfirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'grvConfirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'grvConfirmedDate';
+                $docInforArr["tableName"] = 'erp_grvmaster';
+                $docInforArr["modelName"] = 'GRVMaster';
+                $docInforArr["primarykey"] = 'grvAutoID';
+                break;
+            case 8:
+                $docInforArr["documentCodeColumnName"] = 'itemIssueCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_itemissuemaster';
+                $docInforArr["modelName"] = 'ItemIssueMaster';
+                $docInforArr["primarykey"] = 'itemIssueAutoID';
+                break;
+            case 12:
+                $docInforArr["documentCodeColumnName"] = 'itemReturnCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_itemreturnmaster';
+                $docInforArr["modelName"] = 'ItemReturnMaster';
+                $docInforArr["primarykey"] = 'itemReturnAutoID';
+                break;
+            case 13:
+                $docInforArr["documentCodeColumnName"] = 'stockTransferCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_stocktransfer';
+                $docInforArr["modelName"] = 'StockTransfer';
+                $docInforArr["primarykey"] = 'stockTransferAutoID';
+                break;
+            case 10:
+                $docInforArr["documentCodeColumnName"] = 'stockReceiveCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_stockreceive';
+                $docInforArr["modelName"] = 'StockReceive';
+                $docInforArr["primarykey"] = 'stockReceiveAutoID';
+                break;
+            case 61:
+                $docInforArr["documentCodeColumnName"] = 'documentCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_inventoryreclassification';
+                $docInforArr["modelName"] = 'InventoryReclassification';
+                $docInforArr["primarykey"] = 'inventoryreclassificationID';
+                break;
+            case 24:
+                $docInforArr["documentCodeColumnName"] = 'purchaseReturnCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_purchasereturnmaster';
+                $docInforArr["modelName"] = 'PurchaseReturn';
+                $docInforArr["primarykey"] = 'purhaseReturnAutoID';
+                break;
+            case 20:
+                $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_custinvoicedirect';
+                $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                break;
+            case 7:
+                $docInforArr["documentCodeColumnName"] = 'stockAdjustmentCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_stockadjustment';
+                $docInforArr["modelName"] = 'StockAdjustment';
+                $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
+                break;
+            case 15:
+                $docInforArr["documentCodeColumnName"] = 'debitNoteCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_debitnote';
+                $docInforArr["modelName"] = 'DebitNote';
+                $docInforArr["primarykey"] = 'debitNoteAutoID';
+                break;
+            case 19:
+                $docInforArr["documentCodeColumnName"] = 'creditNoteCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_creditnote';
+                $docInforArr["modelName"] = 'CreditNote';
+                $docInforArr["primarykey"] = 'creditNoteAutoID';
+                break;
+            case 11:
+                $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
+                $docInforArr["modelName"] = 'BookInvSuppMaster';
+                $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
+                break;
+            case 4:
+                $docInforArr["documentCodeColumnName"] = 'BPVcode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_paysupplierinvoicemaster';
+                $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
+                $docInforArr["primarykey"] = 'PayMasterAutoId';
+                break;
+            case 62:
+                $docInforArr["documentCodeColumnName"] = 'bankRecPrimaryCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_bankrecmaster';
+                $docInforArr["modelName"] = 'BankReconciliation';
+                $docInforArr["primarykey"] = 'bankRecAutoID';
+                break;
+            case 63:
+                $docInforArr["documentCodeColumnName"] = 'capitalizationCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_fa_assetcapitalization';
+                $docInforArr["modelName"] = 'AssetCapitalization';
+                $docInforArr["primarykey"] = 'capitalizationID';
+                break;
+            case 64:
+                $docInforArr["documentCodeColumnName"] = 'bankTransferDocumentCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_paymentbanktransfer';
+                $docInforArr["modelName"] = 'PaymentBankTransfer';
+                $docInforArr["primarykey"] = 'paymentBankTransferID';
+                break;
+            case 17:
+                $docInforArr["documentCodeColumnName"] = 'JVcode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_jvmaster';
+                $docInforArr["modelName"] = 'JvMaster';
+                $docInforArr["primarykey"] = 'jvMasterAutoId';
+                break;
+            case 22:
+                $docInforArr["documentCodeColumnName"] = 'faCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_fa_asset_master';
+                $docInforArr["modelName"] = 'FixedAssetMaster';
+                $docInforArr["primarykey"] = 'faID';
+                break;
+            case 23:
+                $docInforArr["documentCodeColumnName"] = 'depCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_fa_depmaster';
+                $docInforArr["modelName"] = 'FixedAssetDepreciationMaster';
+                $docInforArr["primarykey"] = 'depMasterAutoID';
+                break;
+            case 46:
+                $docInforArr["documentCodeColumnName"] = 'transferVoucherNo';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_budgettransferform';
+                $docInforArr["modelName"] = 'BudgetTransferForm';
+                $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
+                break;
+            case 65:
+                $docInforArr["documentCodeColumnName"] = 'budgetmasterID';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_budgetmaster';
+                $docInforArr["modelName"] = 'BudgetMaster';
+                $docInforArr["primarykey"] = 'budgetmasterID';
+                break;
+            case 41:
+                $docInforArr["documentCodeColumnName"] = 'disposalDocumentCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confimedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confimedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_fa_asset_disposalmaster';
+                $docInforArr["modelName"] = 'AssetDisposalMaster';
+                $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
+                break;
+            case 21:
+                $docInforArr["documentCodeColumnName"] = 'custPaymentReceiveCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_customerreceivepayment';
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                break;
+            default:
+                return ['success' => false, 'message' => 'Document ID not found'];
+        }
+
+        $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+        $masterRec = $namespacedModel::find($params["autoID"]);
+
+        $document = Models\DocumentMaster::where('documentSystemID', $params["document"])->first();
+        if ($document) {
+            // get current employee detail
+            $empInfo = self::getEmployeeInfo();
+
+            // get approval rolls
+            $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
+            $output = $approvalLevel->first();
+
+            if ($output) {
+                /** get source document master record*/
+                $sorceDocument = $namespacedModel::find($params["autoID"]);
+                $documentApproved = [];
+                if ($output) {
+                    if ($output->approvalrole) {
+                        foreach ($output->approvalrole as $val) {
+                            if ($val->approvalGroupID) {
+                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $val->documentSystemID, 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID);
+                            }
+                        }
+                    }
+                }
+                if (count($documentApproved) > 0) {
+                    // insert rolls to document approved table
+                    $isDocumentApproved = Models\DocumentApproved::insert($documentApproved);
+                    if ($isDocumentApproved) {
+                        //confirm the document
+                        $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
+                    }
+                }
             }
         }
     }

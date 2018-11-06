@@ -447,14 +447,25 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             $input['receiveAmountTrans'] = 0;
         }
 
-        /*if payment greater than blance amount */
-        /*$totalPaidAmount = CustomerReceivePaymentDetail::select(DB::raw("SUM(receiveAmountTrans) as receiveAmountTrans"))->where('arAutoID', $detail['arAutoID'])->first();
+        // checking payment amount greater than balance amount
+        $totalReceiveAmountPreCheck = CustomerReceivePaymentDetail::where('arAutoID', $input['arAutoID'])
+            ->where('custRecivePayDetAutoID', '<>', $input['custRecivePayDetAutoID'])
+            ->sum('receiveAmountTrans');
 
-        $totalinvoiceamount = $detail->bookingAmountTrans - ($totalPaidAmount->receiveAmountTrans + $input['receiveAmountTrans']);
-        if ($totalinvoiceamount < 0) {
-            return $this->sendError('You cannot enter amount greater than balance amounat', 500);
+        $matchedAmountPreCheck = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, IFNULL(Sum(erp_matchdocumentmaster.matchedAmount),0) * -1 AS SumOfmatchedAmount')
+            ->where('companySystemID', $input["companySystemID"])
+            ->where('PayMasterAutoId', $input["bookingInvCodeSystem"])
+            ->where('documentSystemID', $input["addedDocumentSystemID"])
+            ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
+
+        $totReceiveAmountPrechk = $totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount'];
+
+        $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount']);
+
+
+        if ($input["receiveAmountTrans"] > $totReceiveAmountDetail) {
+            return $this->sendError('Payment amount cannot be greater than balance amount', 500);
         }
-        /**/
 
         $currency = \Helper::convertAmountToLocalRpt(206, $input['arAutoID'], $input['receiveAmountTrans']);
         $input['receiveAmountLocal'] = \Helper::roundValue($currency['localAmount']);
