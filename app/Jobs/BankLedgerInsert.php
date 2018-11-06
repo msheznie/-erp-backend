@@ -6,7 +6,6 @@ use App\Models\BankLedger;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\Employee;
-use App\Models\GeneralLedger;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierMaster;
 use Illuminate\Bus\Queueable;
@@ -74,6 +73,8 @@ class BankLedgerInsert implements ShouldQueue
                         $payee = SupplierMaster::find($masterData->BPVsupplierID);
                         if($payee){
                             $data['payeeCode'] = $payee->primarySupplierCode;
+                        }else {
+                            $data['payeeCode'] = null;
                         }
                         $data['payeeName'] = $masterData->directPaymentPayee;
                         $data['payeeGLCodeID'] = $masterData->supplierGLCodeSystemID;
@@ -139,6 +140,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                                 $data['createdPcID'] = gethostname();
                                 $data['timestamp'] = NOW();
+                                Log::info($data);
                                 array_push($finalData, $data);
                             }
                         }

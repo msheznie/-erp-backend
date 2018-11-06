@@ -1097,14 +1097,14 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 4,'autoID' => 76732, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 4,'autoID' => 76741, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-    $master = \App\Models\PaySupplierInvoiceMaster::find(76734);
+    //$master = \App\Models\PaySupplierInvoiceMaster::find(76734);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
-    //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
+    $job = \App\Jobs\BankLedgerInsert::dispatch($master);
     //$master = \App\Models\AssetDisposalMaster::find(241);
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
-    $job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
+    //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
 });
 
 Route::get('runQueueSR', function () {
