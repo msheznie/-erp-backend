@@ -2559,10 +2559,10 @@ class Helper
                             $receivePayment['localCurrencyER'] = $dpdetails2->toCompanyLocalCurrencyER;
                             $receivePayment['companyRptCurrencyID'] = $dpdetails2->toCompanyRptCurrencyID;
                             $receivePayment['companyRptCurrencyER'] = $dpdetails2->toCompanyRptCurrencyER;
-                            $receivePayment['bankAmount'] = $dpdetails2->toBankAmount;
-                            $receivePayment['receivedAmount'] = $dpdetails2->toBankAmount;
-                            $receivePayment['localAmount'] = $dpdetails2->toCompanyLocalCurrencyAmount;
-                            $receivePayment['companyRptAmount'] = $dpdetails2->toCompanyRptCurrencyAmount;
+                            $receivePayment['bankAmount'] = ABS($dpdetails2->toBankAmount) * -1;
+                            $receivePayment['receivedAmount'] = ABS($dpdetails2->toBankAmount) * -1;
+                            $receivePayment['localAmount'] = ABS($dpdetails2->toCompanyLocalCurrencyAmount) * -1;
+                            $receivePayment['companyRptAmount'] = ABS($dpdetails2->toCompanyRptCurrencyAmount) * -1;
                             $receivePayment['bankID'] = $dpdetails2->toBankID;
                             $receivePayment['bankAccount'] = $dpdetails2->toBankAccountID;
                             $receivePayment['bankCurrency'] = $dpdetails2->toBankCurrencyID;
