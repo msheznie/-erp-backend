@@ -628,9 +628,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $masterHeaderSumLocal = $checkPreDirectSumLocal;
             $masterHeaderSumReport = $checkPreDirectSumReport;
 
-            $input['receivedAmount'] = (\Helper::roundValue($masterHeaderSumTrans) *-1);
-            $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) *-1);
-            $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) *-1);
+            $input['receivedAmount'] = (\Helper::roundValue($masterHeaderSumTrans) * -1);
+            $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) * -1);
+            $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) * -1);
         }
 
         // calculating bank amount
@@ -778,7 +778,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
                     ->get();
 
-                foreach($customerReceivePaymentDetailRec as $row){
+                foreach ($customerReceivePaymentDetailRec as $row) {
 
                     $totalReceiveAmountTrans = CustomerReceivePaymentDetail::where('arAutoID', $row['arAutoID'])
                         ->sum('receiveAmountTrans');
@@ -978,13 +978,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-
-        $master = DB::table('erp_customerreceivepayment')
+        $master = CustomerReceivePayment::where('erp_customerreceivepayment.companySystemID', $input['companyId'])
             ->leftjoin('currencymaster as transCurr', 'custTransactionCurrencyID', '=', 'transCurr.currencyID')
             ->leftjoin('currencymaster as bankCurr', 'bankCurrency', '=', 'bankCurr.currencyID')
             ->leftjoin('employees', 'erp_customerreceivepayment.createdUserSystemID', '=', 'employees.employeeSystemID')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_customerreceivepayment.customerID')
-            ->where('erp_customerreceivepayment.companySystemID', $input['companyId'])
             ->where('erp_customerreceivepayment.documentSystemID', $input['documentId']);
 
         if (array_key_exists('confirmedYN', $input)) {
@@ -1020,6 +1018,26 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
         }
 
+        $master = $master->select([
+            'custPaymentReceiveCode',
+            'transCurr.CurrencyCode as transCurrencyCode',
+            'bankCurr.CurrencyCode as bankCurrencyCode',
+            'documentType',
+            'erp_customerreceivepayment.approvedDate',
+            'erp_customerreceivepayment.confirmedDate',
+            'erp_customerreceivepayment.createdDateTime',
+            'custPaymentReceiveDate',
+            'erp_customerreceivepayment.narration',
+            'empName',
+            'transCurr.DecimalPlaces as transDecimal',
+            'bankCurr.DecimalPlaces as bankDecimal',
+            'erp_customerreceivepayment.confirmedYN',
+            'erp_customerreceivepayment.approved',
+            'custReceivePaymentAutoID',
+            'customermaster.CustomerName',
+            'receivedAmount as receivedAmount',
+            'bankAmount as bankAmount'
+            ]);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -1031,8 +1049,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->orWhere('erp_customerreceivepayment.narration', 'LIKE', "%{$search}%");
             });
         }
-        $request->request->remove('search.value');
-        $master->select('custPaymentReceiveCode', 'transCurr.CurrencyCode as transCurrencyCode', 'bankCurr.CurrencyCode as bankCurrencyCode', 'documentType', 'erp_customerreceivepayment.approvedDate', 'erp_customerreceivepayment.confirmedDate', 'erp_customerreceivepayment.createdDateTime', 'custPaymentReceiveDate', 'erp_customerreceivepayment.narration', 'empName', 'transCurr.DecimalPlaces as transDecimal', 'bankCurr.DecimalPlaces as bankDecimal', 'erp_customerreceivepayment.confirmedYN', 'erp_customerreceivepayment.approved', 'custReceivePaymentAutoID', 'customermaster.CustomerName', 'receivedAmount', 'bankAmount');
 
         return \DataTables::of($master)
             ->order(function ($query) use ($input) {
@@ -1045,11 +1061,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
-    }
-
-    public function recieptDetailsRecords()
-    {
-
     }
 
     public function getReceiptVoucherMasterRecord(Request $request)
