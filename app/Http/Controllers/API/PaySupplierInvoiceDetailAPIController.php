@@ -264,7 +264,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $input["supplierPaymentAmount"] = 0;
         }
 
-
         if($input["isPullAmount"] == 1){
             $input["supplierPaymentAmount"] = $paySupplierInvoiceDetail->paymentBalancedAmount;
         }
