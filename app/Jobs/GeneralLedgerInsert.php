@@ -1290,6 +1290,9 @@ class GeneralLedgerInsert implements ShouldQueue
                             $masterDocumentDate = $masterData->BPVdate;
                         }
 
+                        $localCurrDP = $masterData->localcurrency ? $masterData->localcurrency->DecimalPlaces : 3;
+                        $rptCurrDP = $masterData->rptcurrency? $masterData->rptcurrency->DecimalPlaces: 2;
+
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
@@ -1402,7 +1405,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
                                     $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
 
-                                    if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal,$masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt,$masterData->rptcurrency->DecimalPlaces)) != 0) {
+                                    if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $localCurrDP)) != 0 || ABS(round($diffRpt, $rptCurrDP)) != 0) {
                                         $company = Company::find($masterData->companySystemID);
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
@@ -1574,7 +1577,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $diffLocal = $convertedLocalAmount - $masterLocal;
                                 $diffRpt = $convertedRpt - $masterRpt;
 
-                                if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal,$masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt,$masterData->rptcurrency->DecimalPlaces)) != 0) {
+                                if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $localCurrDP)) != 0 || ABS(round($diffRpt, $rptCurrDP)) != 0) {
                                     $company = Company::find($masterData->companySystemID);
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
