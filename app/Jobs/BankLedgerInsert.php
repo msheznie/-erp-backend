@@ -103,7 +103,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['companyID'] = $custReceivePayment->companyID;
                                 $data['documentSystemID'] = $custReceivePayment->documentSystemID;
                                 $data['documentID'] = $custReceivePayment->documentID;
-                                $data['documentSystemCode'] = $custReceivePayment->custReceivePaymentAutoID;
+                                $data['documentSystemCode'] = $custReceivePayment->PayMasterAutoId;
                                 $data['documentCode'] = $custReceivePayment->custPaymentReceiveCode;
                                 $data['documentDate'] = $custReceivePayment->custPaymentReceiveDate;
                                 $data['postedDate'] = $masterDocumentDate;
@@ -131,10 +131,10 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['localCurrencyER'] = $custReceivePayment->localCurrencyER;
                                 $data['companyRptCurrencyID'] = $custReceivePayment->companyRptCurrencyID;
                                 $data['companyRptCurrencyER'] = $custReceivePayment->companyRptCurrencyER;
-                                $data['payAmountBank'] = $custReceivePayment->bankAmount;
-                                $data['payAmountSuppTrans'] = $custReceivePayment->bankAmount;
-                                $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
-                                $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
+                                $data['payAmountBank'] = ABS($custReceivePayment->bankAmount) * -1;
+                                $data['payAmountSuppTrans'] = ABS($custReceivePayment->bankAmount) * -1;
+                                $data['payAmountCompLocal'] = ABS($custReceivePayment->localAmount) * -1;
+                                $data['payAmountCompRpt'] = ABS($custReceivePayment->companyRptAmount) * -1;
                                 $data['invoiceType'] = $custReceivePayment->documentType;
                                 $data['createdUserID'] = $empID->empID;
                                 $data['createdUserSystemID'] = $empID->employeeSystemID;
