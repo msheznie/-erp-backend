@@ -1054,12 +1054,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
     Route::resource('audit_trails', 'AuditTrailAPIController');
 
-<<<<<<< HEAD
     Route::post('generateAssetInsuranceReport', 'FixedAssetMasterAPIController@generateAssetInsuranceReport');
     Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport');
-
-
-=======
     Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
     Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
     Route::resource('asset_types', 'AssetTypeAPIController');
@@ -1071,7 +1067,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
     Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
->>>>>>> eccfad7506a1afd9a9b469d1287e716a77447ccf
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
