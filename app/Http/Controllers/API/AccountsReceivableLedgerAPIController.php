@@ -16,6 +16,7 @@ use App\Http\Requests\API\UpdateAccountsReceivableLedgerAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\CustomerReceivePayment;
 use App\Repositories\AccountsReceivableLedgerRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -305,7 +306,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\\\\\", $search);
             $filter= " AND ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%' OR erp_accountsreceivableledger.documentCode LIKE '%{$search}%' ) ";
         }
-
+        $custPaymentReceiveDate = Carbon::parse($master->custPaymentReceiveDate)->format('Y-m-d');
            $qry="
    SELECT
 	erp_accountsreceivableledger.arAutoID,
@@ -384,7 +385,7 @@ WHERE
 	AND md.supplierTransCurrencyID = custTransCurrencyID
 	LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 
 WHERE
-	erp_accountsreceivableledger.documentDate < '{$master->custPaymentReceiveDate}' 
+	date(erp_accountsreceivableledger.documentDate) < '{$custPaymentReceiveDate}'
 	AND
 	{$filter}
 	erp_accountsreceivableledger.selectedToPaymentInv = 0
@@ -394,9 +395,11 @@ WHERE
     AND erp_accountsreceivableledger.customerID = $master->customerID 
     AND erp_accountsreceivableledger.custTransCurrencyID = $master->custTransactionCurrencyID 
 HAVING
-	ROUND( SumOfcustbalanceAmount,2 ) <> 0 ORDER BY documentDate $sort
+	ROUND( SumOfcustbalanceAmount, DecimalPlaces) <> 0 ORDER BY documentDate $sort
         ";
 
+        //echo $qry;
+        //exit();
 
         $invMaster = DB::select($qry);
 

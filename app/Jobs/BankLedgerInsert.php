@@ -6,6 +6,7 @@ use App\Models\BankLedger;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\Employee;
+use App\Models\GeneralLedger;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierMaster;
 use Illuminate\Bus\Queueable;
@@ -48,7 +49,11 @@ class BankLedgerInsert implements ShouldQueue
                 $empID = Employee::find($masterModel['employeeSystemID']);
                 switch ($masterModel["documentSystemID"]) {
                     case 4: // Payment Voucher
-                        $masterData = PaySupplierInvoiceMaster::find($masterModel["autoID"]);
+                        $masterData = PaySupplierInvoiceMaster::with('financeperiod_by')->find($masterModel["autoID"]);
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if ($masterData->financeperiod_by->isActive == -1) {
+                            $masterDocumentDate = $masterData->BPVdate;
+                        }
                         $data['companySystemID'] = $masterData->companySystemID;
                         $data['companyID'] = $masterData->companyID;
                         $data['documentSystemID'] = $masterData->documentSystemID;
@@ -56,7 +61,7 @@ class BankLedgerInsert implements ShouldQueue
                         $data['documentSystemCode'] = $masterModel["autoID"];
                         $data['documentCode'] = $masterData->BPVcode;
                         $data['documentDate'] = $masterData->BPVdate;
-                        $data['postedDate'] = $masterData->postedDate;
+                        $data['postedDate'] = $masterDocumentDate;
                         $data['documentNarration'] = $masterData->BPVNarration;
                         $data['bankID'] = $masterData->BPVbank;
                         $data['bankAccountID'] = $masterData->BPVAccount;
@@ -100,7 +105,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['documentSystemCode'] = $custReceivePayment->custReceivePaymentAutoID;
                                 $data['documentCode'] = $custReceivePayment->custPaymentReceiveCode;
                                 $data['documentDate'] = $custReceivePayment->custPaymentReceiveDate;
-                                $data['postedDate'] = $custReceivePayment->postedDate;
+                                $data['postedDate'] = $masterDocumentDate;
                                 $data['documentNarration'] = $custReceivePayment->narration;
                                 $data['bankID'] = $custReceivePayment->bankID;
                                 $data['bankAccountID'] = $custReceivePayment->bankAccount;
@@ -194,8 +199,13 @@ class BankLedgerInsert implements ShouldQueue
                 }
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($e->getMessage());
+                Log::error($this->failed($e));
             }
         }
+    }
+
+    public function failed($exception)
+    {
+        return $exception->getMessage();
     }
 }

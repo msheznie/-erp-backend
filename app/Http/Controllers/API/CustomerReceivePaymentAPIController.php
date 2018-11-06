@@ -27,6 +27,7 @@ use App\Models\BankAccount;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\EmployeesDepartment;
+use App\Models\ExpenseClaimType;
 use App\Models\SegmentMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\CustomerReceivePaymentDetail;
@@ -148,9 +149,39 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError("Customer is required", 500);
         }
 
-        $company = Company::select('CompanyID')
-            ->where('companySystemID', $input['companySystemID'])
-            ->first();
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 4;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+        }
+
+        unset($inputParam);
+
+        if (isset($input['custPaymentReceiveDate'])) {
+            if ($input['custPaymentReceiveDate']) {
+                $input['custPaymentReceiveDate'] = new Carbon($input['custPaymentReceiveDate']);
+            }
+        }
+
+        $documentDate = $input['custPaymentReceiveDate'];
+        $monthBegin = $input['FYPeriodDateFrom'];
+        $monthEnd = $input['FYPeriodDateTo'];
+
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Document date is not within the financial period!', 500);
+        }
 
         $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
 
@@ -166,28 +197,29 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $custPaymentReceiveCode = ($company->CompanyID . '\\' . $y . '\\BRV' . str_pad($serialNo['serialNo'], 6, '0', STR_PAD_LEFT));
 
-        $input['companyID'] = $company->CompanyID;
         $input['documentSystemID'] = 21;
         $input['documentID'] = 'BRV';
         $input['serialNo'] = $serialNo->serialNo;
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
-        $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
-        $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
         $input['custPaymentReceiveCode'] = $custPaymentReceiveCode;
         $input['custPaymentReceiveDate'] = Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00';
 
         /*currency*/
         $myCurr = $input['custTransactionCurrencyID'];
 
-        $companyCurrency = \Helper::companyCurrency($input['custTransactionCurrencyID']);
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $myCurr, $myCurr, 0);
 
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+        if ($company) {
+            $input['companyID'] = $company->CompanyID;
+            $input['localCurrencyID'] = $company->localCurrencyID;
+            $input['companyRptCurrencyID'] = $company->reportingCurrency;
+            $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        }
+
         $input['custTransactionCurrencyER'] = 1;
-        $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-        $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-        $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;;
-        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
         $bank = BankAssign::select('bankmasterAutoID')
             ->where('companyID', $company['CompanyID'])
@@ -274,7 +306,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
      */
     public function show($id)
     {
-
         /** @var CustomerReceivePayment $customerReceivePayment */
         //  $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
 
@@ -341,7 +372,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN'));
 
         $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency']);
@@ -358,21 +388,50 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input['custChequeDate'] = ($input['custChequeDate'] != '' ? Carbon::parse($input['custChequeDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
 
+        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        if (!$companyFinanceYear["success"]) {
+            return $this->sendError($companyFinanceYear["message"], 500);
+        }
+
+        $inputParam = $input;
+        $inputParam["departmentSystemID"] = 4;
+        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        if (!$companyFinancePeriod["success"]) {
+            return $this->sendError($companyFinancePeriod["message"], 500);
+        } else {
+            $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
+            $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
+        }
+
+        $documentDate = $input['custPaymentReceiveDate'];
+        $monthBegin = $input['FYPeriodDateFrom'];
+        $monthEnd = $input['FYPeriodDateTo'];
+
+        if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+        } else {
+            return $this->sendError('Document date is not within the financial period!', 500);
+        }
+
+        $company = Company::where('companySystemID', $input['companySystemID'])->first();
+
+        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
+        if ($company) {
+            $input['localCurrencyID'] = $company->localCurrencyID;
+            $input['companyRptCurrencyID'] = $company->reportingCurrency;
+            $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        }
+
         if ($input['documentType'] == 13) {
             /*customer reciept*/
             $detail = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->get();
 
             if ($input['customerID'] != $customerReceivePayment->customerID) {
-                /*
-                 * customer change
-                 *
-                 * */
 
                 if (count($detail) > 0) {
                     return $this->sendError('Invoice details exist. You can not change the customer.', 500);
                 }
                 $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
-
 
                 /*if customer change*/
                 $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
@@ -476,7 +535,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if ($input['bankID'] != $customerReceivePayment->bankID) {
                 $bankAccount = BankAccount::where('companyID', $customerReceivePayment->companyID)->where('bankmasterAutoID', $input['bankID'])->where('isDefault', 1)->first();
 
-
                 $input['custTransactionCurrencyER'] = 0;
                 $input['companyRptCurrencyID'] = 0;
                 $input['companyRptCurrencyER'] = 0;
@@ -522,8 +580,48 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
         }
 
-        $checkPreTotal = DirectReceiptDetail::where('directReceiptAutoID', $id)
+        // calculating header total
+        $checkPreDirectSumTrans = DirectReceiptDetail::where('directReceiptAutoID', $id)
             ->sum('DRAmount');
+
+        $checkPreDirectSumLocal = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('localAmount');
+
+        $checkPreDirectSumReport = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('comRptAmount');
+
+        $masterHeaderSumTrans = 0;
+        $masterHeaderSumLocal = 0;
+        $masterHeaderSumReport = 0;
+        if ($input['documentType'] == 13) {
+
+            $customerReceiveAmountTrans = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                ->sum('receiveAmountTrans');
+
+            $customerReceiveAmountLocal = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                ->sum('receiveAmountLocal');
+
+            $customerReceiveAmountReport = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                ->sum('receiveAmountRpt');
+
+            $masterHeaderSumTrans = $checkPreDirectSumTrans + $customerReceiveAmountTrans;
+            $masterHeaderSumLocal = $checkPreDirectSumLocal + $customerReceiveAmountLocal;
+            $masterHeaderSumReport = $checkPreDirectSumReport + $customerReceiveAmountReport;
+
+            $input['receivedAmount'] = \Helper::roundValue($masterHeaderSumTrans);
+            $input['localAmount'] = \Helper::roundValue($masterHeaderSumLocal);
+            $input['companyRptAmount'] = \Helper::roundValue($masterHeaderSumReport);
+
+        } else if ($input['documentType'] == 14) {
+
+            $masterHeaderSumTrans = $checkPreDirectSumTrans;
+            $masterHeaderSumLocal = $checkPreDirectSumLocal;
+            $masterHeaderSumReport = $checkPreDirectSumReport;
+
+            $input['receivedAmount'] = \Helper::roundValue($masterHeaderSumTrans);
+            $input['localAmount'] = \Helper::roundValue($masterHeaderSumLocal);
+            $input['companyRptAmount'] = \Helper::roundValue($masterHeaderSumReport);
+        }
 
         if ($customerReceivePayment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -564,14 +662,14 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             if ($input['documentType'] == 13) {
 
-                $checkQuantity = CustomerReceivePaymentDetail::where('directReceiptAutoID', $id)
+                $checkQuantity = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
                     ->where(function ($q) {
-                        $q->where('DRAmount', '<=', 0)
-                            ->orWhereNull('localAmount', '<=', 0)
-                            ->orWhereNull('comRptAmount', '<=', 0)
-                            ->orWhereNull('debitAmount')
-                            ->orWhereNull('localAmount')
-                            ->orWhereNull('comRptAmount');
+                        $q->where('receiveAmountTrans', '<=', 0)
+                            ->orWhereNull('receiveAmountLocal', '<=', 0)
+                            ->orWhereNull('receiveAmountRpt', '<=', 0)
+                            ->orWhereNull('receiveAmountTrans')
+                            ->orWhereNull('receiveAmountLocal')
+                            ->orWhereNull('receiveAmountRpt');
                     })
                     ->count();
                 if ($checkQuantity > 0) {
@@ -584,7 +682,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $q->where('DRAmount', '<=', 0)
                         ->orWhereNull('localAmount', '<=', 0)
                         ->orWhereNull('comRptAmount', '<=', 0)
-                        ->orWhereNull('debitAmount')
+                        ->orWhereNull('DRAmount')
                         ->orWhereNull('localAmount')
                         ->orWhereNull('comRptAmount');
                 })
@@ -623,7 +721,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         $error_count++;
                     }
 
-                    $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
+                    $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->DRAmountCurrency, $updateItem->DRAmountCurrency, $updateItem->DRAmount);
 
                     $input['localAmount'] = $companyCurrencyConversion['localAmount'];
                     $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
@@ -631,12 +729,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                     $updateItem->save();
 
-                    if ($updateItem->debitAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
+                    if ($updateItem->DRAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
                         array_push($finalError['amount_zero'], $updateItem->itemPrimaryCode);
-                        $error_count++;
-                    }
-                    if ($updateItem->debitAmount < 0 || $updateItem->localAmount < 0 || $updateItem->comRptAmount < 0) {
-                        array_push($finalError['amount_neg'], $updateItem->itemPrimaryCode);
                         $error_count++;
                     }
                 }
@@ -649,12 +743,19 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             $input['RollLevForApp_curr'] = 1;
 
+            unset($input['confirmedYN']);
+            unset($input['confirmedByEmpSystemID']);
+            unset($input['confirmedByEmpID']);
+            unset($input['confirmedByName']);
+            unset($input['confirmedDate']);
+
+
             $params = array('autoID' => $id,
-                'company' => $debitNote->companySystemID,
-                'document' => $debitNote->documentSystemID,
+                'company' => $customerReceivePayment->companySystemID,
+                'document' => $customerReceivePayment->documentSystemID,
                 'segment' => 0,
                 'category' => 0,
-                'amount' => $amount
+                'amount' => $input['receivedAmount']
             );
 
             $confirm = \Helper::confirmDocument($params);
@@ -765,6 +866,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $id = $input['id'];
                 $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->first();
                 $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+                $output['expenseClaimType'] = ExpenseClaimType::all();
 
                 if ($master->customerID != '') {
                     $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();

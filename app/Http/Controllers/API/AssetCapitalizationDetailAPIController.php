@@ -135,7 +135,7 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
 
             $input['companyID'] = $company->CompanyID;
 
-            $assetMaster = FixedAssetMaster::withoutGlobalScopes()->find($input['faID']);
+            $assetMaster = FixedAssetMaster::find($input['faID']);
 
             $input['faCode'] = $assetMaster->faCode;
             $input['assetDescription'] = $assetMaster->assetDescription;

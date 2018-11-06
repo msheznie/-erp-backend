@@ -281,5 +281,9 @@ class SupplierMaster extends Model
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','supplierCodeSystem');
     }
 
+    public function critical()
+    {
+        return $this->belongsTo('App\Models\SupplierCritical', 'isCriticalYN', 'suppliercriticalID');
+    }
 
 }

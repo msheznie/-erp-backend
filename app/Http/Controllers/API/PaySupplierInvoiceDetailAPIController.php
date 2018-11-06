@@ -264,7 +264,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $input["supplierPaymentAmount"] = 0;
         }
 
-
         if($input["isPullAmount"] == 1){
             $input["supplierPaymentAmount"] = $paySupplierInvoiceDetail->paymentBalancedAmount;
         }
@@ -785,7 +784,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
-        if (floatval($input['supplierPaymentAmount']) > floatval($input['paymentBalancedAmount'])) {
+        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
+
+        if (round($input['supplierPaymentAmount'], $documentCurrencyDecimalPlace) > round($input['paymentBalancedAmount'], $documentCurrencyDecimalPlace)) {
             return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
         }
 
@@ -798,6 +799,10 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $existTotal = $detailAmountTot + $input['supplierPaymentAmount'];
         if ($existTotal > $matchDocumentMasterData->matchBalanceAmount) {
             return $this->sendError('Matching amount total cannot be greater than balance amount to match', 500, ['type' => 'amountmismatch']);
+        }
+
+        if ($input['supplierPaymentAmount'] == "") {
+            $input['supplierPaymentAmount'] = 0;
         }
 
         $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])->where('payDetailAutoID', '<>', $input['payDetailAutoID'])->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
