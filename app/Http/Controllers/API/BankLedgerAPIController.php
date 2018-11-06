@@ -243,7 +243,7 @@ class BankLedgerAPIController extends AppBaseController
         $input = $request->all();
 
         /** @var BankLedger $bankLedger */
-        $bankLedger = $this->bankLedgerRepository->findWithoutFail($id);
+        $bankLedger = $this->bankLedgerRepository->with(['bank_account'])->findWithoutFail($id);
 
         if (empty($bankLedger)) {
             return $this->sendError('Bank Ledger not found');
@@ -353,12 +353,17 @@ class BankLedgerAPIController extends AppBaseController
 
                 if ($updateArray['trsClearedYN'] == -1) {
 
+                    $bankGLCode = 000;
+
+                    if($bankLedger->bank_account){
+                        $bankGLCode = $bankLedger->bank_account->chartOfAccountSystemID;
+                    }
 
                     $checkGLAmount = GeneralLedger::where('companySystemID', $bankLedger->companySystemID)
-                        ->where('documentSystemID', $bankLedger->documentSystemID)
-                        ->where('documentSystemCode', $bankLedger->documentSystemCode)
-                        ->where('chartOfAccountSystemID', $bankLedger->payeeGLCodeID)
-                        ->first();
+                                                    ->where('documentSystemID', $bankLedger->documentSystemID)
+                                                    ->where('documentSystemCode', $bankLedger->documentSystemCode)
+                                                    ->where('chartOfAccountSystemID', $bankGLCode)
+                                                    ->first();
 
                     if (!empty($checkGLAmount)) {
                         $glAmount = 0;
@@ -367,7 +372,7 @@ class BankLedgerAPIController extends AppBaseController
                         } else if ($bankLedger->bankCurrency == $checkGLAmount->documentRptCurrencyID) {
                             $glAmount = $checkGLAmount->documentRptAmount;
                         }
-                        if ($bankLedger->payAmountBank != $glAmount) {
+                        if (abs($bankLedger->payAmountBank) != abs($glAmount)) {
                             return $this->sendError('Bank amount is not matching with GL amount.', 500);
                         }
                     } else {
@@ -850,7 +855,7 @@ class BankLedgerAPIController extends AppBaseController
         foreach ($bankLedger as $item) {
 
             $temArray['chequePrintedYN'] = -1;
-            //$this->bankLedgerRepository->update($temArray, $item->bankLedgerAutoID);
+            $this->bankLedgerRepository->update($temArray, $item->bankLedgerAutoID);
 
             $amountSplit = explode(".",$item->payAmountBank);
             $intAmt = 0;

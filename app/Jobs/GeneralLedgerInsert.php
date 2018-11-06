@@ -1291,7 +1291,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
 
                         $localCurrDP = $masterData->localcurrency ? $masterData->localcurrency->DecimalPlaces : 3;
-                        $rptCurrDP = $masterData->rptcurrency? $masterData->rptcurrency->DecimalPlaces: 2;
+                        $rptCurrDP = $masterData->rptcurrency ? $masterData->rptcurrency->DecimalPlaces : 2;
 
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
@@ -1588,13 +1588,13 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
 
                                     if ($diffTrans > 0 || $diffLocal > 0 || $diffRpt > 0) {
-                                        $data['documentTransAmount'] = \Helper::roundValue($diffTrans);
-                                        $data['documentLocalAmount'] = \Helper::roundValue($diffLocal);
-                                        $data['documentRptAmount'] = \Helper::roundValue($diffRpt);
+                                        $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * -1;
+                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal)) * -1;
+                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt)) * -1;
                                     } else {
-                                        $data['documentTransAmount'] = \Helper::roundValue($diffTrans) * -1;
-                                        $data['documentLocalAmount'] = \Helper::roundValue($diffLocal) * -1;
-                                        $data['documentRptAmount'] = \Helper::roundValue($diffRpt) * -1;
+                                        $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans));
+                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal));
+                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($diffRpt));
                                     }
 
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
