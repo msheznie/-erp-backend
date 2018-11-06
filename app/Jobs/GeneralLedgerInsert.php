@@ -1405,7 +1405,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
                                     $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
 
-                                    if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $localCurrDP)) != 0 || ABS(round($diffRpt, $rptCurrDP)) != 0) {
+                                    if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
+
                                         $company = Company::find($masterData->companySystemID);
                                         $data['serviceLineSystemID'] = 24;
                                         $data['serviceLineCode'] = 'X';
@@ -1577,7 +1578,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                 $diffLocal = $convertedLocalAmount - $masterLocal;
                                 $diffRpt = $convertedRpt - $masterRpt;
 
-                                if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $localCurrDP)) != 0 || ABS(round($diffRpt, $rptCurrDP)) != 0) {
+                                if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
+
                                     $company = Company::find($masterData->companySystemID);
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
@@ -1663,13 +1665,13 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['glAccountType'] = 'BS';
                                     $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                     $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount) * -1;
+                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount + $totaldd->transAmount) * -1;
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount) * -1;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount + $totaldd->localAmount) * -1;
                                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount) * -1;
+                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount + $totaldd->rptAmount) * -1;
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
 
@@ -1680,15 +1682,16 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['glAccountType'] = 'BS';
                                     $data['documentTransCurrencyID'] = $masterData->bankCurrency;
                                     $data['documentTransCurrencyER'] = $masterData->bankCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount);
+                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount + $totaldd->transAmount);
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount);
+                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount + $totaldd->localAmount);
                                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount);
+                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount + $totaldd->rptAmount);
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
+
                                 }
                             }
 
@@ -2110,8 +2113,8 @@ class GeneralLedgerInsert implements ShouldQueue
                         if (in_array($masterModel["documentSystemID"], [19, 20, 21])) {
                             $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel);
                         }
-                        if (in_array($masterModel["documentSystemID"], [4])) {
-                            //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterModel);
+                        if (in_array($masterModel["documentSystemID"], [21])) {
+                            $bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterModel);
                         }
                     }
                     DB::commit();
