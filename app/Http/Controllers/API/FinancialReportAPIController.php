@@ -828,6 +828,7 @@ class FinancialReportAPIController extends AppBaseController
                                     erp_generalledger.documentLocalCurrencyID,
                                     erp_generalledger.documentRptCurrencyID,
                                     erp_generalledger.documentID,
+                                    erp_generalledger.documentSystemID,
                                     erp_generalledger.documentSystemCode,
                                     erp_generalledger.documentCode,
                                     erp_generalledger.documentDate,
