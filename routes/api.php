@@ -1054,6 +1054,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
     Route::resource('audit_trails', 'AuditTrailAPIController');
 
+    Route::post('generateAssetInsuranceReport', 'FixedAssetMasterAPIController@generateAssetInsuranceReport');
+    Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport');
     Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
     Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
     Route::resource('asset_types', 'AssetTypeAPIController');
