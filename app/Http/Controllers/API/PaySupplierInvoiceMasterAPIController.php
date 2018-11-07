@@ -620,8 +620,40 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
                     }
 
+
+                    $finalError = array(
+                        'more_booked' => array(),
+                    );
+
+                    $error_count = 0;
+
                     $pvDetailExist = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
                         ->get();
+
+                    foreach ($pvDetailExist as $val) {
+                        $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
+                            ->where('apAutoID', $val->apAutoID)
+                            ->first();
+
+                        if ($val->addedDocumentSystemID == 11) {
+                            //supplier invoice
+                            if ($payDetailMoreBooked->supplierPaymentAmount > $val->supplierInvoiceAmount) {
+                                array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
+                                $error_count++;
+                            }
+                        } else if ($val->addedDocumentSystemID == 15) {
+                            //debit note
+                            if ($payDetailMoreBooked->supplierPaymentAmount < $val->supplierInvoiceAmount) {
+                                array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
+                                $error_count++;
+                            }
+                        }
+                    }
+
+                    $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+                    if ($error_count > 0) {
+                        return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                    }
 
                     foreach ($pvDetailExist as $val) {
                         $updatePayment = AccountsPayableLedger::find($val->apAutoID);
