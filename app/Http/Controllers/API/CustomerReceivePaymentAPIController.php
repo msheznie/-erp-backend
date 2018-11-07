@@ -20,6 +20,7 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerAssigned;
 use App\Models\CurrencyMaster;
@@ -641,6 +642,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['bankCurrencyER'] = $bankCurrencyConversion['transToDocER'];
         }
 
+        $itemExistArray = array();
+        $error_count = 0;
 
         if ($customerReceivePayment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -715,7 +718,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     'active_serviceLine' => array(),
                     'contract_check' => array()
                 );
-                $error_count = 0;
 
                 foreach ($directReceiptDetail as $item) {
 
@@ -771,6 +773,32 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
                 }
             }
+            // updating accounts receivable ledger table
+            if ($input['documentType'] == 13) {
+
+                $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->get();
+
+                foreach ($customerReceivePaymentDetailRec as $item) {
+
+                    $totalReceiveAmountTrans = CustomerReceivePaymentDetail::where('arAutoID', $item['arAutoID'])
+                        ->sum('receiveAmountTrans');
+
+                    $customerInvoiceMaster = CustomerInvoiceDirect::find($item['bookingInvCodeSystem']);
+
+                    if ($totalReceiveAmountTrans > $customerInvoiceMaster->bookingAmountTrans) {
+
+                        $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
+                        $itemExistArray[] = [$itemDrt];
+
+                    }
+                }
+            }
+
+
+            if (!empty($itemExistArray)) {
+                return $this->sendError($itemExistArray, 422);
+            }
 
             // updating accounts receivable ledger table
             if ($input['documentType'] == 13) {
@@ -793,15 +821,28 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                     $arLedgerUpdate = AccountsReceivableLedger::find($row['arAutoID']);
 
-                    if ($totReceiveAmount == 0) {
-                        $arLedgerUpdate->fullyInvoiced = 0;
-                        $arLedgerUpdate->selectedToPaymentInv = 0;
-                    } else if ($row->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount > $row->bookingAmountTrans) {
-                        $arLedgerUpdate->fullyInvoiced = 2;
-                        $arLedgerUpdate->selectedToPaymentInv = -1;
-                    } else if (($row->bookingAmountTrans > $totReceiveAmount) && ($totReceiveAmount > 0)) {
-                        $arLedgerUpdate->fullyInvoiced = 1;
-                        $arLedgerUpdate->selectedToPaymentInv = 0;
+                    if ($row['addedDocumentSystemID'] == 20) {
+                        if ($totReceiveAmount == 0) {
+                            $arLedgerUpdate->fullyInvoiced = 0;
+                            $arLedgerUpdate->selectedToPaymentInv = 0;
+                        } else if ($row->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount > $row->bookingAmountTrans) {
+                            $arLedgerUpdate->fullyInvoiced = 2;
+                            $arLedgerUpdate->selectedToPaymentInv = -1;
+                        } else if (($row->bookingAmountTrans > $totReceiveAmount) && ($totReceiveAmount > 0)) {
+                            $arLedgerUpdate->fullyInvoiced = 1;
+                            $arLedgerUpdate->selectedToPaymentInv = 0;
+                        }
+                    } else if ($row['addedDocumentSystemID'] == 19) {
+                        if ($totReceiveAmount == 0) {
+                            $arLedgerUpdate->fullyInvoiced = 0;
+                            $arLedgerUpdate->selectedToPaymentInv = 0;
+                        } else if ($row->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount < $row->bookingAmountTrans) {
+                            $arLedgerUpdate->fullyInvoiced = 2;
+                            $arLedgerUpdate->selectedToPaymentInv = -1;
+                        } else if (($row->bookingAmountTrans < $totReceiveAmount) && ($totReceiveAmount < 0)) {
+                            $arLedgerUpdate->fullyInvoiced = 1;
+                            $arLedgerUpdate->selectedToPaymentInv = 0;
+                        }
                     }
                     $arLedgerUpdate->save();
                 }
@@ -880,7 +921,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
      *      )
      * )
      */
-    public function destroy($id)
+    public
+    function destroy($id)
     {
         /** @var CustomerReceivePayment $customerReceivePayment */
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
@@ -894,7 +936,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         return $this->sendResponse($id, 'Customer Receive Payment deleted successfully');
     }
 
-    public function getRecieptVoucherFormData(Request $request)
+    public
+    function getRecieptVoucherFormData(Request $request)
     {
         $input = $request->all();
         /*companySystemID*/
@@ -968,7 +1011,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
     }
 
-    public function recieptVoucherDataTable(Request $request)
+    public
+    function recieptVoucherDataTable(Request $request)
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN'));
@@ -1037,7 +1081,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'customermaster.CustomerName',
             'receivedAmount as receivedAmount',
             'bankAmount as bankAmount'
-            ]);
+        ]);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -1063,7 +1107,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->make(true);
     }
 
-    public function getReceiptVoucherMasterRecord(Request $request)
+    public
+    function getReceiptVoucherMasterRecord(Request $request)
     {
         $input = $request->all();
 
@@ -1075,7 +1120,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
-    public function receiptVoucherReopen(Request $request)
+    public
+    function receiptVoucherReopen(Request $request)
     {
         $input = $request->all();
 

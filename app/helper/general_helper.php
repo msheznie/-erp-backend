@@ -25,6 +25,8 @@ use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models;
+use App\Models\CustomerReceivePayment;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1427,6 +1429,11 @@ class Helper
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
                                 }
+                            }
+
+                            if ($input["documentSystemID"] == 21) {
+                                //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
+                                $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
                             }
 
                             $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
@@ -3084,6 +3091,53 @@ class Helper
                     }
                 }
             }
+        }
+    }
+
+    public static function appendToBankLedger($autoID)
+    {
+        $custReceivePayment = Models\CustomerReceivePayment::find($autoID);
+        if($custReceivePayment){
+            $data['companySystemID'] = $custReceivePayment->companySystemID;
+            $data['companyID'] = $custReceivePayment->companyID;
+            $data['documentSystemID'] = $custReceivePayment->documentSystemID;
+            $data['documentID'] = $custReceivePayment->documentID;
+            $data['documentSystemCode'] = $custReceivePayment->custReceivePaymentAutoID;
+            $data['documentCode'] = $custReceivePayment->custPaymentReceiveCode;
+            $data['documentDate'] = $custReceivePayment->custPaymentReceiveDate;
+            $data['postedDate'] = $custReceivePayment->postedDate;
+            $data['documentNarration'] = $custReceivePayment->narration;
+            $data['bankID'] = $custReceivePayment->bankID;
+            $data['bankAccountID'] = $custReceivePayment->bankAccount;
+            $data['bankCurrency'] = $custReceivePayment->bankCurrency;
+            $data['bankCurrencyER'] = $custReceivePayment->bankCurrencyER;
+            $data['documentChequeNo'] = $custReceivePayment->custChequeNo;
+            $data['documentChequeDate'] = $custReceivePayment->custChequeDate;
+            $data['payeeID'] = $custReceivePayment->customerID;
+
+            $payee = Models\CustomerMaster::find($custReceivePayment->customerID);
+            if($payee){
+                $data['payeeCode'] = $payee->CutomerCode;
+            }
+            $data['payeeName'] = $custReceivePayment->PayeeName;
+            $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
+            $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
+            $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;
+            $data['supplierTransCurrencyER'] = $custReceivePayment->custTransactionCurrencyER;
+            $data['localCurrencyID'] = $custReceivePayment->localCurrencyID;
+            $data['localCurrencyER'] = $custReceivePayment->localCurrencyER;
+            $data['companyRptCurrencyID'] = $custReceivePayment->companyRptCurrencyID;
+            $data['companyRptCurrencyER'] = $custReceivePayment->companyRptCurrencyER;
+            $data['payAmountBank'] = $custReceivePayment->bankAmount;
+            $data['payAmountSuppTrans'] = $custReceivePayment->bankAmount;
+            $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
+            $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
+            $data['invoiceType'] = $custReceivePayment->documentType;
+            $data['createdUserID'] = $custReceivePayment->createdUserID;
+            $data['createdUserSystemID'] = $custReceivePayment->createdUserSystemID;
+            $data['createdPcID'] = gethostname();
+            $data['timestamp'] = NOW();
+            Models\BankLedger::create($data);
         }
     }
 }
