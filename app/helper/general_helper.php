@@ -25,6 +25,8 @@ use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models;
+use App\Models\CustomerReceivePayment;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -525,6 +527,7 @@ class Helper
                                     $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                                     if (!$docAttachment) {
                                         return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
+
                                     }
                                 }
                             } else {
@@ -1428,6 +1431,11 @@ class Helper
                                 }
                             }
 
+                            if ($input["documentSystemID"] == 21) {
+                                //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
+                                $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
+                            }
+
                             $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
                             if ($input["documentSystemID"] == 13 && !empty($sourceModel)) {
                                 $jobCI = CreateStockReceive::dispatch($sourceModel);
@@ -1437,9 +1445,9 @@ class Helper
                             }
                             if ($input["documentSystemID"] == 4 && !empty($sourceModel)) {
                                 //$jobPV = CreateReceiptVoucher::dispatch($sourceModel);
-                                if($sourceModel->invoiceType == 3) {
+                                if ($sourceModel->invoiceType == 3) {
                                     $jobPV = self::generateCustomerReceiptVoucher($sourceModel);
-                                }else{
+                                } else {
                                     $bankLedger = BankLedgerInsert::dispatch($masterData);
                                 }
                             }
@@ -1770,7 +1778,7 @@ class Helper
     public static function getEmployeeInfoByURL($input)
     {
 
-        if(!array_key_exists('Authorization',$input) || $input['Authorization'] == ""){
+        if (!array_key_exists('Authorization', $input) || $input['Authorization'] == "") {
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
@@ -1778,14 +1786,14 @@ class Helper
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
-        $token =  trim(str_replace("","",$input['Authorization']));
+        $token = trim(str_replace("", "", $input['Authorization']));
 
-       $oauth = Models\AccessTokens::where('id','<>',$token)
-                                    //->where('id','like',"%{$token}%")
-                                    ->where('revoked',0)
-                                    ->get();
+        $oauth = Models\AccessTokens::where('id', '<>', $token)
+            //->where('id','like',"%{$token}%")
+            ->where('revoked', 0)
+            ->get();
 
-        if(empty($oauth)){
+        if (empty($oauth)) {
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
@@ -1793,9 +1801,9 @@ class Helper
         $user = Models\User::find($id);
         $employee = Models\Employee::find($user->employee_id);
 
-        if($employee){
+        if ($employee) {
             return ['success' => true, 'message' => $employee];
-        }else{
+        } else {
             return ['success' => false, 'message' => 'Unauthorized'];
         }
     }
@@ -2499,194 +2507,637 @@ class Helper
     {
         Log::useFiles(storage_path() . '/logs/create_receipt_voucher_jobs.log');
         if ($pvMaster->invoiceType == 3) {
-            DB::beginTransaction();
-            try {
-                Log::info('started');
-                Log::info($pvMaster->PayMasterAutoId);
-                $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->get();
-                if (count($dpdetails) > 0) {
-                    if ($pvMaster->expenseClaimOrPettyCash == 6 || $pvMaster->expenseClaimOrPettyCash == 7) {
-                        $company = Models\Company::find($pvMaster->interCompanyToSystemID);
-                        $receivePayment['companySystemID'] = $pvMaster->interCompanyToSystemID;
-                        $receivePayment['companyID'] = $company->CompanyID;
-                        $receivePayment['documentSystemID'] = 21;
-                        $receivePayment['documentID'] = 'BRV';
+            Log::info('started');
+            Log::info($pvMaster->PayMasterAutoId);
+            $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->get();
+            if (count($dpdetails) > 0) {
+                if ($pvMaster->expenseClaimOrPettyCash == 6 || $pvMaster->expenseClaimOrPettyCash == 7) {
+                    $company = Models\Company::find($pvMaster->interCompanyToSystemID);
+                    $receivePayment['companySystemID'] = $pvMaster->interCompanyToSystemID;
+                    $receivePayment['companyID'] = $company->CompanyID;
+                    $receivePayment['documentSystemID'] = 21;
+                    $receivePayment['documentID'] = 'BRV';
 
-                        $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
+                    $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
 
-                        $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
-                        $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
-                        $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
+                    $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
+                    $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
+                    $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
-                        $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
-                        $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                        $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                    $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
+                    $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                    $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
 
-                        $BRVLastSerial = Models\CustomerReceivePayment::where('companySystemID', $pvMaster->interCompanyToSystemID)
-                            ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
-                            ->where('documentSystemID', 21)
-                            ->where('serialNo', '>', 0)
-                            ->orderBy('serialNo', 'desc')
-                            ->first();
+                    $BRVLastSerial = Models\CustomerReceivePayment::where('companySystemID', $pvMaster->interCompanyToSystemID)
+                        ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
+                        ->where('documentSystemID', 21)
+                        ->where('serialNo', '>', 0)
+                        ->orderBy('serialNo', 'desc')
+                        ->first();
 
-                        $cusInvLastSerialNumber = 1;
-                        if ($BRVLastSerial) {
-                            $cusInvLastSerialNumber = intval($BRVLastSerial->serialNo) + 1;
-                        }
-                        $receivePayment['serialNo'] = $cusInvLastSerialNumber;
+                    $cusInvLastSerialNumber = 1;
+                    if ($BRVLastSerial) {
+                        $cusInvLastSerialNumber = intval($BRVLastSerial->serialNo) + 1;
+                    }
+                    $receivePayment['serialNo'] = $cusInvLastSerialNumber;
 
-                        if ($companyFinanceYear) {
-                            $cusStartYear = $companyFinanceYear->bigginingDate;
-                            $cusFinYearExp = explode('-', $cusStartYear);
-                            $cusFinYear = $cusFinYearExp[0];
-                        } else {
-                            $cusFinYear = date("Y");
-                        }
-                        $docCode = ($company->CompanyID . '\\' . $cusFinYear . '\\' . $receivePayment['documentID'] . str_pad($cusInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
+                    if ($companyFinanceYear) {
+                        $cusStartYear = $companyFinanceYear->bigginingDate;
+                        $cusFinYearExp = explode('-', $cusStartYear);
+                        $cusFinYear = $cusFinYearExp[0];
+                    } else {
+                        $cusFinYear = date("Y");
+                    }
+                    $docCode = ($company->CompanyID . '\\' . $cusFinYear . '\\' . $receivePayment['documentID'] . str_pad($cusInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-                        $receivePayment['custPaymentReceiveCode'] = $docCode;
-                        $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
-                        $receivePayment['narration'] = $pvMaster->BPVNarration;
-                        $receivePayment['intercompanyPaymentID'] = $pvMaster->PayMasterAutoId;
-                        $receivePayment['intercompanyPaymentCode'] = $pvMaster->BPVcode;
-                        $receivePayment['expenseClaimOrPettyCash'] = $pvMaster->expenseClaimOrPettyCash;
+                    $receivePayment['custPaymentReceiveCode'] = $docCode;
+                    $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
+                    $receivePayment['narration'] = $pvMaster->BPVNarration;
+                    $receivePayment['intercompanyPaymentID'] = $pvMaster->PayMasterAutoId;
+                    $receivePayment['intercompanyPaymentCode'] = $pvMaster->BPVcode;
+                    $receivePayment['expenseClaimOrPettyCash'] = $pvMaster->expenseClaimOrPettyCash;
 
-                        $dpdetails2 = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->first();
-                        if ($dpdetails2) {
-                            $receivePayment['custTransactionCurrencyID'] = $dpdetails2->toBankCurrencyID;
-                            $receivePayment['custTransactionCurrencyER'] = 1;
-                            $receivePayment['localCurrencyID'] = $dpdetails2->toCompanyLocalCurrencyID;
-                            $receivePayment['localCurrencyER'] = $dpdetails2->toCompanyLocalCurrencyER;
-                            $receivePayment['companyRptCurrencyID'] = $dpdetails2->toCompanyRptCurrencyID;
-                            $receivePayment['companyRptCurrencyER'] = $dpdetails2->toCompanyRptCurrencyER;
-                            $receivePayment['bankAmount'] = $dpdetails2->toBankAmount;
-                            $receivePayment['receivedAmount'] = $dpdetails2->toBankAmount;
-                            $receivePayment['localAmount'] = $dpdetails2->toCompanyLocalCurrencyAmount;
-                            $receivePayment['companyRptAmount'] = $dpdetails2->toCompanyRptCurrencyAmount;
-                            $receivePayment['bankID'] = $dpdetails2->toBankID;
-                            $receivePayment['bankAccount'] = $dpdetails2->toBankAccountID;
-                            $receivePayment['bankCurrency'] = $dpdetails2->toBankCurrencyID;
-                            $receivePayment['bankCurrencyER'] = 1;
-                        }
+                    $dpdetails2 = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->first();
+                    if ($dpdetails2) {
+                        $receivePayment['custTransactionCurrencyID'] = $dpdetails2->toBankCurrencyID;
+                        $receivePayment['custTransactionCurrencyER'] = 1;
+                        $receivePayment['localCurrencyID'] = $dpdetails2->toCompanyLocalCurrencyID;
+                        $receivePayment['localCurrencyER'] = $dpdetails2->toCompanyLocalCurrencyER;
+                        $receivePayment['companyRptCurrencyID'] = $dpdetails2->toCompanyRptCurrencyID;
+                        $receivePayment['companyRptCurrencyER'] = $dpdetails2->toCompanyRptCurrencyER;
+                        $receivePayment['bankAmount'] = ABS($dpdetails2->toBankAmount) * -1;
+                        $receivePayment['receivedAmount'] = ABS($dpdetails2->toBankAmount) * -1;
+                        $receivePayment['localAmount'] = ABS($dpdetails2->toCompanyLocalCurrencyAmount) * -1;
+                        $receivePayment['companyRptAmount'] = ABS($dpdetails2->toCompanyRptCurrencyAmount) * -1;
+                        $receivePayment['bankID'] = $dpdetails2->toBankID;
+                        $receivePayment['bankAccount'] = $dpdetails2->toBankAccountID;
+                        $receivePayment['bankCurrency'] = $dpdetails2->toBankCurrencyID;
+                        $receivePayment['bankCurrencyER'] = 1;
+                    }
 
-                        $receivePayment['documentType'] = 14;
-                        $receivePayment['createdUserSystemID'] = $pvMaster->confirmedByEmpSystemID;
-                        $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
-                        $receivePayment['createdPcID'] = gethostname();
+                    $receivePayment['documentType'] = 14;
+                    $receivePayment['createdUserSystemID'] = $pvMaster->confirmedByEmpSystemID;
+                    $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
+                    $receivePayment['createdPcID'] = gethostname();
 
-                        Log::info($receivePayment);
+                    Log::info($receivePayment);
 
-                        $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
+                    $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
 
-                        if ($custRecMaster) {
-                            foreach ($dpdetails as $val) {
-                                $chartofAccount = Models\ChartOfAccount::where('interCompanySystemID', $pvMaster->companySystemID)->first();
-                                $receivePaymentDetail['directReceiptAutoID'] = $custRecMaster->custReceivePaymentAutoID;
-                                $receivePaymentDetail['companySystemID'] = $pvMaster->interCompanyToSystemID;
-                                $receivePaymentDetail['companyID'] = $company->CompanyID;
+                    if ($custRecMaster) {
+                        foreach ($dpdetails as $val) {
+                            $chartofAccount = Models\ChartOfAccount::where('interCompanySystemID', $pvMaster->companySystemID)->first();
+                            $receivePaymentDetail['directReceiptAutoID'] = $custRecMaster->custReceivePaymentAutoID;
+                            $receivePaymentDetail['companySystemID'] = $pvMaster->interCompanyToSystemID;
+                            $receivePaymentDetail['companyID'] = $company->CompanyID;
 
-                                $serviceLine = Models\SegmentMaster::ofCompany([$pvMaster->interCompanyToSystemID])->isPublic()->first();
-                                if ($serviceLine) {
-                                    $receivePaymentDetail['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
-                                    $receivePaymentDetail['serviceLineCode'] = $serviceLine->ServiceLineCode;
-                                }
-
-                                $receivePaymentDetail['chartOfAccountSystemID'] = $chartofAccount->chartOfAccountSystemID;
-                                $receivePaymentDetail['glCode'] = $chartofAccount->AccountCode;
-                                $receivePaymentDetail['glCodeDes'] = $chartofAccount->AccountDescription;
-                                $receivePaymentDetail['contractID'] = null;
-                                $receivePaymentDetail['comments'] = $pvMaster->BPVNarration;
-                                $receivePaymentDetail['DRAmountCurrency'] = $val->toBankCurrencyID;
-                                $receivePaymentDetail['DDRAmountCurrencyER'] = 1;
-                                $receivePaymentDetail['DRAmount'] = $val->toBankAmount;
-                                $receivePaymentDetail['localCurrency'] = $val->toCompanyLocalCurrencyID;
-                                $receivePaymentDetail['localCurrencyER'] = $val->toCompanyLocalCurrencyER;
-                                $receivePaymentDetail['localAmount'] = $val->toCompanyLocalCurrencyAmount;
-                                $receivePaymentDetail['comRptCurrency'] = $val->toCompanyRptCurrencyID;
-                                $receivePaymentDetail['comRptCurrencyER'] = $val->toCompanyRptCurrencyER;
-                                $receivePaymentDetail['comRptAmount'] = $val->toCompanyRptCurrencyAmount;
-                                Log::info($receivePaymentDetail);
-                                $custRecMaster = Models\DirectReceiptDetail::create($receivePaymentDetail);
+                            $serviceLine = Models\SegmentMaster::ofCompany([$pvMaster->interCompanyToSystemID])->isPublic()->first();
+                            if ($serviceLine) {
+                                $receivePaymentDetail['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
+                                $receivePaymentDetail['serviceLineCode'] = $serviceLine->ServiceLineCode;
                             }
 
-                            $params = array('autoID' => $custRecMaster->custReceivePaymentAutoID, 'company' => $pvMaster->interCompanyToSystemID, 'document' => 21, 'segment' => '', 'category' => '', 'amount' => 0);
-                            $confirm = \Helper::confirmDocument($params);
-                            Log::info($confirm["message"]);
+                            $receivePaymentDetail['chartOfAccountSystemID'] = $chartofAccount->chartOfAccountSystemID;
+                            $receivePaymentDetail['glCode'] = $chartofAccount->AccountCode;
+                            $receivePaymentDetail['glCodeDes'] = $chartofAccount->AccountDescription;
+                            $receivePaymentDetail['contractID'] = null;
+                            $receivePaymentDetail['comments'] = $pvMaster->BPVNarration;
+                            $receivePaymentDetail['DRAmountCurrency'] = $val->toBankCurrencyID;
+                            $receivePaymentDetail['DDRAmountCurrencyER'] = 1;
+                            $receivePaymentDetail['DRAmount'] = $val->toBankAmount;
+                            $receivePaymentDetail['localCurrency'] = $val->toCompanyLocalCurrencyID;
+                            $receivePaymentDetail['localCurrencyER'] = $val->toCompanyLocalCurrencyER;
+                            $receivePaymentDetail['localAmount'] = $val->toCompanyLocalCurrencyAmount;
+                            $receivePaymentDetail['comRptCurrency'] = $val->toCompanyRptCurrencyID;
+                            $receivePaymentDetail['comRptCurrencyER'] = $val->toCompanyRptCurrencyER;
+                            $receivePaymentDetail['comRptAmount'] = $val->toCompanyRptCurrencyAmount;
+                            Log::info($receivePaymentDetail);
+                            $custRecDetail = Models\DirectReceiptDetail::create($receivePaymentDetail);
                         }
-                    } else {
-                        $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->where('glCodeIsBank', 1)->get();
-                        if (count($dpdetails) > 0) {
-                            foreach ($dpdetails as $val) {
-                                $receivePayment['companySystemID'] = $pvMaster->companySystemID;
-                                $receivePayment['companyID'] = $pvMaster->companyID;
-                                $receivePayment['documentSystemID'] = $pvMaster->documentSystemID;
-                                $receivePayment['documentID'] = $pvMaster->documentID;
 
-                                $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
+                        $params = array('autoID' => $custRecMaster->custReceivePaymentAutoID, 'company' => $pvMaster->interCompanyToSystemID, 'document' => 21, 'segment' => '', 'category' => '', 'amount' => 0);
+                        $confirm = self::confirmWithoutRuleDocument($params);
+                        Log::info($confirm["message"]);
+                    }
+                } else {
+                    $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->where('glCodeIsBank', 1)->get();
+                    if (count($dpdetails) > 0) {
+                        foreach ($dpdetails as $val) {
+                            $receivePayment['companySystemID'] = $pvMaster->companySystemID;
+                            $receivePayment['companyID'] = $pvMaster->companyID;
+                            $receivePayment['documentSystemID'] = $pvMaster->documentSystemID;
+                            $receivePayment['documentID'] = $pvMaster->documentID;
 
-                                $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
-                                $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
-                                $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
+                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
 
-                                $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
-                                $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                                $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
-                                $receivePayment['PayMasterAutoId'] = $pvMaster->PayMasterAutoId;
-                                $receivePayment['serialNo'] = $pvMaster->serialNo;
-                                $receivePayment['custPaymentReceiveCode'] = $pvMaster->BPVcode;
-                                $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
-                                $receivePayment['narration'] = $pvMaster->BPVNarration;
+                            $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
+                            $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
+                            $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
-                                $receivePayment['custTransactionCurrencyID'] = $val->bankCurrencyID;
-                                $receivePayment['custTransactionCurrencyER'] = 1;
+                            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
+                            $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                            $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                            $receivePayment['PayMasterAutoId'] = $pvMaster->PayMasterAutoId;
+                            $receivePayment['serialNo'] = $pvMaster->serialNo;
+                            $receivePayment['custPaymentReceiveCode'] = $pvMaster->BPVcode;
+                            $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
+                            $receivePayment['narration'] = $pvMaster->BPVNarration;
 
-                                $account = Models\BankAccount::where('chartOfAccountSystemID', $val->chartOfAccountSystemID)->where('companySystemID', $pvMaster->companySystemID)->first();
+                            $receivePayment['custTransactionCurrencyID'] = $val->bankCurrencyID;
+                            $receivePayment['custTransactionCurrencyER'] = 1;
 
-                                $receivePayment['bankID'] = $account->bankmasterAutoID;
-                                $receivePayment['bankAccount'] = $account->bankAccountAutoID;
-                                $receivePayment['bankCurrency'] = $val->bankCurrencyID;
-                                $receivePayment['bankCurrencyER'] = 1;
+                            $account = Models\BankAccount::where('chartOfAccountSystemID', $val->chartOfAccountSystemID)->where('companySystemID', $pvMaster->companySystemID)->first();
 
-                                $companyCurrencyConversion = \Helper::currencyConversion($pvMaster->companySystemID, $val->bankCurrencyID, $val->bankCurrencyID, $val->bankAmount);
+                            $receivePayment['bankID'] = $account->bankmasterAutoID;
+                            $receivePayment['bankAccount'] = $account->bankAccountAutoID;
+                            $receivePayment['bankCurrency'] = $val->bankCurrencyID;
+                            $receivePayment['bankCurrencyER'] = 1;
 
-                                $receivePayment['localCurrencyID'] = $val->localCurrency;
-                                $receivePayment['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                                $receivePayment['companyRptCurrencyID'] = $val->comRptCurrency;
-                                $receivePayment['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                                $receivePayment['bankAmount'] = $val->bankAmount;
-                                $receivePayment['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
-                                $receivePayment['companyRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
-                                $receivePayment['receivedAmount'] = $val->bankAmount;
+                            $companyCurrencyConversion = \Helper::currencyConversion($pvMaster->companySystemID, $val->bankCurrencyID, $val->bankCurrencyID, $val->bankAmount);
 
-                                $receivePayment['confirmedYN'] = 1;
-                                $receivePayment['confirmedByEmpSystemID'] = $pvMaster->confirmedByEmpSystemID;
-                                $receivePayment['confirmedByEmpID'] = $pvMaster->confirmedByEmpID;;
-                                $receivePayment['confirmedByName'] = $pvMaster->confirmedByName;;
-                                $receivePayment['confirmedDate'] = NOW();
-                                $receivePayment['approved'] = -1;
-                                $receivePayment['approvedDate'] = NOW();
-                                $receivePayment['postedDate'] = NOW();
-                                $receivePayment['createdUserSystemID'] = $pvMaster->confirmedByEmpSystemID;
-                                $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
-                                $receivePayment['createdPcID'] = gethostname();
+                            $receivePayment['localCurrencyID'] = $val->localCurrency;
+                            $receivePayment['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                            $receivePayment['companyRptCurrencyID'] = $val->comRptCurrency;
+                            $receivePayment['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                            $receivePayment['bankAmount'] = $val->bankAmount;
+                            $receivePayment['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+                            $receivePayment['companyRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+                            $receivePayment['receivedAmount'] = $val->bankAmount;
 
-                                $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
-                                Log::info($receivePayment);
+                            $receivePayment['confirmedYN'] = 1;
+                            $receivePayment['confirmedByEmpSystemID'] = $pvMaster->confirmedByEmpSystemID;
+                            $receivePayment['confirmedByEmpID'] = $pvMaster->confirmedByEmpID;;
+                            $receivePayment['confirmedByName'] = $pvMaster->confirmedByName;;
+                            $receivePayment['confirmedDate'] = NOW();
+                            $receivePayment['approved'] = -1;
+                            $receivePayment['approvedDate'] = NOW();
+                            $receivePayment['postedDate'] = NOW();
+                            $receivePayment['createdUserSystemID'] = $pvMaster->confirmedByEmpSystemID;
+                            $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
+                            $receivePayment['createdPcID'] = gethostname();
+
+                            $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
+                            Log::info($receivePayment);
+                        }
+                    }
+                }
+            }
+            Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
+            $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
+            $jobPV = BankLedgerInsert::dispatch($masterData);
+        }
+    }
+
+
+    /**
+     * A common function to confirm document with approval creation
+     * @param $params : accept parameters as an array
+     * $param 1-documentSystemID : autoID
+     * $param 2-company : company
+     * $param 3-document : document
+     * $param 4-segment : segment
+     * $param 5-category : category
+     * $param 6-amount : amount
+     * no return values
+     */
+    public static function confirmWithoutRuleDocument($params)
+    {
+        /** check document is already confirmed*/
+        if (!array_key_exists('autoID', $params)) {
+            return ['success' => false, 'message' => 'Parameter documentSystemID is missing'];
+        }
+
+        if (!array_key_exists('company', $params)) {
+            return ['success' => false, 'message' => 'Parameter company is missing'];
+        }
+
+        if (!array_key_exists('document', $params)) {
+            return ['success' => false, 'message' => 'Parameter document is missing'];
+        }
+
+
+        $docInforArr = array('documentCodeColumnName' => '', 'confirmColumnName' => '', 'confirmedBy' => '', 'confirmedBySystemID' => '', 'confirmedDate' => '', 'tableName' => '', 'modelName' => '', 'primarykey' => '');
+        switch ($params["document"]) { // check the document id and set relavant parameters
+            case 1:
+            case 50:
+            case 51:
+                $docInforArr["documentCodeColumnName"] = 'purchaseRequestCode';
+                $docInforArr["confirmColumnName"] = 'PRConfirmedYN';
+                $docInforArr["confirmedBy"] = 'PRConfirmedBy';
+                $docInforArr["confirmedByEmpID"] = 'PRConfirmedByEmpName';
+                $docInforArr["confirmedBySystemID"] = 'PRConfirmedBySystemID';
+                $docInforArr["confirmedDate"] = 'PRConfirmedDate';
+                $docInforArr["tableName"] = 'erp_purchaserequest';
+                $docInforArr["modelName"] = 'PurchaseRequest';
+                $docInforArr["primarykey"] = 'purchaseRequestID';
+                break;
+            case 2:
+            case 5:
+            case 52:
+                $docInforArr["documentCodeColumnName"] = 'purchaseOrderCode';
+                $docInforArr["confirmColumnName"] = 'poConfirmedYN';
+                $docInforArr["confirmedBy"] = 'poConfirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'poConfirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'poConfirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'poConfirmedDate';
+                $docInforArr["tableName"] = 'erp_purchaseordermaster';
+                $docInforArr["modelName"] = 'ProcumentOrder';
+                $docInforArr["primarykey"] = 'purchaseOrderID';
+                break;
+            case 56:
+                $docInforArr["documentCodeColumnName"] = 'primarySupplierCode';
+                $docInforArr["confirmColumnName"] = 'supplierConfirmedYN';
+                $docInforArr["confirmedBy"] = 'supplierConfirmedEmpName';
+                $docInforArr["confirmedByEmpID"] = 'supplierConfirmedEmpID';
+                $docInforArr["confirmedBySystemID"] = 'supplierConfirmedEmpSystemID';
+                $docInforArr["confirmedDate"] = 'supplierConfirmedDate';
+                $docInforArr["tableName"] = 'suppliermaster';
+                $docInforArr["modelName"] = 'SupplierMaster';
+                $docInforArr["primarykey"] = 'supplierCodeSystem';
+                break;
+            case 57:
+                $docInforArr["documentCodeColumnName"] = 'primaryCode';
+                $docInforArr["confirmColumnName"] = 'itemConfirmedYN';
+                $docInforArr["confirmedBy"] = 'itemConfirmedByEMPName';
+                $docInforArr["confirmedByEmpID"] = 'itemConfirmedByEMPID';
+                $docInforArr["confirmedBySystemID"] = 'itemConfirmedByEMPSystemID';
+                $docInforArr["confirmedDate"] = 'itemConfirmedDate';
+                $docInforArr["tableName"] = 'itemmaster';
+                $docInforArr["modelName"] = 'ItemMaster';
+                $docInforArr["primarykey"] = 'itemCodeSystem';
+                break;
+            case 58:
+                $docInforArr["documentCodeColumnName"] = 'CutomerCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'customermaster';
+                $docInforArr["modelName"] = 'CustomerMaster';
+                $docInforArr["primarykey"] = 'customerCodeSystem';
+                break;
+            case 59:
+                $docInforArr["documentCodeColumnName"] = 'AccountCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedEmpDate';
+                $docInforArr["tableName"] = 'chartofaccounts';
+                $docInforArr["modelName"] = 'ChartOfAccount';
+                $docInforArr["primarykey"] = 'chartOfAccountSystemID';
+                break;
+            case 9:
+                $docInforArr["documentCodeColumnName"] = 'RequestCode';
+                $docInforArr["confirmColumnName"] = 'ConfirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedEmpName';
+                $docInforArr["confirmedByEmpID"] = 'ConfirmedBy';
+                $docInforArr["confirmedBySystemID"] = 'ConfirmedBySystemID';
+                $docInforArr["confirmedDate"] = 'ConfirmedDate';
+                $docInforArr["tableName"] = 'erp_request';
+                $docInforArr["modelName"] = 'MaterielRequest';
+                $docInforArr["primarykey"] = 'RequestID';
+                break;
+            case 3:
+                $docInforArr["documentCodeColumnName"] = 'grvPrimaryCode';
+                $docInforArr["confirmColumnName"] = 'grvConfirmedYN';
+                $docInforArr["confirmedBy"] = 'grvConfirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'grvConfirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'grvConfirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'grvConfirmedDate';
+                $docInforArr["tableName"] = 'erp_grvmaster';
+                $docInforArr["modelName"] = 'GRVMaster';
+                $docInforArr["primarykey"] = 'grvAutoID';
+                break;
+            case 8:
+                $docInforArr["documentCodeColumnName"] = 'itemIssueCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_itemissuemaster';
+                $docInforArr["modelName"] = 'ItemIssueMaster';
+                $docInforArr["primarykey"] = 'itemIssueAutoID';
+                break;
+            case 12:
+                $docInforArr["documentCodeColumnName"] = 'itemReturnCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_itemreturnmaster';
+                $docInforArr["modelName"] = 'ItemReturnMaster';
+                $docInforArr["primarykey"] = 'itemReturnAutoID';
+                break;
+            case 13:
+                $docInforArr["documentCodeColumnName"] = 'stockTransferCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_stocktransfer';
+                $docInforArr["modelName"] = 'StockTransfer';
+                $docInforArr["primarykey"] = 'stockTransferAutoID';
+                break;
+            case 10:
+                $docInforArr["documentCodeColumnName"] = 'stockReceiveCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_stockreceive';
+                $docInforArr["modelName"] = 'StockReceive';
+                $docInforArr["primarykey"] = 'stockReceiveAutoID';
+                break;
+            case 61:
+                $docInforArr["documentCodeColumnName"] = 'documentCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_inventoryreclassification';
+                $docInforArr["modelName"] = 'InventoryReclassification';
+                $docInforArr["primarykey"] = 'inventoryreclassificationID';
+                break;
+            case 24:
+                $docInforArr["documentCodeColumnName"] = 'purchaseReturnCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_purchasereturnmaster';
+                $docInforArr["modelName"] = 'PurchaseReturn';
+                $docInforArr["primarykey"] = 'purhaseReturnAutoID';
+                break;
+            case 20:
+                $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_custinvoicedirect';
+                $docInforArr["modelName"] = 'CustomerInvoiceDirect';
+                $docInforArr["primarykey"] = 'custInvoiceDirectAutoID';
+                break;
+            case 7:
+                $docInforArr["documentCodeColumnName"] = 'stockAdjustmentCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_stockadjustment';
+                $docInforArr["modelName"] = 'StockAdjustment';
+                $docInforArr["primarykey"] = 'stockAdjustmentAutoID';
+                break;
+            case 15:
+                $docInforArr["documentCodeColumnName"] = 'debitNoteCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_debitnote';
+                $docInforArr["modelName"] = 'DebitNote';
+                $docInforArr["primarykey"] = 'debitNoteAutoID';
+                break;
+            case 19:
+                $docInforArr["documentCodeColumnName"] = 'creditNoteCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_creditnote';
+                $docInforArr["modelName"] = 'CreditNote';
+                $docInforArr["primarykey"] = 'creditNoteAutoID';
+                break;
+            case 11:
+                $docInforArr["documentCodeColumnName"] = 'bookingInvCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_bookinvsuppmaster';
+                $docInforArr["modelName"] = 'BookInvSuppMaster';
+                $docInforArr["primarykey"] = 'bookingSuppMasInvAutoID';
+                break;
+            case 4:
+                $docInforArr["documentCodeColumnName"] = 'BPVcode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_paysupplierinvoicemaster';
+                $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
+                $docInforArr["primarykey"] = 'PayMasterAutoId';
+                break;
+            case 62:
+                $docInforArr["documentCodeColumnName"] = 'bankRecPrimaryCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_bankrecmaster';
+                $docInforArr["modelName"] = 'BankReconciliation';
+                $docInforArr["primarykey"] = 'bankRecAutoID';
+                break;
+            case 63:
+                $docInforArr["documentCodeColumnName"] = 'capitalizationCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_fa_assetcapitalization';
+                $docInforArr["modelName"] = 'AssetCapitalization';
+                $docInforArr["primarykey"] = 'capitalizationID';
+                break;
+            case 64:
+                $docInforArr["documentCodeColumnName"] = 'bankTransferDocumentCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_paymentbanktransfer';
+                $docInforArr["modelName"] = 'PaymentBankTransfer';
+                $docInforArr["primarykey"] = 'paymentBankTransferID';
+                break;
+            case 17:
+                $docInforArr["documentCodeColumnName"] = 'JVcode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_jvmaster';
+                $docInforArr["modelName"] = 'JvMaster';
+                $docInforArr["primarykey"] = 'jvMasterAutoId';
+                break;
+            case 22:
+                $docInforArr["documentCodeColumnName"] = 'faCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_fa_asset_master';
+                $docInforArr["modelName"] = 'FixedAssetMaster';
+                $docInforArr["primarykey"] = 'faID';
+                break;
+            case 23:
+                $docInforArr["documentCodeColumnName"] = 'depCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_fa_depmaster';
+                $docInforArr["modelName"] = 'FixedAssetDepreciationMaster';
+                $docInforArr["primarykey"] = 'depMasterAutoID';
+                break;
+            case 46:
+                $docInforArr["documentCodeColumnName"] = 'transferVoucherNo';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_budgettransferform';
+                $docInforArr["modelName"] = 'BudgetTransferForm';
+                $docInforArr["primarykey"] = 'budgetTransferFormAutoID';
+                break;
+            case 65:
+                $docInforArr["documentCodeColumnName"] = 'budgetmasterID';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_budgetmaster';
+                $docInforArr["modelName"] = 'BudgetMaster';
+                $docInforArr["primarykey"] = 'budgetmasterID';
+                break;
+            case 41:
+                $docInforArr["documentCodeColumnName"] = 'disposalDocumentCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByEmpName';
+                $docInforArr["confirmedByEmpID"] = 'confimedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confimedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_fa_asset_disposalmaster';
+                $docInforArr["modelName"] = 'AssetDisposalMaster';
+                $docInforArr["primarykey"] = 'assetdisposalMasterAutoID';
+                break;
+            case 21:
+                $docInforArr["documentCodeColumnName"] = 'custPaymentReceiveCode';
+                $docInforArr["confirmColumnName"] = 'confirmedYN';
+                $docInforArr["confirmedBy"] = 'confirmedByName';
+                $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                $docInforArr["confirmedDate"] = 'confirmedDate';
+                $docInforArr["tableName"] = 'erp_customerreceivepayment';
+                $docInforArr["modelName"] = 'CustomerReceivePayment';
+                $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                break;
+            default:
+                return ['success' => false, 'message' => 'Document ID not found'];
+        }
+
+        $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
+        $masterRec = $namespacedModel::find($params["autoID"]);
+
+        $document = Models\DocumentMaster::where('documentSystemID', $params["document"])->first();
+        if ($document) {
+            // get current employee detail
+            $empInfo = self::getEmployeeInfo();
+
+            // get approval rolls
+            $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
+            $output = $approvalLevel->first();
+
+
+            if ($output) {
+                /** get source document master record*/
+                $sorceDocument = $namespacedModel::find($params["autoID"]);
+                $documentApproved = [];
+                if ($output) {
+                    if ($output->approvalrole) {
+                        foreach ($output->approvalrole as $val) {
+                            if ($val->approvalGroupID) {
+                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $val->documentSystemID, 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID);
                             }
                         }
                     }
                 }
-
-                Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
-                $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
-                $jobPV = BankLedgerInsert::dispatch($masterData);
-
-                DB::commit();
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                Log::error($e->getMessage());
+                if (count($documentApproved) > 0) {
+                    // insert rolls to document approved table
+                    $isDocumentApproved = Models\DocumentApproved::insert($documentApproved);
+                    if ($isDocumentApproved) {
+                        //confirm the document
+                        $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
+                    }
+                }
             }
+        }
+    }
+
+    public static function appendToBankLedger($autoID)
+    {
+        $custReceivePayment = Models\CustomerReceivePayment::find($autoID);
+        if($custReceivePayment){
+            $data['companySystemID'] = $custReceivePayment->companySystemID;
+            $data['companyID'] = $custReceivePayment->companyID;
+            $data['documentSystemID'] = $custReceivePayment->documentSystemID;
+            $data['documentID'] = $custReceivePayment->documentID;
+            $data['documentSystemCode'] = $custReceivePayment->custReceivePaymentAutoID;
+            $data['documentCode'] = $custReceivePayment->custPaymentReceiveCode;
+            $data['documentDate'] = $custReceivePayment->custPaymentReceiveDate;
+            $data['postedDate'] = $custReceivePayment->postedDate;
+            $data['documentNarration'] = $custReceivePayment->narration;
+            $data['bankID'] = $custReceivePayment->bankID;
+            $data['bankAccountID'] = $custReceivePayment->bankAccount;
+            $data['bankCurrency'] = $custReceivePayment->bankCurrency;
+            $data['bankCurrencyER'] = $custReceivePayment->bankCurrencyER;
+            $data['documentChequeNo'] = $custReceivePayment->custChequeNo;
+            $data['documentChequeDate'] = $custReceivePayment->custChequeDate;
+            $data['payeeID'] = $custReceivePayment->customerID;
+
+            $payee = Models\CustomerMaster::find($custReceivePayment->customerID);
+            if($payee){
+                $data['payeeCode'] = $payee->CutomerCode;
+            }
+            $data['payeeName'] = $custReceivePayment->PayeeName;
+            $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
+            $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
+            $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;
+            $data['supplierTransCurrencyER'] = $custReceivePayment->custTransactionCurrencyER;
+            $data['localCurrencyID'] = $custReceivePayment->localCurrencyID;
+            $data['localCurrencyER'] = $custReceivePayment->localCurrencyER;
+            $data['companyRptCurrencyID'] = $custReceivePayment->companyRptCurrencyID;
+            $data['companyRptCurrencyER'] = $custReceivePayment->companyRptCurrencyER;
+            $data['payAmountBank'] = $custReceivePayment->bankAmount;
+            $data['payAmountSuppTrans'] = $custReceivePayment->bankAmount;
+            $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
+            $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
+            $data['invoiceType'] = $custReceivePayment->documentType;
+            $data['createdUserID'] = $custReceivePayment->createdUserID;
+            $data['createdUserSystemID'] = $custReceivePayment->createdUserSystemID;
+            $data['createdPcID'] = gethostname();
+            $data['timestamp'] = NOW();
+            Models\BankLedger::create($data);
         }
     }
 }

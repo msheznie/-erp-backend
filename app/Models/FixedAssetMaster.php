@@ -745,5 +745,24 @@ class FixedAssetMaster extends Model
         return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
     }
 
-    
+    public function department()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function finance_category()
+    {
+        return $this->belongsTo('App\Models\AssetFinanceCategory','AUDITCATOGARY','faFinanceCatID');
+    }
+
+    public function asset_type()
+    {
+        return $this->belongsTo('App\Models\AssetType','assetType','typeID');
+    }
+
+    public function group_to()
+    {
+        return $this->belongsTo('App\Models\FixedAssetMaster','groupTO','faID');
+    }
+
 }

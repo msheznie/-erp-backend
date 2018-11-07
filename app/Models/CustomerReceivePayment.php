@@ -579,7 +579,7 @@ class CustomerReceivePayment extends Model
 
     public function directdetails()
     {
-        return $this->hasMany('App\Models\DirectReceiptDetail', 'custReceivePaymentAutoID', 'directReceiptAutoID');
+        return $this->hasMany('App\Models\DirectReceiptDetail', 'directReceiptAutoID', 'custReceivePaymentAutoID');
     }
 
     public function bank()

@@ -8,6 +8,8 @@
  * -- Create date : 08 - August 2018
  * -- Description : This file contains the all CRUD for Asset master
  * -- REVISION HISTORY
+ * -- Date: 05-November 2018 By: Fayas Description: Added new functions named as generateAssetInsuranceReport(),
+ *             exportAssetInsurance()
  */
 
 namespace App\Http\Controllers\API;
@@ -793,7 +795,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAssetCostingByID($id)
     {
         /** @var FixedAssetMaster $fixedAssetMaster */
-        $fixedAssetMaster = $this->fixedAssetMasterRepository->with('confirmed_by')->findWithoutFail($id);
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by','group_to'])->findWithoutFail($id);
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
@@ -1060,5 +1062,162 @@ class FixedAssetMasterAPIController extends AppBaseController
             }, 'created_by', 'modified_by'])->findWithoutFail($input['faID']);
 
         return $this->sendResponse($output, 'Data retrieved successfully');
+    }
+
+    public function generateAssetInsuranceReport(Request $request)
+    {
+
+        $input = $request->all();
+        //$input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+
+        $search = $request->input('search.value');
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $assetInsurance = $this->assetInsuranceReport($input,$search);
+
+        return \DataTables::of($assetInsurance)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('erp_fa_asset_master.faID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+    public function exportAssetInsuranceReport(Request $request)
+    {
+
+        $type = $request->type;
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        //$input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+        $search = $request->input('search.value');
+        $assetInsurance = $this->assetInsuranceReport($input,$search)->orderBy('erp_fa_asset_master.faID',$sort)->get();
+        if ($assetInsurance) {
+            $x = 0;
+            foreach ($assetInsurance as $val) {
+                $data[$x]['Company ID'] = $val->companyID;
+                $data[$x]['Asset Type'] = $val->AssetType;
+                $data[$x]['Category'] = $val->Category;
+                $data[$x]['Asset Code'] = $val->AssetCode;
+                $data[$x]['Asset Description'] = $val->AssetDescription;
+                $data[$x]['Serial Number'] = $val->SerialNumber;
+                $data[$x]['Date AQ'] = \Helper::dateFormat($val->dateAQ);
+                $data[$x]['Date DEP'] = \Helper::dateFormat($val->dateDEP);
+                $data[$x]['DEP Percentage'] = $val->DEPpercentage;
+                $data[$x]['Cost Local'] = number_format($val->CostLocal,3);
+                $data[$x]['Dep Local'] = number_format($val->DepLocal,3);
+                $data[$x]['Cost Rpt'] = number_format($val->CostRpt,3);
+                $data[$x]['Dep Rpt'] = number_format($val->DepRpt,3);
+                $data[$x]['Departmentt'] = $val->department;
+                $data[$x]['Policy Type'] = $val->policyType;
+                $data[$x]['Policy Number'] = $val->policyNumber;
+                $data[$x]['Date From'] = \Helper::dateFormat($val->dateFrom);
+                $data[$x]['Date To'] = \Helper::dateFormat($val->dateTo);
+                $data[$x]['Insurer Name'] = $val->insurerName;
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+        $csv = \Excel::create('asset_insurance_report', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
+    }
+
+    public function assetInsuranceReport($input,$search){
+
+
+        $companyId = $input['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $subCompanies = [$companyId];
+        }
+
+        if(array_key_exists('asOfDate',$input) && $input['asOfDate']){
+            $asOfDate = new Carbon($input['asOfDate']);
+        }else{
+            $asOfDate = Carbon::now();
+        }
+
+        $asOfDateFormat = $asOfDate->format('Y-m-d');
+
+        $assetInsurance = FixedAssetMaster::select(DB::raw("erp_fa_asset_master.companyID,
+                                                            erp_fa_asset_master.faID,
+                                                            erp_fa_asset_master.faCode AS AssetCode,
+                                                            erp_fa_asset_master.assetDescription AS AssetDescription,
+                                                            erp_fa_asset_master.faUnitSerialNo AS SerialNumber,
+                                                            erp_fa_asset_master.dateAQ,
+                                                            erp_fa_asset_master.dateDEP, 
+                                                            erp_fa_asset_master.DEPpercentage,
+                                                            erp_fa_asset_master.COSTUNIT AS CostLocal,
+                                                            erp_fa_asset_master.costUnitRpt AS CostRpt,
+                                                            erp_fa_assettype.typeDes AS AssetType,
+                                                            erp_fa_financecategory.financeCatDescription AS Category,
+                                                            serviceline.ServiceLineDes AS department,
+                                                            erp_fa_insurancepolicytypes.policyDescription AS policyType,
+                                                            erp_fa_insurancedetails.policyNumber,
+                                                            erp_fa_insurancedetails.dateOfInsurance AS dateFrom,
+                                                            erp_fa_insurancedetails.dateOfExpiry AS dateTo,
+                                                            erp_fa_insurancedetails.insurerName,
+                                                            dep.depLocal AS DepLocal,
+                                                            dep.depRpt AS DepRpt"))
+            ->whereIn('erp_fa_asset_master.companySystemID', $subCompanies)
+            ->where('erp_fa_asset_master.approved', -1)
+            ->whereDate('erp_fa_asset_master.dateAQ','<=',$asOfDate)
+            ->leftJoin('erp_fa_assettype', 'erp_fa_assettype.typeID', '=', 'erp_fa_asset_master.assetType')
+            ->leftJoin('erp_fa_financecategory', 'erp_fa_financecategory.faFinanceCatID', '=', 'erp_fa_asset_master.AUDITCATOGARY')
+            ->leftJoin('serviceline', 'serviceline.serviceLineSystemID', '=', 'erp_fa_asset_master.serviceLineSystemID')
+            ->leftJoin('erp_fa_insurancedetails', 'erp_fa_insurancedetails.faID', '=', 'erp_fa_asset_master.faID')
+            ->leftJoin('erp_fa_insurancepolicytypes', 'erp_fa_insurancepolicytypes.insurancePolicyTypesID', '=', 'erp_fa_insurancedetails.policy')
+            ->leftJoin(DB::raw('(SELECT
+                        erp_fa_assetdepreciationperiods.faID,
+                        sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depLocal,
+                        sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depRpt 
+                        FROM
+                            erp_fa_depmaster
+                            INNER JOIN erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID 
+                        WHERE
+                            erp_fa_depmaster.approved = - 1 
+                            AND DATE(erp_fa_depmaster.depDate) <= '.$asOfDateFormat.'
+                        GROUP BY
+                        erp_fa_assetdepreciationperiods.faID) as dep'),
+                function ($join) {
+                    $join->on('erp_fa_asset_master.faID', '=', 'dep.faID');
+                });
+
+
+        /*if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetInsurance = $assetInsurance->where(function ($query) use ($search) {
+                $query->where('itemIssueCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }*/
+
+        return $assetInsurance;
     }
 }

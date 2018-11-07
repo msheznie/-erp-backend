@@ -447,14 +447,29 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             $input['receiveAmountTrans'] = 0;
         }
 
-        /*if payment greater than blance amount */
-        /*$totalPaidAmount = CustomerReceivePaymentDetail::select(DB::raw("SUM(receiveAmountTrans) as receiveAmountTrans"))->where('arAutoID', $detail['arAutoID'])->first();
+        // checking payment amount greater than balance amount
+        $totalReceiveAmountPreCheck = CustomerReceivePaymentDetail::where('arAutoID', $input['arAutoID'])
+            ->where('custRecivePayDetAutoID', '<>', $input['custRecivePayDetAutoID'])
+            ->sum('receiveAmountTrans');
 
-        $totalinvoiceamount = $detail->bookingAmountTrans - ($totalPaidAmount->receiveAmountTrans + $input['receiveAmountTrans']);
-        if ($totalinvoiceamount < 0) {
-            return $this->sendError('You cannot enter amount greater than balance amounat', 500);
+        $matchedAmountPreCheck = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, IFNULL(Sum(erp_matchdocumentmaster.matchedAmount),0) * -1 AS SumOfmatchedAmount')
+            ->where('companySystemID', $input["companySystemID"])
+            ->where('PayMasterAutoId', $input["bookingInvCodeSystem"])
+            ->where('documentSystemID', $input["addedDocumentSystemID"])
+            ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
+
+        $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount']);
+
+
+        if ($input['addedDocumentSystemID'] == 20) {
+            if ($input["receiveAmountTrans"] > $totReceiveAmountDetail) {
+                return $this->sendError('Payment amount cannot be greater than balance amount', 500);
+            }
+        } else if ($input['addedDocumentSystemID'] == 19) {
+            if ($input["receiveAmountTrans"] < $totReceiveAmountDetail) {
+                return $this->sendError('Payment amount cannot be greater than balance amount', 500);
+            }
         }
-        /**/
 
         $currency = \Helper::convertAmountToLocalRpt(206, $input['arAutoID'], $input['receiveAmountTrans']);
         $input['receiveAmountLocal'] = \Helper::roundValue($currency['localAmount']);
@@ -483,16 +498,30 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         //updating Accounts receivable Ledger
         $arLedgerUpdate = AccountsReceivableLedger::find($input['arAutoID']);
 
-        if ($totReceiveAmount == 0) {
-            $arLedgerUpdate->fullyInvoiced = 0;
-            $arLedgerUpdate->selectedToPaymentInv = 0;
-        } else if ($detailUpdateBalance->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount > $detailUpdateBalance->bookingAmountTrans) {
-            $arLedgerUpdate->fullyInvoiced = 2;
-            $arLedgerUpdate->selectedToPaymentInv = -1;
-        } else if (($detailUpdateBalance->bookingAmountTrans > $totReceiveAmount) && ($totReceiveAmount > 0)) {
-            $arLedgerUpdate->fullyInvoiced = 1;
-            $arLedgerUpdate->selectedToPaymentInv = 0;
+        if ($input['addedDocumentSystemID'] == 20) {
+            if ($totReceiveAmount == 0) {
+                $arLedgerUpdate->fullyInvoiced = 0;
+                $arLedgerUpdate->selectedToPaymentInv = 0;
+            } else if ($detailUpdateBalance->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount > $detailUpdateBalance->bookingAmountTrans) {
+                $arLedgerUpdate->fullyInvoiced = 2;
+                $arLedgerUpdate->selectedToPaymentInv = -1;
+            } else if (($detailUpdateBalance->bookingAmountTrans > $totReceiveAmount) && ($totReceiveAmount > 0)) {
+                $arLedgerUpdate->fullyInvoiced = 1;
+                $arLedgerUpdate->selectedToPaymentInv = 0;
+            }
+        } else if ($input['addedDocumentSystemID'] == 19) {
+            if ($totReceiveAmount == 0) {
+                $arLedgerUpdate->fullyInvoiced = 0;
+                $arLedgerUpdate->selectedToPaymentInv = 0;
+            } else if ($detailUpdateBalance->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount < $detailUpdateBalance->bookingAmountTrans) {
+                $arLedgerUpdate->fullyInvoiced = 2;
+                $arLedgerUpdate->selectedToPaymentInv = -1;
+            } else if (($detailUpdateBalance->bookingAmountTrans < $totReceiveAmount) && ($totReceiveAmount < 0)) {
+                $arLedgerUpdate->fullyInvoiced = 1;
+                $arLedgerUpdate->selectedToPaymentInv = 0;
+            }
         }
+
         $arLedgerUpdate->save();
 
         return $this->sendResponse('', 'Unallocation amount added successfully');

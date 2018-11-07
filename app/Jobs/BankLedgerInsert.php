@@ -6,7 +6,6 @@ use App\Models\BankLedger;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\Employee;
-use App\Models\GeneralLedger;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierMaster;
 use Illuminate\Bus\Queueable;
@@ -74,6 +73,8 @@ class BankLedgerInsert implements ShouldQueue
                         $payee = SupplierMaster::find($masterData->BPVsupplierID);
                         if($payee){
                             $data['payeeCode'] = $payee->primarySupplierCode;
+                        }else {
+                            $data['payeeCode'] = null;
                         }
                         $data['payeeName'] = $masterData->directPaymentPayee;
                         $data['payeeGLCodeID'] = $masterData->supplierGLCodeSystemID;
@@ -102,7 +103,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['companyID'] = $custReceivePayment->companyID;
                                 $data['documentSystemID'] = $custReceivePayment->documentSystemID;
                                 $data['documentID'] = $custReceivePayment->documentID;
-                                $data['documentSystemCode'] = $custReceivePayment->custReceivePaymentAutoID;
+                                $data['documentSystemCode'] = $custReceivePayment->PayMasterAutoId;
                                 $data['documentCode'] = $custReceivePayment->custPaymentReceiveCode;
                                 $data['documentDate'] = $custReceivePayment->custPaymentReceiveDate;
                                 $data['postedDate'] = $masterDocumentDate;
@@ -130,15 +131,16 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['localCurrencyER'] = $custReceivePayment->localCurrencyER;
                                 $data['companyRptCurrencyID'] = $custReceivePayment->companyRptCurrencyID;
                                 $data['companyRptCurrencyER'] = $custReceivePayment->companyRptCurrencyER;
-                                $data['payAmountBank'] = $custReceivePayment->bankAmount;
-                                $data['payAmountSuppTrans'] = $custReceivePayment->bankAmount;
-                                $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
-                                $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
+                                $data['payAmountBank'] = ABS($custReceivePayment->bankAmount) * -1;
+                                $data['payAmountSuppTrans'] = ABS($custReceivePayment->bankAmount) * -1;
+                                $data['payAmountCompLocal'] = ABS($custReceivePayment->localAmount) * -1;
+                                $data['payAmountCompRpt'] = ABS($custReceivePayment->companyRptAmount) * -1;
                                 $data['invoiceType'] = $custReceivePayment->documentType;
                                 $data['createdUserID'] = $empID->empID;
                                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                                 $data['createdPcID'] = gethostname();
                                 $data['timestamp'] = NOW();
+                                Log::info($data);
                                 array_push($finalData, $data);
                             }
                         }
