@@ -463,14 +463,26 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
                 if (isset($input['interCompanyToSystemID'])) {
-                    $interCompany = Company::find($input['interCompanyToSystemID']);
-                    if ($interCompany) {
-                        $input['interCompanyToID'] = $interCompany->CompanyID;
+                    if($input['interCompanyToSystemID']) {
+                        $interCompany = Company::find($input['interCompanyToSystemID']);
+                        if ($interCompany) {
+                            $input['interCompanyToID'] = $interCompany->CompanyID;
+                        }
+                    }else {
+                        $input['interCompanyToSystemID'] = null;
+                        $input['interCompanyToID'] = null;
                     }
+                }else{
+                    $input['interCompanyToSystemID'] = null;
+                    $input['interCompanyToID'] = null;
                 }
             } else {
                 $input['interCompanyToSystemID'] = null;
                 $input['interCompanyToID'] = null;
+            }
+
+            if (!isset($input['expenseClaimOrPettyCash'])) {
+                $input['expenseClaimOrPettyCash'] = null;
             }
 
             $bankAccount = BankAccount::find($input['BPVAccount']);
