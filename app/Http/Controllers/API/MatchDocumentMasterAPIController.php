@@ -1317,35 +1317,48 @@ HAVING
    )");
         } elseif ($input['matchType'] == 2) {
             $invoiceMaster = DB::select("SELECT
-	erp_creditnote.creditNoteAutoID as masterAutoID,
+	erp_creditnote.creditNoteAutoID AS masterAutoID,
 	erp_creditnote.documentSystemID,
 	erp_creditnote.companySystemID,
 	erp_creditnote.companyID,
 	erp_creditnote.creditNoteCode AS docMatchedCode,
 	erp_creditnote.creditNoteDate AS docMatchedDate,
 	erp_creditnote.customerID,
-	Sum(
-		erp_custreceivepaymentdet.receiveAmountTrans
-	) AS SumOfreceiveAmountTrans,
-	Sum(
-		erp_custreceivepaymentdet.receiveAmountLocal
-	) AS SumOfreceiveAmountLocal,
-	Sum(
-		erp_custreceivepaymentdet.receiveAmountRpt
-	) AS SumOfreceiveAmountRpt,
-	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
-	ROUND(
-		(
-			erp_custreceivepaymentdet.receiveAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0)
-		),
-		currency.DecimalPlaces
-	) AS BalanceAmt,
 	currency.CurrencyCode,
-	currency.DecimalPlaces
+	currency.DecimalPlaces,
+	erp_creditnote.creditAmountTrans as SumOfreceiveAmountTrans,
+	(
+		erp_creditnote.creditAmountTrans - (
+			IFNULL(
+				receipt.SumOfreceiptAmount,
+				0
+			) + IFNULL(advd.SumOfmatchingAmount, 0)
+		)
+	) AS BalanceAmt
 FROM
 	erp_creditnote
-INNER JOIN erp_custreceivepaymentdet ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_creditnote.creditNoteAutoID
 INNER JOIN currencymaster AS currency ON currency.currencyID = erp_creditnote.customerCurrencyID
+LEFT JOIN (
+	SELECT
+		custReceivePaymentAutoID,
+		addedDocumentSystemID,
+		bookingInvCodeSystem,
+		bookingInvCode,
+		companySystemID,
+		COALESCE (SUM(receiveAmountTrans), 0) AS SumOfreceiptAmount
+	FROM
+		erp_custreceivepaymentdet
+	WHERE
+		bookingInvCode = '0'
+	GROUP BY
+		addedDocumentSystemID,
+		bookingInvCodeSystem,
+		companySystemID
+) AS receipt ON (
+	receipt.custReceivePaymentAutoID = erp_creditnote.creditNoteAutoID
+	AND receipt.addedDocumentSystemID = erp_creditnote.documentSystemiD
+	AND receipt.companySystemID = erp_creditnote.companySystemID
+)
 LEFT JOIN (
 	SELECT
 		erp_matchdocumentmaster.PayMasterAutoId,
@@ -1371,17 +1384,18 @@ LEFT JOIN (
 )
 WHERE
 	erp_creditnote.companySystemID = " . $input['companySystemID'] . "
-AND erp_custreceivepaymentdet.bookingInvCode = '0'
 AND erp_creditnote.approved = - 1
 AND erp_creditnote.matchInvoice <> 2
 AND customerID = " . $input['BPVsupplierID'] . "
 GROUP BY
-	erp_custreceivepaymentdet.custReceivePaymentAutoID,
+	erp_creditnote.creditNoteAutoID,
 	erp_creditnote.documentSystemiD,
-	erp_custreceivepaymentdet.companySystemID,
+	erp_creditnote.companySystemID,
 	erp_creditnote.customerID
 HAVING
-	(ROUND(BalanceAmt, 1) > 0)");
+	(
+		ROUND(BalanceAmt, DecimalPlaces) > 0
+	)");
         }
 
         return $this->sendResponse($invoiceMaster, 'Data retrived successfully');
