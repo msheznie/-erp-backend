@@ -1102,6 +1102,7 @@ Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBank
 Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
 Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
+Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
@@ -1111,14 +1112,14 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 4,'autoID' => 76746, 'companySystemID' => 11, 'employeeSystemID' => 2664];
-    //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-    $master = \App\Models\PaySupplierInvoiceMaster::find(76750);
+    $master = ['documentSystemID' => 41,'autoID' => 247, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    //$master = \App\Models\PaySupplierInvoiceMaster::find(76750);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
     //$master = \App\Models\AssetDisposalMaster::find(241);
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
-    $job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
+    //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
 });
 
 Route::get('runQueueSR', function () {
