@@ -835,6 +835,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             //return floatval($poMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
 
+            //return $poMasterSumDeducted.'-'.$paymentTotalSum['paymentTotalSum'];
             if (abs(($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
 
             } else {
@@ -853,7 +854,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 foreach ($poAdvancePaymentType as $payment) {
                     $paymentPercentageAmount = ($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmount - $input['poDiscountAmount']) + $input['VATAmount']);
 
-                    if (abs(($payment['comAmount'] - round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) / round($paymentPercentageAmount, $supplierCurrencyDecimalPlace)) < 0.00001) {
+                    if (abs(($payment['comAmount'] - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
 
                     } else {
                         return $this->sendError('Payment terms is not matching with the PO total');

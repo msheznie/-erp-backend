@@ -290,7 +290,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
                 //update payment terms table
                 $paymentTermUpdate = PoPaymentTerms::find($advance['paymentTermID']);
-                $paymentTermUpdate->comAmount = $roundedCalculatePer;
+                $paymentTermUpdate->comAmount = $calculatePer;
                 $paymentTermUpdate->save();
 
                 $PoAdvancePaymentFetch = PoAdvancePayment::where('poTermID', $advance['paymentTermID'])

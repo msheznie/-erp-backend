@@ -682,16 +682,22 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('documentSystemID', $input["addedDocumentSystemID"])
             ->groupBy('PayMasterAutoId', 'documentSystemID')->first();
 
-        $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount']);
+        $machAmount = 0;
+        if ($matchedAmountPreCheck) {
+            $machAmount = $matchedAmountPreCheck["SumOfmatchedAmount"];
+        }
 
+        $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + ($machAmount * -1));
 
+        //return $totReceiveAmountDetail;
+        //exit();
         if ($input['addedDocumentSystemID'] == 20) {
             if ($input["receiveAmountTrans"] > $totReceiveAmountDetail) {
-                return $this->sendError('Payment amount cannot be greater than balance amount', 500);
+                return $this->sendError('Matching amount cannot be greater than balance amount', 500);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {
-            if ($input["receiveAmountTrans"] < $totReceiveAmountDetail) {
-                return $this->sendError('Payment amount cannot be greater than balance amount', 500);
+            if ( $input["receiveAmountTrans"] < $totReceiveAmountDetail) {
+                return $this->sendError('Matching amount cannot be greater than balance amount', 500);
             }
         }
 
