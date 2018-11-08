@@ -496,6 +496,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport');
     Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod');
     Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY');
+    Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear');
     Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
     Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
     Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV');
@@ -1067,6 +1068,17 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
     Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
+
+
+    Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
+    Route::post('getMonthlyAdditionsByCompany', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionsByCompany');
+    Route::get('getMonthlyAdditionFormData', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionFormData');
+    Route::post('getProcessPeriods', 'MonthlyAdditionsMasterAPIController@getProcessPeriods');
+    Route::resource('monthly_addition_details', 'MonthlyAdditionDetailAPIController');
+    Route::resource('employment_types', 'EmploymentTypeAPIController');
+    Route::resource('period_masters', 'PeriodMasterAPIController');
+    Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
+    Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1113,7 +1125,6 @@ Route::get('runQueueSR', function () {
     $bt = \App\Models\BudgetTransferForm::find(463);
     $job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
-
 
 
 
