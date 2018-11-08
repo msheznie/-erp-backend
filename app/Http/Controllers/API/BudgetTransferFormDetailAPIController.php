@@ -162,9 +162,15 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             && $input['fromChartOfAccountSystemID'] == $input['toChartOfAccountSystemID']
             && $input['fromServiceLineSystemID'] == $input['toServiceLineSystemID']
         ) {
-            return $this->sendError('You cannot transfer to same account, Please select different accounts', 500);
+            return $this->sendError('You cannot transfer to the same account, Please select a different account', 500);
         }
+        $fromChartOfAccount  = ChartOfAccountsAssigned::where('companySystemID',$budgetTransferMaster->companySystemID)
+            ->where('chartOfAccountSystemID',$input['fromChartOfAccountSystemID'])
+            ->first();
 
+        if(empty($fromChartOfAccount)){
+            return $this->sendError('From Account Not Found', 500);
+        }
 
         $fromDataBudgetCheck = Budjetdetails::where('companySystemID', $budgetTransferMaster->companySystemID)
                                             ->where('chartOfAccountID',$input['fromChartOfAccountSystemID'])
@@ -173,10 +179,18 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                                             ->where('Year',$budgetTransferMaster->year)
                                             ->count();
 
+
         if($fromDataBudgetCheck == 0){
-            return $this->sendError('There is no budget added for from account', 500);
+            return $this->sendError('There is no budget allocated for '.$fromChartOfAccount->AccountCode, 500);
         }
 
+        $toChartOfAccount  = ChartOfAccountsAssigned::where('companySystemID',$budgetTransferMaster->companySystemID)
+            ->where('chartOfAccountSystemID',$input['fromChartOfAccountSystemID'])
+            ->first();
+
+        if(empty($toChartOfAccount)){
+            return $this->sendError('To Account Not Found', 500);
+        }
 
         $toDataBudgetCheck = Budjetdetails::where('companySystemID', $budgetTransferMaster->companySystemID)
                                             ->where('chartOfAccountID',$input['toChartOfAccountSystemID'])
@@ -186,7 +200,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                                             ->count();
 
         if($toDataBudgetCheck == 0){
-            return $this->sendError('There is no budget added for to account', 500);
+            return $this->sendError('There is no budget allocated for '.$toChartOfAccount->AccountCode, 500);
         }
 
         $checkSameEntry = $this->budgetTransferFormDetailRepository->findWhere(['budgetTransferFormAutoID' => $input['budgetTransferFormAutoID'],
@@ -264,7 +278,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
 
         if (count($checkBalance) > 0) {
             if ($input['adjustmentAmountRpt'] > $checkBalance[0]->balance) {
-                return $this->sendError('You cannot transfer more then the balance amount, Balance amount is ' . $checkBalance[0]->balance, 500);
+                return $this->sendError('You cannot transfer more than the balance amount, Balance amount is ' . $checkBalance[0]->balance, 500);
             }
         }
 

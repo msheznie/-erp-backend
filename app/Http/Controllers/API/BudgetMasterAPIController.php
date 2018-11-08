@@ -807,8 +807,11 @@ class BudgetMasterAPIController extends AppBaseController
             ->get();
 
         $masterTemplates = TemplatesMaster::when(request('isFilter') == 0, function ($q) {
-                                            return $q->where('isBudgetUpload',-1);
-                                        })->get();
+                                            return $q->where('isBudgetUpload',-1)
+                                                      ->where('isActive',-1);
+                                        })
+                                        ->where('templateType','PL')
+                                        ->get();
 
         if (count($companyFinanceYear) > 0) {
             $startYear = $companyFinanceYear[0]['financeYear'];
