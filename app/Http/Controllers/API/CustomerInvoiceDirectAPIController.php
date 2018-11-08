@@ -350,9 +350,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
-
-      
-
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->findWithoutFail($id);
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
@@ -367,7 +364,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             if ($_post['custTransactionCurrencyID'] != $customerInvoiceDirect->custTransactionCurrencyID) {
                 if (count($detail) > 0) {
-                    return $this->sendError('Invoice details exist. You can not change the currency.', 500);
+                    return $this->sendError('Invoice details exist. You cannot change the currency.', 500);
                 } else {
                     $myCurr = $_post['custTransactionCurrencyID'];
                     $companyCurrency = \Helper::companyCurrency($myCurr);
@@ -399,17 +396,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!$companyFinanceYearCheck["success"]) {
             return $this->sendError($companyFinanceYearCheck["message"], 500);
         }
-        /*financial Period check*/
-        $companyFinancePeriodCheck = \Helper::companyFinancePeriodCheck($input);
-        if (!$companyFinancePeriodCheck["success"]) {
-            return $this->sendError($companyFinancePeriodCheck["message"], 500);
+        if ($isPerforma == 0) {
+            /*financial Period check*/
+            $companyFinancePeriodCheck = \Helper::companyFinancePeriodCheck($input);
+            if (!$companyFinancePeriodCheck["success"]) {
+                return $this->sendError($companyFinancePeriodCheck["message"], 500);
+            }
         }
-
         $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
-        $_post['companyFinancePeriodID']=$input['companyFinancePeriodID'];
+        $_post['companyFinancePeriodID'] = $input['companyFinancePeriodID'];
 
         $_post['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
         $_post['FYEnd'] = $CompanyFinanceYear->endingDate;
@@ -450,7 +448,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
             if (count($detail) > 0) {
-                return $this->sendError('Invoice details exist. You can not change the customer.', 500);
+                return $this->sendError('Invoice details exist. You cannot change the customer.', 500);
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             if ($customer->creditDays == 0 || $customer->creditDays == '') {
@@ -493,14 +491,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $_post['serviceStartDate'] = Carbon::parse($input['serviceStartDate'])->format('Y-m-d') . ' 00:00:00';
             $_post['serviceEndDate'] = Carbon::parse($input['serviceEndDate'])->format('Y-m-d') . ' 00:00:00';
             if (($_post['serviceStartDate'] >= $_post['serviceEndDate'])) {
-                return $this->sendError('Service start date can not be greater than service end date.', 500);
+                return $this->sendError('Service start date cannot be greater than service end date.', 500);
             }
         }
 
         $_post['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($_post['bookingDate'] > $curentDate) {
-            return $this->sendError('Dcoument date can not be greater than current date', 500);
+            return $this->sendError('Document date cannot be greater than current date', 500);
         }
 
         if ($input['invoiceDueDate'] != '') {
@@ -523,7 +521,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else {
             $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
             $_post['bookingDate'] = $curentDate;
-           // return $this->sendError('Document Date should be between financial period start date and end date.', 500);
+            // return $this->sendError('Document Date should be between financial period start date and end date.', 500);
 
         }
 
@@ -533,7 +531,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 if (($_post['bookingDate'] >= $_post['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $_post['FYPeriodDateTo'])) {
 
                 } else {
-                    return $this->sendError('Document Date should be between financial period start date and end date.', 500);
+                    return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
                 }
 
                 /**/
@@ -622,7 +620,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
                 if (count($detail) == 0) {
-                    return $this->sendError('You can not confirm. Invoice Details not found.', 500);
+                    return $this->sendError('You cannot confirm. Invoice Details not found.', 500);
                 } else {
                     $detailValidation = CustomerInvoiceDirectDetail::selectRaw("IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
                     IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,
@@ -685,7 +683,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     if (count($groupby) != 0 || count($groupby) != 0) {
 
                         if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                            return $this->sendError('You can not continue . multiple service line or contract exist in details.', 500);
+                            return $this->sendError('You cannot continue . multiple service line or contract exist in details.', 500);
                         } else {
                             $params = array('autoID' => $id,
                                 'company' => $customerInvoiceDirect->companySystemID,
@@ -712,7 +710,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else {
             $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
 
-            return $this->sendResponse($_post, 'Invoice Updated Successfully ');
+            return $this->sendResponse($_post, 'Invoice Updated Successfully');
         }
 
 
@@ -841,10 +839,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
     public function getCustomerInvoiceMasterView(Request $request)
     {
-
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'month', 'approved', 'year', 'isProforma'));
+        $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'customerID', 'month', 'approved', 'year', 'isProforma'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -883,7 +880,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         if (array_key_exists('customerID', $input)) {
-            if (($input['customerID'] !='')) {
+            if (($input['customerID'] != '')) {
                 $invMaster->where('erp_custinvoicedirect.customerID', $input['customerID']);
             }
         }
@@ -1388,8 +1385,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
-        $customerInvoice=[];
-        if($detail){
+        $customerInvoice = [];
+        if ($detail) {
             if ($master->isPerforma == 1) {
                 $customerInvoice = $this->customerInvoiceDirectRepository->getAudit($id);
 
@@ -1401,15 +1398,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             $customerInvoice->companySystemID = $companySystemID;
         }
-        $company= Company::where('companySystemID',$companySystemID)->first();
-        $customerInvoice->companyLogo=$company->companyLogo;
-        $customerInvoice->CompanyName=$company->CompanyName;
-        if($master->secondaryLogoCompanySystemID > 0){
-            $company= Company::where('companySystemID',$master->secondaryLogoCompanySystemID)->first();
-            $customerInvoice->CompanyName=$company->CompanyName;
-            $customerInvoice->companyLogo=$company->companyLogo;
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $customerInvoice->companyLogo = $company->companyLogo;
+        $customerInvoice->CompanyName = $company->CompanyName;
+        if ($master->secondaryLogoCompanySystemID > 0) {
+            $company = Company::where('companySystemID', $master->secondaryLogoCompanySystemID)->first();
+            $customerInvoice->CompanyName = $company->CompanyName;
+            $customerInvoice->companyLogo = $company->companyLogo;
         }
-
 
 
         $line_invoiceNO = true;
@@ -1787,7 +1783,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input = $request->all();
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $input['id'])->first();
 
-        $master= DB::select("SELECT
+        $master = DB::select("SELECT
 	erp_custreceivepaymentdet.custReceivePaymentAutoID,
 	erp_custreceivepaymentdet.companyID,
 	erp_customerreceivepayment.custPaymentReceiveCode,

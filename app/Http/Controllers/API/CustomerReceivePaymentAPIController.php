@@ -1107,12 +1107,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->make(true);
     }
 
-    public
-    function getReceiptVoucherMasterRecord(Request $request)
+    public function getReceiptVoucherMasterRecord(Request $request)
     {
         $input = $request->all();
 
-        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['confirmed_by', 'created_by', 'modified_by', 'approved_by' => function ($query) {
+        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['confirmed_by', 'created_by', 'modified_by', 'company', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }])->first();
@@ -1120,8 +1119,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
-    public
-    function receiptVoucherReopen(Request $request)
+    public function receiptVoucherReopen(Request $request)
     {
         $input = $request->all();
 

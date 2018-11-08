@@ -120,11 +120,14 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $taxRpt = $tax->rptAmount;
                             $taxTrans = $tax->transAmount;
                         }
-                        $masterDocumentDate = date('Y-m-d H:i:s');
-                        /*if($masterData->finance_period_by->isActive == -1){
-                            $masterDocumentDate = $masterData->bookingDate;
-                        }*/
+
                         if ($masterData) {
+
+                            $masterDocumentDate = date('Y-m-d H:i:s');
+                            if($masterData->finance_period_by->isActive == -1){
+                                $masterDocumentDate = $masterData->bookingDate;
+                            }
+
                             $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
                             $data['documentSystemID'] = $masterData->documentSystemiD;

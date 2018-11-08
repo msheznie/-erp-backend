@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Company Finance Period
  * -- REVISION HISTORY
  * -- Date: 12-June 2018 By: Nazir Description: Added new functions named as getAllFinancePeriod() For load all finance period
+ * -- Date: 08-November 2018 By: Nazir Description: Added new functions named as getAllFinancePeriodForYear() For load all finance period
  */
 namespace App\Http\Controllers\API;
 
@@ -318,6 +319,21 @@ class CompanyFinancePeriodAPIController extends AppBaseController
 
         return $this->sendResponse($output, 'Finance periods retrieved successfully');
 
+    }
+
+    public function getAllFinancePeriodForYear(Request $request)
+    {
+        $companyId = $request['companyId'];
+        $companyFinanceYearID = $request['companyFinanceYearID'];
+        $departmentSystemID = $request['departmentSystemID'];
+
+        $output = CompanyFinancePeriod::select(DB::raw("companyFinancePeriodID,isCurrent,CONCAT(DATE_FORMAT(dateFrom, '%d/%m/%Y'), ' | ', DATE_FORMAT(dateTo, '%d/%m/%Y')) as financePeriod"))
+            ->where('companySystemID', '=', $companyId)
+            ->where('companyFinanceYearID', $companyFinanceYearID)
+            ->where('departmentSystemID', $departmentSystemID)
+            ->get();
+
+        return $this->sendResponse($output, 'Finance periods retrieved successfully');
     }
 
 }

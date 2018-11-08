@@ -656,10 +656,11 @@ class GeneralLedgerInsert implements ShouldQueue
                         $taxGL = chartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->vatOutputGLCodeSystemID)->first();
                         $date = new Carbon($masterData->bookingDate);
                         $time = Carbon::now();
-                        $masterDocumentDate = date('Y-m-d H:i:s');
-                        /*          if ($masterData->finance_period_by->isActive == -1) {
-                                      $masterDocumentDate = $masterData->bookingDate;
-                                  }*/
+
+                        $masterDocumentDate = $time;
+                        if ($masterData->finance_period_by->isActive == -1) {
+                            $masterDocumentDate = $masterData->bookingDate;
+                        }
                         $data['companySystemID'] = $masterData->companySystemID;
                         $data['companyID'] = $masterData->companyID;
                         $data['masterCompanyID'] = $company->masterComapanyID;
