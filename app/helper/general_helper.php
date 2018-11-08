@@ -25,6 +25,8 @@ use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\ItemLedgerInsert;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models;
+use App\Models\CustomerReceivePayment;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1429,6 +1431,11 @@ class Helper
                                 }
                             }
 
+                            if ($input["documentSystemID"] == 21) {
+                                //$bankLedgerInsert = \App\Jobs\BankLedgerInsert::dispatch($masterData);
+                                $bankLedgerInsert = self::appendToBankLedger($input["documentSystemCode"]);
+                            }
+
                             $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
                             if ($input["documentSystemID"] == 13 && !empty($sourceModel)) {
                                 $jobCI = CreateStockReceive::dispatch($sourceModel);
@@ -2500,194 +2507,184 @@ class Helper
     {
         Log::useFiles(storage_path() . '/logs/create_receipt_voucher_jobs.log');
         if ($pvMaster->invoiceType == 3) {
-            DB::beginTransaction();
-            try {
-                Log::info('started');
-                Log::info($pvMaster->PayMasterAutoId);
-                $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->get();
-                if (count($dpdetails) > 0) {
-                    if ($pvMaster->expenseClaimOrPettyCash == 6 || $pvMaster->expenseClaimOrPettyCash == 7) {
-                        $company = Models\Company::find($pvMaster->interCompanyToSystemID);
-                        $receivePayment['companySystemID'] = $pvMaster->interCompanyToSystemID;
-                        $receivePayment['companyID'] = $company->CompanyID;
-                        $receivePayment['documentSystemID'] = 21;
-                        $receivePayment['documentID'] = 'BRV';
+            Log::info('started');
+            Log::info($pvMaster->PayMasterAutoId);
+            $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->get();
+            if (count($dpdetails) > 0) {
+                if ($pvMaster->expenseClaimOrPettyCash == 6 || $pvMaster->expenseClaimOrPettyCash == 7) {
+                    $company = Models\Company::find($pvMaster->interCompanyToSystemID);
+                    $receivePayment['companySystemID'] = $pvMaster->interCompanyToSystemID;
+                    $receivePayment['companyID'] = $company->CompanyID;
+                    $receivePayment['documentSystemID'] = 21;
+                    $receivePayment['documentID'] = 'BRV';
 
-                        $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
+                    $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
 
-                        $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
-                        $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
-                        $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
+                    $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
+                    $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
+                    $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
-                        $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
-                        $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                        $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                    $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
+                    $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                    $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
 
-                        $BRVLastSerial = Models\CustomerReceivePayment::where('companySystemID', $pvMaster->interCompanyToSystemID)
-                            ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
-                            ->where('documentSystemID', 21)
-                            ->where('serialNo', '>', 0)
-                            ->orderBy('serialNo', 'desc')
-                            ->first();
+                    $BRVLastSerial = Models\CustomerReceivePayment::where('companySystemID', $pvMaster->interCompanyToSystemID)
+                        ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
+                        ->where('documentSystemID', 21)
+                        ->where('serialNo', '>', 0)
+                        ->orderBy('serialNo', 'desc')
+                        ->first();
 
-                        $cusInvLastSerialNumber = 1;
-                        if ($BRVLastSerial) {
-                            $cusInvLastSerialNumber = intval($BRVLastSerial->serialNo) + 1;
-                        }
-                        $receivePayment['serialNo'] = $cusInvLastSerialNumber;
+                    $cusInvLastSerialNumber = 1;
+                    if ($BRVLastSerial) {
+                        $cusInvLastSerialNumber = intval($BRVLastSerial->serialNo) + 1;
+                    }
+                    $receivePayment['serialNo'] = $cusInvLastSerialNumber;
 
-                        if ($companyFinanceYear) {
-                            $cusStartYear = $companyFinanceYear->bigginingDate;
-                            $cusFinYearExp = explode('-', $cusStartYear);
-                            $cusFinYear = $cusFinYearExp[0];
-                        } else {
-                            $cusFinYear = date("Y");
-                        }
-                        $docCode = ($company->CompanyID . '\\' . $cusFinYear . '\\' . $receivePayment['documentID'] . str_pad($cusInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
-
-                        $receivePayment['custPaymentReceiveCode'] = $docCode;
-                        $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
-                        $receivePayment['narration'] = $pvMaster->BPVNarration;
-                        $receivePayment['intercompanyPaymentID'] = $pvMaster->PayMasterAutoId;
-                        $receivePayment['intercompanyPaymentCode'] = $pvMaster->BPVcode;
-                        $receivePayment['expenseClaimOrPettyCash'] = $pvMaster->expenseClaimOrPettyCash;
-
-                        $dpdetails2 = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->first();
-                        if ($dpdetails2) {
-                            $receivePayment['custTransactionCurrencyID'] = $dpdetails2->toBankCurrencyID;
-                            $receivePayment['custTransactionCurrencyER'] = 1;
-                            $receivePayment['localCurrencyID'] = $dpdetails2->toCompanyLocalCurrencyID;
-                            $receivePayment['localCurrencyER'] = $dpdetails2->toCompanyLocalCurrencyER;
-                            $receivePayment['companyRptCurrencyID'] = $dpdetails2->toCompanyRptCurrencyID;
-                            $receivePayment['companyRptCurrencyER'] = $dpdetails2->toCompanyRptCurrencyER;
-                            $receivePayment['bankAmount'] = ABS($dpdetails2->toBankAmount) * -1;
-                            $receivePayment['receivedAmount'] = ABS($dpdetails2->toBankAmount) * -1;
-                            $receivePayment['localAmount'] = ABS($dpdetails2->toCompanyLocalCurrencyAmount) * -1;
-                            $receivePayment['companyRptAmount'] = ABS($dpdetails2->toCompanyRptCurrencyAmount) * -1;
-                            $receivePayment['bankID'] = $dpdetails2->toBankID;
-                            $receivePayment['bankAccount'] = $dpdetails2->toBankAccountID;
-                            $receivePayment['bankCurrency'] = $dpdetails2->toBankCurrencyID;
-                            $receivePayment['bankCurrencyER'] = 1;
-                        }
-
-                        $receivePayment['documentType'] = 14;
-                        $receivePayment['createdUserSystemID'] = $pvMaster->confirmedByEmpSystemID;
-                        $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
-                        $receivePayment['createdPcID'] = gethostname();
-
-                        Log::info($receivePayment);
-
-                        $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
-
-                        if ($custRecMaster) {
-                            foreach ($dpdetails as $val) {
-                                $chartofAccount = Models\ChartOfAccount::where('interCompanySystemID', $pvMaster->companySystemID)->first();
-                                $receivePaymentDetail['directReceiptAutoID'] = $custRecMaster->custReceivePaymentAutoID;
-                                $receivePaymentDetail['companySystemID'] = $pvMaster->interCompanyToSystemID;
-                                $receivePaymentDetail['companyID'] = $company->CompanyID;
-
-                                $serviceLine = Models\SegmentMaster::ofCompany([$pvMaster->interCompanyToSystemID])->isPublic()->first();
-                                if ($serviceLine) {
-                                    $receivePaymentDetail['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
-                                    $receivePaymentDetail['serviceLineCode'] = $serviceLine->ServiceLineCode;
-                                }
-
-                                $receivePaymentDetail['chartOfAccountSystemID'] = $chartofAccount->chartOfAccountSystemID;
-                                $receivePaymentDetail['glCode'] = $chartofAccount->AccountCode;
-                                $receivePaymentDetail['glCodeDes'] = $chartofAccount->AccountDescription;
-                                $receivePaymentDetail['contractID'] = null;
-                                $receivePaymentDetail['comments'] = $pvMaster->BPVNarration;
-                                $receivePaymentDetail['DRAmountCurrency'] = $val->toBankCurrencyID;
-                                $receivePaymentDetail['DDRAmountCurrencyER'] = 1;
-                                $receivePaymentDetail['DRAmount'] = $val->toBankAmount;
-                                $receivePaymentDetail['localCurrency'] = $val->toCompanyLocalCurrencyID;
-                                $receivePaymentDetail['localCurrencyER'] = $val->toCompanyLocalCurrencyER;
-                                $receivePaymentDetail['localAmount'] = $val->toCompanyLocalCurrencyAmount;
-                                $receivePaymentDetail['comRptCurrency'] = $val->toCompanyRptCurrencyID;
-                                $receivePaymentDetail['comRptCurrencyER'] = $val->toCompanyRptCurrencyER;
-                                $receivePaymentDetail['comRptAmount'] = $val->toCompanyRptCurrencyAmount;
-                                Log::info($receivePaymentDetail);
-                                $custRecDetail = Models\DirectReceiptDetail::create($receivePaymentDetail);
-                            }
-
-                            DB::commit();
-                            $params = array('autoID' => $custRecMaster->custReceivePaymentAutoID, 'company' => $pvMaster->interCompanyToSystemID, 'document' => 21, 'segment' => '', 'category' => '', 'amount' => 0);
-                            $confirm = self::confirmWithoutRuleDocument($params);
-                            Log::info($confirm["message"]);
-                        }
+                    if ($companyFinanceYear) {
+                        $cusStartYear = $companyFinanceYear->bigginingDate;
+                        $cusFinYearExp = explode('-', $cusStartYear);
+                        $cusFinYear = $cusFinYearExp[0];
                     } else {
-                        $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->where('glCodeIsBank', 1)->get();
-                        if (count($dpdetails) > 0) {
-                            foreach ($dpdetails as $val) {
-                                $receivePayment['companySystemID'] = $pvMaster->companySystemID;
-                                $receivePayment['companyID'] = $pvMaster->companyID;
-                                $receivePayment['documentSystemID'] = $pvMaster->documentSystemID;
-                                $receivePayment['documentID'] = $pvMaster->documentID;
+                        $cusFinYear = date("Y");
+                    }
+                    $docCode = ($company->CompanyID . '\\' . $cusFinYear . '\\' . $receivePayment['documentID'] . str_pad($cusInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-                                $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
+                    $receivePayment['custPaymentReceiveCode'] = $docCode;
+                    $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
+                    $receivePayment['narration'] = $pvMaster->BPVNarration;
+                    $receivePayment['intercompanyPaymentID'] = $pvMaster->PayMasterAutoId;
+                    $receivePayment['intercompanyPaymentCode'] = $pvMaster->BPVcode;
+                    $receivePayment['expenseClaimOrPettyCash'] = $pvMaster->expenseClaimOrPettyCash;
 
-                                $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
-                                $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
-                                $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
+                    $dpdetails2 = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->first();
+                    if ($dpdetails2) {
+                        $receivePayment['custTransactionCurrencyID'] = $dpdetails2->toBankCurrencyID;
+                        $receivePayment['custTransactionCurrencyER'] = 1;
+                        $receivePayment['localCurrencyID'] = $dpdetails2->toCompanyLocalCurrencyID;
+                        $receivePayment['localCurrencyER'] = $dpdetails2->toCompanyLocalCurrencyER;
+                        $receivePayment['companyRptCurrencyID'] = $dpdetails2->toCompanyRptCurrencyID;
+                        $receivePayment['companyRptCurrencyER'] = $dpdetails2->toCompanyRptCurrencyER;
+                        $receivePayment['bankAmount'] = ABS($dpdetails2->toBankAmount) * -1;
+                        $receivePayment['receivedAmount'] = ABS($dpdetails2->toBankAmount) * -1;
+                        $receivePayment['localAmount'] = ABS($dpdetails2->toCompanyLocalCurrencyAmount) * -1;
+                        $receivePayment['companyRptAmount'] = ABS($dpdetails2->toCompanyRptCurrencyAmount) * -1;
+                        $receivePayment['bankID'] = $dpdetails2->toBankID;
+                        $receivePayment['bankAccount'] = $dpdetails2->toBankAccountID;
+                        $receivePayment['bankCurrency'] = $dpdetails2->toBankCurrencyID;
+                        $receivePayment['bankCurrencyER'] = 1;
+                    }
 
-                                $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
-                                $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                                $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
-                                $receivePayment['PayMasterAutoId'] = $pvMaster->PayMasterAutoId;
-                                $receivePayment['serialNo'] = $pvMaster->serialNo;
-                                $receivePayment['custPaymentReceiveCode'] = $pvMaster->BPVcode;
-                                $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
-                                $receivePayment['narration'] = $pvMaster->BPVNarration;
+                    $receivePayment['documentType'] = 14;
+                    $receivePayment['createdUserSystemID'] = $pvMaster->confirmedByEmpSystemID;
+                    $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
+                    $receivePayment['createdPcID'] = gethostname();
 
-                                $receivePayment['custTransactionCurrencyID'] = $val->bankCurrencyID;
-                                $receivePayment['custTransactionCurrencyER'] = 1;
+                    Log::info($receivePayment);
 
-                                $account = Models\BankAccount::where('chartOfAccountSystemID', $val->chartOfAccountSystemID)->where('companySystemID', $pvMaster->companySystemID)->first();
+                    $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
 
-                                $receivePayment['bankID'] = $account->bankmasterAutoID;
-                                $receivePayment['bankAccount'] = $account->bankAccountAutoID;
-                                $receivePayment['bankCurrency'] = $val->bankCurrencyID;
-                                $receivePayment['bankCurrencyER'] = 1;
+                    if ($custRecMaster) {
+                        foreach ($dpdetails as $val) {
+                            $chartofAccount = Models\ChartOfAccount::where('interCompanySystemID', $pvMaster->companySystemID)->first();
+                            $receivePaymentDetail['directReceiptAutoID'] = $custRecMaster->custReceivePaymentAutoID;
+                            $receivePaymentDetail['companySystemID'] = $pvMaster->interCompanyToSystemID;
+                            $receivePaymentDetail['companyID'] = $company->CompanyID;
 
-                                $companyCurrencyConversion = \Helper::currencyConversion($pvMaster->companySystemID, $val->bankCurrencyID, $val->bankCurrencyID, $val->bankAmount);
-
-                                $receivePayment['localCurrencyID'] = $val->localCurrency;
-                                $receivePayment['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                                $receivePayment['companyRptCurrencyID'] = $val->comRptCurrency;
-                                $receivePayment['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                                $receivePayment['bankAmount'] = $val->bankAmount;
-                                $receivePayment['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
-                                $receivePayment['companyRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
-                                $receivePayment['receivedAmount'] = $val->bankAmount;
-
-                                $receivePayment['confirmedYN'] = 1;
-                                $receivePayment['confirmedByEmpSystemID'] = $pvMaster->confirmedByEmpSystemID;
-                                $receivePayment['confirmedByEmpID'] = $pvMaster->confirmedByEmpID;;
-                                $receivePayment['confirmedByName'] = $pvMaster->confirmedByName;;
-                                $receivePayment['confirmedDate'] = NOW();
-                                $receivePayment['approved'] = -1;
-                                $receivePayment['approvedDate'] = NOW();
-                                $receivePayment['postedDate'] = NOW();
-                                $receivePayment['createdUserSystemID'] = $pvMaster->confirmedByEmpSystemID;
-                                $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
-                                $receivePayment['createdPcID'] = gethostname();
-
-                                $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
-                                Log::info($receivePayment);
-                                DB::commit();
+                            $serviceLine = Models\SegmentMaster::ofCompany([$pvMaster->interCompanyToSystemID])->isPublic()->first();
+                            if ($serviceLine) {
+                                $receivePaymentDetail['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
+                                $receivePaymentDetail['serviceLineCode'] = $serviceLine->ServiceLineCode;
                             }
+
+                            $receivePaymentDetail['chartOfAccountSystemID'] = $chartofAccount->chartOfAccountSystemID;
+                            $receivePaymentDetail['glCode'] = $chartofAccount->AccountCode;
+                            $receivePaymentDetail['glCodeDes'] = $chartofAccount->AccountDescription;
+                            $receivePaymentDetail['contractID'] = null;
+                            $receivePaymentDetail['comments'] = $pvMaster->BPVNarration;
+                            $receivePaymentDetail['DRAmountCurrency'] = $val->toBankCurrencyID;
+                            $receivePaymentDetail['DDRAmountCurrencyER'] = 1;
+                            $receivePaymentDetail['DRAmount'] = $val->toBankAmount;
+                            $receivePaymentDetail['localCurrency'] = $val->toCompanyLocalCurrencyID;
+                            $receivePaymentDetail['localCurrencyER'] = $val->toCompanyLocalCurrencyER;
+                            $receivePaymentDetail['localAmount'] = $val->toCompanyLocalCurrencyAmount;
+                            $receivePaymentDetail['comRptCurrency'] = $val->toCompanyRptCurrencyID;
+                            $receivePaymentDetail['comRptCurrencyER'] = $val->toCompanyRptCurrencyER;
+                            $receivePaymentDetail['comRptAmount'] = $val->toCompanyRptCurrencyAmount;
+                            Log::info($receivePaymentDetail);
+                            $custRecDetail = Models\DirectReceiptDetail::create($receivePaymentDetail);
+                        }
+
+                        $params = array('autoID' => $custRecMaster->custReceivePaymentAutoID, 'company' => $pvMaster->interCompanyToSystemID, 'document' => 21, 'segment' => '', 'category' => '', 'amount' => 0);
+                        $confirm = self::confirmWithoutRuleDocument($params);
+                        Log::info($confirm["message"]);
+                    }
+                } else {
+                    $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->where('glCodeIsBank', 1)->get();
+                    if (count($dpdetails) > 0) {
+                        foreach ($dpdetails as $val) {
+                            $receivePayment['companySystemID'] = $pvMaster->companySystemID;
+                            $receivePayment['companyID'] = $pvMaster->companyID;
+                            $receivePayment['documentSystemID'] = $pvMaster->documentSystemID;
+                            $receivePayment['documentID'] = $pvMaster->documentID;
+
+                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [date('Y')])->first();
+
+                            $receivePayment['companyFinanceYearID'] = $companyFinanceYear->companyFinanceYearID;
+                            $receivePayment['FYBiggin'] = $companyFinanceYear->bigginingDate;
+                            $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
+
+                            $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
+                            $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                            $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                            $receivePayment['PayMasterAutoId'] = $pvMaster->PayMasterAutoId;
+                            $receivePayment['serialNo'] = $pvMaster->serialNo;
+                            $receivePayment['custPaymentReceiveCode'] = $pvMaster->BPVcode;
+                            $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
+                            $receivePayment['narration'] = $pvMaster->BPVNarration;
+
+                            $receivePayment['custTransactionCurrencyID'] = $val->bankCurrencyID;
+                            $receivePayment['custTransactionCurrencyER'] = 1;
+
+                            $account = Models\BankAccount::where('chartOfAccountSystemID', $val->chartOfAccountSystemID)->where('companySystemID', $pvMaster->companySystemID)->first();
+
+                            $receivePayment['bankID'] = $account->bankmasterAutoID;
+                            $receivePayment['bankAccount'] = $account->bankAccountAutoID;
+                            $receivePayment['bankCurrency'] = $val->bankCurrencyID;
+                            $receivePayment['bankCurrencyER'] = 1;
+
+                            $companyCurrencyConversion = \Helper::currencyConversion($pvMaster->companySystemID, $val->bankCurrencyID, $val->bankCurrencyID, $val->bankAmount);
+
+                            $receivePayment['localCurrencyID'] = $val->localCurrency;
+                            $receivePayment['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                            $receivePayment['companyRptCurrencyID'] = $val->comRptCurrency;
+                            $receivePayment['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                            $receivePayment['bankAmount'] = $val->bankAmount;
+                            $receivePayment['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+                            $receivePayment['companyRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+                            $receivePayment['receivedAmount'] = $val->bankAmount;
+
+                            $receivePayment['confirmedYN'] = 1;
+                            $receivePayment['confirmedByEmpSystemID'] = $pvMaster->confirmedByEmpSystemID;
+                            $receivePayment['confirmedByEmpID'] = $pvMaster->confirmedByEmpID;;
+                            $receivePayment['confirmedByName'] = $pvMaster->confirmedByName;;
+                            $receivePayment['confirmedDate'] = NOW();
+                            $receivePayment['approved'] = -1;
+                            $receivePayment['approvedDate'] = NOW();
+                            $receivePayment['postedDate'] = NOW();
+                            $receivePayment['createdUserSystemID'] = $pvMaster->confirmedByEmpSystemID;
+                            $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
+                            $receivePayment['createdPcID'] = gethostname();
+
+                            $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
+                            Log::info($receivePayment);
                         }
                     }
                 }
-
-                Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
-                $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
-                $jobPV = BankLedgerInsert::dispatch($masterData);
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                Log::error($e->getMessage());
             }
+            Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
+            $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
+            $jobPV = BankLedgerInsert::dispatch($masterData);
         }
     }
 
@@ -3071,6 +3068,7 @@ class Helper
             $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
             $output = $approvalLevel->first();
 
+
             if ($output) {
                 /** get source document master record*/
                 $sorceDocument = $namespacedModel::find($params["autoID"]);
@@ -3093,6 +3091,53 @@ class Helper
                     }
                 }
             }
+        }
+    }
+
+    public static function appendToBankLedger($autoID)
+    {
+        $custReceivePayment = Models\CustomerReceivePayment::find($autoID);
+        if($custReceivePayment){
+            $data['companySystemID'] = $custReceivePayment->companySystemID;
+            $data['companyID'] = $custReceivePayment->companyID;
+            $data['documentSystemID'] = $custReceivePayment->documentSystemID;
+            $data['documentID'] = $custReceivePayment->documentID;
+            $data['documentSystemCode'] = $custReceivePayment->custReceivePaymentAutoID;
+            $data['documentCode'] = $custReceivePayment->custPaymentReceiveCode;
+            $data['documentDate'] = $custReceivePayment->custPaymentReceiveDate;
+            $data['postedDate'] = $custReceivePayment->postedDate;
+            $data['documentNarration'] = $custReceivePayment->narration;
+            $data['bankID'] = $custReceivePayment->bankID;
+            $data['bankAccountID'] = $custReceivePayment->bankAccount;
+            $data['bankCurrency'] = $custReceivePayment->bankCurrency;
+            $data['bankCurrencyER'] = $custReceivePayment->bankCurrencyER;
+            $data['documentChequeNo'] = $custReceivePayment->custChequeNo;
+            $data['documentChequeDate'] = $custReceivePayment->custChequeDate;
+            $data['payeeID'] = $custReceivePayment->customerID;
+
+            $payee = Models\CustomerMaster::find($custReceivePayment->customerID);
+            if($payee){
+                $data['payeeCode'] = $payee->CutomerCode;
+            }
+            $data['payeeName'] = $custReceivePayment->PayeeName;
+            $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
+            $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
+            $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;
+            $data['supplierTransCurrencyER'] = $custReceivePayment->custTransactionCurrencyER;
+            $data['localCurrencyID'] = $custReceivePayment->localCurrencyID;
+            $data['localCurrencyER'] = $custReceivePayment->localCurrencyER;
+            $data['companyRptCurrencyID'] = $custReceivePayment->companyRptCurrencyID;
+            $data['companyRptCurrencyER'] = $custReceivePayment->companyRptCurrencyER;
+            $data['payAmountBank'] = $custReceivePayment->bankAmount;
+            $data['payAmountSuppTrans'] = $custReceivePayment->bankAmount;
+            $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
+            $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
+            $data['invoiceType'] = $custReceivePayment->documentType;
+            $data['createdUserID'] = $custReceivePayment->createdUserID;
+            $data['createdUserSystemID'] = $custReceivePayment->createdUserSystemID;
+            $data['createdPcID'] = gethostname();
+            $data['timestamp'] = NOW();
+            Models\BankLedger::create($data);
         }
     }
 }

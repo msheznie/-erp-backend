@@ -651,7 +651,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         $items = FixedAssetMaster::OfCompany([$companyID])->isDisposed()->isApproved();
 
         if (array_key_exists('search', $input)) {
-            $search = $input['search'];
+            $search = str_replace("\\", "\\\\", $input['search']);
             $items = $items->where(function ($query) use ($search) {
                 $query->where('faCode', 'LIKE', "%{$search}%")
                     ->orWhere('assetDescription', 'LIKE', "%{$search}%");

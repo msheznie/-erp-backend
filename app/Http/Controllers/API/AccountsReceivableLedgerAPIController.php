@@ -332,7 +332,6 @@ erp_accountsreceivableledger.custInvoiceAmount as SumOfreceiveAmountTrans,
 	CurrencyCode,
 	DecimalPlaces,
 	  erp_accountsreceivableledger.custInvoiceAmount-IFNULL( SumOfreceiveAmountTrans, 0 )-IFNULL( matchedAmount*-1, 0 ) as balanceAmount,
-	IFNULL( SumOfcustbalanceAmount, 0 ) AS SumOfcustbalanceAmount,
 	IFNULL( matchedAmount, 0 ) AS matchedAmount,
 	FALSE AS isChecked 
 FROM
@@ -395,15 +394,9 @@ WHERE
     AND erp_accountsreceivableledger.customerID = $master->customerID 
     AND erp_accountsreceivableledger.custTransCurrencyID = $master->custTransactionCurrencyID 
 HAVING
-	ROUND( SumOfcustbalanceAmount, DecimalPlaces) <> 0 ORDER BY documentDate $sort
+	ROUND(balanceAmount, DecimalPlaces) <> 0 ORDER BY documentDate $sort
         ";
-
-        //echo $qry;
-        //exit();
-
         $invMaster = DB::select($qry);
-
-
 
         $col[0] = $input['order'][0]['column'];
         $col[1] = $input['order'][0]['dir'];
@@ -414,10 +407,7 @@ HAVING
         $data['search']['value'] = '';
         $request->merge($data);
 
-
-
         $request->request->remove('search.value');
-
 
         return \DataTables::of($invMaster)
             ->addIndexColumn()

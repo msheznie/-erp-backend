@@ -795,7 +795,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAssetCostingByID($id)
     {
         /** @var FixedAssetMaster $fixedAssetMaster */
-        $fixedAssetMaster = $this->fixedAssetMasterRepository->with('confirmed_by')->findWithoutFail($id);
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by','group_to'])->findWithoutFail($id);
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
