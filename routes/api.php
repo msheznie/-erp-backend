@@ -1102,6 +1102,7 @@ Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBank
 Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
 Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
+Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
