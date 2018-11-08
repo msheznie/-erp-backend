@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AdvancePaymentDetails;
+use App\Models\AssetCapitalization;
 use App\Models\AssetDisposalDetail;
 use App\Models\AssetDisposalMaster;
 use App\Models\BookInvSuppDet;
@@ -1865,6 +1866,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = 0;
                             $data['nonHoldingPercentage'] = 0;
+                            $data['contraYN'] = 0;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -1872,18 +1874,55 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
-                            if ($masterData->grvdetail_by) {
-                                $data['chartOfAccountSystemID'] = $masterData->grvdetail_by->financeGLcodebBSSystemID;
-                                $data['glCode'] = $masterData->grvdetail_by->financeGLcodebBS;
-                                $data['glAccountType'] = 'BS';
-                                $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
-                                $data['documentLocalCurrencyER'] = 0;
-                                $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
-                                $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
-                                $data['documentRptCurrencyER'] = 0;
-                                $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
-                                $data['timestamp'] = \Helper::currentDateTime();
-                                array_push($finalData, $data);
+                            //if the asset from asset capitalization pass a gl entry
+                            if ($masterData->docOriginSystemCode) {
+                                if ($masterData->docOriginDocumentSystemID == 63) {
+                                    $assetCapitalization = AssetCapitalization::find($masterData->docOriginSystemCode);
+                                    if ($assetCapitalization) {
+                                        $data['chartOfAccountSystemID'] = $assetCapitalization->contraAccountSystemID;
+                                        $data['glCode'] = $assetCapitalization->contraAccountGLCode;
+                                        $data['glAccountType'] = 'BS';
+                                        $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = 0;
+                                        $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
+                                        $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                        $data['documentRptCurrencyER'] = 0;
+                                        $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
+                                        $data['contraYN'] = -1;
+                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        array_push($finalData, $data);
+                                    }
+                                } else {
+                                    if ($masterData->grvdetail_by) {
+                                        $data['chartOfAccountSystemID'] = $masterData->grvdetail_by->financeGLcodebBSSystemID;
+                                        $data['glCode'] = $masterData->grvdetail_by->financeGLcodebBS;
+                                        $data['glAccountType'] = 'BS';
+                                        $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = 0;
+                                        $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
+                                        $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                        $data['documentRptCurrencyER'] = 0;
+                                        $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
+                                        $data['contraYN'] = 0;
+                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        array_push($finalData, $data);
+                                    }
+                                }
+                            } else {
+                                if ($masterData->grvdetail_by) {
+                                    $data['chartOfAccountSystemID'] = $masterData->grvdetail_by->financeGLcodebBSSystemID;
+                                    $data['glCode'] = $masterData->grvdetail_by->financeGLcodebBS;
+                                    $data['glAccountType'] = 'BS';
+                                    $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = 0;
+                                    $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
+                                    $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                    $data['documentRptCurrencyER'] = 0;
+                                    $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    $data['contraYN'] = 0;
+                                    array_push($finalData, $data);
+                                }
                             }
                         }
                         break;
@@ -2025,39 +2064,24 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = 0;
                             $data['nonHoldingPercentage'] = 0;
+                            $data['contraYN'] = 0;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
                             $data['createdUserPC'] = gethostname();
                             $data['timestamp'] = \Helper::currentDateTime();
 
-                            if ($disposal) {
-                                foreach ($disposal as $val) {
-                                    $data['serviceLineSystemID'] = $val->serviceLineSystemID;
-                                    $data['serviceLineCode'] = $val->serviceLineCode;
-                                    $data['chartOfAccountSystemID'] = $val->DISPOGLCODESystemID;
-                                    $data['glCode'] = $val->DISPOGLCODE;
-                                    $data['glAccountType'] = $val->disposal_account->catogaryBLorPL;
-                                    $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
-                                    $data['documentLocalCurrencyER'] = 0;
-                                    $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
-                                    $data['documentRptCurrencyER'] = 0;
-                                    $data['documentTransCurrencyID'] = 0;
-                                    $data['documentTransCurrencyER'] = 0;
-                                    $data['documentTransAmount'] = 0;
-                                    if ($val->netBookValueLocal > 0) {
-                                        $data['documentLocalAmount'] = ABS($val->netBookValueLocal);
-                                        $data['documentRptAmount'] = ABS($val->netBookValueRpt);
-                                    } else {
-                                        $data['documentLocalAmount'] = $val->netBookValueLocal;
-                                        $data['documentRptAmount'] = $val->netBookValueRpt;
-                                    }
-                                    array_push($finalData, $data);
-                                }
-                            }
+                            $depRptAmountTotal = 0;
+                            $depLocalAmountTotal = 0;
+
+                            $costRptAmountTotal = 0;
+                            $costLocalAmountTotal = 0;
 
                             if ($depreciation) {
                                 foreach ($depreciation as $val) {
+                                    $depRptAmountTotal += ABS($val->depAmountRpt);
+                                    $depLocalAmountTotal += ABS($val->depAmountLocal);
+
                                     $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                                     $data['serviceLineCode'] = $val->serviceLineCode;
                                     $data['chartOfAccountSystemID'] = $val->ACCDEPGLCODESystemID;
@@ -2072,12 +2096,15 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentTransCurrencyID'] = 0;
                                     $data['documentTransCurrencyER'] = 0;
                                     $data['documentTransAmount'] = 0;
+                                    $data['contraYN'] = 0;
                                     array_push($finalData, $data);
                                 }
                             }
 
                             if ($cost) {
                                 foreach ($cost as $val) {
+                                    $costRptAmountTotal = ABS($val->costUnitRpt);
+                                    $costLocalAmountTotal = ABS($val->COSTUNIT);
                                     $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                                     $data['serviceLineCode'] = $val->serviceLineCode;
                                     $data['chartOfAccountSystemID'] = $val->COSTGLCODESystemID;
@@ -2092,7 +2119,64 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['documentTransCurrencyID'] = 0;
                                     $data['documentTransCurrencyER'] = 0;
                                     $data['documentTransAmount'] = 0;
+                                    $data['contraYN'] = 0;
                                     array_push($finalData, $data);
+                                }
+                            }
+
+                            //if the asset disposal type is 8 pass an entry to asset capitalization contra account
+                            if ($masterData->disposalType == 8) {
+                                $diffRpt = $costRptAmountTotal - $depRptAmountTotal;
+                                $diffLocal = $costLocalAmountTotal - $depLocalAmountTotal;
+                                if ($diffRpt != 0 || $diffLocal != 0) {
+                                    $disposalDetail = AssetDisposalDetail::ofMaster($masterModel["autoID"])->first();
+                                    if ($disposalDetail) {
+                                        $assetCapitalizationMaster = AssetCapitalization::with('contra_account')->where('faID', $disposalDetail->faID)->first();
+                                        if ($assetCapitalizationMaster) {
+                                            $data['serviceLineSystemID'] = $disposalDetail->serviceLineSystemID;
+                                            $data['serviceLineCode'] = $disposalDetail->serviceLineCode;
+                                            $data['chartOfAccountSystemID'] = $assetCapitalizationMaster->contraAccountSystemID;
+                                            $data['glCode'] = $assetCapitalizationMaster->contraAccountGLCode;
+                                            $data['glAccountType'] = $assetCapitalizationMaster->contra_account ? $assetCapitalizationMaster->contra_account->catogaryBLorPL : 'BS';
+                                            $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = 0;
+                                            $data['documentLocalAmount'] = $diffLocal;
+                                            $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                            $data['documentRptCurrencyER'] = 0;
+                                            $data['documentRptAmount'] = $diffRpt;
+                                            $data['documentTransCurrencyID'] = 0;
+                                            $data['documentTransCurrencyER'] = 0;
+                                            $data['documentTransAmount'] = 0;
+                                            $data['contraYN'] = -1;
+                                            array_push($finalData, $data);
+                                        }
+                                    }
+                                }
+                            }else {
+                                if ($disposal) {
+                                    foreach ($disposal as $val) {
+                                        $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $val->serviceLineCode;
+                                        $data['chartOfAccountSystemID'] = $val->DISPOGLCODESystemID;
+                                        $data['glCode'] = $val->DISPOGLCODE;
+                                        $data['glAccountType'] = $val->disposal_account->catogaryBLorPL;
+                                        $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = 0;
+                                        $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                        $data['documentRptCurrencyER'] = 0;
+                                        $data['documentTransCurrencyID'] = 0;
+                                        $data['documentTransCurrencyER'] = 0;
+                                        $data['documentTransAmount'] = 0;
+                                        $data['contraYN'] = 0;
+                                        if ($val->netBookValueLocal > 0) {
+                                            $data['documentLocalAmount'] = ABS($val->netBookValueLocal);
+                                            $data['documentRptAmount'] = ABS($val->netBookValueRpt);
+                                        } else {
+                                            $data['documentLocalAmount'] = $val->netBookValueLocal;
+                                            $data['documentRptAmount'] = $val->netBookValueRpt;
+                                        }
+                                        array_push($finalData, $data);
+                                    }
                                 }
                             }
                         }

@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * --
  */
+
 namespace App\Models;
 
 use Eloquent as Model;
@@ -130,12 +131,12 @@ class AssetDisposalMaster extends Model
 {
 
     public $table = 'erp_fa_asset_disposalmaster';
-    
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = 'assetdisposalMasterAutoID';
-    protected $with = ['confirmed_by','created_by', 'modified_by','confirmed_by'];
+    protected $with = ['confirmed_by', 'created_by', 'modified_by', 'confirmed_by'];
 
     public $fillable = [
         'companySystemID',
@@ -222,7 +223,7 @@ class AssetDisposalMaster extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     /**
@@ -235,7 +236,7 @@ class AssetDisposalMaster extends Model
 
     public function scopeOfCompany($query, $type)
     {
-        return $query->whereIN('companySystemID',  $type);
+        return $query->whereIN('companySystemID', $type);
     }
 
     public function approved_by()
@@ -272,5 +273,5 @@ class AssetDisposalMaster extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
-    
+
 }

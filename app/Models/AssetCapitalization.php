@@ -205,6 +205,8 @@ class AssetCapitalization extends Model
         'allocationTypeID',
         'faCatID',
         'faID',
+        'contraAccountSystemID',
+        'contraAccountGLCode',
         'assetNBVLocal',
         'assetNBVRpt',
         'timesReferred',
@@ -254,6 +256,8 @@ class AssetCapitalization extends Model
         'allocationTypeID' => 'boolean',
         'faCatID' => 'integer',
         'faID' => 'integer',
+        'contraAccountSystemID' => 'integer',
+        'contraAccountGLCode' => 'string',
         'assetNBVLocal' => 'float',
         'assetNBVRpt' => 'float',
         'confirmedYN' => 'integer',
@@ -327,6 +331,11 @@ class AssetCapitalization extends Model
     public function financeyear_by()
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function contra_account()
+    {
+        return $this->belongsTo('App\Models\ChartofAccount', 'contraAccountSystemID', 'chartOfAccountSystemID');
     }
 
 }
