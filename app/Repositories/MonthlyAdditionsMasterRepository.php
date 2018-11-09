@@ -60,4 +60,14 @@ class MonthlyAdditionsMasterRepository extends BaseRepository
     {
         return MonthlyAdditionsMaster::class;
     }
+
+    public function getAudit($id)
+    {
+        return $this->with(['created_by', 'confirmed_by', 'modified_by', 'company', 'details', 'approved_by' => function ($query) {
+            $query->with(['employee' => function ($q) {
+                $q->with(['details.designation']);
+            }])
+                ->where('documentSystemID', 28);
+        }])->findWithoutFail($id);
+    }
 }
