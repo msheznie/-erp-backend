@@ -587,6 +587,11 @@ class CustomerReceivePayment extends Model
         return $this->belongsTo('App\Models\BankAccount', 'bankAccount', 'bankAccountAutoID');
     }
 
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
     public function finance_period_by()
     {
         return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');

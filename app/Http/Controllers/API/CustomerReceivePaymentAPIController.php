@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 29-October 2018 By: Nazir Description: Added new function getReceiptVoucherMasterRecord(),
  * -- Date: 29-October 2018 By: Nazir Description: Added new function receiptVoucherReopen(),
+ * -- Date: 08-November 2018 By: Nazir Description: Added new function printReceiptVoucher(),
  */
 
 namespace App\Http\Controllers\API;
@@ -638,7 +639,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $bankCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['bankCurrency'], $input['receivedAmount']);
 
         if ($bankCurrencyConversion) {
-            $input['bankAmount'] = \Helper::roundValue($bankCurrencyConversion['documentAmount']);
+            $input['bankAmount'] = (\Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1);
             $input['bankCurrencyER'] = $bankCurrencyConversion['transToDocER'];
         }
 
@@ -676,18 +677,46 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             if ($input['documentType'] == 13) {
 
-                $checkQuantity = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
-                    ->where(function ($q) {
-                        $q->where('receiveAmountTrans', '<=', 0)
-                            ->orWhereNull('receiveAmountLocal', '<=', 0)
-                            ->orWhereNull('receiveAmountRpt', '<=', 0)
-                            ->orWhereNull('receiveAmountTrans')
-                            ->orWhereNull('receiveAmountLocal')
-                            ->orWhereNull('receiveAmountRpt');
-                    })
-                    ->count();
-                if ($checkQuantity > 0) {
-                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                $detailAllRecords = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->get();
+
+                if ($detailAllRecords) {
+                    foreach ($detailAllRecords as $row) {
+                        if ($row['addedDocumentSystemID'] == 20) {
+                            $checkAmount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                                ->where('addedDocumentSystemID', $row['addedDocumentSystemID'])
+                                ->where('receiveAmountTrans', '<=', 0)
+                                ->where(function ($q) {
+                                    $q->where('receiveAmountTrans', '<=', 0)
+                                        ->orWhereNull('receiveAmountLocal', '<=', 0)
+                                        ->orWhereNull('receiveAmountRpt', '<=', 0)
+                                        ->orWhereNull('receiveAmountTrans')
+                                        ->orWhereNull('receiveAmountLocal')
+                                        ->orWhereNull('receiveAmountRpt');
+                                })
+                                ->count();
+
+                            if ($checkAmount > 0) {
+                                return $this->sendError('Amount should be greater than 0 for every items', 500);
+                            }
+                        } elseif ($row['addedDocumentSystemID'] == 19) {
+                            $checkAmount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                                ->where('addedDocumentSystemID', $row['addedDocumentSystemID'])
+                                ->where(function ($q) {
+                                    $q->where('receiveAmountTrans', '=', 0)
+                                        ->orWhereNull('receiveAmountLocal', '=', 0)
+                                        ->orWhereNull('receiveAmountRpt', '=', 0)
+                                        ->orWhereNull('receiveAmountTrans')
+                                        ->orWhereNull('receiveAmountLocal')
+                                        ->orWhereNull('receiveAmountRpt');
+                                })
+                                ->count();
+
+                            if ($checkAmount > 0) {
+                                return $this->sendError('Amount should be greater than 0 for every items' , 500);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -921,8 +950,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
      *      )
      * )
      */
-    public
-    function destroy($id)
+    public function destroy($id)
     {
         /** @var CustomerReceivePayment $customerReceivePayment */
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
@@ -936,8 +964,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         return $this->sendResponse($id, 'Customer Receive Payment deleted successfully');
     }
 
-    public
-    function getRecieptVoucherFormData(Request $request)
+    public function getRecieptVoucherFormData(Request $request)
     {
         $input = $request->all();
         /*companySystemID*/
@@ -1107,21 +1134,21 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->make(true);
     }
 
-    public
-    function getReceiptVoucherMasterRecord(Request $request)
+    public function getReceiptVoucherMasterRecord(Request $request)
     {
         $input = $request->all();
 
-        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['confirmed_by', 'created_by', 'modified_by', 'approved_by' => function ($query) {
+        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
-        }])->first();
+        }, 'directdetails' => function ($query) {
+            $query->with('segment');
+        },'details'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
-    public
-    function receiptVoucherReopen(Request $request)
+    public function receiptVoucherReopen(Request $request)
     {
         $input = $request->all();
 
@@ -1221,5 +1248,69 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             ->delete();
 
         return $this->sendResponse($custReceivePaymentMaster->toArray(), 'Supplier Invoice reopened successfully');
+    }
+
+    public function printReceiptVoucher(Request $request){
+
+        $id = $request->get('custRecivePayDetAutoID');
+
+        $customerReceivePaymentData = CustomerReceivePayment::find($id);
+
+        if (empty($customerReceivePaymentData)) {
+            return $this->sendError('Customer Receive Payment not found');
+        }
+
+        $customerReceivePaymentRecord = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->with(['confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'approved_by' => function ($query) {
+            $query->with('employee');
+            $query->where('documentSystemID', 21);
+        }, 'directdetails' => function ($query) {
+            $query->with('segment');
+        },'details'])->first();
+
+        if (empty($customerReceivePaymentRecord)) {
+            return $this->sendError('Customer Receive Payment not found');
+        }
+
+        $refernaceDoc = \Helper::getCompanyDocRefNo($customerReceivePaymentRecord->companySystemID, $customerReceivePaymentRecord->documentSystemID);
+
+        $transDecimal = 2;
+        $localDecimal = 3;
+        $rptDecimal = 2;
+
+        if ($customerReceivePaymentRecord->currency) {
+            $transDecimal = $customerReceivePaymentRecord->currency->DecimalPlaces;
+        }
+
+        if ($customerReceivePaymentRecord->localCurrency) {
+            $localDecimal = $customerReceivePaymentRecord->localCurrency->DecimalPlaces;
+        }
+
+        if ($customerReceivePaymentRecord->rptCurrency) {
+            $rptDecimal = $customerReceivePaymentRecord->rptCurrency->DecimalPlaces;
+        }
+
+        $directTotTra = DirectReceiptDetail::where('directReceiptAutoID', $id)
+            ->sum('DRAmount');
+
+        $ciDetailTotTra = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+            ->sum('receiveAmountTrans');
+
+        $order = array(
+            'masterdata' => $customerReceivePaymentRecord,
+            'docRef' => $refernaceDoc,
+            'transDecimal' => $transDecimal,
+            'localDecimal' => $localDecimal,
+            'rptDecimal' => $rptDecimal,
+            'directTotTra' => $directTotTra,
+            'ciDetailTotTra' => $ciDetailTotTra
+        );
+
+        $time = strtotime("now");
+        $fileName = 'receipt_voucher_' . $id . '_' . $time . '.pdf';
+        $html = view('print.receipt_voucher', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 }
