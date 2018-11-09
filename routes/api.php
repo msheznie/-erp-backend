@@ -1074,6 +1074,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getMonthlyAdditionFormData', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionFormData');
     Route::post('getProcessPeriods', 'MonthlyAdditionsMasterAPIController@getProcessPeriods');
     Route::resource('monthly_addition_details', 'MonthlyAdditionDetailAPIController');
+    Route::get('getItemsByMonthlyAddition', 'MonthlyAdditionDetailAPIController@getItemsByMonthlyAddition');
+    Route::get('checkPullFromExpenseClaim', 'MonthlyAdditionDetailAPIController@checkPullFromExpenseClaim');
+    Route::get('getECForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECForMonthlyAddition');
+    Route::get('getECDetailsForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECDetailsForMonthlyAddition');
     Route::resource('employment_types', 'EmploymentTypeAPIController');
     Route::resource('period_masters', 'PeriodMasterAPIController');
     Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');

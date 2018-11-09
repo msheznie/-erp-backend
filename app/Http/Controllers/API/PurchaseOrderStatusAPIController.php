@@ -665,8 +665,8 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $purchaseOrders = ProcumentOrder::whereIn('companySystemID', $subCompanies)
             ->where('approved', -1)
             ->whereIn('grvRecieved',$grvStatus)
-            ->with(['supplier', 'currency', 'status' => function ($q) {
-                $q->orderBy('purchaseOrderID', 'desc')->with(['category'])->first();
+            ->with(['supplier', 'currency', 'status_one' => function ($q) {
+                $q->with(['category']);
             }, 'supplier' => function ($q) {
                 $q->with(['country']);
             }]);
@@ -706,12 +706,12 @@ class PurchaseOrderStatusAPIController extends AppBaseController
             $comments = "";
             $grvStatus = "";
 
-            if(!empty($val->status)){
-                if(count($val->status)){
-                    $comments  =  $val->status[0]->comments;
+            if(!empty($val->status_one)){
+                if($val->status_one){
+                    $comments  =  $val->status_one->comments;
 
-                    if(!empty($val->status[0]->category)){
-                        $status = $val->status[0]->category->description;
+                    if(!empty($val->status_one->category)){
+                        $status = $val->status_one->category->description;
                     }
                 }
             }
