@@ -200,6 +200,7 @@ class MonthlyAdditionsMaster extends Model
         'dateMA',
         'confirmedYN',
         'confirmedByEmpSystemID',
+        'confirmedByEmpID',
         'confirmedby',
         'confirmedDate',
         'approvedYN',
@@ -240,6 +241,7 @@ class MonthlyAdditionsMaster extends Model
         'processPeriod' => 'integer',
         'confirmedYN' => 'integer',
         'confirmedByEmpSystemID' => 'integer',
+        'confirmedByEmpID' => 'string',
         'confirmedby' => 'string',
         'approvedYN' => 'integer',
         'approvedByUserSystemID' => 'integer',
@@ -281,5 +283,26 @@ class MonthlyAdditionsMaster extends Model
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function details()
+    {
+        return $this->hasMany('App\Models\MonthlyAdditionDetail','monthlyAdditionsMasterID','monthlyAdditionsMasterID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+    public function approved_by(){
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','monthlyAdditionsMasterID');
+    }
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 }

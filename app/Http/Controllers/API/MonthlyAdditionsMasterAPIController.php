@@ -9,14 +9,18 @@
  * -- Description : This file contains the all CRUD for Monthly Additions Master
  * -- REVISION HISTORY
  * -- Date: 07-November 2018 By: Fayas Description: Added new functions named as getMonthlyAdditionsByCompany(),getMonthlyAdditionFormData()
+ * -- Date: 08-November 2018 By: Fayas Description: Added new functions named as getMonthlyAdditionAudit(),monthlyAdditionReopen()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMonthlyAdditionsMasterAPIRequest;
 use App\Http\Requests\API\UpdateMonthlyAdditionsMasterAPIRequest;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\EmploymentType;
 use App\Models\ExpenseClaimType;
 use App\Models\MonthlyAdditionsMaster;
@@ -24,6 +28,7 @@ use App\Models\PeriodMaster;
 use App\Models\SalaryProcessEmploymentTypes;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Repositories\MonthlyAdditionDetailRepository;
 use App\Repositories\MonthlyAdditionsMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -40,10 +45,12 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
 {
     /** @var  MonthlyAdditionsMasterRepository */
     private $monthlyAdditionsMasterRepository;
+    private $monthlyAdditionDetailRepository;
 
-    public function __construct(MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo)
+    public function __construct(MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo,MonthlyAdditionDetailRepository $monthlyAdditionDetailRepo)
     {
         $this->monthlyAdditionsMasterRepository = $monthlyAdditionsMasterRepo;
+        $this->monthlyAdditionDetailRepository = $monthlyAdditionDetailRepo;
     }
 
     /**
@@ -152,8 +159,8 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         $input['documentID'] = 'MA';
 
         $company = Company::where('companySystemID', $input['companySystemID'])
-                            ->with(['localcurrency', 'reportingcurrency'])
-                            ->first();
+            ->with(['localcurrency', 'reportingcurrency'])
+            ->first();
 
         if (empty($company)) {
             return $this->sendError('Company not found', 500);
@@ -167,19 +174,19 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         }
 
         $salaryProcessCheck = SalaryProcessEmploymentTypes::where('companySystemID', $input['companySystemID'])
-                                                    ->where('empType', $input['empType'])
-                                                    //->where('periodID', $input['processPeriod'])
-                                                    ->whereHas('salary_process', function ($q) use ($input) {
-                                                        $q->where('Currency', $input['currency']);
-                                                    })
-                                                    ->max('periodID');
+            ->where('empType', $input['empType'])
+            //->where('periodID', $input['processPeriod'])
+            ->whereHas('salary_process', function ($q) use ($input) {
+                $q->where('Currency', $input['currency']);
+            })
+            ->max('periodID');
 
-        if(!$salaryProcessCheck){
+        if (!$salaryProcessCheck) {
             $salaryProcessCheck = -1;
         }
 
         if ($salaryProcessCheck > $input['processPeriod']) {
-            return $this->sendError('Salary has been processed for selected month.'. $salaryProcessCheck, 500);
+            return $this->sendError('Salary has been processed for selected month.' . $salaryProcessCheck, 500);
         }
 
         $input['dateMA'] = $processPeriod->endDate;
@@ -259,8 +266,8 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
     {
         /** @var MonthlyAdditionsMaster $monthlyAdditionsMaster */
         $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository
-                                        ->with(['employment_type','currency_by','confirmed_by'])
-                                         ->findWithoutFail($id);
+            ->with(['employment_type', 'currency_by', 'confirmed_by'])
+            ->findWithoutFail($id);
 
         if (empty($monthlyAdditionsMaster)) {
             return $this->sendError('Monthly Additions Master not found');
@@ -318,6 +325,8 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
     public function update($id, UpdateMonthlyAdditionsMasterAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['employment_type', 'currency_by', 'confirmed_by']);
+        $input = $this->convertArrayToValue($input);
 
         /** @var MonthlyAdditionsMaster $monthlyAdditionsMaster */
         $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
@@ -326,9 +335,58 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
             return $this->sendError('Monthly Additions Master not found');
         }
 
-        $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository->update($input, $id);
+        if ($monthlyAdditionsMaster->confirmedYN == 1) {
+            return $this->sendError('This document already confirmed you cannot edit.', 500);
+        }
 
-        return $this->sendResponse($monthlyAdditionsMaster->toArray(), 'MonthlyAdditionsMaster updated successfully');
+
+        if ($monthlyAdditionsMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            unset($inputParam);
+            $validator = \Validator::make($input, [
+                'companySystemID' => 'required',
+                'currency' => 'required|numeric|min:1',
+                'empType' => 'required|numeric|min:1',
+                'processPeriod' => 'required|numeric|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $checkItems = $this->monthlyAdditionDetailRepository->findWhere(['monthlyAdditionsMasterID' => $id]);
+
+            if (count($checkItems) == 0) {
+                return $this->sendError('Every monthly addition should have at least one item', 500);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+            $params = array('autoID' => $id,
+                'company' => $monthlyAdditionsMaster->companySystemID,
+                'document' => $monthlyAdditionsMaster->documentSystemID,
+                'segment' => 0,
+                'category' => 0,
+                'amount' => 0
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+        $employee = \Helper::getEmployeeInfo();
+
+
+        $updateInput = array(
+            'modifiedpc' => gethostname(),
+            'modifieduser' => $employee->empID,
+            'modifiedUserSystemID' => $employee->employeeSystemID,
+            'description' => $input['description']
+        );
+
+        $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository->update($updateInput, $id);
+
+        return $this->sendResponse($monthlyAdditionsMaster->toArray(), 'Monthly Addition updated successfully');
     }
 
     /**
@@ -497,4 +555,111 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         return $this->sendResponse($processPeriods, 'Record retrieved successfully');
     }
 
+    public function getMonthlyAdditionAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $monthlyAddition = $this->monthlyAdditionsMasterRepository->getAudit($id);
+
+        if (empty($monthlyAddition)) {
+            return $this->sendError('Monthly Addition not found');
+        }
+
+        $monthlyAddition->docRefNo = \Helper::getCompanyDocRefNo($monthlyAddition->companySystemID, $monthlyAddition->documentSystemID);
+
+        return $this->sendResponse($monthlyAddition->toArray(), 'Monthly Addition retrieved successfully');
+    }
+
+    public function monthlyAdditionReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+        $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($monthlyAddition)) {
+            return $this->sendError('Monthly Addition not found');
+        }
+
+        if ($monthlyAddition->approvedYN == -1) {
+            return $this->sendError('You cannot reopen this Monthly Addition it is already fully approved');
+        }
+
+        if ($monthlyAddition->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Monthly Addition it is already partially approved');
+        }
+
+        if ($monthlyAddition->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Monthly Addition, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedby' => null,
+            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->monthlyAdditionsMasterRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $monthlyAddition->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $monthlyAddition->monthlyAdditionsCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $monthlyAddition->monthlyAdditionsCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $monthlyAddition->companySystemID)
+            ->where('documentSystemCode', $monthlyAddition->monthlyAdditionsMasterID)
+            ->where('documentSystemID', $monthlyAddition->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $monthlyAddition->companySystemID)
+                    ->where('documentSystemID', $monthlyAddition->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $monthlyAddition->companySystemID)
+            ->where('documentSystemID', $monthlyAddition->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($monthlyAddition->toArray(), 'Monthly Addition reopened successfully');
+    }
 }

@@ -9,7 +9,8 @@
  * -- Description : This file contains the all CRUD for Monthly Addition Detail
  * -- REVISION HISTORY
  * -- Date: 08-November 2018 By: Fayas Description: Added new functions named as getItemsByMonthlyAddition(),checkPullFromExpenseClaim(),
- *                                                              getECForMonthlyAddition(),getECDetailsForMonthlyAddition()
+ *                                                              getECForMonthlyAddition(),getECDetailsForMonthlyAddition(),
+ *        addMonthlyAdditionDetails(),deleteAllMonthlyAdditionDetails()
  */
 namespace App\Http\Controllers\API;
 
@@ -18,6 +19,7 @@ use App\Http\Requests\API\UpdateMonthlyAdditionDetailAPIRequest;
 use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimDetails;
 use App\Models\MonthlyAdditionDetail;
+use App\Repositories\ExpenseClaimRepository;
 use App\Repositories\MonthlyAdditionDetailRepository;
 use App\Repositories\MonthlyAdditionsMasterRepository;
 use Illuminate\Http\Request;
@@ -30,17 +32,20 @@ use Response;
  * Class MonthlyAdditionDetailController
  * @package App\Http\Controllers\API
  */
-
 class MonthlyAdditionDetailAPIController extends AppBaseController
 {
     /** @var  MonthlyAdditionDetailRepository */
     private $monthlyAdditionDetailRepository;
     private $monthlyAdditionsMasterRepository;
+    private $expenseClaimRepository;
 
-    public function __construct(MonthlyAdditionDetailRepository $monthlyAdditionDetailRepo,MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo)
+    public function __construct(MonthlyAdditionDetailRepository $monthlyAdditionDetailRepo,
+                                MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo,
+                                ExpenseClaimRepository $expenseClaimRepo)
     {
         $this->monthlyAdditionDetailRepository = $monthlyAdditionDetailRepo;
         $this->monthlyAdditionsMasterRepository = $monthlyAdditionsMasterRepo;
+        $this->expenseClaimRepository = $expenseClaimRepo;
     }
 
     /**
@@ -301,7 +306,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         $rId = $input['monthlyAdditionsMasterID'];
 
         $items = MonthlyAdditionDetail::where('monthlyAdditionsMasterID', $rId)
-            ->with(['employee','department','currency_ma','expense_claim','chart_of_account'])
+            ->with(['employee', 'department', 'currency_ma', 'expense_claim', 'chart_of_account'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Monthly Addition Details retrieved successfully');
@@ -329,8 +334,8 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        if($monthlyAddition->confirmedYN == 1){
-            return $this->sendError('This document already confirmed you cannot add items.',500);
+        if ($monthlyAddition->confirmedYN == 1) {
+            return $this->sendError('This document already confirmed you cannot add items.', 500);
         }
 
 
@@ -359,16 +364,19 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        if($monthlyAddition->confirmedYN == 1){
-            return $this->sendError('This document already confirmed you cannot add items.',500);
+        if ($monthlyAddition->confirmedYN == 1) {
+            return $this->sendError('This document already confirmed you cannot add items.', 500);
         }
 
-        $expenseClaims = ExpenseClaim::where('companySystemID',$monthlyAddition->companySystemID)
-                                      ->where('approved',-1)
-                                      ->where('pettyCashYN',1)
-                                      ->where('glCodeAssignedYN',-1)
-                                      ->where('addedToSalary',0)
-                                       ->get();
+        $expenseClaims = ExpenseClaim::where('companySystemID', $monthlyAddition->companySystemID)
+            ->where('approved', -1)
+            ->where('pettyCashYN', 1)
+            ->where('glCodeAssignedYN', -1)
+            ->where('addedToSalary', 0)
+            /*->whereHas('details', function ($q) use ($monthlyAddition) {
+                $q->where('currencyID', $monthlyAddition->currency);
+            })*/
+            ->get();
 
         return $this->sendResponse($expenseClaims, 'Monthly Addition retrieved successfully');
     }
@@ -377,6 +385,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $id = $input['id'];
+        $monthlyAdditionId = $input['monthlyAdditionId'];
 
         $expenseClaim = ExpenseClaim::find($id);
 
@@ -384,12 +393,109 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             return $this->sendError('Expense Claim not found');
         }
 
+        $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($monthlyAdditionId);
+
+        if (empty($monthlyAddition)) {
+            return $this->sendError('Monthly Addition not found');
+        }
+
         $expenseClaimDetails = ExpenseClaimDetails::where('companySystemID', $expenseClaim->companySystemID)
-                                            ->where('expenseClaimMasterAutoID',$id)
-                                            ->with(['currency'])
-                                            //->groupBy(['expenseClaimMasterAutoID', 'chartOfAccountSystemID'])
-                                            ->get();
+            ->where('expenseClaimMasterAutoID', $id)
+            //->where('currencyID', $monthlyAddition->currency)
+            ->with(['currency','local_currency'])
+            //->groupBy(['expenseClaimMasterAutoID', 'chartOfAccountSystemID'])
+            ->get();
 
         return $this->sendResponse($expenseClaimDetails, 'Expense Claim Details retrieved successfully');
     }
+
+    public function addMonthlyAdditionDetails(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['expenseClaimId'];
+        $monthlyAdditionId = $input['monthlyAdditionId'];
+
+        $expenseClaim = $this->expenseClaimRepository->find($id);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+        $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($monthlyAdditionId);
+
+        if (empty($monthlyAddition)) {
+            return $this->sendError('Monthly Addition not found');
+        }
+
+        $expenseClaimDetails = ExpenseClaimDetails::where('companySystemID', $expenseClaim->companySystemID)
+            ->where('expenseClaimMasterAutoID', $id)
+            //->where('currencyID', $monthlyAddition->currency)
+            ->with(['currency'])
+            ->get();
+
+        foreach ($expenseClaimDetails as $detail) {
+
+            $temData = array('monthlyAdditionsMasterID' => $monthlyAddition->monthlyAdditionsMasterID,
+                'expenseClaimMasterAutoID' => $expenseClaim->expenseClaimMasterAutoID,
+                'empSystemID' => $expenseClaim->clamiedByNameSystemID,
+                'empID' => \Helper::getEmployeeCode($expenseClaim->clamiedByNameSystemID),
+                'empdepartment' => $detail['serviceLineSystemID'],
+                'description' => $detail['description'],
+                'declareCurrency' => $detail['localCurrency'],
+                'declareAmount' => $detail['localAmount'],
+                'amountMA' => $detail['localAmount'],
+                'currencyMAID' => $detail['localCurrency'],
+                'glCode' => $detail['chartOfAccountSystemID'],
+                'localCurrencyID' => $detail['localCurrency'],
+                'localCurrencyER' => $detail['localCurrencyER'],
+                'localAmount' => $detail['localAmount'],
+                'rptCurrencyID' => $detail['comRptCurrency'],
+                'rptCurrencyER' => $detail['comRptCurrencyER'],
+                'rptAmount' => $detail['comRptAmount'],
+                'IsSSO' => 0,
+                'IsTax' => 0,
+                'createdpc' => gethostname());
+            $this->monthlyAdditionDetailRepository->create($temData);
+
+        }
+
+        if (count($expenseClaimDetails) > 0) {
+            $this->expenseClaimRepository->update(['addedForPayment' => -1, 'addedToSalary' => -1], $id);
+        }
+
+        return $this->sendResponse($expenseClaimDetails, 'Monthly Addition Details added successfully');
+    }
+
+    public function deleteAllMonthlyAdditionDetails(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+
+        $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
+
+        if (empty($monthlyAddition)) {
+            return $this->sendError('Monthly Addition not found');
+        }
+
+        if ($monthlyAddition->confirmedYN == 1) {
+            return $this->sendError('This document already confirmed you cannot delete items.', 500);
+        }
+
+        $monthlyAdditionDetails = $this->monthlyAdditionDetailRepository->findWhere(['monthlyAdditionsMasterID' => $id]);
+
+        foreach ($monthlyAdditionDetails as $detail) {
+            $monthlyAdditionDetail = $this->monthlyAdditionDetailRepository->findWithoutFail($detail['monthlyAdditionDetailID']);
+
+            if (!empty($monthlyAdditionDetail)) {
+                $expenseClaim = $this->expenseClaimRepository->find($detail['expenseClaimMasterAutoID']);
+                if (!empty($expenseClaim)) {
+                    $this->expenseClaimRepository->update(['addedForPayment' => 0, 'addedToSalary' => 0], $detail['expenseClaimMasterAutoID']);
+                }
+                $monthlyAdditionDetail->delete();
+            }
+        }
+
+        return $this->sendResponse($monthlyAdditionDetails, 'Monthly Addition Details deleted successfully');
+    }
+
 }
