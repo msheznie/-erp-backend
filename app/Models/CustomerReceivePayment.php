@@ -636,4 +636,9 @@ class CustomerReceivePayment extends Model
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'custReceivePaymentAutoID');
     }
+
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
+    }
 }
