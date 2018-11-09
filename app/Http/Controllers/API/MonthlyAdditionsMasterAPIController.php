@@ -465,6 +465,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
 
         $monthlyAdditions = MonthlyAdditionsMaster::whereIn('companySystemID', $subCompanies)
             ->with('currency_by')
+            ->where('expenseClaimAdditionYN', 1)
             ->where('documentSystemID', $input['documentId']);
 
         if (array_key_exists('confirmedYN', $input)) {
