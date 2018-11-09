@@ -101,6 +101,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('bank_memo_suppliers', 'BankMemoSupplierAPIController');
 
     Route::get('getBankMemoBySupplierCurrency', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrency');
+    Route::get('getBankMemoBySupplierCurrencyId', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrencyId');
     Route::post('addBulkMemos', 'BankMemoSupplierAPIController@addBulkMemos');
     Route::post('exportSupplierCurrencyMemos', 'BankMemoSupplierAPIController@exportSupplierCurrencyMemos');
 

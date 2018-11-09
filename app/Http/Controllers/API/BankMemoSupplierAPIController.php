@@ -11,6 +11,7 @@
  * -- REVISION HISTORY
  * -- Date: 14-March 2018 By: Fayas Description: Added new functions named as getBankMemoBySupplierCurrency(),deleteBankMemo(),supplierBankMemoDeleteAll()
  * -- Date: 30-October 2018 By: Fayas Description: Added new functions named as addBulkMemos(),exportSupplierCurrencyMemos()
+ * -- Date: 09-November 2018 By: Fayas Description: Added new functions named as getBankMemoBySupplierCurrencyId()
  */
 
 namespace App\Http\Controllers\API;
@@ -19,6 +20,7 @@ use App\Http\Requests\API\CreateBankMemoSupplierAPIRequest;
 use App\Http\Requests\API\UpdateBankMemoSupplierAPIRequest;
 use App\Models\BankMemoSupplier;
 use App\Models\BankMemoTypes;
+use App\Models\SupplierCurrency;
 use App\Repositories\BankMemoSupplierRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -84,6 +86,25 @@ class BankMemoSupplierAPIController extends AppBaseController
         $data = array('bankMemos' => $bankMemoSuppliers->toArray(), 'count' => $count);
 
         return $this->sendResponse($data, 'Bank Memo Suppliers retrieved successfully');
+    }
+
+    public function getBankMemoBySupplierCurrencyId(Request $request)
+    {
+        $supplierCurrencyID = -1;
+        $supplierCurrency = SupplierCurrency::where('currencyID',$request['supplierCurrencyID'])
+                                                ->where('supplierCodeSystem',$request['supplierCodeSystem'])
+                                                    ->first();
+
+        if(!empty($supplierCurrency)){
+            $supplierCurrencyID = $supplierCurrency->supplierCurrencyID;
+        }
+
+        $bankMemoSuppliers = BankMemoSupplier::where("supplierCurrencyID", $supplierCurrencyID)
+                                                ->where("supplierCodeSystem", $request['supplierCodeSystem'])
+                                                ->orderBySort()
+                                                ->get();
+
+        return $this->sendResponse($bankMemoSuppliers, 'Bank Memo Suppliers retrieved successfully');
     }
 
     public function exportSupplierCurrencyMemos(Request $request)
