@@ -11,7 +11,7 @@
  * -- Date: 12-June 2018 By: Fayas Description: Added new functions named as getAllRequestByCompany(),getRequestFormData()
  * -- Date: 19-June 2018 By: Fayas Description: Added new functions named as materielRequestAudit()
  * -- Date: 13-July 2018 By: Fayas Description: Added new functions named as getAllNotApprovedRequestByUser(),getApprovedMaterielRequestsByUser()
- * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as requestReopen()
+ * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as requestReopen(),printMaterielRequest()
  */
 namespace App\Http\Controllers\API;
 
@@ -754,22 +754,33 @@ class MaterielRequestAPIController extends AppBaseController
     {
         $id = $request->get('id');
 
-        $materielRequest = $this->materielRequestRepository
-            ->with(['created_by','confirmed_by','modified_by','approved_by' => function ($query) {
-                $query->with('employee')
-                      ->where('documentSystemID',9);
-            }])
-           /* ->with(['cancelled_by','manually_closed_by','approved_by' => function ($query) {
-                $query->with('employee')
-                    ->where('documentSystemID',9);
-            }])*/
-            ->findWithoutFail($id);
-
+        $materielRequest = $this->materielRequestRepository->getAudit($id);
         if (empty($materielRequest)) {
             return $this->sendError('Materiel Request not found');
         }
 
         return $this->sendResponse($materielRequest->toArray(), 'Materiel Request retrieved successfully');
+    }
+
+    public function printMaterielRequest(Request $request)
+    {
+        $id = $request->get('id');
+        $materielRequest = $this->materielRequestRepository->getAudit($id);
+
+        if (empty($materielRequest)) {
+            return $this->sendError('Materiel Request not found');
+        }
+
+        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
+
+        $array = array('entity' => $materielRequest);
+        $time = strtotime("now");
+        $fileName = 'materiel_request' . $id . '_' . $time . '.pdf';
+        $html = view('print.materiel_request', $array);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
     public function requestReopen(Request $request)
