@@ -162,11 +162,11 @@
             <td colspan="3" style="bottom: 0;position: absolute;text-align: right">
             <span class="font-weight-bold">
                 <h3 class="text-muted">
-                    @if($entity->confirmedYN == 0 && $entity->approved == 0)
+                    @if($entity->ConfirmedYN == 0 && $entity->approved == 0)
                         Not Confirmed
-                    @elseif($entity->confirmedYN == 1 && $entity->approved == 0)
+                    @elseif($entity->ConfirmedYN == 1 && $entity->approved == 0)
                         Pending Approval
-                    @elseif($entity->confirmedYN == 1 && ($entity->approved == 1 ||  $entity->approved == -1))
+                    @elseif($entity->ConfirmedYN == 1 && ($entity->approved == 1 ||  $entity->approved == -1))
                         Fully Approved
                     @endif
                     </h3>
