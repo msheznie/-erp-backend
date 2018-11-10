@@ -247,7 +247,7 @@
                             Customer Invoice Receipt
                         @endif
                         @if($masterdata->documentType == 14)
-                                Direct Receipt
+                            Direct Receipt
                         @endif
                     </span>
                 </div>
@@ -287,62 +287,44 @@
         </tr>
     </table>
     <hr style="color: #d3d9df">
-    <table style="width: 100%">
-        <tr style="width:100%">
-            <td style="width: 60%">
-                <table>
-                    <tr>
-                        <td width="150px">
-                            <span class="font-weight-bold">Bank</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            @if($masterdata->bank)
-                                {{$masterdata->bank->AccountNo}}
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="50px">
-                            <span class="font-weight-bold">Cheque No</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            <span>{{$masterdata->custChequeNo}}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="50px">
-                            <span class="font-weight-bold">Cheque Date</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            {{ \App\helper\Helper::dateFormat($masterdata->custChequeDate)}}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Narration </span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            <span>{{$masterdata->narration}}</span>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-            <td style="width: 40%">
-                <table style="width: 100%">
-                    <tr style="width: 100%">
-                        <td valign="bottom" class="text-right">
+    @if($masterdata->documentType == 13)
+        <table style="width: 100%">
+            <tr style="width:100%">
+                <td style="width: 60%">
+                    <table>
+                        <tr>
+                            <td colspan="3">
+                                <span class="font-weight-bold">To :</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                @if ($masterdata->customer)
+                                    {{$masterdata->customer->CutomerCode}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                @if($masterdata->customer)
+                                    {!! nl2br($masterdata->customer->customerAddress1) !!}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="70px">
+                                <span class="font-weight-bold">Comments :</span>
+                            </td>
+                            <td colspan="2">
+                                <span>{{$masterdata->narration}}</span>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 40%">
+                    <table style="width: 100%">
+                        <tr style="width: 100%">
+                            <td valign="bottom" class="text-right">
                                          <span class="font-weight-bold">
                          <h3 class="text-muted">
                              @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
@@ -354,23 +336,110 @@
                              @endif
                          </h3>
  `             </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>&nbsp;</td>
-                    </tr>
-                    <tr>
-                        <td valign="bottom" class="text-right">
-                            <span class="font-weight-bold"> Currency:</span>
-                            @if($masterdata->currency)
-                                {{$masterdata->currency->CurrencyCode}}
-                            @endif
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td valign="bottom" class="text-right">
+                                <span class="font-weight-bold"> Currency:</span>
+                                @if($masterdata->currency)
+                                    {{$masterdata->currency->CurrencyCode}}
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    @endif
+    @if($masterdata->documentType == 14)
+        <table style="width: 100%">
+            <tr style="width:100%">
+                <td style="width: 60%">
+                    <table>
+                        <tr>
+                            <td width="150px">
+                                <span class="font-weight-bold">Bank</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                @if($masterdata->bank)
+                                    {{$masterdata->bank->AccountNo}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50px">
+                                <span class="font-weight-bold">Cheque No</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                <span>{{$masterdata->custChequeNo}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50px">
+                                <span class="font-weight-bold">Cheque Date</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                {{ \App\helper\Helper::dateFormat($masterdata->custChequeDate)}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="70px">
+                                <span class="font-weight-bold">Narration </span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                <span>{{$masterdata->narration}}</span>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 40%">
+                    <table style="width: 100%">
+                        <tr style="width: 100%">
+                            <td valign="bottom" class="text-right">
+                                         <span class="font-weight-bold">
+                         <h3 class="text-muted">
+                             @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
+                                 Not Confirmed
+                             @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
+                                 Pending Approval
+                             @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
+                                 Fully Approved
+                             @endif
+                         </h3>
+ `             </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td valign="bottom" class="text-right">
+                                <span class="font-weight-bold"> Currency:</span>
+                                @if($masterdata->currency)
+                                    {{$masterdata->currency->CurrencyCode}}
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    @endif
     @if($masterdata->documentType == 14)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">

@@ -36,6 +36,7 @@ use App\Models\ItemMaster;
 use App\Models\ItemReturnMaster;
 use App\Models\JvMaster;
 use App\Models\MaterielRequest;
+use App\Models\MonthlyAdditionsMaster;
 use App\Models\PaymentBankTransfer;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\ProcumentOrder;
@@ -311,6 +312,13 @@ class email
                     if (!empty($assetDisposal)) {
                         $data['docApprovedYN'] = $assetDisposal->approvedYN;
                         $data['docCode'] = $assetDisposal->disposalDocumentCode;
+                    }
+                    break;
+                case 28:
+                    $monthlyAddition = MonthlyAdditionsMaster::find($data['docSystemCode']);
+                    if (!empty($monthlyAddition)) {
+                        $data['docApprovedYN'] = $monthlyAddition->approvedYN;
+                        $data['docCode'] = $monthlyAddition->monthlyAdditionsCode;
                     }
                     break;
                 default:

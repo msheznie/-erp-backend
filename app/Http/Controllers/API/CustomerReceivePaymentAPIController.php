@@ -1138,7 +1138,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'approved_by' => function ($query) {
+        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
@@ -1260,7 +1260,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError('Customer Receive Payment not found');
         }
 
-        $customerReceivePaymentRecord = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->with(['confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'approved_by' => function ($query) {
+        $customerReceivePaymentRecord = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->with(['confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {

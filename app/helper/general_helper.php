@@ -492,6 +492,17 @@ class Helper
                     $docInforArr["modelName"] = 'CustomerReceivePayment';
                     $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
                     break;
+                case 28:
+                    $docInforArr["documentCodeColumnName"] = 'monthlyAdditionsCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedby';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'hrms_monthlyadditionsmaster';
+                    $docInforArr["modelName"] = 'MonthlyAdditionsMaster';
+                    $docInforArr["primarykey"] = 'monthlyAdditionsMasterID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1841,6 +1852,15 @@ class Helper
     {
         $user = Models\User::find(Auth::id());
         return $user->employee_id;
+    }
+
+    public static function getEmployeeCode($empId)
+    {
+        $employee = Models\Employee::find($empId);
+        if(!empty($employee)){
+            return $employee->empID;
+        }
+        return 0;
     }
 
     public static function getEmployeeID()
