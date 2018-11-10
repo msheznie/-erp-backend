@@ -193,5 +193,10 @@ class DirectReceiptDetail extends Model
         return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
     }
 
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
     
 }

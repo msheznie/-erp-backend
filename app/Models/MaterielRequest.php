@@ -353,5 +353,7 @@ class MaterielRequest extends Model
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','RequestID');
     }
 
-    
+    public function company(){
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
+    }
 }

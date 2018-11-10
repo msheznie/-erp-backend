@@ -101,6 +101,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('bank_memo_suppliers', 'BankMemoSupplierAPIController');
 
     Route::get('getBankMemoBySupplierCurrency', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrency');
+    Route::get('getBankMemoBySupplierCurrencyId', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrencyId');
     Route::post('addBulkMemos', 'BankMemoSupplierAPIController@addBulkMemos');
     Route::post('exportSupplierCurrencyMemos', 'BankMemoSupplierAPIController@exportSupplierCurrencyMemos');
 
@@ -496,6 +497,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport');
     Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod');
     Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY');
+    Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear');
     Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
     Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
     Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV');
@@ -1067,6 +1069,25 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
     Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
+
+
+    Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
+    Route::get('getMonthlyAdditionAudit', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionAudit');
+    Route::post('monthlyAdditionReopen', 'MonthlyAdditionsMasterAPIController@monthlyAdditionReopen');
+    Route::post('getMonthlyAdditionsByCompany', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionsByCompany');
+    Route::get('getMonthlyAdditionFormData', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionFormData');
+    Route::post('getProcessPeriods', 'MonthlyAdditionsMasterAPIController@getProcessPeriods');
+    Route::resource('monthly_addition_details', 'MonthlyAdditionDetailAPIController');
+    Route::get('getItemsByMonthlyAddition', 'MonthlyAdditionDetailAPIController@getItemsByMonthlyAddition');
+    Route::get('checkPullFromExpenseClaim', 'MonthlyAdditionDetailAPIController@checkPullFromExpenseClaim');
+    Route::get('getECForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECForMonthlyAddition');
+    Route::get('getECDetailsForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECDetailsForMonthlyAddition');
+    Route::post('addMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@addMonthlyAdditionDetails');
+    Route::post('deleteAllMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@deleteAllMonthlyAdditionDetails');
+    Route::resource('employment_types', 'EmploymentTypeAPIController');
+    Route::resource('period_masters', 'PeriodMasterAPIController');
+    Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
+    Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1090,6 +1111,8 @@ Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBank
 Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
 Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
+Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
+Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
@@ -1099,21 +1122,20 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 4,'autoID' => 76746, 'companySystemID' => 11, 'employeeSystemID' => 2664];
-    //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
-    $master = \App\Models\PaySupplierInvoiceMaster::find(76750);
+    $master = ['documentSystemID' => 41,'autoID' => 247, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    //$master = \App\Models\PaySupplierInvoiceMaster::find(76750);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
     //$master = \App\Models\AssetDisposalMaster::find(241);
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
-    $job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
+    //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
 });
 
 Route::get('runQueueSR', function () {
     $bt = \App\Models\BudgetTransferForm::find(463);
     $job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
-
 
 
 

@@ -492,6 +492,17 @@ class Helper
                     $docInforArr["modelName"] = 'CustomerReceivePayment';
                     $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
                     break;
+                case 28:
+                    $docInforArr["documentCodeColumnName"] = 'monthlyAdditionsCode';
+                    $docInforArr["confirmColumnName"] = 'confirmedYN';
+                    $docInforArr["confirmedBy"] = 'confirmedby';
+                    $docInforArr["confirmedByEmpID"] = 'confirmedByEmpID';
+                    $docInforArr["confirmedBySystemID"] = 'confirmedByEmpSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmedDate';
+                    $docInforArr["tableName"] = 'hrms_monthlyadditionsmaster';
+                    $docInforArr["modelName"] = 'MonthlyAdditionsMaster';
+                    $docInforArr["primarykey"] = 'monthlyAdditionsMasterID';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -1843,6 +1854,15 @@ class Helper
         return $user->employee_id;
     }
 
+    public static function getEmployeeCode($empId)
+    {
+        $employee = Models\Employee::find($empId);
+        if(!empty($employee)){
+            return $employee->empID;
+        }
+        return 0;
+    }
+
     public static function getEmployeeID()
     {
         $user = Models\User::find(Auth::id());
@@ -2282,6 +2302,7 @@ class Helper
             $dpMaster['FYEnd'] = $companyFinanceYear['endingDate'];
             $dpMaster['FYPeriodDateFrom'] = $companyFinancePeriod['dateFrom'];
             $dpMaster['FYPeriodDateTo'] = $companyFinancePeriod['dateTo'];
+            $dpMaster['companyFinancePeriodID'] = $companyFinancePeriod['companyFinancePeriodID'];
             $dpMaster['documentSystemID'] = 41;
             $dpMaster['documentID'] = 'FADS';
             $dpMaster['serialNo'] = $lastSerialNumber;
@@ -2293,36 +2314,44 @@ class Helper
             $dpMaster['createdUserSystemID'] = $fixedCapital['createdUserSystemID'];
 
             $output = Models\AssetDisposalMaster::create($dpMaster);
+            if ($output) {
+                $asset = Models\FixedAssetMaster::find($fixedCapital['faID']);
 
-            $asset = Models\FixedAssetMaster::find($fixedCapital['faID']);
+                $depreciationLocal = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountLocal');
+                $depreciationRpt = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountRpt');
 
-            $depreciationLocal = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountLocal');
-            $depreciationRpt = Models\FixedAssetDepreciationPeriod::OfCompany([$fixedCapital['companySystemID']])->OfAsset($fixedCapital['faID'])->sum('depAmountRpt');
+                $nbvRpt = $asset->costUnitRpt - $depreciationRpt;
+                $nbvLocal = $asset->COSTUNIT - $depreciationLocal;
 
-            $nbvRpt = $asset->costUnitRpt - $depreciationRpt;
-            $nbvLocal = $asset->COSTUNIT - $depreciationLocal;
+                $dpDetail['assetdisposalMasterAutoID'] = $output['assetdisposalMasterAutoID'];
+                $dpDetail['companySystemID'] = $fixedCapital['companySystemID'];
+                $dpDetail['companyID'] = $fixedCapital['companyID'];
+                $dpDetail['serviceLineSystemID'] = $asset['serviceLineSystemID'];
+                $dpDetail['serviceLineCode'] = $asset['serviceLineCode'];
+                $dpDetail['itemCode'] = $asset['itemSystemCode'];
+                $dpDetail['faID'] = $asset['faID'];
+                $dpDetail['faCode'] = $asset['faCode'];
+                $dpDetail['faUnitSerialNo'] = $asset['faUnitSerialNo'];
+                $dpDetail['assetDescription'] = $asset['assetDescription'];
+                $dpDetail['COSTUNIT'] = $asset['COSTUNIT'];
+                $dpDetail['costUnitRpt'] = $asset['costUnitRpt'];
+                $dpDetail['netBookValueLocal'] = $nbvLocal;
+                $dpDetail['depAmountLocal'] = $depreciationLocal;
+                $dpDetail['depAmountRpt'] = $depreciationRpt;
+                $dpDetail['netBookValueRpt'] = $nbvRpt;
+                $dpDetail['COSTGLCODE'] = $asset['COSTGLCODE'];
+                $dpDetail['COSTGLCODESystemID'] = $asset['costglCodeSystemID'];
+                $dpDetail['ACCDEPGLCODE'] = $asset['ACCDEPGLCODE'];
+                $dpDetail['ACCDEPGLCODESystemID'] = $asset['accdepglCodeSystemID'];
+                $dpDetail['DISPOGLCODE'] = $asset['DISPOGLCODE'];
+                $dpDetail['DISPOGLCODESystemID'] = $asset['dispglCodeSystemID'];
 
-            $dpDetail['assetdisposalMasterAutoID'] = $output['assetdisposalMasterAutoID'];
-            $dpDetail['companySystemID'] = $fixedCapital['companySystemID'];
-            $dpDetail['companyID'] = $fixedCapital['companyID'];
-            $dpDetail['serviceLineSystemID'] = $asset['serviceLineSystemID'];
-            $dpDetail['serviceLineCode'] = $asset['serviceLineCode'];
-            $dpDetail['itemCode'] = $asset['itemSystemCode'];
-            $dpDetail['faID'] = $asset['faID'];
-            $dpDetail['faCode'] = $asset['faCode'];
-            $dpDetail['faUnitSerialNo'] = $asset['faUnitSerialNo'];
-            $dpDetail['assetDescription'] = $asset['assetDescription'];
-            $dpDetail['COSTUNIT'] = $asset['COSTUNIT'];
-            $dpDetail['costUnitRpt'] = $asset['costUnitRpt'];
-            $dpDetail['netBookValueLocal'] = $nbvLocal;
-            $dpDetail['depAmountLocal'] = $depreciationLocal;
-            $dpDetail['depAmountRpt'] = $depreciationRpt;
-            $dpDetail['netBookValueRpt'] = $nbvRpt;
-            $dpDetail['COSTGLCODE'] = $asset['COSTGLCODE'];
-            $dpDetail['ACCDEPGLCODE'] = $asset['ACCDEPGLCODE'];
-            $dpDetail['DISPOGLCODE'] = $asset['DISPOGLCODE'];
-
-            $output2 = Models\AssetDisposalDetail::create($dpDetail);
+                $disposalDetail = Models\AssetDisposalDetail::create($dpDetail);
+                if ($disposalDetail) {
+                    $params = array('autoID' => $output['assetdisposalMasterAutoID'], 'company' => $fixedCapital['companySystemID'], 'document' => 41, 'segment' => '', 'category' => '', 'amount' => 0);
+                    $assetDisposalDetail = self::confirmWithoutRuleDocument($params);
+                }
+            }
 
             $capitalizeDetail = Models\AssetCapitalizationDetail::where('capitalizationID', $masterData['autoID'])->get();
             if ($capitalizeDetail) {
@@ -2334,16 +2363,13 @@ class Helper
                     }
 
                     $asset = Models\FixedAssetMaster::find($val['faID']);
-
+                    $data = $asset->toArray();
                     $documentCode = ($val["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-                    $data["departmentID"] = 'AM';
-                    $data["departmentSystemID"] = null;
-                    $data["serviceLineSystemID"] = $val["serviceLineSystemID"];
-                    $data["serviceLineCode"] = $val["serviceLineCode"];
-                    $data["companySystemID"] = $val["companySystemID"];
-                    $data["companyID"] = $val["companyID"];
-                    $data["documentSystemID"] = 22;
-                    $data["documentID"] = 'FA';
+                    $data["docOriginDocumentSystemID"] = $fixedCapital['documentSystemID'];
+                    $data["docOriginDocumentID"] = $fixedCapital['documentID'];
+                    $data["docOriginSystemCode"] = $masterData['autoID'];
+                    $data["docOrigin"] = $fixedCapital['capitalizationCode'];
+                    $data["docOriginDetailID"] = $val["capitalizationDetailID"];
                     $data["serialNo"] = $lastSerialNumber;
                     $data["itemCode"] = $asset["itemSystemCode"];
                     $data["faCode"] = $documentCode;
@@ -2353,11 +2379,37 @@ class Helper
                     $data["groupTO"] = $val['faID'];
                     $data["COSTUNIT"] = $val["allocatedAmountLocal"];
                     $data["costUnitRpt"] = $val["allocatedAmountRpt"];
+                    $data["RollLevForApp_curr"] = 1;
+                    $data["confirmedYN"] = 0;
+                    $data["confirmedByEmpSystemID"] = null;
+                    $data["confirmedByEmpID"] = null;
+                    $data["confirmedDate"] = null;
+                    $data["approved"] = 0;
+                    $data["approvedDate"] = null;
+                    $data["approvedByUserID"] = null;
+                    $data["approvedByUserSystemID"] = null;
+                    $data["selectedforJobYN"] = null;
+                    $data["lastVerifiedDate"] = null;
+                    $data["timesReferred"] = 0;
+                    $data["refferedBackYN"] = 0;
                     $data['createdPcID'] = gethostname();
                     $data['createdUserID'] = \Helper::getEmployeeID();
                     $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data["modifiedUser"] = null;
+                    $data["modifiedUserSystemID"] = null;
+                    $data["modifiedPc"] = null;
+                    $data["selectedForDisposal"] = 0;
+                    $data["DIPOSED"] = 0;
+                    $data["disposedDate"] = null;
+                    $data["tempRecord"] = null;
+                    $data["toolsCondition"] = null;
 
                     $fixedAsset = Models\FixedAssetMaster::create($data);
+
+                    if ($fixedAsset) {
+                        $params = array('autoID' => $fixedAsset['faID'], 'company' => $val["companySystemID"], 'document' => 22, 'segment' => '', 'category' => '', 'amount' => 0);
+                        $assetConfirm = self::confirmWithoutRuleDocument($params);
+                    }
                 }
             }
         }
@@ -3097,7 +3149,7 @@ class Helper
     public static function appendToBankLedger($autoID)
     {
         $custReceivePayment = Models\CustomerReceivePayment::find($autoID);
-        if($custReceivePayment){
+        if ($custReceivePayment) {
             $data['companySystemID'] = $custReceivePayment->companySystemID;
             $data['companyID'] = $custReceivePayment->companyID;
             $data['documentSystemID'] = $custReceivePayment->documentSystemID;
@@ -3116,7 +3168,7 @@ class Helper
             $data['payeeID'] = $custReceivePayment->customerID;
 
             $payee = Models\CustomerMaster::find($custReceivePayment->customerID);
-            if($payee){
+            if ($payee) {
                 $data['payeeCode'] = $payee->CutomerCode;
             }
             $data['payeeName'] = $custReceivePayment->PayeeName;

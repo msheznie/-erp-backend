@@ -143,7 +143,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $validator = \Validator::make($input, [
             'description' => 'required',
-            'bankRecAsOf' => 'required',
+            'bankRecAsOf' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -183,7 +183,7 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         $maxAsOfDate = BankReconciliation::where('bankAccountAutoID', $input['bankAccountAutoID'])
-            ->max('bankRecAsOf');
+                                          ->max('bankRecAsOf');
 
         if ($maxAsOfDate >= $input['bankRecAsOf']) {
             return $this->sendError('You cannot create bank reconciliation, Please select the as of date after ' . (new Carbon($maxAsOfDate))->format('d/m/Y'), 500);
