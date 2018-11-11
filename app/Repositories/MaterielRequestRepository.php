@@ -66,4 +66,15 @@ class MaterielRequestRepository extends BaseRepository
     {
         return MaterielRequest::class;
     }
+
+    public function getAudit($id)
+    {
+        return $this ->with(['created_by','confirmed_by','warehouse_by','modified_by','company', 'details' => function ($q) {
+            $q->with('uom_issuing', 'item_by');
+        },'approved_by' => function ($query) {
+            $query->with(['employee' => function ($q) {
+                $q->with(['details.designation']);
+            }])->where('documentSystemID',9);
+        }])->findWithoutFail($id);
+    }
 }

@@ -167,7 +167,9 @@ return [
         'toChartOfAccountSystemID' => 'To Account Code',
         'adjustmentAmountRpt' => 'Amount ',
         'remarks' => 'Remarks',
-        'templateMasterID' => 'Template'
+        'templateMasterID' => 'Template',
+        'processPeriod' => 'Month',
+        'empType' => 'Type'
     ],
 
 ];

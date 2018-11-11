@@ -1017,7 +1017,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function getAllPaymentVoucherByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID'));
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1075,6 +1075,31 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
                 $paymentVoucher->where('BPVsupplierID', $input['supplierID']);
+            }
+        }
+
+        if (array_key_exists('chequePaymentYN', $input)) {
+            if (($input['chequePaymentYN'] == 0 || $input['chequePaymentYN'] == -1) && !is_null($input['chequePaymentYN'])) {
+                $paymentVoucher->where('chequePaymentYN', $input['chequePaymentYN']);
+            }
+        }
+
+
+        if (array_key_exists('BPVbank', $input)) {
+            if ($input['BPVbank'] && !is_null($input['BPVbank'])) {
+                $paymentVoucher->where('BPVbank', $input['BPVbank']);
+            }
+        }
+
+        if (array_key_exists('BPVAccount', $input)) {
+            if ($input['BPVAccount'] && !is_null($input['BPVAccount'])) {
+                $paymentVoucher->where('BPVAccount', $input['BPVAccount']);
+            }
+        }
+
+        if (array_key_exists('chequeSentToTreasury', $input)) {
+            if (($input['chequeSentToTreasury'] == 0 || $input['chequeSentToTreasury'] == -1) && !is_null($input['chequeSentToTreasury'])) {
+                $paymentVoucher->where('chequeSentToTreasury', $input['chequeSentToTreasury']);
             }
         }
 

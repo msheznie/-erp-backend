@@ -1,0 +1,666 @@
+<?php
+/**
+ * =============================================
+ * -- File Name : MonthlyAdditionsMasterAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Monthly Additions Master
+ * -- Author : Mohamed Fayas
+ * -- Create date : 07 - November 2018
+ * -- Description : This file contains the all CRUD for Monthly Additions Master
+ * -- REVISION HISTORY
+ * -- Date: 07-November 2018 By: Fayas Description: Added new functions named as getMonthlyAdditionsByCompany(),getMonthlyAdditionFormData()
+ * -- Date: 08-November 2018 By: Fayas Description: Added new functions named as getMonthlyAdditionAudit(),monthlyAdditionReopen()
+ */
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateMonthlyAdditionsMasterAPIRequest;
+use App\Http\Requests\API\UpdateMonthlyAdditionsMasterAPIRequest;
+use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\CurrencyMaster;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
+use App\Models\EmploymentType;
+use App\Models\ExpenseClaimType;
+use App\Models\MonthlyAdditionsMaster;
+use App\Models\PeriodMaster;
+use App\Models\SalaryProcessEmploymentTypes;
+use App\Models\YesNoSelection;
+use App\Models\YesNoSelectionForMinus;
+use App\Repositories\MonthlyAdditionDetailRepository;
+use App\Repositories\MonthlyAdditionsMasterRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class MonthlyAdditionsMasterController
+ * @package App\Http\Controllers\API
+ */
+class MonthlyAdditionsMasterAPIController extends AppBaseController
+{
+    /** @var  MonthlyAdditionsMasterRepository */
+    private $monthlyAdditionsMasterRepository;
+    private $monthlyAdditionDetailRepository;
+
+    public function __construct(MonthlyAdditionsMasterRepository $monthlyAdditionsMasterRepo,MonthlyAdditionDetailRepository $monthlyAdditionDetailRepo)
+    {
+        $this->monthlyAdditionsMasterRepository = $monthlyAdditionsMasterRepo;
+        $this->monthlyAdditionDetailRepository = $monthlyAdditionDetailRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/monthlyAdditionsMasters",
+     *      summary="Get a listing of the MonthlyAdditionsMasters.",
+     *      tags={"MonthlyAdditionsMaster"},
+     *      description="Get all MonthlyAdditionsMasters",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/MonthlyAdditionsMaster")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->monthlyAdditionsMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->monthlyAdditionsMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $monthlyAdditionsMasters = $this->monthlyAdditionsMasterRepository->all();
+
+        return $this->sendResponse($monthlyAdditionsMasters->toArray(), 'Monthly Additions Masters retrieved successfully');
+    }
+
+    /**
+     * @param CreateMonthlyAdditionsMasterAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/monthlyAdditionsMasters",
+     *      summary="Store a newly created MonthlyAdditionsMaster in storage",
+     *      tags={"MonthlyAdditionsMaster"},
+     *      description="Store MonthlyAdditionsMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="MonthlyAdditionsMaster that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/MonthlyAdditionsMaster")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/MonthlyAdditionsMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateMonthlyAdditionsMasterAPIRequest $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $input['createdpc'] = gethostname();
+        //$input['createdUserID'] = $employee->empID;
+        $input['createdUserSystemID'] = $employee->employeeSystemID;
+
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required',
+            'currency' => 'required|numeric|min:1',
+            'empType' => 'required|numeric|min:1',
+            'processPeriod' => 'required|numeric|min:1'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $input['documentSystemID'] = 28;
+        $input['documentID'] = 'MA';
+
+        $company = Company::where('companySystemID', $input['companySystemID'])
+            ->with(['localcurrency', 'reportingcurrency'])
+            ->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company not found', 500);
+        }
+        $input['CompanyID'] = $company->CompanyID;
+
+        $processPeriod = PeriodMaster::find($input['processPeriod']);
+
+        if (empty($company)) {
+            return $this->sendError('Month not found', 500);
+        }
+
+        $salaryProcessCheck = SalaryProcessEmploymentTypes::where('companySystemID', $input['companySystemID'])
+            ->where('empType', $input['empType'])
+            //->where('periodID', $input['processPeriod'])
+            ->whereHas('salary_process', function ($q) use ($input) {
+                $q->where('Currency', $input['currency']);
+            })
+            ->max('periodID');
+
+        if (!$salaryProcessCheck) {
+            $salaryProcessCheck = -1;
+        }
+
+        if ($salaryProcessCheck > $input['processPeriod']) {
+            return $this->sendError('Salary has been processed for selected month.' . $salaryProcessCheck, 500);
+        }
+
+        $input['dateMA'] = $processPeriod->endDate;
+
+        $currencyRate = \Helper::currencyConversion($input['companySystemID'], $input['currency'], $input['currency'], 0);
+
+        $input['localCurrencyID'] = $company->localCurrencyID;
+        $input['rptCurrencyID'] = $company->reportingCurrency;
+
+        $input['localCurrencyExchangeRate'] = $currencyRate['trasToLocER'];
+        $input['rptCurrencyExchangeRate'] = $currencyRate['trasToRptER'];
+
+        $lastSerial = MonthlyAdditionsMaster::where('companySystemID', $input['companySystemID'])
+            ->max('serialNo');
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial) + 1;
+        }
+
+        $input['serialNo'] = $lastSerialNumber;
+        $input['RollLevForApp_curr'] = 1;
+
+        $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
+        if ($documentMaster) {
+            $code = ($company->CompanyID . '/HR/' . $input['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $input['monthlyAdditionsCode'] = $code;
+        }
+
+        $input['expenseClaimAdditionYN'] = 1;
+
+        $monthlyAdditionsMasters = $this->monthlyAdditionsMasterRepository->create($input);
+
+        return $this->sendResponse($monthlyAdditionsMasters->toArray(), 'Monthly Addition saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/monthlyAdditionsMasters/{id}",
+     *      summary="Display the specified MonthlyAdditionsMaster",
+     *      tags={"MonthlyAdditionsMaster"},
+     *      description="Get MonthlyAdditionsMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of MonthlyAdditionsMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/MonthlyAdditionsMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var MonthlyAdditionsMaster $monthlyAdditionsMaster */
+        $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository
+            ->with(['employment_type', 'currency_by', 'confirmed_by'])
+            ->findWithoutFail($id);
+
+        if (empty($monthlyAdditionsMaster)) {
+            return $this->sendError('Monthly Additions Master not found');
+        }
+
+        return $this->sendResponse($monthlyAdditionsMaster->toArray(), 'Monthly Additions Master retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateMonthlyAdditionsMasterAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/monthlyAdditionsMasters/{id}",
+     *      summary="Update the specified MonthlyAdditionsMaster in storage",
+     *      tags={"MonthlyAdditionsMaster"},
+     *      description="Update MonthlyAdditionsMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of MonthlyAdditionsMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="MonthlyAdditionsMaster that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/MonthlyAdditionsMaster")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/MonthlyAdditionsMaster"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateMonthlyAdditionsMasterAPIRequest $request)
+    {
+        $input = $request->all();
+        $input = array_except($input, ['employment_type', 'currency_by', 'confirmed_by']);
+        $input = $this->convertArrayToValue($input);
+
+        /** @var MonthlyAdditionsMaster $monthlyAdditionsMaster */
+        $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
+
+        if (empty($monthlyAdditionsMaster)) {
+            return $this->sendError('Monthly Additions Master not found');
+        }
+
+        if ($monthlyAdditionsMaster->confirmedYN == 1) {
+            return $this->sendError('This document already confirmed you cannot edit.', 500);
+        }
+
+
+        if ($monthlyAdditionsMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            unset($inputParam);
+            $validator = \Validator::make($input, [
+                'companySystemID' => 'required',
+                'currency' => 'required|numeric|min:1',
+                'empType' => 'required|numeric|min:1',
+                'processPeriod' => 'required|numeric|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            $checkItems = $this->monthlyAdditionDetailRepository->findWhere(['monthlyAdditionsMasterID' => $id]);
+
+            if (count($checkItems) == 0) {
+                return $this->sendError('Every monthly addition should have at least one item', 500);
+            }
+
+            $input['RollLevForApp_curr'] = 1;
+            $params = array('autoID' => $id,
+                'company' => $monthlyAdditionsMaster->companySystemID,
+                'document' => $monthlyAdditionsMaster->documentSystemID,
+                'segment' => 0,
+                'category' => 0,
+                'amount' => 0
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            }
+        }
+        $employee = \Helper::getEmployeeInfo();
+
+
+        $updateInput = array(
+            'modifiedpc' => gethostname(),
+            'modifieduser' => $employee->empID,
+            'modifiedUserSystemID' => $employee->employeeSystemID,
+            'description' => $input['description']
+        );
+
+        $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository->update($updateInput, $id);
+
+        return $this->sendResponse($monthlyAdditionsMaster->toArray(), 'Monthly Addition updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/monthlyAdditionsMasters/{id}",
+     *      summary="Remove the specified MonthlyAdditionsMaster from storage",
+     *      tags={"MonthlyAdditionsMaster"},
+     *      description="Delete MonthlyAdditionsMaster",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of MonthlyAdditionsMaster",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var MonthlyAdditionsMaster $monthlyAdditionsMaster */
+        $monthlyAdditionsMaster = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
+
+        if (empty($monthlyAdditionsMaster)) {
+            return $this->sendError('Monthly Additions Master not found');
+        }
+
+        $monthlyAdditionsMaster->delete();
+
+        return $this->sendResponse($id, 'Monthly Additions Master deleted successfully');
+    }
+
+    public function getMonthlyAdditionsByCompany(Request $request)
+    {
+
+        $input = $request->all();
+
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approvedYN'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $monthlyAdditions = MonthlyAdditionsMaster::whereIn('companySystemID', $subCompanies)
+            ->with('currency_by')
+            ->where('expenseClaimAdditionYN', 1)
+            ->where('documentSystemID', $input['documentId']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                $monthlyAdditions = $monthlyAdditions->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == -1) && !is_null($input['approvedYN'])) {
+                $monthlyAdditions = $monthlyAdditions->where('approvedYN', $input['approvedYN']);
+            }
+        }
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $monthlyAdditions = $monthlyAdditions->where(function ($query) use ($search) {
+                $query->where('monthlyAdditionsCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($monthlyAdditions)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('monthlyAdditionsMasterID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getMonthlyAdditionFormData(Request $request)
+    {
+        $companyId = $request['companyId'];
+        /** Yes and No Selection */
+        $yesNoSelection = YesNoSelection::all();
+
+        /** all Units*/
+        $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
+
+        $company = Company::where('companySystemID', $companyId)->with(['localcurrency', 'reportingcurrency'])->first();
+        $currencies = CurrencyMaster::all();
+        $employmentTypes = EmploymentType::all();
+
+        $output = array(
+            'yesNoSelection' => $yesNoSelection,
+            'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'company' => $company,
+            'currencies' => $currencies,
+            'employmentTypes' => $employmentTypes
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getProcessPeriods(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'companySystemID' => 'required|numeric|min:1',
+            'currency' => 'required|numeric|min:1',
+            'empType' => 'required|numeric|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        $maxPeriodID = SalaryProcessEmploymentTypes::where('companySystemID', $input['companySystemID'])
+            ->where('empType', $input['empType'])
+            ->whereHas('salary_process', function ($q) use ($input) {
+                $q->where('Currency', $input['currency']);
+            })
+            ->max('periodID');
+        if (!$maxPeriodID) {
+            $maxPeriodID = 0;
+        }
+
+        $processPeriods = PeriodMaster::select(DB::raw("periodMasterID as value,CONCAT(periodMonth,' : ',DATE_FORMAT(startDate, '%d/%m/%Y'), ' - ' ,DATE_FORMAT(endDate, '%d/%m/%Y')) as label"))
+            ->where('periodMasterID', '>', $maxPeriodID)->get();
+
+        return $this->sendResponse($processPeriods, 'Record retrieved successfully');
+    }
+
+    public function getMonthlyAdditionAudit(Request $request)
+    {
+        $id = $request->get('id');
+        $monthlyAddition = $this->monthlyAdditionsMasterRepository->getAudit($id);
+
+        if (empty($monthlyAddition)) {
+            return $this->sendError('Monthly Addition not found');
+        }
+
+        $monthlyAddition->docRefNo = \Helper::getCompanyDocRefNo($monthlyAddition->companySystemID, $monthlyAddition->documentSystemID);
+
+        return $this->sendResponse($monthlyAddition->toArray(), 'Monthly Addition retrieved successfully');
+    }
+
+    public function monthlyAdditionReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+        $monthlyAddition = $this->monthlyAdditionsMasterRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($monthlyAddition)) {
+            return $this->sendError('Monthly Addition not found');
+        }
+
+        if ($monthlyAddition->approvedYN == -1) {
+            return $this->sendError('You cannot reopen this Monthly Addition it is already fully approved');
+        }
+
+        if ($monthlyAddition->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Monthly Addition it is already partially approved');
+        }
+
+        if ($monthlyAddition->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Monthly Addition, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedby' => null,
+            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->monthlyAdditionsMasterRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $monthlyAddition->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $monthlyAddition->monthlyAdditionsCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $monthlyAddition->monthlyAdditionsCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $monthlyAddition->companySystemID)
+            ->where('documentSystemCode', $monthlyAddition->monthlyAdditionsMasterID)
+            ->where('documentSystemID', $monthlyAddition->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $monthlyAddition->companySystemID)
+                    ->where('documentSystemID', $monthlyAddition->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $monthlyAddition->companySystemID)
+            ->where('documentSystemID', $monthlyAddition->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($monthlyAddition->toArray(), 'Monthly Addition reopened successfully');
+    }
+}

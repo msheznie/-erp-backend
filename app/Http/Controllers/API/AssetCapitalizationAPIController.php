@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateAssetCapitalizationAPIRequest;
 use App\Http\Requests\API\UpdateAssetCapitalizationAPIRequest;
 use App\Models\AssetCapitalization;
 use App\Models\AssetCapitalizationDetail;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentApproved;
@@ -183,6 +184,11 @@ class AssetCapitalizationAPIController extends AppBaseController
                 $input['companyID'] = $company->CompanyID;
             }
 
+            $contraAccount = ChartOfAccount::find($input['contraAccountSystemID']);
+            if ($contraAccount) {
+                $input['contraAccountGLCode'] = $contraAccount->AccountCode;
+            }
+
             $documentMaster = DocumentMaster::find($input['documentSystemID']);
             if ($documentMaster) {
                 $input['documentID'] = $documentMaster->documentID;
@@ -281,7 +287,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }])->findWithoutFail($id);
+        }, 'contra_account'])->findWithoutFail($id);
 
         if (empty($assetCapitalization)) {
             return $this->sendError('Asset Capitalization not found');
@@ -354,6 +360,11 @@ class AssetCapitalizationAPIController extends AppBaseController
             $documentSystemID = $assetCapitalization->documentSystemID;
 
             $input['documentDate'] = new Carbon($input['documentDate']);
+
+            $contraAccount = ChartOfAccount::find($input['contraAccountSystemID']);
+            if ($contraAccount) {
+                $input['contraAccountGLCode'] = $contraAccount->AccountCode;
+            }
 
             if ($assetCapitalization->confirmedYN == 0 && $input['confirmedYN'] == 1) {
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
