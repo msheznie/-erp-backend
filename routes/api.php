@@ -321,7 +321,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
 
     Route::post('approveSupplier', 'SupplierMasterAPIController@approveSupplier');
-    Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier');
+    Route::post('rejectSugetAssetManagementFilterDatapplier', 'SupplierMasterAPIController@rejectSupplier');
 
     Route::post('approveCustomer', 'CustomerMasterAPIController@approveCustomer');
     Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer');
@@ -1067,6 +1067,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
     Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
+    Route::post('generateAssetDetailDrilldown', 'AssetManagementReportAPIController@generateAssetDetailDrilldown');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1104,7 +1105,7 @@ Route::get('runQueue', function () {
     $master = \App\Models\PaySupplierInvoiceMaster::find(76750);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
-    //$master = \App\Models\AssetDisposalMaster::find(241);
+    //$master = \App\Models\AssetDisposalMaster::find(241);generateAssetDetailDrilldown
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
     $job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
 });
