@@ -1667,13 +1667,13 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['glAccountType'] = 'BS';
                                     $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                     $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount + $totaldd->transAmount) * -1;
+                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount) * -1;
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount + $totaldd->localAmount) * -1;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount) * -1;
                                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount + $totaldd->rptAmount) * -1;
+                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount) * -1;
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
 
@@ -1684,15 +1684,37 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['glAccountType'] = 'BS';
                                     $data['documentTransCurrencyID'] = $masterData->bankCurrency;
                                     $data['documentTransCurrencyER'] = $masterData->bankCurrencyER;
-                                    $data['documentTransAmount'] = \Helper::roundValue($cpd->transAmount + $totaldd->transAmount);
+                                    $data['documentTransAmount'] = abs(\Helper::roundValue($cpd->transAmount + $totaldd->transAmount));
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($cpd->localAmount + $totaldd->localAmount);
+                                    $data['documentLocalAmount'] = abs(\Helper::roundValue($cpd->localAmount + $totaldd->localAmount));
                                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($cpd->rptAmount + $totaldd->rptAmount);
+                                    $data['documentRptAmount'] = abs(\Helper::roundValue($cpd->rptAmount + $totaldd->rptAmount));
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
+
+                                    if ($dd) {
+                                        foreach ($dd as $val) {
+                                            $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                            $data['serviceLineCode'] = $val->serviceLineCode;
+                                            $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
+                                            $data['glCode'] = $val->financeGLcodePL;
+                                            $data['glAccountType'] = $val->chartofaccount->catogaryBLorPL;
+                                            $data['documentNarration'] = $val->comments;
+                                            $data['documentTransCurrencyID'] = $val->transCurrencyID;
+                                            $data['documentTransCurrencyER'] = $val->transCurrencyER;
+                                            $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount)) * -1;
+                                            $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount)) * -1;
+                                            $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                                            $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                                            $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount)) * -1;
+                                            $data['timestamp'] = \Helper::currentDateTime();
+                                            array_push($finalData, $data);
+                                        }
+                                    }
 
                                 }
                             }

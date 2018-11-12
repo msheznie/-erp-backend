@@ -354,7 +354,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 } else {
                     return $this->sendError('Selected customer receive payment is not updated in general ledger. Please check again', 500);
                 }
-
+                $customerDetail = CustomerMaster::find($customerReceivePaymentMaster->customerID);
                 $input['matchingType'] = 'AR';
                 $input['PayMasterAutoId'] = $input['custReceivePaymentAutoID'];
                 $input['documentSystemID'] = $customerReceivePaymentMaster->documentSystemID;
@@ -362,16 +362,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['BPVcode'] = $customerReceivePaymentMaster->custPaymentReceiveCode;
                 $input['BPVdate'] = $customerReceivePaymentMaster->custPaymentReceiveDate;
                 $input['BPVNarration'] = $customerReceivePaymentMaster->narration;
-                $input['directPaymentPayeeSelectEmp'] = $customerReceivePaymentMaster->PayeeSelectEmp;
-                $input['directPaymentPayee'] = $customerReceivePaymentMaster->PayeeName;
-                $input['directPayeeCurrency'] = $customerReceivePaymentMaster->PayeeCurrency;
+                //$input['directPaymentPayeeSelectEmp'] = $customerReceivePaymentMaster->PayeeSelectEmp;
+                $input['directPaymentPayee'] = $customerDetail->CustomerName;
+                $input['directPayeeCurrency'] = $customerReceivePaymentMaster->custTransactionCurrencyID;
                 $input['BPVsupplierID'] = $customerReceivePaymentMaster->customerID;
                 $input['supplierGLCodeSystemID'] = $customerReceivePaymentMaster->customerGLCodeSystemID;
                 $input['supplierGLCode'] = $customerReceivePaymentMaster->customerGLCode;
                 $input['supplierTransCurrencyID'] = $customerReceivePaymentMaster->custTransactionCurrencyID;
                 $input['supplierTransCurrencyER'] = $customerReceivePaymentMaster->custTransactionCurrencyER;
-                /*   $input['supplierDefCurrencyID'] = $customerReceivePaymentMaster->supplierDefCurrencyID;
-                     $input['supplierDefCurrencyER'] = $customerReceivePaymentMaster->supplierDefCurrencyER;*/
+                $input['supplierDefCurrencyID'] = $customerReceivePaymentMaster->custTransactionCurrencyID;
+                $input['supplierDefCurrencyER'] = $customerReceivePaymentMaster->custTransactionCurrencyER;
                 $input['localCurrencyID'] = $customerReceivePaymentMaster->localCurrencyID;
                 $input['localCurrencyER'] = $customerReceivePaymentMaster->localCurrencyER;
                 $input['companyRptCurrencyID'] = $customerReceivePaymentMaster->companyRptCurrencyID;
