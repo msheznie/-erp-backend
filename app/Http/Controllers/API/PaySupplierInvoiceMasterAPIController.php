@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 03-September 2018 By:Mubashir Description: Added new functions named as getPaymentVoucherFormData(),getAllPaymentVoucherByCompany()
  * -- Date: 14-September 2018 By:Mubashir Description: Added new functions named as getPaymentVoucherMatchItems()
+ * -- Date: 12-November 2018 By:Nazir Description: Added new functions named as updateSentToTreasuryDetail()
  */
 
 namespace App\Http\Controllers\API;
@@ -463,16 +464,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
                 if (isset($input['interCompanyToSystemID'])) {
-                    if($input['interCompanyToSystemID']) {
+                    if ($input['interCompanyToSystemID']) {
                         $interCompany = Company::find($input['interCompanyToSystemID']);
                         if ($interCompany) {
                             $input['interCompanyToID'] = $interCompany->CompanyID;
                         }
-                    }else {
+                    } else {
                         $input['interCompanyToSystemID'] = null;
                         $input['interCompanyToID'] = null;
                     }
-                }else{
+                } else {
                     $input['interCompanyToSystemID'] = null;
                     $input['interCompanyToID'] = null;
                 }
@@ -1683,6 +1684,35 @@ HAVING
         $payInvoice->save();
 
         return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher cancelled successfully');
+
+    }
+
+    public function updateSentToTreasuryDetail(Request $request)
+    {
+        $payInvoice = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request['PayMasterAutoId']);
+
+        if (empty($payInvoice)) {
+            return $this->sendError('Payment Voucher not found');
+        }
+
+        if ($payInvoice->confirmedYN == 0) {
+            return $this->sendError('You cannot send to treasury this PV, this is not confirmed');
+        }
+
+        if ($payInvoice->approved == -1) {
+            return $this->sendError('You cannot send to treasury this PV, this is already approved');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $payInvoice->chequeSentToTreasury = -1;
+        $payInvoice->chequeSentToTreasuryByEmpSystemID = $employee->employeeSystemID;
+        $payInvoice->chequeSentToTreasuryByEmpID = $employee->empID;
+        $payInvoice->chequeSentToTreasuryByEmpName = $employee->empFullName;
+        $payInvoice->chequeSentToTreasuryDate = NOW();
+        $payInvoice->save();
+
+        return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher updated successfully');
 
     }
 
