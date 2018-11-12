@@ -538,6 +538,9 @@ class FixedAssetMaster extends Model
         'tempRecord',
         'toolsCondition',
         'selectedforJobYN',
+        'postToGLYN',
+        'postToGLCodeSystemID',
+        'postToGLCode',
         'timestamp'
     ];
 
@@ -634,7 +637,10 @@ class FixedAssetMaster extends Model
         'supplierIDRentedAsset' => 'integer',
         'tempRecord' => 'integer',
         'toolsCondition' => 'integer',
-        'selectedforJobYN' => 'integer'
+        'selectedforJobYN' => 'integer',
+        'postToGLYN' => 'integer',
+        'postToGLCodeSystemID' => 'integer',
+        'postToGLCode' => 'integer',
     ];
 
     /**
