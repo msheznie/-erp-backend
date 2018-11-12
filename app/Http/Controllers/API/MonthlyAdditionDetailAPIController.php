@@ -19,6 +19,7 @@ use App\Http\Requests\API\UpdateMonthlyAdditionDetailAPIRequest;
 use App\Models\Employee;
 use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimDetails;
+use App\Models\HRMSChartOfAccounts;
 use App\Models\MonthlyAdditionDetail;
 use App\Repositories\ExpenseClaimRepository;
 use App\Repositories\MonthlyAdditionDetailRepository;
@@ -448,6 +449,14 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
                 }
             }
 
+            $chartAccountId = 0;
+
+            $hrms_account = HRMSChartOfAccounts::where('AccountCode',$detail['glCode'])->first();
+
+            if(!empty($hrms_account)){
+                $chartAccountId = $hrms_account->charofAccAutoID;
+            }
+
             $temData = array('monthlyAdditionsMasterID' => $monthlyAddition->monthlyAdditionsMasterID,
                 'expenseClaimMasterAutoID' => $expenseClaim->expenseClaimMasterAutoID,
                 'empSystemID' => $expenseClaim->clamiedByNameSystemID,
@@ -458,7 +467,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
                 'declareAmount' => $detail['localAmount'],
                 'amountMA' => $detail['localAmount'],
                 'currencyMAID' => $detail['localCurrency'],
-                'glCode' => $detail['chartOfAccountSystemID'],
+                'glCode' => $chartAccountId, //$detail['chartOfAccountSystemID'],
                 'localCurrencyID' => $detail['localCurrency'],
                 'localCurrencyER' => $detail['localCurrencyER'],
                 'localAmount' => $detail['localAmount'],
