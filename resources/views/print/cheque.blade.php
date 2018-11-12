@@ -195,7 +195,7 @@
                 </td>
             </tr>
             <tr style="width: 100%">
-                <td valign="top" style="width: 50%;padding-right: 10px" class="text-right"><b>{{$entity->payeeName}}</b></td>
+                <td valign="top" style="width: 50%;padding-right: 10px" class="text-right"><b>{{$entity->directPaymentPayee}}</b></td>
                 <td valign="top" style="width: 50%" class="text-center"></td>
             </tr>
             <tr style="width: 100%">
@@ -220,7 +220,7 @@
                     <td valign="top" style="width: 80%"></td>
                     <td valign="top" style="width: 20%">
                         <b>
-                            {{$entity->documentCode}}
+                            {{$entity->BPVcode}}
                         </b>
                     </td>
                 </tr>
