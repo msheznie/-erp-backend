@@ -1,23 +1,19 @@
 <?php
-/**
- * =============================================
- * -- File Name : FixedAssetDepreciationPeriod.php
- * -- Project Name : ERP
- * -- Module Name :  Asset Management
- * -- Author : Mubashir
- * -- Create date : 27 - September 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- * --
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="FixedAssetDepreciationPeriod",
+ *      definition="DepreciationPeriodsReferredHistory",
  *      required={""},
+ *      @SWG\Property(
+ *          property="DepreciationPeriodsReferredID",
+ *          description="DepreciationPeriodsReferredID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="DepreciationPeriodsID",
  *          description="DepreciationPeriodsID",
@@ -158,6 +154,17 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="boolean"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserSystemID",
+ *          description="createdUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="createdBy",
  *          description="createdBy",
  *          type="string"
@@ -169,17 +176,20 @@ use Eloquent as Model;
  *      )
  * )
  */
-class FixedAssetDepreciationPeriod extends Model
+class DepreciationPeriodsReferredHistory extends Model
 {
 
-    public $table = 'erp_fa_assetdepreciationperiods';
-    
+    public $table = 'erp_fa_assetdepreciationperiodsreferredhistory';
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'DepreciationPeriodsID';
+    protected $primaryKey = 'DepreciationPeriodsReferredID';
+
+
 
     public $fillable = [
+        'DepreciationPeriodsID',
         'depMasterAutoID',
         'companySystemID',
         'companyID',
@@ -208,8 +218,8 @@ class FixedAssetDepreciationPeriod extends Model
         'depAmountRpt',
         'depDoneYN',
         'timesReferred',
-        'createdBy',
         'createdUserSystemID',
+        'createdBy',
         'createdPCid',
         'createdDateTime',
         'timestamp'
@@ -221,6 +231,7 @@ class FixedAssetDepreciationPeriod extends Model
      * @var array
      */
     protected $casts = [
+        'DepreciationPeriodsReferredID' => 'integer',
         'DepreciationPeriodsID' => 'integer',
         'depMasterAutoID' => 'integer',
         'companySystemID' => 'integer',
@@ -245,9 +256,9 @@ class FixedAssetDepreciationPeriod extends Model
         'depAmountRptCurr' => 'integer',
         'depAmountRpt' => 'float',
         'depDoneYN' => 'integer',
-        'timesReferred' => 'integer',
-        'createdBy' => 'string',
+        'timesReferred' => 'boolean',
         'createdUserSystemID' => 'integer',
+        'createdBy' => 'string',
         'createdPCid' => 'string'
     ];
 
@@ -259,58 +270,6 @@ class FixedAssetDepreciationPeriod extends Model
     public static $rules = [
         
     ];
-
-    /**
-     * Scope a query to only include users of a given type.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param mixed $type
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-
-    public function scopeOfCompany($query, $type)
-    {
-        return $query->whereIN('companySystemID',  $type);
-    }
-
-    /**
-     * Scope a query to only include users of a given type.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param mixed $type
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-
-    public function scopeOfAsset($query, $faID)
-    {
-        return $query->where('faID',  $faID);
-    }
-
-    /**
-     * Scope a query to only include users of a given type.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param mixed $type
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-
-    public function scopeOfDepreciation($query, $depMasterAutoID)
-    {
-        return $query->where('depMasterAutoID',  $depMasterAutoID);
-    }
-
-
-    public function maincategory_by(){
-        return $this->belongsTo('App\Models\FixedAssetCategory','faMainCategory','faCatID');
-    }
-
-    public function financecategory_by(){
-        return $this->belongsTo('App\Models\AssetFinanceCategory','faFinanceCatID','faFinanceCatID');
-    }
-
-    public function serviceline_by(){
-        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
-    }
 
     
 }

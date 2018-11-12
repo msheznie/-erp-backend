@@ -15,12 +15,16 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateFixedAssetDepreciationMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetDepreciationMasterAPIRequest;
 use App\Jobs\CreateDepreciation;
+use App\Jobs\CreateDepreciationAmend;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\DepreciationMasterReferredHistory;
+use App\Models\DepreciationPeriodsReferredHistory;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetDepreciationPeriod;
@@ -226,12 +230,10 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
             $depMasterAutoID = $fixedAssetDepreciationMasters['depMasterAutoID'];
             DB::commit();
-
             if ($fixedAssetDepreciationMasters)
             {
                 $job = CreateDepreciation::dispatch($depMasterAutoID);
             }
-
 
             return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
         } catch (\Exception $exception) {
@@ -283,7 +285,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var FixedAssetDepreciationMaster $fixedAssetDepreciationMaster */
-        $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
+        $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->with(['confirmed_by'])->findWithoutFail($id);
 
         if (empty($fixedAssetDepreciationMaster)) {
             return $this->sendError('Fixed Asset Depreciation Master not found');
@@ -768,5 +770,67 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+
+    function referBackDepreciation(Request $request){
+
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $depMasterAutoID = $input['depMasterAutoID'];
+
+            $fixedAssetDep = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($depMasterAutoID);
+            if (empty($fixedAssetDep)) {
+                return $this->sendError('Fixed Asset Depreciation not found');
+            }
+
+            if ($fixedAssetDep->refferedBackYN != -1) {
+                return $this->sendError('You cannot amend this document');
+            }
+
+            $fixedAssetDepArray = $fixedAssetDep->toArray();
+
+            $storefixedAssetDepHistory = DepreciationMasterReferredHistory::create($fixedAssetDepArray);
+
+            $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $depMasterAutoID)
+                ->where('companySystemID', $fixedAssetDep->companySystemID)
+                ->where('documentSystemID', $fixedAssetDep->documentSystemID)
+                ->get();
+
+            if (!empty($fetchDocumentApproved)) {
+                foreach ($fetchDocumentApproved as $DocumentApproved) {
+                    $DocumentApproved['refTimes'] = $fixedAssetDep->timesReferred;
+                }
+            }
+
+            $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+            $storeDocumentReferedHistory = DocumentReferedHistory::create($DocumentApprovedArray);
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $depMasterAutoID)
+                ->where('companySystemID', $fixedAssetDep->companySystemID)
+                ->where('documentSystemID', $fixedAssetDep->documentSystemID)
+                ->delete();
+
+            if ($deleteApproval) {
+                $fixedAssetDep->refferedBackYN = 0;
+                $fixedAssetDep->confirmedYN = 0;
+                $fixedAssetDep->confirmedByEmpSystemID = null;
+                $fixedAssetDep->confirmedByEmpID = null;
+                $fixedAssetDep->confirmedDate = null;
+                $fixedAssetDep->RollLevForApp_curr = 1;
+                $fixedAssetDep->save();
+            }
+
+            CreateDepreciationAmend::dispatch($depMasterAutoID);
+
+            DB::commit();
+            return $this->sendResponse($fixedAssetDep->toArray(), 'Fixed asset depreciation amended successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
     }
 }
