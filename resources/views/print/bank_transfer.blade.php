@@ -186,7 +186,7 @@
                             <td valign="top" style="width: 100%">
                                 <h6>
                                     <span class="font-weight-bold">Doc Ref No</span>
-                                    <span style="margin-left: 10px">{{$entity->documentCode}}</span>
+                                    <span style="margin-left: 10px">{{$entity->BPVcode}}</span>
                                 </h6>
                             </td>
                         </tr>
@@ -199,9 +199,9 @@
                             <td>
                                 <br>
                                 <b>The Manager</b><br>
-                                @if($entity->bank_account)
-                                    <b>{{$entity->bank_account->bankName}}</b> <br>
-                                    <b>{{$entity->bank_account->bankBranch}}</b>
+                                @if($entity->bankaccount)
+                                    <b>{{$entity->bankaccount->bankName}}</b> <br>
+                                    <b>{{$entity->bankaccount->bankBranch}}</b>
                                 @else
                                     <br><br>
                                 @endif
@@ -210,11 +210,11 @@
                                 Dear Sir,<br><br>
                                 <u><b>Sub : FUND TRANSFER</b></u> <br> <br>
                                 By debiting our Account No.
-                                <b>@if($entity->bank_account){{$entity->bank_account->AccountNo}}@endif</b>
+                                <b>@if($entity->bankaccount){{$entity->bankaccount->AccountNo}}@endif</b>
                                 kindly transfer a sum
                                 of
-                                <b>@if($entity->bank_currency_by) {{$entity->bank_currency_by->CurrencyCode}}@endif {{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>
-                                [@if($entity->bank_currency_by) {{$entity->bank_currency_by->CurrencyCode}}@endif {{$entity->amount_word}}
+                                <b>@if($entity->bankcurrency) {{$entity->bankcurrency->CurrencyCode}}@endif {{number_format($entity->payAmountBank,$entity->decimalPlaces)}}</b>
+                                [@if($entity->bankcurrency) {{$entity->bankcurrency->CurrencyCode}}@endif {{$entity->amount_word}}
                                 and
                                 {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif] to the
                                 following account as detailed below.<br>
