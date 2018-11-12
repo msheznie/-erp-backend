@@ -179,7 +179,10 @@ class PaymentBankTransfer extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'exportedYN',
+        'exportedUserSystemID',
+        'exportedDate'
     ];
 
     /**
@@ -210,7 +213,10 @@ class PaymentBankTransfer extends Model
         'modifiedPc' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'narration' => 'string'
+        'narration' => 'string',
+        'exportedYN'  => 'integer',
+        'exportedUserSystemID'  => 'integer',
+        'exportedDate' => 'string'
     ];
 
     /**

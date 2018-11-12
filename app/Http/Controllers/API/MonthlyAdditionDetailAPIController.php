@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateMonthlyAdditionDetailAPIRequest;
 use App\Http\Requests\API\UpdateMonthlyAdditionDetailAPIRequest;
+use App\Models\Employee;
 use App\Models\ExpenseClaim;
 use App\Models\ExpenseClaimDetails;
 use App\Models\MonthlyAdditionDetail;
@@ -323,6 +324,10 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             return $this->sendError('Monthly Addition not found');
         }
 
+        if ($monthlyAddition->confirmedYN == 1) {
+            return $this->sendError('You cannot add items as the document is already confirmed.', 500);
+        }
+
         $validator = \Validator::make($monthlyAddition->toArray(), [
             'companySystemID' => 'required',
             'currency' => 'required|numeric|min:1',
@@ -333,11 +338,6 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-
-        if ($monthlyAddition->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed you cannot add items.', 500);
-        }
-
 
         return $this->sendResponse($monthlyAddition->toArray(), 'Monthly Addition retrieved successfully');
     }
@@ -353,6 +353,10 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             return $this->sendError('Monthly Addition not found');
         }
 
+        if ($monthlyAddition->confirmedYN == 1) {
+            return $this->sendError('You cannot add items as the document is already confirmed.', 500);
+        }
+
         $validator = \Validator::make($monthlyAddition->toArray(), [
             'companySystemID' => 'required',
             'currency' => 'required|numeric|min:1',
@@ -364,10 +368,6 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        if ($monthlyAddition->confirmedYN == 1) {
-            return $this->sendError('This document already confirmed you cannot add items.', 500);
-        }
-
         $expenseClaims = ExpenseClaim::where('companySystemID', $monthlyAddition->companySystemID)
             ->where('approved', -1)
             ->where('pettyCashYN', 1)
@@ -376,6 +376,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
             /*->whereHas('details', function ($q) use ($monthlyAddition) {
                 $q->where('currencyID', $monthlyAddition->currency);
             })*/
+            ->orderBy('expenseClaimDate','desc')
             ->get();
 
         return $this->sendResponse($expenseClaims, 'Monthly Addition retrieved successfully');
@@ -435,11 +436,23 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
 
         foreach ($expenseClaimDetails as $detail) {
 
+            $emp = Employee::with(['details'])->find($expenseClaim->clamiedByNameSystemID);
+
+            $empID = '';
+            $empDepartment = 0;
+
+            if(!empty($emp)){
+                $empID = $emp->empID;
+                if($emp->details){
+                    $empDepartment = $emp->details->departmentID;
+                }
+            }
+
             $temData = array('monthlyAdditionsMasterID' => $monthlyAddition->monthlyAdditionsMasterID,
                 'expenseClaimMasterAutoID' => $expenseClaim->expenseClaimMasterAutoID,
                 'empSystemID' => $expenseClaim->clamiedByNameSystemID,
-                'empID' => \Helper::getEmployeeCode($expenseClaim->clamiedByNameSystemID),
-                'empdepartment' => $detail['serviceLineSystemID'],
+                'empID' => $empID,
+                'empdepartment' => $empDepartment,
                 'description' => $detail['description'],
                 'declareCurrency' => $detail['localCurrency'],
                 'declareAmount' => $detail['localAmount'],

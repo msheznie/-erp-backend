@@ -23,6 +23,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetCategorySub;
@@ -30,6 +31,7 @@ use App\Models\FixedAssetCost;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetInsuranceDetail;
 use App\Models\FixedAssetMaster;
+use App\Models\FixedAssetMasterReferredHistory;
 use App\Models\GRVDetails;
 use App\Models\InsurancePolicyType;
 use App\Models\Location;
@@ -801,7 +803,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $fixedAssetCosting = FixedAssetCost::with(['localcurrency', 'rptcurrency'])->ofFixedAsset($id)->get();
-        $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO' => $id]);
+        $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO' => $id, 'approved' => -1]);
         $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->get();
         $insurance = FixedAssetInsuranceDetail::with(['policy_by', 'location_by'])->ofAsset($id)->get();
 
@@ -1220,5 +1222,64 @@ class FixedAssetMasterAPIController extends AppBaseController
         }*/
 
         return $assetInsurance;
+    }
+
+    function referBackCosting(Request $request){
+
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $faID = $input['faID'];
+
+            $fixedAsset = $this->fixedAssetMasterRepository->findWithoutFail($faID);
+            if (empty($fixedAsset)) {
+                return $this->sendError('Fixed Asset Master not found');
+            }
+
+            if ($fixedAsset->refferedBackYN != -1) {
+                return $this->sendError('You cannot amend this document');
+            }
+
+            $fixedAssetArray = $fixedAsset->toArray();
+
+            $storefixedAssetHistory = FixedAssetMasterReferredHistory::create($fixedAssetArray);
+
+            $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $faID)
+                ->where('companySystemID', $fixedAsset->companySystemID)
+                ->where('documentSystemID', $fixedAsset->documentSystemID)
+                ->get();
+
+            if (!empty($fetchDocumentApproved)) {
+                foreach ($fetchDocumentApproved as $DocumentApproved) {
+                    $DocumentApproved['refTimes'] = $fixedAsset->timesReferred;
+                }
+            }
+
+            $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+            $storeDocumentReferedHistory = DocumentReferedHistory::create($DocumentApprovedArray);
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $faID)
+                ->where('companySystemID', $fixedAsset->companySystemID)
+                ->where('documentSystemID', $fixedAsset->documentSystemID)
+                ->delete();
+
+            if ($deleteApproval) {
+                $fixedAsset->refferedBackYN = 0;
+                $fixedAsset->confirmedYN = 0;
+                $fixedAsset->confirmedByEmpSystemID = null;
+                $fixedAsset->confirmedByEmpID = null;
+                $fixedAsset->confirmedDate = null;
+                $fixedAsset->RollLevForApp_curr = 1;
+                $fixedAsset->save();
+            }
+
+            DB::commit();
+            return $this->sendResponse($fixedAsset->toArray(), 'Fixed asset amended successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+
     }
 }
