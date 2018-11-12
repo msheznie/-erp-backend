@@ -28,6 +28,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
 use App\Repositories\PaymentBankTransferRepository;
+use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -45,13 +46,16 @@ class BankLedgerAPIController extends AppBaseController
     private $bankLedgerRepository;
     private $bankReconciliationRepository;
     private $paymentBankTransferRepository;
+    private $paySupplierInvoiceMasterRepository;
 
     public function __construct(BankLedgerRepository $bankLedgerRepo, BankReconciliationRepository $bankReconciliationRepo,
-                                PaymentBankTransferRepository $paymentBankTransferRepo)
+                                PaymentBankTransferRepository $paymentBankTransferRepo,
+                                PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo)
     {
         $this->bankLedgerRepository = $bankLedgerRepo;
         $this->bankReconciliationRepository = $bankReconciliationRepo;
         $this->paymentBankTransferRepository = $paymentBankTransferRepo;
+        $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
     }
 
     /**
@@ -355,15 +359,15 @@ class BankLedgerAPIController extends AppBaseController
 
                     $bankGLCode = 000;
 
-                    if($bankLedger->bank_account){
+                    if ($bankLedger->bank_account) {
                         $bankGLCode = $bankLedger->bank_account->chartOfAccountSystemID;
                     }
 
                     $checkGLAmount = GeneralLedger::where('companySystemID', $bankLedger->companySystemID)
-                                                    ->where('documentSystemID', $bankLedger->documentSystemID)
-                                                    ->where('documentSystemCode', $bankLedger->documentSystemCode)
-                                                    ->where('chartOfAccountSystemID', $bankGLCode)
-                                                    ->first();
+                        ->where('documentSystemID', $bankLedger->documentSystemID)
+                        ->where('documentSystemCode', $bankLedger->documentSystemCode)
+                        ->where('chartOfAccountSystemID', $bankGLCode)
+                        ->first();
 
                     if (!empty($checkGLAmount)) {
                         $glAmount = 0;
@@ -702,7 +706,7 @@ class BankLedgerAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('bankLedgerAutoID', $input['order'][0]['dir']);
+                        $query->orderBy('PayMasterAutoId', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -754,19 +758,24 @@ class BankLedgerAPIController extends AppBaseController
             $bank_currency_id = $bankAccount->currency->currencyID;
         }
 
-        $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
+        $bankLedger = PaySupplierInvoiceMaster::whereIn('companySystemID', $subCompanies)
+            ->where("confirmedYN", 1)
+            ->where("approved", 0)
+            ->where("RollLevForApp_curr", 1)
+            ->where("refferedBackYN", 0)
+            ->where("cancelYN", 0)
             ->where("chequePrintedYN", $chequePrintedYN)
             ->where("chequePaymentYN", $input['option'])
             ->when(request('invoiceType') && in_array($input['invoiceType'], $input), function ($q) use ($input) {
                 return $q->where('invoiceType', $input['invoiceType']);
             })
             ->when(request('bankID'), function ($q) use ($input) {
-                return $q->where('bankID', $input['bankID']);
+                return $q->where('BPVbank', $input['bankID']);
             })
             ->when(request('bankAccountID'), function ($q) use ($input) {
-                return $q->where('bankAccountID', $input['bankAccountID']);
+                return $q->where('BPVAccount', $input['bankAccountID']);
             })
-            ->with(['bank_currency_by', 'company', 'bank_account', 'supplier_by' => function ($q3) use ($bank_currency_id) {
+            ->with(['bankcurrency', 'company', 'bankaccount', 'supplier' => function ($q3) use ($bank_currency_id) {
                 $q3->with(['supplierCurrency' => function ($q4) use ($bank_currency_id) {
                     $q4->where('currencyID', $bank_currency_id)
                         ->with(['bankMemo_by']);
@@ -798,10 +807,10 @@ class BankLedgerAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
         $bankLedger = $this->chequeListQrt($input, $search, 0)
             ->when($input['chequeNumberRange'], function ($q) use ($input) {
-                $q->where('documentChequeNo', '>=', $input['chequeNumberRangeFrom'])
-                    ->where('documentChequeNo', '<=', $input['chequeNumberRangeTo']);
+                $q->where('BPVchequeNo', '>=', $input['chequeNumberRangeFrom'])
+                    ->where('BPVchequeNo', '<=', $input['chequeNumberRangeTo']);
             })
-            ->orderBy('bankLedgerAutoID', $sort)
+            ->orderBy('PayMasterAutoId', $sort)
             ->get();
 
         if (count($bankLedger) == 0) {
@@ -815,7 +824,7 @@ class BankLedgerAPIController extends AppBaseController
             $temArray['chequePrintedByEmpSystemID'] = $employee->employeeSystemID;
             $temArray['chequePrintedByEmpID'] = $employee->empID;
             $temArray['chequePrintedByEmpName'] = $employee->empName;
-            $this->bankLedgerRepository->update($temArray, $item->bankLedgerAutoID);
+            $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
         }
 
         return $this->sendResponse($bankLedger->toArray(), 'updated successfully');
@@ -839,10 +848,10 @@ class BankLedgerAPIController extends AppBaseController
 
         $bankLedger = $this->chequeListQrt($input, $search, 1)
             ->when($input['chequeNumberRange'], function ($q) use ($input) {
-                $q->where('documentChequeNo', '>=', $input['chequeNumberRangeFrom'])
-                    ->where('documentChequeNo', '<=', $input['chequeNumberRangeTo']);
+                $q->where('BPVchequeNo', '>=', $input['chequeNumberRangeFrom'])
+                    ->where('BPVchequeNo', '<=', $input['chequeNumberRangeTo']);
             })
-            ->orderBy('bankLedgerAutoID', $sort)
+            ->orderBy('PayMasterAutoId', $sort)
             ->get();
 
         if (count($bankLedger) == 0) {
@@ -855,69 +864,69 @@ class BankLedgerAPIController extends AppBaseController
         foreach ($bankLedger as $item) {
 
             $temArray['chequePrintedYN'] = -1;
-            $this->bankLedgerRepository->update($temArray, $item->bankLedgerAutoID);
+            $this->paySupplierInvoiceMasterRepository->update($temArray, $item->PayMasterAutoId);
 
-            $amountSplit = explode(".",$item->payAmountBank);
+            $amountSplit = explode(".", $item->payAmountBank);
             $intAmt = 0;
             $floatAmt = 00;
 
-            if(count($amountSplit) == 1){
+            if (count($amountSplit) == 1) {
                 $intAmt = $amountSplit[0];
                 $floatAmt = 00;
-            }else if(count($amountSplit) == 2){
+            } else if (count($amountSplit) == 2) {
                 $intAmt = $amountSplit[0];
                 $floatAmt = $amountSplit[1];
             }
 
             $item['amount_word'] = ucwords($f->format($intAmt));
-            if ($item['supplier_by']) {
-                if ($item['supplier_by']['supplierCurrency']) {
-                    if ($item['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
-                        $memos = $item['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
-                       $item->memos = $memos;
+            if ($item['supplier']) {
+                if ($item['supplier']['supplierCurrency']) {
+                    if ($item['supplier']['supplierCurrency'][0]['bankMemo_by']) {
+                        $memos = $item['supplier']['supplierCurrency'][0]['bankMemo_by'];
+                        $item->memos = $memos;
                     }
                 }
             }
             $item['decimalPlaces'] = 2;
             $item['floatAmt'] = (string)$floatAmt;
-            if($item['bank_currency_by']){
-                $item['decimalPlaces'] = $item['bank_currency_by']['DecimalPlaces'];
+            if ($item['bankcurrency']) {
+                $item['decimalPlaces'] = $item['bankcurrency']['DecimalPlaces'];
             }
 
-            $temDetails = PaySupplierInvoiceMaster::where('PayMasterAutoId', $item['documentSystemCode'])
-                                                  ->first();
+            $temDetails = PaySupplierInvoiceMaster::where('PayMasterAutoId', $item['PayMasterAutoId'])
+                ->first();
 
-            if(!empty($temDetails)){
-                if($input['invoiceType'] == 2){
+            if (!empty($temDetails)) {
+                if ($input['invoiceType'] == 2) {
                     $item['details'] = $temDetails->supplierdetail;
-                }else if($input['invoiceType'] == 3){
+                } else if ($input['invoiceType'] == 3) {
                     $item['details'] = $temDetails->directdetail;
-                }else if($input['invoiceType'] == 5){
+                } else if ($input['invoiceType'] == 5) {
                     $item['details'] = $temDetails->advancedetail;
-                }else{
+                } else {
                     $item['details'] = [];
                 }
-            }else{
+            } else {
                 $item['details'] = [];
             }
         }
 
         //return $bankLedger;
         $htmlName = '';
-        if($input['option']  == -1){
+        if ($input['option'] == -1) {
             $htmlName = 'cheque';
-        }else if($input['option']  ==  0){
+        } else if ($input['option'] == 0) {
             $htmlName = 'bank_transfer';
         }
         $array = array('entities' => $bankLedger, 'date' => now());
-        if($htmlName){
-            $html = view('print.'.$htmlName, $array);
+        if ($htmlName) {
+            $html = view('print.' . $htmlName, $array);
             $pdf = \App::make('dompdf.wrapper');
             $pdf->loadHTML($html);
             //$materielIssue->docRefNo = \Helper::getCompanyDocRefNo($input['companySystemID'], $materielIssue->documentSystemID);
             //'landscape'
             return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
-        }else{
+        } else {
             return $this->sendError('Error', 500);
         }
     }

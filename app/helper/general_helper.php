@@ -1683,6 +1683,7 @@ class Helper
             }
         } catch (\Exception $e) {
             DB::rollback();
+            Log::error($e->getMessage());
             return ['success' => false, 'message' => 'Error Occurred'];
         }
     }
@@ -1738,6 +1739,18 @@ class Helper
                     $docInforArr["primarykey"] = 'budgetmasterID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 22: // Asset Costing
+                    $docInforArr["tableName"] = 'erp_fa_asset_master';
+                    $docInforArr["modelName"] = 'FixedAssetMaster';
+                    $docInforArr["primarykey"] = 'faID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 23: // Asset Depreciation
+                    $docInforArr["tableName"] = 'erp_fa_depmaster';
+                    $docInforArr["modelName"] = 'FixedAssetDepreciationMaster';
+                    $docInforArr["primarykey"] = 'depMasterAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -1753,7 +1766,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);

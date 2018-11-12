@@ -620,6 +620,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $masterHeaderSumLocal = $checkPreDirectSumLocal + $customerReceiveAmountLocal;
             $masterHeaderSumReport = $checkPreDirectSumReport + $customerReceiveAmountReport;
 
+            $masterHeaderSumTrans = abs($masterHeaderSumTrans);
+            $masterHeaderSumLocal = abs($masterHeaderSumLocal);
+            $masterHeaderSumReport = abs($masterHeaderSumReport);
+
             $input['receivedAmount'] = (\Helper::roundValue($masterHeaderSumTrans) * -1);
             $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) * -1);
             $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) * -1);
@@ -630,13 +634,17 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $masterHeaderSumLocal = $checkPreDirectSumLocal;
             $masterHeaderSumReport = $checkPreDirectSumReport;
 
+            $masterHeaderSumTrans = abs($masterHeaderSumTrans);
+            $masterHeaderSumLocal = abs($masterHeaderSumLocal);
+            $masterHeaderSumReport = abs($masterHeaderSumReport);
+
             $input['receivedAmount'] = (\Helper::roundValue($masterHeaderSumTrans) * -1);
             $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) * -1);
             $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) * -1);
         }
 
         // calculating bank amount
-        $bankCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['bankCurrency'], $input['receivedAmount']);
+        $bankCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['bankCurrency'], $masterHeaderSumTrans);
 
         if ($bankCurrencyConversion) {
             $input['bankAmount'] = (\Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1);
@@ -768,12 +776,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         $error_count++;
                     }
 
-                    $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->DRAmountCurrency, $updateItem->DRAmountCurrency, $updateItem->DRAmount);
-
-                    $input['localAmount'] = $companyCurrencyConversion['localAmount'];
-                    $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                    $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                     $updateItem->save();
 
                     if ($updateItem->DRAmount == 0 || $updateItem->localAmount == 0 || $updateItem->comRptAmount == 0) {
@@ -802,10 +804,50 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
                 }
             }
+
+            if ($input['documentType'] == 13) {
+                $directReceiptDetail = DirectReceiptDetail::where('directReceiptAutoID', $id)->get();
+
+                $finalError = array('amount_zero' => array(),
+                    'amount_neg' => array(),
+                    'required_serviceLine' => array(),
+                    'active_serviceLine' => array()
+                );
+
+                foreach ($directReceiptDetail as $item) {
+
+                    $updateItem = DirectReceiptDetail::find($item['directReceiptDetailsID']);
+
+                    if ($updateItem->serviceLineSystemID && !is_null($updateItem->serviceLineSystemID)) {
+
+                        $checkDepartmentActive = SegmentMaster::where('serviceLineSystemID', $updateItem->serviceLineSystemID)
+                            ->where('isActive', 1)
+                            ->first();
+                        if (empty($checkDepartmentActive)) {
+                            $updateItem->serviceLineSystemID = null;
+                            $updateItem->serviceLineCode = null;
+                            array_push($finalError['active_serviceLine'], $updateItem->glCode);
+                            $error_count++;
+                        }
+                    } else {
+                        array_push($finalError['required_serviceLine'], $updateItem->glCode);
+                        $error_count++;
+                    }
+
+                    $updateItem->save();
+
+                }
+
+                $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+                if ($error_count > 0) {
+                    return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                }
+            }
             // updating accounts receivable ledger table
             if ($input['documentType'] == 13) {
 
                 $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->where('addedDocumentSystemID', 20)
                     ->get();
 
                 foreach ($customerReceivePaymentDetailRec as $item) {
@@ -815,7 +857,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                     $customerInvoiceMaster = CustomerInvoiceDirect::find($item['bookingInvCodeSystem']);
 
-                    if ($totalReceiveAmountTrans > $customerInvoiceMaster->bookingAmountTrans) {
+                    if ($totalReceiveAmountTrans > $customerInvoiceMaster['bookingAmountTrans']) {
 
                         $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
                         $itemExistArray[] = [$itemDrt];
@@ -833,6 +875,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if ($input['documentType'] == 13) {
 
                 $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->where('addedDocumentSystemID' ,'<>', '')
                     ->get();
 
                 foreach ($customerReceivePaymentDetailRec as $row) {
