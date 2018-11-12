@@ -1088,6 +1088,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('period_masters', 'PeriodMasterAPIController');
     Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
     Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
+    Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
+    Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1136,6 +1138,10 @@ Route::get('runQueueSR', function () {
     $bt = \App\Models\BudgetTransferForm::find(463);
     $job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
+
+
 
 
 

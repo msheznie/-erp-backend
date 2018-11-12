@@ -258,7 +258,7 @@ class MonthlyAdditionDetail extends Model
 
     public function department()
     {
-        return $this->belongsTo('App\Models\SegmentMaster', 'empdepartment', 'serviceLineSystemID');
+        return $this->belongsTo('App\Models\HRMSDepartmentMaster','empdepartment','DepartmentID');
     }
 
     public function currency_ma()
@@ -273,6 +273,6 @@ class MonthlyAdditionDetail extends Model
 
     public function chart_of_account()
     {
-        return $this->belongsTo('App\Models\ChartOfAccount', 'glCode','chartOfAccountSystemID');
+        return $this->belongsTo('App\Models\HRMSChartOfAccounts', 'glCode','charofAccAutoID');
     }
 }

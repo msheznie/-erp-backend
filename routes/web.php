@@ -15,3 +15,9 @@ Route::resource('periodMasters', 'PeriodMasterController');
 Route::resource('salaryProcessMasters', 'SalaryProcessMasterController');
 
 Route::resource('salaryProcessEmploymentTypes', 'SalaryProcessEmploymentTypesController');
+
+
+
+Route::resource('hRMSChartOfAccounts', 'HRMSChartOfAccountsController');
+
+Route::resource('hRMSDepartmentMasters', 'HRMSDepartmentMasterController');
