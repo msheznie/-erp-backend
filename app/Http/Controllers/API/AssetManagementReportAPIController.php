@@ -19,6 +19,7 @@ use App\Models\AssetFinanceCategory;
 use App\Models\Company;
 use App\Models\Months;
 use App\Models\Year;
+use App\Models\AssetType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -40,10 +41,14 @@ class AssetManagementReportAPIController extends AppBaseController
         $years = Year::all();
         $months = Months::all();
 
+        /*load asset type dropdown*/
+        $aasetType = AssetType::all();
+
         $output = array(
             'assetCategory' => $assetCategory,
             'years' => $years,
             'months' => $months,
+            'assetType' => $aasetType
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -58,7 +63,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     'reportTypeID' => 'required',
                     'fromDate' => 'required',
                     'assetCategory' => 'required',
-                    'currencyID' => 'required'
+                    'typeID' => 'required'
                 ]);
 
                 if ($validator->fails()) {//echo 'in';exit;
@@ -111,6 +116,42 @@ class AssetManagementReportAPIController extends AppBaseController
         switch ($reportID) {
             case 'AMAR': //Asset Register
 
+                /*shahmy*/
+
+                $typeID = $request->typeID;
+                $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
+                $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
+                $assetCategory = join(',', $assetCategory);
+
+                $qry="SELECT groupTO,faUnitSerialNo,faID, erp_fa_assettype.typeDes, erp_fa_financecategory.financeCatDescription, final.COSTGLCODE, final.ACCDEPGLCODE, assetType, serviceline.ServiceLineDes, final.serviceLineCode, docOrigin, AUDITCATOGARY, faCode, assetDescription, DEPpercentage, dateAQ, dateDEP, COSTUNIT, IFNULL(depAmountLocal,0) as depAmountLocal, COSTUNIT - IFNULL(depAmountLocal,0) as localnbv, costUnitRpt,
+ IFNULL(depAmountRpt,0) as depAmountRpt , costUnitRpt - IFNULL(depAmountRpt,0) as rptnbv FROM ( SELECT 		t.groupTO,erp_fa_asset_master.faUnitSerialNo ,erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, IFNULL( t.COSTUNIT, 0 ) AS COSTUNIT, IFNULL( depAmountLocal, 0 ) AS depAmountLocal, IFNULL( t.costUnitRpt, 0 ) AS costUnitRpt, IFNULL( depAmountRpt, 0 ) AS depAmountRpt FROM ( SELECT groupTO, SUM( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, SUM( depAmountLocal ) AS depAmountLocal, SUM( costUnitRpt ) AS costUnitRpt, SUM( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, SUM( depAmountLocal ) AS depAmountLocal, SUM( depAmountRpt ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NOT NULL GROUP BY groupTO ) t INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.faID = t.groupTO
+  
+  UNION ALL SELECT groupTO,erp_fa_asset_master.faUnitSerialNo,
+erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, ( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, ( depAmountLocal ) AS depAmountLocal, ( costUnitRpt ) AS costUnitRpt, ( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, IFNULL( SUM( depAmountLocal ), 0 ) AS depAmountLocal, IFNULL( SUM( depAmountRpt ), 0 ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NULL ORDER BY dateDEP DESC ) final INNER JOIN serviceline ON serviceline.ServiceLineCode = final.serviceLineCode INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = final.assetType";
+
+
+                $output = \DB::select($qry);
+
+                $outputArr=[];
+
+                $localnbv=0;
+                $rptnbv=0;
+                if ($output) {
+                    foreach ($output as $val) {
+                        $localnbv +=$val->localnbv;
+                        $rptnbv +=$val->rptnbv;
+                        $outputArr[$val->financeCatDescription][] =  $val;
+                    }
+                }
+
+
+
+
+
+
+                return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv);
+
+
                 break;
             case 'AMAA': //Asset Additions
 
@@ -134,7 +175,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 break;
             case 'AMAD': //Asset Disposal
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getAssetDisposal($request);
 
@@ -168,7 +209,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMADR': //Asset Depreciation Register
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'ADRM') { //Asset Depreciation Register Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationRegisterMonthlyQRY($request);
 
@@ -192,7 +233,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output['data'], 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $output['month']);
                 } else if ($reportTypeID == 'ADDM') { //Asset Depreciation Detail Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationDetailMonthlyQRY($request);
 
@@ -234,7 +275,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
 
                 } else if ($reportTypeID == 'ADDS') { //Asset Depreciation Detail Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationDetailSummaryQRY($request);
 
@@ -268,7 +309,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
                 } else if ($reportTypeID == 'ADCS') { //Asset Depreciation Category Summary
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationCategorySummaryQRY($request);
 
@@ -302,7 +343,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'month' => $arrayMonth);
                 } else if ($reportTypeID == 'ADCSM') { //Asset Depreciation Category Summary Monthly
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->assetDepreciationCategorySummaryMonthlyQRY($request);
 
@@ -399,7 +440,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMAD': //Asset Disposal
 
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
                 $currency = \Helper::companyCurrency($request->companySystemID);
                 $output = $this->getAssetDisposal($request);
 
@@ -446,7 +487,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMADR': //Asset Depreciation Register
                 $data = [];
                 $reportTypeID = $request->reportTypeID;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','year','month'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
                 if ($reportTypeID == 'ADRM') { //Asset Depreciation Register Monthly
                     $output = $this->assetDepreciationRegisterMonthlyQRY($request);
                     if ($output['data']) {
@@ -504,8 +545,7 @@ class AssetManagementReportAPIController extends AppBaseController
                             $x++;
                         }
                     }
-                }
-                else if ($reportTypeID == 'ADCS') { //Depreciation Category Summary
+                } else if ($reportTypeID == 'ADCS') { //Depreciation Category Summary
                     $output = $this->assetDepreciationCategorySummaryQRY($request);
                     $arrayMonth = array('Jan', 'Feb', 'March', 'April', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dece');
                     if ($output) {
@@ -520,8 +560,7 @@ class AssetManagementReportAPIController extends AppBaseController
                             $x++;
                         }
                     }
-                }
-                else if ($reportTypeID == 'ADCSM') { //Depreciation Category Monthly Summary
+                } else if ($reportTypeID == 'ADCSM') { //Depreciation Category Monthly Summary
                     $output = $this->assetDepreciationCategorySummaryMonthlyQRY($request);
                     $arrayMonth = array('Jan', 'Feb', 'March', 'April', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dece');
                     if ($output) {
@@ -1513,5 +1552,122 @@ GROUP BY
         $output = \DB::select($sql);
         //dd(DB::getQueryLog());
         return $output;
+    }
+
+    public function generateAssetDetailDrilldown(Request $request){
+
+        $typeID = $request->typeID;
+        $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
+        $assetCategory = join(',', $assetCategory);
+        $faID = $request->faID;
+        $input=$request->all();
+        $qry="SELECT
+	groupTO,
+	faUnitSerialNo,
+	faID,
+	erp_fa_assettype.typeDes,
+	erp_fa_financecategory.financeCatDescription,
+	final.COSTGLCODE,
+	final.ACCDEPGLCODE,
+	assetType,
+	serviceline.ServiceLineDes,
+	final.serviceLineCode,
+	docOrigin,
+	AUDITCATOGARY,
+	faCode,
+	assetDescription,
+	DEPpercentage,
+	dateAQ,
+	dateDEP,
+	COSTUNIT,
+	IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
+	COSTUNIT - IFNULL( depAmountLocal, 0 ) AS localnbv,
+	costUnitRpt,
+	IFNULL( depAmountRpt, 0 ) AS depAmountRpt,
+	costUnitRpt - IFNULL( depAmountRpt, 0 ) AS rptnbv 
+FROM
+	(
+	SELECT
+		t.groupTO,
+		erp_fa_asset_master.faUnitSerialNo,
+		erp_fa_asset_master.faID,
+		COSTGLCODE,
+		ACCDEPGLCODE,
+		assetType,
+		erp_fa_asset_master.serviceLineCode,
+		docOrigin,
+		AUDITCATOGARY,
+		erp_fa_asset_master.faCode,
+		erp_fa_asset_master.assetDescription,
+		DEPpercentage,
+		dateAQ,
+		dateDEP,
+		IFNULL( t.COSTUNIT, 0 ) AS COSTUNIT,
+		IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
+		IFNULL( t.costUnitRpt, 0 ) AS costUnitRpt,
+		IFNULL( depAmountRpt, 0 ) AS depAmountRpt 
+	FROM
+		(
+		SELECT
+			groupTO,
+			( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT,
+			( depAmountLocal ) AS depAmountLocal,
+			( costUnitRpt ) AS costUnitRpt,
+			( depAmountRpt ) AS depAmountRpt 
+		FROM
+			erp_fa_asset_master
+			LEFT JOIN (
+			SELECT
+				faID,
+				SUM( depAmountLocal ) AS depAmountLocal,
+				SUM( depAmountRpt ) AS depAmountRpt 
+			FROM
+				(
+				SELECT
+					faID,
+					erp_fa_assetdepreciationperiods.depMasterAutoID,
+					sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal,
+					sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt 
+				FROM
+					erp_fa_assetdepreciationperiods
+					INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
+				WHERE
+					erp_fa_depmaster.approved =- 1 
+				GROUP BY
+					faID 
+				) t 
+		
+			) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID 
+		WHERE
+			companySystemID = $request->companySystemID
+			AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' 
+				OR DIPOSED = - 1 
+			) 
+			AND groupTO = $faID 
+	
+		) t
+		INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.faID = t.groupTO 
+	) final
+	INNER JOIN serviceline ON serviceline.ServiceLineCode = final.serviceLineCode
+	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
+	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = final.assetType";
+
+        $output = \DB::select($qry);
+
+        $outputArr=[];
+
+        $localnbv=0;
+        $rptnbv=0;
+        if ($output) {
+            foreach ($output as $val) {
+                $localnbv +=$val->localnbv;
+                $rptnbv +=$val->rptnbv;
+                $outputArr[$val->financeCatDescription][] =  $val;
+            }
+        }
+
+        return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv);
+
     }
 }
