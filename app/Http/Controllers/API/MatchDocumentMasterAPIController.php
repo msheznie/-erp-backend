@@ -1349,8 +1349,7 @@ WHERE
        erp_custreceivepaymentdet.receiveAmountRpt
    ) AS SumOfreceiveAmountRpt,
    IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
-   ROUND((
-       erp_custreceivepaymentdet.receiveAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0)
+   ROUND((COALESCE (SUM(erp_custreceivepaymentdet.receiveAmountTrans),0) - IFNULL(advd.SumOfmatchingAmount, 0)
    ),currency.DecimalPlaces) AS BalanceAmt,
        currency.CurrencyCode,
    currency.DecimalPlaces
