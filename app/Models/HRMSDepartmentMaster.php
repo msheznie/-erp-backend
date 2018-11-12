@@ -66,7 +66,7 @@ class HRMSDepartmentMaster extends Model
         'DepartmentDescription',
         'isActive',
         'ServiceLineCode',
-        'CompanyID',
+        'CompanyID', 
         'showInCombo',
         'timestamp'
     ];
