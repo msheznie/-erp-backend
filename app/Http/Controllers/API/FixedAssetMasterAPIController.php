@@ -1221,4 +1221,27 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         return $assetInsurance;
     }
+
+    public function getAssetCostingViewByFaID($id)
+    {
+        /** @var FixedAssetMaster $fixedAssetMaster */
+
+
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by','group_to','department','departmentmaster','assettypemaster','supplier','finance_category','category_by','sub_category_by','sub_category_by2','sub_category_by2'])->findWithoutFail($id);
+        if (empty($fixedAssetMaster)) {
+            return $this->sendError('Fixed Asset Master not found');
+        }
+        $fixedAssetCosting = FixedAssetCost::with(['localcurrency', 'rptcurrency'])->ofFixedAsset($id)->get();
+        $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO' => $id,'approved'=>-1]);
+        $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->get();
+        $insurance = FixedAssetInsuranceDetail::with(['policy_by', 'location_by'])->ofAsset($id)->get();
+
+        if (empty($fixedAssetMaster)) {
+            return $this->sendError('Fixed Asset Master not found');
+        }
+
+        $output = ['fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
+
+        return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+    }
 }
