@@ -18,7 +18,6 @@ use App\Http\Requests\API\CreateFixedAssetMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetMasterAPIRequest;
 use App\Models\AssetFinanceCategory;
 use App\Models\AssetType;
-use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DepartmentMaster;
@@ -638,7 +637,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             'fixedAssetCategory' => $fixedAssetCategory,
             'supplier' => $supplier,
             'location' => $location,
-            'insuranceType' => $insuranceType
+            'insuranceType' => $insuranceType,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -798,7 +797,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAssetCostingByID($id)
     {
         /** @var FixedAssetMaster $fixedAssetMaster */
-        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to'])->findWithoutFail($id);
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by','group_to'])->findWithoutFail($id);
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
@@ -1080,7 +1079,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $assetInsurance = $this->assetInsuranceReport($input, $search);
+        $assetInsurance = $this->assetInsuranceReport($input,$search);
 
         return \DataTables::of($assetInsurance)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -1095,7 +1094,6 @@ class FixedAssetMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
-
     public function exportAssetInsuranceReport(Request $request)
     {
 
@@ -1108,7 +1106,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
         //$input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
         $search = $request->input('search.value');
-        $assetInsurance = $this->assetInsuranceReport($input, $search)->orderBy('erp_fa_asset_master.faID', $sort)->get();
+        $assetInsurance = $this->assetInsuranceReport($input,$search)->orderBy('erp_fa_asset_master.faID',$sort)->get();
         if ($assetInsurance) {
             $x = 0;
             foreach ($assetInsurance as $val) {
@@ -1121,10 +1119,10 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x]['Date AQ'] = \Helper::dateFormat($val->dateAQ);
                 $data[$x]['Date DEP'] = \Helper::dateFormat($val->dateDEP);
                 $data[$x]['DEP Percentage'] = $val->DEPpercentage;
-                $data[$x]['Cost Local'] = number_format($val->CostLocal, 3);
-                $data[$x]['Dep Local'] = number_format($val->DepLocal, 3);
-                $data[$x]['Cost Rpt'] = number_format($val->CostRpt, 3);
-                $data[$x]['Dep Rpt'] = number_format($val->DepRpt, 3);
+                $data[$x]['Cost Local'] = number_format($val->CostLocal,3);
+                $data[$x]['Dep Local'] = number_format($val->DepLocal,3);
+                $data[$x]['Cost Rpt'] = number_format($val->CostRpt,3);
+                $data[$x]['Dep Rpt'] = number_format($val->DepRpt,3);
                 $data[$x]['Departmentt'] = $val->department;
                 $data[$x]['Policy Type'] = $val->policyType;
                 $data[$x]['Policy Number'] = $val->policyNumber;
@@ -1149,8 +1147,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         return $this->sendResponse(array(), 'successfully export');
     }
 
-    public function assetInsuranceReport($input, $search)
-    {
+    public function assetInsuranceReport($input,$search){
 
 
         $companyId = $input['companyId'];
@@ -1162,9 +1159,9 @@ class FixedAssetMasterAPIController extends AppBaseController
             $subCompanies = [$companyId];
         }
 
-        if (array_key_exists('asOfDate', $input) && $input['asOfDate']) {
+        if(array_key_exists('asOfDate',$input) && $input['asOfDate']){
             $asOfDate = new Carbon($input['asOfDate']);
-        } else {
+        }else{
             $asOfDate = Carbon::now();
         }
 
@@ -1193,7 +1190,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             ->whereIn('erp_fa_asset_master.companySystemID', $subCompanies)
             ->where('erp_fa_asset_master.approved', -1)
             ->where('erp_fa_asset_master.DIPOSED', 0)
-            ->whereDate('erp_fa_asset_master.dateAQ', '<=', $asOfDate)
+            ->whereDate('erp_fa_asset_master.dateAQ','<=',$asOfDate)
             ->leftJoin('erp_fa_assettype', 'erp_fa_assettype.typeID', '=', 'erp_fa_asset_master.assetType')
             ->leftJoin('erp_fa_financecategory', 'erp_fa_financecategory.faFinanceCatID', '=', 'erp_fa_asset_master.AUDITCATOGARY')
             ->leftJoin('serviceline', 'serviceline.serviceLineSystemID', '=', 'erp_fa_asset_master.serviceLineSystemID')
@@ -1208,7 +1205,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                             INNER JOIN erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.depMasterAutoID = erp_fa_depmaster.depMasterAutoID 
                         WHERE
                             erp_fa_depmaster.approved = - 1 
-                            AND DATE(erp_fa_depmaster.depDate) <= ' . $asOfDateFormat . '
+                            AND DATE(erp_fa_depmaster.depDate) <= '.$asOfDateFormat.'
                         GROUP BY
                         erp_fa_assetdepreciationperiods.faID) as dep'),
                 function ($join) {
@@ -1227,17 +1224,18 @@ class FixedAssetMasterAPIController extends AppBaseController
         return $assetInsurance;
     }
 
-
+<<<<<<< HEAD
     public function getAssetCostingViewByFaID($id)
     {
         /** @var FixedAssetMaster $fixedAssetMaster */
 
-        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'department', 'departmentmaster', 'assettypemaster', 'supplier', 'finance_category', 'category_by', 'sub_category_by', 'sub_category_by2', 'sub_category_by2'])->findWithoutFail($id);
+
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by','group_to','department','departmentmaster','assettypemaster','supplier','finance_category','category_by','sub_category_by','sub_category_by2','sub_category_by2'])->findWithoutFail($id);
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
         $fixedAssetCosting = FixedAssetCost::with(['localcurrency', 'rptcurrency'])->ofFixedAsset($id)->get();
-        $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO' => $id, 'approved' => -1]);
+        $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO' => $id,'approved'=>-1]);
         $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->get();
         $insurance = FixedAssetInsuranceDetail::with(['policy_by', 'location_by'])->ofAsset($id)->get();
 
@@ -1248,12 +1246,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         $output = ['fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
 
         return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
-
-    }
-    
-
-    function referBackCosting(Request $request)
-    {
+=======
+    function referBackCosting(Request $request){
 
         DB::beginTransaction();
         try {
@@ -1309,5 +1303,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+
+>>>>>>> aca2d24305ae45df41b1c393bb3bf2785d89d4cd
     }
 }

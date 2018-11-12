@@ -772,6 +772,45 @@ WHERE
 
 
 ";
+
+        $qry="SELECT
+	count(erp_documentapproved.companySystemID)  as totalCount
+FROM
+	(
+	SELECT
+		companySystemID,
+		departmentSystemID,
+
+	documentSystemID,
+	serviceLineSystemID,
+		approvalGroupID
+
+		
+	FROM
+		erp_documentapproved 
+	WHERE
+		erp_documentapproved.approvedYN = 0 
+		AND erp_documentapproved.rejectedYN = 0 
+		AND erp_documentapproved.approvalGroupID > 0 
+		AND documentSystemID IN ( 1, 50, 51, 2, 5, 52, 4, 11, 15, 20, 19 ) 
+	) erp_documentapproved
+	INNER JOIN (
+	SELECT
+	companySystemID,
+			departmentSystemID,
+				documentSystemID,
+		ServiceLineSystemID,
+			employeeGroupID
+		 
+	FROM
+		employeesdepartments 
+	WHERE
+		employeeSystemID = $employeeSystemID 
+		AND documentSystemID IN ( 1, 50, 51, 2, 5, 52, 4, 11, 15, 20, 19 ) )employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+		AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+		AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID";
         $output = DB::select($qry);
 
         return $this->sendResponse($output[0]->totalCount, 'Document Approved deleted successfully');
