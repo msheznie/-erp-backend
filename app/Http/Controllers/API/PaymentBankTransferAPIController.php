@@ -26,6 +26,7 @@ use App\Repositories\PaymentBankTransferRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -40,7 +41,8 @@ class PaymentBankTransferAPIController extends AppBaseController
     /** @var  PaymentBankTransferRepository */
     private $paymentBankTransferRepository;
     private $bankLedgerRepository;
-    public function __construct(PaymentBankTransferRepository $paymentBankTransferRepo,BankLedgerRepository $bankLedgerRepo)
+
+    public function __construct(PaymentBankTransferRepository $paymentBankTransferRepo, BankLedgerRepository $bankLedgerRepo)
     {
         $this->paymentBankTransferRepository = $paymentBankTransferRepo;
         $this->bankLedgerRepository = $bankLedgerRepo;
@@ -188,8 +190,8 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         $lastSerial = PaymentBankTransfer::where('companySystemID', $input['companySystemID'])
-                                        ->orderBy('paymentBankTransferID', 'desc')
-                                        ->first();
+            ->orderBy('paymentBankTransferID', 'desc')
+            ->first();
 
         $lastSerialNumber = 1;
         if ($lastSerial) {
@@ -436,7 +438,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->get();
 
         foreach ($payments as $data) {
-            $updateArray = ['pulledToBankTransferYN' => 0,'paymentBankTransferID' => null];
+            $updateArray = ['pulledToBankTransferYN' => 0, 'paymentBankTransferID' => null];
             $this->bankLedgerRepository->update($updateArray, $data['bankLedgerAutoID']);
         }
 
@@ -648,7 +650,8 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->make(true);
     }
 
-    public function exportPaymentBankTransfer(Request $request){
+    public function exportPaymentBankTransfer(Request $request)
+    {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
 
@@ -660,7 +663,7 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
-
+        $decimalPlaces = 3;
         if ($isGroup) {
             $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
         } else {
@@ -668,18 +671,29 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         $paymentBankTransfer = PaymentBankTransfer::with(['bank_account'])->find($input['paymentBankTransferID']);
-        $confirmed = 0;
-        if (!empty($paymentBankTransfer)) {
-            $confirmed = $paymentBankTransfer->confirmedYN;
+
+        if (empty($paymentBankTransfer)) {
+            return $this->sendError('Payment Bank Transfer not found',500);
         }
 
-        if($paymentBankTransfer->approvedYN != -1){
+        if ($paymentBankTransfer->exportedYN == 1) {
+            return $this->sendError('This document already exported.', 500);
+        }
+
+        if ($paymentBankTransfer->approvedYN != -1) {
             return $this->sendError("This document is not approved. You cannot export. Please check again.", 500);
         }
 
+        $confirmed = $paymentBankTransfer->confirmedYN;
+
+        if ($paymentBankTransfer && $paymentBankTransfer->bank_account) {
+            if ($paymentBankTransfer->bank_account->currency) {
+                $decimalPlaces = $paymentBankTransfer->bank_account->currency->DecimalPlaces;
+            }
+        }
 
         $bankId = 1;
-        if($paymentBankTransfer->bank_account){
+        if ($paymentBankTransfer->bank_account) {
             $bankId = $paymentBankTransfer->bank_account->accountCurrencyID;
         }
 
@@ -689,7 +703,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->where("trsClearedYN", -1)
             ->where("bankClearedYN", 0)
             ->where("bankCurrency", $bankId)
-            ->whereIn('invoiceType',[2,3,5])
+            ->whereIn('invoiceType', [2, 3, 5])
             ->where(function ($q) use ($input, $confirmed) {
                 $q->where(function ($q1) use ($input) {
                     $q1->where('paymentBankTransferID', $input['paymentBankTransferID'])
@@ -698,10 +712,10 @@ class PaymentBankTransferAPIController extends AppBaseController
                     $q2->orWhere("pulledToBankTransferYN", 0);
                 });
             })
-            ->with(['supplier_by' => function($q3) use($bankId){
-                $q3->with(['supplierCurrency' => function($q4) use($bankId){
-                      $q4->where('currencyID',$bankId)
-                         ->with(['bankMemo_by']);
+            ->with(['supplier_by' => function ($q3) use ($bankId) {
+                $q3->with(['supplierCurrency' => function ($q4) use ($bankId) {
+                    $q4->where('currencyID', $bankId)
+                        ->with(['bankMemo_by']);
                 }]);
             }]);
 
@@ -711,67 +725,47 @@ class PaymentBankTransferAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $bankLedger = $bankLedger->where(function ($query) use ($search) {
                 //$query->where('documentCode', 'LIKE', "%{$search}%")
-                 //   ->orWhere('documentNarration', 'LIKE', "%{$search}%");
+                //   ->orWhere('documentNarration', 'LIKE', "%{$search}%");
             });
         }
-        $bankLedger = $bankLedger->orderBy('bankLedgerAutoID','desc')->get();
+        $bankLedger = $bankLedger->orderBy('bankLedgerAutoID', 'desc')->get();
         $data = array();
         $x = 0;
         foreach ($bankLedger as $val) {
             $x++;
-            if($val['supplier_by']){
-                if($val['supplier_by']['supplierCurrency']){
-                    if($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']){
-
-                        $memos  = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
-                            foreach ($memos as $memo){
-                                if($memo->bankMemoTypeID == 4){
-                                    $data[$x]['Account No(13)'] = preg_replace("/[^0-9]/", "", $memo->memoDetail );
-                                    break;
-                                }
-                            }
-                    }else{
-                        $data[$x]['Account No(13)'] = '';
-                    }
-                }else{
-                    $data[$x]['Account No(13)'] = '';
-                }
-            }else{
-                $data[$x]['Account No(13)'] = '';
-            }
-
-            $data[$x]['Amount(15)']        = $val->payAmountBank;
-            $data[$x]['Reference No (16)'] = $val->documentCode;
-            if($val['supplier_by']){
-                if($val['supplier_by']['supplierCurrency']){
-                    if($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']){
-                         $memos  = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
-                        foreach ($memos as $memo){
-                            if($memo->bankMemoTypeID == 1){
-                                $data[$x]['Narration1 (35)'] = $memo->memoDetail;
-                                break;
+            $accountNo13 = '';
+            $narration135 = '';
+            if ($val['supplier_by']) {
+                if ($val['supplier_by']['supplierCurrency']) {
+                    if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
+                        $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
+                        foreach ($memos as $memo) {
+                            if ($memo->bankMemoTypeID == 4) {
+                                $accountNo13 = preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                            } else if ($memo->bankMemoTypeID == 1) {
+                                $narration135 = $memo->memoDetail;
                             }
                         }
-                    }else{
-                        $data[$x]['Narration1 (35)'] = '';
                     }
-                }else{
-                    $data[$x]['Narration1 (35)'] = '';
                 }
-            }else{
-                $data[$x]['Narration1 (35)'] = '';
             }
-
-            $data[$x]['Narration2 (35)']   = $val->documentNarration;
-
-            if($val['supplier_by']){
+            $data[$x]['Account No(13)'] = $accountNo13;
+            $data[$x]['Amount(15)'] = number_format($val->payAmountBank, $decimalPlaces);
+            $data[$x]['Reference No (16)'] = $val->documentCode;
+            $data[$x]['Narration1 (35)'] = $narration135;
+            $data[$x]['Narration2 (35)'] = $val->documentNarration;
+            if ($val['supplier_by']) {
                 $data[$x]['Mobile No'] = $val['supplier_by']['telephone'];
                 $data[$x]['EmailID'] = $val['supplier_by']['supEmail'];
-            }else{
+            } else {
                 $data[$x]['Mobile No'] = '';
                 $data[$x]['EmailID'] = '';
             }
         }
+
+         $updateArray = [ 'exportedYN'  => 1, 'exportedUserSystemID'  => Auth::id(), 'exportedDate' => now()];
+
+         $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
 
         $csv = \Excel::create('payment_bank_transfer', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {

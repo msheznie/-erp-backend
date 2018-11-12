@@ -8,6 +8,7 @@ use App\Models\FixedAssetDepreciationPeriod;
 use App\Repositories\FixedAssetDepreciationPeriodRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -277,5 +278,52 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
         $fixedAssetDepreciationPeriod->delete();
 
         return $this->sendResponse($id, 'Fixed Asset Depreciation Period deleted successfully');
+    }
+
+
+    public function getAssetDepPeriodsByID(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $assetDepPeriod = FixedAssetDepreciationPeriod::with(['maincategory_by', 'financecategory_by', 'serviceline_by'])->ofDepreciation($input['depMasterAutoID']);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetDepPeriod = $assetDepPeriod->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%");
+                $query->orWhere('assetDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $outputSUM = $assetDepPeriod->get();
+
+        $depAmountLocal = collect($outputSUM)->pluck('depAmountLocal')->toArray();
+        $depAmountLocal = array_sum($depAmountLocal);
+
+        $depAmountRpt = collect($outputSUM)->pluck('depAmountRpt')->toArray();
+        $depAmountRpt = array_sum($depAmountRpt);
+
+        return \DataTables::eloquent($assetDepPeriod)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('DepreciationPeriodsID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->with('totalAmount', [
+                'depAmountLocal' => $depAmountLocal,
+                'depAmountRpt' => $depAmountRpt,
+            ])
+            ->make(true);
     }
 }

@@ -4,13 +4,11 @@ namespace App\Jobs;
 
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
-use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
 use App\Repositories\FixedAssetDepreciationMasterRepository;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -22,16 +20,16 @@ use Illuminate\Support\Facades\Log;
 class CreateDepreciation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    protected $depreciation;
+    protected $depAutoID;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($depreciation)
+    public function __construct($depAutoID)
     {
-        $this->depreciation = $depreciation;
+        $this->depAutoID = $depAutoID;
     }
 
     /**
@@ -44,7 +42,7 @@ class CreateDepreciation implements ShouldQueue
         Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
         DB::beginTransaction();
         try {
-            $depMasterAutoID = $this->depreciation;
+            $depMasterAutoID = $this->depAutoID;
             $depMaster = $faDepMaster->find($depMasterAutoID);
             if($depMaster) {
                 $depDate = Carbon::parse($depMaster->FYPeriodDateTo);
@@ -54,7 +52,7 @@ class CreateDepreciation implements ShouldQueue
                 }])->isDisposed()->ofCompany([$depMaster->companySystemID])->isApproved()->orderBy('faID', 'desc')->get();
                 $depAmountRptTotal = 0;
                 $depAmountLocalTotal = 0;
-                if ($faMaster) {
+                if (count($faMaster) > 0) {
                     $finalData = [];
                     foreach ($faMaster as $val) {
                         $depAmountRpt = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountRpt : 0;
@@ -138,13 +136,14 @@ class CreateDepreciation implements ShouldQueue
                             FixedAssetDepreciationPeriod::insert($t);
                         }
                     }
+
+                    $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
+
+                    if($depDetail) {
+                        $fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMasterAutoID);
+                    }
                 }
 
-                $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
-
-                if($depDetail) {
-                    $fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMasterAutoID);
-                }
                 DB::commit();
             }
         } catch (\Exception $e) {

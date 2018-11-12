@@ -755,6 +755,10 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
+             //confirmed=1 AND approved =0 and RollLevForApp_curr=1 AND refferedBackYN=0 AND cancelYN=0
+            //->where("chequePrintedYN", $chequePrintedYN)
+            //->where("chequePrintedYN", $chequePrintedYN)
+            //->where("chequePrintedYN", $chequePrintedYN)
             ->where("chequePrintedYN", $chequePrintedYN)
             ->where("chequePaymentYN", $input['option'])
             ->when(request('invoiceType') && in_array($input['invoiceType'], $input), function ($q) use ($input) {

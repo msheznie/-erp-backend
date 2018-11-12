@@ -207,6 +207,7 @@ class FixedAssetDepreciationPeriod extends Model
         'depAmountRptCurr',
         'depAmountRpt',
         'depDoneYN',
+        'timesReferred',
         'createdBy',
         'createdUserSystemID',
         'createdPCid',
@@ -244,6 +245,7 @@ class FixedAssetDepreciationPeriod extends Model
         'depAmountRptCurr' => 'integer',
         'depAmountRpt' => 'float',
         'depDoneYN' => 'integer',
+        'timesReferred' => 'integer',
         'createdBy' => 'string',
         'createdUserSystemID' => 'integer',
         'createdPCid' => 'string'
