@@ -251,5 +251,28 @@ class MonthlyAdditionDetail extends Model
         
     ];
 
-    
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'empSystemID', 'employeeSystemID');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo('App\Models\HRMSDepartmentMaster','empdepartment','DepartmentID');
+    }
+
+    public function currency_ma()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'currencyMAID','currencyID');
+    }
+
+    public function expense_claim()
+    {
+        return $this->belongsTo('App\Models\ExpenseClaim', 'expenseClaimMasterAutoID', 'expenseClaimMasterAutoID');
+    }
+
+    public function chart_of_account()
+    {
+        return $this->belongsTo('App\Models\HRMSChartOfAccounts', 'glCode','charofAccAutoID');
+    }
 }
