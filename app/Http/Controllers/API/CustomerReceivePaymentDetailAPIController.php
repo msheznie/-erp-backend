@@ -583,7 +583,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     ->first();
 
                 if ($glCheck) {
-                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
                         $itemExistArray[] = [$itemDrt];
                     }
