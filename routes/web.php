@@ -15,3 +15,9 @@ Route::resource('periodMasters', 'PeriodMasterController');
 Route::resource('salaryProcessMasters', 'SalaryProcessMasterController');
 
 Route::resource('salaryProcessEmploymentTypes', 'SalaryProcessEmploymentTypesController');
+
+Route::resource('fixedAssetMasterReferredHistories', 'FixedAssetMasterReferredHistoryController');
+
+Route::resource('depreciationMasterReferredHistories', 'DepreciationMasterReferredHistoryController');
+
+Route::resource('depreciationPeriodsReferredHistories', 'DepreciationPeriodsReferredHistoryController');

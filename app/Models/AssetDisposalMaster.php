@@ -241,7 +241,7 @@ class AssetDisposalMaster extends Model
 
     public function approved_by()
     {
-        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'depMasterAutoID');
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'assetdisposalMasterAutoID');
     }
 
     public function confirmed_by()
