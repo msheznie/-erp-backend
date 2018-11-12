@@ -134,11 +134,19 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
 
                 $outputArr=[];
 
+                $COSTUNIT=0;
+                $costUnitRpt=0;
+                $depAmountLocal=0;
+                $depAmountRpt=0;
                 $localnbv=0;
                 $rptnbv=0;
                 if ($output) {
                     foreach ($output as $val) {
                         $localnbv +=$val->localnbv;
+                        $COSTUNIT +=$val->COSTUNIT;
+                        $costUnitRpt +=$val->costUnitRpt;
+                        $depAmountRpt +=$val->depAmountRpt;
+                        $depAmountLocal +=$val->depAmountLocal;
                         $rptnbv +=$val->rptnbv;
                         $outputArr[$val->financeCatDescription][] =  $val;
                     }
@@ -149,7 +157,7 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
 
 
 
-                return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv);
+                return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv,'COSTUNIT'=>$COSTUNIT,'costUnitRpt'=>$costUnitRpt,'depAmountLocal'=>$depAmountLocal,'depAmountRpt'=>$depAmountRpt);
 
 
                 break;
@@ -1657,17 +1665,34 @@ FROM
 
         $outputArr=[];
 
+
+
+        $COSTUNIT=0;
+        $costUnitRpt=0;
+        $depAmountLocal=0;
+        $depAmountRpt=0;
         $localnbv=0;
         $rptnbv=0;
         if ($output) {
             foreach ($output as $val) {
                 $localnbv +=$val->localnbv;
+                $COSTUNIT +=$val->COSTUNIT;
+                $costUnitRpt +=$val->costUnitRpt;
+                $depAmountRpt +=$val->depAmountRpt;
+                $depAmountLocal +=$val->depAmountLocal;
                 $rptnbv +=$val->rptnbv;
                 $outputArr[$val->financeCatDescription][] =  $val;
             }
         }
 
-        return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv);
+
+
+
+
+
+        return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv,'COSTUNIT'=>$COSTUNIT,'costUnitRpt'=>$costUnitRpt,'depAmountLocal'=>$depAmountLocal,'depAmountRpt'=>$depAmountRpt);
+
+
 
     }
 }

@@ -1683,6 +1683,7 @@ class Helper
             }
         } catch (\Exception $e) {
             DB::rollback();
+            Log::error($e->getMessage());
             return ['success' => false, 'message' => 'Error Occurred'];
         }
     }

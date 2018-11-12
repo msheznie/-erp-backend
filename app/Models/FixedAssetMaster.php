@@ -769,4 +769,23 @@ class FixedAssetMaster extends Model
         return $this->belongsTo('App\Models\FixedAssetMaster','groupTO','faID');
     }
 
+    public function departmentmaster(){
+        return $this->belongsTo('App\Models\DepartmentMaster','departmentSystemID','departmentSystemID');
+    }
+
+    public function assettypemaster(){
+        return $this->belongsTo('App\Models\AssetType','assetType','typeID');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierIDRentedAsset', 'supplierCodeSystem');
+    }
+    public function sub_category_by2(){
+        return $this->belongsTo('App\Models\FixedAssetCategorySub','faSubCatID2','faCatSubID');
+    }
+    public function sub_category_by3(){
+        return $this->belongsTo('App\Models\FixedAssetCategorySub','faSubCatID3','faCatSubID');
+    }
+
 }
