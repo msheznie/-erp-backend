@@ -275,6 +275,32 @@
                             </span>
                         </td>
                     </tr>
+                    <tr>
+                        <td width="70px">
+                            <span class="font-weight-bold">Invoice Number</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            <span>
+                               {{$masterdata->supplierInvoiceNo}}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="70px">
+                            <span class="font-weight-bold">Invoice Date</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            <span>
+                                {{ \App\helper\Helper::dateFormat($masterdata->supplierInvoiceDate)}}
+                            </span>
+                        </td>
+                    </tr>
                 </table>
             </td>
         </tr>
@@ -319,17 +345,6 @@
                         </td>
                         <td>
                             {{$masterdata->secondaryRefNo}}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="50px">
-                            <span class="font-weight-bold">Invoice Number</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            {{$masterdata->supplierInvoiceNo}}
                         </td>
                     </tr>
                     <tr>

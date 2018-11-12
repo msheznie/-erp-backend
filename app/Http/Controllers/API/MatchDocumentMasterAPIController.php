@@ -27,6 +27,7 @@ use App\Models\BookInvSuppMaster;
 use App\Models\CreditNote;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
+use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DebitNote;
@@ -406,6 +407,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 } else {
                     return $this->sendError('Selected credit note is not updated in general ledger. Please check again', 500);
                 }
+                $customerDetail = CustomerMaster::find($creditNoteMaster->customerID);
                 $input['matchingType'] = 'AR';
                 $input['PayMasterAutoId'] = $input['custReceivePaymentAutoID'];
                 $input['documentSystemID'] = $creditNoteMaster->documentSystemiD;
@@ -413,20 +415,20 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['BPVcode'] = $creditNoteMaster->creditNoteCode;
                 $input['BPVdate'] = $creditNoteMaster->creditNoteDate;
                 $input['BPVNarration'] = $creditNoteMaster->comments;
-                //$input['directPaymentPayeeSelectEmp'] = $creditNoteMaster->directPaymentPayeeSelectEmp;
-                //$input['directPaymentPayee'] = $creditNoteMaster->directPaymentPayee;
-                //$input['directPayeeCurrency'] = $creditNoteMaster->supplierTransactionCurrencyID;
+                //$input['directPaymentPayeeSelectEmp'] =  $customerDetail->CustomerName;
+                $input['directPaymentPayee'] = $customerDetail->CustomerName;
+                $input['directPayeeCurrency'] = $creditNoteMaster->customerCurrencyID;
                 $input['BPVsupplierID'] = $creditNoteMaster->customerID;
                 $input['supplierGLCodeSystemID'] = $creditNoteMaster->customerGLCodeSystemID;
                 $input['supplierGLCode'] = $creditNoteMaster->customerGLCode;
                 $input['supplierTransCurrencyID'] = $creditNoteMaster->customerCurrencyID;
                 $input['supplierTransCurrencyER'] = $creditNoteMaster->customerCurrencyER;
-                //$input['supplierDefCurrencyID'] = $creditNoteMaster->supplierTransactionCurrencyID;
-                //$input['supplierDefCurrencyER'] = $creditNoteMaster->supplierTransactionCurrencyER;
+                $input['supplierDefCurrencyID'] = $creditNoteMaster->customerCurrencyID;
+                $input['supplierDefCurrencyER'] = $creditNoteMaster->customerCurrencyER;
                 $input['localCurrencyID'] = $creditNoteMaster->localCurrencyID;
                 $input['localCurrencyER'] = $creditNoteMaster->localCurrencyER;
-                $input['companyRptCurrencyID'] = $creditNoteMaster->companyRptCurrencyID;
-                $input['companyRptCurrencyER'] = $creditNoteMaster->companyRptCurrencyER;
+                $input['companyRptCurrencyID'] = $creditNoteMaster->companyReportingCurrencyID;
+                $input['companyRptCurrencyER'] = $creditNoteMaster->companyReportingER;
                 //$input['payAmountBank'] = $creditNoteMaster->payAmountBank;
                 $input['payAmountSuppTrans'] = $creditNoteMaster->creditAmountTrans;
                 //$input['payAmountSuppDef'] = $creditNoteMaster->debitAmountTrans;
@@ -1582,6 +1584,7 @@ LEFT JOIN currencymaster ON erp_accountsreceivableledger.custTransCurrencyID = c
 WHERE
 	erp_accountsreceivableledger.documentType IN (11, 12)
 AND date(erp_accountsreceivableledger.documentDate) <= "' . $matchingDocdate . '"
+AND erp_accountsreceivableledger.documentSystemID = 20
 AND erp_accountsreceivableledger.selectedToPaymentInv = 0
 AND erp_accountsreceivableledger.fullyInvoiced <> 2
 AND erp_accountsreceivableledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . '

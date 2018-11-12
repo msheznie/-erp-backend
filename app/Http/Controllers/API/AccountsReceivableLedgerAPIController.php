@@ -336,22 +336,27 @@ erp_accountsreceivableledger.custInvoiceAmount as SumOfreceiveAmountTrans,
 	FALSE AS isChecked 
 FROM
 	erp_accountsreceivableledger
-	LEFT JOIN (
-SELECT
-	erp_custreceivepaymentdet.arAutoID,
-	Sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS SumOfreceiveAmountTrans,
-	Sum( erp_custreceivepaymentdet.receiveAmountLocal ) AS SumOfreceiveAmountLocal,
-	Sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS SumOfreceiveAmountRpt,
-	Sum( erp_custreceivepaymentdet.custbalanceAmount ) AS SumOfcustbalanceAmount 
-FROM
-	erp_custreceivepaymentdet 
-WHERE
-	companySystemID = $master->companySystemID 
-GROUP BY
-	erp_custreceivepaymentdet.arAutoID 
-HAVING
-	erp_custreceivepaymentdet.arAutoID IS NOT NULL 
-	) sid ON sid.arAutoID = erp_accountsreceivableledger.arAutoID
+LEFT JOIN (
+	SELECT
+		erp_custreceivepaymentdet.arAutoID,
+		IFNULL(
+			Sum(
+				erp_custreceivepaymentdet.bookingAmountTrans
+			),
+			0
+		) AS SumOfsupplierPaymentAmount,
+		IFNULL(
+			Sum(
+				erp_custreceivepaymentdet.custbalanceAmount
+			),
+			0
+		) AS SumOfcustbalanceAmount,
+		IFNULL(Sum(erp_custreceivepaymentdet.receiveAmountTrans), 0) AS SumOfreceiveAmountTrans
+	FROM
+		erp_custreceivepaymentdet
+	GROUP BY
+		erp_custreceivepaymentdet.arAutoID
+) sid ON sid.arAutoID = erp_accountsreceivableledger.arAutoID
 	LEFT JOIN (
 SELECT
 	erp_matchdocumentmaster.PayMasterAutoId,

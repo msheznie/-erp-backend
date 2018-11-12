@@ -803,7 +803,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $fixedAssetCosting = FixedAssetCost::with(['localcurrency', 'rptcurrency'])->ofFixedAsset($id)->get();
-        $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO' => $id]);
+        $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO' => $id, 'approved' => -1]);
         $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->get();
         $insurance = FixedAssetInsuranceDetail::with(['policy_by', 'location_by'])->ofAsset($id)->get();
 
