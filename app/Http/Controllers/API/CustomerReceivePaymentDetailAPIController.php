@@ -405,7 +405,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->first();
 
-        if (empty($input['receiveAmountTrans']) || $input['receiveAmountTrans'] == 0 || $input['receiveAmountTrans'] == '' || $input['receiveAmountTrans'] < 0 ) {
+        if (empty($input['receiveAmountTrans']) || $input['receiveAmountTrans'] == 0 || $input['receiveAmountTrans'] == '' || $input['receiveAmountTrans'] < 0) {
             return $this->sendError('Amount cannot be 0 or null');
         }
 
@@ -479,6 +479,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $currency = \Helper::convertAmountToLocalRpt(206, $input['arAutoID'], $input['receiveAmountTrans']);
         $input['receiveAmountLocal'] = \Helper::roundValue($currency['localAmount']);
         $input['receiveAmountRpt'] = \Helper::roundValue($currency['reportingAmount']);
+
 
         $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->update($input, $input['custRecivePayDetAutoID']);
 
@@ -582,7 +583,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     ->first();
 
                 if ($glCheck) {
-                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
                         $itemExistArray[] = [$itemDrt];
                     }
@@ -690,7 +691,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                 return $this->sendError('Matching amount cannot be greater than balance amount', 500);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {
-            if ( $input["receiveAmountTrans"] < $totReceiveAmountDetail) {
+            if ($input["receiveAmountTrans"] < $totReceiveAmountDetail) {
                 return $this->sendError('Matching amount cannot be greater than balance amount', 500);
             }
         }

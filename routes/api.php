@@ -883,6 +883,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
     Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
+    Route::post('updateSentToTreasuryDetail', 'PaySupplierInvoiceMasterAPIController@updateSentToTreasuryDetail');
 
     Route::get('getRVPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getRVPaymentVoucherMatchItems');
 
@@ -1128,15 +1129,15 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 41,'autoID' => 247, 'companySystemID' => 52, 'employeeSystemID' => 2664];
-    //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    $master = ['documentSystemID' => 41,'autoID' => 250, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76750);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
     //$master = \App\Models\AssetDisposalMaster::find(241);generateAssetDetailDrilldown
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
-    $job = \App\Jobs\CreateDepreciation::dispatch(100000398);
+    //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
 
 });
 
