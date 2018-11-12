@@ -1087,9 +1087,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('period_masters', 'PeriodMasterAPIController');
     Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
     Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
-
+<<<<<<< HEAD
     Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
     Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
+=======
+
+>>>>>>> f3d8ccc54e911d3d9831f05ee80032c497f3335d
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
