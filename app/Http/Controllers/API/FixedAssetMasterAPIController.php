@@ -18,6 +18,7 @@ use App\Http\Requests\API\CreateFixedAssetMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetMasterAPIRequest;
 use App\Models\AssetFinanceCategory;
 use App\Models\AssetType;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DepartmentMaster;
@@ -637,7 +638,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             'fixedAssetCategory' => $fixedAssetCategory,
             'supplier' => $supplier,
             'location' => $location,
-            'insuranceType' => $insuranceType,
+            'insuranceType' => $insuranceType
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

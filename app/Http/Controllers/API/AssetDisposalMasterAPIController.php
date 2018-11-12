@@ -794,8 +794,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
             ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
-                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                    ->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID');
                 $query->whereIn('employeesdepartments.documentSystemID', [41])
                     ->where('employeesdepartments.companySystemID', $companyId)
                     ->where('employeesdepartments.employeeSystemID', $empID);

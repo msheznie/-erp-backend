@@ -338,4 +338,9 @@ class AssetCapitalization extends Model
         return $this->belongsTo('App\Models\ChartofAccount', 'contraAccountSystemID', 'chartOfAccountSystemID');
     }
 
+    public function asset_by()
+    {
+        return $this->belongsTo('App\Models\FixedAssetMaster', 'faID', 'faID');
+    }
+
 }
