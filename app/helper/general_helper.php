@@ -27,6 +27,7 @@ use App\Jobs\UnbilledGRVInsert;
 use App\Models;
 use App\Models\CustomerReceivePayment;
 use App\Models\Employee;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1521,7 +1522,7 @@ class Helper
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if(count($updateDisposed) > 0){
                                     foreach ($updateDisposed as $val){
-                                        $faMaster = Models\FixedAssetMaster::find($val->faID)->update(['DIPOSED' => 1, 'disposedDate' => NOW(), 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
+                                        $faMaster = Models\FixedAssetMaster::find($val->faID)->update(['DIPOSED' => -1, 'disposedDate' => NOW(), 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
                                     }
                                 }
                             }
@@ -2367,7 +2368,7 @@ class Helper
 
                 $disposalDetail = Models\AssetDisposalDetail::create($dpDetail);
                 if ($disposalDetail) {
-                    $asset->DIPOSED = 1;
+                    $asset->DIPOSED = -1;
                     $asset->disposedDate = NOW();
                     $asset->assetdisposalMasterAutoID = $output['assetdisposalMasterAutoID'];
                     $asset->save();
@@ -2387,6 +2388,13 @@ class Helper
                     }
 
                     $asset = Models\FixedAssetMaster::find($val['faID']);
+                    $disposalDate = Carbon::parse($fixedCapital->approvedDate);
+                    $sod = Carbon::parse($asset->dateDEP);
+                    $diffDays = $disposalDate->diffInDays($sod);
+                    $noYears = $diffDays/365;
+                    $remainingLife = $asset->depMonth - $noYears;
+                    $DEPpercentage = 100/$remainingLife;
+
                     $data = $asset->toArray();
                     $documentCode = ($val["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
                     $data["docOriginDocumentSystemID"] = $fixedCapital['documentSystemID'];
@@ -2400,6 +2408,8 @@ class Helper
                     $data["assetDescription"] = 'Allocation of Logistics from ' . $output['disposalDocumentCode'] . ' related to ' . $fixedCapital['capitalizationCode'];
                     $data["dateAQ"] = NOW();
                     $data["dateDEP"] = NOW();
+                    $data["depMonth"] = $remainingLife;
+                    $data["DEPpercentage"] = $DEPpercentage;
                     $data["groupTO"] = $val['faID'];
                     $data["COSTUNIT"] = $val["allocatedAmountLocal"];
                     $data["costUnitRpt"] = $val["allocatedAmountRpt"];
