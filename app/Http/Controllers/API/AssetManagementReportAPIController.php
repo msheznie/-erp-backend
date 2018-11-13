@@ -123,41 +123,38 @@ class AssetManagementReportAPIController extends AppBaseController
                 $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
                 $assetCategory = join(',', $assetCategory);
 
-                $qry="SELECT groupTO,faUnitSerialNo,faID, erp_fa_assettype.typeDes, erp_fa_financecategory.financeCatDescription, final.COSTGLCODE, final.ACCDEPGLCODE, assetType, serviceline.ServiceLineDes, final.serviceLineCode, docOrigin, AUDITCATOGARY, faCode, assetDescription, DEPpercentage, dateAQ, dateDEP, COSTUNIT, IFNULL(depAmountLocal,0) as depAmountLocal, COSTUNIT - IFNULL(depAmountLocal,0) as localnbv, costUnitRpt,
- IFNULL(depAmountRpt,0) as depAmountRpt , costUnitRpt - IFNULL(depAmountRpt,0) as rptnbv FROM ( SELECT 		t.groupTO,erp_fa_asset_master.faUnitSerialNo ,erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, IFNULL( t.COSTUNIT, 0 ) AS COSTUNIT, IFNULL( depAmountLocal, 0 ) AS depAmountLocal, IFNULL( t.costUnitRpt, 0 ) AS costUnitRpt, IFNULL( depAmountRpt, 0 ) AS depAmountRpt FROM ( SELECT groupTO, SUM( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, SUM( depAmountLocal ) AS depAmountLocal, SUM( costUnitRpt ) AS costUnitRpt, SUM( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, SUM( depAmountLocal ) AS depAmountLocal, SUM( depAmountRpt ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NOT NULL GROUP BY groupTO ) t INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.faID = t.groupTO
+                $qry = "SELECT groupTO,faUnitSerialNo,faID, erp_fa_assettype.typeDes, erp_fa_financecategory.financeCatDescription, final.COSTGLCODE, final.ACCDEPGLCODE, assetType, serviceline.ServiceLineDes, final.serviceLineCode, docOrigin, AUDITCATOGARY, faCode, assetDescription, DEPpercentage, dateAQ, dateDEP, COSTUNIT, IFNULL(depAmountLocal,0) as depAmountLocal, COSTUNIT - IFNULL(depAmountLocal,0) as localnbv, costUnitRpt,
+ IFNULL(depAmountRpt,0) as depAmountRpt , costUnitRpt - IFNULL(depAmountRpt,0) as rptnbv FROM ( SELECT 		t.groupTO,erp_fa_asset_master.faUnitSerialNo ,erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, IFNULL( t.COSTUNIT, 0 ) AS COSTUNIT, IFNULL( depAmountLocal, 0 ) AS depAmountLocal, IFNULL( t.costUnitRpt, 0 ) AS costUnitRpt, IFNULL( depAmountRpt, 0 ) AS depAmountRpt FROM ( SELECT groupTO, SUM( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, SUM( depAmountLocal ) AS depAmountLocal, SUM( costUnitRpt ) AS costUnitRpt, SUM( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, SUM( depAmountLocal ) AS depAmountLocal, SUM( depAmountRpt ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID
+  
+  WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NOT NULL GROUP BY groupTO ) t INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.faID = t.groupTO
   
   UNION ALL SELECT groupTO,erp_fa_asset_master.faUnitSerialNo,
 erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, ( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, ( depAmountLocal ) AS depAmountLocal, ( costUnitRpt ) AS costUnitRpt, ( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, IFNULL( SUM( depAmountLocal ), 0 ) AS depAmountLocal, IFNULL( SUM( depAmountRpt ), 0 ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NULL ORDER BY dateDEP DESC ) final INNER JOIN serviceline ON serviceline.ServiceLineCode = final.serviceLineCode INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = final.assetType";
 
+                //$output = \DB::select($qry);
+                $output = $this->getAssetRegisterDetail($request);
+                $outputArr = [];
 
-                $output = \DB::select($qry);
-
-                $outputArr=[];
-
-                $COSTUNIT=0;
-                $costUnitRpt=0;
-                $depAmountLocal=0;
-                $depAmountRpt=0;
-                $localnbv=0;
-                $rptnbv=0;
+                $COSTUNIT = 0;
+                $costUnitRpt = 0;
+                $depAmountLocal = 0;
+                $depAmountRpt = 0;
+                $localnbv = 0;
+                $rptnbv = 0;
                 if ($output) {
                     foreach ($output as $val) {
-                        $localnbv +=$val->localnbv;
-                        $COSTUNIT +=$val->COSTUNIT;
-                        $costUnitRpt +=$val->costUnitRpt;
-                        $depAmountRpt +=$val->depAmountRpt;
-                        $depAmountLocal +=$val->depAmountLocal;
-                        $rptnbv +=$val->rptnbv;
-                        $outputArr[$val->financeCatDescription][] =  $val;
+                        $localnbv += $val->localnbv;
+                        $COSTUNIT += $val->COSTUNIT;
+                        $costUnitRpt += $val->costUnitRpt;
+                        $depAmountRpt += $val->depAmountRpt;
+                        $depAmountLocal += $val->depAmountLocal;
+                        $rptnbv += $val->rptnbv;
+                        $outputArr[$val->financeCatDescription][] = $val;
                     }
                 }
 
 
-
-
-
-
-                return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv,'COSTUNIT'=>$COSTUNIT,'costUnitRpt'=>$costUnitRpt,'depAmountLocal'=>$depAmountLocal,'depAmountRpt'=>$depAmountRpt);
+                return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
 
 
                 break;
@@ -405,6 +402,224 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
         $type = $request->type;
         switch ($reportID) {
             case 'AMAR': //Asset Register
+
+                $output = $this->getAssetRegisterDetail($request);
+
+                $outputArr = [];
+
+          /*      if ($request->excelType == 1) {
+                    if ($output) {
+                        foreach ($output as $val) {
+                            if($val->groupTO==1){
+                                $outputArr[$val->groupTO][$val->groupbydesc][$val->financeCatDescription][] = (array)$val;
+                            }else{
+                                $outputArr[0][$val->financeCatDescription][] = (array)$val;
+                            }
+
+                        }
+                    }
+
+                } else {*/
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $outputArr[$val->financeCatDescription][] = (array)$val;
+                        }
+                    }
+
+              /*  }*/
+
+
+
+
+
+
+                $x = 0;
+
+
+                    if (!empty($outputArr)) {
+                        $TotalCOSTUNIT = 0;
+                        $TotaldepAmountLocal = 0;
+                        $Totallocalnbv = 0;
+                        $TotalcostUnitRpt = 0;
+                        $TotaldepAmountRpt = 0;
+                        $Totalrptnbv = 0;
+                        foreach ($outputArr as $key => $val) {
+
+                            $data[$x]['Cost GL'] = $key;
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = '';
+                            $data[$x]['Local Amount unitcost'] = '';
+                            $data[$x]['Local Amount accDep'] = '';
+                            $data[$x]['Local Amount net Value'] = '';
+                            $data[$x]['Rpt Amount unit cost'] = '';
+                            $data[$x]['Rpt Amount acc dep'] = '';
+                            $data[$x]['Rpt Amount acc net value'] = '';
+
+                            $x++;
+
+                            $data[$x]['Cost GL'] = 'Cost GL';
+                            $data[$x]['Acc Dep GL'] = 'Acc Dep GL';
+                            $data[$x]['Type'] = 'Type';
+                            $data[$x]['Segment'] = 'Segment';
+                            $data[$x]['category'] = 'Finance Category';
+                            $data[$x]['FA Code'] = 'FA Code';
+                            $data[$x]['Grouped YN'] = 'Grouped FA Code';
+                            $data[$x]['Serial Number'] = 'Serial Number';
+                            $data[$x]['Asset Description'] = 'Asset Description';
+                            $data[$x]['DEP %'] = 'DEP %';
+                            $data[$x]['Date Aquired'] = 'Date Aquired';
+                            $data[$x]['Dep Start Date'] = 'Dep Start Date';
+                            $data[$x]['Local Amount unitcost'] = '';
+                            $data[$x]['Local Amount accDep'] = '';
+                            $data[$x]['Local Amount net Value'] = 'Local Amount';
+                            $data[$x]['Rpt Amount unit cost'] = '';
+                            $data[$x]['Rpt Amount acc dep'] = 'Rpt Amount';
+                            $data[$x]['Rpt Amount acc net value'] = '';
+
+                            $x++;
+
+                            $data[$x]['Cost GL'] = '';
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = '';
+
+                            $data[$x]['Local Amount unitcost'] = 'Unit Cost';
+                            $data[$x]['Local Amount accDep'] = 'AccDep Amount';
+                            $data[$x]['Local Amount net Value'] = 'Net Book Value';
+                            $data[$x]['Rpt Amount unit cost'] = 'Unit Cost';
+                            $data[$x]['Rpt Amount acc dep'] = 'AccDep Amount';
+                            $data[$x]['Rpt Amount acc net value'] = 'Net Book Value';
+
+                            $x++;
+                            $COSTUNIT = 0;
+                            $depAmountLocal = 0;
+                            $localnbv = 0;
+                            $costUnitRpt = 0;
+                            $depAmountRpt = 0;
+                            $rptnbv = 0;
+
+
+                            foreach ($outputArr[$key] as $value) {
+                                $x++;
+                                $COSTUNIT += $value['COSTUNIT'];
+                                $depAmountLocal += $value['depAmountLocal'];
+                                $localnbv += $value['localnbv'];
+                                $costUnitRpt += $value['costUnitRpt'];
+                                $depAmountRpt += $value['depAmountRpt'];
+                                $rptnbv += $value['rptnbv'];
+
+                                $TotalCOSTUNIT += $value['COSTUNIT'];
+                                $TotaldepAmountLocal += $value['depAmountLocal'];
+                                $Totallocalnbv += $value['localnbv'];
+                                $TotalcostUnitRpt += $value['costUnitRpt'];
+                                $TotaldepAmountRpt += $value['depAmountRpt'];
+                                $Totalrptnbv += $value['rptnbv'];
+
+                                $data[$x]['Cost GL'] = $value['COSTGLCODE'];
+                                $data[$x]['Acc Dep GL'] = $value['ACCDEPGLCODE'];
+                                $data[$x]['Type'] = $value['typeDes'];
+                                $data[$x]['Segment'] = $value['ServiceLineDes'];
+                                $data[$x]['category'] = $key;
+                                $data[$x]['FA Code'] = $value['faCode'];
+                                $data[$x]['Grouped YN'] = $value['groupbydesc'];
+                                $data[$x]['Serial Number'] = $value['faUnitSerialNo'];
+                                $data[$x]['Asset Description'] = $value['assetDescription'];
+                                $data[$x]['DEP %'] = round($value['DEPpercentage'], 2);
+                                $data[$x]['Date Aquired'] = \Helper::dateFormat($value['dateAQ']);
+                                $data[$x]['Dep Start Date'] = \Helper::dateFormat($value['dateDEP']);
+
+                                $data[$x]['Local Amount unitcost'] = round($value['COSTUNIT'], 2);
+                                $data[$x]['Local Amount accDep'] = round($value['depAmountLocal'], 2);
+                                $data[$x]['Local Amount net Value'] = round($value['localnbv'], 2);
+                                $data[$x]['Rpt Amount unit cost'] = round($value['costUnitRpt'], 2);
+                                $data[$x]['Rpt Amount acc dep'] = round($value['depAmountRpt'], 2);
+                                $data[$x]['Rpt Amount acc net value'] = round($value['rptnbv'], 2);
+
+                            }
+
+                            $x++;
+
+
+                            $data[$x]['Cost GL'] = '';
+                            $data[$x]['Acc Dep GL'] = '';
+                            $data[$x]['Type'] = '';
+                            $data[$x]['Segment'] = '';
+                            $data[$x]['category'] = '';
+                            $data[$x]['FA Code'] = '';
+                            $data[$x]['Grouped YN'] = '';
+                            $data[$x]['Serial Number'] = '';
+                            $data[$x]['Asset Description'] = '';
+                            $data[$x]['DEP %'] = '';
+                            $data[$x]['Date Aquired'] = '';
+                            $data[$x]['Dep Start Date'] = 'Sub Total';
+
+                            $data[$x]['Local Amount unitcost'] = $COSTUNIT;
+                            $data[$x]['Local Amount accDep'] = $depAmountLocal;
+                            $data[$x]['Local Amount net Value'] = $localnbv;
+                            $data[$x]['Rpt Amount unit cost'] = $costUnitRpt;
+                            $data[$x]['Rpt Amount acc dep'] = $depAmountRpt;
+                            $data[$x]['Rpt Amount acc net value'] = $rptnbv;
+
+$x++;
+
+                        }
+
+
+                        $x++;
+
+                        $data[$x]['Cost GL'] = '';
+                        $data[$x]['Acc Dep GL'] = '';
+                        $data[$x]['Type'] = '';
+                        $data[$x]['Segment'] = '';
+                        $data[$x]['category'] = '';
+                        $data[$x]['FA Code'] = '';
+                        $data[$x]['Grouped YN'] = '';
+                        $data[$x]['Serial Number'] = '';
+                        $data[$x]['Asset Description'] = '';
+                        $data[$x]['DEP %'] = '';
+                        $data[$x]['Date Aquired'] = '';
+                        $data[$x]['Dep Start Date'] = 'Total';
+                        $data[$x]['Local Amount unitcost'] = $TotalCOSTUNIT;
+                        $data[$x]['Local Amount accDep'] = $TotaldepAmountLocal;
+                        $data[$x]['Local Amount net Value'] = $Totallocalnbv;
+                        $data[$x]['Rpt Amount unit cost'] = $TotalcostUnitRpt;
+                        $data[$x]['Rpt Amount acc dep'] = $TotaldepAmountRpt;
+                        $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
+                    }
+
+
+
+
+                $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
+                    $excel->sheet('asset register', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', false, false);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
 
                 break;
             case 'AMAA': //Asset Additions
@@ -1562,25 +1777,31 @@ GROUP BY
         return $output;
     }
 
-    public function generateAssetDetailDrilldown(Request $request){
+    public function generateAssetDetailDrilldown(Request $request)
+    {
 
         $typeID = $request->typeID;
         $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
         $assetCategory = join(',', $assetCategory);
         $faID = $request->faID;
-        $input=$request->all();
+        $input = $request->all();
+
+
+
+
+
         $qry="SELECT
 	groupTO,
 	faUnitSerialNo,
-	faID,
+	erp_fa_asset_master.faID,
 	erp_fa_assettype.typeDes,
 	erp_fa_financecategory.financeCatDescription,
-	final.COSTGLCODE,
-	final.ACCDEPGLCODE,
+	erp_fa_asset_master.COSTGLCODE,
+	erp_fa_asset_master.ACCDEPGLCODE,
 	assetType,
 	serviceline.ServiceLineDes,
-	final.serviceLineCode,
+	erp_fa_asset_master.serviceLineCode,
 	docOrigin,
 	AUDITCATOGARY,
 	faCode,
@@ -1595,104 +1816,200 @@ GROUP BY
 	IFNULL( depAmountRpt, 0 ) AS depAmountRpt,
 	costUnitRpt - IFNULL( depAmountRpt, 0 ) AS rptnbv 
 FROM
-	(
+	erp_fa_asset_master
+	LEFT JOIN (
 	SELECT
-		t.groupTO,
-		erp_fa_asset_master.faUnitSerialNo,
-		erp_fa_asset_master.faID,
-		COSTGLCODE,
-		ACCDEPGLCODE,
-		assetType,
-		erp_fa_asset_master.serviceLineCode,
-		docOrigin,
-		AUDITCATOGARY,
-		erp_fa_asset_master.faCode,
-		erp_fa_asset_master.assetDescription,
-		DEPpercentage,
-		dateAQ,
-		dateDEP,
-		IFNULL( t.COSTUNIT, 0 ) AS COSTUNIT,
-		IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
-		IFNULL( t.costUnitRpt, 0 ) AS costUnitRpt,
-		IFNULL( depAmountRpt, 0 ) AS depAmountRpt 
+		faID,
+		erp_fa_assetdepreciationperiods.depMasterAutoID,
+		sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal,
+		sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt 
 	FROM
-		(
-		SELECT
-			groupTO,
-			( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT,
-			( depAmountLocal ) AS depAmountLocal,
-			( costUnitRpt ) AS costUnitRpt,
-			( depAmountRpt ) AS depAmountRpt 
-		FROM
-			erp_fa_asset_master
-			LEFT JOIN (
-			SELECT
-				faID,
-				SUM( depAmountLocal ) AS depAmountLocal,
-				SUM( depAmountRpt ) AS depAmountRpt 
-			FROM
-				(
-				SELECT
-					faID,
-					erp_fa_assetdepreciationperiods.depMasterAutoID,
-					sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal,
-					sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt 
-				FROM
-					erp_fa_assetdepreciationperiods
-					INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
-				WHERE
-					erp_fa_depmaster.approved =- 1 
-				GROUP BY
-					faID 
-				) t 
-		
-			) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID 
-		WHERE
-			companySystemID = $request->companySystemID
-			AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' 
-				OR DIPOSED = - 1 
-			) 
-			AND groupTO = $faID 
-	
-		) t
-		INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.faID = t.groupTO 
-	) final
-	INNER JOIN serviceline ON serviceline.ServiceLineCode = final.serviceLineCode
+		erp_fa_assetdepreciationperiods
+		INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
+	WHERE
+		erp_fa_depmaster.approved =- 1 
+	GROUP BY
+		faID 
+	) t ON erp_fa_asset_master.faID = t.faID
+	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
 	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
-	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = final.assetType";
+	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode 
+WHERE
+	erp_fa_asset_master.companySystemID = $request->companySystemID 
+	AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' 
+		OR DIPOSED = - 1 ) AND
+	(erp_fa_asset_master.faID = $faID OR 	erp_fa_asset_master.groupTO = $faID )
+	
+	
+	
+	
+";
+
+
 
         $output = \DB::select($qry);
 
-        $outputArr=[];
+        $outputArr = [];
 
 
-
-        $COSTUNIT=0;
-        $costUnitRpt=0;
-        $depAmountLocal=0;
-        $depAmountRpt=0;
-        $localnbv=0;
-        $rptnbv=0;
+        $COSTUNIT = 0;
+        $costUnitRpt = 0;
+        $depAmountLocal = 0;
+        $depAmountRpt = 0;
+        $localnbv = 0;
+        $rptnbv = 0;
         if ($output) {
             foreach ($output as $val) {
-                $localnbv +=$val->localnbv;
-                $COSTUNIT +=$val->COSTUNIT;
-                $costUnitRpt +=$val->costUnitRpt;
-                $depAmountRpt +=$val->depAmountRpt;
-                $depAmountLocal +=$val->depAmountLocal;
-                $rptnbv +=$val->rptnbv;
-                $outputArr[$val->financeCatDescription][] =  $val;
+                $localnbv += $val->localnbv;
+                $COSTUNIT += $val->COSTUNIT;
+                $costUnitRpt += $val->costUnitRpt;
+                $depAmountRpt += $val->depAmountRpt;
+                $depAmountLocal += $val->depAmountLocal;
+                $rptnbv += $val->rptnbv;
+                $outputArr[$val->financeCatDescription][] = $val;
             }
         }
 
 
+        return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
+
+
+    }
+
+
+    function getAssetRegisterDetail($request)
+    {
+        $typeID = $request->typeID;
+        $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
+        $assetCategory = join(',', $assetCategory);
+
+        if ($request->excelType == 1) {
+
+            $qry="SELECT
+IF(groupTO,1,0) as groupTO,
+	assetGroup.assetDescription as groupbydesc,
+	faUnitSerialNo,
+	erp_fa_asset_master.faID,
+	erp_fa_assettype.typeDes,
+	erp_fa_financecategory.financeCatDescription,
+	erp_fa_asset_master.COSTGLCODE,
+	erp_fa_asset_master.ACCDEPGLCODE,
+	assetType,
+	serviceline.ServiceLineDes,
+	erp_fa_asset_master.serviceLineCode,
+	docOrigin,
+	AUDITCATOGARY,
+	faCode,
+	erp_fa_asset_master.assetDescription,
+	DEPpercentage,
+	dateAQ,
+	dateDEP,
+	COSTUNIT,
+	IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
+	COSTUNIT - IFNULL( depAmountLocal, 0 ) AS localnbv,
+	costUnitRpt,
+	IFNULL( depAmountRpt, 0 ) AS depAmountRpt,
+	costUnitRpt - IFNULL( depAmountRpt, 0 ) AS rptnbv 
+FROM
+	erp_fa_asset_master
+	LEFT JOIN (
+	SELECT
+		faID,
+		erp_fa_assetdepreciationperiods.depMasterAutoID,
+		sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal,
+		sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt 
+	FROM
+		erp_fa_assetdepreciationperiods
+		INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
+	WHERE
+		erp_fa_depmaster.approved =- 1 
+	GROUP BY
+		faID 
+	) t ON erp_fa_asset_master.faID = t.faID
+	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
+	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
+	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
+LEFT JOIN (SELECT assetDescription , faID FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = 31   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
+WHERE
+	erp_fa_asset_master.companySystemID = $request->companySystemID
+	AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate'
+	OR DIPOSED = - 1 
+	)";
 
 
 
 
-        return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv,'COSTUNIT'=>$COSTUNIT,'costUnitRpt'=>$costUnitRpt,'depAmountLocal'=>$depAmountLocal,'depAmountRpt'=>$depAmountRpt);
+        } else {
+            $qry = "SELECT groupTO,faUnitSerialNo,faID, erp_fa_assettype.typeDes, erp_fa_financecategory.financeCatDescription, final.COSTGLCODE, final.ACCDEPGLCODE, assetType, serviceline.ServiceLineDes, final.serviceLineCode, docOrigin, AUDITCATOGARY, faCode, assetDescription, DEPpercentage, dateAQ, dateDEP, COSTUNIT, IFNULL(depAmountLocal,0) as depAmountLocal, COSTUNIT - IFNULL(depAmountLocal,0) as localnbv, costUnitRpt,
+ IFNULL(depAmountRpt,0) as depAmountRpt , costUnitRpt - IFNULL(depAmountRpt,0) as rptnbv FROM ( SELECT 		t.groupTO,erp_fa_asset_master.faUnitSerialNo ,erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, IFNULL( t.COSTUNIT, 0 ) AS COSTUNIT, IFNULL( depAmountLocal, 0 ) AS depAmountLocal, IFNULL( t.costUnitRpt, 0 ) AS costUnitRpt, IFNULL( depAmountRpt, 0 ) AS depAmountRpt FROM ( SELECT groupTO, SUM( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, SUM( depAmountLocal ) AS depAmountLocal, SUM( costUnitRpt ) AS costUnitRpt, SUM( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, SUM( depAmountLocal ) AS depAmountLocal, SUM( depAmountRpt ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NOT NULL GROUP BY groupTO ) t INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.faID = t.groupTO
+  
+  UNION ALL SELECT groupTO,erp_fa_asset_master.faUnitSerialNo,
+erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, ( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, ( depAmountLocal ) AS depAmountLocal, ( costUnitRpt ) AS costUnitRpt, ( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, IFNULL( SUM( depAmountLocal ), 0 ) AS depAmountLocal, IFNULL( SUM( depAmountRpt ), 0 ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NULL ORDER BY dateDEP DESC ) final INNER JOIN serviceline ON serviceline.ServiceLineCode = final.serviceLineCode INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = final.assetType";
 
 
 
+        }
+
+        $qry="
+SELECT * FROM ( SELECT
+IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
+    
+  groupTO,
+	assetGroup.faCode as groupbydesc,
+	erp_fa_asset_master.faUnitSerialNo,
+	erp_fa_asset_master.faID,
+	erp_fa_assettype.typeDes,
+	erp_fa_financecategory.financeCatDescription,
+	erp_fa_asset_master.COSTGLCODE,
+	erp_fa_asset_master.ACCDEPGLCODE,
+	assetType,
+	serviceline.ServiceLineDes,
+	erp_fa_asset_master.serviceLineCode,
+	docOrigin,
+	AUDITCATOGARY,
+	erp_fa_asset_master.faCode,
+	erp_fa_asset_master.assetDescription,
+	DEPpercentage,
+	dateAQ,
+	dateDEP,
+	COSTUNIT,
+	IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
+	COSTUNIT - IFNULL( depAmountLocal, 0 ) AS localnbv,
+	costUnitRpt,
+	IFNULL( depAmountRpt, 0 ) AS depAmountRpt,
+	costUnitRpt - IFNULL( depAmountRpt, 0 ) AS rptnbv 
+FROM
+	erp_fa_asset_master
+	LEFT JOIN (
+	SELECT
+		faID,
+		erp_fa_assetdepreciationperiods.depMasterAutoID,
+		sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal,
+		sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt 
+	FROM
+		erp_fa_assetdepreciationperiods
+		INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
+	WHERE
+		erp_fa_depmaster.approved =- 1 
+	GROUP BY
+		faID 
+	) t ON erp_fa_asset_master.faID = t.faID
+	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
+	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
+	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
+LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
+WHERE
+	erp_fa_asset_master.companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory)
+	AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = 1 AND ( disposedDate IS NULL OR disposedDate > '$asOfDate'
+	OR DIPOSED = - 1 
+	)) t  ORDER BY sortfaID desc  ";
+
+
+
+
+        $output = \DB::select($qry);
+
+        return $output;
     }
 }
