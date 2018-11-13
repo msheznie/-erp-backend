@@ -939,16 +939,23 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 $CustomerReceivePaymentData = CustomerReceivePayment::find($matchDocumentMaster->PayMasterAutoId);
 
-                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)->where('documentSystemID', $matchDocumentMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+                $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
+                    ->where('custReceivePaymentAutoID', $matchDocumentMaster->PayMasterAutoId)
+                    ->where('bookingInvCode', '0')
+                    ->groupBy('custReceivePaymentAutoID')
+                    ->first();
+
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentSystemID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)->where('documentSystemID', $matchDocumentMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
                 $machAmount = 0;
                 if ($matchedAmount) {
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
                 $receiveAmountTot = 0;
-                if($CustomerReceivePaymentData){
-                    $receiveAmountTot = abs($CustomerReceivePaymentData->receivedAmount);
+                if($customerSettleAmountSum){
+                    $receiveAmountTot = $customerSettleAmountSum["SumDetailAmount"];
                 }
+
                 if ($machAmount == 0) {
                     $CustomerReceivePaymentData->matchInvoice = 0;
                     $CustomerReceivePaymentData->save();
@@ -978,7 +985,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
-                $totalPaidAmount = (($customerSettleAmountSum["SumDetailAmount"]) + $machAmount);
+                $totalPaidAmount = ($customerSettleAmountSum["SumDetailAmount"] + $machAmount);
 
                 if ($totalPaidAmount == 0) {
                     $creditNoteData->matchInvoice = 0;
