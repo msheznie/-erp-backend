@@ -161,8 +161,11 @@ class AssetDisposalDetail extends Model
         'depAmountRpt',
         'netBookValueRpt',
         'COSTGLCODE',
+        'COSTGLCODESystemID',
         'ACCDEPGLCODE',
+        'ACCDEPGLCODESystemID',
         'DISPOGLCODE',
+        'DISPOGLCODESystemID',
         'timestamp'
     ];
 
@@ -189,8 +192,11 @@ class AssetDisposalDetail extends Model
         'depAmountLocal' => 'float',
         'depAmountRpt' => 'float',
         'netBookValueRpt' => 'float',
+        'COSTGLCODESystemID' => 'integer',
         'COSTGLCODE' => 'string',
+        'ACCDEPGLCODESystemID' => 'integer',
         'ACCDEPGLCODE' => 'string',
+        'DISPOGLCODESystemID' => 'string',
         'DISPOGLCODE' => 'string'
     ];
 

@@ -195,6 +195,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     $inputData[$x]['bookingInvCodeSystem'] = $item['bookingInvSystemCode'];
                     $inputData[$x]['bookingInvCode'] = $item['bookingInvDocCode'];
                     $inputData[$x]['bookingDate'] = $item['bookingInvoiceDate'];
+                    $inputData[$x]['comments'] = $master->narration;
                     $inputData[$x]['custTransactionCurrencyID'] = $item['custTransCurrencyID'];
                     $inputData[$x]['custTransactionCurrencyER'] = $item['custTransER'];
                     $inputData[$x]['companyReportingCurrencyID'] = $item['comRptCurrencyID'];
@@ -404,6 +405,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->first();
 
+        if (empty($input['receiveAmountTrans']) || $input['receiveAmountTrans'] == 0 || $input['receiveAmountTrans'] == '' || $input['receiveAmountTrans'] < 0) {
+            return $this->sendError('Amount cannot be 0 or null');
+        }
+
         $receiveAmountTrans = $input['receiveAmountTrans'];
 
         $data['custReceivePaymentAutoID'] = $custReceivePaymentAutoID;
@@ -474,6 +479,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $currency = \Helper::convertAmountToLocalRpt(206, $input['arAutoID'], $input['receiveAmountTrans']);
         $input['receiveAmountLocal'] = \Helper::roundValue($currency['localAmount']);
         $input['receiveAmountRpt'] = \Helper::roundValue($currency['reportingAmount']);
+
 
         $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->update($input, $input['custRecivePayDetAutoID']);
 
@@ -564,31 +570,20 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             }
         }
 
-        //check record exist in General Ledger table
-        foreach ($input['detailTable'] as $itemExist) {
-
-            if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
-                $siDetailExistGL = GeneralLedger::where('documentSystemID', $itemExist['addedDocumentSystemID'])
-                    ->where('companySystemID', $itemExist['companySystemID'])
-                    ->where('documentSystemCode', $itemExist['bookingInvCodeSystem'])
-                    ->first();
-
-                if (empty($siDetailExistGL)) {
-                    $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                    $itemExistArray[] = [$itemDrt];
-                }
-            }
-        }
-
         //check record total in General Ledger table
         foreach ($input['detailTable'] as $itemExist) {
 
             if (isset($itemExist['isChecked']) && $itemExist['isChecked']) {
 
-                $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $itemExist['addedDocumentSystemID'])->where('companySystemID', $itemExist['companySystemID'])->where('documentSystemCode', $itemExist['bookingInvCodeSystem'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
+                $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')
+                    ->where('documentSystemID', $itemExist['addedDocumentSystemID'])
+                    ->where('companySystemID', $itemExist['companySystemID'])
+                    ->where('documentSystemCode', $itemExist['bookingInvCodeSystem'])
+                    ->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')
+                    ->first();
 
                 if ($glCheck) {
-                    if ($glCheck->SumOfdocumentLocalAmount != 0 || $glCheck->SumOfdocumentRptAmount != 0) {
+                    if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
                         $itemExistArray[] = [$itemDrt];
                     }
@@ -666,8 +661,14 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
+        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
+
         if ($input['receiveAmountTrans'] == "") {
             $input['receiveAmountTrans'] = 0;
+        }
+
+        if (round($input['receiveAmountTrans'], $documentCurrencyDecimalPlace) > round($matchDocumentMasterData->matchBalanceAmount, $documentCurrencyDecimalPlace)) {
+            return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
         }
 
         // checking payment amount greater than balance amount
@@ -696,7 +697,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                 return $this->sendError('Matching amount cannot be greater than balance amount', 500);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {
-            if ( $input["receiveAmountTrans"] < $totReceiveAmountDetail) {
+            if ($input["receiveAmountTrans"] < $totReceiveAmountDetail) {
                 return $this->sendError('Matching amount cannot be greater than balance amount', 500);
             }
         }

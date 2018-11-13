@@ -10,6 +10,8 @@
  * -- REVISION HISTORY
  * -- Date: 03-September 2018 By:Mubashir Description: Added new functions named as getPaymentVoucherFormData(),getAllPaymentVoucherByCompany()
  * -- Date: 14-September 2018 By:Mubashir Description: Added new functions named as getPaymentVoucherMatchItems()
+ * -- Date: 12-November 2018 By:Nazir Description: Added new functions named as updateSentToTreasuryDetail()
+ * -- Date: 13-November 2018 By:Nazir Description: Added new functions named as printPaymentVoucher()
  */
 
 namespace App\Http\Controllers\API;
@@ -463,16 +465,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
                 if (isset($input['interCompanyToSystemID'])) {
-                    if($input['interCompanyToSystemID']) {
+                    if ($input['interCompanyToSystemID']) {
                         $interCompany = Company::find($input['interCompanyToSystemID']);
                         if ($interCompany) {
                             $input['interCompanyToID'] = $interCompany->CompanyID;
                         }
-                    }else {
+                    } else {
                         $input['interCompanyToSystemID'] = null;
                         $input['interCompanyToID'] = null;
                     }
-                }else{
+                } else {
                     $input['interCompanyToSystemID'] = null;
                     $input['interCompanyToID'] = null;
                 }
@@ -1684,6 +1686,106 @@ HAVING
 
         return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher cancelled successfully');
 
+    }
+
+    public function updateSentToTreasuryDetail(Request $request)
+    {
+        $payInvoice = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request['PayMasterAutoId']);
+
+        if (empty($payInvoice)) {
+            return $this->sendError('Payment Voucher not found');
+        }
+
+        if ($payInvoice->confirmedYN == 0) {
+            return $this->sendError('You cannot send to treasury this PV, this is not confirmed');
+        }
+
+        if ($payInvoice->approved == -1) {
+            return $this->sendError('You cannot send to treasury this PV, this is already approved');
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $payInvoice->chequeSentToTreasury = -1;
+        $payInvoice->chequeSentToTreasuryByEmpSystemID = $employee->employeeSystemID;
+        $payInvoice->chequeSentToTreasuryByEmpID = $employee->empID;
+        $payInvoice->chequeSentToTreasuryByEmpName = $employee->empFullName;
+        $payInvoice->chequeSentToTreasuryDate = NOW();
+        $payInvoice->save();
+
+        return $this->sendResponse($payInvoice->toArray(), 'Payment Voucher updated successfully');
+
+    }
+
+
+    public function printPaymentVoucher(Request $request){
+
+        $id = $request->get('PayMasterAutoId');
+
+        $PaySupplierInvoiceMasterData = PaySupplierInvoiceMaster::find($id);
+
+        if (empty($PaySupplierInvoiceMasterData)) {
+            return $this->sendError('Pay Supplier Invoice Master not found');
+        }
+
+        $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
+            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'supplierdetail', 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {
+                $query->with('segment');
+            }, 'approved_by' => function ($query) {
+                $query->with('employee');
+                $query->where('documentSystemID', 4);
+            }, 'created_by', 'cancelled_by'])->first();
+
+        if (empty($output)) {
+            return $this->sendError('Customer Receive Payment not found');
+        }
+
+        $refernaceDoc = \Helper::getCompanyDocRefNo($output->companySystemID, $output->documentSystemID);
+
+        $transDecimal = 2;
+        $localDecimal = 3;
+        $rptDecimal = 2;
+
+        if ($output->transactioncurrency) {
+            $transDecimal = $output->transactioncurrency->DecimalPlaces;
+        }
+
+        if ($output->localcurrency) {
+            $localDecimal = $output->localcurrency->DecimalPlaces;
+        }
+
+        if ($output->rptcurrency) {
+            $rptDecimal = $output->rptcurrency->DecimalPlaces;
+        }
+
+        $supplierdetailTotTra = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+            ->sum('supplierPaymentAmount');
+
+        $directDetailTotTra = DirectPaymentDetails::where('directPaymentAutoID', $id)
+            ->sum('DPAmount');
+
+        $advancePayDetailTotTra = AdvancePaymentDetails::where('PayMasterAutoId', $id)
+            ->sum('paymentAmount');
+
+
+        $order = array(
+            'masterdata' => $output,
+            'docRef' => $refernaceDoc,
+            'transDecimal' => $transDecimal,
+            'localDecimal' => $localDecimal,
+            'rptDecimal' => $rptDecimal,
+            'supplierdetailTotTra' => $supplierdetailTotTra,
+            'directDetailTotTra' => $directDetailTotTra,
+            'advancePayDetailTotTra' => $advancePayDetailTotTra
+        );
+
+        $time = strtotime("now");
+        $fileName = 'payment_voucher_' . $id . '_' . $time . '.pdf';
+        $html = view('print.payment_voucher', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
 }

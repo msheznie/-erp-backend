@@ -322,7 +322,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
 
     Route::post('approveSupplier', 'SupplierMasterAPIController@approveSupplier');
-    Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier');
+    Route::post('rejectSugetAssetManagementFilterDatapplier', 'SupplierMasterAPIController@rejectSupplier');
 
     Route::post('approveCustomer', 'CustomerMasterAPIController@approveCustomer');
     Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer');
@@ -883,6 +883,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
     Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
+    Route::post('updateSentToTreasuryDetail', 'PaySupplierInvoiceMasterAPIController@updateSentToTreasuryDetail');
 
     Route::get('getRVPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getRVPaymentVoucherMatchItems');
 
@@ -913,8 +914,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
     Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData');
+    Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts');
     Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany');
     Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
+    Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
+    Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
     Route::resource('credit_notes', 'CreditNoteAPIController');
     Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
     Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
@@ -1007,6 +1011,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('assetDepreciationReopen', 'FixedAssetDepreciationMasterAPIController@assetDepreciationReopen');
     Route::post('getAssetDepApprovalByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovalByUser');
     Route::post('getAssetDepApprovedByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovedByUser');
+    Route::post('referBackDepreciation', 'FixedAssetDepreciationMasterAPIController@referBackDepreciation');
     Route::post('updateReceiptVoucherMatchDetail', 'CustomerReceivePaymentDetailAPIController@updateReceiptVoucherMatchDetail');
 
     Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
@@ -1060,6 +1065,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport');
     Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
     Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
+    Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
     Route::resource('asset_types', 'AssetTypeAPIController');
     Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
     Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
@@ -1069,8 +1075,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
     Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
-
-
+    Route::post('generateAssetDetailDrilldown', 'AssetManagementReportAPIController@generateAssetDetailDrilldown');
     Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
     Route::get('getMonthlyAdditionAudit', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionAudit');
     Route::post('monthlyAdditionReopen', 'MonthlyAdditionsMasterAPIController@monthlyAdditionReopen');
@@ -1088,6 +1093,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('period_masters', 'PeriodMasterAPIController');
     Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
     Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
+    Route::get('getAssetCostingViewByFaID/{id}', 'FixedAssetMasterAPIController@getAssetCostingViewByFaID');
+
+    Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
+    Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1113,6 +1122,7 @@ Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
 Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
 Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
+Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
@@ -1122,20 +1132,26 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 41,'autoID' => 247, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $master = ['documentSystemID' => 22,'autoID' => 70190, 'companySystemID' => 52, 'employeeSystemID' => 2664];
     $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76750);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
-    //$master = \App\Models\AssetDisposalMaster::find(241);
+    //$master = \App\Models\AssetDisposalMaster::find(241);generateAssetDetailDrilldown
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
+    //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
+
 });
 
 Route::get('runQueueSR', function () {
     $bt = \App\Models\BudgetTransferForm::find(463);
     $job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
+
+
 
 
 
