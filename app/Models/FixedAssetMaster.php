@@ -538,6 +538,9 @@ class FixedAssetMaster extends Model
         'tempRecord',
         'toolsCondition',
         'selectedforJobYN',
+        'postToGLYN',
+        'postToGLCodeSystemID',
+        'postToGLCode',
         'timestamp'
     ];
 
@@ -634,7 +637,10 @@ class FixedAssetMaster extends Model
         'supplierIDRentedAsset' => 'integer',
         'tempRecord' => 'integer',
         'toolsCondition' => 'integer',
-        'selectedforJobYN' => 'integer'
+        'selectedforJobYN' => 'integer',
+        'postToGLYN' => 'integer',
+        'postToGLCodeSystemID' => 'integer',
+        'postToGLCode' => 'integer',
     ];
 
     /**
@@ -781,11 +787,18 @@ class FixedAssetMaster extends Model
     {
         return $this->belongsTo('App\Models\SupplierMaster', 'supplierIDRentedAsset', 'supplierCodeSystem');
     }
+
     public function sub_category_by2(){
         return $this->belongsTo('App\Models\FixedAssetCategorySub','faSubCatID2','faCatSubID');
     }
+
     public function sub_category_by3(){
         return $this->belongsTo('App\Models\FixedAssetCategorySub','faSubCatID3','faCatSubID');
+    }
+
+    public function posttogl_by()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount','postToGLCodeSystemID','chartOfAccountSystemID');
     }
 
 }

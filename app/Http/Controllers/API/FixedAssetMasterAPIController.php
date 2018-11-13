@@ -18,6 +18,8 @@ use App\Http\Requests\API\CreateFixedAssetMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetMasterAPIRequest;
 use App\Models\AssetFinanceCategory;
 use App\Models\AssetType;
+use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DepartmentMaster;
@@ -35,10 +37,8 @@ use App\Models\FixedAssetMasterReferredHistory;
 use App\Models\GRVDetails;
 use App\Models\InsurancePolicyType;
 use App\Models\Location;
-use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
-use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\FixedAssetCostRepository;
@@ -224,7 +224,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
 
                 $lastSerialNumber = 1;
-                $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID', $input['companySystemID'])->first();
+                $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
                 if ($lastSerial) {
                     $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                 }
@@ -335,6 +335,124 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
     }
+
+
+    public function create(CreateFixedAssetMasterAPIRequest $request)
+    {
+        $input = $request->all();
+        $itemImgaeArr = $input['itemImage'];
+        $itemPicture = $input['itemPicture'];
+        $input = array_except($request->all(), 'itemImage');
+        $input = $this->convertArrayToValue($input);
+
+        DB::beginTransaction();
+        try {
+            $messages = [
+                'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
+            ];
+            $validator = \Validator::make($request->all(), [
+                'dateAQ' => 'required|date',
+                'dateDEP' => 'required|date|after_or_equal:dateAQ',
+            ], $messages);
+
+            if ($validator->fails()) {//echo 'in';exit;
+                return $this->sendError($validator->messages(), 422);
+            }
+
+            if (isset($input['itemPicture'])) {
+                if ($itemImgaeArr[0]['size'] > 31457280) {
+                    return $this->sendError("Maximum allowed file size is 30 MB. Please upload lesser than 30 MB.", 500);
+                }
+            }
+
+            $input['serviceLineSystemID'] = $input["serviceLineSystemID"];
+            $segment = SegmentMaster::find($input['serviceLineSystemID']);
+            if ($segment) {
+                $input['serviceLineCode'] = $segment->ServiceLineCode;
+            }
+
+            $company = Company::find($input['companySystemID']);
+            if ($company) {
+                $input['companyID'] = $company->CompanyID;
+            }
+
+            $department = DepartmentMaster::find($input['departmentSystemID']);
+            if ($department) {
+                $input['departmentID'] = $department->DepartmentID;
+            }
+
+            if($input['postToGLYN']) {
+                $chartOfAccount = ChartOfAccount::find($input['postToGLCodeSystemID']);
+                if (!empty($chartOfAccount)) {
+                    $input['postToGLCode'] = $chartOfAccount->AccountCode;
+                }
+                $input['postToGLYN'] = 1;
+            }else{
+                $input['postToGLYN'] = 0;
+            }
+
+            $input["documentSystemID"] = 22;
+            $input["documentID"] = 'FA';
+
+            if (isset($input['dateAQ'])) {
+                if ($input['dateAQ']) {
+                    $input['dateAQ'] = new Carbon($input['dateAQ']);
+                }
+            }
+
+            if (isset($input['dateDEP'])) {
+                if ($input['dateDEP']) {
+                    $input['dateDEP'] = new Carbon($input['dateDEP']);
+                }
+            }
+
+            if (isset($input['lastVerifiedDate'])) {
+                if ($input['lastVerifiedDate']) {
+                    $input['lastVerifiedDate'] = new Carbon($input['lastVerifiedDate']);
+                }
+            }
+
+            $lastSerialNumber = 1;
+            $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+            }
+
+            $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+
+            $input["serialNo"] = $lastSerialNumber;
+            $input["faCode"] = $documentCode;
+
+            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], 2, 2, $input['costUnitRpt']);
+            if($companyCurrencyConversion) {
+                $input['COSTUNIT'] = $companyCurrencyConversion['localAmount'];
+            }
+
+            $input['createdPcID'] = gethostname();
+            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            unset($input['itemPicture']);
+            $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
+
+            if ($itemPicture) {
+                $decodeFile = base64_decode($itemImgaeArr[0]['file']);
+                $extension = $itemImgaeArr[0]['filetype'];
+                $data['itemPicture'] = $input['companyID'] . '_' . $input["documentID"] . '_' . $fixedAssetMasters['faID'] . '.' . $extension;
+
+                $path = $input["documentID"] . '/' . $fixedAssetMasters['faID'] . '/' . $data['itemPicture'];
+                $data['itemPath'] = $path;
+                Storage::disk('public')->put($path, $decodeFile);
+                $fixedAssetMasters = $this->fixedAssetMasterRepository->update($data, $fixedAssetMasters['faID']);
+            }
+
+            DB::commit();
+            return $this->sendResponse($fixedAssetMasters->toArray(), 'Fixed Asset Master saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
 
     /**
      * @param int $id
@@ -469,6 +587,16 @@ class FixedAssetMasterAPIController extends AppBaseController
             $department = DepartmentMaster::find($input['departmentSystemID']);
             if ($department) {
                 $input['departmentID'] = $department->DepartmentID;
+            }
+
+            if($input['postToGLYN']) {
+                $chartOfAccount = ChartOfAccount::find($input['postToGLCodeSystemID']);
+                if (!empty($chartOfAccount)) {
+                    $input['postToGLCode'] = $chartOfAccount->AccountCode;
+                }
+                $input['postToGLYN'] = 1;
+            }else{
+                $input['postToGLYN'] = 0;
             }
 
             if (isset($input['dateAQ'])) {
@@ -637,7 +765,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             'fixedAssetCategory' => $fixedAssetCategory,
             'supplier' => $supplier,
             'location' => $location,
-            'insuranceType' => $insuranceType,
+            'insuranceType' => $insuranceType
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -797,7 +925,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAssetCostingByID($id)
     {
         /** @var FixedAssetMaster $fixedAssetMaster */
-        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to'])->findWithoutFail($id);
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'posttogl_by'])->findWithoutFail($id);
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
@@ -1249,7 +1377,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
 
     }
-    
+
 
     function referBackCosting(Request $request)
     {
@@ -1309,4 +1437,28 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
     }
+
+
+    public function getPostToGLAccounts(request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+
+        $items = ChartOfAccountsAssigned::where('companySystemID', $companyID)
+            ->where('isAssigned', -1)
+            ->where('isActive', 1);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('AccountCode', 'LIKE', "%{$search}%")
+                    ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+
+    }
+
 }

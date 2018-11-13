@@ -1472,7 +1472,7 @@ class Helper
                                 $qtyRangeArr = [];
                                 if ($fixeAssetDetail) {
                                     $lastSerialNumber = 1;
-                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID', $docApproved->companySystemID)->first();
+                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
                                     if ($lastSerial) {
                                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                                     }
@@ -1517,6 +1517,12 @@ class Helper
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
                                 if ($sourceModel->disposalType == 1 || $sourceModel->disposalType == 6) {
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel);
+                                }
+                                $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
+                                if(count($updateDisposed) > 0){
+                                    foreach ($updateDisposed as $val){
+                                        $faMaster = Models\FixedAssetMaster::find($val->faID)->update(['DIPOSED' => 1, 'disposedDate' => NOW(), 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
+                                    }
                                 }
                             }
 
@@ -2361,6 +2367,11 @@ class Helper
 
                 $disposalDetail = Models\AssetDisposalDetail::create($dpDetail);
                 if ($disposalDetail) {
+                    $asset->DIPOSED = 1;
+                    $asset->disposedDate = NOW();
+                    $asset->assetdisposalMasterAutoID = $output['assetdisposalMasterAutoID'];
+                    $asset->save();
+
                     $params = array('autoID' => $output['assetdisposalMasterAutoID'], 'company' => $fixedCapital['companySystemID'], 'document' => 41, 'segment' => '', 'category' => '', 'amount' => 0);
                     $assetDisposalDetail = self::confirmWithoutRuleDocument($params);
                 }
@@ -2370,7 +2381,7 @@ class Helper
             if ($capitalizeDetail) {
                 foreach ($capitalizeDetail as $val) {
                     $lastSerialNumber = 1;
-                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->where('companySystemID', $masterData['companySystemID'])->first();
+                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
                     if ($lastSerial) {
                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                     }
@@ -2398,6 +2409,7 @@ class Helper
                     $data["confirmedByEmpID"] = null;
                     $data["confirmedDate"] = null;
                     $data["approved"] = 0;
+                    $data["assetType"] = 1;
                     $data["approvedDate"] = null;
                     $data["approvedByUserID"] = null;
                     $data["approvedByUserSystemID"] = null;
