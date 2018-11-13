@@ -2409,6 +2409,7 @@ class Helper
                     $data["confirmedByEmpID"] = null;
                     $data["confirmedDate"] = null;
                     $data["approved"] = 0;
+                    $data["assetType"] = 1;
                     $data["approvedDate"] = null;
                     $data["approvedByUserID"] = null;
                     $data["approvedByUserSystemID"] = null;
