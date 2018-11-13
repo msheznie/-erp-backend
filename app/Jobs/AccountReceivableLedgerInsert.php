@@ -136,8 +136,8 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['documentCode'] = $masterData->bookingInvCode;
                             $data['documentDate'] = $masterDocumentDate;
                             $data['customerID'] = $masterData->customerID;
-                            $data['InvoiceNo'] = null;
-                            $data['InvoiceDate'] = null;
+                            $data['InvoiceNo'] = $masterData->customerInvoiceNo;
+                            $data['InvoiceDate'] = $masterData->customerInvoiceDate;
                             $data['custTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                             $data['custTransER'] = $masterData->custTransactionCurrencyER;
                             $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
