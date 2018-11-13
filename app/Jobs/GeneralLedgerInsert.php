@@ -1848,103 +1848,120 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
                         break;
                     case 22: // FA - Fixed Asset Master
-                        $masterData = FixedAssetMaster::with(['grvdetail_by'])->find($masterModel["autoID"]);
+                        $masterData = FixedAssetMaster::with(['grvdetail_by', 'posttogl_by'])->find($masterModel["autoID"]);
                         $companyCurrency = Company::find($masterModel["companySystemID"]);
 
                         if ($masterData) {
-                            $data['companySystemID'] = $masterData->companySystemID;
-                            $data['companyID'] = $masterData->companyID;
-                            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
-                            $data['serviceLineCode'] = $masterData->serviceLineCode;
-                            $data['masterCompanyID'] = null;
-                            $data['documentSystemID'] = $masterData->documentSystemID;
-                            $data['documentID'] = $masterData->documentID;
-                            $data['documentSystemCode'] = $masterModel["autoID"];
-                            $data['documentCode'] = $masterData->faCode;
-                            $data['documentDate'] = date('Y-m-d H:i:s');
-                            $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
-                            $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
-                            $data['documentConfirmedDate'] = $masterData->confirmedDate;
-                            $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
-                            $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
-                            $data['documentFinalApprovedDate'] = $masterData->approvedDate;
-                            $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
-                            $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-                            $data['documentNarration'] = $masterData->COMMENTS;
-                            $data['clientContractID'] = 'X';
-                            $data['contractUID'] = 159;
-                            $data['supplierCodeSystem'] = 0;
-                            $data['chartOfAccountSystemID'] = $masterData->costglCodeSystemID;
-                            $data['glCode'] = $masterData->COSTGLCODE;
-                            $data['glAccountType'] = 'BS';
-                            $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
-                            $data['documentLocalCurrencyER'] = 0;
-                            $data['documentLocalAmount'] = ABS($masterData->COSTUNIT);
-                            $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
-                            $data['documentRptCurrencyER'] = 0;
-                            $data['documentRptAmount'] = ABS($masterData->costUnitRpt);
-                            $data['documentTransCurrencyID'] = 0;
-                            $data['documentTransCurrencyER'] = 0;
-                            $data['documentTransAmount'] = 0;
-                            $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = 0;
-                            $data['nonHoldingPercentage'] = 0;
-                            $data['contraYN'] = 0;
-                            $data['createdDateTime'] = \Helper::currentDateTime();
-                            $data['createdUserID'] = $empID->empID;
-                            $data['createdUserSystemID'] = $empID->employeeSystemID;
-                            $data['createdUserPC'] = gethostname();
-                            $data['timestamp'] = \Helper::currentDateTime();
-                            array_push($finalData, $data);
+                            if ($masterData->assetType == 1) {
+                                $data['companySystemID'] = $masterData->companySystemID;
+                                $data['companyID'] = $masterData->companyID;
+                                $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
+                                $data['serviceLineCode'] = $masterData->serviceLineCode;
+                                $data['masterCompanyID'] = null;
+                                $data['documentSystemID'] = $masterData->documentSystemID;
+                                $data['documentID'] = $masterData->documentID;
+                                $data['documentSystemCode'] = $masterModel["autoID"];
+                                $data['documentCode'] = $masterData->faCode;
+                                $data['documentDate'] = date('Y-m-d H:i:s');
+                                $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
+                                $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
+                                $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                                $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                                $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+                                $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                                $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                                $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                                $data['documentNarration'] = $masterData->COMMENTS;
+                                $data['clientContractID'] = 'X';
+                                $data['contractUID'] = 159;
+                                $data['supplierCodeSystem'] = 0;
+                                $data['chartOfAccountSystemID'] = $masterData->costglCodeSystemID;
+                                $data['glCode'] = $masterData->COSTGLCODE;
+                                $data['glAccountType'] = 'BS';
+                                $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = 0;
+                                $data['documentLocalAmount'] = ABS($masterData->COSTUNIT);
+                                $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                $data['documentRptCurrencyER'] = 0;
+                                $data['documentRptAmount'] = ABS($masterData->costUnitRpt);
+                                $data['documentTransCurrencyID'] = 0;
+                                $data['documentTransCurrencyER'] = 0;
+                                $data['documentTransAmount'] = 0;
+                                $data['holdingShareholder'] = null;
+                                $data['holdingPercentage'] = 0;
+                                $data['nonHoldingPercentage'] = 0;
+                                $data['contraYN'] = 0;
+                                $data['createdDateTime'] = \Helper::currentDateTime();
+                                $data['createdUserID'] = $empID->empID;
+                                $data['createdUserSystemID'] = $empID->employeeSystemID;
+                                $data['createdUserPC'] = gethostname();
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                array_push($finalData, $data);
 
-                            //if the asset from asset capitalization pass a gl entry
-                            if ($masterData->docOriginSystemCode) {
-                                if ($masterData->docOriginDocumentSystemID == 63) {
-                                    $assetCapitalization = AssetCapitalization::find($masterData->docOriginSystemCode);
-                                    if ($assetCapitalization) {
-                                        $data['chartOfAccountSystemID'] = $assetCapitalization->contraAccountSystemID;
-                                        $data['glCode'] = $assetCapitalization->contraAccountGLCode;
-                                        $data['glAccountType'] = 'BS';
-                                        $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
-                                        $data['documentLocalCurrencyER'] = 0;
-                                        $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
-                                        $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
-                                        $data['documentRptCurrencyER'] = 0;
-                                        $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
-                                        $data['contraYN'] = -1;
-                                        $data['timestamp'] = \Helper::currentDateTime();
-                                        array_push($finalData, $data);
+                                //if the asset from asset capitalization pass a gl entry
+                                if ($masterData->docOriginSystemCode) {
+                                    if ($masterData->docOriginDocumentSystemID == 63) {
+                                        $assetCapitalization = AssetCapitalization::find($masterData->docOriginSystemCode);
+                                        if ($assetCapitalization) {
+                                            $data['chartOfAccountSystemID'] = $assetCapitalization->contraAccountSystemID;
+                                            $data['glCode'] = $assetCapitalization->contraAccountGLCode;
+                                            $data['glAccountType'] = 'BS';
+                                            $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = 0;
+                                            $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
+                                            $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                            $data['documentRptCurrencyER'] = 0;
+                                            $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
+                                            $data['contraYN'] = -1;
+                                            $data['timestamp'] = \Helper::currentDateTime();
+                                            array_push($finalData, $data);
+                                        }
+                                    } else {
+                                        if ($masterData->grvdetail_by) {
+                                            $data['chartOfAccountSystemID'] = $masterData->grvdetail_by->financeGLcodebBSSystemID;
+                                            $data['glCode'] = $masterData->grvdetail_by->financeGLcodebBS;
+                                            $data['glAccountType'] = 'BS';
+                                            $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = 0;
+                                            $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
+                                            $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                            $data['documentRptCurrencyER'] = 0;
+                                            $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
+                                            $data['contraYN'] = 0;
+                                            $data['timestamp'] = \Helper::currentDateTime();
+                                            array_push($finalData, $data);
+                                        }
                                     }
                                 } else {
-                                    if ($masterData->grvdetail_by) {
-                                        $data['chartOfAccountSystemID'] = $masterData->grvdetail_by->financeGLcodebBSSystemID;
-                                        $data['glCode'] = $masterData->grvdetail_by->financeGLcodebBS;
-                                        $data['glAccountType'] = 'BS';
+                                    if ($masterData->postToGLYN) {
+                                        $data['chartOfAccountSystemID'] = $masterData->postToGLCodeSystemID;
+                                        $data['glCode'] = $masterData->postToGLCode;
+                                        $data['glAccountType'] = $masterData->posttogl_by->catogaryBLorPL;
                                         $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
                                         $data['documentLocalCurrencyER'] = 0;
                                         $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
                                         $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
                                         $data['documentRptCurrencyER'] = 0;
                                         $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
-                                        $data['contraYN'] = 0;
                                         $data['timestamp'] = \Helper::currentDateTime();
+                                        $data['contraYN'] = 0;
                                         array_push($finalData, $data);
+                                    } else {
+                                        if ($masterData->grvdetail_by) {
+                                            $data['chartOfAccountSystemID'] = $masterData->grvdetail_by->financeGLcodebBSSystemID;
+                                            $data['glCode'] = $masterData->grvdetail_by->financeGLcodebBS;
+                                            $data['glAccountType'] = 'BS';
+                                            $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
+                                            $data['documentLocalCurrencyER'] = 0;
+                                            $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
+                                            $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
+                                            $data['documentRptCurrencyER'] = 0;
+                                            $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
+                                            $data['timestamp'] = \Helper::currentDateTime();
+                                            $data['contraYN'] = 0;
+                                            array_push($finalData, $data);
+                                        }
                                     }
-                                }
-                            } else {
-                                if ($masterData->grvdetail_by) {
-                                    $data['chartOfAccountSystemID'] = $masterData->grvdetail_by->financeGLcodebBSSystemID;
-                                    $data['glCode'] = $masterData->grvdetail_by->financeGLcodebBS;
-                                    $data['glAccountType'] = 'BS';
-                                    $data['documentLocalCurrencyID'] = $companyCurrency->localCurrencyID;
-                                    $data['documentLocalCurrencyER'] = 0;
-                                    $data['documentLocalAmount'] = ABS($masterData->COSTUNIT) * -1;
-                                    $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
-                                    $data['documentRptCurrencyER'] = 0;
-                                    $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
-                                    $data['timestamp'] = \Helper::currentDateTime();
-                                    $data['contraYN'] = 0;
-                                    array_push($finalData, $data);
                                 }
                             }
                         }
@@ -2175,7 +2192,7 @@ class GeneralLedgerInsert implements ShouldQueue
                                         }
                                     }
                                 }
-                            }else {
+                            } else {
                                 if ($disposal) {
                                     foreach ($disposal as $val) {
                                         $data['serviceLineSystemID'] = $val->serviceLineSystemID;
