@@ -937,7 +937,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             //updating master table
             if ($matchDocumentMaster->documentSystemID == 21) {
 
-                $CustomerReceivePaymentData = CustomerReceivePayment::find($matchDocumentMaster->PayMasterAutoId);
+                $CustomerReceivePaymentDataUpdate = CustomerReceivePayment::find($matchDocumentMaster->PayMasterAutoId);
 
                 $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
                     ->where('custReceivePaymentAutoID', $matchDocumentMaster->PayMasterAutoId)
@@ -957,16 +957,13 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 }
 
                 if ($machAmount == 0) {
-                    $CustomerReceivePaymentData->matchInvoice = 0;
-                    $CustomerReceivePaymentData->save();
+                    $CustomerReceivePaymentDataUpdate->matchInvoice = 0;
                 } else if ($receiveAmountTot == $machAmount || $machAmount > $receiveAmountTot) {
-                    $CustomerReceivePaymentData->matchInvoice = 2;
-                    $CustomerReceivePaymentData->save();
+                    $CustomerReceivePaymentDataUpdate->matchInvoice = 2;
                 } else if (($receiveAmountTot > $machAmount) && ($machAmount > 0)) {
-                    $CustomerReceivePaymentData->matchInvoice = 1;
-                    $CustomerReceivePaymentData->save();
+                    $CustomerReceivePaymentDataUpdate->matchInvoice = 1;
                 }
-
+                $CustomerReceivePaymentDataUpdate->save();
             } elseif ($matchDocumentMaster->documentSystemID == 19) {
 
                 $creditNoteData = CreditNote::find($matchDocumentMaster->PayMasterAutoId);
