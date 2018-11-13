@@ -149,6 +149,12 @@ class AssetCapitalizationAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
+            $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->first();
+
+            if($assetCapitalizations){
+                return $this->sendError('Selected asset is already added for capitalization', 500);
+            }
+
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
@@ -356,6 +362,12 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             if (empty($assetCapitalization)) {
                 return $this->sendError('Asset Capitalization not found');
+            }
+
+            $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->where('faID', '<>',  $input['faID'])->first();
+
+            if($assetCapitalizations){
+                return $this->sendError('Selected asset is already added for capitalization', 500);
             }
 
             $companySystemID = $assetCapitalization->companySystemID;
