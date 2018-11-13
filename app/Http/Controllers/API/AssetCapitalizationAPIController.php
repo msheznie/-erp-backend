@@ -364,7 +364,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                 return $this->sendError('Asset Capitalization not found');
             }
 
-            $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->where('faID', '<>',  $input['faID'])->first();
+            $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->where('capitalizationID', '<>',  $id)->first();
 
             if($assetCapitalizations){
                 return $this->sendError('Selected asset is already added for capitalization', 500);
