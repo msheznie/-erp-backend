@@ -939,7 +939,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 $CustomerReceivePaymentData = CustomerReceivePayment::find($matchDocumentMaster->PayMasterAutoId);
 
-                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)->where('documentSystemID', $matchDocumentMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentSystemID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)->where('documentSystemID', $matchDocumentMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
                 $machAmount = 0;
                 if ($matchedAmount) {
@@ -949,6 +949,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 if($CustomerReceivePaymentData){
                     $receiveAmountTot = abs($CustomerReceivePaymentData->receivedAmount);
                 }
+                //echo $receiveAmountTot."-".$machAmount;
+                //exit();
                 if ($machAmount == 0) {
                     $CustomerReceivePaymentData->matchInvoice = 0;
                     $CustomerReceivePaymentData->save();
@@ -978,7 +980,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
-                $totalPaidAmount = (($customerSettleAmountSum["SumDetailAmount"]) + $machAmount);
+                $totalPaidAmount = ($customerSettleAmountSum["SumDetailAmount"] + $machAmount);
 
                 if ($totalPaidAmount == 0) {
                     $creditNoteData->matchInvoice = 0;
