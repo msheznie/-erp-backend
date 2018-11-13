@@ -3183,8 +3183,12 @@ class Helper
 
     public static function appendToBankLedger($autoID)
     {
-        $custReceivePayment = Models\CustomerReceivePayment::find($autoID);
+        $custReceivePayment = Models\CustomerReceivePayment::with('finance_period_by')->find($autoID);
         if ($custReceivePayment) {
+            $masterDocumentDate = date('Y-m-d H:i:s');
+            if ($custReceivePayment->finance_period_by->isActive == -1) {
+                $masterDocumentDate = $custReceivePayment->postedDate;
+            }
             $data['companySystemID'] = $custReceivePayment->companySystemID;
             $data['companyID'] = $custReceivePayment->companyID;
             $data['documentSystemID'] = $custReceivePayment->documentSystemID;
@@ -3192,7 +3196,7 @@ class Helper
             $data['documentSystemCode'] = $custReceivePayment->custReceivePaymentAutoID;
             $data['documentCode'] = $custReceivePayment->custPaymentReceiveCode;
             $data['documentDate'] = $custReceivePayment->custPaymentReceiveDate;
-            $data['postedDate'] = $custReceivePayment->postedDate;
+            $data['postedDate'] = $masterDocumentDate;
             $data['documentNarration'] = $custReceivePayment->narration;
             $data['bankID'] = $custReceivePayment->bankID;
             $data['bankAccountID'] = $custReceivePayment->bankAccount;

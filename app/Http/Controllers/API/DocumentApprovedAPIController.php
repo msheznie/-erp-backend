@@ -811,9 +811,9 @@ FROM
 		AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID";
-        $output = DB::select($qry);
+        /*$output = DB::select($qry);*/
 
-        return $this->sendResponse($output[0]->totalCount, 'Document Approved deleted successfully');
+        return $this->sendResponse(0, 'Document Approved deleted successfully');
 
     }
 
