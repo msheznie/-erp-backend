@@ -318,6 +318,54 @@
                         </td>
                     </tr>
                     <tr>
+                        <td width="50px">
+                            <span class="font-weight-bold">Bank Name</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($masterdata->bankaccount)
+                                {{$masterdata->bankaccount->bankName}}
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="50px">
+                            <span class="font-weight-bold">Bank</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($masterdata->bankaccount)
+                                {{$masterdata->bankaccount->AccountNo}}
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="50px">
+                            <span class="font-weight-bold">Cheque No</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            <span>{{$masterdata->BPVchequeNo}}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="50px">
+                            <span class="font-weight-bold">Cheque Date</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            {{ \App\helper\Helper::dateFormat($masterdata->BPVchequeDate)}}
+                        </td>
+                    </tr>
+                    <tr>
                         <td width="70px">
                             <span class="font-weight-bold">Narration </span>
                         </td>
