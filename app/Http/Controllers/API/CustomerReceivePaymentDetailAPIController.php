@@ -661,8 +661,14 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
+        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
+
         if ($input['receiveAmountTrans'] == "") {
             $input['receiveAmountTrans'] = 0;
+        }
+
+        if (round($input['receiveAmountTrans'], $documentCurrencyDecimalPlace) > round($matchDocumentMasterData->matchBalanceAmount, $documentCurrencyDecimalPlace)) {
+            return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
         }
 
         // checking payment amount greater than balance amount
