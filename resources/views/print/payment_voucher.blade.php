@@ -319,6 +319,19 @@
                     </tr>
                     <tr>
                         <td width="50px">
+                            <span class="font-weight-bold">Bank Name</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($masterdata->bankaccount)
+                                {{$masterdata->bankaccount->bankName}}
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="50px">
                             <span class="font-weight-bold">Bank</span>
                         </td>
                         <td width="10px">
