@@ -44,7 +44,8 @@
  * -- Date: 31-July 2018 By: Nazir Description: Added new functions named as exportPoEmployeePerformance()
  * -- Date: 21-September 2018 By: fayas Description: Added new functions named as reportPoToPaymentFilterOptions(),reportPoToPayment(),
  *                                                   exportPoToPaymentReport()
- * -- Date: 21-September 2018 By: Nazir Description: Added new functions named as exportProcumentOrderMaster(),
+ * -- Date: 21-September 2018 By: Nazir Description: Added new functions named as exportProcumentOrderMaster()
+ * -- Date: 13-November 2018 By: Fayas Description: Added new functions named as getAdvancePaymentRequestStatusHistory(),
  */
 
 namespace App\Http\Controllers\API;
@@ -1048,7 +1049,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function getProcumentOrderByDocumentType(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable','financeCategory'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable', 'financeCategory'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -4197,7 +4198,7 @@ FROM
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName . " ".$procumentOrderUpdate->purchaseOrderCode;
+                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName . " " . $procumentOrderUpdate->purchaseOrderCode;
                     $dataEmail['emailAlertMessage'] = $temp;
                     Alert::create($dataEmail);
                 }
@@ -4229,7 +4230,7 @@ FROM
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName. " ".$procumentOrderUpdate->purchaseOrderCode ;
+                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName . " " . $procumentOrderUpdate->purchaseOrderCode;
                     $dataEmail['emailAlertMessage'] = $temp;
                     Alert::create($dataEmail);
                 }
@@ -5084,5 +5085,57 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $output = array('suppliers' => $suppliers);
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function getAdvancePaymentRequestStatusHistory(Request $request)
+    {
+        $input = $request->all();
+
+        $companySystemID = $input['companySystemID'];
+        $purchaseOrderID = $input['purchaseOrderID'];
+        $advancePaymentId = $input['poAdvPaymentID'];
+
+        $detail = DB::select('SELECT
+				erp_paysupplierinvoicemaster.PayMasterAutoId AS PayMasterAutoId,
+				suppliermaster.primarySupplierCode,
+			    suppliermaster.supplierName,
+			    erp_paysupplierinvoicemaster.BPVsupplierID,
+				erp_paysupplierinvoicemaster.documentID,
+				erp_paysupplierinvoicemaster.companyID,
+				"Advance Payment" AS paymentType,
+				erp_paysupplierinvoicemaster.BPVcode,
+				erp_paysupplierinvoicemaster.BPVdate,
+				"-" AS supplierInvoiceNo,
+				"-" AS supplierInvoiceDate,
+				erp_advancepaymentdetails.purchaseOrderID,
+				erp_advancepaymentdetails.supplierTransAmount AS TransAmount,
+				erp_advancepaymentdetails.localAmount AS LocalAmount,
+				erp_advancepaymentdetails.comRptAmount AS RptAmount,
+				erp_paysupplierinvoicemaster.trsClearedDate,
+				erp_paysupplierinvoicemaster.bankClearedDate,
+				erp_paysupplierinvoicemaster.approvedDate,
+				erp_paysupplierinvoicemaster.invoiceType,
+				erp_paysupplierinvoicemaster.confirmedYN,
+				erp_paysupplierinvoicemaster.approved,
+				cm1.CurrencyCode AS transactionCurrency,
+			    cm2.CurrencyCode AS localCurrency,
+			    cm3.CurrencyCode AS reportingCurrency,
+			    cm1.DecimalPlaces AS transactionDeci,
+				cm2.DecimalPlaces AS localDeci,
+				cm3.DecimalPlaces AS reportingDec
+			FROM
+				erp_paysupplierinvoicemaster
+			INNER JOIN erp_advancepaymentdetails ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_advancepaymentdetails.PayMasterAutoId
+			INNER JOIN suppliermaster ON erp_paysupplierinvoicemaster.BPVsupplierID = suppliermaster.supplierCodeSystem
+			INNER JOIN currencymaster cm1 ON cm1.currencyID = erp_advancepaymentdetails.supplierTransCurrencyID
+			INNER JOIN currencymaster cm2 ON cm2.currencyID = erp_advancepaymentdetails.localCurrencyID
+			INNER JOIN currencymaster cm3 ON cm3.currencyID = erp_advancepaymentdetails.comRptCurrencyID
+			WHERE
+				erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
+			AND erp_advancepaymentdetails.purchaseOrderID = ' . $purchaseOrderID . '
+			AND erp_advancepaymentdetails.poAdvPaymentID = ' . $advancePaymentId . '
+	');
+
+        return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
 }

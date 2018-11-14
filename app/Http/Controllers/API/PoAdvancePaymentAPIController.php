@@ -14,6 +14,7 @@
  * -- Date: 31-April 2018 By: Nazir Description: Added new functions named as getLogisticPrintDetail()
  * -- Date: 14-June 2018 By: Nazir Description: Added new functions named as loadPoPaymentTermsLogisticForGRV()
  * -- Date: 27-August 2018 By: Nazir Description: Added new functions named as getPoLogisticPrintPDF()
+ * -- Date: 13-November 2018 By: Nazir Description: Added new functions named as generateAdvancePaymentRequestReport()
  **/
 namespace App\Http\Controllers\API;
 
@@ -103,7 +104,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
         }
 
         //check record all ready exist
-        $poTermExist= PoAdvancePayment::where('poTermID', $input['paymentTermID'])
+        $poTermExist = PoAdvancePayment::where('poTermID', $input['paymentTermID'])
             ->where('poID', $input['poID'])
             ->first();
 
@@ -123,10 +124,10 @@ class PoAdvancePaymentAPIController extends AppBaseController
         $input['poTermID'] = $input['paymentTermID'];
         $input['narration'] = $input['paymentTemDes'];
 
-   /*     if (isset($input['comDate'])) {
-            $masterDate = str_replace('/', '-', $input['comDate']);
-            $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
-        }*/
+        /*     if (isset($input['comDate'])) {
+                 $masterDate = str_replace('/', '-', $input['comDate']);
+                 $input['reqDate'] = date('Y-m-d', strtotime($masterDate));
+             }*/
         $input['reqDate'] = date('Y-m-d H:i:s');
         $input['reqAmount'] = $input['comAmount'];
         $input['reqAmountTransCur_amount'] = $input['comAmount'];
@@ -424,7 +425,7 @@ ORDER BY
         $poAdvPaymentID = $input['poAdvPaymentID'];
         $typeID = $input['typeID'];
 
-        if($typeID == 1){
+        if ($typeID == 1) {
 
             $poPaymentTerms = PoAdvancePayment::where('poTermID', $poAdvPaymentID)
                 ->first();
@@ -501,7 +502,7 @@ ORDER BY
 
         $typeID = $request->get('typeID');
 
-        if($typeID == 1){
+        if ($typeID == 1) {
 
             $poPaymentTerms = PoAdvancePayment::where('poTermID', $id)
                 ->first();
@@ -556,6 +557,110 @@ ORDER BY
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+    }
+
+
+    public function generateAdvancePaymentRequestReport(Request $request)
+    {
+
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('invoiceType'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyId'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $advancePaymentRequest = PoAdvancePayment::whereIn('companySystemID', $subCompanies)
+            ->whereHas('po_master', function ($q) {
+                $q->where('poConfirmedYN', 1)
+                    ->where('approved', -1)
+                    ->where('poCancelledYN', 0);
+            })
+            ->when(request('invoiceType'), function ($q) use ($input) {
+                $q->where('purchaseRequestCode', $input['invoiceType']);
+            })
+            ->with(['supplier_by', 'currency', 'last_detail' => function ($q) {
+                $q->with(['pay_invoice' => function ($q1) {
+                    $q1->select('PayMasterAutoId', 'BPVcode', 'approved');
+                }]);
+            }, 'details' => function ($q) {
+                $q->selectRaw('erp_advancepaymentdetails.poAdvPaymentID,
+                            erp_advancepaymentdetails.PayMasterAutoId,
+                            Sum( erp_advancepaymentdetails.paymentAmount ) AS SumOfpaymentAmount,
+                            Sum( erp_advancepaymentdetails.supplierTransAmount ) AS SumOfsupplierTransAmount')->groupBy('poAdvPaymentID')
+                     ->whereNotNull('purchaseOrderID');
+            }]);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $advancePaymentRequest = $advancePaymentRequest->where(function ($query) use ($search) {
+                $query->where('poCode', 'LIKE', "%{$search}%")
+                    ->orWhere('SupplierPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($advancePaymentRequest)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('poAdvPaymentID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->addColumn('status', function ($row) {
+                return $this->getStatus($row);
+            })
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getStatus($row)
+    {
+        $approved = 0;
+        $status = 0;
+        $mySupplierTransAmount = 0;
+        if (count($row->details) > 0) {
+            $mySupplierTransAmount = $row->details[0]->SumOfpaymentAmount;
+        }
+
+        if ($row->last_detail) {
+            if ($row->last_detail->pay_invoice) {
+                $approved = $row->last_detail->pay_invoice->approved;
+            }
+        }
+
+
+        $RoundBalanceAmount = round($row->reqAmount - $mySupplierTransAmount);
+
+        if ($RoundBalanceAmount == 0 && $approved = -1) { //approved = -1
+            $status = 2;
+        } else if (($row->selectedToPayment == -1 || $row->selectedToPayment == 0) && $RoundBalanceAmount != 0 && $approved == -1) { //approved = -1
+            $status = 1;
+        } else if ($row->selectedToPayment == -1 && $approved == 0) { //approved = 0
+            $status = 3;
+        }
+
+        /*IIf([RoundBalanceAmount]=0 And [ERO_Qry_POAdvancePaymentSumOfPaidPayments]‌‌.[approved]‌‌=-1,2,
+        IIf(([selectedToPayment]=-1 Or [selectedToPayment]=0) And [RoundBalanceAmount]<>0 And [ERO_Qry_POAdvancePaymentSumOfPaidPayments]‌‌.[approved]‌‌=-1,1,
+        IIf([selectedToPayment]=-1 And [ERO_Qry_POAdvancePaymentSumOfPaidPayments]‌‌.[approved]=0,3,0)))*/
+        return $status;
+        return array('value' => $status,'RoundBalanceAmount' => $RoundBalanceAmount,'approved' => $approved);
     }
 
 

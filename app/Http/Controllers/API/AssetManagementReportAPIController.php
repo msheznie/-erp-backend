@@ -610,7 +610,7 @@ $x++;
 
                 $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                     $excel->sheet('asset register', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', false, false);
+                        $sheet->fromArray($data, null, 'A1', true, false);
                         $sheet->setAutoSize(true);
                         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                     });
@@ -1883,6 +1883,16 @@ WHERE
         $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
         $assetCategory = join(',', $assetCategory);
+        $searchText = $request->searchText;
+
+
+        $where="";
+        if($searchText !=''){
+            $searchText = str_replace("\\", "\\\\", $searchText);
+            $where=" AND ( assetGroup.faCode LIKE '%$searchText%' OR erp_fa_asset_master.assetDescription LIKE '%$searchText%' OR  
+            erp_fa_asset_master.faCode LIKE '%$searchText%' )  ";
+        }
+
 
         if ($request->excelType == 1) {
 
@@ -1975,10 +1985,10 @@ IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
 	dateDEP,
 	COSTUNIT,
 	IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
-	COSTUNIT - IFNULL( depAmountLocal, 0 ) AS localnbv,
+	IFNULL(COSTUNIT,0) - IFNULL( depAmountLocal, 0 ) AS localnbv,
 	costUnitRpt,
 	IFNULL( depAmountRpt, 0 ) AS depAmountRpt,
-	costUnitRpt - IFNULL( depAmountRpt, 0 ) AS rptnbv 
+	IFNULL(costUnitRpt,0) - IFNULL( depAmountRpt, 0 ) AS rptnbv 
 FROM
 	erp_fa_asset_master
 	LEFT JOIN (
@@ -2000,9 +2010,9 @@ FROM
 	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
 LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
-	erp_fa_asset_master.companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND approved =-1
+	erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
 	AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND  ((DIPOSED = - 1  AND (   disposedDate > '$asOfDate')) OR DIPOSED <>  -1)
-	
+	$where
 	) t  ORDER BY sortfaID desc  ";
 
 
