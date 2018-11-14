@@ -913,7 +913,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     if ($totReceiveAmount == 0) {
                         $arLedgerUpdate->fullyInvoiced = 0;
                         $arLedgerUpdate->selectedToPaymentInv = 0;
-                    } else if ($val->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount > $val->bookingAmountTrans) {
+                    } else if (($val->bookingAmountTrans == $totReceiveAmount) || ($totReceiveAmount > $val->bookingAmountTrans)) {
                         $arLedgerUpdate->fullyInvoiced = 2;
                         $arLedgerUpdate->selectedToPaymentInv = -1;
                     } else if (($val->bookingAmountTrans > $totReceiveAmount) && ($totReceiveAmount > 0)) {
@@ -924,7 +924,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     if ($totReceiveAmount == 0) {
                         $arLedgerUpdate->fullyInvoiced = 0;
                         $arLedgerUpdate->selectedToPaymentInv = 0;
-                    } else if ($val->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount < $val->bookingAmountTrans) {
+                    } else if (($val->bookingAmountTrans == $totReceiveAmount) || ($totReceiveAmount < $val->bookingAmountTrans)) {
                         $arLedgerUpdate->fullyInvoiced = 2;
                         $arLedgerUpdate->selectedToPaymentInv = -1;
                     } else if (($val->bookingAmountTrans < $totReceiveAmount) && ($totReceiveAmount < 0)) {
@@ -960,7 +960,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 if ($machAmount == 0) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 0;
-                } else if (round($receiveAmountTot,$supplierCurrencyDecimalPlace) == round($machAmount, $supplierCurrencyDecimalPlace) || round($machAmount, $supplierCurrencyDecimalPlace) > round($receiveAmountTot, $supplierCurrencyDecimalPlace)) {
+                } else if ((round($receiveAmountTot,$supplierCurrencyDecimalPlace) == round($machAmount, $supplierCurrencyDecimalPlace)) || (round($machAmount, $supplierCurrencyDecimalPlace) > round($receiveAmountTot, $supplierCurrencyDecimalPlace))) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 2;
                 } else if ((round($receiveAmountTot, $supplierCurrencyDecimalPlace) > round($machAmount, $supplierCurrencyDecimalPlace)) && (round($machAmount, $supplierCurrencyDecimalPlace) > 0)) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 1;
@@ -1002,7 +1002,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 if ($totalPaidAmount == 0) {
                     $creditNoteData->matchInvoice = 0;
                     $creditNoteData->save();
-                } else if (round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace) == round($totalPaidAmount, $supplierCurrencyDecimalPlace) || round($totalPaidAmount, $supplierCurrencyDecimalPlace) > round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace)) {
+                } else if ((round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace) == round($totalPaidAmount, $supplierCurrencyDecimalPlace)) || (round($totalPaidAmount, $supplierCurrencyDecimalPlace) > round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace))) {
                     $creditNoteData->matchInvoice = 2;
                     $creditNoteData->save();
                 } else if ((round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace) > round($totalPaidAmount, $supplierCurrencyDecimalPlace)) && (round($totalPaidAmount, $supplierCurrencyDecimalPlace) > 0)) {
