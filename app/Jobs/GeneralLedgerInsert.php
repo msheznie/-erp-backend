@@ -1613,7 +1613,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
                         break;
                     case 21: // BRV - Customer Receive Payment
-                        $masterData = CustomerReceivePayment::with(['bank'])->find($masterModel["autoID"]);
+                        $masterData = CustomerReceivePayment::with(['bank', 'finance_period_by'])->find($masterModel["autoID"]);
 
                         //get balancesheet account
                         $cpd = CustomerReceivePaymentDetail::selectRaw("SUM(receiveAmountLocal) as localAmount, SUM(receiveAmountRpt) as rptAmount,SUM(receiveAmountTrans) as transAmount,localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,custTransactionCurrencyID as transCurrencyID,companyReportingER as reportingCurrencyER,localCurrencyER as localCurrencyER,custTransactionCurrencyER as transCurrencyER")->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])->first();
@@ -1622,6 +1622,11 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         //get p&l account
                         $dd = DirectReceiptDetail::with(['chartofaccount'])->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,comments,chartOfAccountSystemID")->WHERE('directReceiptAutoID', $masterModel["autoID"])->whereNotNull('serviceLineSystemID')->whereNotNull('chartOfAccountSystemID')->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'comments')->get();
+
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+                        if ($masterData->finance_period_by->isActive == -1) {
+                            $masterDocumentDate = $masterData->custPaymentReceiveDate;
+                        }
 
                         if ($masterData) {
                             $data['companySystemID'] = $masterData->companySystemID;
@@ -1633,9 +1638,9 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['documentID'] = $masterData->documentID;
                             $data['documentSystemCode'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->custPaymentReceiveCode;
-                            $data['documentDate'] = date('Y-m-d H:i:s');
-                            $data['documentYear'] = \Helper::dateYear($masterData->custPaymentReceiveDate);
-                            $data['documentMonth'] = \Helper::dateMonth($masterData->custPaymentReceiveDate);
+                            $data['documentDate'] = $masterDocumentDate;
+                            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
                             $data['documentConfirmedDate'] = $masterData->confirmedDate;
                             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -2231,6 +2236,91 @@ class GeneralLedgerInsert implements ShouldQueue
                     Log::info('Successfully inserted to GL table ' . date('H:i:s'));
 
                     if ($generalLedgerInsert) {
+                        // updating posted date in relevant documents
+
+                        // getting general ledger document date
+                        $glDocumentDate = GeneralLedger::selectRaw('documentDate')
+                            ->where('documentSystemID', $masterModel["documentSystemID"])
+                            ->where('companySystemID', $masterModel["companySystemID"])
+                            ->where('documentSystemCode', $masterModel["autoID"])
+                            ->first();
+
+                        switch ($masterModel["documentSystemID"]) {
+                            case 11: // Supplier Invoice
+                                $documentUpdateData = BookInvSuppMaster::find($masterModel["autoID"]);
+
+                                if ($glDocumentDate) {
+                                    $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                                    $documentUpdateData->save();
+                                }
+                                break;
+                            case 15: // Debit note
+                                $documentUpdateData = DebitNote::find($masterModel["autoID"]);
+
+                                if ($glDocumentDate) {
+                                    $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                                    $documentUpdateData->save();
+                                }
+                                break;
+                            case 4: // Payment Voucher
+                                $documentUpdateData = PaySupplierInvoiceMaster::find($masterModel["autoID"]);
+
+                                if ($glDocumentDate) {
+                                    $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                                    $documentUpdateData->save();
+                                }
+                                break;
+                            case 20: // Customer Invoice
+                                $documentUpdateData = CustomerInvoiceDirect::find($masterModel["autoID"]);
+
+                                if ($glDocumentDate) {
+                                    $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                                    $documentUpdateData->save();
+                                }
+                                break;
+                            case 19: // Credit Note
+                                $documentUpdateData = CreditNote::find($masterModel["autoID"]);
+
+                                if ($glDocumentDate) {
+                                    $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                                    $documentUpdateData->save();
+                                }
+                                break;
+                            case 21: //  Customer Receipt Voucher
+                                $documentUpdateData = CustomerReceivePayment::find($masterModel["autoID"]);
+
+                                if ($glDocumentDate) {
+                                    $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                                    $documentUpdateData->save();
+                                }
+                                break;
+                            case 17: //  Journal Voucher
+                                $documentUpdateData = JvMaster::find($masterModel["autoID"]);
+
+                                if ($glDocumentDate) {
+                                    $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                                    $documentUpdateData->save();
+                                }
+                                break;
+                            case 10: //  Stock Receive
+                                $documentUpdateData = StockReceive::find($masterModel["autoID"]);
+
+                                if ($glDocumentDate) {
+                                    $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                                    $documentUpdateData->save();
+                                }
+                                break;
+                            case 13: //  Stock Transfer
+                                $documentUpdateData = StockTransfer::find($masterModel["autoID"]);
+
+                                if ($glDocumentDate) {
+                                    $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                                    $documentUpdateData->save();
+                                }
+                                break;
+                            default:
+                                Log::warning('Posted date document id not found ' . date('H:i:s'));
+                        }
                         if (in_array($masterModel["documentSystemID"], [15, 11, 4])) {
                             $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
                         }

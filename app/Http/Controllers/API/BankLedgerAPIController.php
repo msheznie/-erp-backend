@@ -524,6 +524,7 @@ class BankLedgerAPIController extends AppBaseController
             ->where('payAmountBank', $type, 0)
             ->where("bankAccountID", $input['bankAccountAutoID'])
             ->where("trsClearedYN", -1)
+            ->whereDate("postedDate",'<=' ,$bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($input, $confirmed) {
                 $q->where(function ($q1) use ($input) {
                     $q1->where('bankRecAutoID', $input['bankRecAutoID'])
