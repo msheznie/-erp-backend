@@ -982,7 +982,12 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
-                $totalPaidAmount = ($customerSettleAmountSum["SumDetailAmount"] + $machAmount);
+                $customerDetailSum = 0;
+                if ($customerSettleAmountSum) {
+                    $customerDetailSum = abs($customerSettleAmountSum["SumDetailAmount"]);
+                }
+
+                $totalPaidAmount = ($customerDetailSum + $machAmount);
 
                 if ($totalPaidAmount == 0) {
                     $creditNoteData->matchInvoice = 0;
@@ -1472,13 +1477,13 @@ HAVING
 	erp_creditnote.customerID,
 	currency.CurrencyCode,
 	currency.DecimalPlaces,
-	erp_creditnote.creditAmountTrans as SumOfreceiveAmountTrans,
+	erp_creditnote.creditAmountTrans AS SumOfreceiveAmountTrans,
 	(
 		erp_creditnote.creditAmountTrans - (
-			IFNULL(
+			(IFNULL(
 				receipt.SumOfreceiptAmount,
 				0
-			) + IFNULL(advd.SumOfmatchingAmount, 0)
+			) * -1) + IFNULL(advd.SumOfmatchingAmount, 0)
 		)
 	) AS BalanceAmt
 FROM
@@ -1495,13 +1500,13 @@ LEFT JOIN (
 	FROM
 		erp_custreceivepaymentdet
 	WHERE
-		bookingInvCode = '0'
+		bookingInvCode <> '0'
 	GROUP BY
 		addedDocumentSystemID,
 		bookingInvCodeSystem,
 		companySystemID
 ) AS receipt ON (
-	receipt.custReceivePaymentAutoID = erp_creditnote.creditNoteAutoID
+	receipt.bookingInvCodeSystem = erp_creditnote.creditNoteAutoID
 	AND receipt.addedDocumentSystemID = erp_creditnote.documentSystemiD
 	AND receipt.companySystemID = erp_creditnote.companySystemID
 )
