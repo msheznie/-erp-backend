@@ -137,7 +137,7 @@ class AccountPayableLedgerInsert implements ShouldQueue
                             $data['documentDate'] = $masterDocumentDate;
                             $data['supplierCodeSystem'] = $masterData->supplierID;
                             $data['supplierInvoiceNo'] = $masterData->supplierInvoiceNo;
-                            $data['supplierInvoiceDate'] = $masterData->bookingDate;
+                            $data['supplierInvoiceDate'] = $masterData->supplierInvoiceDate;
 
                             if ($masterData->documentType == 0) { // check if it is supplier invoice
                                 $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;

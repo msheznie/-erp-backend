@@ -13,8 +13,6 @@
 
 Route::group(['middleware' => 'auth:api'], function () {
 
-    /** Warehouse master Created by Fayas  */
-
     Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
@@ -884,6 +882,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
     Route::post('paymentVoucherCancel', 'PaySupplierInvoiceMasterAPIController@paymentVoucherCancel');
+    Route::post('updateSentToTreasuryDetail', 'PaySupplierInvoiceMasterAPIController@updateSentToTreasuryDetail');
 
     Route::get('getRVPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getRVPaymentVoucherMatchItems');
 
@@ -914,9 +913,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
     Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData');
+    Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts');
     Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany');
     Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
     Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
+    Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
     Route::resource('credit_notes', 'CreditNoteAPIController');
     Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
     Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController');
@@ -1091,6 +1092,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('period_masters', 'PeriodMasterAPIController');
     Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
     Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
+    Route::get('getAssetCostingViewByFaID/{id}', 'FixedAssetMasterAPIController@getAssetCostingViewByFaID');
 
     Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
     Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
@@ -1120,6 +1122,7 @@ Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
 Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
 Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
 Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
+Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
 
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
@@ -1129,8 +1132,8 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 41,'autoID' => 247, 'companySystemID' => 52, 'employeeSystemID' => 2664];
-    //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    $master = ['documentSystemID' => 22,'autoID' => 70190, 'companySystemID' => 52, 'employeeSystemID' => 2664];
+    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76750);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
@@ -1152,7 +1155,6 @@ Route::get('runQueue', function () {
         $lastrow = $excel->getActiveSheet()->getHighestRow();
         $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
     })->download('csv');
-
 });
 
 Route::get('runQueueSR', function () {

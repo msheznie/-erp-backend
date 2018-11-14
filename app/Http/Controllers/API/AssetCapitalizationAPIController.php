@@ -149,6 +149,12 @@ class AssetCapitalizationAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
+            $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->first();
+
+            if($assetCapitalizations){
+                return $this->sendError('Selected asset is already added for capitalization', 500);
+            }
+
             $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
@@ -287,7 +293,9 @@ class AssetCapitalizationAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        }, 'contra_account'])->findWithoutFail($id);
+        }, 'contra_account', 'asset_by' => function ($query) {
+            $query->selectRaw("CONCAT(faCode,' - ',assetDescription) as assetName,faID");
+        }])->findWithoutFail($id);
 
         if (empty($assetCapitalization)) {
             return $this->sendError('Asset Capitalization not found');
@@ -354,6 +362,12 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             if (empty($assetCapitalization)) {
                 return $this->sendError('Asset Capitalization not found');
+            }
+
+            $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->where('capitalizationID', '<>',  $id)->first();
+
+            if($assetCapitalizations){
+                return $this->sendError('Selected asset is already added for capitalization', 500);
             }
 
             $companySystemID = $assetCapitalization->companySystemID;
