@@ -288,6 +288,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '<', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
+            ->whereDate("postedDate",'<=' ,$bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation, $confirmed) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -301,6 +302,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
+            ->whereDate("postedDate",'<=' ,$bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation, $confirmed) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -314,6 +316,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '<', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
+            ->whereDate("postedDate",'<=' ,$bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -325,6 +328,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
+            ->whereDate("postedDate",'<=' ,$bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)

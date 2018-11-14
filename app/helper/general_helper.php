@@ -3187,7 +3187,7 @@ class Helper
         if ($custReceivePayment) {
             $masterDocumentDate = date('Y-m-d H:i:s');
             if ($custReceivePayment->finance_period_by->isActive == -1) {
-                $masterDocumentDate = $custReceivePayment->postedDate;
+                $masterDocumentDate = $custReceivePayment->custPaymentReceiveDate;
             }
             $data['companySystemID'] = $custReceivePayment->companySystemID;
             $data['companyID'] = $custReceivePayment->companyID;
