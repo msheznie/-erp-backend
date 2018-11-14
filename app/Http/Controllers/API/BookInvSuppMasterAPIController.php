@@ -169,7 +169,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])->first();
+        $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])
+            ->where('supplierID', $input['supplierID'])
+            ->first();
 
         if ($alreadyAdded) {
             return $this->sendError("Entered supplier invoice number was already used ($alreadyAdded->bookingInvCode). Please check again", 500);
@@ -403,6 +405,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($bookInvSuppMaster->supplierTransactionCurrencyID);
 
         $alreadyAdded = BookInvSuppMaster::where('supplierInvoiceNo', $input['supplierInvoiceNo'])
+            ->where('supplierID', $input['supplierID'])
             ->where('bookingSuppMasInvAutoID', '<>', $id)
             ->first();
 
