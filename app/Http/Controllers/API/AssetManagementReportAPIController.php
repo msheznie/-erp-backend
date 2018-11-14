@@ -1883,6 +1883,16 @@ WHERE
         $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
         $assetCategory = join(',', $assetCategory);
+        $searchText = $request->searchText;
+
+
+        $where="";
+        if($searchText !=''){
+            $searchText = str_replace("\\", "\\\\", $searchText);
+            $where=" AND ( assetGroup.faCode LIKE '%$searchText%' OR erp_fa_asset_master.assetDescription LIKE '%$searchText%' OR  
+            erp_fa_asset_master.faCode LIKE '%$searchText%' )  ";
+        }
+
 
         if ($request->excelType == 1) {
 
@@ -2000,9 +2010,9 @@ FROM
 	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
 LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
-	erp_fa_asset_master.companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND approved =-1
+	erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
 	AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND  ((DIPOSED = - 1  AND (   disposedDate > '$asOfDate')) OR DIPOSED <>  -1)
-	
+	$where
 	) t  ORDER BY sortfaID desc  ";
 
 
