@@ -95,7 +95,7 @@ class SupplierMasterAPIController extends AppBaseController
     public function getSupplierMasterByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'supplierNatureID', 'isActive'));
+        $input = $this->convertArrayToSelectedValue($input, array('supplierCountryID', 'isCriticalYN', 'isActive','supplierConfirmedYN','approvedYN'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -253,6 +253,24 @@ class SupplierMasterAPIController extends AppBaseController
         if (array_key_exists('supplierCountryID', $input)) {
             if ($input['supplierCountryID'] && !is_null($input['supplierCountryID'])) {
                 $supplierMasters->where('supplierCountryID', '=', $input['supplierCountryID']);
+            }
+        }
+
+        if (array_key_exists('isCriticalYN', $input)) {
+            if ($input['isCriticalYN'] && !is_null($input['isCriticalYN'])) {
+                $supplierMasters->where('isCriticalYN', '=', $input['isCriticalYN']);
+            }
+        }
+
+        if (array_key_exists('supplierConfirmedYN', $input)) {
+            if ($input['supplierConfirmedYN'] && !is_null($input['supplierConfirmedYN'])) {
+                $supplierMasters->where('supplierConfirmedYN', '=', $input['supplierConfirmedYN']);
+            }
+        }
+
+        if (array_key_exists('approvedYN', $input)) {
+            if ($input['approvedYN'] && !is_null($input['approvedYN'])) {
+                $supplierMasters->where('approvedYN', '=', $input['approvedYN']);
             }
         }
 
