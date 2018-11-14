@@ -610,7 +610,7 @@ $x++;
 
                 $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
                     $excel->sheet('asset register', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', false, false);
+                        $sheet->fromArray($data, null, 'A1', true, false);
                         $sheet->setAutoSize(true);
                         $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                     });
@@ -1975,10 +1975,10 @@ IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
 	dateDEP,
 	COSTUNIT,
 	IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
-	COSTUNIT - IFNULL( depAmountLocal, 0 ) AS localnbv,
+	IFNULL(COSTUNIT,0) - IFNULL( depAmountLocal, 0 ) AS localnbv,
 	costUnitRpt,
 	IFNULL( depAmountRpt, 0 ) AS depAmountRpt,
-	costUnitRpt - IFNULL( depAmountRpt, 0 ) AS rptnbv 
+	IFNULL(costUnitRpt,0) - IFNULL( depAmountRpt, 0 ) AS rptnbv 
 FROM
 	erp_fa_asset_master
 	LEFT JOIN (
