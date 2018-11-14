@@ -423,6 +423,18 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError('Document date is not within the financial period!', 500);
         }
 
+        $validator = \Validator::make($input, [
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'custPaymentReceiveDate' => 'required',
+            'custTransactionCurrencyID' => 'required|numeric|min:1',
+            'narration' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
         $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
@@ -655,18 +667,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $error_count = 0;
 
         if ($customerReceivePayment->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-
-            $validator = \Validator::make($input, [
-                'companyFinancePeriodID' => 'required|numeric|min:1',
-                'companyFinanceYearID' => 'required|numeric|min:1',
-                'custPaymentReceiveDate' => 'required',
-                'custTransactionCurrencyID' => 'required|numeric|min:1',
-                'narration' => 'required',
-            ]);
-
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422);
-            }
 
             if ($input['documentType'] == 13) {
 
