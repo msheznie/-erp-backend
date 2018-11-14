@@ -232,5 +232,9 @@ class AdvancePaymentDetails extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransCurrencyID', 'currencyID');
     }
 
-    
+    public function pay_invoice()
+    {
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', 'PayMasterAutoId', 'PayMasterAutoId');
+    }
+
 }
