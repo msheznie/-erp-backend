@@ -970,8 +970,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 //when adding a new matching, checking whether debit amount more than the document value
                 $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
-                    ->where('addedDocumentSystemID', $creditNoteData->documentSystemID)
+                    ->where('addedDocumentSystemID', $creditNoteData->documentSystemiD)
                     ->where('bookingInvCodeSystem', $creditNoteData->creditNoteAutoID)
+                    ->where('companySystemID', $creditNoteData->companySystemID)
+                    ->where('bookingInvCode', '<>', '0')
                     ->groupBy('addedDocumentSystemID', 'bookingInvCodeSystem')
                     ->first();
 
