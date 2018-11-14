@@ -346,7 +346,7 @@ class BankLedgerAPIController extends AppBaseController
                 }
 
                 if ($bankLedger->bankClearedYN == -1) {
-                    return $this->sendError('You cannot edit, This item already added to bank reconciliation.', 500);
+                    return $this->sendError('You cannot edit, This document is already added to bank reconciliation.', 500);
                 }
 
                 if ($input['trsClearedYN']) {

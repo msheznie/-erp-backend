@@ -178,5 +178,18 @@ class PoAdvancePayment extends Model
         return $this->belongsTo('App\Models\AddonCostCategories', 'logisticCategoryID', 'idaddOnCostCategories');
     }
 
+    public function po_master()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'poID', 'purchaseOrderID');
+    }
+    public function last_detail()
+    {
+        return $this->hasOne('App\Models\AdvancePaymentDetails','poAdvPaymentID','poAdvPaymentID')->orderBy('advancePaymentDetailAutoID', 'desc');
+    }
+    public function details()
+    {
+        return $this->hasMany('App\Models\AdvancePaymentDetails','poAdvPaymentID','poAdvPaymentID');
+    }
+
 
 }
