@@ -1050,6 +1050,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', 'Already pulled');
         }
 
+      
+
 
         /*if bookinvoice not available create header*/
         /*     if ($master->bookingInvCode == ' ' || $master->bookingInvCode == 0) {
@@ -1175,12 +1177,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $now = Carbon::now();
             $new_date = $now->addDays($contract->paymentInDaysForJob);
 
+            $date1=Carbon::parse($getRentalDetailFromFreeBilling->rentalStartDate);
+            $month = $date1->format('F');
+
 
             $bankdetails['invoiceDueDate'] = $new_date;
             $bankdetails['paymentInDaysForJob'] = $contract->paymentInDaysForJob;
             $bankdetails['performaDate'] = $performa->performaDate;
             $bankdetails['rigNo'] = ($performa->ticket ? $performa->ticket->regNo . ' - ' . $performa->ticket->rig->RigDescription : '');
-            $bankdetails['servicePeriod'] = "";
+            $bankdetails['servicePeriod'] = $month;
             $bankdetails['serviceStartDate'] = $getRentalDetailFromFreeBilling->rentalStartDate;
             $bankdetails['serviceEndDate'] = $getRentalDetailFromFreeBilling->rentalEndDate;
             /**/

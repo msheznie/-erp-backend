@@ -788,6 +788,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Match Document Master not found');
         }
 
+        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMaster->supplierTransCurrencyID);
+
         if (isset($input['matchingDocdate'])) {
             if ($input['matchingDocdate']) {
                 $input['matchingDocdate'] = new Carbon($input['matchingDocdate']);
@@ -911,7 +913,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     if ($totReceiveAmount == 0) {
                         $arLedgerUpdate->fullyInvoiced = 0;
                         $arLedgerUpdate->selectedToPaymentInv = 0;
-                    } else if ($val->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount > $val->bookingAmountTrans) {
+                    } else if (($val->bookingAmountTrans == $totReceiveAmount) || ($totReceiveAmount > $val->bookingAmountTrans)) {
                         $arLedgerUpdate->fullyInvoiced = 2;
                         $arLedgerUpdate->selectedToPaymentInv = -1;
                     } else if (($val->bookingAmountTrans > $totReceiveAmount) && ($totReceiveAmount > 0)) {
@@ -922,7 +924,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     if ($totReceiveAmount == 0) {
                         $arLedgerUpdate->fullyInvoiced = 0;
                         $arLedgerUpdate->selectedToPaymentInv = 0;
-                    } else if ($val->bookingAmountTrans == $totReceiveAmount || $totReceiveAmount < $val->bookingAmountTrans) {
+                    } else if (($val->bookingAmountTrans == $totReceiveAmount) || ($totReceiveAmount < $val->bookingAmountTrans)) {
                         $arLedgerUpdate->fullyInvoiced = 2;
                         $arLedgerUpdate->selectedToPaymentInv = -1;
                     } else if (($val->bookingAmountTrans < $totReceiveAmount) && ($totReceiveAmount < 0)) {
@@ -952,45 +954,58 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
                 $receiveAmountTot = 0;
-                if($customerSettleAmountSum){
+                if ($customerSettleAmountSum) {
                     $receiveAmountTot = $customerSettleAmountSum["SumDetailAmount"];
                 }
 
                 if ($machAmount == 0) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 0;
-                } else if ($receiveAmountTot == $machAmount || $machAmount > $receiveAmountTot) {
+                } else if ((round($receiveAmountTot,$supplierCurrencyDecimalPlace) == round($machAmount, $supplierCurrencyDecimalPlace)) || (round($machAmount, $supplierCurrencyDecimalPlace) > round($receiveAmountTot, $supplierCurrencyDecimalPlace))) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 2;
-                } else if (($receiveAmountTot > $machAmount) && ($machAmount > 0)) {
+                } else if ((round($receiveAmountTot, $supplierCurrencyDecimalPlace) > round($machAmount, $supplierCurrencyDecimalPlace)) && (round($machAmount, $supplierCurrencyDecimalPlace) > 0)) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 1;
                 }
                 $CustomerReceivePaymentDataUpdate->save();
-            } elseif ($matchDocumentMaster->documentSystemID == 19) {
+            }
+            if ($matchDocumentMaster->documentSystemID == 19) {
 
                 $creditNoteData = CreditNote::find($matchDocumentMaster->PayMasterAutoId);
 
                 //when adding a new matching, checking whether debit amount more than the document value
-                $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
-                    ->where('addedDocumentSystemID', $creditNoteData->documentSystemID)
+                $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, companySystemID, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
+                    ->where('addedDocumentSystemID', $creditNoteData->documentSystemiD)
                     ->where('bookingInvCodeSystem', $creditNoteData->creditNoteAutoID)
-                    ->groupBy('addedDocumentSystemID', 'bookingInvCodeSystem')
+                    ->where('companySystemID', $creditNoteData->companySystemID)
+                    ->where('bookingInvCode', '<>', '0')
+                    ->groupBy('addedDocumentSystemID', 'bookingInvCodeSystem', 'companySystemID')
                     ->first();
 
-                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)->where('documentSystemID', $matchDocumentMaster->documentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
+                    ->where('documentSystemID', $matchDocumentMaster->documentSystemID)
+                    ->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')
+                    ->first();
 
                 $machAmount = 0;
                 if ($matchedAmount) {
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
-                $totalPaidAmount = ($customerSettleAmountSum["SumDetailAmount"] + $machAmount);
+                $customerDetailSum = 0;
+                if ($customerSettleAmountSum) {
+                    $customerDetailSum = abs($customerSettleAmountSum["SumDetailAmount"]);
+                }
 
+                $totalPaidAmount = ($customerDetailSum + $machAmount);
+
+                //echo $totalPaidAmount."-".$creditNoteData->creditAmountTrans;
+                //exit();
                 if ($totalPaidAmount == 0) {
                     $creditNoteData->matchInvoice = 0;
                     $creditNoteData->save();
-                } else if ($creditNoteData->creditAmountTrans == $totalPaidAmount || $totalPaidAmount > $creditNoteData->creditAmountTrans) {
+                } else if ((round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace) == round($totalPaidAmount, $supplierCurrencyDecimalPlace)) || (round($totalPaidAmount, $supplierCurrencyDecimalPlace) > round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace))) {
                     $creditNoteData->matchInvoice = 2;
                     $creditNoteData->save();
-                } else if (($creditNoteData->creditAmountTrans > $totalPaidAmount) && ($totalPaidAmount > 0)) {
+                } else if ((round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace) > round($totalPaidAmount, $supplierCurrencyDecimalPlace)) && (round($totalPaidAmount, $supplierCurrencyDecimalPlace) > 0)) {
                     $creditNoteData->matchInvoice = 1;
                     $creditNoteData->save();
                 }
@@ -1472,13 +1487,13 @@ HAVING
 	erp_creditnote.customerID,
 	currency.CurrencyCode,
 	currency.DecimalPlaces,
-	erp_creditnote.creditAmountTrans as SumOfreceiveAmountTrans,
+	erp_creditnote.creditAmountTrans AS SumOfreceiveAmountTrans,
 	(
 		erp_creditnote.creditAmountTrans - (
-			IFNULL(
+			(IFNULL(
 				receipt.SumOfreceiptAmount,
 				0
-			) + IFNULL(advd.SumOfmatchingAmount, 0)
+			) * -1) + IFNULL(advd.SumOfmatchingAmount, 0)
 		)
 	) AS BalanceAmt
 FROM
@@ -1495,13 +1510,13 @@ LEFT JOIN (
 	FROM
 		erp_custreceivepaymentdet
 	WHERE
-		bookingInvCode = '0'
+		bookingInvCode <> '0'
 	GROUP BY
 		addedDocumentSystemID,
 		bookingInvCodeSystem,
 		companySystemID
 ) AS receipt ON (
-	receipt.custReceivePaymentAutoID = erp_creditnote.creditNoteAutoID
+	receipt.bookingInvCodeSystem = erp_creditnote.creditNoteAutoID
 	AND receipt.addedDocumentSystemID = erp_creditnote.documentSystemiD
 	AND receipt.companySystemID = erp_creditnote.companySystemID
 )
