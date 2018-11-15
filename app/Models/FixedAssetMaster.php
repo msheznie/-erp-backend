@@ -717,6 +717,19 @@ class FixedAssetMaster extends Model
         return $query->where('approved',  -1);
     }
 
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeAssetType($query,$assetType)
+    {
+        return $query->where('assetType',  $assetType);
+    }
+
     public function category_by(){
         return $this->belongsTo('App\Models\FixedAssetCategory','faCatID','faCatID');
     }
