@@ -136,7 +136,8 @@ class PoAdvancePayment extends Model
         'requestedByEmpName' => 'string',
         'reqAmountInPOTransCur' => 'float',
         'reqAmountInPOLocalCur' => 'float',
-        'reqAmountInPORptCur' => 'float'
+        'reqAmountInPORptCur' => 'float',
+        'sum_payment' => 'float'
     ];
 
     /**
@@ -178,5 +179,37 @@ class PoAdvancePayment extends Model
         return $this->belongsTo('App\Models\AddonCostCategories', 'logisticCategoryID', 'idaddOnCostCategories');
     }
 
+    public function po_master()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'poID', 'purchaseOrderID');
+    }
+    public function last_detail()
+    {
+        return $this->hasOne('App\Models\AdvancePaymentDetails','poAdvPaymentID','poAdvPaymentID')->orderBy('advancePaymentDetailAutoID', 'desc');
+    }
+    public function details()
+    {
+        return $this->hasMany('App\Models\AdvancePaymentDetails','poAdvPaymentID','poAdvPaymentID');
+    }
+
+    public function scopeSumOfPaymentAmount($q){
+
+        return $q->leftJoin('erp_advancepaymentdetails', 'erp_purchaseorderadvpayment.poAdvPaymentID', '=', 'erp_advancepaymentdetails.poAdvPaymentID')
+                        ->selectRaw('erp_purchaseorderadvpayment.*,
+                                     erp_advancepaymentdetails.PayMasterAutoId,
+                                     Sum( erp_advancepaymentdetails.paymentAmount ) AS SumOfpaymentAmount')
+                        ->groupBy('erp_advancepaymentdetails.poAdvPaymentID')
+                        ->whereNotNull('erp_advancepaymentdetails.purchaseOrderID');
+    }
+
+    public function getSumPaymentAttribute()
+    {
+        return $this->details->sum('paymentAmount');
+    }
+
+    public function setSumPaymentAttribute($value)
+    {
+        $this->attributes['sum_payment'] = $this->details->sum('paymentAmount');
+    }
 
 }

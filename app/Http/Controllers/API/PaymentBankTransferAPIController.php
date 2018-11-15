@@ -677,7 +677,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         if ($paymentBankTransfer->exportedYN == 1) {
-            return $this->sendError('This document already exported.', 500);
+            return $this->sendError('This document is already exported.', 500);
         }
 
         if ($paymentBankTransfer->approvedYN != -1) {
@@ -741,7 +741,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                         $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
                         foreach ($memos as $memo) {
                             if ($memo->bankMemoTypeID == 4) {
-                                $accountNo13 = preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                                $accountNo13 = preg_replace("/[^0-9]/","", $memo->memoDetail);
                             } else if ($memo->bankMemoTypeID == 1) {
                                 $narration135 = $memo->memoDetail;
                             }

@@ -816,6 +816,11 @@ class PaySupplierInvoiceMaster extends Model
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
     }
 
+    public function cheque_treasury_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'chequeSentToTreasuryByEmpSystemID', 'employeeSystemID');
+    }
+
     public function bank()
     {
         return $this->belongsTo('App\Models\BankAccount', 'BPVAccount', 'bankAccountAutoID');
