@@ -289,7 +289,8 @@
         <table class="table table-bordered" style="width: 100%;">
             <thead>
             <tr class="theme-tr-head">
-
+                <th style="width:10%;text-align: center">Account Code</th>
+                <th style="width:10%;text-align: center">Account Description</th>
                 <th style="width:10%;text-align: center">Comments</th>
                 <th style="width:10%;text-align: center">Service Line</th>
                 <th style="width:10%;text-align: center">Amount</th>
@@ -301,8 +302,9 @@
             @foreach ($request->details as $item)
                 {{$directTraSubTotal +=$item->creditAmount}}
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                    <td>{{$item->glCode}}</td>
+                    <td>{{$item->glCodeDes}}</td>
                     <td>{{$item->comments}}</td>
-
                     <td>{{$item->segment->ServiceLineDes}}</td>
                     <td class="text-right">{{number_format($item->creditAmount,$numberFormatting)}}</td>
                 </tr>
