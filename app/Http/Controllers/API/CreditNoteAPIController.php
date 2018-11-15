@@ -132,7 +132,12 @@ class CreditNoteAPIController extends AppBaseController
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
         /**/
         /*companySystemID*/
-        $serialNo = CreditNote::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))->where('documentID', 'CN')->where('companySystemID', $input['companySystemID'])->orderBy('serialNo', 'desc')->first();
+        $serialNo = CreditNote::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))
+            ->where('documentID', 'CN')
+            ->where('companySystemID', $input['companySystemID'])
+            ->orderBy('serialNo', 'desc')
+            ->first();
+
         $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
         $creditNoteCode = ($company->CompanyID . '\\' . $y . '\\CN' . str_pad($serialNo['serialNo'], 6, '0', STR_PAD_LEFT));
 
