@@ -127,26 +127,42 @@ class CreditNoteAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'currencyID', 'customerCurrencyID'));
         $company = Company::select('CompanyID')->where('companySystemID', $input['companySystemID'])->first();
-        $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
         /**/
-        /*companySystemID*/
-        $serialNo = CreditNote::select(DB::raw('IFNULL(MAX(serialNo),0)+1 as serialNo'))
-            ->where('documentID', 'CN')
+
+        $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])
             ->where('companySystemID', $input['companySystemID'])
-            ->orderBy('serialNo', 'desc')
             ->first();
 
-        $y = date('Y', strtotime($CompanyFinanceYear->bigginingDate));
-        $creditNoteCode = ($company->CompanyID . '\\' . $y . '\\CN' . str_pad($serialNo['serialNo'], 6, '0', STR_PAD_LEFT));
+        $lastSerial = CreditNote::where('companySystemID', $input['companySystemID'])
+            ->where('companyFinanceYearID', $input['companyFinanceYearID'])
+            ->orderBy('creditNoteAutoID', 'desc')
+            ->first();
+
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+        }
+
+        if ($companyfinanceyear) {
+            $startYear = $companyfinanceyear['bigginingDate'];
+            $finYearExp = explode('-', $startYear);
+            $finYear = $finYearExp[0];
+
+            $input['FYBiggin'] = $companyfinanceyear->bigginingDate;
+            $input['FYEnd'] = $companyfinanceyear->endingDate;
+        } else {
+            $finYear = date("Y");
+        }
+
+        $creditNoteCode = ($company->CompanyID . '\\' . $finYear . '\\' . 'CN' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        $input['creditNoteCode'] = $creditNoteCode;
 
         $input['companyID'] = $company->CompanyID;
         $input['documentSystemiD'] = 19;
         $input['documentID'] = 'CN';
-        $input['serialNo'] = $serialNo->serialNo;
-        $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
-        $input['FYEnd'] = $CompanyFinanceYear->endingDate;
+        $input['serialNo'] = $lastSerialNumber;
         $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
         $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
         $input['creditNoteCode'] = $creditNoteCode;
