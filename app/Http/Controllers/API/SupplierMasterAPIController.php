@@ -263,19 +263,19 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         if (array_key_exists('supplierConfirmedYN', $input)) {
-            if ($input['supplierConfirmedYN'] && !is_null($input['supplierConfirmedYN'])) {
+            if (($input['supplierConfirmedYN'] == 0 || $input['supplierConfirmedYN'] == 1) && !is_null($input['supplierConfirmedYN'])) {
                 $supplierMasters->where('supplierConfirmedYN', '=', $input['supplierConfirmedYN']);
             }
         }
 
         if (array_key_exists('approvedYN', $input)) {
-            if ($input['approvedYN'] && !is_null($input['approvedYN'])) {
+            if (($input['approvedYN'] == 0 || $input['approvedYN'] == 1) && !is_null($input['approvedYN'])) {
                 $supplierMasters->where('approvedYN', '=', $input['approvedYN']);
             }
         }
 
         if (array_key_exists('supplierNatureID', $input)) {
-            if ($input['supplierNatureID'] && !is_null($input['supplierNatureID'])) {
+            if ($input['supplierNatureID']  && !is_null($input['supplierNatureID'])) {
                 $supplierMasters->where('supplierNatureID', '=', $input['supplierNatureID']);
             }
         }
@@ -461,7 +461,10 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function updateSupplierMaster(Request $request)
     {
-        $input = $this->convertArrayToValue($request->all());
+        $input = $request->all();
+        $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
+            'supplierConfirmedEmpName','supplierConfirmedDate','finalApprovedBy']);
+        $input = $this->convertArrayToValue($input);
         $employee = \Helper::getEmployeeInfo();
         $input['modifiedPc']   = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -475,12 +478,6 @@ class SupplierMasterAPIController extends AppBaseController
 
         $isConfirm = $input['supplierConfirmedYN'];
         //unset($input['companySystemID']);
-        unset($input['supplierConfirmedYN']);
-        unset($input['supplierConfirmedEmpID']);
-        unset($input['supplierConfirmedEmpSystemID']);
-        unset($input['supplierConfirmedEmpName']);
-        unset($input['supplierConfirmedDate']);
-        unset($input['finalApprovedBy']);
 
         $id = $input['supplierCodeSystem'];
 
@@ -558,7 +555,6 @@ class SupplierMasterAPIController extends AppBaseController
     {
         /** @var SupplierMaster $supplierMaster */
         $supplierMaster = $this->supplierMasterRepository->with(['finalApprovedBy'])->findWithoutFail($id);
-        //$supplierMaster = SupplierMaster::where("supplierCodeSystem", $id)->first();
 
         if (empty($supplierMaster)) {
             return $this->sendError('Supplier Master not found');

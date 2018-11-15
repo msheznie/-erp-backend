@@ -620,8 +620,10 @@ ORDER BY
             ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', 'erp_purchaseordermaster.purchaseOrderID')
             ->leftJoin('suppliermaster', 'erp_purchaseorderadvpayment.supplierID', 'suppliermaster.supplierCodeSystem')
             ->leftJoin('currencymaster', 'erp_purchaseorderadvpayment.currencyID', 'currencymaster.currencyID')
-            ->leftJoin(DB::raw('(SELECT erp_advancepaymentdetails.poAdvPaymentID,erp_advancepaymentdetails.PayMasterAutoId,
-                                        Sum( erp_advancepaymentdetails.paymentAmount ) AS SumOfpaymentAmount FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID) as details'), function ($query) {
+            ->leftJoin(DB::raw('(SELECT poAdvPaymentID, SumOfpaymentAmount,PayMasterAutoId FROM (SELECT * FROM
+	( SELECT MAX( PayMasterAutoId ) AS PayMasterAutoId,poAdvPaymentID as poAdvPaymentIDs FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID ) a
+	INNER JOIN ( SELECT erp_advancepaymentdetails.poAdvPaymentID, Sum( erp_advancepaymentdetails.paymentAmount ) AS SumOfpaymentAmount FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID) AS maximum ON maximum.poAdvPaymentID = a.poAdvPaymentIDs 
+	) b) as details'), function ($query) {
                 $query->on('erp_purchaseorderadvpayment.poAdvPaymentID', '=', 'details.poAdvPaymentID');
             })
             ->leftJoin('erp_paysupplierinvoicemaster', 'details.PayMasterAutoId', 'erp_paysupplierinvoicemaster.PayMasterAutoId');
