@@ -682,6 +682,21 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     return $this->sendError('Every receipt voucher should have at least one item', 500);
                 }
             }
+            // checking minus value
+            if ($input['documentType'] == 13) {
+
+                $checkDirectMinusTotal = DirectReceiptDetail::where('directReceiptAutoID', $id)
+                    ->sum('DRAmount');
+
+                $checkReciveDetailMinusTotal = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->sum('receiveAmountTrans');
+
+                $netMinustot = $checkReciveDetailMinusTotal + $checkDirectMinusTotal;
+
+                if ($netMinustot < 0) {
+                    return $this->sendError('Net amount cannot be minus total', 500);
+                }
+            }
 
             if ($input['documentType'] == 13) {
 
@@ -721,25 +736,41 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 ->count();
 
                             if ($checkAmount > 0) {
-                                return $this->sendError('Amount should be greater than 0 for every items' , 500);
+                                return $this->sendError('Amount should be greater than 0 for every items', 500);
                             }
                         }
                     }
                 }
+
+                $checkQuantity = DirectReceiptDetail::where('directReceiptAutoID', $id)
+                    ->where(function ($q) {
+                        $q->where('DRAmount', '=', 0)
+                            ->orWhereNull('localAmount', '=', 0)
+                            ->orWhereNull('comRptAmount', '=', 0)
+                            ->orWhereNull('DRAmount')
+                            ->orWhereNull('localAmount')
+                            ->orWhereNull('comRptAmount');
+                    })
+                    ->count();
+                if ($checkQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
             }
 
-            $checkQuantity = DirectReceiptDetail::where('directReceiptAutoID', $id)
-                ->where(function ($q) {
-                    $q->where('DRAmount', '<=', 0)
-                        ->orWhereNull('localAmount', '<=', 0)
-                        ->orWhereNull('comRptAmount', '<=', 0)
-                        ->orWhereNull('DRAmount')
-                        ->orWhereNull('localAmount')
-                        ->orWhereNull('comRptAmount');
-                })
-                ->count();
-            if ($checkQuantity > 0) {
-                return $this->sendError('Amount should be greater than 0 for every items', 500);
+            if ($input['documentType'] == 14) {
+                $checkQuantity = DirectReceiptDetail::where('directReceiptAutoID', $id)
+                    ->where(function ($q) {
+                        $q->where('DRAmount', '<=', 0)
+                            ->orWhereNull('localAmount', '<=', 0)
+                            ->orWhereNull('comRptAmount', '<=', 0)
+                            ->orWhereNull('DRAmount')
+                            ->orWhereNull('localAmount')
+                            ->orWhereNull('comRptAmount');
+                    })
+                    ->count();
+                if ($checkQuantity > 0) {
+                    return $this->sendError('Amount should be greater than 0 for every items', 500);
+                }
             }
 
             $policyConfirmedUserToApprove = CompanyPolicyMaster::where('companyPolicyCategoryID', 15)
@@ -875,7 +906,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if ($input['documentType'] == 13) {
 
                 $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
-                    ->where('addedDocumentSystemID' ,'<>', '')
+                    ->where('addedDocumentSystemID', '<>', '')
                     ->get();
 
                 foreach ($customerReceivePaymentDetailRec as $row) {
@@ -1186,7 +1217,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
             $query->with('segment');
-        },'details'])->first();
+        }, 'details'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -1293,7 +1324,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         return $this->sendResponse($custReceivePaymentMaster->toArray(), 'Supplier Invoice reopened successfully');
     }
 
-    public function printReceiptVoucher(Request $request){
+    public function printReceiptVoucher(Request $request)
+    {
 
         $id = $request->get('custRecivePayDetAutoID');
 
@@ -1308,7 +1340,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
             $query->with('segment');
-        },'details'])->first();
+        }, 'details'])->first();
 
         if (empty($customerReceivePaymentRecord)) {
             return $this->sendError('Customer Receive Payment not found');
