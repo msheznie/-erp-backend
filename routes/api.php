@@ -1093,11 +1093,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
     Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
     Route::get('getAssetCostingViewByFaID/{id}', 'FixedAssetMasterAPIController@getAssetCostingViewByFaID');
+    Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload');
+    Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
 
     Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
     Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
     Route::post('generateAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@generateAdvancePaymentRequestReport');
     Route::post('exportAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@exportAdvancePaymentRequestReport');
+
+    Route::post('addDetailsFromExpenseClaim', 'DirectPaymentDetailsAPIController@addDetailsFromExpenseClaim');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

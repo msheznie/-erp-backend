@@ -381,13 +381,13 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $input['departmentID'] = $department->DepartmentID;
             }
 
-            if($input['postToGLYN']) {
+            if ($input['postToGLYN']) {
                 $chartOfAccount = ChartOfAccount::find($input['postToGLCodeSystemID']);
                 if (!empty($chartOfAccount)) {
                     $input['postToGLCode'] = $chartOfAccount->AccountCode;
                 }
                 $input['postToGLYN'] = 1;
-            }else{
+            } else {
                 $input['postToGLYN'] = 0;
             }
 
@@ -424,7 +424,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input["faCode"] = $documentCode;
 
             $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], 2, 2, $input['costUnitRpt']);
-            if($companyCurrencyConversion) {
+            if ($companyCurrencyConversion) {
                 $input['COSTUNIT'] = $companyCurrencyConversion['localAmount'];
             }
 
@@ -589,13 +589,13 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $input['departmentID'] = $department->DepartmentID;
             }
 
-            if($input['postToGLYN']) {
+            if ($input['postToGLYN']) {
                 $chartOfAccount = ChartOfAccount::find($input['postToGLCodeSystemID']);
                 if (!empty($chartOfAccount)) {
                     $input['postToGLCode'] = $chartOfAccount->AccountCode;
                 }
                 $input['postToGLYN'] = 1;
-            }else{
+            } else {
                 $input['postToGLYN'] = 0;
             }
 
@@ -1278,8 +1278,6 @@ class FixedAssetMasterAPIController extends AppBaseController
 
     public function assetInsuranceReport($input, $search)
     {
-
-
         $companyId = $input['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
 
@@ -1459,6 +1457,97 @@ class FixedAssetMasterAPIController extends AppBaseController
         $items = $items->take(20)->get();
         return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
 
+    }
+
+    public function assetCostingUpload(request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['assetExcelUpload'];
+            $input = array_except($request->all(), 'assetExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+
+            Storage::disk('local')->put($originalFileName, $decodeFile);
+
+            $finalData = [];
+            $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
+            })->select(array('asset_description', 'serial_no'))->get()->toArray();
+
+            if (count($record) > 0) {
+                $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
+                if ($lastSerial) {
+                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                }
+                $segment = SegmentMaster::find($input['serviceLineSystemID']);
+                if ($segment) {
+                    $input['serviceLineCode'] = $segment->ServiceLineCode;
+                }
+
+                $company = Company::find($input['companySystemID']);
+                if ($company) {
+                    $input['companyID'] = $company->CompanyID;
+                }
+                foreach ($record as $val) {
+                    if ($val['asset_description'] || $val['serial_no']) {
+                        $data = [];
+                        $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                        $data['assetDescription'] = $val['asset_description'];
+                        $data['faUnitSerialNo'] = $val['serial_no'];
+                        $data['serialNo'] = $lastSerialNumber;
+                        $data['faCode'] = $documentCode;
+                        $data['supplierIDRentedAsset'] = $input['supplierID'];
+                        $data['serviceLineSystemID'] = $input['serviceLineSystemID'];
+                        $data['faCatID'] = $input['faCatID'];
+                        $data['faSubCatID'] = $input['faSubCatID'];
+                        $data['faSubCatID2'] = $input['faSubCatID2'];
+                        $data['faSubCatID3'] = $input['faSubCatID3'];
+                        $data['faSubCatID3'] = $input['faSubCatID3'];
+                        $data['documentID'] = 'FA';
+                        $data['documentSystemID'] = 22;
+                        $data['companySystemID'] = $input['companySystemID'];
+                        $data['companyID'] = $input['companyID'];
+                        $data['serviceLineSystemID'] = $input['serviceLineSystemID'];
+                        $data['serviceLineCode'] = $input['serviceLineCode'];
+                        $data['assetType'] = 2;
+                        $data['createdPcID'] = gethostname();
+                        $data['createdUserID'] = \Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $finalData[] = $data;
+                        $lastSerialNumber++;
+                    }
+                }
+            } else {
+                return $this->sendError('No Records found!', 500);
+            }
+
+            if (count($finalData) > 0) {
+                foreach (array_chunk($finalData, 500) as $t) {
+                    FixedAssetMaster::insert($t);
+                }
+            }
+            Storage::disk('local')->delete($originalFileName);
+            DB::commit();
+            return $this->sendResponse([], 'Assets uploaded successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+        //Storage::disk('local')->delete($originalFileName);
+
+    }
+
+    public function downloadAssetTemplate(Request $request)
+    {
+        $input = $request->all();
+        if ($exists = Storage::disk('public')->exists('asset_master_template/asset_upload_template.xlsx')) {
+            return Storage::disk('public')->download('asset_master_template/asset_upload_template.xlsx','asset_upload_template.xlsx');
+        } else {
+            return $this->sendError('Attachments not found', 500);
+        }
     }
 
 }
