@@ -120,6 +120,17 @@ class FinancialReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
                 break;
+            case 'FTD':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate'
+                ]);
+
+                if ($validator->fails()) {//echo 'in';exit;
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -221,6 +232,51 @@ class FinancialReportAPIController extends AppBaseController
                 );
                 break;
             case 'FGL': // General Ledger
+
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getGeneralLedger($request);
+
+                $currencyIdLocal = 1;
+                $currencyIdRpt = 2;
+
+                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+
+                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
+
+
+                if (!empty($decimalPlaceUniqueLocal)) {
+                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+                }
+
+                if (!empty($decimalPlaceUniqueRpt)) {
+                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
+                }
+
+                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
+                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
+
+                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
+                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
+                $total = array();
+                $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
+                $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
+                $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
+                $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
+                return array('reportData' => $output,
+                    'companyName' => $checkIsGroup->CompanyName,
+                    'isGroup' => $checkIsGroup->isGroup,
+                    'total' => $total,
+                    'decimalPlaceLocal' => $decimalPlaceLocal,
+                    'decimalPlaceRpt' => $decimalPlaceRpt,
+                    'currencyLocal' => $requestCurrencyLocal->CurrencyCode,
+                    'currencyRpt' => $requestCurrencyRpt->CurrencyCode,
+                );
+                break;
+            case 'FTD': // Tax Detail
 
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $checkIsGroup = Company::find($request->companySystemID);
@@ -484,7 +540,7 @@ class FinancialReportAPIController extends AppBaseController
                     if (!empty($output)) {
                         $outputArr = array();
                         foreach ($output as $val1) {
-                            $outputArr[$val1->glCode.' - '.$val1->AccountDescription][] = $val1;
+                            $outputArr[$val1->glCode . ' - ' . $val1->AccountDescription][] = $val1;
                         }
 
                         $x = 0;
@@ -527,13 +583,13 @@ class FinancialReportAPIController extends AppBaseController
                                     $data[$x]['Supplier/Customer'] = $val->isCustomer;
 
                                     if ($checkIsGroup->isGroup == 0) {
-                                         $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
-                                         $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
+                                        $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->localDebit, $decimalPlaceLocal);
+                                        $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->localCredit, $decimalPlaceLocal);
                                     }
 
                                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptDebit, $decimalPlaceRpt);
                                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->rptCredit, $decimalPlaceRpt);
-                                    $subTotalDebitRpt  += $val->rptDebit;
+                                    $subTotalDebitRpt += $val->rptDebit;
                                     $subTotalCreditRpt += $val->rptCredit;
 
                                     $subTotalDebitLocal += $val->localDebit;
@@ -555,7 +611,7 @@ class FinancialReportAPIController extends AppBaseController
                                 }
 
                                 $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt, $decimalPlaceRpt);
-                                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalCreditRpt,$decimalPlaceRpt);
+                                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalCreditRpt, $decimalPlaceRpt);
 
                                 $x++;
                                 $data[$x][''] = '';
@@ -585,7 +641,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountDebit'], $decimalPlaceLocal);
                             $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountCredit'], $decimalPlaceLocal);
                         }
-                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountDebit'], $decimalPlaceRpt); ;
+                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountDebit'], $decimalPlaceRpt);;
                         $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountCredit'], $decimalPlaceRpt);;
                     }
                 } else {
@@ -1165,6 +1221,23 @@ class FinancialReportAPIController extends AppBaseController
         //dd(DB::getQueryLog());
         return $output;
 
+    }
+
+    public function getTaxDetailQry($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
     }
 
 }
