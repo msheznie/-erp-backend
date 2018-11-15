@@ -463,7 +463,7 @@ class SupplierMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
-            'supplierConfirmedEmpName','supplierConfirmedDate','finalApprovedBy']);
+            'supplierConfirmedEmpName','supplierConfirmedDate','final_approved_by']);
         $input = $this->convertArrayToValue($input);
         $employee = \Helper::getEmployeeInfo();
         $input['modifiedPc']   = gethostname();
