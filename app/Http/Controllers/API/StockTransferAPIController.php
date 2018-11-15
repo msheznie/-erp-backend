@@ -1114,6 +1114,7 @@ class StockTransferAPIController extends AppBaseController
             ->where('locationFrom', $stockReceive->locationFrom)
             ->where('approved', -1)
             ->where('fullyReceived', 0)
+            ->where('interCompanyTransferYN', 0)
             ->orderby('createdDateTime', 'desc')
             ->get();
 

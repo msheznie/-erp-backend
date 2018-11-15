@@ -33,6 +33,7 @@ use App\Models\Company;
 use App\Models\customercurrency;
 use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
+use App\Models\TicketMaster;
 use App\Models\Contract;
 use App\Models\chartOfAccount;
 use App\Models\DocumentApproved;
@@ -1050,7 +1051,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', 'Already pulled');
         }
 
-      
+
 
 
         /*if bookinvoice not available create header*/
@@ -1081,10 +1082,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
         }
 
-        $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $master->companyID)->where('ContractNumber', $performa->contractID)->first();
+        $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob','contractType')->where('CompanyID', $master->companyID)->where('ContractNumber', $performa->contractID)->first();
 
 
-        $getRentalDetailFromFreeBilling = FreeBillingMasterPerforma::select('companyID', 'PerformaInvoiceNo', 'rentalStartDate', 'rentalEndDate')->where('companyID', $master->companyID)->where('PerformaInvoiceNo', $performaMasterID)->first();
+        $getRentalDetailFromFreeBilling = FreeBillingMasterPerforma::select('companyID', 'PerformaInvoiceNo', 'rentalStartDate','ticketNo', 'rentalEndDate')->where('companyID', $master->companyID)->where('PerformaInvoiceNo', $performaMasterID)->first();
+
+        $ticket =TicketMaster::select('Timedatejobstra','Timedatejobend')->where('ticketidAtuto',$getRentalDetailFromFreeBilling->ticketNo)->first();
+
 
         $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)->first();
         if (!empty($tax)) {
@@ -1177,7 +1181,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $now = Carbon::now();
             $new_date = $now->addDays($contract->paymentInDaysForJob);
 
-            $date1=Carbon::parse($getRentalDetailFromFreeBilling->rentalStartDate);
+
+
+            $rentalStartDate=$ticket->Timedatejobstra;
+            $rentalEndDate=$ticket->Timedatejobend;
+
+            if($contract->contractType==1){
+
+                $rentalStartDate=$getRentalDetailFromFreeBilling->rentalStartDate;
+                $rentalEndDate=$getRentalDetailFromFreeBilling->rentalEndDate;
+
+            }
+
+            $date1=Carbon::parse($rentalStartDate);
             $month = $date1->format('F');
 
 
@@ -1186,8 +1202,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $bankdetails['performaDate'] = $performa->performaDate;
             $bankdetails['rigNo'] = ($performa->ticket ? $performa->ticket->regNo . ' - ' . $performa->ticket->rig->RigDescription : '');
             $bankdetails['servicePeriod'] = $month;
-            $bankdetails['serviceStartDate'] = $getRentalDetailFromFreeBilling->rentalStartDate;
-            $bankdetails['serviceEndDate'] = $getRentalDetailFromFreeBilling->rentalEndDate;
+            $bankdetails['serviceStartDate'] = $rentalStartDate;
+            $bankdetails['serviceEndDate'] = $rentalEndDate;
             /**/
 
             DB::beginTransaction();
