@@ -472,7 +472,7 @@ class BankLedgerAPIController extends AppBaseController
                 return $this->sendError('You cannot edit, it is not confirmed.', 500);
             }
 
-            if ($entity->approved == 1) {
+            if ($entity->approved == -1) {
                 return $this->sendError('You cannot edit, it is already approved.', 500);
             }
 

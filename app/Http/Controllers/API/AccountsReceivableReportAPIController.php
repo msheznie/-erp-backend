@@ -1427,11 +1427,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
                             $data[$x]['Contract No'] = $val->ContractNumber;
                             $data[$x]['Contract Description'] = $val->contractDescription;
                             $data[$x]['Contract/PO'] = $val->CONTRACT_PO;
-                            $data[$x]['Contract Description'] = \Helper::dateFormat($val->ContEndDate);
+                            $data[$x]['Contract End Date'] = \Helper::dateFormat($val->ContEndDate);
                             $data[$x]['GL Code'] = $val->glCode;
                             $data[$x]['GL Desc'] = $val->AccountDescription;
                             $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
-                            $data[$x]['Posting Month'] = $val->PostingMonth;
+                            $data[$x]['Posting Month'] = Carbon::parse($val->documentDate)->shortEnglishMonth;
                             $data[$x]['Posting Year'] = $val->PostingYear;
                             $data[$x]['Narration'] = $val->documentNarration;
 
