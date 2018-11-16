@@ -28,7 +28,8 @@ class ReportAPIController extends AppBaseController
         switch ($reportID) {
             case 'POA':
                 $validator = \Validator::make($request->all(), [
-                    'daterange' => 'required',
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
                     'suppliers' => 'required',
                     'reportType' => 'required',
                 ]);
@@ -58,11 +59,11 @@ class ReportAPIController extends AppBaseController
                     $sort = 'desc';
                 }
 
-                $startDate = new Carbon($request->daterange[0]);
+                $startDate = new Carbon($request->fromDate);
                 //$startDate = $startDate->addDays(1);
                 $startDate = $startDate->format('Y-m-d');
 
-                $endDate = new Carbon($request->daterange[1]);
+                $endDate = new Carbon($request->toDate);
                 //$endDate = $endDate->addDays(1);
                 $endDate = $endDate->format('Y-m-d');
 
@@ -540,16 +541,17 @@ WHERE
         switch ($reportID) {
             case 'POA':
                 $validatedData = $request->validate([
-                    'daterange' => 'required',
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
                     'suppliers' => 'required',
                 ]);
 
 
-                $startDate = new Carbon($request->daterange[0]);
+                $startDate = new Carbon($request->fromDate);
                 //$startDate = $startDate->addDays(1);
                 $startDate = $startDate->format('Y-m-d');
 
-                $endDate = new Carbon($request->daterange[1]);
+                $endDate = new Carbon($request->toDate);
                 //$endDate = $endDate->addDays(1);
                 $endDate = $endDate->format('Y-m-d');
 

@@ -958,11 +958,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $receiveAmountTot = $customerSettleAmountSum["SumDetailAmount"];
                 }
 
+                $RoundedMachAmount = round($machAmount,$supplierCurrencyDecimalPlace);
+                $RoundedReceiveAmountTot = round($receiveAmountTot,$supplierCurrencyDecimalPlace);
+
                 if ($machAmount == 0) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 0;
-                } else if ($receiveAmountTot == $machAmount || $machAmount > $receiveAmountTot) {
+                } else if ($RoundedReceiveAmountTot == $RoundedMachAmount || $RoundedMachAmount > $RoundedReceiveAmountTot) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 2;
-                } else if ($receiveAmountTot > $machAmount && $machAmount > 0) {
+                } else if ($RoundedReceiveAmountTot > $RoundedMachAmount && $RoundedMachAmount > 0) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 1;
                 }
                 $CustomerReceivePaymentDataUpdate->save();
@@ -1013,7 +1016,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 }
                 $creditNoteDataUpdate->save();
             }
-            
+
 
             $input['matchingConfirmedYN'] = 1;
             $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;;
