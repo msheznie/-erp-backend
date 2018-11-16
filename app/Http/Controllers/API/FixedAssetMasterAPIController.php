@@ -1474,6 +1474,15 @@ class FixedAssetMasterAPIController extends AppBaseController
             Storage::disk('local')->put($originalFileName, $decodeFile);
 
             $finalData = [];
+            $formatChk = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
+            })->first()->toArray();
+
+            if(count($formatChk) > 0) {
+                if (!isset($formatChk['asset_description']) || !isset($formatChk['serial_no'])) {
+                    return $this->sendError('Uploaded data format is invalid', 500);
+                }
+            }
+
             $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
             })->select(array('asset_description', 'serial_no'))->get()->toArray();
 
