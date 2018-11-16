@@ -444,6 +444,7 @@ class CustomerReceivePayment extends Model
         'approvedByUserSystemID',
         'postedDate',
         'trsCollectedYN',
+        'trsCollectedByEmpSystemID',
         'trsCollectedByEmpID',
         'trsCollectedByEmpName',
         'trsCollectedDate',
@@ -478,9 +479,6 @@ class CustomerReceivePayment extends Model
         'refferedBackYN',
         'timesReferred',
         'companyFinancePeriodID',
-        'customerGLCodeSystemID'
-
-
     ];
 
     /**
@@ -533,6 +531,7 @@ class CustomerReceivePayment extends Model
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'trsCollectedYN' => 'integer',
+        'trsCollectedByEmpSystemID' => 'integer',
         'trsCollectedByEmpID' => 'string',
         'trsCollectedByEmpName' => 'string',
         'trsClearedYN' => 'integer',
@@ -560,7 +559,6 @@ class CustomerReceivePayment extends Model
         'refferedBackYN' => 'integer',
         'timesReferred' => 'integer',
         'companyFinancePeriodID' => 'integer',
-        'customerGLCodeSystemID' => 'integer'
     ];
 
     /**

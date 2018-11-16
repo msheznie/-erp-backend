@@ -491,7 +491,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($input['serviceStartDate'] != '' && $input['serviceEndDate'] != '') {
             $_post['serviceStartDate'] = Carbon::parse($input['serviceStartDate'])->format('Y-m-d') . ' 00:00:00';
             $_post['serviceEndDate'] = Carbon::parse($input['serviceEndDate'])->format('Y-m-d') . ' 00:00:00';
-            if (($_post['serviceStartDate'] >= $_post['serviceEndDate'])) {
+            if (($_post['serviceStartDate'] > $_post['serviceEndDate'])) {
                 return $this->sendError('Service start date cannot be greater than service end date.', 500);
             }
         }

@@ -350,11 +350,11 @@ class ErpItemLedgerAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $startDate = new Carbon($request->daterange[0]);
+        $startDate = new Carbon($request->fromDate);
         //$startDate = $startDate->addDays(1);
         $startDate = $startDate->format('Y-m-d');
 
-        $endDate = new Carbon($request->daterange[1]);
+        $endDate = new Carbon($request->toDate);
         //$endDate = $endDate->addDays(1);
         $endDate = $endDate->format('Y-m-d');
 
@@ -596,11 +596,11 @@ WHERE
             $subCompanies = [$selectedCompanyId];
         }
 
-        $startDate = new Carbon($request->daterange[0]);
+        $startDate = new Carbon($request->fromDate);
         //$startDate = $startDate->addDays(1);
         $startDate = $startDate->format('Y-m-d');
 
-        $endDate = new Carbon($request->daterange[1]);
+        $endDate = new Carbon($request->toDate);
         //$endDate = $endDate->addDays(1);
         $endDate = $endDate->format('Y-m-d');
 
@@ -761,7 +761,8 @@ WHERE
         switch ($reportID) {
             case 'SL':
                 $validator = \Validator::make($request->all(), [
-                    'daterange' => 'required',
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
                     'Items' => 'required',
                     'Docs' => 'required',
                     'Warehouse' => 'required',
