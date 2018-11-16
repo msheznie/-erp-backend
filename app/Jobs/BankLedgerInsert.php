@@ -89,6 +89,13 @@ class BankLedgerInsert implements ShouldQueue
                         $data['payAmountSuppTrans'] = $masterData->payAmountSuppTrans;
                         $data['payAmountCompLocal'] = $masterData->payAmountCompLocal;
                         $data['payAmountCompRpt'] = $masterData->payAmountCompRpt;
+
+                        $data['trsCollectedYN'] = $masterData->trsCollectedYN;
+                        $data['trsCollectedByEmpSystemID'] = $masterData->trsCollectedByEmpSystemID;
+                        $data['trsCollectedByEmpID'] = $masterData->trsCollectedByEmpID;
+                        $data['trsCollectedByEmpName'] = $masterData->trsCollectedByEmpName;
+                        $data['trsCollectedDate'] = $masterData->trsCollectedDate;
+
                         $data['invoiceType'] = $masterData->invoiceType;
                         $data['createdUserID'] = $empID->empID;
                         $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -135,6 +142,13 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['payAmountSuppTrans'] = ABS($custReceivePayment->bankAmount) * -1;
                                 $data['payAmountCompLocal'] = ABS($custReceivePayment->localAmount) * -1;
                                 $data['payAmountCompRpt'] = ABS($custReceivePayment->companyRptAmount) * -1;
+
+                                $data['trsCollectedYN'] = $custReceivePayment->trsCollectedYN;
+                                $data['trsCollectedByEmpSystemID'] = $custReceivePayment->trsCollectedByEmpSystemID;
+                                $data['trsCollectedByEmpID'] = $custReceivePayment->trsCollectedByEmpID;
+                                $data['trsCollectedByEmpName'] = $custReceivePayment->trsCollectedByEmpName;
+                                $data['trsCollectedDate'] = $custReceivePayment->trsCollectedDate;
+
                                 $data['invoiceType'] = $custReceivePayment->documentType;
                                 $data['createdUserID'] = $empID->empID;
                                 $data['createdUserSystemID'] = $empID->employeeSystemID;
@@ -182,6 +196,13 @@ class BankLedgerInsert implements ShouldQueue
                             $data['payAmountSuppTrans'] = $custReceivePayment->bankAmount;
                             $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
                             $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
+
+                            $data['trsCollectedYN'] = $custReceivePayment->trsCollectedYN;
+                            $data['trsCollectedByEmpSystemID'] = $custReceivePayment->trsCollectedByEmpSystemID;
+                            $data['trsCollectedByEmpID'] = $custReceivePayment->trsCollectedByEmpID;
+                            $data['trsCollectedByEmpName'] = $custReceivePayment->trsCollectedByEmpName;
+                            $data['trsCollectedDate'] = $custReceivePayment->trsCollectedDate;
+
                             $data['invoiceType'] = $custReceivePayment->documentType;
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
