@@ -976,11 +976,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     ->where('addedDocumentSystemID', $creditNoteData->documentSystemiD)
                     ->where('bookingInvCodeSystem', $creditNoteData->creditNoteAutoID)
                     ->where('companySystemID', $creditNoteData->companySystemID)
-                    ->where('bookingInvCode', '<>', '0')
                     ->groupBy('addedDocumentSystemID', 'bookingInvCodeSystem', 'companySystemID')
                     ->first();
 
-                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')
+                    ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
                     ->where('documentSystemID', $matchDocumentMaster->documentSystemID)
                     ->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')
                     ->first();
@@ -997,18 +997,22 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 $totalPaidAmount = ($customerDetailSum + $machAmount);
 
-                //echo $totalPaidAmount."-".$creditNoteData->creditAmountTrans;
-                //exit();
+                $RoundedTotalPaidAmount = round($totalPaidAmount,$supplierCurrencyDecimalPlace );
+                $RoundedCreditAmountTrans = round($creditNoteData->creditAmountTrans,$supplierCurrencyDecimalPlace);
+
                 if ($totalPaidAmount == 0) {
                     $creditNoteData->matchInvoice = 0;
-                    $creditNoteData->save();
-                } else if ((round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace) == round($totalPaidAmount, $supplierCurrencyDecimalPlace)) || (round($totalPaidAmount, $supplierCurrencyDecimalPlace) > round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace))) {
-                    $creditNoteData->matchInvoice = 2;
-                    $creditNoteData->save();
-                } else if ((round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace) > round($totalPaidAmount, $supplierCurrencyDecimalPlace)) && (round($totalPaidAmount, $supplierCurrencyDecimalPlace) > 0)) {
-                    $creditNoteData->matchInvoice = 1;
-                    $creditNoteData->save();
                 }
+                elseif ($RoundedCreditAmountTrans == $RoundedTotalPaidAmount) {
+                    $creditNoteData->matchInvoice = 2;
+                }
+                elseif( $RoundedTotalPaidAmount > $RoundedCreditAmountTrans){
+                    $creditNoteData->matchInvoice = 2;
+                }
+                if ($RoundedCreditAmountTrans > $RoundedTotalPaidAmount && ($RoundedTotalPaidAmount > 0)) {
+                    $creditNoteData->matchInvoice = 1;
+                }
+                $creditNoteData->save();
             }
 
             $input['matchingConfirmedYN'] = 1;

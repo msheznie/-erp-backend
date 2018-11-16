@@ -124,11 +124,14 @@ class FinancialReportAPIController extends AppBaseController
                 $validator = \Validator::make($request->all(), [
                     'reportTypeID' => 'required',
                     'fromDate' => 'required',
-                    'toDate' => 'required|date|after_or_equal:fromDate'
+                    'tempType' => 'required'
                 ]);
 
                 if ($validator->fails()) {//echo 'in';exit;
                     return $this->sendError($validator->messages(), 422);
+                }
+                if ($request->tempType == 0) {//echo 'in';exit;
+                    return $this->sendError('Please select a type');
                 }
                 break;
             default:
@@ -280,45 +283,15 @@ class FinancialReportAPIController extends AppBaseController
 
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $checkIsGroup = Company::find($request->companySystemID);
-                $output = $this->getGeneralLedger($request);
-
-                $currencyIdLocal = 1;
-                $currencyIdRpt = 2;
-
-                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
-
-                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
-                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
-
-
-                if (!empty($decimalPlaceUniqueLocal)) {
-                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
-                }
-
-                if (!empty($decimalPlaceUniqueRpt)) {
-                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
-                }
-
-                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
-                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
-
-                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
-                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+                $output = $this->getTaxDetailQry($request);
 
                 $total = array();
-                $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
-                $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
-                $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
-                $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
+
                 return array('reportData' => $output,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'total' => $total,
-                    'decimalPlaceLocal' => $decimalPlaceLocal,
-                    'decimalPlaceRpt' => $decimalPlaceRpt,
-                    'currencyLocal' => $requestCurrencyLocal->CurrencyCode,
-                    'currencyRpt' => $requestCurrencyRpt->CurrencyCode,
+                    'tempType' => $request->tempType
                 );
                 break;
             default:
@@ -673,6 +646,74 @@ class FinancialReportAPIController extends AppBaseController
                 }
 
                 $csv = \Excel::create('general_ledger', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
+                break;
+            case 'FTD':
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $checkIsGroup = Company::find($request->companySystemID);
+
+                $output = $this->getTaxDetailQry($request);
+                $data = array();
+                if ($request->tempType == 1) {
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Document Code'] = $val->bookingInvCode;
+                            $data[$x]['Document Date'] = $val->bookingDate;
+                            $data[$x]['Invoice No'] = $val->supplierInvoiceNo;
+                            $data[$x]['Invoice Date'] = $val->supplierInvoiceDate;
+                            $data[$x]['Narration'] = $val->comments;
+                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Currency'] = $val->CurrencyCode;
+                            $data[$x]['Value'] = ($val->bookingAmountTrans - $val->taxTotalAmount);
+                            $data[$x]['Discount'] = 0;
+                            $data[$x]['Net Value'] = ($val->bookingAmountTrans - $val->taxTotalAmount);
+                            $data[$x]['VAT'] = $val->taxTotalAmount;
+                            $data[$x]['Due Amount'] = $val->bookingAmountTrans;
+                            $data[$x]['Posted Date'] = $val->postedDate;
+                            $x++;
+                        }
+                    }
+                } else {
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Document Code'] = $val->bookingInvCode;
+                            $data[$x]['Document Date'] = $val->bookingDate;
+                            $data[$x]['Invoice No'] = $val->bookingInvCode;
+                            $data[$x]['Invoice Date'] = $val->bookingDate;
+                            $data[$x]['Narration'] = $val->comments;
+                            $data[$x]['Customer Code'] = $val->CutomerCode;
+                            $data[$x]['Customer Short Code'] = $val->customerShortCode;
+                            $data[$x]['Customer Name'] = $val->CustomerName;
+                            $data[$x]['Currency'] = $val->CurrencyCode;
+                            $data[$x]['Value'] = $val->bookingAmountTrans ;
+                            $data[$x]['Discount'] = 0;
+                            $data[$x]['Net Value'] = $val->bookingAmountTrans;
+                            $data[$x]['VAT'] = $val->taxTotalAmount;
+                            $data[$x]['Due Amount'] = ($val->bookingAmountTrans + $val->taxTotalAmount);
+                            $data[$x]['Posted Date'] = $val->postedDate;
+                            $x++;
+                        }
+                    }
+                }
+
+                $csv = \Excel::create('trial_balance_details', function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -1238,6 +1279,105 @@ class FinancialReportAPIController extends AppBaseController
         } else {
             $companyID = (array)$request->companySystemID;
         }
+        if ($request->tempType == 1) {
+
+            $query = 'SELECT
+	MASTER .companyID,
+	MASTER .bookingInvCode,
+	DATE_FORMAT(
+		MASTER .bookingDate,
+		"%d/%m/%Y"
+	) AS bookingDate,
+	MASTER .supplierInvoiceNo,
+	DATE_FORMAT(
+		MASTER .supplierInvoiceDate,
+		"%d/%m/%Y"
+	) AS supplierInvoiceDate,
+	MASTER .comments,
+	suppliermaster.primarySupplierCode,
+	suppliermaster.supplierName,
+	currencymaster.CurrencyCode,
+	currencymaster.DecimalPlaces,
+	MASTER .bookingAmountTrans,
+	IFNULL(tax.taxTotalAmount, 0) AS taxTotalAmount,
+	DATE_FORMAT(
+		MASTER .postedDate,
+		"%d/%m/%Y"
+	) AS postedDate
+FROM
+	erp_bookinvsuppmaster AS MASTER
+INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MASTER .supplierID
+INNER JOIN currencymaster ON currencymaster.currencyID = MASTER .supplierTransactionCurrencyID
+LEFT JOIN (
+	SELECT
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode,
+		IFNULL(Sum(taxdetail.amount), 0) AS taxTotalAmount
+	FROM
+		erp_taxdetail AS taxdetail
+	GROUP BY
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode
+) tax ON tax.documentSystemID = MASTER .documentSystemID
+AND tax.companySystemID = MASTER .companySystemID
+AND tax.documentSystemCode = MASTER .bookingSuppMasInvAutoID
+WHERE DATE(master.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
+	MASTER.companySystemID IN (' . join(',', $companyID) . ')
+AND MASTER.approved = - 1
+AND MASTER.cancelYN = 0';
+        } else {
+            $query = 'SELECT
+	MASTER .companyID,
+	MASTER .bookingInvCode,
+	DATE_FORMAT(
+		MASTER .bookingDate,
+		"%d/%m/%Y"
+	) AS bookingDate,
+	MASTER .comments,
+	customermaster.CutomerCode,
+	customermaster.customerShortCode,
+	customermaster.CustomerName,
+	currencymaster.CurrencyCode,
+	currencymaster.DecimalPlaces,
+MASTER.bookingAmountTrans,
+	IFNULL(tax.taxTotalAmount, 0) AS taxTotalAmount,
+	DATE_FORMAT(
+		MASTER .postedDate,
+		"%d/%m/%Y"
+	) AS postedDate
+FROM
+	erp_custinvoicedirect AS MASTER
+INNER JOIN customermaster ON customermaster.customerCodeSystem = MASTER.customerID
+INNER JOIN currencymaster ON currencymaster.currencyID = MASTER.custTransactionCurrencyID
+LEFT JOIN (
+	SELECT
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode,
+		IFNULL(Sum(taxdetail.amount), 0) AS taxTotalAmount
+	FROM
+		erp_taxdetail AS taxdetail
+	GROUP BY
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode
+) tax ON tax.documentSystemID = MASTER .documentSystemID
+AND tax.companySystemID = MASTER .companySystemID
+AND tax.documentSystemCode = MASTER .custInvoiceDirectAutoID
+WHERE
+	DATE(master.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+AND MASTER .companySystemID IN (' . join(',', $companyID) . ')
+AND MASTER .approved = - 1
+AND MASTER .canceledYN = 0';
+        }
+
+        $output = \DB::select($query);
+        //dd(DB::getQueryLog());
+        return $output;
+
+
     }
 
 }
