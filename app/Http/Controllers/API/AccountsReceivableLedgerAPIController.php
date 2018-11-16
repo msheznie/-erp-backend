@@ -389,7 +389,7 @@ WHERE
 	AND md.supplierTransCurrencyID = custTransCurrencyID
 	LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 
 WHERE
-	date(erp_accountsreceivableledger.documentDate) < '{$custPaymentReceiveDate}'
+	date(erp_accountsreceivableledger.documentDate) <= '{$custPaymentReceiveDate}'
 	AND
 	{$filter}
 	erp_accountsreceivableledger.selectedToPaymentInv = 0
