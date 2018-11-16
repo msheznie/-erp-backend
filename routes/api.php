@@ -895,6 +895,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updatePaymentVoucherMatchingDetail', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherMatchingDetail');
 
     Route::resource('bank_ledgers', 'BankLedgerAPIController');
+    Route::post('updateTreasuryCollection', 'BankLedgerAPIController@updateTreasuryCollection');
     Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
     Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
 
