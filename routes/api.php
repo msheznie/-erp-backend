@@ -895,6 +895,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('updatePaymentVoucherMatchingDetail', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherMatchingDetail');
 
     Route::resource('bank_ledgers', 'BankLedgerAPIController');
+    Route::post('updateTreasuryCollection', 'BankLedgerAPIController@updateTreasuryCollection');
     Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
     Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
 
@@ -1137,29 +1138,15 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    $master = ['documentSystemID' => 22,'autoID' => 70190, 'companySystemID' => 52, 'employeeSystemID' => 2664];
-    $job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
+    $master = ['documentSystemID' => 21,'autoID' => 109, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76750);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
-    //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
+    $job = \App\Jobs\BankLedgerInsert::dispatch($master);
     //$master = \App\Models\AssetDisposalMaster::find(241);generateAssetDetailDrilldown
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
     //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
-    $data = array();
-    $memoDetail = '055874 3545 35445';
-    $data[0]['test'] = preg_replace("/[^0-9]/","", $memoDetail);
-
-    $csv = \Excel::create('payment_bank_transfer', function ($excel) use ($data) {
-        $excel->sheet('sheet name', function ($sheet) use ($data) {
-            $sheet->fromArray($data, null, 'A1', true);
-            //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
-            $sheet->setAutoSize(true);
-            $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-        });
-        $lastrow = $excel->getActiveSheet()->getHighestRow();
-        $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-    })->download('csv');
 });
 
 Route::get('runQueueSR', function () {
