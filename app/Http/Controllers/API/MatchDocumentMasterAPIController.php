@@ -378,11 +378,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['companyRptCurrencyID'] = $customerReceivePaymentMaster->companyRptCurrencyID;
                 $input['companyRptCurrencyER'] = $customerReceivePaymentMaster->companyRptCurrencyER;
                 $input['payAmountBank'] = $customerReceivePaymentMaster->bankID;
-                //$input['payAmountSuppTrans'] = $customerReceivePaymentMaster->custTransactionCurrencyID;
+                $input['payAmountSuppTrans'] = $customerReceivePaymentMaster->receivedAmount;
                 //$input['payAmountSuppDef'] = $customerReceivePaymentMaster->payAmountSuppDef;
                 //$input['suppAmountDocTotal'] = $customerReceivePaymentMaster->suppAmountDocTotal;
-                //$input['payAmountCompLocal'] = $customerReceivePaymentMaster->payAmountCompLocal;
-                //$input['payAmountCompRpt'] = $customerReceivePaymentMaster->payAmountCompRpt;
+                $input['payAmountCompLocal'] = $customerReceivePaymentMaster->localAmount;
+                $input['payAmountCompRpt'] = $customerReceivePaymentMaster->companyRptAmount;
                 $input['invoiceType'] = $customerReceivePaymentMaster->documentType;
                 $input['matchInvoice'] = $customerReceivePaymentMaster->matchInvoice;
                 $input['matchingAmount'] = 0;
@@ -810,7 +810,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
         $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
 
-
         if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
 
             $pvDetailExist = CustomerReceivePaymentDetail::select(DB::raw('matchingDocID,addedDocumentSystemID'))
@@ -936,13 +935,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $arLedgerUpdate->save();
             }
 
-            //updating master table
-            if ($matchDocumentMaster->documentSystemID == 21) {
 
-                $CustomerReceivePaymentDataUpdate = CustomerReceivePayment::find($matchDocumentMaster->PayMasterAutoId);
+            //updating master table
+            if ($input['documentSystemID'] == 21) {
+
+                $CustomerReceivePaymentDataUpdate = CustomerReceivePayment::find($input['PayMasterAutoId']);
 
                 $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
-                    ->where('custReceivePaymentAutoID', $matchDocumentMaster->PayMasterAutoId)
+                    ->where('custReceivePaymentAutoID', $input['PayMasterAutoId'])
                     ->where('bookingInvCode', '0')
                     ->groupBy('custReceivePaymentAutoID')
                     ->first();
@@ -958,29 +958,32 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $receiveAmountTot = $customerSettleAmountSum["SumDetailAmount"];
                 }
 
+                $RoundedMachAmount = round($machAmount,$supplierCurrencyDecimalPlace);
+                $RoundedReceiveAmountTot = round($receiveAmountTot,$supplierCurrencyDecimalPlace);
+
                 if ($machAmount == 0) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 0;
-                } else if ((round($receiveAmountTot,$supplierCurrencyDecimalPlace) == round($machAmount, $supplierCurrencyDecimalPlace)) || (round($machAmount, $supplierCurrencyDecimalPlace) > round($receiveAmountTot, $supplierCurrencyDecimalPlace))) {
+                } else if ($RoundedReceiveAmountTot == $RoundedMachAmount || $RoundedMachAmount > $RoundedReceiveAmountTot) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 2;
-                } else if ((round($receiveAmountTot, $supplierCurrencyDecimalPlace) > round($machAmount, $supplierCurrencyDecimalPlace)) && (round($machAmount, $supplierCurrencyDecimalPlace) > 0)) {
+                } else if ($RoundedReceiveAmountTot > $RoundedMachAmount && $RoundedMachAmount > 0) {
                     $CustomerReceivePaymentDataUpdate->matchInvoice = 1;
                 }
                 $CustomerReceivePaymentDataUpdate->save();
             }
-            if ($matchDocumentMaster->documentSystemID == 19) {
+            if ($input['documentSystemID'] == 19) {
 
-                $creditNoteData = CreditNote::find($matchDocumentMaster->PayMasterAutoId);
+                $creditNoteDataUpdate = CreditNote::find($input['PayMasterAutoId']);
 
                 //when adding a new matching, checking whether debit amount more than the document value
                 $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, companySystemID, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
-                    ->where('addedDocumentSystemID', $creditNoteData->documentSystemiD)
-                    ->where('bookingInvCodeSystem', $creditNoteData->creditNoteAutoID)
-                    ->where('companySystemID', $creditNoteData->companySystemID)
-                    ->where('bookingInvCode', '<>', '0')
-                    ->groupBy('addedDocumentSystemID', 'bookingInvCodeSystem', 'companySystemID')
+                    ->where('addedDocumentSystemID', $creditNoteDataUpdate->documentSystemiD)
+                    ->where('bookingInvCodeSystem', $creditNoteDataUpdate->creditNoteAutoID)
+                    ->groupBy('addedDocumentSystemID', 'bookingInvCodeSystem')
                     ->first();
 
-                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
+
+                $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')
+                    ->where('PayMasterAutoId', $matchDocumentMaster->PayMasterAutoId)
                     ->where('documentSystemID', $matchDocumentMaster->documentSystemID)
                     ->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')
                     ->first();
@@ -996,20 +999,24 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 }
 
                 $totalPaidAmount = ($customerDetailSum + $machAmount);
+                $RoundedTotalPaidAmount = round($totalPaidAmount,$supplierCurrencyDecimalPlace);
+                $RoundedCreditAmountTrans = round($creditNoteDataUpdate->creditAmountTrans,$supplierCurrencyDecimalPlace);
 
-                //echo $totalPaidAmount."-".$creditNoteData->creditAmountTrans;
-                //exit();
                 if ($totalPaidAmount == 0) {
-                    $creditNoteData->matchInvoice = 0;
-                    $creditNoteData->save();
-                } else if ((round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace) == round($totalPaidAmount, $supplierCurrencyDecimalPlace)) || (round($totalPaidAmount, $supplierCurrencyDecimalPlace) > round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace))) {
-                    $creditNoteData->matchInvoice = 2;
-                    $creditNoteData->save();
-                } else if ((round($creditNoteData->creditAmountTrans, $supplierCurrencyDecimalPlace) > round($totalPaidAmount, $supplierCurrencyDecimalPlace)) && (round($totalPaidAmount, $supplierCurrencyDecimalPlace) > 0)) {
-                    $creditNoteData->matchInvoice = 1;
-                    $creditNoteData->save();
+                    $creditNoteDataUpdate->matchInvoice = 0;
                 }
+                elseif($RoundedCreditAmountTrans == $RoundedTotalPaidAmount) {
+                    $creditNoteDataUpdate->matchInvoice = 2;
+                }
+                elseif( $RoundedTotalPaidAmount > $RoundedCreditAmountTrans){
+                    $creditNoteDataUpdate->matchInvoice = 2;
+                }
+                elseif ($RoundedCreditAmountTrans > $RoundedTotalPaidAmount && ($RoundedTotalPaidAmount > 0)) {
+                    $creditNoteDataUpdate->matchInvoice = 1;
+                }
+                $creditNoteDataUpdate->save();
             }
+
 
             $input['matchingConfirmedYN'] = 1;
             $input['matchingConfirmedByEmpSystemID'] = $employee->employeeSystemID;;

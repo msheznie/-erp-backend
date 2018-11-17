@@ -128,6 +128,10 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
                 return $this->sendError('Company not found');
             }
 
+            if ($master->faID == $input['faID']) {
+                return $this->sendError('Cannot add same item which is selected in header.');
+            }
+
             $detail = $this->assetCapitalizationDetailRepository->findWhere(['capitalizationID' => $input['capitalizationID'], 'faID' => $input['faID']]);
             if (count($detail) > 0) {
                 return $this->sendError('Cannot add same item.');

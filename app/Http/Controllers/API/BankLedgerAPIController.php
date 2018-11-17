@@ -13,6 +13,7 @@
  * -- Date: 03-October 2018 By: Fayas Description: Added new functions named as getPaymentsByBankTransfer()
  * -- Date: 30-October 2018 By: Fayas Description: Added new functions named as getChequePrintingItems()
  * -- Date: 31-October 2018 By: Fayas Description: Added new functions named as getChequePrintingFormData(),printChequeItems()
+ * -- Date: 16-November 2018 By: Fayas Description: Added new functions named as updateTreasuryCollection()
  */
 namespace App\Http\Controllers\API;
 
@@ -22,16 +23,19 @@ use App\Models\BankAccount;
 use App\Models\BankLedger;
 use App\Models\BankMaster;
 use App\Models\BankReconciliation;
+use App\Models\CustomerReceivePayment;
 use App\Models\GeneralLedger;
 use App\Models\PaymentBankTransfer;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
+use App\Repositories\CustomerReceivePaymentRepository;
 use App\Repositories\PaymentBankTransferRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Input;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -47,15 +51,18 @@ class BankLedgerAPIController extends AppBaseController
     private $bankReconciliationRepository;
     private $paymentBankTransferRepository;
     private $paySupplierInvoiceMasterRepository;
+    private $customerReceivePaymentRepository;
 
     public function __construct(BankLedgerRepository $bankLedgerRepo, BankReconciliationRepository $bankReconciliationRepo,
                                 PaymentBankTransferRepository $paymentBankTransferRepo,
-                                PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo)
+                                PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo,
+                                CustomerReceivePaymentRepository $customerReceivePaymentRepo)
     {
         $this->bankLedgerRepository = $bankLedgerRepo;
         $this->bankReconciliationRepository = $bankReconciliationRepo;
         $this->paymentBankTransferRepository = $paymentBankTransferRepo;
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
+        $this->customerReceivePaymentRepository = $customerReceivePaymentRepo;
     }
 
     /**
@@ -431,6 +438,77 @@ class BankLedgerAPIController extends AppBaseController
         return $this->sendResponse($bankLedger->toArray(), 'BankLedger updated successfully');
     }
 
+
+    public function updateTreasuryCollection(Request $request){
+
+        $input = $request->all();
+        $id = 0 ;
+
+        if (array_key_exists('editType', $input)) {
+
+            $entity = null;
+            if($input['editType'] == 1){
+                $id = $input['custReceivePaymentAutoID'];
+                $entity = $this->customerReceivePaymentRepository->find($id);
+
+                if (empty($entity)) {
+                    return $this->sendError('Payment not found');
+                }
+            }else if($input['editType'] == 2){
+                $id = $input['PayMasterAutoId'];
+                $entity = $this->paySupplierInvoiceMasterRepository->find($id);
+
+                if (empty($entity)) {
+                    return $this->sendError('Receipt not found');
+                }
+            }else{
+                return $this->sendError('Error',500);
+            }
+
+
+            $employee = \Helper::getEmployeeInfo();
+
+            if ($entity->confirmedYN != 1) {
+                return $this->sendError('You cannot edit, it is not confirmed.', 500);
+            }
+
+            if ($entity->approved == -1) {
+                return $this->sendError('You cannot edit, it is already approved.', 500);
+            }
+
+            if ($input['trsCollectedYN']) {
+                $updateArray['trsCollectedYN'] = -1;
+            } else {
+                $updateArray['trsCollectedYN'] = 0;
+            }
+
+            if ($updateArray['trsCollectedYN']) {
+                $updateArray['trsCollectedByEmpName'] = $employee->empName;
+                $updateArray['trsCollectedByEmpID'] = $employee->empID;
+                $updateArray['trsCollectedByEmpSystemID'] = $employee->employeeSystemID;
+                $updateArray['trsCollectedDate'] = now();
+            } else {
+                $updateArray['trsCollectedByEmpName'] = null;
+                $updateArray['trsCollectedByEmpID'] = null;
+                $updateArray['trsCollectedByEmpSystemID'] = null;
+                $updateArray['trsCollectedDate'] = null;
+            }
+
+            if($input['editType'] == 1){
+                $id = $input['custReceivePaymentAutoID'];
+                $this->customerReceivePaymentRepository->update($updateArray, $id);
+                $entity = $this->customerReceivePaymentRepository->find($id);
+            }else if($input['editType'] == 2){
+                $id = $input['PayMasterAutoId'];
+                $this->paySupplierInvoiceMasterRepository->update($updateArray, $id);
+                $entity = $this->paySupplierInvoiceMasterRepository->find($id);
+            }
+            return $this->sendResponse($entity->toArray(), 'Successfully updated');
+        }else{
+            return $this->sendError('Error.', 500);
+        }
+    }
+
     /**
      * @param int $id
      * @return Response
@@ -580,38 +658,67 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         $type = '<';
+        $documentCode = "documentCode";
+        $documentNarration = "documentNarration";
+        $autoId = "bankLedgerAutoID";
+        $data = array();
 
         if (array_key_exists('type', $input) && ($input['type'] == 1 || $input['type'] == 2)) {
-
             if ($input['type'] == 1) {
                 $type = '<';
+                $documentCode = "custPaymentReceiveCode";
+                $documentNarration = "narration";
+                $autoId = "custReceivePaymentAutoID";
             } else if ($input['type'] == 2) {
                 $type = '>';
+                $documentCode = "BPVcode";
+                $documentNarration = "BPVNarration";
+                $autoId = "PayMasterAutoId";
             }
         }
 
-        $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
-            ->where('payAmountBank', $type, 0)
-            ->where("bankAccountID", $input['bankAccountAutoID'])
-            //->where("trsClearedYN", -1)
-            ->where("bankClearedYN", 0);
+        if(array_key_exists('isClear', $input) && $input['isClear']){
+            $documentCode = "documentCode";
+            $documentNarration = "documentNarration";
+            $autoId = "bankLedgerAutoID";
+            $data = BankLedger::whereIn('companySystemID', $subCompanies)
+                                ->where('payAmountBank', $type, 0)
+                                ->where("bankAccountID", $input['bankAccountAutoID'])
+                                //->where("trsClearedYN", -1)
+                                ->where("bankClearedYN", 0);
+        }else{
+            if ($input['type'] == 1) {
+                $data = CustomerReceivePayment::whereIn('companySystemID', $subCompanies)
+                    ->where("bankAccount", $input['bankAccountAutoID'])
+                    ->where("bankClearedYN", 0)
+                    ->where("confirmedYN", 1)
+                    ->where("approved", 0);
+
+            } else if ($input['type'] == 2) {
+                $data = PaySupplierInvoiceMaster::whereIn('companySystemID', $subCompanies)
+                    ->where("BPVAccount", $input['bankAccountAutoID'])
+                    ->where("bankClearedYN", 0)
+                    ->where("confirmedYN", 1)
+                    ->where("approved", 0);
+            }
+        }
 
         $search = $request->input('search.value');
 
-        if ($search) {
+        if ($search && $documentCode && $documentNarration) {
             $search = str_replace("\\", "\\\\", $search);
-            $bankLedger = $bankLedger->where(function ($query) use ($search) {
-                $query->where('documentCode', 'LIKE', "%{$search}%")
-                    ->orWhere('documentNarration', 'LIKE', "%{$search}%");
+            $data = $data->where(function ($query) use ($search,$documentCode,$documentNarration) {
+                $query->where($documentCode, 'LIKE', "%{$search}%")
+                    ->orWhere($documentNarration, 'LIKE', "%{$search}%");
             });
         }
 
-        return \DataTables::eloquent($bankLedger)
+        return \DataTables::eloquent($data)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->order(function ($query) use ($input) {
+            ->order(function ($query) use ($input,$autoId) {
                 if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('bankLedgerAutoID', $input['order'][0]['dir']);
+                    if ($input['order'][0]['column'] == 0 && $autoId) {
+                        $query->orderBy($autoId, $input['order'][0]['dir']);
                     }
                 }
             })

@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for Direct payment detail
  * -- REVISION HISTORY
  * -- Date: 18 September 2018 By: Mubashir Description: Added new function updateDirectPaymentAccount(),deleteAllDirectPayment(),getDirectPaymentDetails()
+ * -- Date: 15 November 2018 By: Fayas Description: Added new function addDetailsFromExpenseClaim()
  */
 
 namespace App\Http\Controllers\API;
@@ -21,9 +22,13 @@ use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CurrencyConversion;
 use App\Models\DirectPaymentDetails;
+use App\Models\Employee;
+use App\Models\ExpenseClaimDetails;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
 use App\Repositories\DirectPaymentDetailsRepository;
+use App\Repositories\ExpenseClaimRepository;
+use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -38,10 +43,15 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 {
     /** @var  DirectPaymentDetailsRepository */
     private $directPaymentDetailsRepository;
+    private $expenseClaimRepository;
+    private $paySupplierInvoiceMasterRepository;
 
-    public function __construct(DirectPaymentDetailsRepository $directPaymentDetailsRepo)
+    public function __construct(DirectPaymentDetailsRepository $directPaymentDetailsRepo,ExpenseClaimRepository $expenseClaimRepo,
+                                PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo)
     {
         $this->directPaymentDetailsRepository = $directPaymentDetailsRepo;
+        $this->expenseClaimRepository = $expenseClaimRepo;
+        $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
     }
 
     /**
@@ -561,6 +571,17 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $id = $request->directPaymentAutoID;
 
+        $expenseClaimDetails = DirectPaymentDetails::where('directPaymentAutoID', $id)->get();
+
+        foreach ($expenseClaimDetails as $detail){
+            if($detail['expenseClaimMasterAutoID']){
+                $expenseClaim = $this->expenseClaimRepository->find($detail['expenseClaimMasterAutoID']);
+                if (!empty($expenseClaim)) {
+                    $this->expenseClaimRepository->update(['addedForPayment' => 0, 'addedToSalary' => 0], $detail['expenseClaimMasterAutoID']);
+                }
+            }
+        }
+
         $directPaymentDetails = DirectPaymentDetails::where('directPaymentAutoID', $id)->delete();
 
         return $this->sendResponse($directPaymentDetails, 'Successfully delete');
@@ -652,6 +673,94 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $output = ['toBankCurrencyER' => 0, 'toBankAmount' => 0];
             return $this->sendResponse($output, 'Successfully data retrieved');
         }
+    }
+
+
+    public function addDetailsFromExpenseClaim(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['expenseClaimId'];
+        $payMasterAutoId = $input['PayMasterAutoId'];
+
+        $expenseClaim = $this->expenseClaimRepository->find($id);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($payMasterAutoId);
+
+        if (empty($paySupplierInvoiceMaster)) {
+            return $this->sendError('Pay Supplier Invoice not found');
+        }
+
+        if ($paySupplierInvoiceMaster->BPVdate) {
+            $finYearExp = explode('-', $paySupplierInvoiceMaster->BPVdate);
+            $budgetYear = $finYearExp[0];
+        } else {
+            $budgetYear = date("Y");
+        }
+
+        $expenseClaimDetails = ExpenseClaimDetails::where('companySystemID', $expenseClaim->companySystemID)
+            ->where('expenseClaimMasterAutoID', $id)
+            ->with(['currency'])
+            ->get();
+
+        foreach ($expenseClaimDetails as $detail) {
+
+            $emp = Employee::with(['details'])->find($expenseClaim->clamiedByNameSystemID);
+
+            $empID = '';
+            $empDepartment = 0;
+
+            if(!empty($emp)){
+                $empID = $emp->empID;
+                if($emp->details){
+                    $empDepartment = $emp->details->departmentID;
+                }
+            }
+
+            $currencyConvert = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID,
+                $detail['localCurrency'], $detail['localCurrency'], $detail['localAmount'],
+                $paySupplierInvoiceMaster->BPVAccount);
+
+            $temData = array(
+                'directPaymentAutoID' => $paySupplierInvoiceMaster->PayMasterAutoId,
+                'companySystemID' => $detail['companySystemID'],
+                'companyID' => $detail['companyID'],
+                'serviceLineSystemID' => $detail['serviceLineSystemID'],
+                'serviceLineCode'=> $detail['serviceLineCode'],
+                'comments'=> $detail['description'],
+                'expenseClaimMasterAutoID' => $expenseClaim->expenseClaimMasterAutoID,
+                'pettyCashYN' => 2,
+                'chartOfAccountSystemID'=> $detail['chartOfAccountSystemID'],
+                'glCode' => $detail['glCode'],
+                'glCodeDes' => $detail['glCodeDescription'],
+                'glCodeIsBank' => 0,
+                'budgetYear' => $budgetYear,
+                'supplierTransCurrencyID' => $detail['localCurrency'],
+                'supplierTransER' => 1,
+                'DPAmountCurrency' => $detail['localCurrency'],
+                'DPAmountCurrencyER' => 1,
+                'DPAmount' => $detail['localAmount'],
+                'bankAmount' => \Helper::roundValue($currencyConvert['bankAmount']),
+                'bankCurrencyID' => $paySupplierInvoiceMaster->supplierTransCurrencyID,
+                'bankCurrencyER' =>  $currencyConvert['transToBankER'],
+                'localCurrency' => $detail['localCurrency'],
+                'localCurrencyER' => 1,
+                'localAmount' => $detail['localAmount'],
+                'comRptCurrency' => $detail['comRptCurrency'],
+                'comRptCurrencyER' => $currencyConvert['trasToRptER'],
+                'comRptAmount' => \Helper::roundValue($currencyConvert['reportingAmount'])
+                );
+            $this->directPaymentDetailsRepository->create($temData);
+        }
+
+        if (count($expenseClaimDetails) > 0) {
+            $this->expenseClaimRepository->update(['addedForPayment' => -1, 'addedToSalary' => -1], $id);
+        }
+
+        return $this->sendResponse($expenseClaimDetails, 'Monthly Addition Details added successfully');
     }
 
 }

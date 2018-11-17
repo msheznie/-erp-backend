@@ -602,7 +602,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
                     $tempArray = $new;
-                    $tempArray["custReceivePaymentAutoID"] = $new['bookingInvCodeSystem'];
+                    $tempArray["custReceivePaymentAutoID"] = $matchDocumentMasterData->PayMasterAutoId;
                     $tempArray["arAutoID"] = $new['arAutoID'];
                     $tempArray["companySystemID"] = $new['companySystemID'];
                     $tempArray["companyID"] = $new['companyID'];
@@ -753,8 +753,23 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                 $arLedgerUpdate->selectedToPaymentInv = 0;
             }
         }
-
         $arLedgerUpdate->save();
+
+        //updating match header table
+        $detailAmountTotTran = CustomerReceivePaymentDetail::where('matchingDocID', $input['matchingDocID'])
+            ->sum('receiveAmountTrans');
+
+        $detailAmountTotLoc = CustomerReceivePaymentDetail::where('matchingDocID', $input['matchingDocID'])
+            ->sum('receiveAmountLocal');
+
+        $detailAmountTotRpt = CustomerReceivePaymentDetail::where('matchingDocID', $input['matchingDocID'])
+            ->sum('receiveAmountRpt');
+
+        $matchDocumentMasterData->matchingAmount = $detailAmountTotTran;
+        $matchDocumentMasterData->matchedAmount = $detailAmountTotTran;
+        $matchDocumentMasterData->matchLocalAmount = \Helper::roundValue($detailAmountTotLoc);
+        $matchDocumentMasterData->matchRptAmount = \Helper::roundValue($detailAmountTotRpt);
+        $matchDocumentMasterData->save();
 
         return $this->sendResponse($receiptVoucherDetails->toArray(), 'Detail updated successfully');
     }
