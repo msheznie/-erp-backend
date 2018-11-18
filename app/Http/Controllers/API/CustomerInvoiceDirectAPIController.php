@@ -1798,6 +1798,21 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         return $this->sendResponse($contract, 'Contract deleted successfully');
     }
 
+    public function getAllcontractbyclientbase(request $request)
+    {
+        $input = $request->all();
+
+        $custInvDirDetAutoID = $input['custInvDirDetAutoID'];
+        $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
+        $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
+
+        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID AND clientID = $master->customerID;";
+        $contract = DB::select($qry);
+
+
+        return $this->sendResponse($contract, 'Contract deleted successfully');
+    }
+
 
     function customerInvoiceReceiptStatus(Request $request)
     {
