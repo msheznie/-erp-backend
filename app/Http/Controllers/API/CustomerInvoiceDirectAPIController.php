@@ -1076,11 +1076,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', 'No details records found');
         }
 
-        $detailsAlreadyExist = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+        //code commented by Nazir : requested by Zahlan
+     /*   $detailsAlreadyExist = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
 
         if (!empty($detailsAlreadyExist)) {
             return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
-        }
+        }*/
 
         $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob','contractType')->where('CompanyID', $master->companyID)->where('ContractNumber', $performa->contractID)->first();
 
