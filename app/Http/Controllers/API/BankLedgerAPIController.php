@@ -409,7 +409,7 @@ class BankLedgerAPIController extends AppBaseController
                 $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
             } else if ($input['editType'] == 4) {
 
-                $bankTransfer = $this->paymentBankTransferRepository->findWithoutFail($input['paymentBankTransferID']);
+                $bankTransfer = $this->paymentBankTransferRepository->with(['bank_account'])->findWithoutFail($input['paymentBankTransferID']);
 
                 if (empty($bankTransfer)) {
                     return $this->sendError('Bank Transfer not found');
@@ -417,6 +417,26 @@ class BankLedgerAPIController extends AppBaseController
 
                 if ($bankTransfer->confirmedYN == 1) {
                     return $this->sendError('You cannot edit, This document already confirmed.', 500);
+                }
+
+                $bankId = 0;
+                if ($bankTransfer->bank_account) {
+                    $bankId = $bankTransfer->bank_account->accountCurrencyID;
+                }
+
+                $checkBankAccount = BankLedger::where('bankLedgerAutoID', $id)
+                    ->whereHas('supplier_by' , function ($q3) use ($bankId) {
+                        $q3->whereHas('supplierCurrency' , function ($q4) use ($bankId) {
+                            $q4->where('currencyID', $bankId)
+                                ->whereHas('bankMemo_by' , function($q){
+                                    $q->where('bankMemoTypeID',4);
+                                });
+                        });
+                    })
+                   ->first();
+
+                if(empty($checkBankAccount) && $input['pulledToBankTransferYN']){
+                    return $this->sendError('Supplier account is not updated. You cannot add this payment to the transfer.', 500);
                 }
 
                 if ($input['pulledToBankTransferYN']) {
@@ -752,7 +772,7 @@ class BankLedgerAPIController extends AppBaseController
         if (!empty($paymentBankTransfer)) {
             $confirmed = $paymentBankTransfer->confirmedYN;
         }
-        $bankId = 1;
+        $bankId = 0;
         if ($paymentBankTransfer->bank_account) {
             $bankId = $paymentBankTransfer->bank_account->accountCurrencyID;
         }
@@ -771,7 +791,15 @@ class BankLedgerAPIController extends AppBaseController
                 })->when($confirmed == 0, function ($q2) {
                     $q2->orWhere("pulledToBankTransferYN", 0);
                 });
-            });
+            })
+            ->with(['supplier_by' => function ($q3) use ($bankId) {
+                $q3->with(['supplierCurrency' => function ($q4) use ($bankId) {
+                    $q4->where('currencyID', $bankId)
+                        ->with(['bankMemo_by' => function($q){
+                            $q->where('bankMemoTypeID',4);
+                        }]);
+                }]);
+            }]);
 
         $search = $request->input('search.value');
 

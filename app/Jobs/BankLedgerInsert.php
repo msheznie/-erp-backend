@@ -71,9 +71,9 @@ class BankLedgerInsert implements ShouldQueue
                         $data['payeeID'] = $masterData->BPVsupplierID;
 
                         $payee = SupplierMaster::find($masterData->BPVsupplierID);
-                        if($payee){
+                        if ($payee) {
                             $data['payeeCode'] = $payee->primarySupplierCode;
-                        }else {
+                        } else {
                             $data['payeeCode'] = null;
                         }
                         $data['payeeName'] = $masterData->directPaymentPayee;
@@ -90,7 +90,12 @@ class BankLedgerInsert implements ShouldQueue
                         $data['payAmountCompLocal'] = $masterData->payAmountCompLocal;
                         $data['payAmountCompRpt'] = $masterData->payAmountCompRpt;
 
-                        $data['trsCollectedYN'] = $masterData->trsCollectedYN;
+                        if ($masterData->trsCollectedYN == 0) {
+                            $data['trsCollectedYN'] = -1;
+                        } else {
+                            $data['trsCollectedYN'] = $masterData->trsCollectedYN;
+                        }
+
                         $data['trsCollectedByEmpSystemID'] = $masterData->trsCollectedByEmpSystemID;
                         $data['trsCollectedByEmpID'] = $masterData->trsCollectedByEmpID;
                         $data['trsCollectedByEmpName'] = $masterData->trsCollectedByEmpName;
@@ -103,9 +108,9 @@ class BankLedgerInsert implements ShouldQueue
                         $data['timestamp'] = NOW();
                         array_push($finalData, $data);
 
-                        if($masterData->invoiceType == 3) {
-                            $custReceivePayment = CustomerReceivePayment::where('companySystemID',$masterData->companySystemID)->where('documentSystemID',$masterData->documentSystemID)->where('PayMasterAutoId',$masterModel["autoID"])->first();
-                            if($custReceivePayment){
+                        if ($masterData->invoiceType == 3) {
+                            $custReceivePayment = CustomerReceivePayment::where('companySystemID', $masterData->companySystemID)->where('documentSystemID', $masterData->documentSystemID)->where('PayMasterAutoId', $masterModel["autoID"])->first();
+                            if ($custReceivePayment) {
                                 $data['companySystemID'] = $custReceivePayment->companySystemID;
                                 $data['companyID'] = $custReceivePayment->companyID;
                                 $data['documentSystemID'] = $custReceivePayment->documentSystemID;
@@ -124,9 +129,9 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['payeeID'] = $custReceivePayment->customerID;
 
                                 $payee = CustomerMaster::find($custReceivePayment->customerID);
-                                if($payee){
+                                if ($payee) {
                                     $data['payeeCode'] = $payee->CutomerCode;
-                                }else{
+                                } else {
                                     $data['payeeCode'] = null;
                                 }
                                 $data['payeeName'] = $custReceivePayment->PayeeName;
@@ -143,7 +148,12 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['payAmountCompLocal'] = ABS($custReceivePayment->localAmount) * -1;
                                 $data['payAmountCompRpt'] = ABS($custReceivePayment->companyRptAmount) * -1;
 
-                                $data['trsCollectedYN'] = $custReceivePayment->trsCollectedYN;
+                                if ($custReceivePayment->trsCollectedYN == 0) {
+                                    $data['trsCollectedYN'] = -1;
+                                } else {
+                                    $data['trsCollectedYN'] = $custReceivePayment->trsCollectedYN;
+                                }
+
                                 $data['trsCollectedByEmpSystemID'] = $custReceivePayment->trsCollectedByEmpSystemID;
                                 $data['trsCollectedByEmpID'] = $custReceivePayment->trsCollectedByEmpID;
                                 $data['trsCollectedByEmpName'] = $custReceivePayment->trsCollectedByEmpName;
@@ -161,7 +171,7 @@ class BankLedgerInsert implements ShouldQueue
                         break;
                     case 21: // Receipt Voucher
                         $custReceivePayment = CustomerReceivePayment::find($masterModel["autoID"]);
-                        if($custReceivePayment){
+                        if ($custReceivePayment) {
                             $data['companySystemID'] = $custReceivePayment->companySystemID;
                             $data['companyID'] = $custReceivePayment->companyID;
                             $data['documentSystemID'] = $custReceivePayment->documentSystemID;
@@ -180,7 +190,7 @@ class BankLedgerInsert implements ShouldQueue
                             $data['payeeID'] = $custReceivePayment->customerID;
 
                             $payee = CustomerMaster::find($custReceivePayment->customerID);
-                            if($payee){
+                            if ($payee) {
                                 $data['payeeCode'] = $payee->CutomerCode;
                             }
                             $data['payeeName'] = $custReceivePayment->PayeeName;
@@ -197,7 +207,12 @@ class BankLedgerInsert implements ShouldQueue
                             $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
                             $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
 
-                            $data['trsCollectedYN'] = $custReceivePayment->trsCollectedYN;
+                            if ($custReceivePayment->trsCollectedYN == 0) {
+                                $data['trsCollectedYN'] = -1;
+                            } else {
+                                $data['trsCollectedYN'] = $custReceivePayment->trsCollectedYN;
+                            }
+
                             $data['trsCollectedByEmpSystemID'] = $custReceivePayment->trsCollectedByEmpSystemID;
                             $data['trsCollectedByEmpID'] = $custReceivePayment->trsCollectedByEmpID;
                             $data['trsCollectedByEmpName'] = $custReceivePayment->trsCollectedByEmpName;

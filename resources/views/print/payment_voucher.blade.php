@@ -293,7 +293,7 @@
                 <table>
                     <tr>
                         <td width="150px">
-                            <span class="font-weight-bold">Supplier Code</span>
+                            <span class="font-weight-bold">Payee Code</span>
                         </td>
                         <td width="10px">
                             <span class="font-weight-bold">:</span>
@@ -306,15 +306,13 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Supplier Name</span>
+                            <span class="font-weight-bold">Payee Name</span>
                         </td>
                         <td width="10px">
                             <span class="font-weight-bold">:</span>
                         </td>
                         <td>
-                            @if($masterdata->supplier)
-                                {{$masterdata->supplier->supplierName}}
-                            @endif
+                            {{$masterdata->directPaymentPayee}}
                         </td>
                     </tr>
                     <tr>
