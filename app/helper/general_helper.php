@@ -2612,8 +2612,11 @@ class Helper
                     $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
                     $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
-                    $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                    $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                    if($companyFinancePeriod) {
+                        $receivePayment['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
+                        $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                        $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                    }
 
                     $BRVLastSerial = Models\CustomerReceivePayment::where('companySystemID', $pvMaster->interCompanyToSystemID)
                         ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
@@ -2722,8 +2725,11 @@ class Helper
                             $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
                             $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
-                            $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                            $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                            if($companyFinancePeriod) {
+                                $receivePayment['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
+                                $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                                $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                            }
                             $receivePayment['PayMasterAutoId'] = $pvMaster->PayMasterAutoId;
                             $receivePayment['serialNo'] = $pvMaster->serialNo;
                             $receivePayment['custPaymentReceiveCode'] = $pvMaster->BPVcode;
@@ -3224,6 +3230,18 @@ class Helper
             $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
             $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
             $data['invoiceType'] = $custReceivePayment->documentType;
+
+            if ($custReceivePayment->trsCollectedYN == 0) {
+                $data['trsCollectedYN'] = -1;
+            } else {
+                $data['trsCollectedYN'] = $custReceivePayment->trsCollectedYN;
+            }
+
+            $data['trsCollectedByEmpSystemID'] = $custReceivePayment->trsCollectedByEmpSystemID;
+            $data['trsCollectedByEmpID'] = $custReceivePayment->trsCollectedByEmpID;
+            $data['trsCollectedByEmpName'] = $custReceivePayment->trsCollectedByEmpName;
+            $data['trsCollectedDate'] = $custReceivePayment->trsCollectedDate;
+
             $data['createdUserID'] = $custReceivePayment->createdUserID;
             $data['createdUserSystemID'] = $custReceivePayment->createdUserSystemID;
             $data['createdPcID'] = gethostname();

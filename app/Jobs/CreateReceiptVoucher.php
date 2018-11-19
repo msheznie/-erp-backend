@@ -66,8 +66,10 @@ class CreateReceiptVoucher implements ShouldQueue
                         $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
                         $companyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
-                        $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                        $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                        if($companyFinancePeriod) {
+                            $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                            $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                        }
 
                         $BRVLastSerial = CustomerReceivePayment::where('companySystemID', $pvMaster->interCompanyToSystemID)
                             ->where('companyFinanceYearID', $companyFinancePeriod->companyFinanceYearID)
@@ -176,8 +178,11 @@ class CreateReceiptVoucher implements ShouldQueue
                                 $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
                                 $companyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
-                                $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                                $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                                if($companyFinancePeriod) {
+                                    $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                                    $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
+                                }
+
                                 $receivePayment['PayMasterAutoId'] = $pvMaster->PayMasterAutoId;
                                 $receivePayment['serialNo'] = $pvMaster->serialNo;
                                 $receivePayment['custPaymentReceiveCode'] = $pvMaster->BPVcode;
@@ -226,7 +231,7 @@ class CreateReceiptVoucher implements ShouldQueue
                     //$jobPV = BankLedgerInsert::dispatch($masterData);
                 }
 
-                Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
+                Log::info('Successfully inserted to Customer receipt voucher ' . date('H:i:s'));
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
