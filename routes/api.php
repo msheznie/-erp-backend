@@ -860,6 +860,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
     Route::get('getReceiptVoucherMasterRecord', 'CustomerReceivePaymentAPIController@getReceiptVoucherMasterRecord');
     Route::post('receiptVoucherReopen', 'CustomerReceivePaymentAPIController@receiptVoucherReopen');
+    Route::post('getReceiptVoucherApproval', 'CustomerReceivePaymentAPIController@getReceiptVoucherApproval');
+    Route::post('getApprovedRVForCurrentUser', 'CustomerReceivePaymentAPIController@getApprovedRVForCurrentUser');
+    Route::post('approveReceiptVoucher', 'CustomerReceivePaymentAPIController@approveReceiptVoucher');
+    Route::post('rejectReceiptVoucher', 'CustomerReceivePaymentAPIController@rejectReceiptVoucher');
 
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');

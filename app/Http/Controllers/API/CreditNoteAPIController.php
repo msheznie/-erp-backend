@@ -848,9 +848,8 @@ class CreditNoteAPIController extends AppBaseController
 
     public function printCreditNote(Request $request){
         $id = $request->get('id');
+
         $creditNote = $this->creditNoteRepository->getAudit($id);
-
-
 
         if (empty($creditNote)) {
             return $this->sendError('Credit note not found.');

@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for GRV Master
  * -- REVISION HISTORY
  * -- Date: 13 Aug 2018 By: Shahmy Description: Added new functions named as getINVFormData() For load form View
+ * -- Date: 18 November 2018 By: Nazir Description: Added new functions named as getAllcontractbyclientbase()
  */
 
 namespace App\Http\Controllers\API;
@@ -1803,7 +1804,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $custInvDirDetAutoID = $input['custInvDirDetAutoID'];
+        $custInvDirDetAutoID = $input['creditNoteDetailsID'];
         $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
 
