@@ -346,6 +346,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     return $this->sendError('Customer Receive Payment not found');
                 }
 
+                //get unallocation sum amount
+                $unAllocationAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmountTrans, Sum(erp_custreceivepaymentdet.receiveAmountLocal) AS SumDetailAmountLocal,Sum(erp_custreceivepaymentdet.receiveAmountRpt) AS SumDetailAmountRpt')
+                    ->where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])
+                    ->where('bookingInvCode', '0')
+                    ->groupBy('custReceivePaymentAutoID')
+                    ->first();
+
+
                 $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $customerReceivePaymentMaster->documentSystemID)->where('companySystemID', $customerReceivePaymentMaster->companySystemID)->where('documentSystemCode', $input['custReceivePaymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
@@ -354,6 +362,15 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     }
                 } else {
                     return $this->sendError('Selected customer receive payment is not updated in general ledger. Please check again', 500);
+                }
+
+                $receiveAmountTotTrans = 0;
+                $receiveAmountTotLocal = 0;
+                $receiveAmountTotRpt = 0;
+                if ($unAllocationAmountSum) {
+                    $receiveAmountTotTrans = $unAllocationAmountSum["SumDetailAmountTrans"];
+                    $receiveAmountTotLocal = $unAllocationAmountSum["SumDetailAmountLocal"];
+                    $receiveAmountTotRpt = $unAllocationAmountSum["SumDetailAmountRpt"];
                 }
                 $customerDetail = CustomerMaster::find($customerReceivePaymentMaster->customerID);
                 $input['matchingType'] = 'AR';
@@ -378,11 +395,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['companyRptCurrencyID'] = $customerReceivePaymentMaster->companyRptCurrencyID;
                 $input['companyRptCurrencyER'] = $customerReceivePaymentMaster->companyRptCurrencyER;
                 $input['payAmountBank'] = $customerReceivePaymentMaster->bankID;
-                //$input['payAmountSuppTrans'] = $customerReceivePaymentMaster->custTransactionCurrencyID;
+                $input['payAmountSuppTrans'] = $receiveAmountTotTrans;
                 //$input['payAmountSuppDef'] = $customerReceivePaymentMaster->payAmountSuppDef;
                 //$input['suppAmountDocTotal'] = $customerReceivePaymentMaster->suppAmountDocTotal;
-                //$input['payAmountCompLocal'] = $customerReceivePaymentMaster->payAmountCompLocal;
-                //$input['payAmountCompRpt'] = $customerReceivePaymentMaster->payAmountCompRpt;
+                $input['payAmountCompLocal'] = $receiveAmountTotLocal;
+                $input['payAmountCompRpt'] = $receiveAmountTotRpt;
                 $input['invoiceType'] = $customerReceivePaymentMaster->documentType;
                 $input['matchInvoice'] = $customerReceivePaymentMaster->matchInvoice;
                 $input['matchingAmount'] = 0;

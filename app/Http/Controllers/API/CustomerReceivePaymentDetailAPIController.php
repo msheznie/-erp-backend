@@ -602,7 +602,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
                     $tempArray = $new;
-                    $tempArray["custReceivePaymentAutoID"] = $new['bookingInvCodeSystem'];
+                    $tempArray["custReceivePaymentAutoID"] = $matchDocumentMasterData->PayMasterAutoId;
                     $tempArray["arAutoID"] = $new['arAutoID'];
                     $tempArray["companySystemID"] = $new['companySystemID'];
                     $tempArray["companyID"] = $new['companyID'];

@@ -12,6 +12,7 @@
  * -- Date: 20-March 2018 By: Fayas Description: Added new functions named as getCustomerFormData(),getAssignedCompaniesByCustomer()
  * -- Date: 21-June 2018 By: Fayas Description: Added new functions named as getSearchCustomerByCompany()
  * -- Date: 13-August 2018 By: Fayas Description: Added new functions named as getContractByCustomer()
+ * -- Date: 19-November 2018 By: Fayas Description: Added new functions named as getJobsByContractAndCustomer()
  */
 
 namespace App\Http\Controllers\API;
@@ -24,6 +25,7 @@ use App\Models\Company;
 use App\Models\CountryMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\TicketMaster;
 use App\Models\YesNoSelection;
 use App\Models\CustomerAssigned;
 use App\Models\ChartOfAccount;
@@ -484,6 +486,34 @@ class CustomerMasterAPIController extends AppBaseController
 
 
         return $this->sendResponse($customers->toArray(), 'Customer Master retrieved successfully');
+    }
+
+    public function getJobsByContractAndCustomer(Request $request)
+    {
+        $companyId = $request->companyId;
+        $input = $request->all();
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+
+        if ($isGroup) {
+            $companies = \Helper::getGroupCompany($companyId);
+        } else {
+            $companies = [$companyId];
+        }
+
+        $jobs = TicketMaster::whereIn('companySystemID', $companies)
+                            ->where('clientSystemID', $input['customer_id'])
+                            ->where('contractUID', $input['contractUIID'])
+                            ->where('jobStartedYNBM', 1)
+                            ->where('jobEndYNSup','!=' ,1)
+                            ->when(request('search', false), function ($q, $search) {
+                                return $q->where(function ($query) use ($search) {
+                                    return $query->where('ticketNo', 'LIKE', "%{$search}%");
+                                });
+                            })
+                            ->get(['ticketidAtuto', 'ticketNo']);
+
+
+        return $this->sendResponse($jobs->toArray(), 'Jobs by Customer retrieved successfully');
     }
 
     public function getContractByCustomer(Request $request)

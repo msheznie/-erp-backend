@@ -720,7 +720,12 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 }
             }
 
-            $temData = array('directPaymentAutoID' => $paySupplierInvoiceMaster->PayMasterAutoId,
+            $currencyConvert = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID,
+                $detail['localCurrency'], $detail['localCurrency'], $detail['localAmount'],
+                $paySupplierInvoiceMaster->BPVAccount);
+
+            $temData = array(
+                'directPaymentAutoID' => $paySupplierInvoiceMaster->PayMasterAutoId,
                 'companySystemID' => $detail['companySystemID'],
                 'companyID' => $detail['companyID'],
                 'serviceLineSystemID' => $detail['serviceLineSystemID'],
@@ -734,19 +739,19 @@ class DirectPaymentDetailsAPIController extends AppBaseController
                 'glCodeIsBank' => 0,
                 'budgetYear' => $budgetYear,
                 'supplierTransCurrencyID' => $detail['localCurrency'],
-                'supplierTransER' => $detail['localCurrencyER'],
+                'supplierTransER' => 1,
                 'DPAmountCurrency' => $detail['localCurrency'],
-                'DPAmountCurrencyER' => $detail['localCurrencyER'],
+                'DPAmountCurrencyER' => 1,
                 'DPAmount' => $detail['localAmount'],
-                'bankAmount' => $detail['localAmount'],
-                'bankCurrencyID' => $detail['localCurrency'],
-                'bankCurrencyER' => $detail['localCurrencyER'],
+                'bankAmount' => \Helper::roundValue($currencyConvert['bankAmount']),
+                'bankCurrencyID' => $paySupplierInvoiceMaster->supplierTransCurrencyID,
+                'bankCurrencyER' =>  $currencyConvert['transToBankER'],
                 'localCurrency' => $detail['localCurrency'],
-                'localCurrencyER' => $detail['localCurrencyER'],
+                'localCurrencyER' => 1,
                 'localAmount' => $detail['localAmount'],
                 'comRptCurrency' => $detail['comRptCurrency'],
-                'comRptCurrencyER' => $detail['comRptCurrencyER'],
-                'comRptAmount' => $detail['comRptAmount']
+                'comRptCurrencyER' => $currencyConvert['trasToRptER'],
+                'comRptAmount' => \Helper::roundValue($currencyConvert['reportingAmount'])
                 );
             $this->directPaymentDetailsRepository->create($temData);
         }

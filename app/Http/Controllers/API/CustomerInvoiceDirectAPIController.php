@@ -1076,11 +1076,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', 'No details records found');
         }
 
-        $detailsAlreadyExist = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+        //code commented by Nazir : requested by Zahlan
+     /*   $detailsAlreadyExist = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
 
         if (!empty($detailsAlreadyExist)) {
             return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
-        }
+        }*/
 
         $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob','contractType')->where('CompanyID', $master->companyID)->where('ContractNumber', $performa->contractID)->first();
 
@@ -1792,6 +1793,21 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $qry = "SELECT * FROM ( SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID AND clientID = $master->customerID UNION ALL SELECT contractUID, ContractNumber FROM contractmaster WHERE contractUID = $contractID ) t GROUP BY contractUID, ContractNumber";
+        $contract = DB::select($qry);
+
+
+        return $this->sendResponse($contract, 'Contract deleted successfully');
+    }
+
+    public function getAllcontractbyclientbase(request $request)
+    {
+        $input = $request->all();
+
+        $custInvDirDetAutoID = $input['custInvDirDetAutoID'];
+        $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
+        $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
+
+        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID AND clientID = $master->customerID;";
         $contract = DB::select($qry);
 
 
