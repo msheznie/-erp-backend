@@ -771,7 +771,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $unClearedReceipt = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
             ->where('bankAccountID', $bankReconciliation->bankAccountAutoID)
-            ->where('postedDate', '<=', $bankReconciliation->bankRecAsOf)
+            ->whereDate('postedDate', '<=', $bankReconciliation->bankRecAsOf)
             ->where('payAmountBank', '<', 0)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
@@ -784,7 +784,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $unClearedPayment = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
             ->where('bankAccountID', $bankReconciliation->bankAccountAutoID)
-            ->where('postedDate', '<=', $bankReconciliation->bankRecAsOf)
+            ->whereDate('postedDate', '<=', $bankReconciliation->bankRecAsOf)
             ->where('payAmountBank', '>', 0)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
@@ -797,7 +797,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $totalUnClearedReceipt = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
             ->where('bankAccountID', $bankReconciliation->bankAccountAutoID)
-            ->where('postedDate', '<=', $bankReconciliation->bankRecAsOf)
+            ->whereDate('postedDate', '<=', $bankReconciliation->bankRecAsOf)
             ->where('payAmountBank', '<', 0)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
@@ -811,7 +811,7 @@ class BankReconciliationAPIController extends AppBaseController
         $totalUnClearedPayment = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
             ->where('bankAccountID', $bankReconciliation->bankAccountAutoID)
             ->where('bankClearedYN', 0)
-            ->where('postedDate', '<=', $bankReconciliation->bankRecAsOf)
+            ->whereDate('postedDate', '<=', $bankReconciliation->bankRecAsOf)
             ->where('payAmountBank', '>', 0)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
