@@ -1804,7 +1804,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $custInvDirDetAutoID = $input['custInvDirDetAutoID'];
+        $custInvDirDetAutoID = $input['creditNoteDetailsID'];
         $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
 
