@@ -90,6 +90,12 @@ class BankLedgerInsert implements ShouldQueue
                         $data['payAmountCompLocal'] = $masterData->payAmountCompLocal;
                         $data['payAmountCompRpt'] = $masterData->payAmountCompRpt;
 
+                        if ($masterData->chequePaymentYN == 0) {
+                            $data['chequePaymentYN'] = -1;
+                        } else {
+                            $data['chequePaymentYN'] = $masterData->chequePaymentYN;
+                        }
+
                         if ($masterData->trsCollectedYN == 0) {
                             $data['trsCollectedYN'] = -1;
                         } else {
@@ -147,6 +153,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $data['payAmountSuppTrans'] = ABS($custReceivePayment->bankAmount) * -1;
                                 $data['payAmountCompLocal'] = ABS($custReceivePayment->localAmount) * -1;
                                 $data['payAmountCompRpt'] = ABS($custReceivePayment->companyRptAmount) * -1;
+                                $data['chequePaymentYN'] = -1;
 
                                 if ($custReceivePayment->trsCollectedYN == 0) {
                                     $data['trsCollectedYN'] = -1;
@@ -206,6 +213,7 @@ class BankLedgerInsert implements ShouldQueue
                             $data['payAmountSuppTrans'] = $custReceivePayment->bankAmount;
                             $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
                             $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
+                            $data['chequePaymentYN'] = -1;
 
                             if ($custReceivePayment->trsCollectedYN == 0) {
                                 $data['trsCollectedYN'] = -1;

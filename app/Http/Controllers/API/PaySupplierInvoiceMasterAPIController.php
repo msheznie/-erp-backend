@@ -1788,4 +1788,145 @@ HAVING
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
+    public function getPaymentApprovalByUser(Request $request){
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $paymentVoucher = DB::table('erp_documentapproved')
+            ->select(
+                'erp_paysupplierinvoicemaster.*',
+                'employees.empName As created_emp',
+                'suppliermaster.supplierName',
+                'suppliercurrency.CurrencyCode as supplierCurrencyCode',
+                'suppliercurrency.DecimalPlaces as supplierCurrencyDecimalPlaces',
+                'bankcurrency.CurrencyCode as bankCurrencyCode',
+                'bankcurrency.DecimalPlaces as bankCurrencyCodeDecimalPlaces',
+                'erp_documentapproved.documentApprovedID',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode'
+            )
+            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+                $query->whereIn('employeesdepartments.documentSystemID', [4])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID);
+            })
+            ->join('erp_paysupplierinvoicemaster', function ($query) use ($companyId) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'PayMasterAutoId')
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('erp_paysupplierinvoicemaster.companySystemID', $companyId)
+                    ->where('erp_paysupplierinvoicemaster.approved', 0)
+                    ->where('erp_paysupplierinvoicemaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('suppliermaster', 'suppliermaster.supplierCodeSystem', 'erp_paysupplierinvoicemaster.BPVsupplierID')
+            ->leftJoin('currencymaster as suppliercurrency', 'suppliercurrency.currencyID', 'supplierTransCurrencyID')
+            ->leftJoin('currencymaster as bankcurrency', 'bankcurrency.currencyID', 'BPVbankCurrency')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [4])
+            ->where('erp_documentapproved.companySystemID', $companyId);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $paymentVoucher = $paymentVoucher->where(function ($query) use ($search) {
+                $query->where('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($paymentVoucher)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('PayMasterAutoId', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getPaymentApprovedByUser(Request $request){
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $input['companyId'];
+        $empID = \Helper::getEmployeeSystemID();
+
+        $paymentVoucher = DB::table('erp_documentapproved')
+            ->select(
+                'erp_paysupplierinvoicemaster.*',
+                'employees.empName As created_emp',
+                'erp_documentapproved.documentApprovedID',
+                'suppliermaster.supplierName',
+                'suppliercurrency.CurrencyCode as supplierCurrencyCode',
+                'suppliercurrency.DecimalPlaces as supplierCurrencyDecimalPlaces',
+                'bankcurrency.CurrencyCode as bankCurrencyCode',
+                'bankcurrency.DecimalPlaces as bankCurrencyCodeDecimalPlaces',
+                'rollLevelOrder',
+                'approvalLevelID',
+                'documentSystemCode')
+            ->join('erp_paysupplierinvoicemaster', function ($query) use ($companyId) {
+                $query->on('erp_documentapproved.documentSystemCode', '=', 'PayMasterAutoId')
+                    ->where('erp_paysupplierinvoicemaster.companySystemID', $companyId)
+                    ->where('erp_paysupplierinvoicemaster.confirmedYN', 1);
+            })
+            ->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('suppliermaster', 'suppliermaster.supplierCodeSystem', 'erp_paysupplierinvoicemaster.BPVsupplierID')
+            ->leftJoin('currencymaster as suppliercurrency', 'suppliercurrency.currencyID', 'supplierTransCurrencyID')
+            ->leftJoin('currencymaster as bankcurrency', 'bankcurrency.currencyID', 'BPVbankCurrency')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->whereIn('erp_documentapproved.documentSystemID', [4])
+            ->where('erp_documentapproved.companySystemID', $companyId)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $paymentVoucher = $paymentVoucher->where(function ($query) use ($search) {
+                $query->where('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($paymentVoucher)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('PayMasterAutoId', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
 }
