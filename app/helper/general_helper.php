@@ -3230,6 +3230,7 @@ class Helper
             $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
             $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
             $data['invoiceType'] = $custReceivePayment->documentType;
+            $data['chequePaymentYN'] = -1;
 
             if ($custReceivePayment->trsCollectedYN == 0) {
                 $data['trsCollectedYN'] = -1;
