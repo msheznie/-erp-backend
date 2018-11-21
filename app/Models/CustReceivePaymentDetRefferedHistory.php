@@ -1,23 +1,19 @@
 <?php
-/**
- * =============================================
- * -- File Name : CustomerReceivePaymentDetail.php
- * -- Project Name : ERP
- * -- Module Name :  Accounts receivable
- * -- Author : Mubashir
- * -- Create date : 24 - August 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- * --
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="CustomerReceivePaymentDetail",
+ *      definition="CustReceivePaymentDetRefferedHistory",
  *      required={""},
+ *      @SWG\Property(
+ *          property="custRecivePayDetRefferedBackID",
+ *          description="custRecivePayDetRefferedBackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="custRecivePayDetAutoID",
  *          description="custRecivePayDetAutoID",
@@ -172,17 +168,18 @@ use Eloquent as Model;
  *      )
  * )
  */
-class CustomerReceivePaymentDetail extends Model
+class CustReceivePaymentDetRefferedHistory extends Model
 {
 
-    public $table = 'erp_custreceivepaymentdet';
+    public $table = 'erp_custreceivepaymentdetrefferedhistory';
     
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey = 'custRecivePayDetAutoID';
 
+    protected $primaryKey = 'custRecivePayDetRefferedBackID';
 
     public $fillable = [
+        'custRecivePayDetAutoID',
         'custReceivePaymentAutoID',
         'arAutoID',
         'companySystemID',
@@ -209,7 +206,6 @@ class CustomerReceivePaymentDetail extends Model
         'receiveAmountTrans',
         'receiveAmountLocal',
         'receiveAmountRpt',
-        'timesReferred',
         'timestamp'
     ];
 
@@ -219,6 +215,7 @@ class CustomerReceivePaymentDetail extends Model
      * @var array
      */
     protected $casts = [
+        'custRecivePayDetRefferedBackID' => 'integer',
         'custRecivePayDetAutoID' => 'integer',
         'custReceivePaymentAutoID' => 'integer',
         'arAutoID' => 'integer',
@@ -244,8 +241,7 @@ class CustomerReceivePaymentDetail extends Model
         'custbalanceAmount' => 'float',
         'receiveAmountTrans' => 'float',
         'receiveAmountLocal' => 'float',
-        'receiveAmountRpt' => 'float',
-        'timesReferred' => 'integer'
+        'receiveAmountRpt' => 'float'
     ];
 
     /**

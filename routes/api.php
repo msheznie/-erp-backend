@@ -864,6 +864,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovedRVForCurrentUser', 'CustomerReceivePaymentAPIController@getApprovedRVForCurrentUser');
     Route::post('approveReceiptVoucher', 'CustomerReceivePaymentAPIController@approveReceiptVoucher');
     Route::post('rejectReceiptVoucher', 'CustomerReceivePaymentAPIController@rejectReceiptVoucher');
+    Route::post('amendReceiptVoucher', 'CustomerReceivePaymentAPIController@amendReceiptVoucher');
 
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
@@ -1168,3 +1169,10 @@ Route::get('runQueueSR', function () {
 
 
 
+
+
+Route::resource('customer_receive_payment_reffered_histories', 'CustomerReceivePaymentRefferedHistoryAPIController');
+
+Route::resource('direct_receipt_details_reffered_histories', 'DirectReceiptDetailsRefferedHistoryAPIController');
+
+Route::resource('cust_receive_payment_det_reffered_histories', 'CustReceivePaymentDetRefferedHistoryAPIController');

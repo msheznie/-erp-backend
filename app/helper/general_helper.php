@@ -1758,6 +1758,12 @@ class Helper
                     $docInforArr["primarykey"] = 'depMasterAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 21: //  Customer Receipt Voucher
+                    $docInforArr["tableName"] = 'erp_customerreceivepayment';
+                    $docInforArr["modelName"] = 'CustomerReceivePayment';
+                    $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -1773,7 +1779,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -1791,7 +1797,7 @@ class Helper
             }
         } catch (\Exception $e) {
             DB::rollback();
-            return ['success' => false, 'message' => $e . 'Error Ocurred'];
+            return ['success' => false, 'message' => $e . 'Error Occurred'];
         }
     }
 
