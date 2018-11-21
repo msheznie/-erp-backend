@@ -463,6 +463,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('documentSystemID', $input["addedDocumentSystemID"])
             ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
+        if($input['tempType'] == 1){
+            $input["receiveAmountTrans"] = $input['custbalanceAmount'];
+        }
+
         $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount']);
 
 
@@ -621,7 +625,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     $tempArray["bookingAmountTrans"] = $new['custInvoiceAmount'];
                     $tempArray["bookingAmountLocal"] = $new['localAmount'];
                     $tempArray["bookingAmountRpt"] = $new['comRptAmount'];
-                    $tempArray["custbalanceAmount"] = $new['balanceMemAmount'];;
+                    $tempArray["custbalanceAmount"] = $new['balanceMemAmountNotRounded'];;
                     $tempArray["receiveAmountTrans"] = 0;
                     $tempArray["receiveAmountLocal"] = 0;
                     $tempArray["receiveAmountRpt"] = 0;
@@ -674,10 +678,9 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         // checking payment amount greater than balance amount
         $totalReceiveAmountPreCheck = CustomerReceivePaymentDetail::where('arAutoID', $input['arAutoID'])
             ->where('custRecivePayDetAutoID', '<>', $input['custRecivePayDetAutoID'])
-            ->where('matchingDocID', $input['matchingDocID'])
             ->sum('receiveAmountTrans');
 
-        $matchedAmountPreCheck = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, IFNULL(Sum(erp_matchdocumentmaster.matchedAmount),0) * -1 AS SumOfmatchedAmount')
+        $matchedAmountPreCheck = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, IFNULL(Sum(erp_matchdocumentmaster.matchedAmount),0) AS SumOfmatchedAmount')
             ->where('companySystemID', $input["companySystemID"])
             ->where('PayMasterAutoId', $input["bookingInvCodeSystem"])
             ->where('documentSystemID', $input["addedDocumentSystemID"])
@@ -688,17 +691,19 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             $machAmount = $matchedAmountPreCheck["SumOfmatchedAmount"];
         }
 
-        $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + ($machAmount * -1));
+        if($input['temptype'] == 1){
+            $input['receiveAmountTrans'] = $input['custbalanceAmount'];
+        }
 
-        //return $totReceiveAmountDetail;
-        //exit();
+        $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $machAmount);
+
         if ($input['addedDocumentSystemID'] == 20) {
             if ($input["receiveAmountTrans"] > $totReceiveAmountDetail) {
-                return $this->sendError('Matching amount cannot be greater than balance amount', 500);
+                return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {
             if ($input["receiveAmountTrans"] < $totReceiveAmountDetail) {
-                return $this->sendError('Matching amount cannot be greater than balance amount', 500);
+                return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
             }
         }
 
@@ -718,13 +723,13 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('companySystemID', $input["companySystemID"])
             ->where('PayMasterAutoId', $input["bookingInvCodeSystem"])
             ->where('documentSystemID', $input["addedDocumentSystemID"])
-            ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
+            ->groupBy('PayMasterAutoId', 'documentSystemID')->first();
 
         $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
 
         $custbalanceAmount = $detailUpdateBalance->bookingAmountTrans - $totReceiveAmount;
 
-        $detailUpdateBalance->custbalanceAmount = $custbalanceAmount;
+        $detailUpdateBalance->custbalanceAmount = \Helper::roundValue($custbalanceAmount);
         $detailUpdateBalance->save();
 
         //updating Accounts receivable Ledger
