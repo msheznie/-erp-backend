@@ -20,6 +20,7 @@ use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
+use App\Models\AdvancePaymentReferback;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\ChartOfAccount;
@@ -27,15 +28,19 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DirectPaymentDetails;
+use App\Models\DirectPaymentReferback;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\ExpenseClaimType;
 use App\Models\MatchDocumentMaster;
 use App\Models\Months;
 use App\Models\PaySupplierInvoiceDetail;
+use App\Models\PaySupplierInvoiceDetailReferback;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\PaySupplierInvoiceMasterReferback;
 use App\Models\PoAdvancePayment;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
@@ -1718,7 +1723,8 @@ HAVING
     }
 
 
-    public function printPaymentVoucher(Request $request){
+    public function printPaymentVoucher(Request $request)
+    {
 
         $id = $request->get('PayMasterAutoId');
 
@@ -1788,7 +1794,8 @@ HAVING
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
-    public function getPaymentApprovalByUser(Request $request){
+    public function getPaymentApprovalByUser(Request $request)
+    {
 
         $input = $request->all();
 
@@ -1864,7 +1871,8 @@ HAVING
             ->make(true);
     }
 
-    public function getPaymentApprovedByUser(Request $request){
+    public function getPaymentApprovedByUser(Request $request)
+    {
 
         $input = $request->all();
 
@@ -1927,6 +1935,106 @@ HAVING
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function referBackPaymentVoucher(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $PayMasterAutoId = $input['PayMasterAutoId'];
+
+            $paymentVoucher = $this->paySupplierInvoiceMasterRepository->findWithoutFail($PayMasterAutoId);
+            if (empty($paymentVoucher)) {
+                return $this->sendError('Payment Voucher Master not found');
+            }
+
+            if ($paymentVoucher->refferedBackYN != -1) {
+                return $this->sendError('You cannot amend this document');
+            }
+
+            $paymentVoucherArray = $paymentVoucher->toArray();
+
+            $storePVHistory = PaySupplierInvoiceMasterReferback::create($paymentVoucherArray);
+
+            if ($paymentVoucher->invoiceType == 2) {
+                $fetchPVDetails = PaySupplierInvoiceDetail::where('PayMasterAutoId', $PayMasterAutoId)
+                    ->get();
+
+                if (!empty($fetchPVDetails)) {
+                    foreach ($fetchPVDetails as $pvDetail) {
+                        $pvDetail['timesReferred'] = $paymentVoucher->timesReferred;
+                    }
+                }
+
+                $pvDetailArray = $fetchPVDetails->toArray();
+
+                $storePVDetailHistory = PaySupplierInvoiceDetailReferback::insert($pvDetailArray);
+            } else if ($paymentVoucher->invoiceType == 3) {
+                $fetchPVDetails = DirectPaymentDetails::where('directPaymentAutoID', $PayMasterAutoId)
+                    ->get();
+
+                if (!empty($fetchPVDetails)) {
+                    foreach ($fetchPVDetails as $pvDetail) {
+                        $pvDetail['timesReferred'] = $paymentVoucher->timesReferred;
+                    }
+                }
+
+                $pvDetailArray = $fetchPVDetails->toArray();
+
+                $storePVDetailHistory = DirectPaymentReferback::insert($pvDetailArray);
+            } else if ($paymentVoucher->invoiceType == 5) {
+                $fetchPVDetails = AdvancePaymentDetails::where('PayMasterAutoId', $PayMasterAutoId)
+                    ->get();
+
+                if (!empty($fetchPVDetails)) {
+                    foreach ($fetchPVDetails as $pvDetail) {
+                        $pvDetail['timesReferred'] = $paymentVoucher->timesReferred;
+                    }
+                }
+
+                $pvDetailArray = $fetchPVDetails->toArray();
+
+                $storePVDetailHistory = AdvancePaymentReferback::insert($pvDetailArray);
+            }
+
+
+            $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $PayMasterAutoId)
+                ->where('companySystemID', $paymentVoucher->companySystemID)
+                ->where('documentSystemID', $paymentVoucher->documentSystemID)
+                ->get();
+
+            if (!empty($fetchDocumentApproved)) {
+                foreach ($fetchDocumentApproved as $DocumentApproved) {
+                    $DocumentApproved['refTimes'] = $paymentVoucher->timesReferred;
+                }
+            }
+
+            $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+            $storeDocumentReferedHistory = DocumentReferedHistory::create($DocumentApprovedArray);
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $PayMasterAutoId)
+                ->where('companySystemID', $paymentVoucher->companySystemID)
+                ->where('documentSystemID', $paymentVoucher->documentSystemID)
+                ->delete();
+
+            if ($deleteApproval) {
+                $paymentVoucher->refferedBackYN = 0;
+                $paymentVoucher->confirmedYN = 0;
+                $paymentVoucher->confirmedByEmpSystemID = null;
+                $paymentVoucher->confirmedByEmpID = null;
+                $paymentVoucher->confirmedDate = null;
+                $paymentVoucher->RollLevForApp_curr = 1;
+                $paymentVoucher->save();
+            }
+
+            DB::commit();
+            return $this->sendResponse($paymentVoucher->toArray(), 'Payment Voucher amended successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }
