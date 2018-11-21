@@ -898,6 +898,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $payDetailMoreBooked = CustomerReceivePaymentDetail::selectRaw('IFNULL(SUM(IFNULL(receiveAmountTrans,0)),0) as receiveAmountTrans')
                     ->where('arAutoID', $item['arAutoID'])
                     ->first();
+
                 if ($payDetailMoreBooked->receiveAmountTrans > $item['bookingAmountTrans']) {
 
                     $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
@@ -1622,6 +1623,7 @@ HAVING
 	DecimalPlaces,
 	IFNULL(custInvoiceAmount, 0) AS custInvoiceAmount,
 	Round((IFNULL(custInvoiceAmount, 0) - IFNULL(sid.SumOfreceiveAmountTrans, 0) - (IFNULL(md.matchedAmount, 0)) * -1),3) as balanceMemAmount,
+	(IFNULL(custInvoiceAmount, 0) - IFNULL(sid.SumOfreceiveAmountTrans, 0) - (IFNULL(md.matchedAmount, 0)) * -1) as balanceMemAmountNotRounded,
 	false as isChecked
 FROM
 	erp_accountsreceivableledger
