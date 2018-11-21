@@ -865,6 +865,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovedRVForCurrentUser', 'CustomerReceivePaymentAPIController@getApprovedRVForCurrentUser');
     Route::post('approveReceiptVoucher', 'CustomerReceivePaymentAPIController@approveReceiptVoucher');
     Route::post('rejectReceiptVoucher', 'CustomerReceivePaymentAPIController@rejectReceiptVoucher');
+    Route::post('amendReceiptVoucher', 'CustomerReceivePaymentAPIController@amendReceiptVoucher');
 
     Route::get('getSupplierInvoiceStatusHistory', 'BookInvSuppMasterAPIController@getSupplierInvoiceStatusHistory');
     Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
@@ -1112,6 +1113,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@exportAdvancePaymentRequestReport');
 
     Route::post('addDetailsFromExpenseClaim', 'DirectPaymentDetailsAPIController@addDetailsFromExpenseClaim');
+    Route::resource('customer_receive_payment_reffered_histories', 'CustomerReceivePaymentRefferedHistoryAPIController');
+    Route::resource('direct_receipt_details_reffered_histories', 'DirectReceiptDetailsRefferedHistoryAPIController');
+    Route::resource('cust_receive_payment_det_reffered_histories', 'CustReceivePaymentDetRefferedHistoryAPIController');
+    Route::resource('pay_supplier_invoice_master_referbacks', 'PaySupplierInvoiceMasterReferbackAPIController');
+    Route::resource('pay_supplier_invoice_detail_referbacks', 'PaySupplierInvoiceDetailReferbackAPIController');
+    Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
+    Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1162,21 +1170,3 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
-
-
-
-
-
-
-
-
-
-
-
-Route::resource('pay_supplier_invoice_master_referbacks', 'PaySupplierInvoiceMasterReferbackAPIController');
-
-Route::resource('pay_supplier_invoice_detail_referbacks', 'PaySupplierInvoiceDetailReferbackAPIController');
-
-Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
-
-Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
