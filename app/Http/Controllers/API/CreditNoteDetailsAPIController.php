@@ -412,7 +412,11 @@ class CreditNoteDetailsAPIController extends AppBaseController
 
         if ($input['contractUID'] != $detail->contractUID) {
             $input['clientContractID']=NULL;
-            $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $detail->companyID)->where('contractUID', $input['contractUID'])->first();
+
+            $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')
+                ->where('contractUID', $input['contractUID'])
+                ->first();
+
             $input['clientContractID'] = $contract->ContractNumber;
 
 

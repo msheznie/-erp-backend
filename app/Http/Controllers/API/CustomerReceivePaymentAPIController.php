@@ -13,6 +13,7 @@
  * -- Date: 08-November 2018 By: Nazir Description: Added new function printReceiptVoucher(),
  * -- Date: 19-November 2018 By: Nazir Description: Added new function getReceiptVoucherApproval(),
  * -- Date: 19-November 2018 By: Nazir Description: Added new function getApprovedRVForCurrentUser(),
+ * -- Date: 21-November 2018 By: Nazir Description: Added new function amendReceiptVoucher(),
  */
 
 namespace App\Http\Controllers\API;
@@ -31,8 +32,12 @@ use App\Models\customercurrency;
 use App\Models\Company;
 use App\Models\CustomerMaster;
 use App\Models\BankAccount;
+use App\Models\CustomerReceivePaymentRefferedHistory;
+use App\Models\CustReceivePaymentDetRefferedHistory;
+use App\Models\DirectReceiptDetailsRefferedHistory;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ExpenseClaimType;
 use App\Models\MatchDocumentMaster;
@@ -1574,5 +1579,84 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendResponse(array(), $reject["message"]);
         }
 
+    }
+
+    public function amendReceiptVoucher(Request $request)
+    {
+        $input = $request->all();
+
+        $custReceivePaymentAutoID = $input['custReceivePaymentAutoID'];
+
+        $customerReceivePaymentData = CustomerReceivePayment::find($custReceivePaymentAutoID);
+
+        if (empty($customerReceivePaymentData)) {
+            return $this->sendError('Customer Receive Payment not found');
+        }
+
+        if ($customerReceivePaymentData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this Receipt Voucher');
+        }
+
+        $receivePaymentArray = $customerReceivePaymentData->toArray();
+
+        $storeReceiptVoucherHistory = CustomerReceivePaymentRefferedHistory::insert($receivePaymentArray);
+
+        $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->get();
+
+        if (!empty($customerReceivePaymentDetailRec)) {
+            foreach ($customerReceivePaymentDetailRec as $bookDetail) {
+                $bookDetail['timesReferred'] = $customerReceivePaymentData->timesReferred;
+            }
+        }
+
+        $customerReceiveDetailArray = $customerReceivePaymentDetailRec->toArray();
+
+        $storeSupplierInvoiceBookDetailHistory = CustReceivePaymentDetRefferedHistory::insert($customerReceiveDetailArray);
+
+        $customerReceivePaymentDirectDetailRec = DirectReceiptDetail::where('directReceiptAutoID', $custReceivePaymentAutoID)->get();
+
+        if (!empty($customerReceivePaymentDirectDetailRec)) {
+            foreach ($customerReceivePaymentDirectDetailRec as $bookDirectDetail) {
+                $bookDirectDetail['timesReferred'] = $customerReceivePaymentData->timesReferred;
+            }
+        }
+
+        $ReceivePaymentDirectDetailArray = $customerReceivePaymentDirectDetailRec->toArray();
+
+        $storeSupplierInvoiceBookDirectDetailHistory = DirectReceiptDetailsRefferedHistory::insert($ReceivePaymentDirectDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
+            ->where('companySystemID', $customerReceivePaymentData->companySystemID)
+            ->where('documentSystemID', $customerReceivePaymentData->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $customerReceivePaymentData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
+            ->where('companySystemID', $customerReceivePaymentData->companySystemID)
+            ->where('documentSystemID', $customerReceivePaymentData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $customerReceivePaymentData->refferedBackYN = 0;
+            $customerReceivePaymentData->confirmedYN = 0;
+            $customerReceivePaymentData->confirmedByEmpSystemID = null;
+            $customerReceivePaymentData->confirmedByEmpID = null;
+            $customerReceivePaymentData->confirmedByName = null;
+            $customerReceivePaymentData->confirmedDate = null;
+            $customerReceivePaymentData->RollLevForApp_curr = 1;
+            $customerReceivePaymentData->save();
+        }
+
+
+        return $this->sendResponse($customerReceivePaymentData->toArray(), 'Receipt voucher amend successfully');
     }
 }

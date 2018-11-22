@@ -195,8 +195,7 @@
         <table style="width:100%">
             <tr>
                 <td width="30%">
-                    <img src="logos/{{$request->secondaryLogoCompanySystemID =='' ? $request->company->companyLogo:$request->secondaryLogo}}"
-                         width="180px" height="60px"></td>
+                    <img src="logos/{{$request->company->companyLogo}}" width="180px" height="60px"></td>
 
 
                 <td width="50%" style="text-align: center">
@@ -291,8 +290,9 @@
             <tr class="theme-tr-head">
                 <th style="width:10%;text-align: center">Account Code</th>
                 <th style="width:10%;text-align: center">Account Description</th>
+                <th style="width:10%;text-align: center">Department</th>
+                <th style="width:10%;text-align: center">Contract</th>
                 <th style="width:10%;text-align: center">Comments</th>
-                <th style="width:10%;text-align: center">Service Line</th>
                 <th style="width:10%;text-align: center">Amount</th>
             </tr>
             </thead>
@@ -304,8 +304,13 @@
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                     <td>{{$item->glCode}}</td>
                     <td>{{$item->glCodeDes}}</td>
+                    <td>
+                    @if($item->segment)
+                        {{$item->segment->ServiceLineDes}}
+                    @endif
+                    </td>
+                    <td>{{$item->clientContractID}}</td>
                     <td>{{$item->comments}}</td>
-                    <td>{{$item->segment->ServiceLineDes}}</td>
                     <td class="text-right">{{number_format($item->creditAmount,$numberFormatting)}}</td>
                 </tr>
 

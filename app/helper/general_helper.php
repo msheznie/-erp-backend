@@ -639,7 +639,7 @@ class Helper
                                     if ($output->approvalrole) {
                                         foreach ($output->approvalrole as $val) {
                                             if ($val->approvalGroupID) {
-                                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $val->documentSystemID, 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID);
+                                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $val->documentSystemID, 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW());
                                             } else {
                                                 return ['success' => false, 'message' => 'Please set the approval group'];
                                             }
@@ -1520,8 +1520,8 @@ class Helper
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel);
                                 }
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
-                                if(count($updateDisposed) > 0){
-                                    foreach ($updateDisposed as $val){
+                                if (count($updateDisposed) > 0) {
+                                    foreach ($updateDisposed as $val) {
                                         $faMaster = Models\FixedAssetMaster::find($val->faID)->update(['DIPOSED' => -1, 'disposedDate' => NOW(), 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
                                     }
                                 }
@@ -1758,6 +1758,18 @@ class Helper
                     $docInforArr["primarykey"] = 'depMasterAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 21: //  Customer Receipt Voucher
+                    $docInforArr["tableName"] = 'erp_customerreceivepayment';
+                    $docInforArr["modelName"] = 'CustomerReceivePayment';
+                    $docInforArr["primarykey"] = 'custReceivePaymentAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 4: // Payment Voucher
+                    $docInforArr["tableName"] = 'erp_paysupplierinvoicemaster';
+                    $docInforArr["modelName"] = 'PaySupplierInvoiceMaster';
+                    $docInforArr["primarykey"] = 'PayMasterAutoId';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -1773,7 +1785,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -1791,7 +1803,7 @@ class Helper
             }
         } catch (\Exception $e) {
             DB::rollback();
-            return ['success' => false, 'message' => $e . 'Error Ocurred'];
+            return ['success' => false, 'message' => $e . 'Error Occurred'];
         }
     }
 
@@ -1877,7 +1889,7 @@ class Helper
     public static function getEmployeeCode($empId)
     {
         $employee = Models\Employee::find($empId);
-        if(!empty($employee)){
+        if (!empty($employee)) {
             return $employee->empID;
         }
         return 0;
@@ -1947,6 +1959,34 @@ class Helper
             ->where('companySystemID', '=', $companySystemID)
             ->first();
         return $companyCurrency;
+    }
+
+    /**
+     * Get company local and reporting currency
+     * @param $companySystemID - current company id
+     * @return array
+     */
+
+    public static function groupCompaniesCurrency($companySystemID)
+    {
+        $companyID = "";
+        $checkIsGroup = Models\Company::find($companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($companySystemID);
+        } else {
+            $companyID = [$companySystemID];
+        }
+
+        $companyCurrency = Models\Company::with(['localcurrency', 'reportingcurrency'])
+            ->whereIN('companySystemID', $companyID)
+            ->get();
+        $outputArr = [];
+        if ($companyCurrency) {
+            foreach ($companyCurrency as $val) {
+                $outputArr[$val->CompanyID] = $val;
+            }
+        }
+        return $outputArr;
     }
 
     /**
@@ -2391,9 +2431,9 @@ class Helper
                     $disposalDate = Carbon::parse($fixedCapital->approvedDate);
                     $sod = Carbon::parse($asset->dateDEP);
                     $diffDays = $disposalDate->diffInDays($sod);
-                    $noYears = $diffDays/365;
+                    $noYears = $diffDays / 365;
                     $remainingLife = $asset->depMonth - $noYears;
-                    $DEPpercentage = 100/$remainingLife;
+                    $DEPpercentage = 100 / $remainingLife;
 
                     $data = $asset->toArray();
                     $documentCode = ($val["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
@@ -2612,7 +2652,7 @@ class Helper
                     $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
                     $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->interCompanyToSystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
-                    if($companyFinancePeriod) {
+                    if ($companyFinancePeriod) {
                         $receivePayment['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
                         $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
                         $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
@@ -2725,7 +2765,7 @@ class Helper
                             $receivePayment['FYEnd'] = $companyFinanceYear->endingDate;
 
                             $companyFinancePeriod = Models\CompanyFinancePeriod::where('companySystemID', $pvMaster->companySystemID)->where('departmentSystemID', 4)->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)->whereRaw('DATE_FORMAT(dateFrom,"%Y-%m") = ?', [date('Y-m')])->first();
-                            if($companyFinancePeriod) {
+                            if ($companyFinancePeriod) {
                                 $receivePayment['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
                                 $receivePayment['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
                                 $receivePayment['FYPeriodDateTo'] = $companyFinancePeriod->dateTo;
@@ -3230,6 +3270,7 @@ class Helper
             $data['payAmountCompLocal'] = $custReceivePayment->localAmount;
             $data['payAmountCompRpt'] = $custReceivePayment->companyRptAmount;
             $data['invoiceType'] = $custReceivePayment->documentType;
+            $data['chequePaymentYN'] = -1;
 
             if ($custReceivePayment->trsCollectedYN == 0) {
                 $data['trsCollectedYN'] = -1;
