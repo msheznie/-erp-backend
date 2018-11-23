@@ -635,8 +635,83 @@ class CustomerReceivePaymentRefferedHistory extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    
+    public function details()
+    {
+        return $this->hasMany('App\Models\CustomerReceivePaymentDetail', 'custReceivePaymentAutoID', 'custReceivePaymentAutoID');
+    }
+
+    public function directdetails()
+    {
+        return $this->hasMany('App\Models\DirectReceiptDetail', 'directReceiptAutoID', 'custReceivePaymentAutoID');
+    }
+
+    public function bank()
+    {
+        return $this->belongsTo('App\Models\BankAccount', 'bankAccount', 'bankAccountAutoID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function finance_period_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function finance_year_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'custTransactionCurrencyID', 'currencyID');
+    }
+
+    public function localCurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function rptCurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyRptCurrencyID', 'currencyID');
+    }
+
+    public function bankcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'bankCurrency', 'currencyID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'custReceivePaymentAutoID');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
+    }
+
+
 }

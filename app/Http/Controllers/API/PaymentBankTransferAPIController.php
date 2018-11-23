@@ -651,8 +651,34 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function exportPaymentBankTransferPreCheck(Request $request)
+    {
+
+        $input = $request->all();
+        $paymentBankTransfer = PaymentBankTransfer::with(['bank_account'])->find($input['paymentBankTransferID']);
+
+        if (empty($paymentBankTransfer)) {
+            return $this->sendError('Payment Bank Transfer not found', 500);
+        }
+
+        if ($paymentBankTransfer->exportedYN == 1) {
+            return $this->sendError('This document is already exported.', 500);
+        }
+
+        if ($paymentBankTransfer->approvedYN != -1) {
+            return $this->sendError("This document is not approved. You cannot export. Please check again.", 500);
+        }
+
+        $updateArray = ['exportedYN' => -1, 'exportedUserSystemID' => Auth::id(), 'exportedDate' => now()];
+
+        $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
+
+        return $this->sendResponse([], 'Payment Bank Transfer export to CSV successfully');
+    }
+
     public function exportPaymentBankTransfer(Request $request)
     {
+
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
 
@@ -662,14 +688,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
         $decimalPlaces = 3;
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
 
         $paymentBankTransfer = PaymentBankTransfer::with(['bank_account'])->find($input['paymentBankTransferID']);
 
@@ -698,9 +717,17 @@ class PaymentBankTransferAPIController extends AppBaseController
             $bankId = $paymentBankTransfer->bank_account->accountCurrencyID;
         }
 
+        $selectedCompanyId = $paymentBankTransfer->companySystemID;
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
         $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
             ->where('payAmountBank', '>', 0)
-            ->where("bankAccountID", $input['bankAccountAutoID'])
+            ->where("bankAccountID", $paymentBankTransfer->bankAccountAutoID)
             ->where("trsClearedYN", -1)
             ->where("bankClearedYN", 0)
             ->where("bankCurrency", $bankId)
@@ -750,7 +777,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                     }
                 }
             }
-            $data[$x]['Account No(13)'] = intval($accountNo13);
+            $data[$x]['Account No(13)'] = $accountNo13;
             $data[$x]['Amount(15)'] = number_format($val->payAmountBank, $decimalPlaces);
             $data[$x]['Reference No (16)'] = $val->documentCode;
             $data[$x]['Narration1 (35)'] = $narration135;
@@ -764,35 +791,27 @@ class PaymentBankTransferAPIController extends AppBaseController
             }
         }
 
-        $updateArray = ['exportedYN' => 1, 'exportedUserSystemID' => Auth::id(), 'exportedDate' => now()];
-
+        $updateArray = ['exportedYN' => 1];
         $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
 
-        $csv = Excel::create('payment_bank_transfer', function ($excel) use ($data) {
-            $excel->sheet('sheet_name', function ($sheet) use ($data) {
-                /*$sheet->setColumnFormat(array(
-                    'A1' => '0'
-                ));*/
-                $sheet->setColumnFormat(array('A2:A5' => 0));
-               /* $sheet->getCell('A1')->setValue('Account No(13)');
-                $sheet->getCell('B1')->setValue('Amount(15)');
-                $sheet->getCell('C1')->setValue('Reference No (16)');
-                $sheet->getCell('D1')->setValue('Narration1 (35)');*/
+        $time = strtotime("now");
+        $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time . '.pdf';
+
+        $csv = Excel::create($fileName, function ($excel) use ($data) {
+            $excel->sheet('Firstsheet', function ($sheet) use ($data) {
+                $sheet->setColumnFormat(array(
+                    'A' => '0',
+                    'B' => '0',
+                ));
                 $sheet->fromArray($data, null, 'A1', true);
-                //$sheet->prependRow(array('Account No(13)','Amount(15)','Reference No (16)','Narration1 (35)','Narration2 (35)','Mobile No','EmailID'));
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 // $sheet->setAutoSize(true);
-                //$sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                //$sheet->getStyle('A2:A5')->getNumberFormat()->setFormatCode(\PHPExcel_Style_NumberFormat::FORMAT_TEXT );
-
+                //$sheet->getStyle('A')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
-
-
+                //$sheet->setWidth('A', 50);
             });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-
-        })->download('csv');
+            //$lastrow = $excel->getActiveSheet()->getHighestRow();
+            //$excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download('xls');
 
         return $this->sendResponse([], 'Payment Bank Transfer export to CSV successfully');
     }

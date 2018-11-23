@@ -446,9 +446,10 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">GL Code</th>
-                    <th class="text-center">GL Code Description</th>
-                    <th class="text-center">Service Line</th>
+                    <th class="text-center">Account Code</th>
+                    <th class="text-center">Account Description</th>
+                    <th class="text-center">Department</th>
+                    <th class="text-center">Contract</th>
                     <th class="text-center">Amount</th>
                     <th class="text-center">Local Amt (
                         @if($masterdata->localCurrency)
@@ -474,13 +475,14 @@
                                 {{$item->segment->ServiceLineDes}}
                             @endif
                         </td>
+                        <td>{{$item->contractID}}</td>
                         <td class="text-right">{{number_format($item->DRAmount, $transDecimal)}}</td>
                         <td class="text-right">{{number_format($item->localAmount, $localDecimal)}}</td>
                         <td class="text-right">{{number_format($item->comRptAmount, $rptDecimal)}}</td>
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                    <td colspan="4" class="text-right border-bottom-remov">&nbsp;</td>
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($directTotTra, $transDecimal)}}</td>
@@ -529,9 +531,9 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">GL Code</th>
-                    <th class="text-center">GL Code Description</th>
-                    <th class="text-center">Service Line</th>
+                    <th class="text-center">Account Code</th>
+                    <th class="text-center">Account Description</th>
+                    <th class="text-center">Department</th>
                     <th class="text-center">Amount</th>
                     <th class="text-center">Local Amt (
                         @if($masterdata->localCurrency)

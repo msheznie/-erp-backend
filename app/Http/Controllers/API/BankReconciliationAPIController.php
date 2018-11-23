@@ -156,7 +156,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $end = (new Carbon())->endOfMonth();
         if ($input['bankRecAsOf'] > $end) {
-           // return $this->sendError('You cannot select a date greater than the current month last day', 500);
+            // return $this->sendError('You cannot select a date greater than the current month last day', 500);
         }
 
         $input['documentSystemID'] = 62;
@@ -183,7 +183,7 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         $maxAsOfDate = BankReconciliation::where('bankAccountAutoID', $input['bankAccountAutoID'])
-                                          ->max('bankRecAsOf');
+            ->max('bankRecAsOf');
 
         if ($maxAsOfDate >= $input['bankRecAsOf']) {
             return $this->sendError('You cannot create bank reconciliation, Please select the as of date after ' . (new Carbon($maxAsOfDate))->format('d/m/Y'), 500);
@@ -213,17 +213,17 @@ class BankReconciliationAPIController extends AppBaseController
 
 
         $openingBalance = BankLedger::selectRaw('companySystemID,bankAccountID,trsClearedYN,bankClearedYN,ABS(SUM(if(bankClearedAmount < 0,bankClearedAmount,0))) - SUM(if(bankClearedAmount > 0,bankClearedAmount,0)) as opening')
-                                    ->where('companySystemID', $input['companySystemID'])
-                                    ->where("bankAccountID", $input['bankAccountAutoID'])
-                                    ->where("trsClearedYN", -1)
-                                    ->where("bankClearedYN", -1)
-                                    ->groupBy('companySystemID', 'bankAccountID')
-                                    ->first();
+            ->where('companySystemID', $input['companySystemID'])
+            ->where("bankAccountID", $input['bankAccountAutoID'])
+            ->where("trsClearedYN", -1)
+            ->where("bankClearedYN", -1)
+            ->groupBy('companySystemID', 'bankAccountID')
+            ->first();
 
-        if(!empty($openingBalance)){
+        if (!empty($openingBalance)) {
             $input['openingBalance'] = $openingBalance->opening;
             $input['closingBalance'] = $openingBalance->opening;
-        }else{
+        } else {
             $input['openingBalance'] = 0;
             $input['closingBalance'] = 0;
         }
@@ -288,7 +288,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '<', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->whereDate("postedDate",'<=' ,$bankReconciliation->bankRecAsOf)
+            ->whereDate("postedDate", '<=', $bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation, $confirmed) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -302,7 +302,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->whereDate("postedDate",'<=' ,$bankReconciliation->bankRecAsOf)
+            ->whereDate("postedDate", '<=', $bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation, $confirmed) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -316,7 +316,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '<', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->whereDate("postedDate",'<=' ,$bankReconciliation->bankRecAsOf)
+            ->whereDate("postedDate", '<=', $bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -328,7 +328,7 @@ class BankReconciliationAPIController extends AppBaseController
             ->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $bankReconciliation->bankAccountAutoID)
             ->where("trsClearedYN", -1)
-            ->whereDate("postedDate",'<=' ,$bankReconciliation->bankRecAsOf)
+            ->whereDate("postedDate", '<=', $bankReconciliation->bankRecAsOf)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where(function ($q1) use ($bankReconciliation) {
                     $q1->where('bankRecAutoID', $bankReconciliation->bankRecAutoID)
@@ -776,8 +776,12 @@ class BankReconciliationAPIController extends AppBaseController
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
                     ->orWhere(function ($q2) use ($bankReconciliation) {
-                        $q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
-                            ->where('bankClearedYN', -1);
+                        //$q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
+                        if($bankReconciliation->confirmedYN == 1) {
+                            $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
+                                ->where('bankClearedYN', -1)
+                                ->where('bankReconciliationDate', '>', $bankReconciliation->bankRecAsOf);
+                        }
                     });
             })
             ->get();
@@ -789,8 +793,12 @@ class BankReconciliationAPIController extends AppBaseController
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
                     ->orWhere(function ($q2) use ($bankReconciliation) {
-                        $q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
-                            ->where('bankClearedYN', -1);
+                        //$q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
+                        if($bankReconciliation->confirmedYN == 1){
+                            $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
+                                ->where('bankClearedYN', -1)
+                                ->where('bankReconciliationDate', '>', $bankReconciliation->bankRecAsOf);
+                        }
                     });
             })
             ->get();
@@ -802,8 +810,12 @@ class BankReconciliationAPIController extends AppBaseController
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
                     ->orWhere(function ($q2) use ($bankReconciliation) {
-                        $q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
-                            ->where('bankClearedYN', -1);
+                        //$q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
+                        if($bankReconciliation->confirmedYN == 1) {
+                            $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
+                                ->where('bankClearedYN', -1)
+                                ->where('bankReconciliationDate', '>', $bankReconciliation->bankRecAsOf);
+                        }
                     });
             })
             ->sum('payAmountBank');
@@ -816,8 +828,12 @@ class BankReconciliationAPIController extends AppBaseController
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
                     ->orWhere(function ($q2) use ($bankReconciliation) {
-                        $q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
-                            ->where('bankClearedYN', -1);
+                        //$q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
+                        if($bankReconciliation->confirmedYN == 1) {
+                            $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
+                                ->where('bankClearedYN', -1)
+                                ->where('bankReconciliationDate', '>', $bankReconciliation->bankRecAsOf);
+                        }
                     });
             })
             ->sum('payAmountBank');
@@ -921,17 +937,17 @@ class BankReconciliationAPIController extends AppBaseController
                         $data[$x]['Narration'] = $val->documentNarration;
                         $data[$x]['Payee Name'] = $val->payeeName;
                         $decimal = 3;
-                        if($val['bank_account']){
-                            if($val['bank_account']['currency']){
+                        if ($val['bank_account']) {
+                            if ($val['bank_account']['currency']) {
                                 $data[$x]['Bank Currency'] = $val['bank_account']['currency']['CurrencyCode'];
                                 $decimal = $val['bank_account']['currency']['DecimalPlaces'];
-                            }else{
+                            } else {
                                 $data[$x]['Bank Currency'] = '';
                             }
-                        }else{
+                        } else {
                             $data[$x]['Bank Currency'] = '';
                         }
-                        $data[$x]['Bank Amount'] = number_format($val->payAmountBank,$decimal);
+                        $data[$x]['Bank Amount'] = number_format($val->payAmountBank, $decimal);
                         $data[$x]['Reconciliation Date'] = \Helper::dateFormat($val->bankReconciliationDate);
                         $data[$x]['Bank Cleared By'] = $val->bankClearedByEmpName;
                         $data[$x]['Bank Cleared Date'] = \Helper::dateFormat($val->bankClearedDate);

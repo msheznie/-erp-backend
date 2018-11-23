@@ -278,4 +278,18 @@ class DirectReceiptDetailsRefferedHistoryAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Direct Receipt Details Reffered History deleted successfully');
     }
+
+
+    public function getRVDetailDirectAmendHistory(Request $request)
+    {
+        $input = $request->all();
+        $directReceiptAutoID = $input['directReceiptAutoID'];
+        $timesReferred = $input['timesReferred'];
+
+        $items = DirectReceiptDetailsRefferedHistory::where('directReceiptAutoID', $directReceiptAutoID)
+            ->where('timesReferred', $timesReferred)
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Purchase Order Details Reffered History retrieved successfully');
+    }
 }

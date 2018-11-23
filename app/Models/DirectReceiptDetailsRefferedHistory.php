@@ -175,6 +175,7 @@ class DirectReceiptDetailsRefferedHistory extends Model
         'comRptCurrency',
         'comRptCurrencyER',
         'comRptAmount',
+        'timesReferred',
         'timeStamp'
     ];
 
@@ -206,6 +207,7 @@ class DirectReceiptDetailsRefferedHistory extends Model
         'localAmount' => 'float',
         'comRptCurrency' => 'integer',
         'comRptCurrencyER' => 'float',
+        'timesReferred' => 'integer',
         'comRptAmount' => 'float'
     ];
 
