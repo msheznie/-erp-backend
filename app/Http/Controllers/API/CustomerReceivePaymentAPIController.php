@@ -402,6 +402,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError('Customer Receive Payment not found');
         }
 
+        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
+
         $input['custPaymentReceiveDate'] = ($input['custPaymentReceiveDate'] != '' ? Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
 
         $input['custChequeDate'] = ($input['custChequeDate'] != '' ? Carbon::parse($input['custChequeDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
@@ -895,7 +897,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                     $customerInvoiceMaster = CustomerInvoiceDirect::find($item['bookingInvCodeSystem']);
 
-                    if ($totalReceiveAmountTrans > $customerInvoiceMaster['bookingAmountTrans']) {
+                    if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round($customerInvoiceMaster['bookingAmountTrans'], $documentCurrencyDecimalPlace)) {
 
                         $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
                         $itemExistArray[] = [$itemDrt];

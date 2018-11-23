@@ -278,4 +278,9 @@ class AdvancePaymentReferbackAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Advance Payment Referback deleted successfully');
     }
+
+    public function getADVPaymentHistoryDetails(Request $request){
+        $advancePaymentDetails = $this->advancePaymentReferbackRepository->with('purchaseorder_by')->findWhere(['PayMasterAutoId' => $request->PayMasterAutoId, 'timesReferred' => $request->timesReferred]);
+        return $this->sendResponse($advancePaymentDetails, 'Payment details retrieved successfully');
+    }
 }

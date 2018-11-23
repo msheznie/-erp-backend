@@ -169,7 +169,8 @@ return [
         'remarks' => 'Remarks',
         'templateMasterID' => 'Template',
         'processPeriod' => 'Month',
-        'empType' => 'Type'
+        'empType' => 'Type',
+        'expenseClaimCategoriesAutoID' => 'Category'
     ],
 
 ];
