@@ -16,6 +16,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateExpenseClaimAPIRequest;
 use App\Http\Requests\API\UpdateExpenseClaimAPIRequest;
 use App\Models\ExpenseClaim;
+use App\Models\ExpenseClaimCategories;
 use App\Models\ExpenseClaimType;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
@@ -371,6 +372,8 @@ class ExpenseClaimAPIController extends AppBaseController
 
         $segments = SegmentMaster::where("companySystemID", $companyId)
             ->where('isActive', 1)->get();
+
+        $categeries = ExpenseClaimCategories::all();
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
