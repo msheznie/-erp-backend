@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateDirectPaymentReferbackAPIRequest;
 use App\Http\Requests\API\UpdateDirectPaymentReferbackAPIRequest;
+use App\Models\CurrencyConversion;
 use App\Models\DirectPaymentReferback;
 use App\Repositories\DirectPaymentReferbackRepository;
 use Illuminate\Http\Request;
@@ -16,7 +17,6 @@ use Response;
  * Class DirectPaymentReferbackController
  * @package App\Http\Controllers\API
  */
-
 class DirectPaymentReferbackAPIController extends AppBaseController
 {
     /** @var  DirectPaymentReferbackRepository */
@@ -277,5 +277,65 @@ class DirectPaymentReferbackAPIController extends AppBaseController
         $directPaymentReferback->delete();
 
         return $this->sendResponse($id, 'Direct Payment Referback deleted successfully');
+    }
+
+    public function getDirectPaymentHistoryDetails(Request $request)
+    {
+        $id = $request->PayMasterAutoId;
+
+        $directPaymentDetails = $this->directPaymentReferbackRepository->with(['segment', 'chartofaccount'])->findWhere(['directPaymentAutoID' => $id, 'timesReferred' => $request->timesReferred]);
+
+        return $this->sendResponse($directPaymentDetails, 'Details retrieved successfully');
+    }
+
+    public function getDPHistoryExchangeRateAmount(Request $request)
+    {
+        $directPaymentDetails = DirectPaymentReferback::where('directPaymentDetailsID', $request->directPaymentDetailsID)->where('timesReferred', $request->timesReferred)->first();
+
+        if (empty($directPaymentDetails)) {
+            return $this->sendError('Direct Payment Details not found');
+        }
+
+        if ($request->toBankCurrencyID) {
+
+            $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $request->toBankCurrencyID)->first();
+            $conversion = $conversion->conversion;
+
+            $bankAmount = 0;
+            if ($request->toBankCurrencyID == $directPaymentDetails->bankCurrencyID) {
+                $bankAmount = $directPaymentDetails->DPAmount;
+            } else {
+                if ($conversion > $directPaymentDetails->DPAmountCurrencyER) {
+                    if ($conversion > 1) {
+                        $bankAmount = $directPaymentDetails->DPAmount / $conversion;
+                    } else {
+                        $bankAmount = $directPaymentDetails->DPAmount * $conversion;
+                    }
+                } else {
+                    If ($conversion > 1) {
+                        $bankAmount = $directPaymentDetails->DPAmount * $conversion;
+                    } else {
+                        $bankAmount = $directPaymentDetails->DPAmount / $conversion;
+                    }
+                }
+            }
+
+            $output = ['toBankCurrencyER' => $conversion, 'toBankAmount' => $bankAmount];
+            return $this->sendResponse($output, 'Successfully data retrieved');
+        } else {
+            $output = ['toBankCurrencyER' => 0, 'toBankAmount' => 0];
+            return $this->sendResponse($output, 'Successfully data retrieved');
+        }
+    }
+
+    public function getDirectPaymentDetailsHistoryByID(Request $request)
+    {
+        $directPaymentDetails = DirectPaymentReferback::where('directPaymentDetailsID', $request->directPaymentDetailsID)->where('timesReferred', $request->timesReferred)->first();
+
+        if (empty($directPaymentDetails)) {
+            return $this->sendError('Direct Payment Details not found');
+        }
+
+        return $this->sendResponse($directPaymentDetails->toArray(), 'Direct Payment Details retrieved successfully');
     }
 }
