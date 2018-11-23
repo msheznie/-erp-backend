@@ -159,8 +159,6 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
 
                 break;
             case 'AMAA': //Asset Additions
-
-                $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getAssetAdditionsQRY($request);
 
                 $outputArr = array();
@@ -176,7 +174,9 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                     }
                 }
 
-                return array('reportData' => $outputArr, 'assetCostLocal' => $assetCostLocal, 'assetCostRpt' => $assetCostRpt);
+                $companyCurrency = \Helper::groupCompaniesCurrency($request->companySystemID);
+
+                return array('reportData' => $outputArr, 'assetCostLocal' => $assetCostLocal, 'assetCostRpt' => $assetCostRpt, 'companyCurrency' => $companyCurrency);
 
                 break;
             case 'AMAD': //Asset Disposal
@@ -191,7 +191,27 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                     }
                 }
 
+
+                $companyID = "";
+                $checkIsGroup = Company::find($request->companySystemID);
+                if ($checkIsGroup->isGroup) {
+                    $companyID = \Helper::getGroupCompany($request->companySystemID);
+                } else {
+                    $companyID = [$request->companySystemID];
+                }
+
+                $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])
+                    ->whereIN('companySystemID', $companyID)
+                    ->get();
+                $outputArr2 = [];
+                if ($companyCurrency) {
+                    foreach ($companyCurrency as $val) {
+                        $outputArr2[$val->CompanyName] = $val;
+                    }
+                }
+
                 $currency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = $outputArr2;
 
                 $total = array();
                 $total['AssetCostLocal'] = array_sum(collect($output)->pluck('AssetCostLocal')->toArray());
@@ -208,6 +228,7 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
                     'decimalPlaceRpt' => $currency->reportingcurrency->DecimalPlaces,
                     'currencyLocal' => $currency->localcurrency->CurrencyCode,
                     'currencyRpt' => $currency->reportingcurrency->CurrencyCode,
+                    'companyCurrency' => $companyCurrency
                 );
 
                 break;
@@ -407,181 +428,80 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
 
                 $outputArr = [];
 
-          /*      if ($request->excelType == 1) {
-                    if ($output) {
-                        foreach ($output as $val) {
-                            if($val->groupTO==1){
-                                $outputArr[$val->groupTO][$val->groupbydesc][$val->financeCatDescription][] = (array)$val;
-                            }else{
-                                $outputArr[0][$val->financeCatDescription][] = (array)$val;
-                            }
+                /*      if ($request->excelType == 1) {
+                          if ($output) {
+                              foreach ($output as $val) {
+                                  if($val->groupTO==1){
+                                      $outputArr[$val->groupTO][$val->groupbydesc][$val->financeCatDescription][] = (array)$val;
+                                  }else{
+                                      $outputArr[0][$val->financeCatDescription][] = (array)$val;
+                                  }
 
-                        }
+                              }
+                          }
+
+                      } else {*/
+                if ($output) {
+                    foreach ($output as $val) {
+                        $outputArr[$val->financeCatDescription][] = (array)$val;
                     }
+                }
 
-                } else {*/
-                    if ($output) {
-                        foreach ($output as $val) {
-                            $outputArr[$val->financeCatDescription][] = (array)$val;
-                        }
-                    }
-
-              /*  }*/
-
-
-
-
+                /*  }*/
 
 
                 $x = 0;
 
 
-                    if (!empty($outputArr)) {
-                        $TotalCOSTUNIT = 0;
-                        $TotaldepAmountLocal = 0;
-                        $Totallocalnbv = 0;
-                        $TotalcostUnitRpt = 0;
-                        $TotaldepAmountRpt = 0;
-                        $Totalrptnbv = 0;
-                        foreach ($outputArr as $key => $val) {
+                if (!empty($outputArr)) {
+                    $TotalCOSTUNIT = 0;
+                    $TotaldepAmountLocal = 0;
+                    $Totallocalnbv = 0;
+                    $TotalcostUnitRpt = 0;
+                    $TotaldepAmountRpt = 0;
+                    $Totalrptnbv = 0;
+                    foreach ($outputArr as $key => $val) {
 
-                            $data[$x]['Cost GL'] = $key;
-                            $data[$x]['Acc Dep GL'] = '';
-                            $data[$x]['Type'] = '';
+                        $data[$x]['Cost GL'] = $key;
+                        $data[$x]['Acc Dep GL'] = '';
+                        $data[$x]['Type'] = '';
 
-                            $data[$x]['Segment'] = '';
-                            $data[$x]['category'] = '';
-                            $data[$x]['FA Code'] = '';
-                            $data[$x]['Grouped YN'] = '';
-                            $data[$x]['Serial Number'] = '';
-                            $data[$x]['Asset Description'] = '';
-                            $data[$x]['DEP %'] = '';
-                            $data[$x]['Date Aquired'] = '';
-                            $data[$x]['Dep Start Date'] = '';
-                            $data[$x]['Local Amount unitcost'] = '';
-                            $data[$x]['Local Amount accDep'] = '';
-                            $data[$x]['Local Amount net Value'] = '';
-                            $data[$x]['Rpt Amount unit cost'] = '';
-                            $data[$x]['Rpt Amount acc dep'] = '';
-                            $data[$x]['Rpt Amount acc net value'] = '';
+                        $data[$x]['Segment'] = '';
+                        $data[$x]['category'] = '';
+                        $data[$x]['FA Code'] = '';
+                        $data[$x]['Grouped YN'] = '';
+                        $data[$x]['Serial Number'] = '';
+                        $data[$x]['Asset Description'] = '';
+                        $data[$x]['DEP %'] = '';
+                        $data[$x]['Date Aquired'] = '';
+                        $data[$x]['Dep Start Date'] = '';
+                        $data[$x]['Local Amount unitcost'] = '';
+                        $data[$x]['Local Amount accDep'] = '';
+                        $data[$x]['Local Amount net Value'] = '';
+                        $data[$x]['Rpt Amount unit cost'] = '';
+                        $data[$x]['Rpt Amount acc dep'] = '';
+                        $data[$x]['Rpt Amount acc net value'] = '';
 
-                            $x++;
+                        $x++;
 
-                            $data[$x]['Cost GL'] = 'Cost GL';
-                            $data[$x]['Acc Dep GL'] = 'Acc Dep GL';
-                            $data[$x]['Type'] = 'Type';
-                            $data[$x]['Segment'] = 'Segment';
-                            $data[$x]['category'] = 'Finance Category';
-                            $data[$x]['FA Code'] = 'FA Code';
-                            $data[$x]['Grouped YN'] = 'Grouped FA Code';
-                            $data[$x]['Serial Number'] = 'Serial Number';
-                            $data[$x]['Asset Description'] = 'Asset Description';
-                            $data[$x]['DEP %'] = 'DEP %';
-                            $data[$x]['Date Aquired'] = 'Date Aquired';
-                            $data[$x]['Dep Start Date'] = 'Dep Start Date';
-                            $data[$x]['Local Amount unitcost'] = '';
-                            $data[$x]['Local Amount accDep'] = '';
-                            $data[$x]['Local Amount net Value'] = 'Local Amount';
-                            $data[$x]['Rpt Amount unit cost'] = '';
-                            $data[$x]['Rpt Amount acc dep'] = 'Rpt Amount';
-                            $data[$x]['Rpt Amount acc net value'] = '';
-
-                            $x++;
-
-                            $data[$x]['Cost GL'] = '';
-                            $data[$x]['Acc Dep GL'] = '';
-                            $data[$x]['Type'] = '';
-                            $data[$x]['Segment'] = '';
-                            $data[$x]['category'] = '';
-                            $data[$x]['FA Code'] = '';
-                            $data[$x]['Grouped YN'] = '';
-                            $data[$x]['Serial Number'] = '';
-                            $data[$x]['Asset Description'] = '';
-                            $data[$x]['DEP %'] = '';
-                            $data[$x]['Date Aquired'] = '';
-                            $data[$x]['Dep Start Date'] = '';
-
-                            $data[$x]['Local Amount unitcost'] = 'Unit Cost';
-                            $data[$x]['Local Amount accDep'] = 'AccDep Amount';
-                            $data[$x]['Local Amount net Value'] = 'Net Book Value';
-                            $data[$x]['Rpt Amount unit cost'] = 'Unit Cost';
-                            $data[$x]['Rpt Amount acc dep'] = 'AccDep Amount';
-                            $data[$x]['Rpt Amount acc net value'] = 'Net Book Value';
-
-                            $x++;
-                            $COSTUNIT = 0;
-                            $depAmountLocal = 0;
-                            $localnbv = 0;
-                            $costUnitRpt = 0;
-                            $depAmountRpt = 0;
-                            $rptnbv = 0;
-
-
-                            foreach ($outputArr[$key] as $value) {
-                                $x++;
-                                $COSTUNIT += $value['COSTUNIT'];
-                                $depAmountLocal += $value['depAmountLocal'];
-                                $localnbv += $value['localnbv'];
-                                $costUnitRpt += $value['costUnitRpt'];
-                                $depAmountRpt += $value['depAmountRpt'];
-                                $rptnbv += $value['rptnbv'];
-
-                                $TotalCOSTUNIT += $value['COSTUNIT'];
-                                $TotaldepAmountLocal += $value['depAmountLocal'];
-                                $Totallocalnbv += $value['localnbv'];
-                                $TotalcostUnitRpt += $value['costUnitRpt'];
-                                $TotaldepAmountRpt += $value['depAmountRpt'];
-                                $Totalrptnbv += $value['rptnbv'];
-
-                                $data[$x]['Cost GL'] = $value['COSTGLCODE'];
-                                $data[$x]['Acc Dep GL'] = $value['ACCDEPGLCODE'];
-                                $data[$x]['Type'] = $value['typeDes'];
-                                $data[$x]['Segment'] = $value['ServiceLineDes'];
-                                $data[$x]['category'] = $key;
-                                $data[$x]['FA Code'] = $value['faCode'];
-                                $data[$x]['Grouped YN'] = $value['groupbydesc'];
-                                $data[$x]['Serial Number'] = $value['faUnitSerialNo'];
-                                $data[$x]['Asset Description'] = $value['assetDescription'];
-                                $data[$x]['DEP %'] = round($value['DEPpercentage'], 2);
-                                $data[$x]['Date Aquired'] = \Helper::dateFormat($value['dateAQ']);
-                                $data[$x]['Dep Start Date'] = \Helper::dateFormat($value['dateDEP']);
-
-                                $data[$x]['Local Amount unitcost'] = round($value['COSTUNIT'], 2);
-                                $data[$x]['Local Amount accDep'] = round($value['depAmountLocal'], 2);
-                                $data[$x]['Local Amount net Value'] = round($value['localnbv'], 2);
-                                $data[$x]['Rpt Amount unit cost'] = round($value['costUnitRpt'], 2);
-                                $data[$x]['Rpt Amount acc dep'] = round($value['depAmountRpt'], 2);
-                                $data[$x]['Rpt Amount acc net value'] = round($value['rptnbv'], 2);
-
-                            }
-
-                            $x++;
-
-
-                            $data[$x]['Cost GL'] = '';
-                            $data[$x]['Acc Dep GL'] = '';
-                            $data[$x]['Type'] = '';
-                            $data[$x]['Segment'] = '';
-                            $data[$x]['category'] = '';
-                            $data[$x]['FA Code'] = '';
-                            $data[$x]['Grouped YN'] = '';
-                            $data[$x]['Serial Number'] = '';
-                            $data[$x]['Asset Description'] = '';
-                            $data[$x]['DEP %'] = '';
-                            $data[$x]['Date Aquired'] = '';
-                            $data[$x]['Dep Start Date'] = 'Sub Total';
-
-                            $data[$x]['Local Amount unitcost'] = $COSTUNIT;
-                            $data[$x]['Local Amount accDep'] = $depAmountLocal;
-                            $data[$x]['Local Amount net Value'] = $localnbv;
-                            $data[$x]['Rpt Amount unit cost'] = $costUnitRpt;
-                            $data[$x]['Rpt Amount acc dep'] = $depAmountRpt;
-                            $data[$x]['Rpt Amount acc net value'] = $rptnbv;
-
-$x++;
-
-                        }
-
+                        $data[$x]['Cost GL'] = 'Cost GL';
+                        $data[$x]['Acc Dep GL'] = 'Acc Dep GL';
+                        $data[$x]['Type'] = 'Type';
+                        $data[$x]['Segment'] = 'Segment';
+                        $data[$x]['category'] = 'Finance Category';
+                        $data[$x]['FA Code'] = 'FA Code';
+                        $data[$x]['Grouped YN'] = 'Grouped FA Code';
+                        $data[$x]['Serial Number'] = 'Serial Number';
+                        $data[$x]['Asset Description'] = 'Asset Description';
+                        $data[$x]['DEP %'] = 'DEP %';
+                        $data[$x]['Date Aquired'] = 'Date Aquired';
+                        $data[$x]['Dep Start Date'] = 'Dep Start Date';
+                        $data[$x]['Local Amount unitcost'] = '';
+                        $data[$x]['Local Amount accDep'] = '';
+                        $data[$x]['Local Amount net Value'] = 'Local Amount';
+                        $data[$x]['Rpt Amount unit cost'] = '';
+                        $data[$x]['Rpt Amount acc dep'] = 'Rpt Amount';
+                        $data[$x]['Rpt Amount acc net value'] = '';
 
                         $x++;
 
@@ -596,16 +516,110 @@ $x++;
                         $data[$x]['Asset Description'] = '';
                         $data[$x]['DEP %'] = '';
                         $data[$x]['Date Aquired'] = '';
-                        $data[$x]['Dep Start Date'] = 'Total';
-                        $data[$x]['Local Amount unitcost'] = $TotalCOSTUNIT;
-                        $data[$x]['Local Amount accDep'] = $TotaldepAmountLocal;
-                        $data[$x]['Local Amount net Value'] = $Totallocalnbv;
-                        $data[$x]['Rpt Amount unit cost'] = $TotalcostUnitRpt;
-                        $data[$x]['Rpt Amount acc dep'] = $TotaldepAmountRpt;
-                        $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
+                        $data[$x]['Dep Start Date'] = '';
+
+                        $data[$x]['Local Amount unitcost'] = 'Unit Cost';
+                        $data[$x]['Local Amount accDep'] = 'AccDep Amount';
+                        $data[$x]['Local Amount net Value'] = 'Net Book Value';
+                        $data[$x]['Rpt Amount unit cost'] = 'Unit Cost';
+                        $data[$x]['Rpt Amount acc dep'] = 'AccDep Amount';
+                        $data[$x]['Rpt Amount acc net value'] = 'Net Book Value';
+
+                        $x++;
+                        $COSTUNIT = 0;
+                        $depAmountLocal = 0;
+                        $localnbv = 0;
+                        $costUnitRpt = 0;
+                        $depAmountRpt = 0;
+                        $rptnbv = 0;
+
+
+                        foreach ($outputArr[$key] as $value) {
+                            $x++;
+                            $COSTUNIT += $value['COSTUNIT'];
+                            $depAmountLocal += $value['depAmountLocal'];
+                            $localnbv += $value['localnbv'];
+                            $costUnitRpt += $value['costUnitRpt'];
+                            $depAmountRpt += $value['depAmountRpt'];
+                            $rptnbv += $value['rptnbv'];
+
+                            $TotalCOSTUNIT += $value['COSTUNIT'];
+                            $TotaldepAmountLocal += $value['depAmountLocal'];
+                            $Totallocalnbv += $value['localnbv'];
+                            $TotalcostUnitRpt += $value['costUnitRpt'];
+                            $TotaldepAmountRpt += $value['depAmountRpt'];
+                            $Totalrptnbv += $value['rptnbv'];
+
+                            $data[$x]['Cost GL'] = $value['COSTGLCODE'];
+                            $data[$x]['Acc Dep GL'] = $value['ACCDEPGLCODE'];
+                            $data[$x]['Type'] = $value['typeDes'];
+                            $data[$x]['Segment'] = $value['ServiceLineDes'];
+                            $data[$x]['category'] = $key;
+                            $data[$x]['FA Code'] = $value['faCode'];
+                            $data[$x]['Grouped YN'] = $value['groupbydesc'];
+                            $data[$x]['Serial Number'] = $value['faUnitSerialNo'];
+                            $data[$x]['Asset Description'] = $value['assetDescription'];
+                            $data[$x]['DEP %'] = round($value['DEPpercentage'], 2);
+                            $data[$x]['Date Aquired'] = \Helper::dateFormat($value['dateAQ']);
+                            $data[$x]['Dep Start Date'] = \Helper::dateFormat($value['dateDEP']);
+
+                            $data[$x]['Local Amount unitcost'] = round($value['COSTUNIT'], 2);
+                            $data[$x]['Local Amount accDep'] = round($value['depAmountLocal'], 2);
+                            $data[$x]['Local Amount net Value'] = round($value['localnbv'], 2);
+                            $data[$x]['Rpt Amount unit cost'] = round($value['costUnitRpt'], 2);
+                            $data[$x]['Rpt Amount acc dep'] = round($value['depAmountRpt'], 2);
+                            $data[$x]['Rpt Amount acc net value'] = round($value['rptnbv'], 2);
+
+                        }
+
+                        $x++;
+
+
+                        $data[$x]['Cost GL'] = '';
+                        $data[$x]['Acc Dep GL'] = '';
+                        $data[$x]['Type'] = '';
+                        $data[$x]['Segment'] = '';
+                        $data[$x]['category'] = '';
+                        $data[$x]['FA Code'] = '';
+                        $data[$x]['Grouped YN'] = '';
+                        $data[$x]['Serial Number'] = '';
+                        $data[$x]['Asset Description'] = '';
+                        $data[$x]['DEP %'] = '';
+                        $data[$x]['Date Aquired'] = '';
+                        $data[$x]['Dep Start Date'] = 'Sub Total';
+
+                        $data[$x]['Local Amount unitcost'] = $COSTUNIT;
+                        $data[$x]['Local Amount accDep'] = $depAmountLocal;
+                        $data[$x]['Local Amount net Value'] = $localnbv;
+                        $data[$x]['Rpt Amount unit cost'] = $costUnitRpt;
+                        $data[$x]['Rpt Amount acc dep'] = $depAmountRpt;
+                        $data[$x]['Rpt Amount acc net value'] = $rptnbv;
+
+                        $x++;
+
                     }
 
+                    $x++;
 
+                    $data[$x]['Cost GL'] = '';
+                    $data[$x]['Acc Dep GL'] = '';
+                    $data[$x]['Type'] = '';
+                    $data[$x]['Segment'] = '';
+                    $data[$x]['category'] = '';
+                    $data[$x]['FA Code'] = '';
+                    $data[$x]['Grouped YN'] = '';
+                    $data[$x]['Serial Number'] = '';
+                    $data[$x]['Asset Description'] = '';
+                    $data[$x]['DEP %'] = '';
+                    $data[$x]['Date Aquired'] = '';
+                    $data[$x]['Dep Start Date'] = 'Total';
+                    $data[$x]['Local Amount unitcost'] = $TotalCOSTUNIT;
+                    $data[$x]['Local Amount accDep'] = $TotaldepAmountLocal;
+                    $data[$x]['Local Amount net Value'] = $Totallocalnbv;
+                    $data[$x]['Rpt Amount unit cost'] = $TotalcostUnitRpt;
+                    $data[$x]['Rpt Amount acc dep'] = $TotaldepAmountRpt;
+                    $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
+                }
 
 
                 $csv = \Excel::create('payment_suppliers_by_year', function ($excel) use ($data) {
@@ -641,7 +655,9 @@ $x++;
                         $data[$x]['PO Code'] = $val->POCODE;
                         $data[$x]['Service Line'] = $val->ServiceLineDes;
                         $data[$x]['Supplier'] = $val->Supplier;
+                        $data[$x]['Asset Cost Local Curr'] = $val->localCurrency;
                         $data[$x]['Asset Cost Local'] = $val->AssetCostLocal;
+                        $data[$x]['Asset Cost Rpt Curr'] = $val->reportCurrency;
                         $data[$x]['Asset Cost Rpt'] = $val->AssetCostRpt;
                         $x++;
                     }
@@ -664,11 +680,8 @@ $x++;
 
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month'));
-                $currency = \Helper::companyCurrency($request->companySystemID);
                 $output = $this->getAssetDisposal($request);
 
-                $decimalPlaceLocal = $currency->reportingcurrency->DecimalPlaces;
-                $decimalPlaceRpt = $currency->reportingcurrency->DecimalPlaces;
                 $data = array();
                 $x = 0;
                 foreach ($output as $val) {
@@ -683,14 +696,17 @@ $x++;
                     $data[$x]['Serial Number'] = $val->AssetSerialNumber;
                     $data[$x]['Asset Description'] = $val->AssetDescription;
 
-                    $data[$x]['Asset Cost (Local)'] = round($val->AssetCostLocal, $decimalPlaceLocal);
-                    $data[$x]['Asset Cost (Reporting)'] = round($val->AssetCostRPT, $decimalPlaceRpt);
+                    $data[$x]['Currency (Local)'] = $val->localCurrency;
+                    $data[$x]['Currency (Reporting)'] = $val->reportCurrency;
 
-                    $data[$x]['Accumulated Depreciation (Local)'] = round($val->AccumulatedDepreciationLocal, $decimalPlaceLocal);
-                    $data[$x]['Accumulated Depreciation (Reporting)'] = round($val->AccumulatedDepreciationRPT, $decimalPlaceRpt);
+                    $data[$x]['Asset Cost (Local)'] = round($val->AssetCostLocal, $val->localCurrencyDeci);
+                    $data[$x]['Asset Cost (Reporting)'] = round($val->AssetCostRPT, $val->reportCurrencyDeci);
 
-                    $data[$x]['Net Book Value (Local)'] = round($val->NetBookVALUELocal, $decimalPlaceLocal);
-                    $data[$x]['Net Book Value (Reporting)'] = round($val->NetBookVALUERPT, $decimalPlaceRpt);
+                    $data[$x]['Accumulated Depreciation (Local)'] = round($val->AccumulatedDepreciationLocal, $val->localCurrencyDeci);
+                    $data[$x]['Accumulated Depreciation (Reporting)'] = round($val->AccumulatedDepreciationRPT, $val->reportCurrencyDeci);
+
+                    $data[$x]['Net Book Value (Local)'] = round($val->NetBookVALUELocal, $val->localCurrencyDeci);
+                    $data[$x]['Net Book Value (Reporting)'] = round($val->NetBookVALUERPT, $val->reportCurrencyDeci);
 
                     $x++;
                 }
@@ -916,13 +932,19 @@ $x++;
                     erp_fa_asset_disposaldetail.netBookValueLocal AS NetBookVALUELocal,
                     erp_fa_asset_disposaldetail.costUnitRpt AS AssetCostRPT,
                     erp_fa_asset_disposaldetail.depAmountRpt AS AccumulatedDepreciationRPT,
-                    erp_fa_asset_disposaldetail.netBookValueRpt AS NetBookVALUERPT
+                    erp_fa_asset_disposaldetail.netBookValueRpt AS NetBookVALUERPT,
+                    locCur.CurrencyCode as localCurrency,
+                    locCur.DecimalPlaces as localCurrencyDeci,
+                    repCur.CurrencyCode as reportCurrency,
+                    repCur.DecimalPlaces as reportCurrencyDeci
                 FROM
                     erp_fa_asset_disposaldetail
                     INNER JOIN erp_fa_asset_master ON erp_fa_asset_disposaldetail.faID = erp_fa_asset_master.faID
                     INNER JOIN erp_fa_financecategory ON erp_fa_asset_master.AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
                     INNER JOIN erp_fa_asset_disposalmaster ON erp_fa_asset_disposaldetail.assetdisposalMasterAutoID = erp_fa_asset_disposalmaster.assetdisposalMasterAutoID 
                     INNER JOIN companymaster ON erp_fa_asset_disposalmaster.companySystemID = companymaster.companySystemID
+                    LEFT JOIN currencymaster as locCur ON locCur.currencyID = companymaster.localCurrencyID
+                LEFT JOIN currencymaster as repCur ON repCur.currencyID = companymaster.reportingCurrency
                 WHERE
                     DATE(erp_fa_asset_disposalmaster.disposalDocumentDate)
                     BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
@@ -1788,10 +1810,7 @@ GROUP BY
         $input = $request->all();
 
 
-
-
-
-        $qry="SELECT
+        $qry = "SELECT
 	groupTO,
 	faUnitSerialNo,
 	erp_fa_asset_master.faID,
@@ -1846,7 +1865,6 @@ WHERE
 ";
 
 
-
         $output = \DB::select($qry);
 
         $outputArr = [];
@@ -1886,17 +1904,17 @@ WHERE
         $searchText = $request->searchText;
 
 
-        $where="";
-        if($searchText !=''){
+        $where = "";
+        if ($searchText != '') {
             $searchText = str_replace("\\", "\\\\", $searchText);
-            $where=" AND ( assetGroup.faCode LIKE '%$searchText%' OR erp_fa_asset_master.assetDescription LIKE '%$searchText%' OR  
+            $where = " AND ( assetGroup.faCode LIKE '%$searchText%' OR erp_fa_asset_master.assetDescription LIKE '%$searchText%' OR  
             erp_fa_asset_master.faCode LIKE '%$searchText%' )  ";
         }
 
 
         if ($request->excelType == 1) {
 
-            $qry="SELECT
+            $qry = "SELECT
 IF(groupTO,1,0) as groupTO,
 	assetGroup.assetDescription as groupbydesc,
 	faUnitSerialNo,
@@ -1948,8 +1966,6 @@ WHERE
 	)";
 
 
-
-
         } else {
             $qry = "SELECT groupTO,faUnitSerialNo,faID, erp_fa_assettype.typeDes, erp_fa_financecategory.financeCatDescription, final.COSTGLCODE, final.ACCDEPGLCODE, assetType, serviceline.ServiceLineDes, final.serviceLineCode, docOrigin, AUDITCATOGARY, faCode, assetDescription, DEPpercentage, dateAQ, dateDEP, COSTUNIT, IFNULL(depAmountLocal,0) as depAmountLocal, COSTUNIT - IFNULL(depAmountLocal,0) as localnbv, costUnitRpt,
  IFNULL(depAmountRpt,0) as depAmountRpt , costUnitRpt - IFNULL(depAmountRpt,0) as rptnbv FROM ( SELECT 		t.groupTO,erp_fa_asset_master.faUnitSerialNo ,erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, IFNULL( t.COSTUNIT, 0 ) AS COSTUNIT, IFNULL( depAmountLocal, 0 ) AS depAmountLocal, IFNULL( t.costUnitRpt, 0 ) AS costUnitRpt, IFNULL( depAmountRpt, 0 ) AS depAmountRpt FROM ( SELECT groupTO, SUM( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, SUM( depAmountLocal ) AS depAmountLocal, SUM( costUnitRpt ) AS costUnitRpt, SUM( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, SUM( depAmountLocal ) AS depAmountLocal, SUM( depAmountRpt ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NOT NULL GROUP BY groupTO ) t INNER JOIN erp_fa_asset_master ON erp_fa_asset_master.faID = t.groupTO
@@ -1958,10 +1974,9 @@ WHERE
 erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_master.serviceLineCode, docOrigin, AUDITCATOGARY, erp_fa_asset_master.faCode, erp_fa_asset_master.assetDescription, DEPpercentage, dateAQ, dateDEP, ( erp_fa_asset_master.COSTUNIT ) AS COSTUNIT, ( depAmountLocal ) AS depAmountLocal, ( costUnitRpt ) AS costUnitRpt, ( depAmountRpt ) AS depAmountRpt FROM erp_fa_asset_master LEFT JOIN ( SELECT faID, IFNULL( SUM( depAmountLocal ), 0 ) AS depAmountLocal, IFNULL( SUM( depAmountRpt ), 0 ) AS depAmountRpt FROM ( SELECT faID, erp_fa_assetdepreciationperiods.depMasterAutoID, sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal, sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt FROM erp_fa_assetdepreciationperiods INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID WHERE erp_fa_depmaster.approved =- 1 GROUP BY faID ) t GROUP BY faID ) erp_fa_assetdepreciationperiods ON erp_fa_assetdepreciationperiods.faID = erp_fa_asset_master.faID WHERE companySystemID = $request->companySystemID AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND ( disposedDate IS NULL OR disposedDate > '$asOfDate' OR DIPOSED = - 1 ) AND groupTO IS NULL ORDER BY dateDEP DESC ) final INNER JOIN serviceline ON serviceline.ServiceLineCode = final.serviceLineCode INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = final.assetType";
 
 
-
         }
 
-        $qry="
+        $qry = "
 SELECT * FROM ( SELECT
 IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
     
@@ -2014,10 +2029,6 @@ WHERE
 	AND erp_fa_asset_master.dateAQ <= '$asOfDate' AND assetType = $typeID AND  ((DIPOSED = - 1  AND (   disposedDate > '$asOfDate')) OR DIPOSED <>  -1)
 	$where
 	) t  ORDER BY sortfaID desc  ";
-
-
-
-
 
 
         $output = \DB::select($qry);
