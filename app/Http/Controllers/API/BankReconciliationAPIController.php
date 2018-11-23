@@ -781,7 +781,7 @@ class BankReconciliationAPIController extends AppBaseController
                             $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
                                 ->where('bankClearedYN', -1);
                             if (!is_null($bankReconciliation->confirmedDate)) {
-                                  $q2->where('bankClearedDate', '>', $bankReconciliation->confirmedDate);
+                                  $q2->where('bankReconciliationDate', '>', $bankReconciliation->bankRecAsOf);
                             }
                         }
                     });
@@ -800,7 +800,7 @@ class BankReconciliationAPIController extends AppBaseController
                             $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
                                 ->where('bankClearedYN', -1);
                             if(!is_null($bankReconciliation->confirmedDate)){
-                                $q2->where('bankClearedDate', '>', $bankReconciliation->confirmedDate);
+                                $q2->where('bankReconciliationDate', '>', $bankReconciliation->bankRecAsOf);
                             }
                         }
                     });
@@ -819,7 +819,7 @@ class BankReconciliationAPIController extends AppBaseController
                             $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
                                 ->where('bankClearedYN', -1);
                             if (!is_null($bankReconciliation->confirmedDate)) {
-                                $q2->where('bankClearedDate', '>', $bankReconciliation->confirmedDate);
+                                $q2->where('bankReconciliationDate', '>', $bankReconciliation->bankRecAsOf);
                             }
                         }
                     });
@@ -839,7 +839,7 @@ class BankReconciliationAPIController extends AppBaseController
                             $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
                                 ->where('bankClearedYN', -1);
                             if (!is_null($bankReconciliation->confirmedDate)) {
-                                  $q2->where('bankClearedDate', '>', $bankReconciliation->confirmedDate);
+                                $q2->where('bankReconciliationDate', '>', $bankReconciliation->bankRecAsOf);
                             }
                         }
                     });
