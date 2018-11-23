@@ -1113,13 +1113,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('exportAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@exportAdvancePaymentRequestReport');
 
     Route::post('addDetailsFromExpenseClaim', 'DirectPaymentDetailsAPIController@addDetailsFromExpenseClaim');
-    Route::resource('customer_receive_payment_reffered_histories', 'CustomerReceivePaymentRefferedHistoryAPIController');
-    Route::resource('direct_receipt_details_reffered_histories', 'DirectReceiptDetailsRefferedHistoryAPIController');
-    Route::resource('cust_receive_payment_det_reffered_histories', 'CustReceivePaymentDetRefferedHistoryAPIController');
-    Route::resource('pay_supplier_invoice_master_referbacks', 'PaySupplierInvoiceMasterReferbackAPIController');
-    Route::resource('pay_supplier_invoice_detail_referbacks', 'PaySupplierInvoiceDetailReferbackAPIController');
+    Route::resource('receiptVoucherAmendHistoryCRUD', 'CustomerReceivePaymentRefferedHistoryAPIController');
+    Route::resource('directreceiptdetailshistories', 'DirectReceiptDetailsRefferedHistoryAPIController');
+    Route::resource('custreceivepaymentdethistories', 'CustReceivePaymentDetRefferedHistoryAPIController');
+    //Route::resource('paysupplierinvoicemasterreferbacks', 'PaySupplierInvoiceMasterReferbackAPIController');
+    //Route::resource('paysupplierinvoicedetailreferbacks', 'PaySupplierInvoiceDetailReferbackAPIController');
     Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
     Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
+    Route::post('getReceiptVoucherAmendHistory', 'CustomerReceivePaymentRefferedHistoryAPIController@getReceiptVoucherAmendHistory');
+    Route::get('getRVDetailDirectAmendHistory', 'DirectReceiptDetailsRefferedHistoryAPIController@getRVDetailDirectAmendHistory');
+    Route::get('getRVDetailAmendHistory', 'CustReceivePaymentDetRefferedHistoryAPIController@getRVDetailAmendHistory');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
