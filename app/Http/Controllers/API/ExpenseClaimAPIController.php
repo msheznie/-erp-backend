@@ -373,13 +373,14 @@ class ExpenseClaimAPIController extends AppBaseController
         $segments = SegmentMaster::where("companySystemID", $companyId)
             ->where('isActive', 1)->get();
 
-        $categeries = ExpenseClaimCategories::all();
+        $categories = ExpenseClaimCategories::all();
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'types' => $types,
-            'segments' => $segments
+            'segments' => $segments,
+            'categories' => $categories
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
