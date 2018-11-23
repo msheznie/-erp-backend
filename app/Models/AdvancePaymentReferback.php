@@ -221,5 +221,25 @@ class AdvancePaymentReferback extends Model
         
     ];
 
+    public function purchaseorder_by()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
+    }
+
+    public function advancepaymentmaster()
+    {
+        return $this->hasOne('App\Models\PoAdvancePayment', 'poAdvPaymentID', 'poAdvPaymentID');
+    }
+
+    public function supplier_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransCurrencyID', 'currencyID');
+    }
+
+    public function pay_invoice()
+    {
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', 'PayMasterAutoId', 'PayMasterAutoId');
+    }
+
     
 }

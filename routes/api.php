@@ -1112,14 +1112,22 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('generateAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@generateAdvancePaymentRequestReport');
     Route::post('exportAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@exportAdvancePaymentRequestReport');
 
-    Route::post('addDetailsFromExpenseClaim', 'DirectPaymentDetailsAPIController@addDetailsFromExpenseClaim');
-    Route::resource('customer_receive_payment_reffered_histories', 'CustomerReceivePaymentRefferedHistoryAPIController');
-    Route::resource('direct_receipt_details_reffered_histories', 'DirectReceiptDetailsRefferedHistoryAPIController');
-    Route::resource('cust_receive_payment_det_reffered_histories', 'CustReceivePaymentDetRefferedHistoryAPIController');
-    Route::resource('pay_supplier_invoice_master_referbacks', 'PaySupplierInvoiceMasterReferbackAPIController');
-    Route::resource('pay_supplier_invoice_detail_referbacks', 'PaySupplierInvoiceDetailReferbackAPIController');
+    Route::post('getAllPaymentVoucherAmendHistory', 'PaySupplierInvoiceMasterReferbackAPIController@getAllPaymentVoucherAmendHistory');
+    Route::get('paymentVoucherHistoryByPVID', 'PaySupplierInvoiceMasterReferbackAPIController@paymentVoucherHistoryByPVID');
     Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
     Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
+
+    Route::get('getPOPaymentHistoryDetails', 'PaySupplierInvoiceDetailReferbackAPIController@getPOPaymentHistoryDetails');
+    Route::get('getADVPaymentHistoryDetails', 'AdvancePaymentReferbackAPIController@getADVPaymentHistoryDetails');
+    Route::get('getDirectPaymentHistoryDetails', 'DirectPaymentReferbackAPIController@getDirectPaymentHistoryDetails');
+    Route::get('getDirectPaymentDetailsHistoryByID', 'DirectPaymentReferbackAPIController@getDirectPaymentDetailsHistoryByID');
+
+    Route::resource('paymentVoucherDetailReferbacks', 'PaySupplierInvoiceDetailReferbackAPIController');
+    Route::post('addDetailsFromExpenseClaim', 'DirectPaymentDetailsAPIController@addDetailsFromExpenseClaim');
+    Route::resource('customer_receive_payment_reffered_histories', 'CustomerReceivePaymentRefferedHistoryAPIController');
+    Route::resource('directReceiptHistories', 'DirectReceiptDetailsRefferedHistoryAPIController');
+    Route::resource('cust_receive_payment_det_reffered_histories', 'CustReceivePaymentDetRefferedHistoryAPIController');
+    Route::resource('PaymentVoucherMasterReferbacks', 'PaySupplierInvoiceMasterReferbackAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');

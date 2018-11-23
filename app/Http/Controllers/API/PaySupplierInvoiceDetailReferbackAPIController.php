@@ -16,7 +16,6 @@ use Response;
  * Class PaySupplierInvoiceDetailReferbackController
  * @package App\Http\Controllers\API
  */
-
 class PaySupplierInvoiceDetailReferbackAPIController extends AppBaseController
 {
     /** @var  PaySupplierInvoiceDetailReferbackRepository */
@@ -277,5 +276,11 @@ class PaySupplierInvoiceDetailReferbackAPIController extends AppBaseController
         $paySupplierInvoiceDetailReferback->delete();
 
         return $this->sendResponse($id, 'Pay Supplier Invoice Detail Referback deleted successfully');
+    }
+
+    public function getPOPaymentHistoryDetails(Request $request)
+    {
+        $data = $this->paySupplierInvoiceDetailReferbackRepository->findWhere(['PayMasterAutoId' => $request->payMasterAutoId, 'timesReferred' => $request->timesReferred]);
+        return $this->sendResponse($data, 'Payment details retrieved successfully');
     }
 }

@@ -849,5 +849,100 @@ class PaySupplierInvoiceMasterReferback extends Model
         
     ];
 
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'BPVsupplierID', 'supplierCodeSystem');
+    }
+
+    public function bankaccount()
+    {
+        return $this->belongsTo('App\Models\BankAccount', 'BPVAccount', 'bankAccountAutoID');
+    }
+
+    public function transactioncurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransCurrencyID', 'currencyID');
+    }
+
+    public function supplierdetail()
+    {
+        return $this->hasMany('App\Models\PaySupplierInvoiceDetail', 'PayMasterAutoId', 'PayMasterAutoId');
+    }
+
+    public function directdetail()
+    {
+        return $this->hasMany('App\Models\DirectPaymentDetails', 'directPaymentAutoID', 'PayMasterAutoId');
+    }
+
+    public function localcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
+    }
+
+    public function rptcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'companyRptCurrencyID', 'currencyID');
+    }
+
+    public function advancedetail()
+    {
+        return $this->hasMany('App\Models\AdvancePaymentDetails', 'PayMasterAutoId', 'PayMasterAutoId');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'PayMasterAutoId');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function cheque_treasury_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'chequeSentToTreasuryByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function bank()
+    {
+        return $this->belongsTo('App\Models\BankAccount', 'BPVAccount', 'bankAccountAutoID');
+    }
+
+    public function suppliercurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'supplierTransCurrencyID', 'currencyID');
+    }
+
+    public function bankcurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'BPVbankCurrency', 'currencyID');
+    }
+
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function cancelled_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'cancelledByEmpSystemID', 'employeeSystemID');
+    }
+
     
 }
