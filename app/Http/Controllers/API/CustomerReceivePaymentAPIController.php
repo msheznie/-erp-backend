@@ -1112,6 +1112,38 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $output['bankCurrencies'] = DB::table('erp_bankaccount')->join('currencymaster', 'accountCurrencyID', '=', 'currencymaster.currencyID')->where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('bankAccountAutoID', $master->bankAccount)->where('isAccountActive', 1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')->get();
                 }
                 break;
+            case 'amendEdit':
+                $id = $input['id'];
+                $master = CustomerReceivePaymentRefferedHistory::where('custReceivePaymentRefferedID', $id)->first();
+                $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+                $output['expenseClaimType'] = ExpenseClaimType::all();
+
+                if ($master->customerID != '') {
+                    $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
+                } else {
+                    $output['currencies'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
+                }
+                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
+                $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
+                    array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
+
+                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
+                $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
+                $output['yesNoSelection'] = YesNoSelection::all();
+                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
+                $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
+                $output['docType'] = $master->documentType;
+                $output['bankDropdown'] = BankAssign::where('isActive', 1)->where('isAssigned', -1)->where('companyID', $output['company']['CompanyID'])->get();
+
+                $output['bankAccount'] = [];
+                $output['bankCurrencies'] = [];
+                if ($master->bankID != '') {
+                    $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('isAccountActive', 1)->get();
+                }
+                if ($master->bankAccount != '') {
+                    $output['bankCurrencies'] = DB::table('erp_bankaccount')->join('currencymaster', 'accountCurrencyID', '=', 'currencymaster.currencyID')->where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('bankAccountAutoID', $master->bankAccount)->where('isAccountActive', 1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')->get();
+                }
+                break;
             default:
                 $output = [];
         }

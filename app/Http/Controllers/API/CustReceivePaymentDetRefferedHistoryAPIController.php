@@ -278,4 +278,17 @@ class CustReceivePaymentDetRefferedHistoryAPIController extends AppBaseControlle
 
         return $this->sendResponse($id, 'Cust Receive Payment Det Reffered History deleted successfully');
     }
+
+    public function getRVDetailAmendHistory(Request $request)
+    {
+        $input = $request->all();
+        $directReceiptAutoID = $input['custReceivePaymentAutoID'];
+        $timesReferred = $input['timesReferred'];
+
+        $items = CustReceivePaymentDetRefferedHistory::where('custReceivePaymentAutoID', $directReceiptAutoID)
+            ->where('timesReferred', $timesReferred)
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Purchase Order Details Reffered History retrieved successfully');
+    }
 }

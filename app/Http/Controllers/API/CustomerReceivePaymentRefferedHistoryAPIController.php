@@ -156,7 +156,11 @@ class CustomerReceivePaymentRefferedHistoryAPIController extends AppBaseControll
     public function show($id)
     {
         /** @var CustomerReceivePaymentRefferedHistory $customerReceivePaymentRefferedHistory */
-        $customerReceivePaymentRefferedHistory = $this->customerReceivePaymentRefferedHistoryRepository->findWithoutFail($id);
+        $customerReceivePaymentRefferedHistory = $this->customerReceivePaymentRefferedHistoryRepository->with(['created_by', 'confirmed_by', 'company', 'finance_period_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'finance_year_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($customerReceivePaymentRefferedHistory)) {
             return $this->sendError('Customer Receive Payment Reffered History not found');
@@ -277,5 +281,16 @@ class CustomerReceivePaymentRefferedHistoryAPIController extends AppBaseControll
         $customerReceivePaymentRefferedHistory->delete();
 
         return $this->sendResponse($id, 'Customer Receive Payment Reffered History deleted successfully');
+    }
+
+    public function getReceiptVoucherAmendHistory(Request $request)
+    {
+        $input = $request->all();
+
+        $customerReceivePaymentHistory = CustomerReceivePaymentRefferedHistory::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])
+            ->with(['created_by','confirmed_by','modified_by','approved_by', 'currency', 'bankcurrency'])
+            ->get();
+
+        return $this->sendResponse($customerReceivePaymentHistory, 'Invoice detail retrieved successfully');
     }
 }
