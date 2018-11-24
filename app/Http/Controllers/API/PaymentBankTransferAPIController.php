@@ -29,6 +29,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Maatwebsite\Excel\Facades\Excel;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
@@ -650,8 +651,34 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function exportPaymentBankTransferPreCheck(Request $request)
+    {
+
+        $input = $request->all();
+        $paymentBankTransfer = PaymentBankTransfer::with(['bank_account'])->find($input['paymentBankTransferID']);
+
+        if (empty($paymentBankTransfer)) {
+            return $this->sendError('Payment Bank Transfer not found', 500);
+        }
+
+        if ($paymentBankTransfer->exportedYN == 1) {
+            return $this->sendError('This document is already exported.', 500);
+        }
+
+        if ($paymentBankTransfer->approvedYN != -1) {
+            return $this->sendError("This document is not approved. You cannot export. Please check again.", 500);
+        }
+
+        $updateArray = ['exportedYN' => -1, 'exportedUserSystemID' => Auth::id(), 'exportedDate' => now()];
+
+        $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
+
+        return $this->sendResponse([], 'Payment Bank Transfer export to CSV successfully');
+    }
+
     public function exportPaymentBankTransfer(Request $request)
     {
+
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('month', 'year'));
 
@@ -661,19 +688,12 @@ class PaymentBankTransferAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
         $decimalPlaces = 3;
-        if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-        } else {
-            $subCompanies = [$selectedCompanyId];
-        }
 
         $paymentBankTransfer = PaymentBankTransfer::with(['bank_account'])->find($input['paymentBankTransferID']);
 
         if (empty($paymentBankTransfer)) {
-            return $this->sendError('Payment Bank Transfer not found',500);
+            return $this->sendError('Payment Bank Transfer not found', 500);
         }
 
         if ($paymentBankTransfer->exportedYN == 1) {
@@ -692,14 +712,22 @@ class PaymentBankTransferAPIController extends AppBaseController
             }
         }
 
-        $bankId = 1;
+        $bankId = 0;
         if ($paymentBankTransfer->bank_account) {
             $bankId = $paymentBankTransfer->bank_account->accountCurrencyID;
         }
 
+        $selectedCompanyId = $paymentBankTransfer->companySystemID;
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
         $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
             ->where('payAmountBank', '>', 0)
-            ->where("bankAccountID", $input['bankAccountAutoID'])
+            ->where("bankAccountID", $paymentBankTransfer->bankAccountAutoID)
             ->where("trsClearedYN", -1)
             ->where("bankClearedYN", 0)
             ->where("bankCurrency", $bankId)
@@ -741,7 +769,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                         $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
                         foreach ($memos as $memo) {
                             if ($memo->bankMemoTypeID == 4) {
-                                $accountNo13 = preg_replace("/[^0-9]/","", $memo->memoDetail);
+                                $accountNo13 =  preg_replace("/[^0-9]/", "", $memo->memoDetail);
                             } else if ($memo->bankMemoTypeID == 1) {
                                 $narration135 = $memo->memoDetail;
                             }
@@ -763,20 +791,27 @@ class PaymentBankTransferAPIController extends AppBaseController
             }
         }
 
-         $updateArray = [ 'exportedYN'  => 1, 'exportedUserSystemID'  => Auth::id(), 'exportedDate' => now()];
+        $updateArray = ['exportedYN' => 1];
+        $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
 
-         $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
+        $time = strtotime("now");
+        $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time . '.pdf';
 
-        $csv = \Excel::create('payment_bank_transfer', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+        $csv = Excel::create($fileName, function ($excel) use ($data) {
+            $excel->sheet('Firstsheet', function ($sheet) use ($data) {
+                $sheet->setColumnFormat(array(
+                    'A' => '0',
+                    'B' => '0',
+                ));
                 $sheet->fromArray($data, null, 'A1', true);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                // $sheet->setAutoSize(true);
+                //$sheet->getStyle('A')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                //$sheet->setWidth('A', 50);
             });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download('csv');
+            //$lastrow = $excel->getActiveSheet()->getHighestRow();
+            //$excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download('xls');
 
         return $this->sendResponse([], 'Payment Bank Transfer export to CSV successfully');
     }

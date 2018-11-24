@@ -654,7 +654,9 @@ class TicketMaster extends Model
         'deletedDate',
         'deletedComment',
         'jobDescID',
-        'secondComments'
+        'secondComments',
+        'companySystemID',
+        'clientSystemID'
     ];
 
     /**
@@ -758,7 +760,9 @@ class TicketMaster extends Model
         'deletedBy' => 'string',
         'deletedComment' => 'string',
         'jobDescID' => 'integer',
-        'secondComments' => 'string'
+        'secondComments' => 'string',
+        'companySystemID' => 'integer',
+        'clientSystemID' => 'integer'
     ];
 
     /**

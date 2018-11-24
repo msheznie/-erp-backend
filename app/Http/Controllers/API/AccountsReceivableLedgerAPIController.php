@@ -300,11 +300,11 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
             $sort = 'desc';
         }
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID',$input['id'])->first();
-        $search = $request->input('search.value');
         $filter='';
+        $search = $request->input('search.value');
         if($search){
             $search = str_replace("\\", "\\\\\\\\", $search);
-            $filter= " AND ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%' OR erp_accountsreceivableledger.documentCode LIKE '%{$search}%' ) ";
+            $filter = " AND ( erp_accountsreceivableledger.documentCode LIKE '%{$search}%' OR erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%' ) ";
         }
         $custPaymentReceiveDate = Carbon::parse($master->custPaymentReceiveDate)->format('Y-m-d');
            $qry="
@@ -312,7 +312,8 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
 	erp_accountsreceivableledger.arAutoID,
 	erp_accountsreceivableledger.documentCodeSystem AS bookingInvSystemCode,
 	custTransCurrencyID,
-	erp_accountsreceivableledger.custTransER,	erp_accountsreceivableledger.InvoiceNo,
+	erp_accountsreceivableledger.custTransER,
+	erp_accountsreceivableledger.InvoiceNo,
 	erp_accountsreceivableledger.localCurrencyID,
 	erp_accountsreceivableledger.localER,
 	erp_accountsreceivableledger.localAmount,
@@ -390,9 +391,8 @@ WHERE
 	LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 
 WHERE
 	date(erp_accountsreceivableledger.documentDate) <= '{$custPaymentReceiveDate}'
-	AND
 	{$filter}
-	erp_accountsreceivableledger.selectedToPaymentInv = 0
+	AND erp_accountsreceivableledger.selectedToPaymentInv = 0
     AND erp_accountsreceivableledger.documentType <> 13
     AND erp_accountsreceivableledger.fullyInvoiced <> 2
     AND erp_accountsreceivableledger.companySystemID = $master->companySystemID 
@@ -401,6 +401,9 @@ WHERE
 HAVING
 	ROUND(balanceAmount, DecimalPlaces) <> 0 ORDER BY documentDate $sort
         ";
+
+        //echo $qry;
+        //exit();
         $invMaster = DB::select($qry);
 
         $col[0] = $input['order'][0]['column'];

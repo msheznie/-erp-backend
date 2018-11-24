@@ -11,6 +11,9 @@
  * -- Date: 29-October 2018 By: Nazir Description: Added new function getReceiptVoucherMasterRecord(),
  * -- Date: 29-October 2018 By: Nazir Description: Added new function receiptVoucherReopen(),
  * -- Date: 08-November 2018 By: Nazir Description: Added new function printReceiptVoucher(),
+ * -- Date: 19-November 2018 By: Nazir Description: Added new function getReceiptVoucherApproval(),
+ * -- Date: 19-November 2018 By: Nazir Description: Added new function getApprovedRVForCurrentUser(),
+ * -- Date: 21-November 2018 By: Nazir Description: Added new function amendReceiptVoucher(),
  */
 
 namespace App\Http\Controllers\API;
@@ -29,8 +32,12 @@ use App\Models\customercurrency;
 use App\Models\Company;
 use App\Models\CustomerMaster;
 use App\Models\BankAccount;
+use App\Models\CustomerReceivePaymentRefferedHistory;
+use App\Models\CustReceivePaymentDetRefferedHistory;
+use App\Models\DirectReceiptDetailsRefferedHistory;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ExpenseClaimType;
 use App\Models\MatchDocumentMaster;
@@ -394,6 +401,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         if (empty($customerReceivePayment)) {
             return $this->sendError('Customer Receive Payment not found');
         }
+
+        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
 
         $input['custPaymentReceiveDate'] = ($input['custPaymentReceiveDate'] != '' ? Carbon::parse($input['custPaymentReceiveDate'])->format('Y-m-d') . ' 00:00:00' : NULL);
 
@@ -888,7 +897,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                     $customerInvoiceMaster = CustomerInvoiceDirect::find($item['bookingInvCodeSystem']);
 
-                    if ($totalReceiveAmountTrans > $customerInvoiceMaster['bookingAmountTrans']) {
+                    if (round($totalReceiveAmountTrans, $documentCurrencyDecimalPlace) > round($customerInvoiceMaster['bookingAmountTrans'], $documentCurrencyDecimalPlace)) {
 
                         $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
                         $itemExistArray[] = [$itemDrt];
@@ -1105,6 +1114,38 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $output['bankCurrencies'] = DB::table('erp_bankaccount')->join('currencymaster', 'accountCurrencyID', '=', 'currencymaster.currencyID')->where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('bankAccountAutoID', $master->bankAccount)->where('isAccountActive', 1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')->get();
                 }
                 break;
+            case 'amendEdit':
+                $id = $input['id'];
+                $master = CustomerReceivePaymentRefferedHistory::where('custReceivePaymentRefferedID', $id)->first();
+                $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+                $output['expenseClaimType'] = ExpenseClaimType::all();
+
+                if ($master->customerID != '') {
+                    $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
+                } else {
+                    $output['currencies'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
+                }
+                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
+                $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
+                    array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
+
+                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
+                $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
+                $output['yesNoSelection'] = YesNoSelection::all();
+                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
+                $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
+                $output['docType'] = $master->documentType;
+                $output['bankDropdown'] = BankAssign::where('isActive', 1)->where('isAssigned', -1)->where('companyID', $output['company']['CompanyID'])->get();
+
+                $output['bankAccount'] = [];
+                $output['bankCurrencies'] = [];
+                if ($master->bankID != '') {
+                    $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('isAccountActive', 1)->get();
+                }
+                if ($master->bankAccount != '') {
+                    $output['bankCurrencies'] = DB::table('erp_bankaccount')->join('currencymaster', 'accountCurrencyID', '=', 'currencymaster.currencyID')->where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $master->bankID)->where('bankAccountAutoID', $master->bankAccount)->where('isAccountActive', 1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode')->get();
+                }
+                break;
             default:
                 $output = [];
         }
@@ -1112,8 +1153,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
     }
 
-    public
-    function recieptVoucherDataTable(Request $request)
+    public function recieptVoucherDataTable(Request $request)
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN'));
@@ -1387,5 +1427,270 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $pdf->loadHTML($html);
 
         return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+    }
+
+    public function getReceiptVoucherApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
+            ->where('documentSystemID', 21)
+            ->first();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_customerreceivepayment.custReceivePaymentAutoID',
+            'erp_customerreceivepayment.custPaymentReceiveCode',
+            'erp_customerreceivepayment.documentSystemID',
+            'erp_customerreceivepayment.custPaymentReceiveDate',
+            'erp_customerreceivepayment.narration',
+            'erp_customerreceivepayment.createdDateTime',
+            'erp_customerreceivepayment.confirmedDate',
+            'erp_customerreceivepayment.receivedAmount',
+            'erp_customerreceivepayment.bankAmount',
+            'erp_customerreceivepayment.documentType',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'customerDocCurrency.DecimalPlaces As customerDocDecimalPlaces',
+            'customerDocCurrency.CurrencyCode As customerDocCurrencyCode',
+            'bankDocCurrency.DecimalPlaces As bankDocDecimalPlaces',
+            'bankDocCurrency.CurrencyCode As bankDocCurrencyCode',
+            'customermaster.CustomerName As CustomerName',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->where('employeesdepartments.documentSystemID', 21)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_customerreceivepayment', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'custReceivePaymentAutoID')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_customerreceivepayment.companySystemID', $companyID)
+                ->where('erp_customerreceivepayment.approved', 0)
+                ->where('erp_customerreceivepayment.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster as customerDocCurrency', 'custTransactionCurrencyID', 'customerDocCurrency.currencyID')
+            ->leftJoin('currencymaster as bankDocCurrency', 'bankCurrency', 'bankDocCurrency.currencyID')
+            ->leftJoin('customermaster', 'customerID', 'customermaster.customerCodeSystem')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 21)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('custPaymentReceiveCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function getApprovedRVForCurrentUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_customerreceivepayment.custReceivePaymentAutoID',
+            'erp_customerreceivepayment.custPaymentReceiveCode',
+            'erp_customerreceivepayment.documentSystemID',
+            'erp_customerreceivepayment.custPaymentReceiveDate',
+            'erp_customerreceivepayment.narration',
+            'erp_customerreceivepayment.createdDateTime',
+            'erp_customerreceivepayment.confirmedDate',
+            'erp_customerreceivepayment.receivedAmount',
+            'erp_customerreceivepayment.bankAmount',
+            'erp_customerreceivepayment.documentType',
+            'erp_customerreceivepayment.approvedDate',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'customerDocCurrency.DecimalPlaces As customerDocDecimalPlaces',
+            'customerDocCurrency.CurrencyCode As customerDocCurrencyCode',
+            'bankDocCurrency.DecimalPlaces As bankDocDecimalPlaces',
+            'bankDocCurrency.CurrencyCode As bankDocCurrencyCode',
+            'customermaster.CustomerName As CustomerName',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('erp_customerreceivepayment', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'custReceivePaymentAutoID')
+                ->where('erp_customerreceivepayment.companySystemID', $companyID)
+                ->where('erp_customerreceivepayment.approved', -1)
+                ->where('erp_customerreceivepayment.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster as customerDocCurrency', 'custTransactionCurrencyID', 'customerDocCurrency.currencyID')
+            ->leftJoin('currencymaster as bankDocCurrency', 'bankCurrency', 'bankDocCurrency.currencyID')
+            ->leftJoin('customermaster', 'customerID', 'customermaster.customerCodeSystem')
+            ->where('erp_documentapproved.documentSystemID', 21)
+            ->where('erp_documentapproved.companySystemID', $companyID)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('custPaymentReceiveCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%")
+                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveReceiptVoucher(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectReceiptVoucher(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
+
+    }
+
+    public function amendReceiptVoucher(Request $request)
+    {
+        $input = $request->all();
+
+        $custReceivePaymentAutoID = $input['custReceivePaymentAutoID'];
+
+        $customerReceivePaymentData = CustomerReceivePayment::find($custReceivePaymentAutoID);
+
+        if (empty($customerReceivePaymentData)) {
+            return $this->sendError('Customer Receive Payment not found');
+        }
+
+        if ($customerReceivePaymentData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this Receipt Voucher');
+        }
+
+        $receivePaymentArray = $customerReceivePaymentData->toArray();
+
+        $storeReceiptVoucherHistory = CustomerReceivePaymentRefferedHistory::insert($receivePaymentArray);
+
+        $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->get();
+
+        if (!empty($customerReceivePaymentDetailRec)) {
+            foreach ($customerReceivePaymentDetailRec as $bookDetail) {
+                $bookDetail['timesReferred'] = $customerReceivePaymentData->timesReferred;
+            }
+        }
+
+        $customerReceiveDetailArray = $customerReceivePaymentDetailRec->toArray();
+
+        $storeSupplierInvoiceBookDetailHistory = CustReceivePaymentDetRefferedHistory::insert($customerReceiveDetailArray);
+
+        $customerReceivePaymentDirectDetailRec = DirectReceiptDetail::where('directReceiptAutoID', $custReceivePaymentAutoID)->get();
+
+        if (!empty($customerReceivePaymentDirectDetailRec)) {
+            foreach ($customerReceivePaymentDirectDetailRec as $bookDirectDetail) {
+                $bookDirectDetail['timesReferred'] = $customerReceivePaymentData->timesReferred;
+            }
+        }
+
+        $ReceivePaymentDirectDetailArray = $customerReceivePaymentDirectDetailRec->toArray();
+
+        $storeSupplierInvoiceBookDirectDetailHistory = DirectReceiptDetailsRefferedHistory::insert($ReceivePaymentDirectDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
+            ->where('companySystemID', $customerReceivePaymentData->companySystemID)
+            ->where('documentSystemID', $customerReceivePaymentData->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $customerReceivePaymentData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
+            ->where('companySystemID', $customerReceivePaymentData->companySystemID)
+            ->where('documentSystemID', $customerReceivePaymentData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $customerReceivePaymentData->refferedBackYN = 0;
+            $customerReceivePaymentData->confirmedYN = 0;
+            $customerReceivePaymentData->confirmedByEmpSystemID = null;
+            $customerReceivePaymentData->confirmedByEmpID = null;
+            $customerReceivePaymentData->confirmedByName = null;
+            $customerReceivePaymentData->confirmedDate = null;
+            $customerReceivePaymentData->RollLevForApp_curr = 1;
+            $customerReceivePaymentData->save();
+        }
+
+
+        return $this->sendResponse($customerReceivePaymentData->toArray(), 'Receipt voucher amend successfully');
     }
 }

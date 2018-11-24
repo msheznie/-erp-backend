@@ -9,6 +9,7 @@
  * -- Description : This file contains the all CRUD for GRV Master
  * -- REVISION HISTORY
  * -- Date: 13 Aug 2018 By: Shahmy Description: Added new functions named as getINVFormData() For load form View
+ * -- Date: 18 November 2018 By: Nazir Description: Added new functions named as getAllcontractbyclientbase()
  */
 
 namespace App\Http\Controllers\API;
@@ -790,6 +791,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         ])->findWithoutFail($id);
 
+        $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
+
+        $customerInvoiceDirect['clientContractID'] = $detail->clientContractID;
+
+
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found', 500);
         } else {
@@ -1366,12 +1372,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     public function AllDeleteCustomerInvoiceDetails(Request $request)
     {
         $id = $request['id'];
-        $getPerformaMasterID = CustomerInvoiceDirectDetail::select('performaMasterID', 'companyID', 'custInvoiceDirectID')->where('custInvoiceDirectID', $id)->first();
+        $getPerformaMasterID = CustomerInvoiceDirectDetail::select('performaMasterID', 'companyID', 'custInvoiceDirectID')->where('custInvoiceDirectID', $id)->groupBy('performaMasterID','companyID','custInvoiceDirectID')->get();
+
+
         if (empty($getPerformaMasterID)) {
             return $this->sendResponse('e', 'No details found');
         }
 
-        $peformaMasterID = $getPerformaMasterID->performaMasterID;
+
 
 
         $Taxdetail = Taxdetail::where('documentSystemCode', $id)->first();
@@ -1381,13 +1389,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            PerformaMaster::where('companyID', $getPerformaMasterID->companyID)->where('PerformaInvoiceNo', $peformaMasterID)->update(array('performaStatus' => 0));
 
-            PerformaDetails::where('companyID', $getPerformaMasterID->companyID)->where('PerformaMasterID', $peformaMasterID)->update(array('invoiceSsytemCode' => 0));
-            CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->delete();
+            if($getPerformaMasterID){
+                foreach ($getPerformaMasterID as $val){
+                    $peformaMasterID = $val->performaMasterID;
+                    PerformaMaster::where('companyID', $val->companyID)->where('PerformaInvoiceNo', $peformaMasterID)->update(array('performaStatus' => 0));
+
+                    PerformaDetails::where('companyID', $val->companyID)->where('PerformaMasterID', $peformaMasterID)->update(array('invoiceSsytemCode' => 0));
+                    CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->delete();
+
+
+                }
+            }
 
             $details = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first()->toArray();
             CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->update($details);
+
             DB::commit();
             return $this->sendResponse('s', 'Successfully Deleted');
         } catch (\Exception $exception) {
@@ -1803,7 +1820,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $custInvDirDetAutoID = $input['custInvDirDetAutoID'];
+        $custInvDirDetAutoID = $input['creditNoteDetailsID'];
         $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
 

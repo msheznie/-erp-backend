@@ -209,6 +209,7 @@ class CustomerReceivePaymentDetail extends Model
         'receiveAmountTrans',
         'receiveAmountLocal',
         'receiveAmountRpt',
+        'timesReferred',
         'timestamp'
     ];
 
@@ -243,7 +244,8 @@ class CustomerReceivePaymentDetail extends Model
         'custbalanceAmount' => 'float',
         'receiveAmountTrans' => 'float',
         'receiveAmountLocal' => 'float',
-        'receiveAmountRpt' => 'float'
+        'receiveAmountRpt' => 'float',
+        'timesReferred' => 'integer'
     ];
 
     /**
