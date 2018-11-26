@@ -1196,3 +1196,7 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+Route::resource('credit_note_referredbacks', 'CreditNoteReferredbackAPIController');
+
+Route::resource('credit_note_details_refferdbacks', 'CreditNoteDetailsRefferdbackAPIController');
