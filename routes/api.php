@@ -817,6 +817,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCreditNoteApprovedByUser', 'CreditNoteAPIController@getCreditNoteApprovedByUser');
     Route::post('getCreditNoteApprovalByUser', 'CreditNoteAPIController@getCreditNoteApprovalByUser');
     Route::get('getPurchaseOrderForSI', 'UnbilledGrvGroupByAPIController@getPurchaseOrderForSI');
+    Route::post('amendCreditNote', 'CreditNoteAPIController@amendCreditNote');
 
     Route::resource('warehouse_items', 'WarehouseItemsAPIController');
     Route::get('getUnbilledGRVDetailsForSI', 'UnbilledGrvGroupByAPIController@getUnbilledGRVDetailsForSI');
