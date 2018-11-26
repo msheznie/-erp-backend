@@ -228,13 +228,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             $input['createdUserID'] = \Helper::getEmployeeID();
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
             $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
-            $depMasterAutoID = $fixedAssetDepreciationMasters['depMasterAutoID'];
             DB::commit();
-            if ($fixedAssetDepreciationMasters)
-            {
-                $job = CreateDepreciation::dispatch($depMasterAutoID);
-            }
-
             return $this->sendResponse($fixedAssetDepreciationMasters->toArray(), 'Fixed Asset Depreciation Master saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
