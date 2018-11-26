@@ -793,8 +793,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
 
-        $customerInvoiceDirect['clientContractID'] = $detail->clientContractID;
-
+        if($detail){
+            $customerInvoiceDirect['clientContractID'] = $detail->clientContractID;
+        }
 
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found', 500);
@@ -1253,6 +1254,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input = $request->all();
         $custInvoiceDirectAutoID = $input['custInvoiceDirectAutoID'];
         $percentage = $input['percentage'];
+
+        if (empty($input['taxMasterAutoID'])) {
+            return $this->sendResponse('e', 'Please select a tax.');
+        }
+
         $taxMasterAutoID = $input['taxMasterAutoID'];
 
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
@@ -1290,7 +1296,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
         $_post['companyID'] = $master->companyID;
+        $_post['companySystemID'] = $master->companySystemID;
         $_post['documentID'] = 'INV';
+        $_post['documentSystemID'] = $master->documentSystemiD;;
         $_post['documentSystemCode'] = $custInvoiceDirectAutoID;
         $_post['documentCode'] = $master->bookingInvCode;
         $_post['taxShortCode'] = $taxMaster->taxShortCode;
