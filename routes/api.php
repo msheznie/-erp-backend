@@ -1140,6 +1140,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getRVDetailDirectAmendHistory', 'DirectReceiptDetailsRefferedHistoryAPIController@getRVDetailDirectAmendHistory');
     Route::get('getRVDetailAmendHistory', 'CustReceivePaymentDetRefferedHistoryAPIController@getRVDetailAmendHistory');
 
+    Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
+    Route::get('payeeBankMemosByDocument', 'BankMemoPayeeAPIController@payeeBankMemosByDocument');
+    Route::post('addBulkPayeeMemos', 'BankMemoPayeeAPIController@addBulkPayeeMemos');
+    Route::post('payeeBankMemoDeleteAll', 'BankMemoPayeeAPIController@payeeBankMemoDeleteAll');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
