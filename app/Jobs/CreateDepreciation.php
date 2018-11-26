@@ -42,6 +42,7 @@ class CreateDepreciation implements ShouldQueue
         Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
         DB::beginTransaction();
         try {
+            Log::info('Depreciation Started');
             $depMasterAutoID = $this->depAutoID;
             $depMaster = $faDepMaster->find($depMasterAutoID);
             if($depMaster) {
@@ -79,8 +80,8 @@ class CreateDepreciation implements ShouldQueue
                             $data['costUnitRpt'] = $val->costUnitRpt;
                             $data['depDoneYN'] = -1;
                             $data['createdPCid'] = gethostname();
-                            $data['createdBy'] = \Helper::getEmployeeID();
-                            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                            $data['createdBy'] = $depMaster->createdUserID;
+                            $data['createdUserSystemID'] = $depMaster->createdUserSystemID;
                             $data['depMonthYear'] = $depMaster->depMonthYear;
                             $data['depMonth'] = $val->depMonth;
                             $data['depAmountLocalCurr'] = $depMaster->depLocalCur;
@@ -113,6 +114,7 @@ class CreateDepreciation implements ShouldQueue
                                                 $data['FYperiodID'] = $companyFinancePeriodID->companyFinancePeriodID;
                                                 $data['depForFYperiodStartDate'] = $companyFinancePeriodID->dateFrom;
                                                 $data['depForFYperiodEndDate'] = $companyFinancePeriodID->dateTo;
+                                                $data['timestamp'] = NOW();
                                                 array_push($finalData, $data);
                                             }
                                         }
@@ -126,6 +128,7 @@ class CreateDepreciation implements ShouldQueue
                                     $data['FYperiodID'] = $depMaster->companyFinancePeriodID;
                                     $data['depForFYperiodStartDate'] = $depMaster->FYPeriodDateFrom;
                                     $data['depForFYperiodEndDate'] = $depMaster->FYPeriodDateTo;
+                                    $data['timestamp'] = NOW();
                                     array_push($finalData, $data);
                                 }
                             }
@@ -145,6 +148,7 @@ class CreateDepreciation implements ShouldQueue
                 }
 
                 DB::commit();
+                Log::info('Depreciation End');
             }
         } catch (\Exception $e) {
             DB::rollBack();

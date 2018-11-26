@@ -255,11 +255,11 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
 
 
         if ($expenseClaim->approved != -1) {
-            return $this->sendError('This document not approved, You cannot edit this item!', 500);
+            return $this->sendError('This expense claim is not approved. You cannot edit this category.', 500);
         }
 
         if ($expenseClaim->addedForPayment != 0 && $expenseClaim->addedForPayment != 0) {
-            return $this->sendError('This item already added to salary. You cannot edit.!', 500);
+            return $this->sendError('Cannot edit. This expense claim is already paid.', 500);
         }
 
         $category = ExpenseClaimCategories::find($input['expenseClaimCategoriesAutoID']);
@@ -301,11 +301,11 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
 
 
         if ($expenseClaim->approved != -1) {
-            return $this->sendError('This document not approved, You cannot edit this item.!', 500);
+            return $this->sendError('This expense claim is not approved. You cannot edit this category.', 500);
         }
 
         if ($expenseClaim->addedForPayment != 0 && $expenseClaim->addedForPayment != 0) {
-            return $this->sendError('This item already added to salary. You cannot edit.!', 500);
+            return $this->sendError('Cannot edit. This expense claim is already paid.', 500);
         }
 
         return $this->sendResponse($expenseClaimDetails->toArray(), 'Expense Claim Details can update successfully');
