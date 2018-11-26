@@ -2026,6 +2026,7 @@ HAVING
                 $paymentVoucher->confirmedByEmpID = null;
                 $paymentVoucher->confirmedDate = null;
                 $paymentVoucher->RollLevForApp_curr = 1;
+                $paymentVoucher->BPVchequeNo = 0;
                 $paymentVoucher->save();
             }
 
