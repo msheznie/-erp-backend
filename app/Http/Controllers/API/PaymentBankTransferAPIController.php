@@ -11,6 +11,7 @@
  * -- Date: 03 - October 2018 By: Fayas Description: Added new functions named as getCheckBeforeCreate(),getAllBankTransferByBankAccount(),
  *    getBankTransferApprovalByUser,getBankTransferApprovedByUser
  * -- Date: 04 - October 2018 By: Fayas Description: Added new functions named as exportPaymentBankTransfer()
+ * -- Date: 21 - November 2018 By: Fayas Description: Added new functions named as paymentBankTransferReopen()
  */
 
 namespace App\Http\Controllers\API;
@@ -20,6 +21,10 @@ use App\Http\Requests\API\UpdatePaymentBankTransferAPIRequest;
 use App\Models\BankAccount;
 use App\Models\BankLedger;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\PaymentBankTransfer;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\PaymentBankTransferRepository;
@@ -815,4 +820,99 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         return $this->sendResponse([], 'Payment Bank Transfer export to CSV successfully');
     }
+
+    public function paymentBankTransferReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['paymentBankTransferID'];
+        $bankTransfer = $this->paymentBankTransferRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($bankTransfer)) {
+            return $this->sendError('Bank Transfer not found');
+        }
+
+        if ($bankTransfer->approvedYN == -1) {
+            return $this->sendError('You cannot reopen this Bank Transfer it is already fully approved');
+        }
+
+        if ($bankTransfer->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Bank Transfer it is already partially approved');
+        }
+
+        if ($bankTransfer->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Bank Transfer, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->paymentBankTransferRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $bankTransfer->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $bankTransfer->bankTransferDocumentCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $bankTransfer->bankTransferDocumentCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $bankTransfer->companySystemID)
+            ->where('documentSystemCode', $bankTransfer->paymentBankTransferID)
+            ->where('documentSystemID', $bankTransfer->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $bankTransfer->companySystemID)
+                    ->where('documentSystemID', $bankTransfer->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $bankTransfer->companySystemID)
+            ->where('documentSystemID', $bankTransfer->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($bankTransfer->toArray(), 'Bank Transfer reopened successfully');
+    }
+
 }
