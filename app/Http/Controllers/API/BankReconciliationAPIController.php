@@ -14,6 +14,7 @@
  * -- Date: 28-September 2018 By: Fayas Description: Added new functions named as bankReconciliationAudit()
  * -- Date: 05 - October 2018 By: Fayas Description: Added new functions named as getTreasuryManagementFilterData(),validateTMReport(),
  *                                                      generateTMReport(),exportTMReport()
+ * -- Date: 23-November 2018 By: Fayas Description: Added new functions named as bankRecReopen()
  *
  */
 namespace App\Http\Controllers\API;
@@ -25,6 +26,10 @@ use App\Models\BankLedger;
 use App\Models\BankMaster;
 use App\Models\BankReconciliation;
 use App\Models\Company;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\EmployeesDepartment;
 use App\Models\YesNoSelection;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
@@ -999,6 +1004,100 @@ class BankReconciliationAPIController extends AppBaseController
             ->get();
 
         return $items;
+    }
+
+    public function bankRecReopen(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['bankRecAutoID'];
+        $bankReconciliation = $this->bankReconciliationRepository->findWithoutFail($id);
+        $emails = array();
+        if (empty($bankReconciliation)) {
+            return $this->sendError('Bank Reconciliation not found');
+        }
+
+        if ($bankReconciliation->approvedYN == -1) {
+            return $this->sendError('You cannot reopen this Bank Reconciliation it is already fully approved');
+        }
+
+        if ($bankReconciliation->RollLevForApp_curr > 1) {
+            return $this->sendError('You cannot reopen this Bank Reconciliation it is already partially approved');
+        }
+
+        if ($bankReconciliation->confirmedYN == 0) {
+            return $this->sendError('You cannot reopen this Bank Reconciliation, it is not confirmed');
+        }
+
+        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+        $this->bankReconciliationRepository->update($updateInput,$id);
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $document = DocumentMaster::where('documentSystemID', $bankReconciliation->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $bankReconciliation->bankRecPrimaryCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $bankReconciliation->bankRecPrimaryCode;
+
+        $subject = $cancelDocNameSubject . ' is reopened';
+
+        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+
+        $documentApproval = DocumentApproved::where('companySystemID', $bankReconciliation->companySystemID)
+            ->where('documentSystemCode', $bankReconciliation->bankRecAutoID)
+            ->where('documentSystemID', $bankReconciliation->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
+
+        if ($documentApproval) {
+            if ($documentApproval->approvedYN == 0) {
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $bankReconciliation->companySystemID)
+                    ->where('documentSystemID', $bankReconciliation->documentSystemID)
+                    ->first();
+
+                if (empty($companyDocument)) {
+                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                }
+
+                $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
+                    ->where('companySystemID', $documentApproval->companySystemID)
+                    ->where('documentSystemID', $documentApproval->documentSystemID);
+
+                if ($companyDocument['isServiceLineApproval'] == -1) {
+                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                }
+
+                $approvalList = $approvalList
+                    ->with(['employee'])
+                    ->groupBy('employeeSystemID')
+                    ->get();
+
+                foreach ($approvalList as $da) {
+                    if ($da->employee) {
+                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                            'companySystemID' => $documentApproval->companySystemID,
+                            'docSystemID' => $documentApproval->documentSystemID,
+                            'alertMessage' => $subject,
+                            'emailAlertMessage' => $body,
+                            'docSystemCode' => $documentApproval->documentSystemCode);
+                    }
+                }
+
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return ['success' => false, 'message' => $sendEmail["message"]];
+                }
+            }
+        }
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $bankReconciliation->companySystemID)
+            ->where('documentSystemID', $bankReconciliation->documentSystemID)
+            ->delete();
+
+        return $this->sendResponse($bankReconciliation->toArray(), 'Bank Reconciliation reopened successfully');
     }
 
 }
