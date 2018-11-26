@@ -63,7 +63,7 @@ class CreateDepreciation implements ShouldQueue
                         $monthlyLocal = ($val->COSTUNIT * ($val->DEPpercentage / 100)) / 12;
                         $monthlyRpt = ($val->costUnitRpt * ($val->DEPpercentage / 100)) / 12;
 
-                        if ($nbvLocal != 0 || $nbvRpt != 0) {
+                        if (round($nbvLocal,2) != 0 || round($nbvRpt,2) != 0) {
                             $data['depMasterAutoID'] = $depMasterAutoID;
                             $data['companySystemID'] = $depMaster->companySystemID;
                             $data['companyID'] = $depMaster->companyID;
@@ -99,7 +99,7 @@ class CreateDepreciation implements ShouldQueue
                                 $data['depAmountRpt'] = $monthlyRpt;
                             }
 
-                            if ($depAmountRpt == 0 && $depAmountLocal == 0) {
+                            if (round($depAmountRpt,2) == 0 && round($depAmountLocal,2) == 0) {
                                 $dateDEP = Carbon::parse($val->dateDEP);
                                 if ($dateDEP->lessThanOrEqualTo($depDate)) {
                                     $differentMonths = CarbonPeriod::create($dateDEP->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
@@ -121,7 +121,7 @@ class CreateDepreciation implements ShouldQueue
                                     }
                                 }
                             } else {
-                                if ($nbvRpt != 0 && $nbvLocal != 0) {
+                                if (round($nbvRpt,2) != 0 && round($nbvLocal,2) != 0) {
                                     $data['FYID'] = $depMaster->companyFinanceYearID;
                                     $data['depForFYStartDate'] = $depMaster->FYBiggin;
                                     $data['depForFYEndDate'] = $depMaster->FYEnd;
