@@ -23,6 +23,7 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\AdvancePaymentReferback;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
+use App\Models\BankMemoPayee;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -526,7 +527,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 if ($input['payeeType'] == 2) {
                     $input['directPaymentPayeeSelectEmp'] = -1;
                     $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                    $input['directPaymentPayee'] = $emp->empFullName;
+                    if(!empty($emp)){
+                        $input['directPaymentPayee'] = $emp->empFullName;
+                    }else{
+                        $input['directPaymentPayee'] = null;
+                    }
                     $input['directPaymentpayeeYN'] = 0;
                     $input['supplierGLCode'] = null;
                     $input['supplierGLCodeSystemID'] = null;
@@ -941,6 +946,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
+
+            if($input['payeeType'] == 1){
+                $bankMemoSupplier = BankMemoPayee::where('documentSystemCode', $id)
+                    ->delete();
+            }
 
             $message = [['status' => 'success', 'message' => 'PaySupplierInvoiceMaster updated successfully'], ['status' => 'warning', 'message' => $warningMessage]];
             DB::commit();

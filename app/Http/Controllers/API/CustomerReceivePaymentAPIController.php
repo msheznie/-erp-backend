@@ -1216,6 +1216,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'empName',
             'transCurr.DecimalPlaces as transDecimal',
             'bankCurr.DecimalPlaces as bankDecimal',
+            'erp_customerreceivepayment.refferedBackYN',
             'erp_customerreceivepayment.confirmedYN',
             'erp_customerreceivepayment.approved',
             'custReceivePaymentAutoID',

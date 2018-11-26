@@ -507,12 +507,19 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
 
         if ($input['contractID'] != $detail->contractID) {
-            $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')->where('CompanyID', $detail->companyID)->where('contractUID', $input['contractID'])->first();
+
+            $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob', 'contractStatus')
+                ->where('CompanyID', $detail->companyID)
+                ->where('contractUID', $input['contractID'])
+                ->first();
+
             $input['clientContractID'] = $contract->ContractNumber;
 
             if (!empty($contract)) {
-                if ($contract->paymentInDaysForJob <= 0) {
-                    return $this->sendError('Payment Period is not updated in the contract. Please update and try again');
+                if($contract->contractStatus != 6){
+                    if ($contract->paymentInDaysForJob <= 0) {
+                        return $this->sendError('Payment Period is not updated in the contract. Please update and try again');
+                    }
                 }
             } else {
                 return $this->sendError('Contract not exist.');

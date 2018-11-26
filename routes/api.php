@@ -817,6 +817,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCreditNoteApprovedByUser', 'CreditNoteAPIController@getCreditNoteApprovedByUser');
     Route::post('getCreditNoteApprovalByUser', 'CreditNoteAPIController@getCreditNoteApprovalByUser');
     Route::get('getPurchaseOrderForSI', 'UnbilledGrvGroupByAPIController@getPurchaseOrderForSI');
+    Route::post('amendCreditNote', 'CreditNoteAPIController@amendCreditNote');
 
     Route::resource('warehouse_items', 'WarehouseItemsAPIController');
     Route::get('getUnbilledGRVDetailsForSI', 'UnbilledGrvGroupByAPIController@getUnbilledGRVDetailsForSI');
@@ -994,6 +995,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
     Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
     Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck');
+    Route::post('paymentBankTransferReopen', 'PaymentBankTransferAPIController@paymentBankTransferReopen');
     Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
 
     Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
@@ -1140,6 +1142,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getRVDetailDirectAmendHistory', 'DirectReceiptDetailsRefferedHistoryAPIController@getRVDetailDirectAmendHistory');
     Route::get('getRVDetailAmendHistory', 'CustReceivePaymentDetRefferedHistoryAPIController@getRVDetailAmendHistory');
 
+    Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
+    Route::get('payeeBankMemosByDocument', 'BankMemoPayeeAPIController@payeeBankMemosByDocument');
+    Route::post('addBulkPayeeMemos', 'BankMemoPayeeAPIController@addBulkPayeeMemos');
+    Route::post('payeeBankMemoDeleteAll', 'BankMemoPayeeAPIController@payeeBankMemoDeleteAll');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1190,3 +1196,7 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+Route::resource('credit_note_referredbacks', 'CreditNoteReferredbackAPIController');
+
+Route::resource('credit_note_details_refferdbacks', 'CreditNoteDetailsRefferdbackAPIController');

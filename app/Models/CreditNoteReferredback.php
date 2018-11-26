@@ -6,8 +6,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="CreditNote",
+ *      definition="CreditNoteReferredback",
  *      required={""},
+ *      @SWG\Property(
+ *          property="creditNoteRefferedBackAutoID",
+ *          description="creditNoteRefferedBackAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="creditNoteAutoID",
  *          description="creditNoteAutoID",
@@ -164,6 +170,23 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="approvedByUserID",
+ *          description="approvedByUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserSystemID",
+ *          description="approvedByUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="secondaryLogoCompanySystemID",
+ *          description="secondaryLogoCompanySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="secondaryLogoCompID",
  *          description="secondaryLogoCompID",
  *          type="string"
@@ -204,6 +227,12 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="documentType",
  *          description="documentType",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -263,17 +292,18 @@ use Eloquent as Model;
  *      )
  * )
  */
-class CreditNote extends Model
+class CreditNoteReferredback extends Model
 {
 
-    public $table = 'erp_creditnote';
+    public $table = 'erp_creditnotereferredback';
 
     const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = "creditNoteAutoID";
+    protected $primaryKey = 'creditNoteRefferedBackAutoID';
 
     public $fillable = [
+        'creditNoteAutoID',
         'companySystemID',
         'companyID',
         'documentSystemiD',
@@ -331,8 +361,8 @@ class CreditNote extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp',
-        'createdDateAndTime'
+        'createdDateAndTime',
+        'timestamp'
     ];
 
     /**
@@ -341,6 +371,7 @@ class CreditNote extends Model
      * @var array
      */
     protected $casts = [
+        'creditNoteRefferedBackAutoID' => 'integer',
         'creditNoteAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -368,9 +399,9 @@ class CreditNote extends Model
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approved' => 'integer',
-        'secondaryLogoCompanySystemID'=>'integer',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
+        'secondaryLogoCompanySystemID' => 'integer',
         'secondaryLogoCompID' => 'string',
         'secondaryLogo' => 'string',
         'matchInvoice' => 'integer',
@@ -389,8 +420,7 @@ class CreditNote extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'createdDateTime' => 'string',
-        'createdDateAndTime' => 'integer'
+        'createdDateTime' => 'string'
     ];
 
     /**
@@ -399,58 +429,8 @@ class CreditNote extends Model
      * @var array
      */
     public static $rules = [
-
+        
     ];
 
-    public function details()
-    {
-        return $this->hasMany('App\Models\CreditNoteDetails', 'creditNoteAutoID', 'creditNoteAutoID');
-    }
-
-    public function approved_by()
-    {
-        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'creditNoteAutoID');
-    }
-
-    public function company()
-    {
-        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
-    }
-
-    public function currency()
-    {
-        return $this->belongsTo('App\Models\CurrencyMaster', 'customerCurrencyID', 'currencyID');
-    }
-
-    public function customer()
-    {
-        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
-
-    }
-    public function confirmed_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
-    }
-    public function createduser()
-    {
-        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
-    }
-
-    public function finance_period_by()
-    {
-        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
-    }
-
-    public function finance_year_by()
-    {
-        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
-    }
-    public function modified_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
-    }
-    public function companydocumentattachment_by()
-    {
-        return $this->hasMany('App\Models\CompanyDocumentAttachment', 'companySystemID', 'companySystemID');
-    }
+    
 }
