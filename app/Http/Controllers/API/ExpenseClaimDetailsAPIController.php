@@ -9,13 +9,17 @@
  * -- Description : This file contains the all CRUD for Expense Claim Details
  * -- REVISION HISTORY
  * -- Date: 10- September 2018 By: Fayas Description: Added new function getDetailsByExpenseClaim()
+ * -- Date: 23- November 2018 By: Fayas Description: Added new function preCheckECDetailEdit()
  */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateExpenseClaimDetailsAPIRequest;
 use App\Http\Requests\API\UpdateExpenseClaimDetailsAPIRequest;
+use App\Models\ChartOfAccount;
+use App\Models\ExpenseClaimCategories;
 use App\Models\ExpenseClaimDetails;
 use App\Repositories\ExpenseClaimDetailsRepository;
+use App\Repositories\ExpenseClaimRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -31,10 +35,12 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
 {
     /** @var  ExpenseClaimDetailsRepository */
     private $expenseClaimDetailsRepository;
+    private $expenseClaimRepository;
 
-    public function __construct(ExpenseClaimDetailsRepository $expenseClaimDetailsRepo)
+    public function __construct(ExpenseClaimDetailsRepository $expenseClaimDetailsRepo,ExpenseClaimRepository $expenseClaimRepo)
     {
         $this->expenseClaimDetailsRepository = $expenseClaimDetailsRepo;
+        $this->expenseClaimRepository = $expenseClaimRepo;
     }
 
     /**
@@ -224,6 +230,15 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
     public function update($id, UpdateExpenseClaimDetailsAPIRequest $request)
     {
         $input = $request->all();
+        $input = array_except($input, ['segment','chart_of_account','currency','category','local_currency']);
+        $input = $this->convertArrayToValue($input);
+        $validator = \Validator::make($input, [
+            'expenseClaimCategoriesAutoID' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         /** @var ExpenseClaimDetails $expenseClaimDetails */
         $expenseClaimDetails = $this->expenseClaimDetailsRepository->findWithoutFail($id);
@@ -232,9 +247,68 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
             return $this->sendError('Expense Claim Details not found');
         }
 
-        $expenseClaimDetails = $this->expenseClaimDetailsRepository->update($input, $id);
+        $expenseClaim = $this->expenseClaimRepository->findWithoutFail($expenseClaimDetails->expenseClaimMasterAutoID);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+
+        if ($expenseClaim->approved != -1) {
+            return $this->sendError('This expense claim is not approved. You cannot edit this category.', 500);
+        }
+
+        if ($expenseClaim->addedForPayment != 0 && $expenseClaim->addedForPayment != 0) {
+            return $this->sendError('Cannot edit. This expense claim is already paid.', 500);
+        }
+
+        $category = ExpenseClaimCategories::find($input['expenseClaimCategoriesAutoID']);
+
+        if (empty($category)) {
+            return $this->sendError('Category not found');
+        }
+
+        $chartOfAccount = ChartOfAccount::where('AccountCode',$category->glCode)->first();
+
+        if (empty($chartOfAccount)) {
+            return $this->sendError('GL Code not found');
+        }
+
+        $updateArray = ['expenseClaimCategoriesAutoID' => $input['expenseClaimCategoriesAutoID'],
+                                                                    'chartOfAccountSystemID' => $chartOfAccount->chartOfAccountSystemID,
+                                                                    'glCode' => $chartOfAccount->AccountCode , 'glCodeDescription' => $chartOfAccount->AccountDescription];
+
+        $expenseClaimDetails = $this->expenseClaimDetailsRepository->update($updateArray, $id);
 
         return $this->sendResponse($expenseClaimDetails->toArray(), 'ExpenseClaimDetails updated successfully');
+    }
+
+    public function preCheckECDetailEdit(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+        /** @var ExpenseClaimDetails $expenseClaimDetails */
+        $expenseClaimDetails = $this->expenseClaimDetailsRepository->findWithoutFail($id);
+
+        if (empty($expenseClaimDetails)) {
+            return $this->sendError('Expense Claim Details not found');
+        }
+
+        $expenseClaim = $this->expenseClaimRepository->findWithoutFail($expenseClaimDetails->expenseClaimMasterAutoID);
+
+        if (empty($expenseClaim)) {
+            return $this->sendError('Expense Claim not found');
+        }
+
+
+        if ($expenseClaim->approved != -1) {
+            return $this->sendError('This expense claim is not approved. You cannot edit this category.', 500);
+        }
+
+        if ($expenseClaim->addedForPayment != 0 && $expenseClaim->addedForPayment != 0) {
+            return $this->sendError('Cannot edit. This expense claim is already paid.', 500);
+        }
+
+        return $this->sendResponse($expenseClaimDetails->toArray(), 'Expense Claim Details can update successfully');
     }
 
     /**
