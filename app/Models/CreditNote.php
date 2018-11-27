@@ -368,7 +368,7 @@ class CreditNote extends Model
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approved' => 'integer',
-        'secondaryLogoCompanySystemID'=>'integer',
+        'secondaryLogoCompanySystemID' => 'integer',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'secondaryLogoCompID' => 'string',
@@ -427,10 +427,12 @@ class CreditNote extends Model
         return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
 
     }
+
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
     }
+
     public function createduser()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
@@ -445,10 +447,12 @@ class CreditNote extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
+
     public function modified_by()
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
+
     public function companydocumentattachment_by()
     {
         return $this->hasMany('App\Models\CompanyDocumentAttachment', 'companySystemID', 'companySystemID');

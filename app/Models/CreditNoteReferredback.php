@@ -429,8 +429,59 @@ class CreditNoteReferredback extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    
+    public function details()
+    {
+        return $this->hasMany('App\Models\CreditNoteDetails', 'creditNoteAutoID', 'creditNoteAutoID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'creditNoteAutoID');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'customerCurrencyID', 'currencyID');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
+
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function finance_period_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function finance_year_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+
 }
