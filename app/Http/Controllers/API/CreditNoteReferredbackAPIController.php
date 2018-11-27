@@ -278,4 +278,16 @@ class CreditNoteReferredbackAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Credit Note Referredback deleted successfully');
     }
+
+
+    public function getCreditNoteAmendHistory(Request $request)
+    {
+        $input = $request->all();
+
+        $supplierInvoiceHistory = CreditNoteReferredback::where('creditNoteAutoID', $input['creditNoteAutoID'])
+            ->with(['created_by','confirmed_by','modified_by','customer','approved_by', 'currency'])
+            ->get();
+
+        return $this->sendResponse($supplierInvoiceHistory, 'Invoice detail retrieved successfully');
+    }
 }

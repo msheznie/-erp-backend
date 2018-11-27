@@ -1146,6 +1146,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('payeeBankMemosByDocument', 'BankMemoPayeeAPIController@payeeBankMemosByDocument');
     Route::post('addBulkPayeeMemos', 'BankMemoPayeeAPIController@addBulkPayeeMemos');
     Route::post('payeeBankMemoDeleteAll', 'BankMemoPayeeAPIController@payeeBankMemoDeleteAll');
+    Route::post('getCreditNoteAmendHistory', 'CreditNoteReferredbackAPIController@getCreditNoteAmendHistory');
+    Route::resource('creditNoteReferredbackCRUD', 'CreditNoteReferredbackAPIController');
+    Route::resource('creditNoteDetailsRefferdbacks', 'CreditNoteDetailsRefferdbackAPIController');
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1196,7 +1199,3 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
-
-Route::resource('credit_note_referredbacks', 'CreditNoteReferredbackAPIController');
-
-Route::resource('credit_note_details_refferdbacks', 'CreditNoteDetailsRefferdbackAPIController');
