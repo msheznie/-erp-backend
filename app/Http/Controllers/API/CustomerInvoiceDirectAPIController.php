@@ -1842,7 +1842,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $contract = DB::select($qry);
 
 
-        return $this->sendResponse($contract, 'Contract deleted successfully');
+        return $this->sendResponse($contract, 'Record retrieved successfully');
     }
 
 

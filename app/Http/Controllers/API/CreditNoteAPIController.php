@@ -645,6 +645,25 @@ class CreditNoteAPIController extends AppBaseController
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
+                break;
+            case 'editAmend' :
+                $id = $input['id'];
+                $master = CreditNoteReferredback::where('creditNoteRefferedBackAutoID', $id)->first();
+                $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companySystemID)->first();
+
+                if ($master->customerID != '') {
+                    $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
+                } else {
+                    $output['currencies'] = [];
+                }
+                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
+                $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
+                    array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
+
+                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
+                $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
+                $output['yesNoSelection'] = YesNoSelection::all();
+                $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
         }
 
 
