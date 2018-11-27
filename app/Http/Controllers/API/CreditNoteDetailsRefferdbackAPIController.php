@@ -16,7 +16,6 @@ use Response;
  * Class CreditNoteDetailsRefferdbackController
  * @package App\Http\Controllers\API
  */
-
 class CreditNoteDetailsRefferdbackAPIController extends AppBaseController
 {
     /** @var  CreditNoteDetailsRefferdbackRepository */
@@ -277,5 +276,19 @@ class CreditNoteDetailsRefferdbackAPIController extends AppBaseController
         $creditNoteDetailsRefferdback->delete();
 
         return $this->sendResponse($id, 'Credit Note Details Refferdback deleted successfully');
+    }
+
+    public function getCNDetailAmendHistory(Request $request)
+    {
+        $input = $request->all();
+        $creditNoteAutoID = $input['creditNoteAutoID'];
+        $timesReferred = $input['timesReferred'];
+
+        $items = CreditNoteDetailsRefferdback::where('creditNoteAutoID', $creditNoteAutoID)
+            ->where('timesReferred', $timesReferred)
+            ->with(['segment'])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Credit Note Details History retrieved successfully');
     }
 }

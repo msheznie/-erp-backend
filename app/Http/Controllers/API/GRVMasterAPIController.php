@@ -1273,7 +1273,12 @@ class GRVMasterAPIController extends AppBaseController
         $seachText = $input['seachText'];
         $seachText = str_replace("\\", "\\\\", $seachText);
         $companyID = $input['companyID'];
-        $grv = GRVMaster::select('grvAutoID', 'grvPrimaryCode')->where('companySystemID', $companyID)->where('approved', -1)->where('grvPrimaryCode', 'LIKE', "%{$seachText}%")->orderBy('grvAutoID', 'desc')->take(30)->get()->toArray();
+        $grv = GRVMaster::select('grvAutoID', 'grvPrimaryCode')
+            ->where('approved', -1)
+            ->where('grvPrimaryCode', 'LIKE', "%{$seachText}%")
+            ->orderBy('grvAutoID', 'desc')
+            ->take(30)
+            ->get()->toArray();
         return $this->sendResponse($grv, 'Data retrieved successfully');
     }
 
