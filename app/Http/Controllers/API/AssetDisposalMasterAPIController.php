@@ -432,7 +432,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
                 foreach ($disposalDetailExist as $val) {
                     if (empty($val->asset_by->itemCode) || $val->asset_by->itemCode == 0) {
-                        array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $$val->asset_by->itemCode->faCode);
+                        array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->asset_by->itemCode->faCode);
                         $error_count++;
                     }
                 }
