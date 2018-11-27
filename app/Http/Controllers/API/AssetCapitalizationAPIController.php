@@ -17,6 +17,7 @@ use App\Http\Requests\API\CreateAssetCapitalizationAPIRequest;
 use App\Http\Requests\API\UpdateAssetCapitalizationAPIRequest;
 use App\Models\AssetCapitalization;
 use App\Models\AssetCapitalizationDetail;
+use App\Models\AssetDisposalDetail;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -151,7 +152,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->first();
 
-            if($assetCapitalizations){
+            if ($assetCapitalizations) {
                 return $this->sendError('Selected asset is already added for capitalization', 500);
             }
 
@@ -364,9 +365,9 @@ class AssetCapitalizationAPIController extends AppBaseController
                 return $this->sendError('Asset Capitalization not found');
             }
 
-            $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->where('capitalizationID', '<>',  $id)->first();
+            $assetCapitalizations = AssetCapitalization::ofAsset($input['faID'])->where('capitalizationID', '<>', $id)->first();
 
-            if($assetCapitalizations){
+            if ($assetCapitalizations) {
                 return $this->sendError('Selected asset is already added for capitalization', 500);
             }
 
@@ -415,7 +416,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                     return $this->sendError('Asset capitalization document cannot confirm without details', 500, ['type' => 'confirm']);
                 }
 
-                foreach ($acDetailExist as $val){
+                foreach ($acDetailExist as $val) {
                     if ($val->allocatedAmountRpt == 0) {
                         return $this->sendError('Asset capitalization document cannot confirm with zero allocated amount', 500, ['type' => 'confirm']);
                     }
@@ -801,7 +802,8 @@ class AssetCapitalizationAPIController extends AppBaseController
     }
 
     public function getCapitalizationApprovalByUser(Request $request)
-    {$input = $request->all();
+    {
+        $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array());
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -926,6 +928,22 @@ class AssetCapitalizationAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    function getCapitalizationLinkedDocument(Request $request)
+    {
+        $id = $request['capitalizationID'];
+        $assetCapitalization = $this->assetCapitalizationRepository->findWithoutFail($id);
+        if (empty($assetCapitalization)) {
+            return $this->sendError('Asset Capitalization not found');
+        }
+
+        $assetDisposalDetail = AssetDisposalDetail::with('master_by')->OfAsset($assetCapitalization->faID)->first();
+
+        $fixedAsset = FixedAssetMaster::OfCompany([$request->companySystemID])->where('docOriginDocumentSystemID', $assetCapitalization->documentSystemID)->where('docOriginSystemCode', $id)->get();
+
+        $output = ['disposal' => $assetDisposalDetail, 'assets' => $fixedAsset];
+        return $this->sendResponse($output, 'Record successfully');
     }
 
 }
