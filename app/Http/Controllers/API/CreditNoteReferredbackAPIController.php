@@ -156,7 +156,11 @@ class CreditNoteReferredbackAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CreditNoteReferredback $creditNoteReferredback */
-        $creditNoteReferredback = $this->creditNoteReferredbackRepository->findWithoutFail($id);
+        $creditNoteReferredback = $this->creditNoteReferredbackRepository->with(['created_by', 'confirmed_by', 'company', 'finance_period_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'finance_year_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($creditNoteReferredback)) {
             return $this->sendError('Credit Note Referredback not found');
