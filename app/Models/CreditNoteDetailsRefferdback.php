@@ -166,11 +166,16 @@ class CreditNoteDetailsRefferdback extends Model
         'creditNoteRefferedBackDetailsID' => 'integer',
         'creditNoteDetailsID' => 'integer',
         'creditNoteAutoID' => 'integer',
+        'companySystemID' => 'integer',
         'companyID' => 'string',
         'customerID' => 'integer',
+        'chartOfAccountSystemID' => 'integer',
         'glCode' => 'string',
         'glCodeDes' => 'string',
+        'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
+        'contractUID' => 'integer',
+        'clientContractID' => 'string',
         'comments' => 'string',
         'creditAmountCurrency' => 'integer',
         'creditAmountCurrencyER' => 'float',
@@ -181,6 +186,7 @@ class CreditNoteDetailsRefferdback extends Model
         'comRptCurrency' => 'integer',
         'comRptCurrencyER' => 'float',
         'comRptAmount' => 'float',
+        'budgetYear' => 'integer',
         'timesReferred' => 'integer'
     ];
 

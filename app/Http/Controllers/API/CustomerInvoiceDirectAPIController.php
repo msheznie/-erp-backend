@@ -527,6 +527,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         }
 
+        $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
+
+        $_post['bookingAmountTrans'] = $detailAmount->bookingAmountTrans;
+        $_post['bookingAmountLocal'] =  $detailAmount->bookingAmountLocal;
+        $_post['bookingAmountRpt'] =  $detailAmount->bookingAmountRpt;
+
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
 
@@ -714,8 +720,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             return $this->sendResponse($_post, 'Invoice Updated Successfully');
         }
-
-
     }
 
     /**
@@ -1369,6 +1373,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
             CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
+
+
             DB::commit();
             return $this->sendResponse('s', 'Successfully Added');
         } catch (\Exception $exception) {
@@ -1836,7 +1842,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $contract = DB::select($qry);
 
 
-        return $this->sendResponse($contract, 'Contract deleted successfully');
+        return $this->sendResponse($contract, 'Record retrieved successfully');
     }
 
 

@@ -16,6 +16,9 @@ use App\Http\Requests\API\CreateCreditNoteAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteAPIRequest;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
+use App\Models\CreditNoteDetailsRefferdback;
+use App\Models\CreditNoteReferredback;
+use App\Models\DocumentReferedHistory;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
@@ -1132,54 +1135,42 @@ WHERE
     {
         $input = $request->all();
 
-        $custReceivePaymentAutoID = $input['custReceivePaymentAutoID'];
+        $creditNoteAutoID = $input['creditNoteAutoID'];
 
-        $customerReceivePaymentData = CustomerReceivePayment::find($custReceivePaymentAutoID);
+        $creditNoteMasterData = CreditNote::find($creditNoteAutoID);
 
-        if (empty($customerReceivePaymentData)) {
-            return $this->sendError('Customer Receive Payment not found');
+        if (empty($creditNoteMasterData)) {
+            return $this->sendError('Credit Note not found');
         }
 
-        if ($customerReceivePaymentData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this Receipt Voucher');
+        if ($creditNoteMasterData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this credit note');
         }
 
-        $receivePaymentArray = $customerReceivePaymentData->toArray();
+        $creditNoteArray = $creditNoteMasterData->toArray();
 
-        $storeReceiptVoucherHistory = CustomerReceivePaymentRefferedHistory::insert($receivePaymentArray);
+        $storeCreditNoteHistory = CreditNoteReferredback::insert($creditNoteArray);
 
-        $customerReceivePaymentDetailRec = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $custReceivePaymentAutoID)->get();
+        $creditNoteDetailRec = CreditNoteDetails::where('creditNoteAutoID', $creditNoteAutoID)->get();
 
-        if (!empty($customerReceivePaymentDetailRec)) {
-            foreach ($customerReceivePaymentDetailRec as $bookDetail) {
-                $bookDetail['timesReferred'] = $customerReceivePaymentData->timesReferred;
+        if (!empty($creditNoteDetailRec)) {
+            foreach ($creditNoteDetailRec as $bookDetail) {
+                $bookDetail['timesReferred'] = $creditNoteMasterData->timesReferred;
             }
         }
 
-        $customerReceiveDetailArray = $customerReceivePaymentDetailRec->toArray();
+        $creditNoteDetailArray = $creditNoteDetailRec->toArray();
 
-        $storeSupplierInvoiceBookDetailHistory = CustReceivePaymentDetRefferedHistory::insert($customerReceiveDetailArray);
+        $storeSupplierInvoiceBookDetailHistory = CreditNoteDetailsRefferdback::insert($creditNoteDetailArray);
 
-        $customerReceivePaymentDirectDetailRec = DirectReceiptDetail::where('directReceiptAutoID', $custReceivePaymentAutoID)->get();
-
-        if (!empty($customerReceivePaymentDirectDetailRec)) {
-            foreach ($customerReceivePaymentDirectDetailRec as $bookDirectDetail) {
-                $bookDirectDetail['timesReferred'] = $customerReceivePaymentData->timesReferred;
-            }
-        }
-
-        $ReceivePaymentDirectDetailArray = $customerReceivePaymentDirectDetailRec->toArray();
-
-        $storeSupplierInvoiceBookDirectDetailHistory = DirectReceiptDetailsRefferedHistory::insert($ReceivePaymentDirectDetailArray);
-
-        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
-            ->where('companySystemID', $customerReceivePaymentData->companySystemID)
-            ->where('documentSystemID', $customerReceivePaymentData->documentSystemID)
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $creditNoteAutoID)
+            ->where('companySystemID', $creditNoteMasterData->companySystemID)
+            ->where('documentSystemID', $creditNoteMasterData->documentSystemiD)
             ->get();
 
         if (!empty($fetchDocumentApproved)) {
             foreach ($fetchDocumentApproved as $DocumentApproved) {
-                $DocumentApproved['refTimes'] = $customerReceivePaymentData->timesReferred;
+                $DocumentApproved['refTimes'] = $creditNoteMasterData->timesReferred;
             }
         }
 
@@ -1187,24 +1178,23 @@ WHERE
 
         $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
-        $deleteApproval = DocumentApproved::where('documentSystemCode', $custReceivePaymentAutoID)
-            ->where('companySystemID', $customerReceivePaymentData->companySystemID)
-            ->where('documentSystemID', $customerReceivePaymentData->documentSystemID)
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $creditNoteAutoID)
+            ->where('companySystemID', $creditNoteMasterData->companySystemID)
+            ->where('documentSystemID', $creditNoteMasterData->documentSystemiD)
             ->delete();
 
         if ($deleteApproval) {
-            $customerReceivePaymentData->refferedBackYN = 0;
-            $customerReceivePaymentData->confirmedYN = 0;
-            $customerReceivePaymentData->confirmedByEmpSystemID = null;
-            $customerReceivePaymentData->confirmedByEmpID = null;
-            $customerReceivePaymentData->confirmedByName = null;
-            $customerReceivePaymentData->confirmedDate = null;
-            $customerReceivePaymentData->RollLevForApp_curr = 1;
-            $customerReceivePaymentData->save();
+            $creditNoteMasterData->refferedBackYN = 0;
+            $creditNoteMasterData->confirmedYN = 0;
+            $creditNoteMasterData->confirmedByEmpSystemID = null;
+            $creditNoteMasterData->confirmedByEmpID = null;
+            $creditNoteMasterData->confirmedByName = null;
+            $creditNoteMasterData->confirmedDate = null;
+            $creditNoteMasterData->RollLevForApp_curr = 1;
+            $creditNoteMasterData->save();
         }
 
-
-        return $this->sendResponse($customerReceivePaymentData->toArray(), 'Receipt voucher amend successfully');
+        return $this->sendResponse($creditNoteMasterData->toArray(), 'Credit note amend successfully');
     }
 
 

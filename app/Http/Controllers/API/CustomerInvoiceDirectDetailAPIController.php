@@ -372,7 +372,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
         $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)->first();
         if (!empty($tax)) {
-            return $this->sendResponse('e', 'Please delete tax details to continue');
+            return $this->sendError("Please delete added tax details !");
         }
         /*  if (!empty($contract)) {
               if ($contract->paymentInDaysForJob <= 0) {
