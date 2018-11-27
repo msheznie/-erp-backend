@@ -2434,7 +2434,7 @@ class Helper
                     }
 
                     $asset = Models\FixedAssetMaster::find($val['faID']);
-                    $disposalDate = Carbon::parse($fixedCapital->approvedDate);
+                    $disposalDate = Carbon::parse($fixedCapital->documentDate);
                     $sod = Carbon::parse($asset->dateDEP);
                     $diffDays = $disposalDate->diffInDays($sod);
                     $noYears = $diffDays / 365;
