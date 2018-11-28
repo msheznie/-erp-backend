@@ -1155,6 +1155,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovedCustomerInvoiceForCurrentUser', 'CustomerInvoiceDirectAPIController@getApprovedCustomerInvoiceForCurrentUser');
     Route::post('approveCustomerInvoice', 'CustomerInvoiceDirectAPIController@approveCustomerInvoice');
     Route::post('rejectCustomerInvoice', 'CustomerInvoiceDirectAPIController@rejectCustomerInvoice');
+    Route::post('getCustomerInvoiceAmend', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceAmend');
+
+    Route::resource('customerInvoiceRefferedbacksCRUD', 'CustomerInvoiceDirectRefferedbackAPIController');
+    Route::resource('customerInvoiceDetRefferedbacks', 'CustomerInvoiceDirectDetRefferedbackAPIController');
+    Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory');
+    Route::get('getCIDetailsForAmendHistory', 'CustomerInvoiceDirectDetRefferedbackAPIController@getCIDetailsForAmendHistory');
 
 });
 

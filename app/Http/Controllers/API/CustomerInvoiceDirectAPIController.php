@@ -12,6 +12,7 @@
  * -- Date: 18 November 2018 By: Nazir Description: Added new functions named as getAllcontractbyclientbase()
  * -- Date: 27 November 2018 By: Nazir Description: Added new functions named as getCustomerInvoiceApproval()
  * -- Date: 27 November 2018 By: Nazir Description: Added new functions named as getApprovedCustomerInvoiceForCurrentUser()
+ * -- Date: 28 November 2018 By: Nazir Description: Added new functions named as getCustomerInvoiceAmend()
  */
 
 namespace App\Http\Controllers\API;
@@ -24,7 +25,10 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\CustomerInvoiceDirectDetRefferedback;
+use App\Models\CustomerInvoiceDirectRefferedback;
 use App\Models\CustomerMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\PerformaDetails;
 use App\Models\PerformaMaster;
 use App\Models\Unit;
@@ -2067,6 +2071,85 @@ WHERE
         } else {
             return $this->sendResponse(array(), $reject["message"]);
         }
+    }
+
+    public function getCustomerInvoiceAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $custInvoiceDirectAutoID = $input['custInvoiceDirectAutoID'];
+
+        $customerInvoiceDirectData = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
+        if (empty($customerInvoiceDirectData)) {
+            return $this->sendError('Customer Invoice not found');
+        }
+
+        if ($customerInvoiceDirectData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this Customer Invoice');
+        }
+
+        $customerInvoiceArray = $customerInvoiceDirectData->toArray();
+
+        $storeSCustomerInvoiceHistory = CustomerInvoiceDirectRefferedback::insert($customerInvoiceArray);
+
+        $fetchCustomerInvoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)
+            ->get();
+
+        if (!empty($fetchCustomerInvoiceDetails)) {
+            foreach ($fetchCustomerInvoiceDetails as $bookDetail) {
+                $bookDetail['timesReferred'] = $customerInvoiceDirectData->timesReferred;
+            }
+        }
+
+        $customerInvoiceDetailArray = $fetchCustomerInvoiceDetails->toArray();
+
+        $storeCustomerInvoiceDetailHistory = CustomerInvoiceDirectDetRefferedback::insert($customerInvoiceDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
+            ->where('companySystemID', $customerInvoiceDirectData->companySystemID)
+            ->where('documentSystemID', $customerInvoiceDirectData->documentSystemiD)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $customerInvoiceDirectData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
+            ->where('companySystemID', $customerInvoiceDirectData->companySystemID)
+            ->where('documentSystemID', $customerInvoiceDirectData->documentSystemiD)
+            ->delete();
+
+        if ($deleteApproval) {
+            $customerInvoiceDirectData->refferedBackYN = 0;
+            $customerInvoiceDirectData->confirmedYN = 0;
+            $customerInvoiceDirectData->confirmedByEmpSystemID = null;
+            $customerInvoiceDirectData->confirmedByEmpID = null;
+            $customerInvoiceDirectData->confirmedByName = null;
+            $customerInvoiceDirectData->confirmedDate = null;
+            $customerInvoiceDirectData->RollLevForApp_curr = 1;
+            $customerInvoiceDirectData->save();
+        }
+
+        // delete tax details
+        $checkTaxExist = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+            ->where('companySystemID', $customerInvoiceDirectData->companySystemID)
+            ->where('documentSystemID', 20)
+            ->first();
+
+        if ($checkTaxExist) {
+            $deleteTaxDetail = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+                ->where('companySystemID', $customerInvoiceDirectData->companySystemID)
+                ->where('documentSystemID', 20)
+                ->delete();
+        }
+
+        return $this->sendResponse($customerInvoiceDirectData->toArray(), 'Customer Invoice Amend successfully');
     }
 
 
