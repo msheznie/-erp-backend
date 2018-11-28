@@ -10,6 +10,8 @@
  * -- REVISION HISTORY
  * -- Date: 13 Aug 2018 By: Shahmy Description: Added new functions named as getINVFormData() For load form View
  * -- Date: 18 November 2018 By: Nazir Description: Added new functions named as getAllcontractbyclientbase()
+ * -- Date: 27 November 2018 By: Nazir Description: Added new functions named as getCustomerInvoiceApproval()
+ * -- Date: 27 November 2018 By: Nazir Description: Added new functions named as getApprovedCustomerInvoiceForCurrentUser()
  */
 
 namespace App\Http\Controllers\API;
@@ -936,7 +938,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $request->request->remove('search.value');
-        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma');
+        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.customerInvoiceDate','erp_custinvoicedirect.refferedBackYN','custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma');
 
         return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
@@ -1886,6 +1888,185 @@ WHERE
 	AND erp_custreceivepaymentdet.addedDocumentSystemID = $master->documentSystemiD");
 
         return $this->sendResponse($master, 'Contract deleted successfully');
+    }
+
+    public function getCustomerInvoiceApproval(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
+            ->where('documentSystemID', 20)
+            ->first();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_custinvoicedirect.custInvoiceDirectAutoID',
+            'erp_custinvoicedirect.bookingInvCode',
+            'erp_custinvoicedirect.documentSystemiD as documentSystemID',
+            'erp_custinvoicedirect.bookingDate',
+            'erp_custinvoicedirect.comments',
+            'erp_custinvoicedirect.createdDateAndTime',
+            'erp_custinvoicedirect.confirmedDate',
+            'erp_custinvoicedirect.bookingAmountTrans',
+            'erp_custinvoicedirect.isPerforma',
+            'erp_custinvoicedirect.documentType',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'customermaster.CustomerName As CustomerName',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
+                $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+            }
+            $query->where('employeesdepartments.documentSystemID', 20)
+                ->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID);
+        })->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'custInvoiceDirectAutoID')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('erp_custinvoicedirect.companySystemID', $companyID)
+                ->where('erp_custinvoicedirect.approved', 0)
+                ->where('erp_custinvoicedirect.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', 0)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'custTransactionCurrencyID', 'currencymaster.currencyID')
+            ->leftJoin('customermaster', 'customerID', 'customermaster.customerCodeSystem')
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 20)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('bookingInvCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function getApprovedCustomerInvoiceForCurrentUser(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+
+        $grvMasters = DB::table('erp_documentapproved')->select(
+            'erp_custinvoicedirect.custInvoiceDirectAutoID',
+            'erp_custinvoicedirect.bookingInvCode',
+            'erp_custinvoicedirect.documentSystemiD',
+            'erp_custinvoicedirect.bookingDate',
+            'erp_custinvoicedirect.comments',
+            'erp_custinvoicedirect.createdDateAndTime',
+            'erp_custinvoicedirect.confirmedDate',
+            'erp_custinvoicedirect.bookingAmountTrans',
+            'erp_custinvoicedirect.isPerforma',
+            'erp_custinvoicedirect.documentType',
+            'erp_custinvoicedirect.approvedDate',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.DecimalPlaces As DecimalPlaces',
+            'currencymaster.CurrencyCode As CurrencyCode',
+            'customermaster.CustomerName As CustomerName',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
+        )->join('erp_custinvoicedirect', function ($query) use ($companyID, $empID) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'custInvoiceDirectAutoID')
+                ->where('erp_custinvoicedirect.companySystemID', $companyID)
+                ->where('erp_custinvoicedirect.approved', -1)
+                ->where('erp_custinvoicedirect.confirmedYN', 1);
+        })->where('erp_documentapproved.approvedYN', -1)
+            ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
+            ->leftJoin('currencymaster', 'custTransactionCurrencyID', 'currencymaster.currencyID')
+            ->leftJoin('customermaster', 'customerID', 'customermaster.customerCodeSystem')
+            ->where('erp_documentapproved.documentSystemID', 11)
+            ->where('erp_documentapproved.companySystemID', $companyID)
+            ->where('erp_documentapproved.employeeSystemID', $empID);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $grvMasters = $grvMasters->where(function ($query) use ($search) {
+                $query->where('bookingInvCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhere('CustomerName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($grvMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function approveCustomerInvoice(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
+
+    public function rejectCustomerInvoice(Request $request)
+    {
+        $reject = \Helper::rejectDocument($request);
+        if (!$reject["success"]) {
+            return $this->sendError($reject["message"]);
+        } else {
+            return $this->sendResponse(array(), $reject["message"]);
+        }
     }
 
 

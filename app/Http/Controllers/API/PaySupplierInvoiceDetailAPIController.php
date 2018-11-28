@@ -264,7 +264,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $input["supplierPaymentAmount"] = 0;
         }
 
-        if($input["isPullAmount"] == 1){
+        if ($input["isPullAmount"] == 1) {
             $input["supplierPaymentAmount"] = $paySupplierInvoiceDetail->paymentBalancedAmount;
         }
 
@@ -712,17 +712,19 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         foreach ($input['detailTable'] as $item) {
-            $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
-                ->where('apAutoID', $item['apAutoID'])
-                ->first();
+            if (isset($item['isChecked']) && $item['isChecked']) {
+                $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
+                    ->where('apAutoID', $item['apAutoID'])
+                    ->first();
 
-            if ($item['addedDocumentSystemID'] == 11) {
-                //supplier invoice
-                if ($payDetailMoreBooked->supplierPaymentAmount > $item['supplierInvoiceAmount']) {
+                if ($item['addedDocumentSystemID'] == 11) {
+                    //supplier invoice
+                    if ($payDetailMoreBooked->supplierPaymentAmount > $item['supplierInvoiceAmount']) {
 
-                    $itemDrt = "Selected invoice " . $item['bookingInvDocCode'] . " booked more than the invoice amount.";
-                    $itemExistArray[] = [$itemDrt];
+                        $itemDrt = "Selected invoice " . $item['bookingInvDocCode'] . " booked more than the invoice amount.";
+                        $itemExistArray[] = [$itemDrt];
 
+                    }
                 }
             }
         }
@@ -816,7 +818,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+        if($input['temptype'] == 1){
+            $input['supplierPaymentAmount'] = $input['paymentBalancedAmount'];
+        }
+
+        $paymentBalancedAmount = $paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
             //supplier invoice
@@ -834,8 +840,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], ABS($input["supplierPaymentAmount"]));
         $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
-        $input["paymentLocalAmount"] = $conversionAmount["localAmount"];
-        $input["paymentComRptAmount"] = $conversionAmount["reportingAmount"];
+        $input["paymentLocalAmount"] =  \Helper::roundValue($conversionAmount["localAmount"]);
+        $input["paymentComRptAmount"] =  \Helper::roundValue($conversionAmount["reportingAmount"]);
 
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->update($input, $input['payDetailAutoID']);
 
