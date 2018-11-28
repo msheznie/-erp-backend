@@ -385,13 +385,13 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     }
 
                     //if the customer is assigned
-                    $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isAssigned', '-1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
+                    $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->companySystemID)->where('isAssigned', '-1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
 
                     if (empty($customer)) {
-                        return $this->sendError('There is no customer assgigned to the selected company. Please assign the customer', 500, ['type' => 'confirm']);
+                        return $this->sendError('There is no customer assigned to the selected company. Please assign the customer', 500, ['type' => 'confirm']);
                     }
                     //checking selected customer is active
-                    $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isActive', '1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
+                    $customer = CustomerAssigned::select('*')->where('companySystemID', $assetDisposalMaster->companySystemID)->where('isActive', '1')->where('customerCodeSystem', $customermaster->customerCodeSystem)->first();
 
                     if (empty($customer)) {
                         return $this->sendError('Assigned customer is not active', 500, ['type' => 'confirm']);
@@ -405,14 +405,14 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     }
 
                     //If the supplier is not assigned
-                    $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->companySystemID)->where('isAssigned', '-1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
+                    $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isAssigned', '-1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
 
                     if (empty($supplier)) {
-                        return $this->sendError('There is no supplier assgigned to the selected company. Please assign the supplier', 500, ['type' => 'confirm']);
+                        return $this->sendError('There is no supplier assigned to the selected company. Please assign the supplier', 500, ['type' => 'confirm']);
                     }
 
                     //checking selected supplier is active
-                    $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->companySystemID)->where('isActive', '1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
+                    $supplier = SupplierAssigned::select('*')->where('companySystemID', $assetDisposalMaster->toCompanySystemID)->where('isActive', '1')->where('supplierCodeSytem', $suppliermaster->supplierCodeSystem)->first();
 
                     if (empty($supplier)) {
                         return $this->sendError('Assigned supplier is not active', 500, ['type' => 'confirm']);
@@ -432,7 +432,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
                 foreach ($disposalDetailExist as $val) {
                     if (empty($val->asset_by->itemCode) || $val->asset_by->itemCode == 0) {
-                        array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->asset_by->itemCode->faCode);
+                        array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->asset_by->faCode);
                         $error_count++;
                     }
                 }

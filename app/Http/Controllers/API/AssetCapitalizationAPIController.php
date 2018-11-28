@@ -500,6 +500,10 @@ class AssetCapitalizationAPIController extends AppBaseController
             return $this->sendError('Asset Capitalization not found');
         }
 
+        if ($assetCapitalization->confirmedYN == 1) {
+            return $this->sendError('You cannot delete confirmed document');
+        }
+
         $assetCapitalization->delete();
 
         return $this->sendResponse($id, 'Asset Capitalization deleted successfully');

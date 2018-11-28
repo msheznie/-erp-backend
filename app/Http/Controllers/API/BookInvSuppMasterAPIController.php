@@ -1169,7 +1169,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $empID = \Helper::getEmployeeSystemID();
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
-            ->where('documentSystemID', 3)
+            ->where('documentSystemID', 11)
             ->first();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
@@ -1331,7 +1331,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
         } else {
             return $this->sendResponse(array(), $reject["message"]);
         }
-
     }
 
     public function saveSupplierInvoiceTaxDetails(Request $request)
