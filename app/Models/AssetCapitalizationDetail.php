@@ -203,6 +203,19 @@ class AssetCapitalizationDetail extends Model
     ];
 
     /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCapitalization($query, $capitalizationID)
+    {
+        return $query->where('capitalizationID',  $capitalizationID);
+    }
+
+    /**
      * Validation rules
      *
      * @var array

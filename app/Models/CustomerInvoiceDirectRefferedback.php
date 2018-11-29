@@ -1,23 +1,19 @@
 <?php
-/**
- * =============================================
- * -- File Name : CustomerInvoiceDirect.php
- * -- Project Name : ERP
- * -- Module Name :  Customer Invoice
- * -- Author : Nazir
- * -- Create date : 21 - August 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- * --
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="CustomerInvoiceDirect",
+ *      definition="CustomerInvoiceDirectRefferedback",
  *      required={""},
+ *      @SWG\Property(
+ *          property="custInvoiceDirectAutoIDRefferedBack",
+ *          description="custInvoiceDirectAutoIDRefferedBack",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="custInvoiceDirectAutoID",
  *          description="custInvoiceDirectAutoID",
@@ -118,7 +114,8 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="wanNO",
  *          description="wanNO",
- *          type="string"
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="PONumber",
@@ -140,6 +137,12 @@ use Eloquent as Model;
  *          property="customerGLCode",
  *          description="customerGLCode",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerGLSystemID",
+ *          description="customerGLSystemID",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="customerInvoiceNo",
@@ -252,6 +255,12 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="secondaryLogoCompanySystemID",
+ *          description="secondaryLogoCompanySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="secondaryLogoCompID",
  *          description="secondaryLogoCompID",
  *          type="string"
@@ -260,6 +269,12 @@ use Eloquent as Model;
  *          property="secondaryLogo",
  *          description="secondaryLogo",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="timesReferred",
@@ -292,14 +307,14 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="canceledYN",
- *          description="canceledYN",
+ *          property="canceledByEmpSystemID",
+ *          description="canceledByEmpSystemID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="canceledByEmpSystemID",
- *          description="canceledByEmpSystemID",
+ *          property="canceledYN",
+ *          description="canceledYN",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -412,20 +427,33 @@ use Eloquent as Model;
  *          property="createdDateTime",
  *          description="createdDateTime",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserID",
+ *          description="approvedByUserID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserSystemID",
+ *          description="approvedByUserSystemID",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class CustomerInvoiceDirect extends Model
+class CustomerInvoiceDirectRefferedback extends Model
 {
 
-    public $table = 'erp_custinvoicedirect';
+    public $table = 'erp_custinvoicedirectrefferedback';
 
     const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey = 'custInvoiceDirectAutoID';
 
+    protected $primaryKey = 'custInvoiceDirectAutoIDRefferedBack';
 
     public $fillable = [
+        'custInvoiceDirectAutoID',
         'transactionMode',
         'companySystemID',
         'companyID',
@@ -453,8 +481,8 @@ class CustomerInvoiceDirect extends Model
         'PONumber',
         'rigNo',
         'customerID',
-        'customerGLSystemID',
         'customerGLCode',
+        'customerGLSystemID',
         'customerInvoiceNo',
         'customerInvoiceDate',
         'custTransactionCurrencyID',
@@ -489,8 +517,8 @@ class CustomerInvoiceDirect extends Model
         'selectedForTracking',
         'customerInvoiceTrackingID',
         'interCompanyTransferYN',
-        'canceledYN',
         'canceledByEmpSystemID',
+        'canceledYN',
         'canceledByEmpID',
         'canceledByEmpName',
         'vatOutputGLCodeSystemID',
@@ -512,10 +540,10 @@ class CustomerInvoiceDirect extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp',
         'createdDateAndTime',
-        'approvedByUserSystemID',
-        'approvedByUserID'
+        'timestamp',
+        'approvedByUserID',
+        'approvedByUserSystemID'
     ];
 
     /**
@@ -524,6 +552,7 @@ class CustomerInvoiceDirect extends Model
      * @var array
      */
     protected $casts = [
+        'custInvoiceDirectAutoIDRefferedBack' => 'integer',
         'custInvoiceDirectAutoID' => 'integer',
         'transactionMode' => 'integer',
         'companySystemID' => 'integer',
@@ -541,12 +570,12 @@ class CustomerInvoiceDirect extends Model
         'customerGRVAutoID' => 'integer',
         'bankID' => 'integer',
         'bankAccountID' => 'integer',
-        'wanNO' => 'string',
+        'wanNO' => 'integer',
         'PONumber' => 'string',
         'rigNo' => 'string',
         'customerID' => 'integer',
-        'customerGLSystemID' => 'integer',
         'customerGLCode' => 'string',
+        'customerGLSystemID' => 'integer',
         'customerInvoiceNo' => 'string',
         'custTransactionCurrencyID' => 'integer',
         'custTransactionCurrencyER' => 'float',
@@ -566,7 +595,7 @@ class CustomerInvoiceDirect extends Model
         'paymentInDaysForJob' => 'integer',
         'isPerforma' => 'integer',
         'documentType' => 'integer',
-        '`secondaryLogoCompanySystemID`' => 'integer',
+        'secondaryLogoCompanySystemID' => 'integer',
         'secondaryLogoCompID' => 'string',
         'secondaryLogo' => 'string',
         'refferedBackYN' => 'integer',
@@ -575,8 +604,8 @@ class CustomerInvoiceDirect extends Model
         'selectedForTracking' => 'integer',
         'customerInvoiceTrackingID' => 'integer',
         'interCompanyTransferYN' => 'integer',
-        'canceledYN' => 'integer',
         'canceledByEmpSystemID' => 'integer',
+        'canceledYN' => 'integer',
         'canceledByEmpID' => 'string',
         'canceledByEmpName' => 'string',
         'vatOutputGLCodeSystemID' => 'integer',
@@ -597,9 +626,8 @@ class CustomerInvoiceDirect extends Model
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
         'createdDateTime' => 'string',
-        'createdDateAndTime' => 'string',
-        'approvedByUserSystemID' => 'integer',
-        'approvedByUserID' => 'integer'
+        'approvedByUserID' => 'integer',
+        'approvedByUserSystemID' => 'integer'
     ];
 
     /**
@@ -608,9 +636,8 @@ class CustomerInvoiceDirect extends Model
      * @var array
      */
     public static $rules = [
-
+        
     ];
-
 
     public function company()
     {
@@ -677,9 +704,9 @@ class CustomerInvoiceDirect extends Model
         return $this->hasMany('App\Models\CompanyDocumentAttachment', 'companySystemID', 'companySystemID');
     }
 
-     public function finance_year_by() {
-         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
-     }
+    public function finance_year_by() {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
 
     public function finance_period_by()
     {
@@ -690,11 +717,6 @@ class CustomerInvoiceDirect extends Model
     {
         return $this->belongsTo('App\Models\GRVMaster', 'customerGRVAutoID', 'grvAutoID');
     }
-
-
-
-
-
 
 
 
