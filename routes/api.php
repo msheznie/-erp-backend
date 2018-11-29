@@ -11,6 +11,8 @@
 |
 */
 
+use Illuminate\Support\Facades\Artisan;
+
 Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
@@ -109,6 +111,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('item/masters', 'ItemMasterAPIController');
     Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
+    Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
     Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
     Route::resource('units', 'UnitAPIController');
     Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
@@ -1177,6 +1180,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 });
 
+
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
 Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
@@ -1215,8 +1219,8 @@ Route::get('runQueue', function () {
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76750);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
-    //$master = \App\Models\AssetDisposalMaster::find(241);generateAssetDetailDrilldown
-    //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
+    $master = \App\Models\AssetDisposalMaster::find(255);
+    $job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
     //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
 });

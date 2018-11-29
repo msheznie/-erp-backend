@@ -205,9 +205,9 @@ class CreditNoteAPIController extends AppBaseController
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
 
-        $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
-        if($input['creditNoteDate'] > $curentDate){
-            return $this->sendError( 'Document date can not be greater than current date',500);
+        $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
+        if ($input['creditNoteDate'] > $curentDate) {
+            return $this->sendError('Document date can not be greater than current date', 500);
         }
 
         if (($input['creditNoteDate'] >= $companyfinanceperiod->dateFrom) && ($input['creditNoteDate'] <= $companyfinanceperiod->dateTo)) {
@@ -324,7 +324,7 @@ class CreditNoteAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID'));
-        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency','createdDateAndTime'));
+        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime'));
 
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
         $input['modifiedUser'] = \Helper::getEmployeeID();
@@ -368,11 +368,11 @@ class CreditNoteAPIController extends AppBaseController
         if (!$companyFinancePeriodCheck["success"]) {
             return $this->sendError($companyFinancePeriodCheck["message"], 500);
         }
-      /*  if ($input['companyFinanceYearID'] != $creditNote->companyFinanceYearID) {
-            $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
-            $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
-            $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
-        }*/
+        /*  if ($input['companyFinanceYearID'] != $creditNote->companyFinanceYearID) {
+              $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
+              $input['FYPeriodDateFrom'] = $companyfinanceperiod->dateFrom;
+              $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
+          }*/
 
 
         if ($input['companyFinancePeriodID'] != $creditNote->companyFinancePeriodID) {
@@ -414,9 +414,9 @@ class CreditNoteAPIController extends AppBaseController
         }
 
         $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
-        $curentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
-        if($_post['creditNoteDate'] > $curentDate){
-            return $this->sendError( 'Dcoument date can not be greater than current date',500);
+        $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
+        if ($_post['creditNoteDate'] > $curentDate) {
+            return $this->sendError('Dcoument date can not be greater than current date', 500);
         }
 
         if (($_post['creditNoteDate'] >= $input['FYPeriodDateFrom']) && ($_post['creditNoteDate'] <= $input['FYPeriodDateTo'])) {
@@ -487,7 +487,6 @@ class CreditNoteAPIController extends AppBaseController
                             }
                         }
                     }
-
 
 
                     /*serviceline and contract validation*/
@@ -616,7 +615,13 @@ class CreditNoteAPIController extends AppBaseController
                     ->get();
                 break;
             case 'create':
-                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
+
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isActive', 1)
+                    ->where('isAssigned', -1)
+                    ->get();
+
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
@@ -637,7 +642,12 @@ class CreditNoteAPIController extends AppBaseController
                 } else {
                     $output['currencies'] = [];
                 }
-                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isActive', 1)
+                    ->where('isAssigned', -1)
+                    ->get();
+
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
@@ -656,7 +666,11 @@ class CreditNoteAPIController extends AppBaseController
                 } else {
                     $output['currencies'] = [];
                 }
-                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isActive', 1)
+                    ->where('isAssigned', -1)
+                    ->get();
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
@@ -695,7 +709,7 @@ class CreditNoteAPIController extends AppBaseController
         }
 
         if (array_key_exists('customerID', $input)) {
-            if (($input['customerID'] !='')) {
+            if (($input['customerID'] != '')) {
                 $master->where('erp_creditnote.customerID', $input['customerID']);
             }
         }
@@ -744,7 +758,7 @@ class CreditNoteAPIController extends AppBaseController
             });
         }
         $request->request->remove('search.value');
-        $master->select('creditNoteCode', 'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved','erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CustomerName', 'creditAmountTrans');
+        $master->select('creditNoteCode', 'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved', 'erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CustomerName', 'creditAmountTrans');
 
         return \DataTables::of($master)
             ->order(function ($query) use ($input) {
@@ -823,9 +837,9 @@ class CreditNoteAPIController extends AppBaseController
                     ->where('companySystemID', $documentApproval->companySystemID)
                     ->where('documentSystemID', $documentApproval->documentSystemID);
 
-              /*  if ($companyDocument['isServiceLineApproval'] == -1) {
-                    $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
-                }*/
+                /*  if ($companyDocument['isServiceLineApproval'] == -1) {
+                      $approvalList = $approvalList->where('ServiceLineSystemID', $documentApproval->serviceLineSystemID);
+                  }*/
 
                 $approvalList = $approvalList
                     ->with(['employee'])
@@ -878,7 +892,8 @@ class CreditNoteAPIController extends AppBaseController
         return $this->sendResponse($creditNote->toArray(), 'Credit Note retrieved successfully');
     }
 
-    public function printCreditNote(Request $request){
+    public function printCreditNote(Request $request)
+    {
         $id = $request->get('id');
 
         $creditNote = $this->creditNoteRepository->getAudit($id);
@@ -922,7 +937,7 @@ class CreditNoteAPIController extends AppBaseController
                 'employees.empName As created_emp',
                 'currencymaster.DecimalPlaces As DecimalPlaces',
                 'currencymaster.CurrencyCode As CurrencyCode',
-'customermaster.CustomerName',
+                'customermaster.CustomerName',
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
@@ -1102,11 +1117,12 @@ class CreditNoteAPIController extends AppBaseController
             ->make(true);
     }
 
-    public function creditNoteReceiptStatus(Request $request){
+    public function creditNoteReceiptStatus(Request $request)
+    {
         $input = $request->all();
         $creditnote = CreditNote::find($input['id']);
 
-       $data= DB::select("SELECT
+        $data = DB::select("SELECT
 	erp_matchdocumentmaster.PayMasterAutoId as masterID,
 	erp_matchdocumentmaster.companyID,
 	erp_matchdocumentmaster.matchingDocCode as docCode,
@@ -1215,8 +1231,6 @@ WHERE
 
         return $this->sendResponse($creditNoteMasterData->toArray(), 'Credit note amend successfully');
     }
-
-
 
 
 }

@@ -1516,7 +1516,7 @@ class Helper
 
                             //generate customer invoice or Direct GRV
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
-                                if ($sourceModel->disposalType == 1 || $sourceModel->disposalType == 6) {
+                                if ($sourceModel->disposalType == 1) {
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel);
                                 }
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
@@ -2488,6 +2488,7 @@ class Helper
                     $data['createdPcID'] = gethostname();
                     $data['createdUserID'] = \Helper::getEmployeeID();
                     $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdDateAndTime'] = date('Y-m-d H:i:s');
                     $data["modifiedUser"] = null;
                     $data["modifiedUserSystemID"] = null;
                     $data["modifiedPc"] = null;

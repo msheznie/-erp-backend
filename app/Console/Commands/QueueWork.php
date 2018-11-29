@@ -38,7 +38,6 @@ class QueueWork extends Command
      */
     public function handle()
     {
-        Artisan::command('queue:work');
-        return true;
+       Artisan::call('queue:work');
     }
 }

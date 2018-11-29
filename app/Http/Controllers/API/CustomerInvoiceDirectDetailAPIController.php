@@ -370,9 +370,12 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
               }
           }*/
 
-        $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)->first();
+        $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+            ->where('companySystemID', $master->companySystemID)
+            ->where('documentSystemID', $master->documentSystemiD)
+            ->first();
         if (!empty($tax)) {
-            return $this->sendError("Please delete added tax details !");
+            return $this->sendError('Please delete tax details to continue !');
         }
         /*  if (!empty($contract)) {
               if ($contract->paymentInDaysForJob <= 0) {
@@ -482,10 +485,6 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             return $this->sendError('Error Occured !');
         }
 
-
-        /*done*/
-
-
     }
 
     public function updateDirectInvoice(Request $request)
@@ -505,6 +504,19 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         }
 
         $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
+
+        if (empty($master)) {
+            return $this->sendError('Customer Invoice Direct not found');
+        }
+
+        $tax = Taxdetail::where('documentSystemCode', $detail->custInvoiceDirectID)
+            ->where('companySystemID', $master->companySystemID)
+            ->where('documentSystemID', $master->documentSystemiD)
+            ->first();
+
+        if (!empty($tax)) {
+            return $this->sendError('Please delete tax details to continue');
+        }
 
         if ($input['contractID'] != $detail->contractID) {
 

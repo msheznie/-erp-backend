@@ -48,7 +48,15 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
-        return parent::render($request, $exception);
+        if ($exception instanceof \Illuminate\Auth\AuthenticationException) {
+            if($request->ajax()){
+                return response()->json(['error' => 'Unauthorized'], 401);
+            } else {
+                return '<h2>'.$exception->getMessage().'</h2>';
+            }
+        }else {
+            return parent::render($request, $exception);
+        }
     }
 
     /*public function render($request, Exception $e)

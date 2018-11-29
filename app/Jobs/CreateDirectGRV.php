@@ -63,27 +63,22 @@ class CreateDirectGRV implements ShouldQueue
                 $directGRV["serviceLineCode"] = $serviceLine->ServiceLineCode;
             }
 
-            $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->toCompanySystemID)
-                ->where('departmentSystemID', 4)
-                ->where('isActive', -1)
-                ->where('isCurrent', -1)
-                ->first();
+            $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $dpMaster->companySystemID)->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
+
+            $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->companySystemID)->where('departmentSystemID', 10)->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)->where('dateFrom', '<', NOW())->where('dateTo', '>', NOW())->first();
 
             $today = NOW();
-            $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode. ',' .$dpMaster->bookingInvCode;
-            $fromCompanyFinanceYear = '';
-            if (!empty($fromCompanyFinancePeriod)) {
-                $fromCompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
-                    ->where('companySystemID', $dpMaster->toCompanySystemID)
-                    ->first();
+            $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode . ',' . $dpMaster->bookingInvCode;
 
-                if (!empty($fromCompanyFinanceYear)) {
-                    $directGRV['FYBiggin'] = $fromCompanyFinanceYear->bigginingDate;
-                    $directGRV['FYEnd'] = $fromCompanyFinanceYear->endingDate;
+            if (!empty($fromCompanyFinanceYear)) {
+
+                $directGRV['FYBiggin'] = $fromCompanyFinanceYear->bigginingDate;
+                $directGRV['FYEnd'] = $fromCompanyFinanceYear->endingDate;
+
+                if (!empty($fromCompanyFinancePeriod)) {
+                    $directGRV['companyFinanceYearID'] = $fromCompanyFinancePeriod->companyFinanceYearID;
+                    $directGRV['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
                 }
-
-                $directGRV['companyFinanceYearID'] = $fromCompanyFinancePeriod->companyFinanceYearID;
-                $directGRV['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
             }
 
             $directGRV['documentSystemID'] = 3;
