@@ -220,5 +220,15 @@ class DirectReceiptDetailsRefferedHistory extends Model
         
     ];
 
+    public function chartofaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
+    }
+
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
     
 }

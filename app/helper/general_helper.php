@@ -2440,7 +2440,7 @@ class Helper
                     }
 
                     $asset = Models\FixedAssetMaster::find($val['faID']);
-                    $disposalDate = Carbon::parse($fixedCapital->approvedDate);
+                    $disposalDate = Carbon::parse($fixedCapital->documentDate);
                     $sod = Carbon::parse($asset->dateDEP);
                     $diffDays = $disposalDate->diffInDays($sod);
                     $noYears = $diffDays / 365;
@@ -2458,8 +2458,8 @@ class Helper
                     $data["itemCode"] = $asset["itemSystemCode"];
                     $data["faCode"] = $documentCode;
                     $data["assetDescription"] = 'Allocation of Logistics from ' . $output['disposalDocumentCode'] . ' related to ' . $fixedCapital['capitalizationCode'];
-                    $data["dateAQ"] = NOW();
-                    $data["dateDEP"] = NOW();
+                    $data["dateAQ"] = $fixedCapital['documentDate'];
+                    $data["dateDEP"] = $fixedCapital['documentDate'];
                     $data["depMonth"] = $remainingLife;
                     $data["DEPpercentage"] = $DEPpercentage;
                     $data["groupTO"] = $val['faID'];

@@ -374,24 +374,17 @@ class CreditNoteDetailsAPIController extends AppBaseController
         return $this->sendResponse($data, 'Credit Note Details deleted successfully');
     }
 
-    public function creditNotegetcontract(Request $request)
+    public function getAllcontractbyclientbase(Request $request)
     {
         $input = $request->all();
         $creditNoteDetailsID = $input['creditNoteDetailsID'];
         $detail = CreditNoteDetails::where('creditNoteDetailsID', $creditNoteDetailsID)->first();
         $master = CreditNote::where('creditNoteAutoID', $detail->creditNoteAutoID)->first();
 
-        $contractID = 0;
-        if ($detail->contractUID != '' && $detail->contractUID != 0) {
-            $contractID = $detail->contractUID;
-
-        }
-
-        $qry = "SELECT * FROM ( SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID  UNION ALL SELECT contractUID, ContractNumber FROM contractmaster WHERE contractUID = $contractID ) t GROUP BY contractUID, ContractNumber";
-
+        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID AND clientID = $master->customerID;";
         $contract = DB::select($qry);
 
-        return $this->sendResponse($contract, 'Contract deleted successfully');
+        return $this->sendResponse($contract, 'Record retrieved successfully');
     }
 
 
@@ -418,7 +411,6 @@ class CreditNoteDetailsAPIController extends AppBaseController
                 ->first();
 
             $input['clientContractID'] = $contract->ContractNumber;
-
 
         }
 

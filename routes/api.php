@@ -793,7 +793,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
     Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
     Route::get('getAllcontractbyclient', 'CustomerInvoiceDirectAPIController@getAllcontractbyclient');
-    Route::get('getAllcontractbyclientbase', 'CustomerInvoiceDirectAPIController@getAllcontractbyclientbase');
     Route::post('addDirectInvoiceDetails', 'CustomerInvoiceDirectDetailAPIController@addDirectInvoiceDetails');
     Route::get('customerInvoiceAudit', 'CustomerInvoiceDirectAPIController@customerInvoiceAudit');
     Route::post('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice');
@@ -811,7 +810,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
     Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
     Route::get('creditNoteDetails', 'CreditNoteDetailsAPIController@creditNoteDetails');
-    Route::get('creditNotegetcontract', 'CreditNoteDetailsAPIController@creditNotegetcontract');
+    Route::get('getAllcontractbyclientbase', 'CreditNoteDetailsAPIController@getAllcontractbyclientbase');
     Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
     Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
     Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
@@ -1153,6 +1152,24 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('st_details_reffered_backs', 'StockTransferDetailsRefferedBackAPIController');
     Route::get('getStockTransferDetailsReferBack', 'StockTransferDetailsRefferedBackAPIController@getStockTransferDetailsReferBack');
 
+    Route::post('getCreditNoteAmendHistory', 'CreditNoteReferredbackAPIController@getCreditNoteAmendHistory');
+    Route::resource('creditNoteReferredbackCRUD', 'CreditNoteReferredbackAPIController');
+    Route::resource('creditNoteDetailsRefferdbacks', 'CreditNoteDetailsRefferdbackAPIController');
+    Route::get('getCapitalizationLinkedDocument', 'AssetCapitalizationAPIController@getCapitalizationLinkedDocument');
+    Route::get('getCNDetailAmendHistory', 'CreditNoteDetailsRefferdbackAPIController@getCNDetailAmendHistory');
+
+    Route::post('getCustomerInvoiceApproval', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceApproval');
+    Route::post('getApprovedCustomerInvoiceForCurrentUser', 'CustomerInvoiceDirectAPIController@getApprovedCustomerInvoiceForCurrentUser');
+    Route::post('approveCustomerInvoice', 'CustomerInvoiceDirectAPIController@approveCustomerInvoice');
+    Route::post('rejectCustomerInvoice', 'CustomerInvoiceDirectAPIController@rejectCustomerInvoice');
+    Route::post('getCustomerInvoiceAmend', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceAmend');
+
+    Route::resource('customerInvoiceRefferedbacksCRUD', 'CustomerInvoiceDirectRefferedbackAPIController');
+    Route::resource('customerInvoiceDetRefferedbacks', 'CustomerInvoiceDirectDetRefferedbackAPIController');
+    Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory');
+    Route::get('getCIDetailsForAmendHistory', 'CustomerInvoiceDirectDetRefferedbackAPIController@getCIDetailsForAmendHistory');
+
+
 });
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
@@ -1203,4 +1220,3 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
-

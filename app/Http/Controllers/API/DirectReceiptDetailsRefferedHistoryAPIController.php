@@ -288,6 +288,7 @@ class DirectReceiptDetailsRefferedHistoryAPIController extends AppBaseController
 
         $items = DirectReceiptDetailsRefferedHistory::where('directReceiptAutoID', $directReceiptAutoID)
             ->where('timesReferred', $timesReferred)
+            ->with(['segment'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Purchase Order Details Reffered History retrieved successfully');

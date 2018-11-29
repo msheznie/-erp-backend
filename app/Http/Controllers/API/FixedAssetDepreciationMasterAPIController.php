@@ -410,6 +410,14 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             return $this->sendError('Fixed Asset Depreciation Master not found');
         }
 
+        if($fixedAssetDepreciationMaster->confirmedYN == 1){
+            return $this->sendError('You cannot delete confirmed document');
+        }
+
+        if($fixedAssetDepreciationMaster->isDepProcessingYN == 0){
+            return $this->sendError('Depreciation is still running', 500);
+        }
+
         $fixedAssetDepreciationMaster->delete();
 
         return $this->sendResponse($id, 'Fixed Asset Depreciation Master deleted successfully');
