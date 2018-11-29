@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : StockTransfer.php
+ * -- File Name : StockTransferRefferedBack.php
  * -- Project Name : ERP
- * -- Module Name :  Stock Transfer
- * -- Author : Mohamed Nazir
- * -- Create date : 13 - July 2018
+ * -- Module Name :  Stock Transfer Referred Back
+ * -- Author : Mohamed Fayas
+ * -- Create date : 29 - November 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
  */
@@ -15,11 +15,23 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="StockTransfer",
+ *      definition="StockTransferRefferedBack",
  *      required={""},
+ *      @SWG\Property(
+ *          property="stockTransferRefferedID",
+ *          description="stockTransferRefferedID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="stockTransferAutoID",
  *          description="stockTransferAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -29,6 +41,12 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="serviceLineSystemID",
+ *          description="serviceLineSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="serviceLineCode",
  *          description="serviceLineCode",
  *          type="string"
@@ -36,6 +54,18 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="companyFinanceYearID",
  *          description="companyFinanceYearID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyFinancePeriodID",
+ *          description="companyFinancePeriodID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="documentSystemID",
+ *          description="documentSystemID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -66,9 +96,21 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="companyFromSystemID",
+ *          description="companyFromSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="companyFrom",
  *          description="companyFrom",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyToSystemID",
+ *          description="companyToSystemID",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="companyTo",
@@ -94,6 +136,12 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="confirmedByEmpSystemID",
+ *          description="confirmedByEmpSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="confirmedByEmpID",
  *          description="confirmedByEmpID",
  *          type="string"
@@ -106,6 +154,17 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="approved",
  *          description="approved",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserID",
+ *          description="approvedByUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserSystemID",
+ *          description="approvedByUserSystemID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -134,6 +193,12 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="createdUserGroup",
  *          description="createdUserGroup",
  *          type="string"
@@ -142,6 +207,12 @@ use Eloquent as Model;
  *          property="createdPCID",
  *          description="createdPCID",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserSystemID",
+ *          description="createdUserSystemID",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="createdUserID",
@@ -154,23 +225,30 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="modifiedUserSystemID",
+ *          description="modifiedUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="modifiedPc",
  *          description="modifiedPc",
  *          type="string"
  *      )
  * )
  */
-class StockTransfer extends Model
+class StockTransferRefferedBack extends Model
 {
 
-    public $table = 'erp_stocktransfer';
+    public $table = 'erp_stocktransferrefferedback';
+    
+    const CREATED_AT = NULL;
+    const UPDATED_AT = NULL;
+    protected $primaryKey  = 'stockTransferRefferedID';
 
-    const CREATED_AT = 'createdDateTime';
-    const UPDATED_AT = 'timeStamp';
-
-    protected $primaryKey  = 'stockTransferAutoID';
 
     public $fillable = [
+        'stockTransferAutoID',
         'companySystemID',
         'companyID',
         'serviceLineSystemID',
@@ -199,11 +277,14 @@ class StockTransfer extends Model
         'confirmedDate',
         'approved',
         'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
         'postedDate',
         'fullyReceived',
         'timesReferred',
         'interCompanyTransferYN',
         'RollLevForApp_curr',
+        'refferedBackYN',
         'createdDateTime',
         'createdUserGroup',
         'createdPCID',
@@ -212,10 +293,7 @@ class StockTransfer extends Model
         'modifiedUser',
         'modifiedUserSystemID',
         'modifiedPc',
-        'timestamp',
-        'approvedByUserID',
-        'approvedByUserSystemID',
-        'refferedBackYN'
+        'timestamp'
     ];
 
     /**
@@ -224,6 +302,7 @@ class StockTransfer extends Model
      * @var array
      */
     protected $casts = [
+        'stockTransferRefferedID' => 'integer',
         'stockTransferAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -248,20 +327,20 @@ class StockTransfer extends Model
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approved' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
         'fullyReceived' => 'integer',
         'timesReferred' => 'integer',
         'interCompanyTransferYN' => 'integer',
         'RollLevForApp_curr' => 'integer',
+        'refferedBackYN' => 'integer',
         'createdUserGroup' => 'string',
-        'createdUserSystemID' => 'integer',
         'createdPCID' => 'string',
+        'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
-        'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string',
-        'approvedByUserID' => 'string',
-        'approvedByUserSystemID' => 'integer',
-        'refferedBackYN' => 'integer'
+        'modifiedUserSystemID' => 'integer',
+        'modifiedPc' => 'string'
     ];
 
     /**
@@ -326,6 +405,4 @@ class StockTransfer extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
-
-    
 }

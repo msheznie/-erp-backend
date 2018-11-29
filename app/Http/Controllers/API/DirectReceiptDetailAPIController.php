@@ -317,13 +317,10 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $detailID = $input['detailID'];
         $detail = DirectReceiptDetail::where('directReceiptDetailsID', $detailID)->first();
         $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $detail->directReceiptAutoID)->first();
-        $contractID = 0;
-        if ($detail->contractUID != '' && $detail->contractUID != 0) {
-            $contractID = $detail->contractUID;
 
-        }
-        $qry = "SELECT * FROM ( SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID  UNION ALL SELECT contractUID, ContractNumber FROM contractmaster WHERE contractUID = $contractID ) t GROUP BY contractUID, ContractNumber";
+        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = $master->companySystemID AND clientID = $master->customerID;";
         $contract = DB::select($qry);
+
         return $this->sendResponse($contract, 'Contract deleted successfully');
     }
 
