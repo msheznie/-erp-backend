@@ -266,7 +266,7 @@
                                         @endif
                                         <br>
                                         @if($det->employee)
-                                            {{$det->employee->details->designation->designation }}
+                                            {{$det->employee->details->designation}}
                                         @endif
                                         <br><br>
                                         @if($det->employee)
@@ -281,7 +281,6 @@
                     {{--SGG PDO ONLY--}}
                     <div class="" style="">
                         <table width="100%">
-
                             <tr>
                                 <td width="15%">
                                     <span class="font-weight-bold">Prepared By :</span>

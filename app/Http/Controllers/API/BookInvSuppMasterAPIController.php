@@ -1015,7 +1015,9 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'erp_bookinvsuppmaster.refferedBackYN',
                 'erp_bookinvsuppmaster.confirmedYN',
                 'erp_bookinvsuppmaster.documentType',
-                'erp_bookinvsuppmaster.approved'
+                'erp_bookinvsuppmaster.approved',
+                'erp_bookinvsuppmaster.supplierInvoiceNo',
+                'erp_bookinvsuppmaster.supplierInvoiceDate'
             ]);
 
         $search = $request->input('search.value');
@@ -1183,6 +1185,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'erp_bookinvsuppmaster.confirmedDate',
             'erp_bookinvsuppmaster.bookingAmountTrans',
             'erp_bookinvsuppmaster.documentType',
+            'erp_bookinvsuppmaster.supplierInvoiceNo',
+            'erp_bookinvsuppmaster.supplierInvoiceDate',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
@@ -1265,6 +1269,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'erp_bookinvsuppmaster.confirmedDate',
             'erp_bookinvsuppmaster.bookingAmountTrans',
             'erp_bookinvsuppmaster.documentType',
+            'erp_bookinvsuppmaster.supplierInvoiceNo',
+            'erp_bookinvsuppmaster.supplierInvoiceDate',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
