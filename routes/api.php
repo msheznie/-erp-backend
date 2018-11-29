@@ -593,6 +593,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
 
     Route::resource('stock_receives', 'StockReceiveAPIController');
+    Route::post('stockReceiveReferBack', 'StockReceiveAPIController@stockReceiveReferBack');
     Route::post('getStockReceiveApproval', 'StockReceiveAPIController@getStockReceiveApproval');
     Route::post('getApprovedSRForCurrentUser', 'StockReceiveAPIController@getApprovedSRForCurrentUser');
     Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
@@ -1169,6 +1170,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory');
     Route::get('getCIDetailsForAmendHistory', 'CustomerInvoiceDirectDetRefferedbackAPIController@getCIDetailsForAmendHistory');
 
+    Route::resource('sr_details_reffered_backs', 'StockReceiveDetailsRefferedBackAPIController');
+    Route::get('getStockReceiveDetailsReferBack', 'StockReceiveDetailsRefferedBackAPIController@getStockReceiveDetailsReferBack');
+    Route::resource('stock_receive_reffered_backs', 'StockReceiveRefferedBackAPIController');
+    Route::post('getReferBackHistoryByStockReceive', 'StockReceiveRefferedBackAPIController@getReferBackHistoryByStockReceive');
 
 });
 
@@ -1220,3 +1225,5 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
