@@ -1392,7 +1392,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $totalAmount = ($percentage / 100) * $totalAmount;
 
-        $taxMaster = \DB::select('SELECT * FROM erp_taxmaster WHERE taxType=1 AND companySystemID = ' . $bookInvSuppMaster->companySystemID . '');
+        $taxMaster = \DB::select('SELECT * FROM erp_taxmaster WHERE taxType=2 AND companySystemID = ' . $bookInvSuppMaster->companySystemID . '');
 
         if (empty($taxMaster)) {
             return $this->sendResponse('e', 'Tax Master not found');

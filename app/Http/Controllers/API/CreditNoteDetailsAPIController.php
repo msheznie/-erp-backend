@@ -381,7 +381,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $detail = CreditNoteDetails::where('creditNoteDetailsID', $creditNoteDetailsID)->first();
         $master = CreditNote::where('creditNoteAutoID', $detail->creditNoteAutoID)->first();
 
-        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID AND clientID = $master->customerID;";
+        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = $master->companySystemID AND clientID = $master->customerID;";
         $contract = DB::select($qry);
 
         return $this->sendResponse($contract, 'Record retrieved successfully');
