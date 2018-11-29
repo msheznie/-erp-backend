@@ -214,7 +214,8 @@ class StockTransfer extends Model
         'modifiedPc',
         'timestamp',
         'approvedByUserID',
-        'approvedByUserSystemID'
+        'approvedByUserSystemID',
+        'refferedBackYN'
     ];
 
     /**
@@ -260,6 +261,7 @@ class StockTransfer extends Model
         'modifiedPc' => 'string',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
+        'refferedBackYN' => 'integer'
     ];
 
     /**

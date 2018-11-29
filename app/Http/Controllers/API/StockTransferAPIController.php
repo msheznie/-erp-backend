@@ -12,6 +12,7 @@
  * -- Date: 24-July 2018 By: Fayas Description: Added new functions named as getStockTransferForReceive(),getStockTransferDetailsByMaster()
  * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as printStockTransfer()
  * -- Date: 27-August 2018 By: Fayas Description: Added new functions named as stockTransferReopen()
+ * -- Date: 29-November 2018 By: Fayas Description: Added new functions named as stockTransferReferBack()
  */
 namespace App\Http\Controllers\API;
 
@@ -23,6 +24,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Months;
@@ -31,6 +33,8 @@ use App\Models\SegmentMaster;
 use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
 use App\Models\StockTransfer;
+use App\Models\StockTransferDetailsRefferedBack;
+use App\Models\StockTransferRefferedBack;
 use App\Models\SupplierMaster;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
@@ -720,7 +724,7 @@ class StockTransferAPIController extends AppBaseController
     public function getStockTransferMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked'));
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'locationFrom', 'confirmedYN', 'approved', 'month', 'year', 'interCompanyTransferYN'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -757,6 +761,12 @@ class StockTransferAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('locationFrom', $input)) {
+            if ($input['locationFrom'] && !is_null($input['locationFrom'])) {
+                $stockTransferMaster->where('locationFrom', '=', $input['locationFrom']);
+            }
+        }
+
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
                 $stockTransferMaster->whereMonth('tranferDate', '=', $input['month']);
@@ -785,7 +795,8 @@ class StockTransferAPIController extends AppBaseController
                 'erp_stocktransfer.confirmedYN',
                 'erp_stocktransfer.approved',
                 'erp_stocktransfer.approvedDate',
-                'erp_stocktransfer.fullyReceived'
+                'erp_stocktransfer.fullyReceived',
+                'erp_stocktransfer.refferedBackYN'
             ]);
 
         $search = $request->input('search.value');
@@ -1232,5 +1243,67 @@ class StockTransferAPIController extends AppBaseController
         return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer reopened successfully');
     }
 
+    public function stockTransferReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $stockTransfer = $this->stockTransferRepository->find($id);
+        if (empty($stockTransfer)) {
+            return $this->sendError('Stock Transfer not found');
+        }
+
+        if ($stockTransfer->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this stock transfer');
+        }
+
+        $stockTransferArray = $stockTransfer->toArray();
+
+        $storeSTHistory = StockTransferRefferedBack::insert($stockTransferArray);
+
+        $fetchDetails = StockTransferDetails::where('stockTransferAutoID', $id)
+                                                            ->get();
+
+        if (!empty($fetchDetails)) {
+            foreach ($fetchDetails as $detail) {
+                $detail['timesReferred'] = $stockTransfer->timesReferred;
+            }
+        }
+
+        $stockTransferDetailArray = $fetchDetails->toArray();
+
+        $storePRDetailHistory = StockTransferDetailsRefferedBack::insert($stockTransferDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockTransfer->companySystemID)
+            ->where('documentSystemID', $stockTransfer->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $stockTransfer->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockTransfer->companySystemID)
+            ->where('documentSystemID', $stockTransfer->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+
+            $updateArray = ['refferedBackYN' => 0,'confirmedYN' => 0,'confirmedByEmpSystemID' => null,
+                            'confirmedByEmpID' => null,'confirmedByName' => null,'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+            $this->stockTransferRepository->update($updateArray,$id);
+        }
+
+        return $this->sendResponse($stockTransfer->toArray(), 'Stock Transfer Amend successfully');
+    }
 
 }
