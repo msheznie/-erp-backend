@@ -155,7 +155,7 @@ class CustomerInvoiceDirectRefferedbackAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CustomerInvoiceDirectRefferedback $customerInvoiceDirectRefferedback */
-        $customerInvoiceDirectRefferedback = $this->customerInvoiceDirectRefferedbackRepository->with(['createduser', 'confirmed_by', 'company', 'bankaccount', 'currency', 'finance_period_by' => function ($query) {
+        $customerInvoiceDirectRefferedback = $this->customerInvoiceDirectRefferedbackRepository->with(['createduser', 'confirmed_by', 'company', 'bankaccount', 'customer', 'currency', 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
