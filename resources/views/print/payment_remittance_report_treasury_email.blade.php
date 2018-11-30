@@ -21,7 +21,7 @@
 
         .footer {
             bottom: 0;
-            height: 100px;
+            height: 10px;
         }
 
         .footer {
@@ -55,7 +55,7 @@
         }
 
         table > tbody > tr > td {
-            font-size: 11.5px;
+            font-size: 14px;
         }
 
         .theme-tr-head {
@@ -75,7 +75,7 @@
         }
 
         .font-weight-bold {
-            font-weight: 700 !important;
+            font-weight: 400 !important;
         }
 
         .table thead th {
@@ -165,6 +165,7 @@
 
         .border-bottom-remov {
             border-bottom: 1px solid #ffffffff !important;
+            border-left: 1px solid #ffffffff !important;
             background-color: #ffffff !important;
             border-right: 1px solid #ffffffff !important;
         }
@@ -174,59 +175,11 @@
 <div class="footer">
     <table style="width:100%;">
         <tr>
-            <td width="40%"><span
-                        class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
+            <td style="width:50%;font-size: 14px;">
+                <span style="width: 50%;"> {{date("l, F d,Y", strtotime(now()))}}</span>
             </td>
-            <td><span class="font-weight-bold">Review By :</span></td>
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            <td><span class="font-weight-bold">Electronically Approved By :</span></td>
-        </tr>
-        <tr>
-            &nbsp;
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            @if ($masterdata->approved_by)
-                @foreach ($masterdata->approved_by as $det)
-                    <td style="padding-right: 25px;font-size: 9px;">
-                        <div>
-                            @if($det->employee)
-                                {{$det->employee->empFullName }}
-                            @endif
-                        </div>
-                        <div><span>
-                @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                                @endif
-              </span></div>
-                        <div style="width: 3px"></div>
-                    </td>
-                @endforeach
-            @endif
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            <td colspan="3" style="width:100%">
-                <hr style="background-color: black">
-            </td>
-        </tr>
-        <tr>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span class="white-space-pre-line font-weight-bold">{!! nl2br($docRef) !!}</span>
-            </td>
-            <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
+            <td style="width:50%; text-align: right;font-size: 14px;">
                 <span style="text-align: center">Page <span class="pagenum"></span></span><br>
-                @if ($masterdata->company)
-                    {{$masterdata->company->CompanyName}}
-                @endif
-            </td>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
@@ -235,65 +188,22 @@
 <div class="card-body content" id="print-section">
     <table style="width: 100%">
         <tr style="width: 100%">
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 10%" class="text-center">
                 @if($masterdata->company)
-                    <img src="logos/{{$masterdata->company->companyLogo}}" width="180px" height="60px">
+                    <span style="font-size: 20px;font-weight: 700"> {{$masterdata->company->CompanyName}}</span><br><br>
+                    <span style="font-size: 20px;font-weight: 700">Remittance Advice</span>
                 @endif
-                <br>
-
-                <div>
-                    <span style="font-size: 18px">
-                        @if($masterdata->documentType == 13)
-                            Customer Invoice Receipt
-                        @endif
-                        @if($masterdata->documentType == 14)
-                            Direct Receipt
-                        @endif
-                    </span>
-                </div>
-            </td>
-            <td valign="top" style="width: 50%">
-                @if($masterdata->company)
-                    <span style="font-size: 24px;font-weight: 400"> {{$masterdata->company->CompanyName}}</span>
-                @endif
-                <br>
-                <table>
-                    <tr>
-                        <td width="100px">
-                            <span class="font-weight-bold">Doc Code</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            <span>{{$masterdata->BPVcode}}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Doc Date </span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            <span>
-                                {{ \App\helper\Helper::dateFormat($masterdata->BPVdate)}}
-                            </span>
-                        </td>
-                    </tr>
-                </table>
             </td>
         </tr>
     </table>
-    <hr style="color: #d3d9df">
+    <br><br>
     <table style="width: 100%">
         <tr style="width:100%">
             <td style="width: 60%">
                 <table>
                     <tr>
                         <td width="150px">
-                            <span class="font-weight-bold">Payee Code</span>
+                            <span class="font-weight-bold">Supplier Code</span>
                         </td>
                         <td width="10px">
                             <span class="font-weight-bold">:</span>
@@ -306,7 +216,7 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Payee Name</span>
+                            <span class="font-weight-bold">Supplier Name</span>
                         </td>
                         <td width="10px">
                             <span class="font-weight-bold">:</span>
@@ -317,33 +227,21 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Bank Name</span>
+                            <span class="font-weight-bold">Supplier Addres</span>
                         </td>
                         <td width="10px">
                             <span class="font-weight-bold">:</span>
                         </td>
-                        <td>
-                            @if($masterdata->bankaccount)
-                                {{$masterdata->bankaccount->bankName}}
+                        <td valign="top">
+                            @if($masterdata->supplier)
+                                {{--{{$masterdata->supplier->address}}--}}
+                                {!! nl2br($masterdata->supplier->address) !!}
                             @endif
                         </td>
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Bank</span>
-                        </td>
-                        <td width="10px">
-                            <span class="font-weight-bold">:</span>
-                        </td>
-                        <td>
-                            @if($masterdata->bankaccount)
-                                {{$masterdata->bankaccount->AccountNo}}
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="50px">
-                            <span class="font-weight-bold">Cheque No</span>
+                            <span class="font-weight-bold">Cheque # / Transfer #</span>
                         </td>
                         <td width="10px">
                             <span class="font-weight-bold">:</span>
@@ -379,24 +277,38 @@
             <td style="width: 40%">
                 <table style="width: 100%">
                     <tr style="width: 100%">
-                        <td valign="bottom" class="text-right">
-                                         <span class="font-weight-bold">
-                         <h3 class="text-muted">
-                             @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
-                                 Not Confirmed
-                             @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
-                                 Pending Approval
-                             @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
-                                 Fully Approved
-                             @endif
-                         </h3>
- `             </span>
+                        <td width="100px">
+                            <span class="font-weight-bold">Doc Code</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            <span>{{$masterdata->BPVcode}}</span>
                         </td>
                     </tr>
                     <tr>
-                        <td>&nbsp;</td>
+                        <td width="70px">
+                            <span class="font-weight-bold">Date </span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            <span>
+                                {{ \App\helper\Helper::dateFormat($masterdata->BPVdate)}}
+                            </span>
+                        </td>
                     </tr>
+                    <tr> <td colspan="3"> &nbsp; </td> </tr>
+                    <tr> <td colspan="3">&nbsp;</td> </tr>
+                    <tr> <td colspan="3">&nbsp;</td> </tr>
                     <tr>
+                        <td width="70px">
+                        </td>
+                        <td width="10px">
+
+                        </td>
                         <td valign="bottom" class="text-right">
                             <span class="font-weight-bold"> Currency:</span>
                             @if($masterdata->transactioncurrency)
@@ -413,86 +325,30 @@
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
-                    <th>#</th>
-                    <th class="text-center">Booking Inv Code</th>
+                    <th class="text-center">System Invoice Number</th>
                     <th class="text-center">Supplier Invoice No</th>
                     <th class="text-center">Invoice Date</th>
                     <th class="text-center">Invoice Amount</th>
                     <th class="text-center">Amount Paid</th>
-                    <th class="text-center">Balance</th>
                 </tr>
                 </thead>
                 <tbody>
                 @foreach ($masterdata->supplierdetail as $ddet)
                     {{$suppliPayment = 0}}
                     {{$suppliPayment = ($ddet->supplierInvoiceAmount - $ddet->supplierPaymentAmount) }}
-                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
-                        <td>{{$loop->iteration}}</td>
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;width: 100%;">
                         <td>{{$ddet->bookingInvDocCode}}</td>
                         <td>{{$ddet->supplierInvoiceNo}}</td>
                         <td>{{ \App\helper\Helper::dateFormat($ddet->supplierInvoiceDate)}}</td>
                         <td class="text-right">{{number_format($ddet->supplierInvoiceAmount, $transDecimal)}}</td>
                         <td class="text-right">{{number_format($ddet->supplierPaymentAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($ddet->paymentBalancedAmount, $transDecimal)}}</td>
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="4" class="text-right border-bottom-remov">&nbsp;</td>
+                    <td colspan="3" class="border-bottom-remov" style="font-size: 12.5px"><b>Electronically Generated Advice</b></td>
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($supplierdetailTotTra, $transDecimal)}}</td>
-                    <td class="text-right border-bottom-remov"></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    @endif
-    @if($masterdata->invoiceType == 3)
-        <div style="margin-top: 30px">
-            <table class="table table-bordered" style="width: 100%;">
-                <thead>
-                <tr class="theme-tr-head">
-                    <th>#</th>
-                    <th class="text-center">GL Code</th>
-                    <th class="text-center">GL Code Description</th>
-                    <th class="text-center">Service Line</th>
-                    <th class="text-center">Payment Amount</th>
-                    <th class="text-center">Local Amt (
-                        @if($masterdata->localCurrency)
-                            {{$masterdata->localCurrency->CurrencyCode}}
-                        @endif
-                        )
-                    </th>
-                    <th class="text-center">Rpt Amt (
-                        @if($masterdata->rptCurrency)
-                            {{$masterdata->rptCurrency->CurrencyCode}}
-                        @endif
-                        )
-                    </th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach ($masterdata->directdetail as $item)
-                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
-                        <td>{{$loop->iteration}}</td>
-                        <td>{{$item->glCode}}</td>
-                        <td>{{$item->glCodeDes}}</td>
-                        <td>@if($item->segment)
-                                {{$item->segment->ServiceLineDes}}
-                            @endif
-                        </td>
-                        <td class="text-right">{{number_format($item->DPAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->localAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->comRptAmount, $transDecimal)}}</td>
-                    </tr>
-                @endforeach
-                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
-                    <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
-                    <td class="text-right"
-                        style="background-color: rgb(215,215,215)">{{number_format($directDetailTotTra, $transDecimal)}}</td>
-                    <td class="text-right border-bottom-remov"></td>
-                    <td class="text-right border-bottom-remov"></td>
                 </tr>
                 </tbody>
             </table>
@@ -503,42 +359,24 @@
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
-                    <th>#</th>
-                    <th class="text-center">Purchase Order No</th>
-                    <th class="text-center">Comment</th>
-                    <th class="text-center">Payment Amount</th>
-                    <th class="text-center">Local Amt (
-                        @if($masterdata->localCurrency)
-                            {{$masterdata->localCurrency->CurrencyCode}}
-                        @endif
-                        )
-                    </th>
-                    <th class="text-center">Rpt Amt (
-                        @if($masterdata->rptCurrency)
-                            {{$masterdata->rptCurrency->CurrencyCode}}
-                        @endif
-                        )
-                    </th>
+                    <th class="text-center">Purchase Order Number</th>
+                    <th class="text-center">Comments</th>
+                    <th class="text-center">Amount</th>
                 </tr>
                 </thead>
                 <tbody>
                 @foreach ($masterdata->advancedetail as $item)
                     <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
-                        <td>{{$loop->iteration}}</td>
                         <td>{{$item->purchaseOrderCode}}</td>
                         <td>{{$item->comments}}</td>
                         <td class="text-right">{{number_format($item->paymentAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->localAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->comRptAmount, $transDecimal)}}</td>
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="2" class="text-right border-bottom-remov">&nbsp;</td>
+                    <td colspan="1" class="border-bottom-remov" style="font-size: 12.5px"><b>Electronically Generated Advice</b></td>
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($advancePayDetailTotTra, $transDecimal)}}</td>
-                    <td class="text-right border-bottom-remov"></td>
-                    <td class="text-right border-bottom-remov"></td>
                 </tr>
                 </tbody>
             </table>
