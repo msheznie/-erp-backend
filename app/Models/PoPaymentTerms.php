@@ -80,5 +80,9 @@ class PoPaymentTerms extends Model
         
     ];
 
+    public function type()
+    {
+        return $this->belongsTo('App\Models\PoPaymentTermTypes', 'LCPaymentYN', 'paymentTermsCategoryID');
+    }
     
 }
