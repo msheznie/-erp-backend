@@ -433,7 +433,7 @@
                         <td>{{ \App\helper\Helper::dateFormat($ddet->supplierInvoiceDate)}}</td>
                         <td class="text-right">{{number_format($ddet->supplierInvoiceAmount, $transDecimal)}}</td>
                         <td class="text-right">{{number_format($ddet->supplierPaymentAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($suppliPayment, $transDecimal)}}</td>
+                        <td class="text-right">{{number_format($ddet->paymentBalancedAmount, $transDecimal)}}</td>
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
