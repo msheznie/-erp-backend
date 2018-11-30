@@ -1,9 +1,9 @@
 <?php
 /**
  * =============================================
- * -- File Name : StockReceive.php
+ * -- File Name : StockReceiveRefferedBack.php
  * -- Project Name : ERP
- * -- Module Name : StockReceive
+ * -- Module Name : Stock Receive Reffered Back
  * -- Author : Mohamed Fayas
  * -- Create date : 23 - July 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
@@ -15,8 +15,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="StockReceive",
+ *      definition="StockReceiveRefferedBack",
  *      required={""},
+ *      @SWG\Property(
+ *          property="stockReceiveRefferedID",
+ *          description="stockReceiveRefferedID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="stockReceiveAutoID",
  *          description="stockReceiveAutoID",
@@ -152,6 +158,17 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="approvedByUserID",
+ *          description="approvedByUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserSystemID",
+ *          description="approvedByUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="timesReferred",
  *          description="timesReferred",
  *          type="integer",
@@ -205,20 +222,27 @@ use Eloquent as Model;
  *          property="modifiedPc",
  *          description="modifiedPc",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class StockReceive extends Model
+class StockReceiveRefferedBack extends Model
 {
 
-    public $table = 'erp_stockreceive';
+    public $table = 'erp_stockreceiverefferedback';
     
-    const CREATED_AT = 'createdDateTime';
-    const UPDATED_AT = 'timestamp';
-    protected $primaryKey  = 'stockReceiveAutoID';
+    const CREATED_AT = NULL;
+    const UPDATED_AT = NULL;
+    protected $primaryKey  = 'stockReceiveRefferedID';
 
 
     public $fillable = [
+        'stockReceiveAutoID',
         'companySystemID',
         'companyID',
         'serviceLineSystemID',
@@ -247,6 +271,8 @@ class StockReceive extends Model
         'confirmedDate',
         'approved',
         'approvedDate',
+        'approvedByUserID',
+        'approvedByUserSystemID',
         'postedDate',
         'timesReferred',
         'interCompanyTransferYN',
@@ -260,8 +286,6 @@ class StockReceive extends Model
         'modifiedUser',
         'modifiedPc',
         'timestamp',
-        'approvedByUserID',
-        'approvedByUserSystemID',
         'refferedBackYN'
     ];
 
@@ -271,6 +295,7 @@ class StockReceive extends Model
      * @var array
      */
     protected $casts = [
+        'stockReceiveRefferedID' => 'integer',
         'stockReceiveAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -295,6 +320,8 @@ class StockReceive extends Model
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approved' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
         'timesReferred' => 'integer',
         'interCompanyTransferYN' => 'integer',
         'RollLevForApp_curr' => 'integer',
@@ -305,8 +332,6 @@ class StockReceive extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'approvedByUserID' => 'string',
-        'approvedByUserSystemID' => 'integer',
         'refferedBackYN' => 'integer'
     ];
 

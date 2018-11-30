@@ -284,6 +284,8 @@ class AssetDisposalDetailAPIController extends AppBaseController
     public function update($id, UpdateAssetDisposalDetailAPIRequest $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToValue($input);
+
 
         /** @var AssetDisposalDetail $assetDisposalDetail */
         $assetDisposalDetail = $this->assetDisposalDetailRepository->findWithoutFail($id);
@@ -362,7 +364,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
 
     function getAssetDisposalDetail(Request $request)
     {
-        $assetDisposalDetail = AssetDisposalDetail::OfMaster($request->assetdisposalMasterAutoID)->with('segment_by')->get();
+        $assetDisposalDetail = AssetDisposalDetail::OfMaster($request->assetdisposalMasterAutoID)->with('segment_by', 'item_by')->get();
         if (empty($assetDisposalDetail)) {
             return $this->sendError('Asset Disposal Detail not found');
         }

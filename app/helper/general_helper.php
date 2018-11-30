@@ -1516,7 +1516,7 @@ class Helper
 
                             //generate customer invoice or Direct GRV
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
-                                if ($sourceModel->disposalType == 1 || $sourceModel->disposalType == 6) {
+                                if ($sourceModel->disposalType == 1) {
                                     $jobCI = CreateCustomerInvoice::dispatch($sourceModel);
                                 }
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
@@ -1782,6 +1782,12 @@ class Helper
                     $docInforArr["primarykey"] = 'stockTransferAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 10: // stock receive
+                    $docInforArr["tableName"] = 'erp_stockreceive';
+                    $docInforArr["modelName"] = 'StockReceive';
+                    $docInforArr["primarykey"] = 'stockReceiveAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -1797,7 +1803,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -2482,6 +2488,7 @@ class Helper
                     $data['createdPcID'] = gethostname();
                     $data['createdUserID'] = \Helper::getEmployeeID();
                     $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdDateAndTime'] = date('Y-m-d H:i:s');
                     $data["modifiedUser"] = null;
                     $data["modifiedUserSystemID"] = null;
                     $data["modifiedPc"] = null;

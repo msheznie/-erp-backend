@@ -192,7 +192,7 @@ class ItemMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
         $search = $request->input('search.value');
-        $itemMasters = ($this->getAllItemsQry($input,$search));
+        $itemMasters = ($this->getAllItemsQry($input, $search));
 
         return \DataTables::eloquent($itemMasters)
             ->order(function ($query) use ($input) {
@@ -220,7 +220,7 @@ class ItemMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
         $search = $request->input('search.value');
-        $items = ($this->getAllItemsQry($input,$search))->orderBy('itemCodeSystem', $sort)->get();
+        $items = ($this->getAllItemsQry($input, $search))->orderBy('itemCodeSystem', $sort)->get();
         $type = $request->get('type');
         if ($items) {
             $x = 0;
@@ -229,22 +229,22 @@ class ItemMasterAPIController extends AppBaseController
                 $data[$x]['Part Number'] = $val['secondaryItemCode'];
                 $data[$x]['Item Description'] = $val['itemDescription'];
 
-                if($val['unit_by']){
+                if ($val['unit_by']) {
                     $data[$x]['UOM'] = $val['unit_by']['UnitShortCode'];
-                }else{
+                } else {
                     $data[$x]['UOM'] = '-';
                 }
 
-                if($val['financeMainCategory']){
+                if ($val['financeMainCategory']) {
                     $data[$x]['Category'] = $val['financeMainCategory']['categoryDescription'];
-                }else{
+                } else {
                     $data[$x]['Category'] = '-';
                 }
 
-                if($val['financeSubCategory']){
+                if ($val['financeSubCategory']) {
                     $data[$x]['Sub Category'] = $val['financeSubCategory']['categoryDescription'];
                     $data[$x]['Gl Code'] = $val['financeSubCategory']['financeGLcodePL'];
-                }else{
+                } else {
                     $data[$x]['Sub Category'] = '-';
                     $data[$x]['Gl Code'] = '-';
                 }
@@ -267,7 +267,7 @@ class ItemMasterAPIController extends AppBaseController
         ///return $this->sendResponse($itemMasters->toArray(), 'Item Masters retrieved successfully');*/
     }
 
-    public function getAllItemsQry($request,$search)
+    public function getAllItemsQry($request, $search)
     {
 
         $input = $request;
@@ -282,7 +282,7 @@ class ItemMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
 
-        $itemMasters = ItemMaster::with(['unit','unit_by','financeMainCategory', 'financeSubCategory']);
+        $itemMasters = ItemMaster::with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory']);
         //->whereIn('primaryCompanySystemID',$childCompanies);
 
         if (array_key_exists('financeCategoryMaster', $input)) {
@@ -314,9 +314,9 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
-        if($search){
-            $itemMasters =   $itemMasters->where(function ($query) use($search) {
-                $query->where('primaryCode','LIKE',"%{$search}%")
+        if ($search) {
+            $itemMasters = $itemMasters->where(function ($query) use ($search) {
+                $query->where('primaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
                     ->orWhere('itemDescription', 'LIKE', "%{$search}%");
             });
@@ -731,5 +731,29 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($materielRequest->toArray(), 'Materiel Issue retrieved successfully');
+    }
+
+    public function getAllFixedAssetItems(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $input['companyID'];
+
+        $items = ItemAssigned::where('companySystemID', $companyId)
+            ->where('financeCategoryMaster', 3)
+            ->where('isActive', 1)
+            ->select(['itemPrimaryCode', 'itemDescription', 'idItemAssigned', 'secondaryItemCode', 'itemCodeSystem']);
+
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $items = $items->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $items = $items->take(20)->get();
+        return $this->sendResponse($items->toArray(), 'Data retrieved successfully');
+
     }
 }

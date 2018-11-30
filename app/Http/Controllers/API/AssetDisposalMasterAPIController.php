@@ -376,7 +376,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     return $this->sendError('Asset Disposal date is not within financial period!', 500, ['type' => 'confirm']);
                 }
 
-                if ($assetDisposalMaster->disposalType == 1 || $assetDisposalMaster->disposalType == 6) {
+                if ($assetDisposalMaster->disposalType == 1) {
                     //For customer check
                     $customermaster = CustomerMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
 
@@ -431,8 +431,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 $error_count = 0;
 
                 foreach ($disposalDetailExist as $val) {
-                    if (empty($val->asset_by->itemCode) || $val->asset_by->itemCode == 0) {
-                        array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->asset_by->faCode);
+                    if (empty($val->itemCode) || $val->itemCode == 0) {
+                        array_push($finalError['itemcode_not_exist'], 'FA' . ' | ' . $val->faCode);
                         $error_count++;
                     }
                 }
