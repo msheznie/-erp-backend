@@ -639,7 +639,9 @@ class BankLedgerAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $bankLedger = $bankLedger->where(function ($query) use ($search) {
                 $query->where('documentCode', 'LIKE', "%{$search}%")
-                    ->orWhere('documentNarration', 'LIKE', "%{$search}%");
+                    ->orWhere('documentNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('documentChequeNo', 'LIKE', "%{$search}%")
+                    ->orWhere('payAmountBank', 'LIKE', "%{$search}%");
             });
         }
 
@@ -681,6 +683,8 @@ class BankLedgerAPIController extends AppBaseController
         $documentCode = "documentCode";
         $documentNarration = "documentNarration";
         $autoId = "bankLedgerAutoID";
+        $documentChequeNo = "documentChequeNo";
+        $payAmountBank = "payAmountBank";
         $data = array();
 
         if (array_key_exists('type', $input) && ($input['type'] == 1 || $input['type'] == 2)) {
@@ -689,11 +693,14 @@ class BankLedgerAPIController extends AppBaseController
                 $documentCode = "custPaymentReceiveCode";
                 $documentNarration = "narration";
                 $autoId = "custReceivePaymentAutoID";
+                $documentChequeNo = "custChequeNo";
+                $payAmountBank = "bankAmount";
             } else if ($input['type'] == 2) {
                 $type = '>';
                 $documentCode = "BPVcode";
                 $documentNarration = "BPVNarration";
                 $autoId = "PayMasterAutoId";
+                $documentChequeNo = "BPVchequeNo";
             }
         }
 
@@ -701,10 +708,11 @@ class BankLedgerAPIController extends AppBaseController
             $documentCode = "documentCode";
             $documentNarration = "documentNarration";
             $autoId = "bankLedgerAutoID";
+            $documentChequeNo = "documentChequeNo";
+            $payAmountBank = "payAmountBank";
             $data = BankLedger::whereIn('companySystemID', $subCompanies)
                                 ->where('payAmountBank', $type, 0)
                                 ->where("bankAccountID", $input['bankAccountAutoID'])
-                                //->where("trsClearedYN", -1)
                                 ->where("bankClearedYN", 0);
         }else{
             if ($input['type'] == 1) {
@@ -727,9 +735,11 @@ class BankLedgerAPIController extends AppBaseController
 
         if ($search && $documentCode && $documentNarration) {
             $search = str_replace("\\", "\\\\", $search);
-            $data = $data->where(function ($query) use ($search,$documentCode,$documentNarration) {
+            $data = $data->where(function ($query) use ($search,$documentCode,$documentNarration,$documentChequeNo,$payAmountBank) {
                 $query->where($documentCode, 'LIKE', "%{$search}%")
-                    ->orWhere($documentNarration, 'LIKE', "%{$search}%");
+                    ->orWhere($documentNarration, 'LIKE', "%{$search}%")
+                    ->orWhere($documentChequeNo, 'LIKE', "%{$search}%")
+                    ->orWhere($payAmountBank, 'LIKE', "%{$search}%");
             });
         }
 
@@ -808,7 +818,9 @@ class BankLedgerAPIController extends AppBaseController
             $bankLedger = $bankLedger->where(function ($query) use ($search) {
                 $query->where('documentCode', 'LIKE', "%{$search}%")
                     ->orWhere('documentNarration', 'LIKE', "%{$search}%")
-                    ->orWhere('payeeName', 'LIKE', "%{$search}%");
+                    ->orWhere('payeeName', 'LIKE', "%{$search}%")
+                    ->orWhere('documentChequeNo', 'LIKE', "%{$search}%")
+                    ->orWhere('payAmountBank', 'LIKE', "%{$search}%");
             });
         }
 
