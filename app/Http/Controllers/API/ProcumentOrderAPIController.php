@@ -1444,7 +1444,11 @@ class ProcumentOrderAPIController extends AppBaseController
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
-        }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->first();
+        }, 'paymentTerms_by' => function ($query) {
+            $query->with('type');
+        }, 'advance_detail' => function ($query) {
+            $query->with(['category_by', 'grv_by', 'currency', 'supplier_by']);
+        }, 'company', 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 

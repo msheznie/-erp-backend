@@ -272,7 +272,7 @@ class TaxdetailAPIController extends AppBaseController
         $taxdetail = $this->taxdetailRepository->findWithoutFail($id);
 
         if (empty($taxdetail)) {
-            return $this->sendError('e', 'Taxdetail not found');
+            return $this->sendError('e', 'Tax detail not found');
         }
 
         $master['vatOutputGLCodeSystemID'] = NULL;
