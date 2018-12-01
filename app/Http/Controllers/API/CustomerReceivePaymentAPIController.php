@@ -1069,7 +1069,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 break;
 
             case 'create':
-                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
+
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isActive', 1)
+                    ->where('isAssigned', -1)
+                    ->get();
+
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
                 $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
@@ -1093,7 +1099,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 } else {
                     $output['currencies'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 }
-                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isActive', 1)
+                    ->where('isAssigned', -1)
+                    ->get();
+
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
@@ -1125,7 +1136,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 } else {
                     $output['currencies'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 }
-                $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companySystemID)->where('isAssigned', '-1')->where('isActive', '1')->get();
+                
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isActive', 1)
+                    ->where('isAssigned', -1)
+                    ->get();
+
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 

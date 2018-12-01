@@ -245,6 +245,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $input['createdPcID'] = gethostname();
                         $input['createdUserID'] = \Helper::getEmployeeID();
                         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $input['createdDateAndTime'] = date('Y-m-d H:i:s');
                         $input["timestamp"] = date('Y-m-d H:i:s');
                         unset($input['grvDetailsID']);
                         unset($input['itemPicture']);
@@ -293,6 +294,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $input['createdPcID'] = gethostname();
                                 $input['createdUserID'] = \Helper::getEmployeeID();
                                 $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                $input['createdDateAndTime'] = date('Y-m-d H:i:s');
                                 $input["timestamp"] = date('Y-m-d H:i:s');
                                 unset($input['grvDetailsID']);
                                 unset($input['itemPicture']);
@@ -431,6 +433,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input['createdPcID'] = gethostname();
             $input['createdUserID'] = \Helper::getEmployeeID();
             $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdDateAndTime'] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
             $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
 

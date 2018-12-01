@@ -11,6 +11,8 @@
 |
 */
 
+use Illuminate\Support\Facades\Artisan;
+
 Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
@@ -109,6 +111,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::resource('item/masters', 'ItemMasterAPIController');
     Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
+    Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
     Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
     Route::resource('units', 'UnitAPIController');
     Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
@@ -568,6 +571,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser');
     Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer');
     Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
+    Route::post('stockTransferReferBack', 'StockTransferAPIController@stockTransferReferBack');
 
 
     Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
@@ -592,6 +596,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
 
     Route::resource('stock_receives', 'StockReceiveAPIController');
+    Route::post('stockReceiveReferBack', 'StockReceiveAPIController@stockReceiveReferBack');
     Route::post('getStockReceiveApproval', 'StockReceiveAPIController@getStockReceiveApproval');
     Route::post('getApprovedSRForCurrentUser', 'StockReceiveAPIController@getApprovedSRForCurrentUser');
     Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
@@ -1145,6 +1150,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('payeeBankMemosByDocument', 'BankMemoPayeeAPIController@payeeBankMemosByDocument');
     Route::post('addBulkPayeeMemos', 'BankMemoPayeeAPIController@addBulkPayeeMemos');
     Route::post('payeeBankMemoDeleteAll', 'BankMemoPayeeAPIController@payeeBankMemoDeleteAll');
+
+    Route::post('getReferBackHistoryByStockTransfer', 'StockTransferRefferedBackAPIController@getReferBackHistoryByStockTransfer');
+    Route::resource('stock_transfer_reffered_backs', 'StockTransferRefferedBackAPIController');
+    Route::resource('st_details_reffered_backs', 'StockTransferDetailsRefferedBackAPIController');
+    Route::get('getStockTransferDetailsReferBack', 'StockTransferDetailsRefferedBackAPIController@getStockTransferDetailsReferBack');
+
     Route::post('getCreditNoteAmendHistory', 'CreditNoteReferredbackAPIController@getCreditNoteAmendHistory');
     Route::resource('creditNoteReferredbackCRUD', 'CreditNoteReferredbackAPIController');
     Route::resource('creditNoteDetailsRefferdbacks', 'CreditNoteDetailsRefferdbackAPIController');
@@ -1162,7 +1173,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory');
     Route::get('getCIDetailsForAmendHistory', 'CustomerInvoiceDirectDetRefferedbackAPIController@getCIDetailsForAmendHistory');
 
+    Route::resource('sr_details_reffered_backs', 'StockReceiveDetailsRefferedBackAPIController');
+    Route::get('getStockReceiveDetailsReferBack', 'StockReceiveDetailsRefferedBackAPIController@getStockReceiveDetailsReferBack');
+    Route::resource('stock_receive_reffered_backs', 'StockReceiveRefferedBackAPIController');
+    Route::post('getReferBackHistoryByStockReceive', 'StockReceiveRefferedBackAPIController@getReferBackHistoryByStockReceive');
+
 });
+
 
 Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
 Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
@@ -1190,6 +1207,8 @@ Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRe
 Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
 Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
 
+Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
+
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 
 Route::get('getBcryptPassword/{password}', function ($password) {
@@ -1202,8 +1221,8 @@ Route::get('runQueue', function () {
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76750);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
     //$job = \App\Jobs\BankLedgerInsert::dispatch($master);
-    //$master = \App\Models\AssetDisposalMaster::find(241);generateAssetDetailDrilldown
-    //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
+    $master = \App\Models\AssetDisposalMaster::find(255);
+    $job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
     //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
 });
@@ -1212,3 +1231,5 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+

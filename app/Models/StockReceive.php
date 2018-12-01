@@ -261,7 +261,8 @@ class StockReceive extends Model
         'modifiedPc',
         'timestamp',
         'approvedByUserID',
-        'approvedByUserSystemID'
+        'approvedByUserSystemID',
+        'refferedBackYN'
     ];
 
     /**
@@ -306,6 +307,7 @@ class StockReceive extends Model
         'modifiedPc' => 'string',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
+        'refferedBackYN' => 'integer'
     ];
 
     /**

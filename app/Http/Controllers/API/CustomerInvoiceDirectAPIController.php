@@ -536,8 +536,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
 
         $_post['bookingAmountTrans'] = $detailAmount->bookingAmountTrans;
-        $_post['bookingAmountLocal'] =  $detailAmount->bookingAmountLocal;
-        $_post['bookingAmountRpt'] =  $detailAmount->bookingAmountRpt;
+        $_post['bookingAmountLocal'] = $detailAmount->bookingAmountLocal;
+        $_post['bookingAmountRpt'] = $detailAmount->bookingAmountRpt;
 
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
@@ -803,7 +803,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
 
-        if($detail){
+        if ($detail) {
             $customerInvoiceDirect['clientContractID'] = $detail->clientContractID;
         }
 
@@ -942,7 +942,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $request->request->remove('search.value');
-        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.customerInvoiceDate','erp_custinvoicedirect.refferedBackYN','custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma');
+        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma');
 
         return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
@@ -977,12 +977,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $bankID = $master->bankID;
         }
 
-        $output['customer'] = CustomerAssigned::select('*')->where('companySystemID', $companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
+        $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName"))
+            ->where('companySystemID', $companyId)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
+            ->get();
+
         $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
         $output['invoiceType'] = array(array('value' => 1, 'label' => 'Proforma Invoice'), array('value' => 0, 'label' => 'Direct Invoice'));
         $output['companyFinanceYear'] = \Helper::companyFinanceYear($companyId);
-        $output['company'] = Company::select('CompanyName', 'CompanyID')->where('companySystemID', $companyId)->first();
+        $output['company'] = Company::select('CompanyName', 'CompanyID', 'companySystemID')->where('companySystemID', $companyId)->first();
         $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
         $output['yesNoSelectionForMinus'] = YesNoSelectionForMinus::all();
         $output['yesNoSelection'] = YesNoSelection::all();
@@ -1000,7 +1005,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $output['bankAccount'] = [];
             if ($bankID != '' && $master->custTransactionCurrencyID != '') {
 
-                $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])->where('bankmasterAutoID', $bankID)->where('accountCurrencyID', $master->custTransactionCurrencyID)->get();
+                /*                $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])
+                                    ->where('bankmasterAutoID', $bankID)
+                                    ->where('accountCurrencyID', $master->custTransactionCurrencyID)
+                                    ->get();*/
+
+                $output['bankAccount'] = BankAccount::where('erp_bankaccount.companySystemID', $output['company']['companySystemID'])
+                    ->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')
+                    ->where('bankmasterAutoID', $bankID)
+                    ->where('accountCurrencyID', $master->custTransactionCurrencyID)
+                    ->where('isAccountActive', 1)
+                    ->where('approvedYN', 1)
+                    ->get();
             }
 
             $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companyId)->get();
@@ -1069,8 +1085,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
-
-
         /*if bookinvoice not available create header*/
         /*     if ($master->bookingInvCode == ' ' || $master->bookingInvCode == 0) {
                  dd($master->bookingInvCode);
@@ -1094,24 +1108,27 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         //code commented by Nazir : requested by Zahlan
-     /*   $detailsAlreadyExist = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+        /*   $detailsAlreadyExist = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
 
-        if (!empty($detailsAlreadyExist)) {
-            return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
-        }*/
+           if (!empty($detailsAlreadyExist)) {
+               return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
+           }*/
 
-        $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob','contractType')->where('CompanyID', $master->companyID)->where('ContractNumber', $performa->contractID)->first();
-
-
-        $getRentalDetailFromFreeBilling = FreeBillingMasterPerforma::select('companyID', 'PerformaInvoiceNo', 'rentalStartDate','ticketNo', 'rentalEndDate')->where('companyID', $master->companyID)->where('PerformaInvoiceNo', $performaMasterID)->first();
-
-        $ticket =TicketMaster::select('Timedatejobstra','Timedatejobend')->where('ticketidAtuto',$getRentalDetailFromFreeBilling->ticketNo)->first();
+        $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob', 'contractType')->where('CompanyID', $master->companyID)->where('ContractNumber', $performa->contractID)->first();
 
 
-        $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)->first();
+        $getRentalDetailFromFreeBilling = FreeBillingMasterPerforma::select('companyID', 'PerformaInvoiceNo', 'rentalStartDate', 'ticketNo', 'rentalEndDate')->where('companyID', $master->companyID)->where('PerformaInvoiceNo', $performaMasterID)->first();
+
+        $ticket = TicketMaster::select('Timedatejobstra', 'Timedatejobend')->where('ticketidAtuto', $getRentalDetailFromFreeBilling->ticketNo)->first();
+
+        $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
+            ->where('companySystemID', $master->companySystemID)
+            ->where('documentSystemID', $master->documentSystemiD)
+            ->first();
         if (!empty($tax)) {
             return $this->sendResponse('e', 'Please delete tax details to continue');
         }
+
         if (!empty($contract)) {
             if ($contract->paymentInDaysForJob <= 0) {
                 return $this->sendResponse('e', 'Payment Period is not updated in the contract. Please update and try again');
@@ -1200,18 +1217,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $new_date = $now->addDays($contract->paymentInDaysForJob);
 
 
+            $rentalStartDate = $ticket->Timedatejobstra;
+            $rentalEndDate = $ticket->Timedatejobend;
 
-            $rentalStartDate=$ticket->Timedatejobstra;
-            $rentalEndDate=$ticket->Timedatejobend;
+            if ($contract->contractType == 1) {
 
-            if($contract->contractType==1){
-
-                $rentalStartDate=$getRentalDetailFromFreeBilling->rentalStartDate;
-                $rentalEndDate=$getRentalDetailFromFreeBilling->rentalEndDate;
+                $rentalStartDate = $getRentalDetailFromFreeBilling->rentalStartDate;
+                $rentalEndDate = $getRentalDetailFromFreeBilling->rentalEndDate;
 
             }
 
-            $date1=Carbon::parse($rentalStartDate);
+            $date1 = Carbon::parse($rentalStartDate);
             $month = $date1->format('F');
 
 
@@ -1392,14 +1408,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     public function AllDeleteCustomerInvoiceDetails(Request $request)
     {
         $id = $request['id'];
-        $getPerformaMasterID = CustomerInvoiceDirectDetail::select('performaMasterID', 'companyID', 'custInvoiceDirectID')->where('custInvoiceDirectID', $id)->groupBy('performaMasterID','companyID','custInvoiceDirectID')->get();
+        $getPerformaMasterID = CustomerInvoiceDirectDetail::select('performaMasterID', 'companyID', 'custInvoiceDirectID')->where('custInvoiceDirectID', $id)->groupBy('performaMasterID', 'companyID', 'custInvoiceDirectID')->get();
 
 
         if (empty($getPerformaMasterID)) {
             return $this->sendResponse('e', 'No details found');
         }
-
-
 
 
         $Taxdetail = Taxdetail::where('documentSystemCode', $id)->first();
@@ -1410,8 +1424,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
-            if($getPerformaMasterID){
-                foreach ($getPerformaMasterID as $val){
+            if ($getPerformaMasterID) {
+                foreach ($getPerformaMasterID as $val) {
                     $peformaMasterID = $val->performaMasterID;
                     PerformaMaster::where('companyID', $val->companyID)->where('PerformaInvoiceNo', $peformaMasterID)->update(array('performaStatus' => 0));
 
@@ -1797,43 +1811,18 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
     public function getAllcontractbyclient(request $request)
     {
-        /*   $input = $request->all();
-           $companyID = $input['companyID'];
-           $serviceLineSystemID = $input['serviceLineSystemID'];
-           $custInvDirDetAutoID = $input['custInvDirDetAutoID'];
-           $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
-           $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
-           $contract = Contract::select('contractUID', 'ContractNumber')->whereHas('segment', function ($query) use ($serviceLineSystemID) {
-               $query->where('serviceLineSystemID', $serviceLineSystemID);
-           })->where('companySystemID', $companyID)->where('clientID', $master->customerID);
-
-           if($detail->contract !=''){
-               $contractb = Contract::select('contractUID', 'ContractNumber')->where('contractUID',$detail->contractID);
-               $contract->union($contractb)->get();
-           }*/
-
         $input = $request->all();
-
-
         $custInvDirDetAutoID = $input['custInvDirDetAutoID'];
         $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
-        /*    $contract = Contract::select('contractUID', 'ContractNumber')->whereHas('segment', function ($query) use ($serviceLineSystemID) {
-                $query->where('serviceLineSystemID', $serviceLineSystemID);
-            })->where('companySystemID', $companyID)->where('clientID', $master->customerID)->get();*/
 
+        if ($master->customerID != '' || $master->customerID != 0) {
+            $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = $master->companySystemID AND clientID = $master->customerID;";
+            $contract = DB::select($qry);
 
-        $contractID = 0;
-        if ($detail->contractID != '' && $detail->contractID != 0) {
-            $contractID = $detail->contractID;
-
+            return $this->sendResponse($contract, 'Record retrieved successfully');
         }
 
-        $qry = "SELECT * FROM ( SELECT contractUID, ContractNumber FROM contractmaster WHERE ServiceLineCode = '{$detail->serviceLineCode}' AND companySystemID = $master->companySystemID AND clientID = $master->customerID UNION ALL SELECT contractUID, ContractNumber FROM contractmaster WHERE contractUID = $contractID ) t GROUP BY contractUID, ContractNumber";
-        $contract = DB::select($qry);
-
-
-        return $this->sendResponse($contract, 'Contract deleted successfully');
     }
 
     public function getAllcontractbyclientbase(request $request)
