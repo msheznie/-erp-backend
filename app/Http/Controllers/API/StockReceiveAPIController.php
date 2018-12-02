@@ -24,12 +24,15 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\StockReceive;
 use App\Models\StockReceiveDetails;
+use App\Models\StockReceiveDetailsRefferedBack;
+use App\Models\StockReceiveRefferedBack;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
@@ -694,7 +697,8 @@ class StockReceiveAPIController extends AppBaseController
                 'timesReferred',
                 'confirmedYN',
                 'approved',
-                'approvedDate'
+                'approvedDate',
+                'refferedBackYN'
             ]);
 
         $search = $request->input('search.value');
@@ -1109,6 +1113,67 @@ class StockReceiveAPIController extends AppBaseController
         return $this->sendResponse($stockTransfer->toArray(), 'Stock Receive reopened successfully');
     }
 
+    public function stockReceiveReferBack(Request $request)
+    {
+        $input = $request->all();
 
+        $id = $input['id'];
+
+        $stockReceive = $this->stockReceiveRepository->find($id);
+        if (empty($stockReceive)) {
+            return $this->sendError('Stock Receive not found');
+        }
+
+        if ($stockReceive->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this stock receive');
+        }
+
+        $stockReceiveArray = $stockReceive->toArray();
+
+        $storeSRHistory = StockReceiveRefferedBack::insert($stockReceiveArray);
+
+        $fetchDetails = StockReceiveDetails::where('stockReceiveAutoID', $id)
+            ->get();
+
+        if (!empty($fetchDetails)) {
+            foreach ($fetchDetails as $detail) {
+                $detail['timesReferred'] = $stockReceive->timesReferred;
+            }
+        }
+
+        $stockReceiveDetailArray = $fetchDetails->toArray();
+
+        $storeSRDetailHistory = StockReceiveDetailsRefferedBack::insert($stockReceiveDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockReceive->companySystemID)
+            ->where('documentSystemID', $stockReceive->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $stockReceive->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $stockReceive->companySystemID)
+            ->where('documentSystemID', $stockReceive->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+
+            $updateArray = ['refferedBackYN' => 0,'confirmedYN' => 0,'confirmedByEmpSystemID' => null,
+                'confirmedByEmpID' => null,'confirmedByName' => null,'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+            $this->stockReceiveRepository->update($updateArray,$id);
+        }
+
+        return $this->sendResponse($stockReceive->toArray(), 'Stock Transfer Amend successfully');
+    }
 
 }

@@ -1005,10 +1005,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $output['bankAccount'] = [];
             if ($bankID != '' && $master->custTransactionCurrencyID != '') {
 
-/*                $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])
-                    ->where('bankmasterAutoID', $bankID)
-                    ->where('accountCurrencyID', $master->custTransactionCurrencyID)
-                    ->get();*/
+                /*                $output['bankAccount'] = BankAccount::where('companyID', $output['company']['CompanyID'])
+                                    ->where('bankmasterAutoID', $bankID)
+                                    ->where('accountCurrencyID', $master->custTransactionCurrencyID)
+                                    ->get();*/
 
                 $output['bankAccount'] = BankAccount::where('erp_bankaccount.companySystemID', $output['company']['companySystemID'])
                     ->leftjoin('currencymaster', 'currencyID', 'accountCurrencyID')
@@ -1816,10 +1816,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $detail = CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $custInvDirDetAutoID)->first();
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
 
-        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = $master->companySystemID AND clientID = $master->customerID;";
-        $contract = DB::select($qry);
+        if ($master->customerID != '' || $master->customerID != 0) {
+            $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = $master->companySystemID AND clientID = $master->customerID;";
+            $contract = DB::select($qry);
 
-        return $this->sendResponse($contract, 'Contract deleted successfully');
+            return $this->sendResponse($contract, 'Record retrieved successfully');
+        }
+
     }
 
     public function getAllcontractbyclientbase(request $request)
