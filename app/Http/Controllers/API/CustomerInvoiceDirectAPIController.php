@@ -449,19 +449,17 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         if ($input['customerInvoiceNo'] != $customerInvoiceDirect->customerInvoiceNo) {
-            /*checking customer invoice no already exist*/
-
-            if($input['customerInvoiceNo'] !='') {
-                $verifyCompanyInvoiceNo = CustomerInvoiceDirect::select("bookingInvCode")->where('customerInvoiceNo', $input['customerInvoiceNo'])->where('customerID', $input['customerID'])->where('companySystemID', $input['companySystemID'])->where('custInvoiceDirectAutoID','<>', $id)->first();
-                if ($verifyCompanyInvoiceNo) {
-                    return $this->sendError("Entered customer invoice number was already used ($verifyCompanyInvoiceNo->bookingInvCode). Please check again.", 500);
-                }
-            }
-
-
             $_post['customerInvoiceNo'] = $input['customerInvoiceNo'];
         } else {
             $_post['customerInvoiceNo'] = $customerInvoiceDirect->customerInvoiceNo;
+        }
+
+        if($_post['customerInvoiceNo'] !='') {
+            /*checking customer invoice no already exist*/
+            $verifyCompanyInvoiceNo = CustomerInvoiceDirect::select("bookingInvCode")->where('customerInvoiceNo', $_post['customerInvoiceNo'])->where('customerID', $input['customerID'])->where('companySystemID', $input['companySystemID'])->where('custInvoiceDirectAutoID','<>', $id)->first();
+            if ($verifyCompanyInvoiceNo) {
+                return $this->sendError("Entered customer invoice number was already used ($verifyCompanyInvoiceNo->bookingInvCode). Please check again.", 500);
+            }
         }
 
 
