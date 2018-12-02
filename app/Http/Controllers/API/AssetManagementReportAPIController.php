@@ -23,6 +23,7 @@ use App\Models\AssetType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 
 class AssetManagementReportAPIController extends AppBaseController
 {
