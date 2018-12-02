@@ -400,10 +400,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
         $input['departmentSystemID'] = 4;
         /*financial Year check*/
-        $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYearCheck["success"]) {
-            return $this->sendError($companyFinanceYearCheck["message"], 500);
+        if ($isPerforma == 0) {
+            $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
+            if (!$companyFinanceYearCheck["success"]) {
+                return $this->sendError($companyFinanceYearCheck["message"], 500);
+            }
         }
+
         if ($isPerforma == 0) {
             /*financial Period check*/
             $companyFinancePeriodCheck = \Helper::companyFinancePeriodCheck($input);
@@ -446,6 +449,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         if ($input['customerInvoiceNo'] != $customerInvoiceDirect->customerInvoiceNo) {
+            /*checking customer invoice no already exist*/
+
+            if($input['customerInvoiceNo'] !='') {
+                $verifyCompanyInvoiceNo = CustomerInvoiceDirect::select("bookingInvCode")->where('customerInvoiceNo', $input['customerInvoiceNo'])->where('customerID', $input['customerID'])->where('companySystemID', $input['companySystemID'])->where('custInvoiceDirectAutoID','<>', $id)->first();
+                if ($verifyCompanyInvoiceNo) {
+                    return $this->sendError("Entered customer invoice number was already used ($verifyCompanyInvoiceNo->bookingInvCode). Please check again.", 500);
+                }
+            }
+
+
             $_post['customerInvoiceNo'] = $input['customerInvoiceNo'];
         } else {
             $_post['customerInvoiceNo'] = $customerInvoiceDirect->customerInvoiceNo;
@@ -532,6 +545,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             // return $this->sendError('Document Date should be between financial period start date and end date.', 500);
 
         }
+
+
+
+
+
 
         $detailAmount = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $id)->first();
 
