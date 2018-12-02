@@ -1177,7 +1177,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getStockReceiveDetailsReferBack', 'StockReceiveDetailsRefferedBackAPIController@getStockReceiveDetailsReferBack');
     Route::resource('stock_receive_reffered_backs', 'StockReceiveRefferedBackAPIController');
     Route::post('getReferBackHistoryByStockReceive', 'StockReceiveRefferedBackAPIController@getReferBackHistoryByStockReceive');
-
 });
 
 
