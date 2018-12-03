@@ -1175,10 +1175,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getStockReceiveDetailsReferBack', 'StockReceiveDetailsRefferedBackAPIController@getStockReceiveDetailsReferBack');
     Route::resource('stock_receive_reffered_backs', 'StockReceiveRefferedBackAPIController');
     Route::post('getReferBackHistoryByStockReceive', 'StockReceiveRefferedBackAPIController@getReferBackHistoryByStockReceive');
+
+    Route::resource('supplier_category_icv_subs', 'SupplierCategoryICVSubAPIController');
+    Route::resource('supplier_category_icv_masters', 'SupplierCategoryICVMasterAPIController');
+    Route::get('subICVCategoriesByMasterCategory', 'SupplierCategoryICVMasterAPIController@subICVCategoriesByMasterCategory');
+
     Route::resource('debitNoteDetailsRefferedbacks', 'DebitNoteDetailsRefferedbackAPIController');
     Route::resource('debitNoteMasterRefferedbacksCRUD', 'DebitNoteMasterRefferedbackAPIController');
     Route::post('getDebitNoteAmendHistory', 'DebitNoteMasterRefferedbackAPIController@getDebitNoteAmendHistory');
     Route::get('getDNDetailAmendHistory', 'DebitNoteDetailsRefferedbackAPIController@getDNDetailAmendHistory');
+
 });
 
 
