@@ -1192,8 +1192,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $invMaster = $invMaster->where(function ($query) use ($search) {
                 $query->where('matchingDocCode', 'LIKE', "%{$search}%")
                     ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVcode', 'LIKE', "%{$search}%")
                     ->orWhereHas('supplier', function ($query) use ($search) {
-                        $query->where('supplierName', 'like', "%{$search}%");
+                        $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
+                            ->orWhere('supplierName', 'LIKE', "%{$search}%");
                     });
             });
         }
