@@ -396,7 +396,7 @@ class BankLedgerAPIController extends AppBaseController
                             return $this->sendError('Bank amount is not matching with GL amount.', 500);
                         }
                     } else {
-                        //return $this->sendError('GL data cannot be found for this document.', 500);
+                        return $this->sendError('GL data cannot be found for this document.', 500);
                     }
                 }
 
