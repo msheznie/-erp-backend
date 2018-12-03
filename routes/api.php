@@ -535,6 +535,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany');
     Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit');
     Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen');
+    Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack');
     Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue');
     Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue');
     Route::post('getGRVMasterApproval', 'GRVMasterAPIController@getGRVMasterApproval');
@@ -584,6 +585,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn');
     Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
     Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen');
+    Route::post('materielReturnReferBack', 'ItemReturnMasterAPIController@materielReturnReferBack');
     Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
     Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
 
@@ -709,11 +711,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getPaymentVoucherFormData', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherFormData');
     Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
     Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
-
     Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
-
     Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
-
     Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
     Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView');
     Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData');
@@ -766,6 +765,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
     Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
     Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
+    Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
 
     Route::resource('performa_masters', 'PerformaMasterAPIController');
     Route::resource('rig_masters', 'RigMasterAPIController');
@@ -1177,6 +1177,21 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getStockReceiveDetailsReferBack', 'StockReceiveDetailsRefferedBackAPIController@getStockReceiveDetailsReferBack');
     Route::resource('stock_receive_reffered_backs', 'StockReceiveRefferedBackAPIController');
     Route::post('getReferBackHistoryByStockReceive', 'StockReceiveRefferedBackAPIController@getReferBackHistoryByStockReceive');
+
+    Route::resource('supplier_category_icv_subs', 'SupplierCategoryICVSubAPIController');
+    Route::resource('supplier_category_icv_masters', 'SupplierCategoryICVMasterAPIController');
+    Route::get('subICVCategoriesByMasterCategory', 'SupplierCategoryICVMasterAPIController@subICVCategoriesByMasterCategory');
+
+    Route::resource('debitNoteDetailsRefferedbacks', 'DebitNoteDetailsRefferedbackAPIController');
+    Route::resource('debitNoteMasterRefferedbacksCRUD', 'DebitNoteMasterRefferedbackAPIController');
+    Route::post('getDebitNoteAmendHistory', 'DebitNoteMasterRefferedbackAPIController@getDebitNoteAmendHistory');
+    Route::get('getDNDetailAmendHistory', 'DebitNoteDetailsRefferedbackAPIController@getDNDetailAmendHistory');
+
+
+    Route::resource('item_issue_referred_back', 'ItemIssueMasterRefferedBackAPIController');
+    Route::post('getReferBackHistoryByMaterielIssues', 'ItemIssueMasterRefferedBackAPIController@getReferBackHistoryByMaterielIssues');
+    Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack');
+    Route::resource('item_issue_details_reffered_backs', 'ItemIssueDetailsRefferedBackAPIController');
 });
 
 
@@ -1215,7 +1230,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 4,'autoID' => 76750, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    //$master = ['documentSystemID' => 7,'autoID' => 491, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
@@ -1230,5 +1245,8 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
+
 
 

@@ -104,7 +104,10 @@ class SupplierAssigned extends Model
         'isCriticalYN',
         'isActive',
         'isAssigned',
-        'timestamp'
+        'timestamp',
+        'supCategoryICVMasterID',
+        'supCategorySubICVID',
+        'isLCCYN'
     ];
 
     /**
@@ -147,7 +150,10 @@ class SupplierAssigned extends Model
         'isRelatedPartyYN' => 'integer',
         'isCriticalYN' => 'integer',
         'isActive' => 'integer',
-        'isAssigned' => 'integer'
+        'isAssigned' => 'integer',
+        'supCategoryICVMasterID' => 'integer',
+        'supCategorySubICVID' => 'integer',
+        'isLCCYN' => 'integer'
     ];
 
     /**

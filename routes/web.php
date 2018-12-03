@@ -1,5 +1,5 @@
 
 
-Route::resource('stockReceiveDetailsRefferedBacks', 'StockReceiveDetailsRefferedBackController');
+Route::resource('itemIssueMasterRefferedBacks', 'ItemIssueMasterRefferedBackController');
 
-Route::resource('stockReceiveRefferedBacks', 'StockReceiveRefferedBackController');
+Route::resource('itemIssueDetailsRefferedBacks', 'ItemIssueDetailsRefferedBackController');

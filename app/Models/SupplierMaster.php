@@ -144,7 +144,10 @@ class SupplierMaster extends Model
         'vatNumber',
         'vatPercentage',
         'createdUserSystemID',
-        'modifiedUserSystemID'
+        'modifiedUserSystemID',
+        'supCategoryICVMasterID',
+        'supCategorySubICVID',
+        'isLCCYN'
     ];
 
     /**
@@ -209,7 +212,10 @@ class SupplierMaster extends Model
         'documentID' => 'string',
         'vatEligible' => 'integer',
         'vatNumber' => 'string',
-        'vatPercentage' => 'integer'
+        'vatPercentage' => 'integer',
+        'supCategoryICVMasterID' => 'integer',
+        'supCategorySubICVID' => 'integer',
+        'isLCCYN' => 'integer'
     ];
 
     /**
