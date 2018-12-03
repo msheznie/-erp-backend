@@ -1558,13 +1558,18 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
         $departments[] = array("serviceLineSystemID" => 24, "ServiceLineCode" => 'X', "serviceLineMasterCode" => 'X', "ServiceLineDes" => 'X');
 
-        $filterCustomers = AccountsReceivableLedger::whereIN('companySystemID', $companiesByGroup)
-            ->select('customerID')
-            ->groupBy('customerID')
-            ->pluck('customerID');
+        $customerMaster = '';
 
-        $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('customerCodeSystem', $filterCustomers)->groupBy('customerCodeSystem')->orderBy('CustomerName', 'ASC')->get();
+        if ($request['reportID'] == 'CR') {
+            $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)->groupBy('customerCodeSystem')->orderBy('CustomerName', 'ASC')->WhereNotNull('customerCodeSystem')->get();
+        } else {
+            $filterCustomers = AccountsReceivableLedger::whereIN('companySystemID', $companiesByGroup)
+                ->select('customerID')
+                ->groupBy('customerID')
+                ->pluck('customerID');
 
+            $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('customerCodeSystem', $filterCustomers)->groupBy('customerCodeSystem')->orderBy('CustomerName', 'ASC')->get();
+        }
         $years = GeneralLedger::select(DB::raw("YEAR(documentDate) as year"))
             ->whereNotNull('documentDate')
             ->groupby('year')
@@ -3567,7 +3572,7 @@ WHERE
                     AND erp_generalledger.supplierCodeSystem = 0,
                     contractmaster.clientID,
                 IF
-                    ( erp_generalledger.documentID = "SI" OR erp_generalledger.documentID = "DN" OR erp_generalledger.documentID = "PV", contractmaster.clientID, erp_generalledger.supplierCodeSystem ) 
+                    ( erp_generalledger.documentSystemID = 11 OR erp_generalledger.documentSystemID = 15 OR erp_generalledger.documentSystemID = 4, contractmaster.clientID, erp_generalledger.supplierCodeSystem ) 
                     ) 
                     ) AS mySupplierCode,
                     erp_generalledger.documentLocalCurrencyID,
@@ -4076,7 +4081,7 @@ AND erp_generalledger.documentRptAmount > 0 ORDER BY erp_generalledger.documentD
                                 AND erp_generalledger.supplierCodeSystem = 0,
                                 contractmaster.clientID,
                             IF
-                                ( erp_generalledger.documentID = "SI" OR erp_generalledger.documentID = "DN" OR erp_generalledger.documentID = "PV", contractmaster.clientID, erp_generalledger.supplierCodeSystem ) 
+                                ( erp_generalledger.documentSystemID = 11 OR erp_generalledger.documentSystemID = 15 OR erp_generalledger.documentSystemID = 4, contractmaster.clientID, erp_generalledger.supplierCodeSystem ) 
                                 ) 
                                 ) AS mySupplierCode,
                                 erp_generalledger.documentLocalCurrencyID,
@@ -4705,66 +4710,66 @@ GROUP BY
         $customeRreceiveMonth = '';
         $invoiceMonth = '';
 
-        $monthArray = array(1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec' );
+        $monthArray = array(1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec');
 
-        foreach($monthArray as $key => $mon){
-            $headerMonth .= "round(final.balanceRpt".$mon.",final.documentRptDecimalPlaces) AS balanceAmount".$mon.",";
+        foreach ($monthArray as $key => $mon) {
+            $headerMonth .= "round(final.balanceRpt" . $mon . ",final.documentRptDecimalPlaces) AS balanceAmount" . $mon . ",";
             $mainqueryMonth .= "(
-				mainQuery.documentRptAmount".$mon." + (
+				mainQuery.documentRptAmount" . $mon . " + (
 
 					IF (
-						matchedBRV.MatchedBRVRptAmount".$mon." IS NULL,
+						matchedBRV.MatchedBRVRptAmount" . $mon . " IS NULL,
 						0,
-						matchedBRV.MatchedBRVRptAmount".$mon."
+						matchedBRV.MatchedBRVRptAmount" . $mon . "
 					)
 				) + (
 
 					IF (
-						InvoicedBRV.BRVRptAmount".$mon." IS NULL,
+						InvoicedBRV.BRVRptAmount" . $mon . " IS NULL,
 						0,
-						InvoicedBRV.BRVRptAmount".$mon."
+						InvoicedBRV.BRVRptAmount" . $mon . "
 					)
 				) + (
 
 					IF (
-						InvoiceFromBRVAndMatching.InvoiceRptAmount".$mon." IS NULL,
+						InvoiceFromBRVAndMatching.InvoiceRptAmount" . $mon . " IS NULL,
 						0,
-						InvoiceFromBRVAndMatching.InvoiceRptAmount".$mon." *- 1
+						InvoiceFromBRVAndMatching.InvoiceRptAmount" . $mon . " *- 1
 					)
 				)
-			) AS balanceRpt".$mon.",";
+			) AS balanceRpt" . $mon . ",";
             $generalLedgerMonth .= "IF (
 					MONTH (
 						erp_generalledger.documentDate
-					) = ".$key.",
+					) = " . $key . ",
 					erp_generalledger.documentRptAmount,
 					0
-				) AS documentRptAmount".$mon.",";
+				) AS documentRptAmount" . $mon . ",";
             $matchedMonth .= "sum(
 					IF (
 						MONTH (
 							erp_matchdocumentmaster.matchingDocdate
-						) = ".$key.",
+						) = " . $key . ",
 						erp_custreceivepaymentdet.receiveAmountRpt,
 						0
 					)
-				) AS MatchedBRVRptAmount".$mon.",";
+				) AS MatchedBRVRptAmount" . $mon . ",";
             $customeRreceiveMonth .= "sum(
 					IF (
 						MONTH (
 							erp_customerreceivepayment.postedDate
-						) = ".$key.",
+						) = " . $key . ",
 						erp_custreceivepaymentdet.receiveAmountRpt,
 						0
 					)
-				) AS BRVRptAmount".$mon.",";
+				) AS BRVRptAmount" . $mon . ",";
             $invoiceMonth .= "sum(
 					IF (
-						docMonth = ".$key.",
+						docMonth = " . $key . ",
 						receiveAmountRpt,
 						0
 					)
-				) AS InvoiceRptAmount".$mon.",";
+				) AS InvoiceRptAmount" . $mon . ",";
         }
 
         $query = 'SELECT
@@ -4947,7 +4952,7 @@ FROM
 				erp_customerreceivepayment.custReceivePaymentAutoID,
 				erp_customerreceivepayment.companySystemID,
 				erp_customerreceivepayment.documentSystemID,
-				' . $customeRreceiveMonth. '
+				' . $customeRreceiveMonth . '
 				sum(erp_custreceivepaymentdet.receiveAmountRpt) AS BRVRptAmountTot,
 				erp_customerreceivepayment.custPaymentReceiveCode
 			FROM

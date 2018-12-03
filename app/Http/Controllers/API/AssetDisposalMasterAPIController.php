@@ -509,6 +509,10 @@ class AssetDisposalMasterAPIController extends AppBaseController
             return $this->sendError('Asset Disposal Master not found');
         }
 
+        if ($assetDisposalMaster->confirmedYN == 1) {
+            return $this->sendError('You cannot delete confirmed document');
+        }
+
         $assetDisposalMaster->delete();
 
         return $this->sendResponse($id, 'Asset Disposal Master deleted successfully');

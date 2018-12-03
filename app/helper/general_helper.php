@@ -1411,6 +1411,11 @@ class Helper
                                 $supplierAssign = Models\SupplierAssigned::insert($supplierMaster->toArray());
                             }
 
+                            if ($input["documentSystemID"] == 59) { //Auto assign item to Chart Of Account
+                                $chartOfAccount = $namespacedModel::selectRaw('primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,chartOfAccountSystemID,AccountCode,AccountDescription,masterAccount,catogaryBLorPLID,catogaryBLorPL,controllAccountYN,controlAccountsSystemID,controlAccounts,isActive,isBank,AllocationID,relatedPartyYN,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
+                                $chartOfAccountAssign = Models\ChartOfAccountsAssigned::insert($chartOfAccount->toArray());
+                            }
+
                             if ($input["documentSystemID"] == 63) { //Create Asset Disposal
                                 $assetDisposal = self::generateAssetDisposal($masterData);
                             }
@@ -2707,7 +2712,7 @@ class Helper
 
                     $receivePayment['custPaymentReceiveCode'] = $docCode;
                     $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
-                    $receivePayment['narration'] = $pvMaster->BPVNarration;
+                    $receivePayment['narration'] = "Inter Company Transfer from " . $pvMaster->companyID . " to " . $pvMaster->interCompanyToID . "  " . $pvMaster->BPVcode;
                     $receivePayment['intercompanyPaymentID'] = $pvMaster->PayMasterAutoId;
                     $receivePayment['intercompanyPaymentCode'] = $pvMaster->BPVcode;
                     $receivePayment['expenseClaimOrPettyCash'] = $pvMaster->expenseClaimOrPettyCash;
