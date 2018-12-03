@@ -315,6 +315,7 @@ class BankLedger extends Model
         'documentSystemCode',
         'documentCode',
         'documentDate',
+        'postedDate',
         'documentNarration',
         'bankID',
         'bankAccountID',

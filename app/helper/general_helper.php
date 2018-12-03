@@ -2706,7 +2706,7 @@ class Helper
 
                     $receivePayment['custPaymentReceiveCode'] = $docCode;
                     $receivePayment['custPaymentReceiveDate'] = $pvMaster->BPVdate;
-                    $receivePayment['narration'] = $pvMaster->BPVNarration;
+                    $receivePayment['narration'] = "Inter Company Transfer from " . $pvMaster->companyID . " to " . $pvMaster->interCompanyToID . "  " . $pvMaster->BPVcode;
                     $receivePayment['intercompanyPaymentID'] = $pvMaster->PayMasterAutoId;
                     $receivePayment['intercompanyPaymentCode'] = $pvMaster->BPVcode;
                     $receivePayment['expenseClaimOrPettyCash'] = $pvMaster->expenseClaimOrPettyCash;
