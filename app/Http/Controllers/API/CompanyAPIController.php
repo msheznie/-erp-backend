@@ -18,6 +18,7 @@ use App\Http\Requests\API\UpdateCompanyAPIRequest;
 use App\Models\Company;
 use App\Models\ChartOfAccount;
 use App\Models\CountryMaster;
+use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierCategoryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\SupplierImportance;
@@ -128,6 +129,8 @@ class CompanyAPIController extends AppBaseController
         $contactTypes = SupplierContactType::all();
 
 
+        $icvCategories = SupplierCategoryICVMaster::all();
+
         $output = array('companies' => $companies->toArray(),
             'liabilityAccount' => $liabilityAccount,
             'country' => $country,
@@ -139,7 +142,8 @@ class CompanyAPIController extends AppBaseController
             'supplierCritical' => $supplierCritical,
             'yesNoSelection' => $yesNoSelection,
             'allCompanies' => $allCompanies,
-            'contactTypes' => $contactTypes
+            'contactTypes' => $contactTypes,
+            'icvCategories' => $icvCategories
             );
         return $this->sendResponse($output, 'Record retrieved successfully');
 

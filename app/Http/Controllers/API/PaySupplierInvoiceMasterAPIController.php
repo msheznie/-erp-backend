@@ -1399,8 +1399,8 @@ WHERE
     {
         $input = $request->all();
 
-        if (!isset($input['matchType'])) {
-            return $this->sendError('Please select a match type');
+        if (!isset($input['BPVsupplierID'])) {
+            return $this->sendError('Please select a supplier');
         }
 
         if ($input['matchType'] == 1) {

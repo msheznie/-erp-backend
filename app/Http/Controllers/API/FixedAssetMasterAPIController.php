@@ -383,13 +383,17 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $input['departmentID'] = $department->DepartmentID;
             }
 
-            if ($input['postToGLYN']) {
-                $chartOfAccount = ChartOfAccount::find($input['postToGLCodeSystemID']);
-                if (!empty($chartOfAccount)) {
-                    $input['postToGLCode'] = $chartOfAccount->AccountCode;
+            if(isset($input['postToGLYN'])) {
+                if ($input['postToGLYN']) {
+                    $chartOfAccount = ChartOfAccount::find($input['postToGLCodeSystemID']);
+                    if (!empty($chartOfAccount)) {
+                        $input['postToGLCode'] = $chartOfAccount->AccountCode;
+                    }
+                    $input['postToGLYN'] = 1;
+                } else {
+                    $input['postToGLYN'] = 0;
                 }
-                $input['postToGLYN'] = 1;
-            } else {
+            }else {
                 $input['postToGLYN'] = 0;
             }
 
@@ -592,14 +596,22 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $input['departmentID'] = $department->DepartmentID;
             }
 
-            if ($input['postToGLYN']) {
-                $chartOfAccount = ChartOfAccount::find($input['postToGLCodeSystemID']);
-                if (!empty($chartOfAccount)) {
-                    $input['postToGLCode'] = $chartOfAccount->AccountCode;
+            if(isset($input['postToGLYN'])) {
+                if ($input['postToGLYN']) {
+                    $chartOfAccount = ChartOfAccount::find($input['postToGLCodeSystemID']);
+                    if (!empty($chartOfAccount)) {
+                        $input['postToGLCode'] = $chartOfAccount->AccountCode;
+                    }
+                    $input['postToGLYN'] = 1;
+                } else {
+                    $input['postToGLYN'] = 0;
+                    $input['postToGLCode'] = null;
+                    $input['postToGLCodeSystemID'] = null;
                 }
-                $input['postToGLYN'] = 1;
-            } else {
+            }else {
                 $input['postToGLYN'] = 0;
+                $input['postToGLCode'] = null;
+                $input['postToGLCodeSystemID'] = null;
             }
 
             if (isset($input['dateAQ'])) {

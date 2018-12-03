@@ -240,7 +240,9 @@ class ItemReturnMaster extends Model
         'modifiedPc',
         'timestamp',
         'approvedByUserID',
-        'approvedByUserSystemID'
+        'approvedByUserSystemID',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -282,6 +284,8 @@ class ItemReturnMaster extends Model
         'modifiedPc' => 'string',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**
