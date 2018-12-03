@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : ItemIssueDetails.php
+ * -- File Name : ItemIssueDetailsRefferedBack.php
  * -- Project Name : ERP
- * -- Module Name :  Item Issue Details
+ * -- Module Name :  Item Issue Details Reffered Back
  * -- Author : Mohamed Fayas
- * -- Create date : 20- June 2018
+ * -- Create date : 03- December 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
  */
@@ -15,8 +15,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="ItemIssueDetails",
+ *      definition="ItemIssueDetailsRefferedBack",
  *      required={""},
+ *      @SWG\Property(
+ *          property="itemIssueDetailRefferedbackID",
+ *          description="itemIssueDetailRefferedbackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="itemIssueDetailID",
  *          description="itemIssueDetailID",
@@ -244,6 +250,12 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="p1",
  *          description="p1",
  *          type="integer",
@@ -329,17 +341,19 @@ use Eloquent as Model;
  *      )
  * )
  */
-class ItemIssueDetails extends Model
+class ItemIssueDetailsRefferedBack extends Model
 {
 
-    public $table = 'erp_itemissuedetails';
-    
+    public $table = 'erp_itemissuedetails_refferedback';
+
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey  = 'itemIssueDetailID';
+    protected $primaryKey  = 'itemIssueDetailRefferedbackID';
+
 
 
     public $fillable = [
+        'itemIssueDetailID',
         'itemIssueAutoID',
         'itemIssueCode',
         'itemCodeSystem',
@@ -378,6 +392,7 @@ class ItemIssueDetails extends Model
         'financeGLcodePLSystemID',
         'financeGLcodePL',
         'includePLForGRVYN',
+        'timesReferred',
         'p1',
         'p2',
         'p3',
@@ -393,8 +408,7 @@ class ItemIssueDetails extends Model
         'p13',
         'pl10',
         'pl3',
-        'timestamp',
-        'timesReferred'
+        'timestamp'
     ];
 
     /**
@@ -403,6 +417,7 @@ class ItemIssueDetails extends Model
      * @var array
      */
     protected $casts = [
+        'itemIssueDetailRefferedbackID' => 'integer',
         'itemIssueDetailID' => 'integer',
         'itemIssueAutoID' => 'integer',
         'itemIssueCode' => 'string',
@@ -442,6 +457,7 @@ class ItemIssueDetails extends Model
         'financeGLcodePLSystemID' => 'integer',
         'financeGLcodePL' => 'string',
         'includePLForGRVYN' => 'integer',
+        'timesReferred' => 'integer',
         'p1' => 'integer',
         'p2' => 'integer',
         'p3' => 'integer',
@@ -455,8 +471,7 @@ class ItemIssueDetails extends Model
         'p11' => 'integer',
         'p12' => 'integer',
         'p13' => 'integer',
-        'pl3' => 'integer',
-        'timesReferred' => 'integer'
+        'pl3' => 'integer'
     ];
 
     /**
@@ -479,6 +494,4 @@ class ItemIssueDetails extends Model
     public function item_by(){
         return $this->belongsTo('App\Models\ItemMaster','itemCodeSystem','itemCodeSystem');
     }
-
-    
 }

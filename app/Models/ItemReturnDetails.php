@@ -219,7 +219,8 @@ class ItemReturnDetails extends Model
         'financeGLcodePLSystemID',
         'financeGLcodePL',
         'includePLForGRVYN',
-        'timestamp'
+        'timestamp',
+        'timesReferred'
     ];
 
     /**
@@ -255,7 +256,8 @@ class ItemReturnDetails extends Model
         'financeGLcodebBS' => 'string',
         'financeGLcodePLSystemID' => 'integer',
         'financeGLcodePL' => 'string',
-        'includePLForGRVYN' => 'integer'
+        'includePLForGRVYN' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**
