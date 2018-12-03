@@ -73,7 +73,6 @@ class SupplierAssignedAPIController extends AppBaseController
         unset( $input['importanceDescription']);
         unset( $input['natureDescription']);
         unset( $input['typeDescription']);
-
         unset( $input['suppliercriticalID']);
         unset( $input['description']);
         unset( $input['idyesNoselection']);
@@ -109,6 +108,12 @@ class SupplierAssignedAPIController extends AppBaseController
             $input['supplierTypeID'] = $input['supplierTypeID'][0];
         if (is_array($input['WHTApplicable']))
             $input['WHTApplicable'] = $input['WHTApplicable'][0];
+        if (is_array($input['supCategoryICVMasterID']))
+            $input['supCategoryICVMasterID'] = $input['supCategoryICVMasterID'][0];
+        if (is_array($input['supCategorySubICVID']))
+            $input['supCategorySubICVID'] = $input['supCategorySubICVID'][0];
+        if (is_array($input['isLCCYN']))
+            $input['isLCCYN'] = $input['isLCCYN'][0];
 
 
         $company = Company::where('companySystemID',$input['companySystemID'])->first();
