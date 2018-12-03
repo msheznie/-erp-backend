@@ -1,23 +1,19 @@
 <?php
-/**
- * =============================================
- * -- File Name : DebitNote.php
- * -- Project Name : ERP
- * -- Module Name :  DebitNote
- * -- Author : Nazir
- * -- Create date : 16 - August 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- * --
- */
+
 namespace App\Models;
 
 use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="DebitNote",
+ *      definition="DebitNoteMasterRefferedback",
  *      required={""},
+ *      @SWG\Property(
+ *          property="debitNoteMasterRefferedBackID",
+ *          description="debitNoteMasterRefferedBackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="debitNoteAutoID",
  *          description="debitNoteAutoID",
@@ -75,14 +71,52 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="referenceNumber",
+ *          description="referenceNumber",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="invoiceNumber",
+ *          description="invoiceNumber",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
  *          property="supplierID",
  *          description="supplierID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="supplierGLCodeSystemID",
+ *          description="supplierGLCodeSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="supplierGLCode",
  *          description="supplierGLCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="liabilityAccountSysemID",
+ *          description="liabilityAccountSysemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="liabilityAccount",
+ *          description="liabilityAccount",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="UnbilledGRVAccountSystemID",
+ *          description="UnbilledGRVAccountSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="UnbilledGRVAccount",
+ *          description="UnbilledGRVAccount",
  *          type="string"
  *      ),
  *      @SWG\Property(
@@ -168,8 +202,25 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="approvedByUserID",
+ *          description="approvedByUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserSystemID",
+ *          description="approvedByUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="documentType",
  *          description="documentType",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -257,17 +308,18 @@ use Eloquent as Model;
  *      )
  * )
  */
-class DebitNote extends Model
+class DebitNoteMasterRefferedback extends Model
 {
 
-    public $table = 'erp_debitnote';
+    public $table = 'erp_debitnotemasterrefferedback';
 
     const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'debitNoteAutoID';
+    protected $primaryKey = 'debitNoteMasterRefferedBackID';
 
     public $fillable = [
+        'debitNoteAutoID',
         'companySystemID',
         'companyID',
         'documentSystemID',
@@ -282,9 +334,15 @@ class DebitNote extends Model
         'debitNoteCode',
         'debitNoteDate',
         'comments',
+        'referenceNumber',
+        'invoiceNumber',
         'supplierID',
-        'supplierGLCode',
         'supplierGLCodeSystemID',
+        'supplierGLCode',
+        'liabilityAccountSysemID',
+        'liabilityAccount',
+        'UnbilledGRVAccountSystemID',
+        'UnbilledGRVAccount',
         'supplierTransactionCurrencyID',
         'supplierTransactionCurrencyER',
         'companyReportingCurrencyID',
@@ -323,8 +381,7 @@ class DebitNote extends Model
         'modifiedPc',
         'createdDateTime',
         'createdDateAndTime',
-        'timestamp',
-        'invoiceNumber'
+        'timestamp'
     ];
 
     /**
@@ -333,6 +390,7 @@ class DebitNote extends Model
      * @var array
      */
     protected $casts = [
+        'debitNoteMasterRefferedBackID' => 'integer',
         'debitNoteAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -343,9 +401,15 @@ class DebitNote extends Model
         'companyFinancePeriodID' => 'integer',
         'debitNoteCode' => 'string',
         'comments' => 'string',
+        'referenceNumber' => 'string',
+        'invoiceNumber' => 'string',
         'supplierID' => 'integer',
-        'supplierGLCode' => 'string',
         'supplierGLCodeSystemID' => 'integer',
+        'supplierGLCode' => 'string',
+        'liabilityAccountSysemID' => 'integer',
+        'liabilityAccount' => 'string',
+        'UnbilledGRVAccountSystemID' => 'integer',
+        'UnbilledGRVAccount' => 'string',
         'supplierTransactionCurrencyID' => 'integer',
         'supplierTransactionCurrencyER' => 'float',
         'companyReportingCurrencyID' => 'integer',
@@ -378,8 +442,7 @@ class DebitNote extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'createdDateTime' => 'string',
-        'invoiceNumber' => 'string'
+        'createdDateTime' => 'string'
     ];
 
     /**
@@ -388,7 +451,7 @@ class DebitNote extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
     public function created_by()
@@ -405,6 +468,7 @@ class DebitNote extends Model
     {
         return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
     }
+
     public function supplier()
     {
         return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
@@ -449,4 +513,6 @@ class DebitNote extends Model
     {
         return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
+
+
 }
