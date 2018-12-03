@@ -13,6 +13,7 @@
  * -- Date: 05-September 2018 By: Fayas Description: Added new function getDebitNoteApprovedByUser(),getDebitNoteApprovalByUser()
  *                ,debitNoteReopen(),printDebitNote()
  * -- Date: 08-October 2018 By: Nazir Description: Added new function getDebitNotePaymentStatusHistory()
+ * -- Date: 30-November 2018 By: Nazir Description: Added new function amendDebitNote()
  */
 namespace App\Http\Controllers\API;
 
@@ -23,8 +24,11 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinanceYear;
 use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
+use App\Models\DebitNoteDetailsRefferedback;
+use App\Models\DebitNoteMasterRefferedback;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\Months;
 use App\Models\SegmentMaster;
@@ -1139,6 +1143,71 @@ UNION ALL
 	AND erp_matchdocumentmaster.documentSystemID = '.$debitNoteMaster->documentSystemID.'');
 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
+    }
+
+    public function amendDebitNote(Request $request)
+    {
+        $input = $request->all();
+
+        $debitNoteAutoID = $input['debitNoteAutoID'];
+
+        $debitNoteMasterData = DebitNote::find($debitNoteAutoID);
+        if (empty($debitNoteMasterData)) {
+            return $this->sendError('Debit Note not found');
+        }
+
+        if ($debitNoteMasterData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this debit note');
+        }
+
+        $debitNoteArray = $debitNoteMasterData->toArray();
+
+        $storeDebitNoteHistory = DebitNoteMasterRefferedback::insert($debitNoteArray);
+
+        $debitNoteDetailRec = DebitNoteDetails::where('debitNoteAutoID', $debitNoteAutoID)->get();
+
+        if (!empty($debitNoteDetailRec)) {
+            foreach ($debitNoteDetailRec as $bookDetail) {
+                $bookDetail['timesReferred'] = $debitNoteMasterData->timesReferred;
+            }
+        }
+
+        $debitNoteDetailArray = $debitNoteDetailRec->toArray();
+
+        $storeDebitNoteDetailHistory = DebitNoteDetailsRefferedback::insert($debitNoteDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $debitNoteAutoID)
+            ->where('companySystemID', $debitNoteMasterData->companySystemID)
+            ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $debitNoteMasterData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $debitNoteAutoID)
+            ->where('companySystemID', $debitNoteMasterData->companySystemID)
+            ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $debitNoteMasterData->refferedBackYN = 0;
+            $debitNoteMasterData->confirmedYN = 0;
+            $debitNoteMasterData->confirmedByEmpSystemID = null;
+            $debitNoteMasterData->confirmedByEmpID = null;
+            $debitNoteMasterData->confirmedByName = null;
+            $debitNoteMasterData->confirmedDate = null;
+            $debitNoteMasterData->RollLevForApp_curr = 1;
+            $debitNoteMasterData->save();
+        }
+
+        return $this->sendResponse($debitNoteMasterData->toArray(), 'Debit note amend successfully');
     }
 
 
