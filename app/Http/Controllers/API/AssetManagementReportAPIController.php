@@ -1002,18 +1002,18 @@ erp_fa_asset_master.faID, COSTGLCODE, ACCDEPGLCODE, assetType, erp_fa_asset_mast
 	erp_fa_asset_master.assetDescription,
 	erp_fa_financecategory.financeCatDescription AS AuditCategory,
 	erp_fa_category.catDescription Category,
-	 ( IF ( assetDepreciation.Jan IS NULL, 0, assetDepreciation.Jan ) )  AS Jan,
-	 ( IF ( assetDepreciation.Feb IS NULL, 0, assetDepreciation.Feb ) )  AS Feb,
-	 ( IF ( assetDepreciation.March IS NULL, 0, assetDepreciation.March ) )  AS March,
-	 ( IF ( assetDepreciation.April IS NULL, 0, assetDepreciation.April ) )  AS April,
-	 ( IF ( assetDepreciation.May IS NULL, 0, assetDepreciation.May ) )  AS May,
-	 ( IF ( assetDepreciation.June IS NULL, 0, assetDepreciation.June ) )  AS June,
-	 ( IF ( assetDepreciation.July IS NULL, 0, assetDepreciation.July ) )  AS July,
-	 ( IF ( assetDepreciation.Aug IS NULL, 0, assetDepreciation.Aug ) )  AS Aug,
-	 ( IF ( assetDepreciation.Sept IS NULL, 0, assetDepreciation.Sept ) )  AS Sept,
-	 ( IF ( assetDepreciation.Oct IS NULL, 0, assetDepreciation.Oct ) )  AS Oct,
-	 ( IF ( assetDepreciation.Nov IS NULL, 0, assetDepreciation.Nov ) )  AS Nov,
-	 ( IF ( assetDepreciation.Dece IS NULL, 0, assetDepreciation.Dece ) )  AS Dece
+	 SUM( IF ( assetDepreciation.Jan IS NULL, 0, assetDepreciation.Jan ) )  AS Jan,
+	 SUM( IF ( assetDepreciation.Feb IS NULL, 0, assetDepreciation.Feb ) )  AS Feb,
+	 SUM( IF ( assetDepreciation.March IS NULL, 0, assetDepreciation.March ) )  AS March,
+	 SUM( IF ( assetDepreciation.April IS NULL, 0, assetDepreciation.April ) )  AS April,
+	 SUM( IF ( assetDepreciation.May IS NULL, 0, assetDepreciation.May ) )  AS May,
+	 SUM( IF ( assetDepreciation.June IS NULL, 0, assetDepreciation.June ) )  AS June,
+	 SUM( IF ( assetDepreciation.July IS NULL, 0, assetDepreciation.July ) )  AS July,
+	 SUM( IF ( assetDepreciation.Aug IS NULL, 0, assetDepreciation.Aug ) )  AS Aug,
+	 SUM( IF ( assetDepreciation.Sept IS NULL, 0, assetDepreciation.Sept ) )  AS Sept,
+	 SUM( IF ( assetDepreciation.Oct IS NULL, 0, assetDepreciation.Oct ) )  AS Oct,
+	 SUM( IF ( assetDepreciation.Nov IS NULL, 0, assetDepreciation.Nov ) )  AS Nov,
+	 SUM( IF ( assetDepreciation.Dece IS NULL, 0, assetDepreciation.Dece ) )  AS Dece
 FROM
 	erp_fa_asset_master
 	LEFT JOIN erp_fa_financecategory ON erp_fa_asset_master.AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
