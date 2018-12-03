@@ -1192,8 +1192,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
             $invMaster = $invMaster->where(function ($query) use ($search) {
                 $query->where('matchingDocCode', 'LIKE', "%{$search}%")
                     ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVcode', 'LIKE', "%{$search}%")
                     ->orWhereHas('supplier', function ($query) use ($search) {
-                        $query->where('supplierName', 'like', "%{$search}%");
+                        $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
+                            ->orWhere('supplierName', 'LIKE', "%{$search}%");
                     });
             });
         }
@@ -1405,8 +1407,10 @@ WHERE
             $invMaster = $invMaster->where(function ($query) use ($search) {
                 $query->where('matchingDocCode', 'LIKE', "%{$search}%")
                     ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVcode', 'LIKE', "%{$search}%")
                     ->orWhereHas('customer', function ($query) use ($search) {
-                        $query->where('CustomerName', 'like', "%{$search}%");
+                        $query->where('CutomerCode', 'LIKE', "%{$search}%")
+                            ->orWhere('CustomerName', 'LIKE', "%{$search}%");
                     });
             });
         }
@@ -1431,6 +1435,10 @@ WHERE
 
         if (!isset($input['matchType'])) {
             return $this->sendError('Please select a match type');
+        }
+
+        if (!isset($input['BPVsupplierID'])) {
+            return $this->sendError('Please select a customer');
         }
 
         if ($input['matchType'] == 1) {
