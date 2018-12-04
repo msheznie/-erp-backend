@@ -249,6 +249,17 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
 
                 break;
+            case 'CNR':
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'customers' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
             default:
                 return $this->sendError('No report ID found');
         }
@@ -833,6 +844,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     'serviceLineTotal' => $serviceLineTotal,
                     'currency' => $requestCurrency->CurrencyCode
                 );
+                break;
+            case 'CNR': //Credit Note Register
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $output = $this->getCreditNoteRegisterQRY($request);
+                return array('reportData' => $output, 'companyName' => $checkIsGroup->CompanyName);
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -1467,6 +1484,45 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
 
                 }
+                break;
+            case 'CNR': //Credit Note Register
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $output = $this->getCreditNoteRegisterQRY($request);
+                $type = $request->type;
+                if ($output) {
+                    $x = 0;
+                    foreach ($output as $val) {
+                        $x++;
+                        $data[$x]['Company ID'] = $val->companyID;
+                        $data[$x]['Company Name'] = $val->CompanyName;
+                        $data[$x]['Customer Short Code'] = $val->CutomerCode;
+                        $data[$x]['Customer Name'] = $val->CustomerName;
+                        $data[$x]['Document Code'] = $val->documentCode;
+                        $data[$x]['Posted Date'] = \Helper::dateFormat($val->postedDate);
+                        $data[$x]['Department'] = $val->ServiceLineDes;
+                        $data[$x]['Client Contract ID'] = $val->clientContractID;
+                        $data[$x]['GL Code'] = $val->AccountCode;
+                        $data[$x]['GL Description'] = $val->AccountDescription;
+                        $data[$x]['Currency'] = $val->CurrencyCode;
+                        $data[$x]['Credit Note Total Amount'] = round($val->documentTransAmount, $val->DecimalPlaces);
+                        $data[$x]['Receipt Matching Code'] = $val->matchingDocCode;
+                        $data[$x]['Receipt Matching Date'] = \Helper::dateFormat($val->matchingDocdate);
+                        $data[$x]['Receipt Amount'] = round($val->detailSum, $val->DecimalPlaces);
+                    }
+                }
+
+                $csv = \Excel::create('customer_collection', function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+
+                return $this->sendResponse(array(), 'successfully export');
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -5267,6 +5323,102 @@ ORDER BY
 	companySystemID ASC');
 
         return $output;
+    }
+
+    // Credit Note Register
+    function getCreditNoteRegisterQRY($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        //$fromDate = $fromDate->addDays(1);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        //$toDate = $toDate->addDays(1);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $customers = (array)$request->customers;
+
+        $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
+
+
+        $qry = 'SELECT
+			erp_generalledger.companyID,
+			erp_generalledger.documentID,
+			erp_generalledger.serviceLineCode,
+			erp_generalledger.documentSystemCode,
+			erp_generalledger.documentCode,
+			erp_generalledger.documentDate,
+			erp_generalledger.documentNarration,
+			companymaster.CompanyName,
+			MONTH (
+				erp_generalledger.documentDate
+			) AS DocMONTH,
+			YEAR (
+				erp_generalledger.documentDate
+			) AS DocYEAR,
+			erp_generalledger.supplierCodeSystem,
+			erp_generalledger.clientContractID,
+			erp_generalledger.documentTransAmount,
+			customermaster.CutomerCode,
+			customermaster.customerShortCode,
+			customermaster.CustomerName,
+			serviceline.ServiceLineDes,
+			chartofaccounts.AccountCode,
+	        chartofaccounts.AccountDescription,
+	        currencymaster.CurrencyCode,
+	        currencymaster.DecimalPlaces,
+	        matchMaster.matchingDocCode,
+	        matchMaster.matchingDocdate,
+	        matchMaster.detailSum,
+	        erp_creditnote.postedDate
+FROM
+	erp_generalledger
+INNER JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+INNER JOIN serviceline ON erp_generalledger.serviceLineSystemID = serviceline.serviceLineSystemID
+INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
+INNER JOIN currencymaster ON erp_generalledger.documentTransCurrencyID = currencymaster.currencyID
+INNER JOIN erp_creditnote ON erp_generalledger.documentSystemCode = erp_creditnote.creditNoteAutoID AND erp_generalledger.documentSystemID = erp_creditnote.documentSystemiD AND erp_generalledger.companySystemID = erp_creditnote.companySystemID
+LEFT JOIN (
+	SELECT
+		erp_matchdocumentmaster.matchDocumentMasterAutoID,
+		erp_matchdocumentmaster.PayMasterAutoId,
+		erp_matchdocumentmaster.matchingDocCode,
+		erp_matchdocumentmaster.matchingDocdate,
+		erp_matchdocumentmaster.companySystemID,
+		erp_matchdocumentmaster.documentSystemID,
+		custDetailRec.detailSum
+	FROM
+		erp_matchdocumentmaster
+	LEFT JOIN (
+		SELECT
+			matchingDocID,
+			SUM(erp_custreceivepaymentdet.receiveAmountTrans) AS detailSum
+		FROM
+			erp_custreceivepaymentdet GROUP BY matchingDocID
+	) AS custDetailRec ON erp_matchdocumentmaster.matchDocumentMasterAutoID = custDetailRec.matchingDocID
+	WHERE
+		matchingConfirmedYN = 1
+	ORDER BY
+		matchDocumentMasterAutoID DESC
+) AS matchMaster ON erp_generalledger.documentSystemCode = matchMaster.PayMasterAutoId
+WHERE erp_generalledger.documentSystemID = 19 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+AND erp_generalledger.documentTransAmount < 0 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ') ORDER BY erp_generalledger.documentDate ASC';
+
+        //echo $qry;
+        //exit();
+        $output = \DB::select($qry);
+
+        return $output;
+
     }
 
 }
