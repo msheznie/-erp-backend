@@ -657,8 +657,12 @@ class GeneralLedgerInsert implements ShouldQueue
                         $time = Carbon::now();
 
                         $masterDocumentDate = $time;
-                        if ($masterData->finance_period_by->isActive == -1) {
-                            $masterDocumentDate = $masterData->bookingDate;
+                        if($masterData->isPerforma == 1){
+                            $masterDocumentDate = $time;
+                        } else {
+                            if ($masterData->finance_period_by->isActive == -1) {
+                                $masterDocumentDate = $masterData->bookingDate;
+                            }
                         }
                         $data['companySystemID'] = $masterData->companySystemID;
                         $data['companyID'] = $masterData->companyID;
