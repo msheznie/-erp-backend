@@ -13,6 +13,7 @@
  * -- Date: 25-July 2018 By: Fayas Description: Added new functions named as getStockReceiveApproval(),getApprovedSRForCurrentUser()
  * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as printStockReceive()
  * -- Date: 28-August 2018 By: Fayas Description: Added new functions named as stockReceiveReopen()
+ * -- Date: 03-December 2018 By: Fayas Description: Added new functions named as stockReceiveReferBack()
  */
 namespace App\Http\Controllers\API;
 

@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : ItemReturnMaster.php
+ * -- File Name : ItemIssueMasterRefferedBack.php
  * -- Project Name : ERP
- * -- Module Name :  Item Return Master
+ * -- Module Name :  Item Issue Master Referred Back
  * -- Author : Mohamed Fayas
- * -- Create date : 16 - July 2018
+ * -- Create date : 03- December 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
  */
@@ -15,11 +15,17 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="ItemReturnMaster",
+ *      definition="ItemIssueMasterRefferedBack",
  *      required={""},
  *      @SWG\Property(
- *          property="itemReturnAutoID",
- *          description="itemReturnAutoID",
+ *          property="itemIssueAutoRefferedbackID",
+ *          description="itemIssueAutoRefferedbackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemIssueAutoID",
+ *          description="itemIssueAutoID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -75,19 +81,41 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="itemReturnCode",
- *          description="itemReturnCode",
+ *          property="itemIssueCode",
+ *          description="itemIssueCode",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="ReturnType",
- *          description="ReturnType",
+ *          property="issueType",
+ *          description="issueType",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="ReturnedBy",
- *          description="ReturnedBy",
+ *          property="wareHouseFrom",
+ *          description="wareHouseFrom",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="wareHouseFromCode",
+ *          description="wareHouseFromCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="wareHouseFromDes",
+ *          description="wareHouseFromDes",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="contractUIID",
+ *          description="contractUIID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="contractID",
+ *          description="contractID",
  *          type="string"
  *      ),
  *      @SWG\Property(
@@ -97,19 +125,76 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="workOrderNo",
+ *          description="workOrderNo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="purchaseOrderNo",
+ *          description="purchaseOrderNo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="networkNo",
+ *          description="networkNo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerSystemID",
+ *          description="customerSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="customerID",
  *          description="customerID",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="wareHouseLocation",
- *          description="wareHouseLocation",
+ *          property="issueRefNo",
+ *          description="issueRefNo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="reqDocID",
+ *          description="reqDocID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="ReturnRefNo",
- *          description="ReturnRefNo",
+ *          property="reqByID",
+ *          description="reqByID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="reqByName",
+ *          description="reqByName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="reqComment",
+ *          description="reqComment",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="wellLocationFieldID",
+ *          description="wellLocationFieldID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="fieldShortCode",
+ *          description="fieldShortCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="fieldName",
+ *          description="fieldName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="wellNO",
+ *          description="wellNO",
  *          type="string"
  *      ),
  *      @SWG\Property(
@@ -146,8 +231,50 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="RollLevForApp_curr",
- *          description="RollLevForApp_curr",
+ *          property="approvedByUserID",
+ *          description="approvedByUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserSystemID",
+ *          description="approvedByUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="directReqByID",
+ *          description="directReqByID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="directReqByName",
+ *          description="directReqByName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="product",
+ *          description="product",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="volume",
+ *          description="volume",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="strength",
+ *          description="strength",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -187,20 +314,38 @@ use Eloquent as Model;
  *          property="modifiedPc",
  *          description="modifiedPc",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="contRefNo",
+ *          description="contRefNo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="is_closed",
+ *          description="is_closed",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="RollLevForApp_curr",
+ *          description="RollLevForApp_curr",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class ItemReturnMaster extends Model
+class ItemIssueMasterRefferedBack extends Model
 {
 
-    public $table = 'erp_itemreturnmaster';
-    
+    public $table = 'erp_itemissuemaster_refferedback';
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
-    protected $primaryKey  = 'itemReturnAutoID';
+    protected $primaryKey  = 'itemIssueAutoRefferedbackID';
 
 
     public $fillable = [
+        'itemIssueAutoID',
         'companySystemID',
         'companyID',
         'serviceLineSystemID',
@@ -212,14 +357,31 @@ class ItemReturnMaster extends Model
         'documentSystemID',
         'documentID',
         'serialNo',
-        'itemReturnCode',
-        'ReturnType',
-        'ReturnDate',
-        'ReturnedBy',
+        'itemIssueCode',
+        'issueType',
+        'issueDate',
+        'wareHouseFrom',
+        'wareHouseFromCode',
+        'wareHouseFromDes',
+        'contractUIID',
+        'contractID',
         'jobNo',
+        'workOrderNo',
+        'purchaseOrderNo',
+        'networkNo',
+        'itemDeliveredOnSiteDate',
+        'customerSystemID',
         'customerID',
-        'wareHouseLocation',
-        'ReturnRefNo',
+        'issueRefNo',
+        'reqDocID',
+        'reqByID',
+        'reqByName',
+        'reqDate',
+        'reqComment',
+        'wellLocationFieldID',
+        'fieldShortCode',
+        'fieldName',
+        'wellNO',
         'comment',
         'confirmedYN',
         'confirmedByEmpSystemID',
@@ -228,8 +390,15 @@ class ItemReturnMaster extends Model
         'confirmedDate',
         'approved',
         'approvedDate',
-        'postedDate',
-        'RollLevForApp_curr',
+        'approvedByUserID',
+        'approvedByUserSystemID',
+        'directReqByID',
+        'directReqByName',
+        'product',
+        'volume',
+        'strength',
+        'refferedBackYN',
+        'timesReferred',
         'createdDateTime',
         'createdUserGroup',
         'createdPCid',
@@ -238,11 +407,10 @@ class ItemReturnMaster extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
-        'timestamp',
-        'approvedByUserID',
-        'approvedByUserSystemID',
-        'refferedBackYN',
-        'timesReferred'
+        'contRefNo',
+        'is_closed',
+        'RollLevForApp_curr',
+        'timestamp'
     ];
 
     /**
@@ -251,7 +419,8 @@ class ItemReturnMaster extends Model
      * @var array
      */
     protected $casts = [
-        'itemReturnAutoID' => 'integer',
+        'itemIssueAutoRefferedbackID' => 'integer',
+        'itemIssueAutoID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
@@ -261,20 +430,43 @@ class ItemReturnMaster extends Model
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'serialNo' => 'integer',
-        'itemReturnCode' => 'string',
-        'ReturnType' => 'integer',
-        'ReturnedBy' => 'string',
+        'itemIssueCode' => 'string',
+        'issueType' => 'integer',
+        'wareHouseFrom' => 'integer',
+        'wareHouseFromCode' => 'string',
+        'wareHouseFromDes' => 'string',
+        'contractUIID' => 'integer',
+        'contractID' => 'string',
         'jobNo' => 'integer',
+        'workOrderNo' => 'string',
+        'purchaseOrderNo' => 'string',
+        'networkNo' => 'string',
+        'customerSystemID' => 'integer',
         'customerID' => 'string',
-        'wareHouseLocation' => 'integer',
-        'ReturnRefNo' => 'string',
+        'issueRefNo' => 'string',
+        'reqDocID' => 'integer',
+        'reqByID' => 'string',
+        'reqByName' => 'string',
+        'reqComment' => 'string',
+        'wellLocationFieldID' => 'integer',
+        'fieldShortCode' => 'string',
+        'fieldName' => 'string',
+        'wellNO' => 'string',
         'comment' => 'string',
         'confirmedYN' => 'integer',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approved' => 'integer',
-        'RollLevForApp_curr' => 'integer',
+        'approvedByUserID' => 'string',
+        'approvedByUserSystemID' => 'integer',
+        'directReqByID' => 'string',
+        'directReqByName' => 'string',
+        'product' => 'string',
+        'volume' => 'string',
+        'strength' => 'string',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer',
         'createdUserGroup' => 'string',
         'createdPCid' => 'string',
         'createdUserSystemID' => 'integer',
@@ -282,10 +474,9 @@ class ItemReturnMaster extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'approvedByUserID' => 'string',
-        'approvedByUserSystemID' => 'integer',
-        'refferedBackYN' => 'integer',
-        'timesReferred' => 'integer'
+        'contRefNo' => 'string',
+        'is_closed' => 'integer',
+        'RollLevForApp_curr' => 'integer'
     ];
 
     /**
@@ -309,7 +500,7 @@ class ItemReturnMaster extends Model
 
     public function customer_by()
     {
-        return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
+        return $this->belongsTo('App\Models\CustomerMaster', 'customerSystemID', 'customerCodeSystem');
     }
 
     public function segment_by()
@@ -324,18 +515,17 @@ class ItemReturnMaster extends Model
 
     public function warehouse_by()
     {
-        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseLocation','wareHouseSystemCode');
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseFrom','wareHouseSystemCode');
     }
 
     public function details()
     {
-        return $this->hasMany('App\Models\ItemReturnDetails','itemReturnAutoID','itemReturnAutoID');
+        return $this->hasMany('App\Models\ItemIssueDetails','itemIssueAutoID','itemIssueAutoID');
     }
 
     public function approved_by(){
-        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemReturnAutoID');
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','itemIssueAutoID');
     }
-
     public function company(){
         return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
