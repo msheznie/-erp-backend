@@ -49,6 +49,9 @@ class CreateDepreciation implements ShouldQueue
                 $depDate = Carbon::parse($depMaster->FYPeriodDateTo);
                 $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                     $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+                    $query->whereHas('master_by', function ($query) {
+                        $query->where('approved', -1);
+                    });
                     $query->groupBy('faID');
                 }])->isDisposed()->ofCompany([$depMaster->companySystemID])->isApproved()->assetType(1)->orderBy('faID', 'desc')->get();
                 $depAmountRptTotal = 0;
