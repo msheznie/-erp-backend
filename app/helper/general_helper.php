@@ -1799,6 +1799,18 @@ class Helper
                     $docInforArr["primarykey"] = 'debitNoteAutoID';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 8: // Materiel Issue
+                    $docInforArr["tableName"] = 'erp_itemissuemaster';
+                    $docInforArr["modelName"] = 'ItemIssueMaster';
+                    $docInforArr["primarykey"] = 'itemIssueAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 12: // Materiel Return
+                    $docInforArr["tableName"] = 'erp_itemreturnmaster';
+                    $docInforArr["modelName"] = 'ItemReturnMaster';
+                    $docInforArr["primarykey"] = 'itemReturnAutoID';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -1814,7 +1826,7 @@ class Helper
                         $empInfo = self::getEmployeeInfo();
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10,15])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19,13,10,15,8,12])) {
                             $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);

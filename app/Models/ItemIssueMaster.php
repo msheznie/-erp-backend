@@ -360,7 +360,9 @@ class ItemIssueMaster extends Model
         'approvedDate',
         'RollLevForApp_curr',
         'approvedByUserID',
-        'approvedByUserSystemID'
+        'approvedByUserSystemID',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -424,6 +426,8 @@ class ItemIssueMaster extends Model
         'RollLevForApp_curr' => 'integer',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer',
     ];
 
     /**

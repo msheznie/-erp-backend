@@ -246,7 +246,7 @@ class SupplierMasterAPIController extends AppBaseController
             $supplierMasters = SupplierAssigned::with(['categoryMaster','critical','country','supplierCurrency' => function ($query) {
                 $query->where('isDefault', -1)
                     ->with(['currencyMaster']);
-            }])->whereIn('CompanySystemID', $childCompanies);
+            }])->whereIn('CompanySystemID', $childCompanies)->where('isAssigned',-1);
 
         }
 

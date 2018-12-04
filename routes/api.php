@@ -535,6 +535,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany');
     Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit');
     Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen');
+    Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack');
     Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue');
     Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue');
     Route::post('getGRVMasterApproval', 'GRVMasterAPIController@getGRVMasterApproval');
@@ -584,6 +585,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn');
     Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
     Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen');
+    Route::post('materielReturnReferBack', 'ItemReturnMasterAPIController@materielReturnReferBack');
     Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
     Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
 
@@ -1185,6 +1187,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getDebitNoteAmendHistory', 'DebitNoteMasterRefferedbackAPIController@getDebitNoteAmendHistory');
     Route::get('getDNDetailAmendHistory', 'DebitNoteDetailsRefferedbackAPIController@getDNDetailAmendHistory');
 
+
+    Route::resource('item_issue_referred_back', 'ItemIssueMasterRefferedBackAPIController');
+    Route::post('getReferBackHistoryByMaterielIssues', 'ItemIssueMasterRefferedBackAPIController@getReferBackHistoryByMaterielIssues');
+    Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack');
+    Route::resource('item_issue_details_reffered_backs', 'ItemIssueDetailsRefferedBackAPIController');
 });
 
 
@@ -1238,6 +1245,7 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
 
 
 

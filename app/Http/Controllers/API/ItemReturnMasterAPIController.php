@@ -12,6 +12,7 @@
  * -- Date: 17 - July 2018 By: Fayas Description: Added new functions named as getMaterielReturnAudit(),getMaterielReturnApprovalByUser(),getMaterielReturnApprovedByUser()
  * -- Date: 30 - July 2018 By: Fayas Description: Added new functions named as printItemReturn()
  * -- Date: 27 - August 2018 By: Fayas Description: Added new functions named as materielReturnReopen()
+ * -- Date: 03-December 2018 By: Fayas Description: Added new functions named as materielReturnReferBack()
  *
  */
 namespace App\Http\Controllers\API;
@@ -47,7 +48,6 @@ use Response;
  * Class ItemReturnMasterController
  * @package App\Http\Controllers\API
  */
-
 class ItemReturnMasterAPIController extends AppBaseController
 {
     /** @var  ItemReturnMasterRepository */
@@ -159,7 +159,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
-        } else{
+        } else {
             $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
             $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
         }
@@ -287,9 +287,9 @@ class ItemReturnMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ItemReturnMaster $itemReturnMaster */
-        $itemReturnMaster = $this->itemReturnMasterRepository->with(['confirmed_by','created_by','finance_period_by'=> function($query){
+        $itemReturnMaster = $this->itemReturnMasterRepository->with(['confirmed_by', 'created_by', 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        },'finance_year_by'=> function($query){
+        }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }])->findWithoutFail($id);
 
@@ -349,8 +349,8 @@ class ItemReturnMasterAPIController extends AppBaseController
     public function update($id, UpdateItemReturnMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by','confirmedByName',
-            'confirmedByEmpID','confirmedDate','confirmed_by','confirmedByEmpSystemID','finance_period_by','finance_year_by']);
+        $input = array_except($input, ['created_by', 'confirmedByName',
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'finance_period_by', 'finance_year_by']);
 
         $input = $this->convertArrayToValue($input);
         $wareHouseError = array('type' => 'wareHouse');
@@ -372,11 +372,11 @@ class ItemReturnMasterAPIController extends AppBaseController
             if ($input['serviceLineSystemID']) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Department not found',500);
+                    return $this->sendError('Department not found', 500);
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
-                    $this->itemReturnMasterRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
+                    $this->itemReturnMasterRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
                     return $this->sendError('Please select a active department.', 500, $serviceLineError);
                 }
             }
@@ -389,7 +389,7 @@ class ItemReturnMasterAPIController extends AppBaseController
                 }
 
                 if ($checkWareHouseActive->isActive == 0) {
-                    $this->itemReturnMasterRepository->update(['wareHouseLocation' => null],$id);
+                    $this->itemReturnMasterRepository->update(['wareHouseLocation' => null], $id);
                     return $this->sendError('Please select a active warehouse.', 500, $wareHouseError);
                 }
             }
@@ -407,7 +407,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
-            } else{
+            } else {
                 $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
                 $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
             }
@@ -438,13 +438,13 @@ class ItemReturnMasterAPIController extends AppBaseController
             }
 
             $checkItems = ItemReturnDetails::where('itemReturnAutoID', $id)
-                                            ->count();
+                ->count();
             if ($checkItems == 0) {
                 return $this->sendError('Every return should have at least one item', 500);
             }
 
             $checkQuantity = ItemReturnDetails::where('itemReturnAutoID', $id)
-                ->where(function ($q){
+                ->where(function ($q) {
                     $q->where('qtyIssued', '<=', 0)
                         ->orWhereNull('qtyIssued');
                 })
@@ -455,9 +455,9 @@ class ItemReturnMasterAPIController extends AppBaseController
             }
 
             $checkCost = ItemReturnDetails::where('itemReturnAutoID', $id)
-                ->where(function ($q){
+                ->where(function ($q) {
                     $q->where('unitCostLocal', '<=', 0)
-                      ->orWhere('unitCostLocal', '<=', 0)->orWhereNull('qtyIssued');
+                        ->orWhere('unitCostLocal', '<=', 0)->orWhereNull('qtyIssued');
                 })
                 ->count();
 
@@ -465,28 +465,28 @@ class ItemReturnMasterAPIController extends AppBaseController
                 return $this->sendError('Unit Cost should be greater than 0 for every items', 500);
             }
 
-            $itemReturnDetails = ItemReturnDetails::where('itemReturnAutoID',$input['itemReturnAutoID'])->get();
+            $itemReturnDetails = ItemReturnDetails::where('itemReturnAutoID', $input['itemReturnAutoID'])->get();
 
             $finalError = array('item_is_not_issued' => array());
             $error_count = 0;
 
 
-            foreach ($itemReturnDetails as $detail){
+            foreach ($itemReturnDetails as $detail) {
                 if ($detail['qtyIssuedDefaultMeasure'] > $detail['qtyFromIssue']) {
                     return $this->sendError("Return quantity should not be greater than issues quantity. Please check again.", 500);
                 }
 
-                $itemIssuesCount =  ItemIssueMaster::where('itemIssueAutoID',$detail['issueCodeSystem'])
-                                                    ->where('companySystemID',$input['companySystemID'])
-                                                    ->where('serviceLineSystemID', $input['serviceLineSystemID'])
-                                                    ->where('wareHouseFrom', $input['wareHouseLocation'])
-                                                    ->where('approved',-1)
-                                                    ->whereHas('details',function ($q) use($detail){
-                                                        $q->where('itemCodeSystem',$detail['itemCodeSystem']);
-                                                    })
-                                                    ->count();
+                $itemIssuesCount = ItemIssueMaster::where('itemIssueAutoID', $detail['issueCodeSystem'])
+                    ->where('companySystemID', $input['companySystemID'])
+                    ->where('serviceLineSystemID', $input['serviceLineSystemID'])
+                    ->where('wareHouseFrom', $input['wareHouseLocation'])
+                    ->where('approved', -1)
+                    ->whereHas('details', function ($q) use ($detail) {
+                        $q->where('itemCodeSystem', $detail['itemCodeSystem']);
+                    })
+                    ->count();
 
-                if($itemIssuesCount == 0){
+                if ($itemIssuesCount == 0) {
                     array_push($finalError['item_is_not_issued'], $detail['itemPrimaryCode']);
                     $error_count++;
                     //return $this->sendError('Selected item is not issued. Please check again', 500);
@@ -498,18 +498,18 @@ class ItemReturnMasterAPIController extends AppBaseController
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
             }
 
-            $amount = 0 ;
+            $amount = 0;
             /*ItemReturnDetails::where('itemReturnAutoID', $id)
                                         ->sum('issueCostRptTotal');*/
 
             $input['RollLevForApp_curr'] = 1;
             $params = array('autoID' => $id,
-                            'company'  => $itemReturnMaster->companySystemID,
-                            'document' => $itemReturnMaster->documentSystemID,
-                            'segment'  => $input['serviceLineSystemID'],
-                            'category' => 0,
-                            'amount'   => $amount
-                            );
+                'company' => $itemReturnMaster->companySystemID,
+                'document' => $itemReturnMaster->documentSystemID,
+                'segment' => $input['serviceLineSystemID'],
+                'category' => 0,
+                'amount' => $amount
+            );
 
             $confirm = \Helper::confirmDocument($params);
             if (!$confirm["success"]) {
@@ -611,7 +611,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         }
 
         $itemReturnMaster = ItemReturnMaster::whereIn('companySystemID', $subCompanies)
-                                            ->with(['created_by', 'warehouse_by', 'segment_by', 'customer_by']);
+            ->with(['created_by', 'warehouse_by', 'segment_by', 'customer_by']);
 
 
         if (array_key_exists('confirmedYN', $input)) {
@@ -652,7 +652,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
 
         $itemReturnMaster = $itemReturnMaster->select(
-               ['itemReturnAutoID',
+            ['itemReturnAutoID',
                 'itemReturnCode',
                 'comment',
                 'ReturnDate',
@@ -666,7 +666,8 @@ class ItemReturnMasterAPIController extends AppBaseController
                 'approvedDate',
                 'createdDateTime',
                 'ReturnRefNo',
-                'wareHouseLocation'
+                'wareHouseLocation',
+                'refferedBackYN'
             ]);
 
         $search = $request->input('search.value');
@@ -720,10 +721,10 @@ class ItemReturnMasterAPIController extends AppBaseController
         $month = Months::all();
 
         $years = ItemReturnMaster::select(DB::raw("YEAR(createdDateTime) as year"))
-                                ->whereNotNull('createdDateTime')
-                                ->groupby('year')
-                                ->orderby('year', 'desc')
-                                ->get();
+            ->whereNotNull('createdDateTime')
+            ->groupby('year')
+            ->orderby('year', 'desc')
+            ->get();
 
         $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
@@ -732,7 +733,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $wareHouseLocation = $wareHouseLocation->get();
 
         $types = array(array('value' => 1, "label" => "Issue Return"),
-                       array('value' => 2, "label" => "Damaged/Repaired Return"));
+            array('value' => 2, "label" => "Damaged/Repaired Return"));
 
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
@@ -778,7 +779,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             return $this->sendError('Materiel Return not found');
         }
 
-        $materielReturn->docRefNo = \Helper::getCompanyDocRefNo($materielReturn->companySystemID,$materielReturn->documentSystemID);
+        $materielReturn->docRefNo = \Helper::getCompanyDocRefNo($materielReturn->companySystemID, $materielReturn->documentSystemID);
 
         return $this->sendResponse($materielReturn->toArray(), 'Materiel Return retrieved successfully');
     }
@@ -792,7 +793,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             return $this->sendError('Materiel Return not found');
         }
 
-        $materielReturn->docRefNo = \Helper::getCompanyDocRefNo($materielReturn->companySystemID,$materielReturn->documentSystemID);
+        $materielReturn->docRefNo = \Helper::getCompanyDocRefNo($materielReturn->companySystemID, $materielReturn->documentSystemID);
 
         $array = array('entity' => $materielReturn);
         $time = strtotime("now");
@@ -1041,10 +1042,10 @@ class ItemReturnMasterAPIController extends AppBaseController
             return $this->sendError('You cannot reopen this Materiel Return, it is not confirmed');
         }
 
-        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
-            'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+        $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
 
-        $this->itemReturnMasterRepository->update($updateInput,$id);
+        $this->itemReturnMasterRepository->update($updateInput, $id);
 
         $employee = \Helper::getEmployeeInfo();
 
@@ -1105,9 +1106,9 @@ class ItemReturnMasterAPIController extends AppBaseController
         }
 
         $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
-                                            ->where('companySystemID', $itemReturnMaster->companySystemID)
-                                            ->where('documentSystemID', $itemReturnMaster->documentSystemID)
-                                            ->delete();
+            ->where('companySystemID', $itemReturnMaster->companySystemID)
+            ->where('documentSystemID', $itemReturnMaster->documentSystemID)
+            ->delete();
 
         return $this->sendResponse($itemReturnMaster->toArray(), 'Materiel Return reopened successfully');
     }

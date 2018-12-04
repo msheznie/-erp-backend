@@ -15,6 +15,7 @@
  * -- Date: 26-July 2018 By: Fayas Description: Added new functions named as printItemIssue()
  * -- Date: 27-August 2018 By: Fayas Description: Added new functions named as materielIssueReopen()
  * -- Date: 29-August 2018 By: Fayas Description: Added new functions named as deliveryPrintItemIssue()
+ * -- Date: 03-December 2018 By: Fayas Description: Added new functions named as materielIssueReferBack()
  */
 namespace App\Http\Controllers\API;
 
@@ -29,9 +30,12 @@ use App\Models\Contract;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ItemIssueDetails;
+use App\Models\ItemIssueDetailsRefferedBack;
 use App\Models\ItemIssueMaster;
+use App\Models\ItemIssueMasterRefferedBack;
 use App\Models\ItemIssueType;
 use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
@@ -761,7 +765,8 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'erp_itemissuemaster.approvedDate',
                 'erp_itemissuemaster.createdDateTime',
                 'erp_itemissuemaster.issueRefNo',
-                'erp_itemissuemaster.wareHouseFrom'
+                'erp_itemissuemaster.wareHouseFrom',
+                'erp_itemissuemaster.refferedBackYN'
             ]);
 
         $search = $request->input('search.value');
@@ -1285,5 +1290,66 @@ class ItemIssueMasterAPIController extends AppBaseController
         return $this->sendResponse($itemIssueMaster->toArray(), 'Materiel Issue reopened successfully');
     }
 
+    public function materielIssueReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $itemIssue = $this->itemIssueMasterRepository->find($id);
+        if (empty($itemIssue)) {
+            return $this->sendError('Materiel Issue not found');
+        }
+
+        if ($itemIssue->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this materiel issue');
+        }
+
+        $itemIssueArray = $itemIssue->toArray();
+
+        $storeSRHistory = ItemIssueMasterRefferedBack::insert($itemIssueArray);
+
+        $fetchDetails = ItemIssueDetails::where('itemIssueAutoID', $id)
+            ->get();
+
+        if (!empty($fetchDetails)) {
+            foreach ($fetchDetails as $detail) {
+                $detail['timesReferred'] = $itemIssue->timesReferred;
+            }
+        }
+
+        $itemIssueDetailArray = $fetchDetails->toArray();
+
+        $storeSRDetailHistory = ItemIssueDetailsRefferedBack::insert($itemIssueDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $itemIssue->companySystemID)
+            ->where('documentSystemID', $itemIssue->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $itemIssue->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $itemIssue->companySystemID)
+            ->where('documentSystemID', $itemIssue->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,'confirmedYN' => 0,'confirmedByEmpSystemID' => null,
+                'confirmedByEmpID' => null,'confirmedByName' => null,'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+            $this->itemIssueMasterRepository->update($updateArray,$id);
+        }
+
+        return $this->sendResponse($itemIssue->toArray(), 'Stock Transfer Amend successfully');
+    }
 
 }
