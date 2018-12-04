@@ -299,6 +299,9 @@ class FixedAssetDepreciationPeriod extends Model
         return $query->where('depMasterAutoID',  $depMasterAutoID);
     }
 
+    public function master_by(){
+        return $this->belongsTo('App\Models\FixedAssetDepreciationMaster','depMasterAutoID','depMasterAutoID');
+    }
 
     public function maincategory_by(){
         return $this->belongsTo('App\Models\FixedAssetCategory','faMainCategory','faCatID');
