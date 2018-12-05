@@ -17,7 +17,6 @@ use Response;
  * Class FixedAssetDepreciationPeriodController
  * @package App\Http\Controllers\API
  */
-
 class FixedAssetDepreciationPeriodAPIController extends AppBaseController
 {
     /** @var  FixedAssetDepreciationPeriodRepository */
@@ -325,5 +324,60 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
                 'depAmountRpt' => $depAmountRpt,
             ])
             ->make(true);
+    }
+
+    function exportAMDepreciation(Request $request)
+    {
+        $type = $request->type;
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        //$input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+        $companyCurrency = \Helper::companyCurrency($input['companyID']);
+
+        $assetDepPeriod = FixedAssetDepreciationPeriod::with(['maincategory_by', 'financecategory_by', 'serviceline_by'])->ofDepreciation($input['depMasterAutoID']);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetDepPeriod = $assetDepPeriod->where(function ($query) use ($search) {
+                $query->where('faCode', 'LIKE', "%{$search}%");
+                $query->orWhere('assetDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $outputSUM = $assetDepPeriod->get();
+        if ($outputSUM) {
+            $x = 0;
+            foreach ($outputSUM as $val) {
+                $data[$x]['FA Code'] = $val->faCode;
+                $data[$x]['Asset Description'] = $val->assetDescription;
+                $data[$x]['Department'] = $val->serviceline_by? $val->serviceline_by->ServiceLineDes : '';
+                $data[$x]['Finance Category'] = $val->financecategory_by? $val->financecategory_by->financeCatDescription : '';
+                $data[$x]['Category'] = $val->maincategory_by? $val->maincategory_by->catDescription : '';
+                $data[$x]['Dep Percent'] = $val->depPercent;
+                $data[$x]['Cost Unit'] = number_format($val->COSTUNIT, $val->localcurrency? $val->localcurrency->DecimalPlaces : 2);
+                $data[$x]['Cost Unit Rpt'] = number_format($val->costUnitRpt, $val->reportingcurrency? $val->reportingcurrency->DecimalPlaces : 2);
+                $data[$x]['Dep Amount Local'] = number_format($val->depAmountLocal, $val->localcurrency? $val->localcurrency->DecimalPlaces : 2);
+                $data[$x]['Dep Amount Rpt'] = number_format($val->depAmountRpt, $val->reportingcurrency? $val->reportingcurrency->DecimalPlaces : 2);
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+        $csv = \Excel::create('asset_depreciation', function ($excel) use ($data) {
+            $excel->sheet('sheet name', function ($sheet) use ($data) {
+                $sheet->fromArray($data, null, 'A1', true);
+                $sheet->setAutoSize(true);
+                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+            });
+            $lastrow = $excel->getActiveSheet()->getHighestRow();
+            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+        })->download($type);
+
+        return $this->sendResponse(array(), 'successfully export');
     }
 }

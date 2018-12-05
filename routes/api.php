@@ -984,6 +984,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
     Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
     Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
+    Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -1084,6 +1085,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
     Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
+    Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation');
     Route::resource('asset_types', 'AssetTypeAPIController');
     Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
     Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
@@ -1187,11 +1189,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getDebitNoteAmendHistory', 'DebitNoteMasterRefferedbackAPIController@getDebitNoteAmendHistory');
     Route::get('getDNDetailAmendHistory', 'DebitNoteDetailsRefferedbackAPIController@getDNDetailAmendHistory');
 
-
     Route::resource('item_issue_referred_back', 'ItemIssueMasterRefferedBackAPIController');
     Route::post('getReferBackHistoryByMaterielIssues', 'ItemIssueMasterRefferedBackAPIController@getReferBackHistoryByMaterielIssues');
     Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack');
     Route::resource('item_issue_details_reffered_backs', 'ItemIssueDetailsRefferedBackAPIController');
+
+    Route::resource('jvMasterReferredbacks', 'JvMasterReferredbackAPIController');
+    Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackAPIController');
+    Route::post('getJournalVoucherAmendHistory', 'JvMasterReferredbackAPIController@getJournalVoucherAmendHistory');
+    Route::get('getJVDetailAmendHistory', 'JvDetailsReferredbackAPIController@getJVDetailAmendHistory');
 });
 
 
@@ -1230,7 +1236,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 7,'autoID' => 491, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    //$master = ['documentSystemID' => 20,'autoID' => 53829, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
@@ -1245,8 +1251,3 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
-
-
-
-
-
