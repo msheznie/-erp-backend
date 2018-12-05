@@ -156,7 +156,11 @@ class JvMasterReferredbackAPIController extends AppBaseController
     public function show($id)
     {
         /** @var JvMasterReferredback $jvMasterReferredback */
-        $jvMasterReferredback = $this->jvMasterReferredbackRepository->findWithoutFail($id);
+        $jvMasterReferredback = $this->jvMasterReferredbackRepository->with(['created_by', 'confirmed_by', 'company', 'modified_by', 'transactioncurrency', 'financeperiod_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'financeyear_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($id);
 
         if (empty($jvMasterReferredback)) {
             return $this->sendError('Jv Master Referredback not found');
@@ -277,5 +281,19 @@ class JvMasterReferredbackAPIController extends AppBaseController
         $jvMasterReferredback->delete();
 
         return $this->sendResponse($id, 'Jv Master Referredback deleted successfully');
+    }
+
+    public function getJournalVoucherAmendHistory(Request $request)
+    {
+        $input = $request->all();
+
+        $jvAmendHistory = JvMasterReferredback::where('jvMasterAutoId', $input['jvMasterAutoId'])
+            ->with(['created_by','confirmed_by','modified_by', 'transactioncurrency','detail' => function ($query) {
+                $query->selectRaw('COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,jvMasterAutoId');
+                $query->groupBy('jvMasterAutoId');
+            }])
+            ->get();
+
+        return $this->sendResponse($jvAmendHistory, 'Journal Voucher detail retrieved successfully');
     }
 }

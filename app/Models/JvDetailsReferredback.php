@@ -261,5 +261,24 @@ class JvDetailsReferredback extends Model
         
     ];
 
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function currency_by()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'currencyID', 'currencyID');
+    }
+
+    public function chartofaccount()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
+    }
+
+    public function contract()
+    {
+        return $this->belongsTo('App\Models\Contract', 'contractUID', 'clientContractID');
+    }
     
 }

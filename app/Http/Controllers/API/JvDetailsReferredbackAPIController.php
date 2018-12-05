@@ -278,4 +278,20 @@ class JvDetailsReferredbackAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Jv Details Referredback deleted successfully');
     }
+
+
+    public function getJVDetailAmendHistory(Request $request)
+    {
+        $input = $request->all();
+        $jvMasterAutoId = $input['jvMasterAutoId'];
+        $timesReferred = $input['timesReferred'];
+
+        $items = JvDetailsReferredback::where('jvMasterAutoId', $jvMasterAutoId)
+            ->where('timesReferred', $timesReferred)
+            ->with(['segment', 'chartofaccount'])
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Journal Voucher detail history retrieved successfully');
+    }
+
 }
