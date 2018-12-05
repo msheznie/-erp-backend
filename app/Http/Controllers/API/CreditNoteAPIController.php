@@ -750,15 +750,18 @@ class CreditNoteAPIController extends AppBaseController
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $master = $master->where(function ($query) use ($search) {
+            $search_without_comma = str_replace(",", "", $search);
+            $master = $master->where(function ($query) use ($search, $search_without_comma) {
                 $query->Where('creditNoteCode', 'LIKE', "%{$search}%")
                     ->orwhere('employees.empName', 'LIKE', "%{$search}%")
                     ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%");
+                    ->orwhere('customermaster.CutomerCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhere('creditAmountTrans', 'LIKE', "%{$search_without_comma}%");
             });
         }
         $request->request->remove('search.value');
-        $master->select('creditNoteCode', 'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved', 'erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CustomerName', 'creditAmountTrans');
+        $master->select('creditNoteCode', 'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved', 'erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CutomerCode','customermaster.CustomerName', 'creditAmountTrans');
 
         return \DataTables::of($master)
             ->order(function ($query) use ($input) {
