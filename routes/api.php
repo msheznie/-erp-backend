@@ -984,6 +984,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
     Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
     Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
+    Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -1250,3 +1251,8 @@ Route::get('runQueueSR', function () {
 
 
 
+
+
+Route::resource('jv_master_referredbacks', 'JvMasterReferredbackAPIController');
+
+Route::resource('jv_details_referredbacks', 'JvDetailsReferredbackAPIController');

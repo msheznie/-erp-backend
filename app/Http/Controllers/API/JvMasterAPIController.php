@@ -18,6 +18,7 @@
  * -- Date: 10-October 2018 By: Nazir Description: Added new functions named as getApprovedJournalVoucherForCurrentUser()
  * -- Date: 14-October 2018 By: Nazir Description: Added new functions named as journalVoucherForPOAccrualJVDetail()
  * -- Date: 15-October 2018 By: Nazir Description: Added new functions named as journalVoucherReopen()
+ * -- Date: 05-December 2018 By: Nazir Description: Added new functions named as getJournalVoucherAmend()
  */
 
 namespace App\Http\Controllers\API;
@@ -33,9 +34,12 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\JvDetail;
+use App\Models\JvDetailsReferredback;
 use App\Models\JvMaster;
+use App\Models\JvMasterReferredback;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelection;
@@ -156,6 +160,19 @@ class JvMasterAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
+        $validator = \Validator::make($input, [
+            'companyFinancePeriodID' => 'required|numeric|min:1',
+            'companyFinanceYearID' => 'required|numeric|min:1',
+            'jvType' => 'required',
+            'JVdate' => 'required',
+            'companySystemID' => 'required',
+            'currencyID' => 'required|numeric|min:1',
+            'JVNarration' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
@@ -1329,5 +1346,72 @@ HAVING
             ->delete();
 
         return $this->sendResponse($jvMasterData->toArray(), 'JV reopened successfully');
+    }
+
+    public function getJournalVoucherAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $jvMasterAutoId = $input['jvMasterAutoId'];
+
+        $jvMasterData = JvMaster::find($jvMasterAutoId);
+        if (empty($jvMasterData)) {
+            return $this->sendError('Journal Voucher not found');
+        }
+
+        if ($jvMasterData->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this journal voucher');
+        }
+
+        $journalVoucherArray = $jvMasterData->toArray();
+
+        $storeJournalVoucherHistory = JvMasterReferredback::insert($journalVoucherArray);
+
+        $fetchJournalVoucherDetails = JvDetail::where('jvMasterAutoId', $jvMasterAutoId)
+            ->get();
+
+        if (!empty($fetchJournalVoucherDetails)) {
+            foreach ($fetchJournalVoucherDetails as $bookDetail) {
+                $bookDetail['timesReferred'] = $jvMasterData->timesReferred;
+            }
+        }
+
+        $journalVoucherDetailArray = $fetchJournalVoucherDetails->toArray();
+
+        $storeJournalVoucherDetailHistory = JvDetailsReferredback::insert($journalVoucherDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $jvMasterAutoId)
+            ->where('companySystemID', $jvMasterData->companySystemID)
+            ->where('documentSystemID', $jvMasterData->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $jvMasterData->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $jvMasterAutoId)
+            ->where('companySystemID', $jvMasterData->companySystemID)
+            ->where('documentSystemID', $jvMasterData->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $jvMasterData->refferedBackYN = 0;
+            $jvMasterData->confirmedYN = 0;
+            $jvMasterData->confirmedByEmpSystemID = null;
+            $jvMasterData->confirmedByEmpID = null;
+            $jvMasterData->confirmedByName = null;
+            $jvMasterData->confirmedDate = null;
+            $jvMasterData->RollLevForApp_curr = 1;
+            $jvMasterData->save();
+        }
+
+
+        return $this->sendResponse($jvMasterData->toArray(), 'Journal Voucher Amend successfully');
     }
 }
