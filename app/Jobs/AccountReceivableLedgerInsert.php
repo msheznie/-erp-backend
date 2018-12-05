@@ -122,10 +122,13 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                         }
 
                         if ($masterData) {
-
                             $masterDocumentDate = date('Y-m-d H:i:s');
-                            if($masterData->finance_period_by->isActive == -1){
-                                $masterDocumentDate = $masterData->bookingDate;
+                            if ($masterData->isPerforma == 1) {
+                                $masterDocumentDate = date('Y-m-d H:i:s');
+                            } else {
+                                if ($masterData->finance_period_by->isActive == -1) {
+                                    $masterDocumentDate = $masterData->bookingDate;
+                                }
                             }
 
                             $data['companySystemID'] = $masterData->companySystemID;

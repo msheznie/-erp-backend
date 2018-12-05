@@ -1085,6 +1085,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
     Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
+    Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation');
     Route::resource('asset_types', 'AssetTypeAPIController');
     Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
     Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
@@ -1231,7 +1232,7 @@ Route::get('getBcryptPassword/{password}', function ($password) {
 });
 
 Route::get('runQueue', function () {
-    //$master = ['documentSystemID' => 7,'autoID' => 491, 'companySystemID' => 11, 'employeeSystemID' => 2664];
+    //$master = ['documentSystemID' => 20,'autoID' => 53829, 'companySystemID' => 11, 'employeeSystemID' => 2664];
     //$job = \App\Jobs\GeneralLedgerInsert::dispatch($master);
     //$master = \App\Models\PaySupplierInvoiceMaster::find(76745);
     //$job = \App\Jobs\CreateReceiptVoucher::dispatch($master);
