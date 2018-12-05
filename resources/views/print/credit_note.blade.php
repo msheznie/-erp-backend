@@ -179,12 +179,6 @@
 <div id="watermark">
          <span class="watermarkText">
            <h3 class="text-muted">
-               @if($request->confirmedYN == 0 && $request->approved == 0)
-                   Not Confirmed & Not Approved <br> Draft Copy
-               @endif
-               @if($request->confirmedYN == 1 && $request->approved == 0)
-                   Confirmed & Not Approved <br> Draft Copy
-               @endif
 
            </h3>
          </span>
@@ -196,7 +190,6 @@
             <tr>
                 <td width="30%">
                     <img src="logos/{{$request->company->companyLogo}}" width="180px" height="60px"></td>
-
 
                 <td width="50%" style="text-align: center">
                     <div class="text-center">
@@ -212,7 +205,18 @@
                     </div>
 
                 </td>
-                <td style="width: 30%"></td>
+                <td style="width: 30%" valign="bottom" >
+                                         <span class="font-weight-bold">
+{{--                         <h4 class="text-muted" style="opacity: 0.6;">
+                             @if($request->confirmedYN == 0 && $request->approved == 0)
+                                 Not Confirmed & Not Approved <br> Draft Copy
+                             @endif
+                             @if($request->confirmedYN == 1 && $request->approved == 0)
+                                 Confirmed & Not Approved <br> Draft Copy
+                             @endif
+                         </h4>--}}
+ `             </span>
+                </td>
             </tr>
         </table>
     </div>
