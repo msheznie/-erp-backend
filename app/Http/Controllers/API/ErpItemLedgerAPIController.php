@@ -308,7 +308,7 @@ class ErpItemLedgerAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
-        $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription','itemmaster.secondaryItemCode')
+        $item = DB::table('erp_itemledger')->select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
             ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->whereIn('erp_itemledger.companySystemID', $subCompanies)
             ->where('itemmaster.financeCategoryMaster', 1)
@@ -867,6 +867,8 @@ WHERE
 	ItemLedger.LocalCurrencyDecimals,
 	ItemLedger.RptCurrencyDecimals,
 	sum( Qty ) AS Qty,
+	ItemLedger.minimumQty,               
+    ItemLedger.maximunQty,      
 	LocalCurrency,
 IF
 	( sum( localAmount ) / sum( Qty ) IS NULL, 0, sum( localAmount ) / sum( Qty ) ) AS WACLocal,
@@ -896,7 +898,9 @@ SELECT
 	currencymaster_1.CurrencyName AS RepCurrency,
 	round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
     currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
-    currencymaster_1.DecimalPlaces AS RptCurrencyDecimals               
+    currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,               
+    itemassigned.minimumQty as minimumQty,               
+    itemassigned.maximunQty as maximunQty             
 FROM
 	`erp_itemledger`
 	INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
@@ -904,6 +908,7 @@ FROM
 	LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
 	LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
 	LEFT JOIN `units` ON `erp_itemledger`.`unitOfMeasure` = `units`.`UnitID` 
+	LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND itemassigned.companySystemID = erp_itemledger.companySystemID
 WHERE
 	erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
 	AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
@@ -979,6 +984,8 @@ GROUP BY
                 ItemLedger.LocalCurrencyDecimals,
                 ItemLedger.RptCurrencyDecimals,
                 sum( Qty ) AS Qty,
+                ItemLedger.minimumQty,               
+                ItemLedger.maximunQty,   
                 LocalCurrency,
             IF
                 ( sum( localAmount ) / sum( Qty ) IS NULL, 0, sum( localAmount ) / sum( Qty ) ) AS WACLocal,
@@ -1008,7 +1015,9 @@ GROUP BY
                 currencymaster_1.CurrencyName AS RepCurrency,
                 round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
                 currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
-                currencymaster_1.DecimalPlaces AS RptCurrencyDecimals               
+                currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,
+                itemassigned.minimumQty as minimumQty,               
+                itemassigned.maximunQty as maximunQty                  
             FROM
                 `erp_itemledger`
                 INNER JOIN `itemmaster` ON `erp_itemledger`.`itemSystemCode` = `itemmaster`.`itemCodeSystem`
@@ -1016,6 +1025,7 @@ GROUP BY
                 LEFT JOIN `currencymaster` ON `erp_itemledger`.`wacLocalCurrencyID` = `currencymaster`.`currencyID`
                 LEFT JOIN `currencymaster` AS `currencymaster_1` ON `erp_itemledger`.`wacRptCurrencyID` = `currencymaster_1`.`currencyID`
                 LEFT JOIN `units` ON `erp_itemledger`.`unitOfMeasure` = `units`.`UnitID` 
+                LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND itemassigned.companySystemID = erp_itemledger.companySystemID
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                 AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
@@ -1034,6 +1044,8 @@ GROUP BY
                 'Item Description' => $val->itemDescription,
                 'UOM' => $val->UnitShortCode,
                 'Part Number' => $val->secondaryItemCode,
+                'Min Qty' => $val->minimumQty,
+                'Max Qty' => $val->maximunQty,
                 'Qty' => $val->Qty,
                 'WAC Local' => number_format($val->WACLocal, $val->LocalCurrencyDecimals),
                 'Local Amount' => number_format($val->WacLocalAmount, $val->LocalCurrencyDecimals),
@@ -1106,7 +1118,7 @@ GROUP BY
         }
 
         if ($search) {
-            $searchQry = "AND (" . join(' OR ', $search).")";
+            $searchQry = "AND (" . join(' OR ', $search) . ")";
         }
 
         /*$sql = "SELECT
@@ -1323,7 +1335,7 @@ GROUP BY
         }
 
         if ($search) {
-            $searchQry = "AND (" . join(' OR ', $search).")";
+            $searchQry = "AND (" . join(' OR ', $search) . ")";
         }
 
         /*$stockTaking = DB::select("SELECT
