@@ -984,6 +984,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
     Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
     Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
+    Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
 
     Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
     Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
@@ -1188,11 +1189,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getDebitNoteAmendHistory', 'DebitNoteMasterRefferedbackAPIController@getDebitNoteAmendHistory');
     Route::get('getDNDetailAmendHistory', 'DebitNoteDetailsRefferedbackAPIController@getDNDetailAmendHistory');
 
-
     Route::resource('item_issue_referred_back', 'ItemIssueMasterRefferedBackAPIController');
     Route::post('getReferBackHistoryByMaterielIssues', 'ItemIssueMasterRefferedBackAPIController@getReferBackHistoryByMaterielIssues');
     Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack');
     Route::resource('item_issue_details_reffered_backs', 'ItemIssueDetailsRefferedBackAPIController');
+
+    Route::resource('jvMasterReferredbacks', 'JvMasterReferredbackAPIController');
+    Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackAPIController');
+    Route::post('getJournalVoucherAmendHistory', 'JvMasterReferredbackAPIController@getJournalVoucherAmendHistory');
+    Route::get('getJVDetailAmendHistory', 'JvDetailsReferredbackAPIController@getJVDetailAmendHistory');
 });
 
 
@@ -1246,8 +1251,3 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
-
-
-
-
-

@@ -1404,10 +1404,13 @@ WHERE
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $invMaster = $invMaster->where(function ($query) use ($search) {
+            $search_without_comma = str_replace(",", "", $search);
+            $invMaster = $invMaster->where(function ($query) use ($search, $search_without_comma) {
                 $query->where('matchingDocCode', 'LIKE', "%{$search}%")
                     ->orWhere('BPVNarration', 'LIKE', "%{$search}%")
                     ->orWhere('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('payAmountSuppTrans', 'LIKE', "%{$search}%")
+                    ->orWhere('matchingAmount', 'LIKE', "%{$search_without_comma}%")
                     ->orWhereHas('customer', function ($query) use ($search) {
                         $query->where('CutomerCode', 'LIKE', "%{$search}%")
                             ->orWhere('CustomerName', 'LIKE', "%{$search}%");

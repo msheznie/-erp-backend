@@ -1237,6 +1237,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'erp_customerreceivepayment.confirmedYN',
             'erp_customerreceivepayment.approved',
             'custReceivePaymentAutoID',
+            'customermaster.CutomerCode',
             'customermaster.CustomerName',
             'receivedAmount as receivedAmount',
             'bankAmount as bankAmount'
@@ -1245,11 +1246,15 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $master = $master->where(function ($query) use ($search) {
+            $search_without_comma = str_replace(",", "", $search);
+            $master = $master->where(function ($query) use ($search, $search_without_comma) {
                 $query->Where('custPaymentReceiveCode', 'LIKE', "%{$search}%")
                     ->orwhere('employees.empName', 'LIKE', "%{$search}%")
+                    ->orwhere('customermaster.CutomerCode', 'LIKE', "%{$search}%")
                     ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
-                    ->orWhere('erp_customerreceivepayment.narration', 'LIKE', "%{$search}%");
+                    ->orWhere('erp_customerreceivepayment.narration', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_customerreceivepayment.receivedAmount', 'LIKE', "%{$search_without_comma}%")
+                    ->orWhere('erp_customerreceivepayment.bankAmount', 'LIKE', "%{$search_without_comma}%");
             });
         }
 

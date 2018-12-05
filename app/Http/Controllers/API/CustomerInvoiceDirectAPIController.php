@@ -948,17 +948,20 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $invMaster = $invMaster->where(function ($query) use ($search) {
+            $search_without_comma = str_replace(",", "", $search);
+            $invMaster = $invMaster->where(function ($query) use ($search, $search_without_comma) {
                 $query->Where('bookingInvCode', 'LIKE', "%{$search}%")
                     ->orwhere('employees.empName', 'LIKE', "%{$search}%")
                     ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
+                    ->orwhere('customermaster.CutomerCode', 'LIKE', "%{$search}%")
                     ->orWhere('customerInvoiceNo', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%");
+                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhere('bookingAmountTrans', 'LIKE', "%{$search_without_comma}%");
             });
         }
 
         $request->request->remove('search.value');
-        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma');
+        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CutomerCode','customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma');
 
         return \DataTables::of($invMaster)
             ->order(function ($query) use ($input) {
