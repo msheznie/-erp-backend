@@ -1831,7 +1831,11 @@ HAVING
                 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder',
                 'approvalLevelID',
-                'documentSystemCode'
+                'erp_documentapproved.documentSystemCode',
+                'erp_bankmemosupplier.memoHeaderSupplier',
+                'erp_bankmemosupplier.memoDetailSupplier',
+                'erp_bankmemopayee.memoHeaderPayee',
+                'erp_bankmemopayee.memoDetailPayee'
             )
             ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
@@ -1848,6 +1852,18 @@ HAVING
                     ->where('erp_paysupplierinvoicemaster.companySystemID', $companyId)
                     ->where('erp_paysupplierinvoicemaster.approved', 0)
                     ->where('erp_paysupplierinvoicemaster.confirmedYN', 1);
+            })
+            ->leftjoin('suppliercurrency as suppCurrency', function ($query) use ($companyId) {
+                $query->on('erp_paysupplierinvoicemaster.BPVsupplierID', '=', 'suppCurrency.supplierCodeSystem')
+                    ->on('erp_paysupplierinvoicemaster.supplierTransCurrencyID', '=', 'suppCurrency.currencyID');
+            })
+            ->leftJoin(DB::raw('(SELECT group_concat(bankMemoHeader SEPARATOR "|") as memoHeaderSupplier,group_concat(memoDetail SEPARATOR "|") as memoDetailSupplier, supplierCodeSystem, supplierCurrencyID FROM erp_bankmemosupplier INNER JOIN erp_bankmemotypes ON erp_bankmemotypes.bankMemoTypeID = erp_bankmemosupplier.bankMemoTypeID WHERE erp_bankmemosupplier.bankMemoTypeID IN (1,2,4) GROUP BY supplierCodeSystem, supplierCurrencyID ORDER BY sortOrder asc) as erp_bankmemosupplier'), function ($query) use ($companyId) {
+                $query->on('erp_paysupplierinvoicemaster.BPVsupplierID', '=', 'erp_bankmemosupplier.supplierCodeSystem')
+                    ->on('suppCurrency.supplierCurrencyID', '=', 'erp_bankmemosupplier.supplierCurrencyID');
+            })
+            ->leftJoin(DB::raw('(SELECT group_concat(bankMemoHeader SEPARATOR "|") as memoHeaderPayee,group_concat(memoDetail SEPARATOR "|") as memoDetailPayee, documentSystemCode, documentSystemID FROM erp_bankmemopayee INNER JOIN erp_bankmemotypes ON erp_bankmemotypes.bankMemoTypeID = erp_bankmemopayee.bankMemoTypeID WHERE erp_bankmemopayee.bankMemoTypeID IN (1,2,4) GROUP BY documentSystemCode, documentSystemID ORDER BY sortOrder asc) as erp_bankmemopayee'), function ($query) use ($companyId) {
+                $query->on('erp_paysupplierinvoicemaster.PayMasterAutoId', '=', 'erp_bankmemopayee.documentSystemCode')
+                    ->on('erp_paysupplierinvoicemaster.documentSystemID', '=', 'erp_bankmemopayee.documentSystemID');
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')

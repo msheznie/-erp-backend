@@ -954,6 +954,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('getAssetNBV', 'AssetCapitalizationAPIController@getAssetNBV');
     Route::get('getCapitalizationFixedAsset', 'AssetCapitalizationAPIController@getCapitalizationFixedAsset');
     Route::post('capitalizationReopen', 'AssetCapitalizationAPIController@capitalizationReopen');
+    Route::post('referBackCapitalization', 'AssetCapitalizationAPIController@referBackCapitalization');
     Route::get('getAssetCapitalizationMaster', 'AssetCapitalizationAPIController@getAssetCapitalizationMaster');
     Route::post('getCapitalizationApprovalByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovalByUser');
     Route::post('getCapitalizationApprovedByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovedByUser');
@@ -1064,6 +1065,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getDisposalApprovalByUser', 'AssetDisposalMasterAPIController@getDisposalApprovalByUser');
     Route::post('getDisposalApprovedByUser', 'AssetDisposalMasterAPIController@getDisposalApprovedByUser');
     Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal');
+    Route::post('referBackDisposal', 'AssetDisposalMasterAPIController@referBackDisposal');
     Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
     Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
@@ -1204,6 +1206,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getReferBackHistoryByMaterielReturn', 'ItemReturnMasterRefferedBackAPIController@getReferBackHistoryByMaterielReturn');
     Route::resource('mr_details_reffered_backs', 'ItemReturnDetailsRefferedBackAPIController');
     Route::get('getItemReturnDetailsReferBack', 'ItemReturnDetailsRefferedBackAPIController@getItemReturnDetailsReferBack');
+
+    Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
+
+    Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
+
+    Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
+
+    Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');
 });
 
 
@@ -1257,4 +1267,6 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
 
