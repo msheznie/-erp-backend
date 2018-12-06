@@ -169,6 +169,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('procumentOrderTotalDiscountUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalDiscountUD');
     Route::post('procumentOrderTotalTaxUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalTaxUD');
     Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv');
+    Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend');
 
     /** Approval Level*/
     Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
@@ -893,7 +894,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('receiptVoucherMatchingCancel', 'MatchDocumentMasterAPIController@receiptVoucherMatchingCancel');
     Route::post('getRVMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getRVMatchDocumentMasterView');
     Route::get('getReceiptVoucherMatchItems', 'MatchDocumentMasterAPIController@getReceiptVoucherMatchItems');
-    Route::get('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail');
+    Route::post('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail');
     Route::post('updateReceiptVoucherMatching', 'MatchDocumentMasterAPIController@updateReceiptVoucherMatching');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
