@@ -1349,7 +1349,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $this->itemIssueMasterRepository->update($updateArray,$id);
         }
 
-        return $this->sendResponse($itemIssue->toArray(), 'Stock Transfer Amend successfully');
+        return $this->sendResponse($itemIssue->toArray(), 'Materiel Issue Amend successfully');
     }
 
 }
