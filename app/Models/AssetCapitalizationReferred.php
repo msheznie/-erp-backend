@@ -1,15 +1,4 @@
 <?php
-/**
- * =============================================
- * -- File Name : AssetCapitalization.php
- * -- Project Name : ERP
- * -- Module Name :  Asset Management
- * -- Author : Mubashir
- * -- Create date : 26 - September 2018
- * -- Description : This file is used to interact with database table and it contains relationships to the tables.
- * -- REVISION HISTORY
- * --
- */
 
 namespace App\Models;
 
@@ -17,8 +6,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="AssetCapitalization",
+ *      definition="AssetCapitalizationReferred",
  *      required={""},
+ *      @SWG\Property(
+ *          property="capitalizationReferredID",
+ *          description="capitalizationReferredID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="capitalizationID",
  *          description="capitalizationID",
@@ -45,6 +40,11 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="documentID",
  *          description="documentID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="capitalizationCode",
+ *          description="capitalizationCode",
  *          type="string"
  *      ),
  *      @SWG\Property(
@@ -88,6 +88,17 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="contraAccountSystemID",
+ *          description="contraAccountSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="contraAccountGLCode",
+ *          description="contraAccountGLCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
  *          property="assetNBVLocal",
  *          description="assetNBVLocal",
  *          type="number",
@@ -98,6 +109,16 @@ use Eloquent as Model;
  *          description="assetNBVRpt",
  *          type="number",
  *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="boolean"
+ *      ),
+ *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="boolean"
  *      ),
  *      @SWG\Property(
  *          property="confirmedYN",
@@ -174,20 +195,54 @@ use Eloquent as Model;
  *          property="modifiedPc",
  *          description="modifiedPc",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="cancelYN",
+ *          description="cancelYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="cancelComment",
+ *          description="cancelComment",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="cancelledByEmpSystemID",
+ *          description="cancelledByEmpSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="canceledByEmpID",
+ *          description="canceledByEmpID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="canceledByEmpName",
+ *          description="canceledByEmpName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="RollLevForApp_curr",
+ *          description="RollLevForApp_curr",
+ *          type="boolean"
  *      )
  * )
  */
-class AssetCapitalization extends Model
+class AssetCapitalizationReferred extends Model
 {
 
-    public $table = 'erp_fa_assetcapitalization';
-
+    public $table = 'erp_fa_assetcapitalizationreferredback';
+    
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timestamp';
 
-    protected $primaryKey = 'capitalizationID';
+    protected $primaryKey = 'capitalizationReferredID';
+
 
     public $fillable = [
+        'capitalizationID',
         'companySystemID',
         'companyID',
         'documentSystemID',
@@ -210,12 +265,12 @@ class AssetCapitalization extends Model
         'assetNBVLocal',
         'assetNBVRpt',
         'timesReferred',
+        'refferedBackYN',
         'confirmedYN',
         'confirmedByEmpSystemID',
         'confirmedByEmpID',
         'confirmedByName',
         'confirmedDate',
-        'refferedBackYN',
         'approved',
         'approvedDate',
         'approvedByUserID',
@@ -224,10 +279,10 @@ class AssetCapitalization extends Model
         'createdUserSystemID',
         'createdUserID',
         'createdPcID',
+        'createdDateTime',
         'modifiedUserSystemID',
         'modifiedUser',
         'modifiedPc',
-        'createdDateTime',
         'cancelYN',
         'cancelComment',
         'cancelDate',
@@ -244,6 +299,7 @@ class AssetCapitalization extends Model
      * @var array
      */
     protected $casts = [
+        'capitalizationReferredID' => 'integer',
         'capitalizationID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -261,12 +317,12 @@ class AssetCapitalization extends Model
         'contraAccountGLCode' => 'string',
         'assetNBVLocal' => 'float',
         'assetNBVRpt' => 'float',
+        'timesReferred' => 'boolean',
+        'refferedBackYN' => 'boolean',
         'confirmedYN' => 'integer',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
-        'timesReferred ' => 'integer',
-        'refferedBackYN ' => 'integer',
         'approved' => 'integer',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
@@ -282,21 +338,8 @@ class AssetCapitalization extends Model
         'cancelledByEmpSystemID' => 'integer',
         'canceledByEmpID' => 'string',
         'canceledByEmpName' => 'string',
-        'RollLevForApp_curr' => 'integer',
+        'RollLevForApp_curr' => 'boolean'
     ];
-
-    /**
-     * Scope a query to only include users of a given type.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param mixed $type
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-
-    public function scopeOfAsset($query, $faID)
-    {
-        return $query->where('faID',  $faID);
-    }
 
     /**
      * Validation rules
@@ -304,58 +347,8 @@ class AssetCapitalization extends Model
      * @var array
      */
     public static $rules = [
-
+        
     ];
 
-    public function company()
-    {
-        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
-    }
-
-    public function detail()
-    {
-        return $this->hasMany('App\Models\AssetCapitalizationDetail', 'capitalizationID', 'capitalizationID');
-    }
-
-    public function approved_by()
-    {
-        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'capitalizationID');
-    }
-
-    public function confirmed_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
-    }
-
-    public function created_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
-    }
-
-    public function modified_by()
-    {
-        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
-    }
-
-
-    public function financeperiod_by()
-    {
-        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
-    }
-
-    public function financeyear_by()
-    {
-        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
-    }
-
-    public function contra_account()
-    {
-        return $this->belongsTo('App\Models\ChartofAccount', 'contraAccountSystemID', 'chartOfAccountSystemID');
-    }
-
-    public function asset_by()
-    {
-        return $this->belongsTo('App\Models\FixedAssetMaster', 'faID', 'faID');
-    }
-
+    
 }
