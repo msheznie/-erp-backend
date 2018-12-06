@@ -296,7 +296,6 @@ class InventoryReportAPIController extends AppBaseController
                
                 ) AS ItemLedger 
             GROUP BY
-                ItemLedger.companySystemID,
                 ItemLedger.itemSystemCode) as grandFinal";
         $items = DB::select($sql);
 
@@ -311,7 +310,6 @@ class InventoryReportAPIController extends AppBaseController
                 AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 AND erp_itemledger.inOutQty < 0
-        
             GROUP BY
                 erp_itemledger.itemSystemCode";
 

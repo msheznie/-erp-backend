@@ -6,7 +6,7 @@
  * -- Module Name :  Item Return Details
  * -- Author : Mohamed Fayas
  * -- Create date : 16 - July 2018
- * -- Description : This file contains the all CRUD for Document Attachments
+ * -- Description : This file contains the all CRUD for Item Return Details
  * -- REVISION HISTORY
  * -- Date: 16 - July 2018 By: Fayas Description: Added new functions named as getAllMaterielReturnByCompany(),getMaterielReturnFormData()
  * -- Date: 17 - July 2018 By: Fayas Description: Added new functions named as getMaterielReturnAudit(),getMaterielReturnApprovalByUser(),getMaterielReturnApprovedByUser()
@@ -25,10 +25,13 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemReturnDetails;
+use App\Models\ItemReturnDetailsRefferedBack;
 use App\Models\ItemReturnMaster;
+use App\Models\ItemReturnMasterRefferedBack;
 use App\Models\Months;
 use App\Models\SegmentMaster;
 use App\Models\Unit;
@@ -581,7 +584,7 @@ class ItemReturnMasterAPIController extends AppBaseController
     }
 
     /**
-     * get All Materiel Issues By Company
+     * get All Materiel Returns By Company
      * POST /getAllMaterielIssuesByCompany
      *
      * @param Request $request
@@ -1111,5 +1114,67 @@ class ItemReturnMasterAPIController extends AppBaseController
             ->delete();
 
         return $this->sendResponse($itemReturnMaster->toArray(), 'Materiel Return reopened successfully');
+    }
+
+    public function materielReturnReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $itemReturn = $this->itemReturnMasterRepository->find($id);
+        if (empty($itemReturn)) {
+            return $this->sendError('Materiel Return not found');
+        }
+
+        if ($itemReturn->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this materiel return');
+        }
+
+        $itemReturnArray = $itemReturn->toArray();
+
+        $storeMRHistory = ItemReturnMasterRefferedBack::insert($itemReturnArray);
+
+        $fetchDetails = ItemReturnDetails::where('itemReturnAutoID', $id)
+            ->get();
+
+        if (!empty($fetchDetails)) {
+            foreach ($fetchDetails as $detail) {
+                $detail['timesReferred'] = $itemReturn->timesReferred;
+            }
+        }
+
+        $itemReturnDetailArray = $fetchDetails->toArray();
+
+        $storeMRDetailHistory = ItemReturnDetailsRefferedBack::insert($itemReturnDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $itemReturn->companySystemID)
+            ->where('documentSystemID', $itemReturn->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $itemReturn->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $itemReturn->companySystemID)
+            ->where('documentSystemID', $itemReturn->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,'confirmedYN' => 0,'confirmedByEmpSystemID' => null,
+                'confirmedByEmpID' => null,'confirmedByName' => null,'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+            $this->itemReturnMasterRepository->update($updateArray,$id);
+        }
+
+        return $this->sendResponse($itemReturn->toArray(), 'Materiel Return Amend successfully');
     }
 }
