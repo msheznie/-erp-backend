@@ -12,6 +12,7 @@
  * -- Date: 19-June 2018 By: Fayas Description: Added new functions named as materielRequestAudit()
  * -- Date: 13-July 2018 By: Fayas Description: Added new functions named as getAllNotApprovedRequestByUser(),getApprovedMaterielRequestsByUser()
  * -- Date: 30-July 2018 By: Fayas Description: Added new functions named as requestReopen(),printMaterielRequest()
+ * -- Date: 06-December 2018 By: Fayas Description: Added new functions named as requestReferBack()
  */
 namespace App\Http\Controllers\API;
 
@@ -22,12 +23,15 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\ItemAssigned;
 use App\Models\Location;
 use App\Models\MaterielRequest;
 use App\Models\MaterielRequestDetails;
 use App\Models\Priority;
+use App\Models\RequestDetailsRefferedBack;
+use App\Models\RequestRefferedBack;
 use App\Models\SegmentMaster;
 use App\Models\Unit;
 use App\Models\WarehouseMaster;
@@ -162,7 +166,8 @@ class MaterielRequestAPIController extends AppBaseController
                 'erp_request.ConfirmedYN',
                 'erp_request.approved',
                 'erp_request.serviceLineSystemID',
-                'erp_request.documentSystemID'
+                'erp_request.documentSystemID',
+                'erp_request.refferedBackYN'
             ]);
 
         $search = $request->input('search.value');
@@ -880,7 +885,68 @@ class MaterielRequestAPIController extends AppBaseController
                                         ->where('documentSystemID', $materielRequest->documentSystemID)
                                         ->delete();
 
-        return $this->sendResponse($materielRequest->toArray(), 'Purchase Order reopened successfully');
+        return $this->sendResponse($materielRequest->toArray(), 'Request reopened successfully');
     }
 
+    public function requestReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $itemRequest = $this->materielRequestRepository->find($id);
+        if (empty($itemRequest)) {
+            return $this->sendError('Request not found');
+        }
+
+        if ($itemRequest->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this request');
+        }
+
+        $itemRequestArray = $itemRequest->toArray();
+
+        $storeMRHistory = RequestRefferedBack::insert($itemRequestArray);
+
+        $fetchDetails = MaterielRequestDetails::where('RequestID', $id)
+            ->get();
+
+        if (!empty($fetchDetails)) {
+            foreach ($fetchDetails as $detail) {
+                $detail['timesReferred'] = $itemRequest->timesReferred;
+            }
+        }
+
+        $itemRequestDetailArray = $fetchDetails->toArray();
+
+        $storeMRDetailHistory = RequestDetailsRefferedBack::insert($itemRequestDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $itemRequest->companySystemID)
+            ->where('documentSystemID', $itemRequest->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $itemRequest->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $itemRequest->companySystemID)
+            ->where('documentSystemID', $itemRequest->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,'ConfirmedYN' => 0,'ConfirmedBySystemID' => null,
+                'ConfirmedBy' => null,'confirmedEmpName' => null,'ConfirmedDate' => null,'RollLevForApp_curr' => 1];
+
+            $this->materielRequestRepository->update($updateArray,$id);
+        }
+
+        return $this->sendResponse($itemRequest->toArray(), 'Request Amend successfully');
+    }
 }

@@ -15,14 +15,17 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAssetCapitalizationAPIRequest;
 use App\Http\Requests\API\UpdateAssetCapitalizationAPIRequest;
+use App\Models\AssetCapitalizatioDetReferred;
 use App\Models\AssetCapitalization;
 use App\Models\AssetCapitalizationDetail;
+use App\Models\AssetCapitalizationReferred;
 use App\Models\AssetDisposalDetail;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetCategory;
 use App\Models\FixedAssetDepreciationPeriod;
@@ -948,6 +951,77 @@ class AssetCapitalizationAPIController extends AppBaseController
 
         $output = ['disposal' => $assetDisposalDetail, 'assets' => $fixedAsset];
         return $this->sendResponse($output, 'Record successfully');
+    }
+
+    function referBackCapitalization(Request $request){
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $capitalizationID = $input['capitalizationID'];
+
+            $capitalization = $this->assetCapitalizationRepository->findWithoutFail($capitalizationID);
+            if (empty($capitalization)) {
+                return $this->sendError('Asset Capitalization not found');
+            }
+
+            if ($capitalization->refferedBackYN != -1) {
+                return $this->sendError('You cannot amend this document');
+            }
+
+            $capitalizationArray = $capitalization->toArray();
+
+            $storeCAHistory = AssetCapitalizationReferred::create($capitalizationArray);
+
+            $fetchCADetails = AssetCapitalizationDetail::OfCapitalization($capitalizationID)
+                ->get();
+
+            if (!empty($fetchCADetails)) {
+                foreach ($fetchCADetails as $caDetail) {
+                    $caDetail['timesReferred'] = $capitalization->timesReferred;
+                }
+            }
+
+            $caDetailArray = $fetchCADetails->toArray();
+
+            $storePVDetailHistory = AssetCapitalizatioDetReferred::insert($caDetailArray);
+
+
+            $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $capitalizationID)
+                ->where('companySystemID', $capitalization->companySystemID)
+                ->where('documentSystemID', $capitalization->documentSystemID)
+                ->get();
+
+            if (!empty($fetchDocumentApproved)) {
+                foreach ($fetchDocumentApproved as $DocumentApproved) {
+                    $DocumentApproved['refTimes'] = $capitalization->timesReferred;
+                }
+            }
+
+            $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+            $storeDocumentReferedHistory = DocumentReferedHistory::create($DocumentApprovedArray);
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $capitalizationID)
+                ->where('companySystemID', $capitalization->companySystemID)
+                ->where('documentSystemID', $capitalization->documentSystemID)
+                ->delete();
+
+            if ($deleteApproval) {
+                $capitalization->refferedBackYN = 0;
+                $capitalization->confirmedYN = 0;
+                $capitalization->confirmedByEmpSystemID = null;
+                $capitalization->confirmedByEmpID = null;
+                $capitalization->confirmedDate = null;
+                $capitalization->RollLevForApp_curr = 1;
+                $capitalization->save();
+            }
+
+            DB::commit();
+            return $this->sendResponse($capitalization->toArray(), 'Asset Capitalization amended successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }

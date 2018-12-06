@@ -851,8 +851,19 @@ class PaymentBankTransferAPIController extends AppBaseController
         $csv = Excel::create($fileName, function ($excel) use ($data) {
             $excel->sheet('Firstsheet', function ($sheet) use ($data) {
                 $sheet->setColumnFormat(array(
-                    'A' => '0',
-                    'B' => '0',
+                    'A' => '@',
+                    'C' => '@',
+                    'D' => '@',
+                    'E' => '@',
+                    'F' => '@',
+                    'G' => '@',
+                    'H' => '@',
+                    'I' => '@',
+                    'J' => '@',
+                    'K' => '@',
+                    'L' => '@',
+                    'M' => '@',
+                    'N' => '@'
                 ));
                 $sheet->fromArray($data, null, 'A1', true);
                 // $sheet->setAutoSize(true);

@@ -260,7 +260,9 @@ class MaterielRequest extends Model
         'timeStamp',
         'RollLevForApp_curr',
         'approvedByUserSystemID',
-        'approvedDate'
+        'approvedDate',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -307,6 +309,8 @@ class MaterielRequest extends Model
         'RollLevForApp_curr' => 'integer',
         'approvedByUserSystemID' => 'integer',
         'approvedDate' => 'string',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**

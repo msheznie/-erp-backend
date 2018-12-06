@@ -15,7 +15,9 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateAssetDisposalMasterAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalMasterAPIRequest;
 use App\Models\AssetDisposalDetail;
+use App\Models\AssetDisposalDetailReferred;
 use App\Models\AssetDisposalMaster;
+use App\Models\AssetDisposalReferred;
 use App\Models\AssetDisposalType;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -23,6 +25,7 @@ use App\Models\CustomerAssigned;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\FixedAssetMaster;
 use App\Models\Months;
@@ -902,6 +905,77 @@ class AssetDisposalMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    function referBackDisposal(Request $request){
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $assetdisposalMasterAutoID = $input['assetdisposalMasterAutoID'];
+
+            $assetdisposal = $this->assetDisposalMasterRepository->findWithoutFail($assetdisposalMasterAutoID);
+            if (empty($assetdisposal)) {
+                return $this->sendError('Asset Disposal not found');
+            }
+
+            if ($assetdisposal->refferedBackYN != -1) {
+                return $this->sendError('You cannot amend this document');
+            }
+
+            $assetdisposalArray = $assetdisposal->toArray();
+
+            $storeADHistory = AssetDisposalReferred::create($assetdisposalArray);
+
+            $fetchADDetails = AssetDisposalDetail::OfMaster($assetdisposalMasterAutoID)
+                ->get();
+
+            if (!empty($fetchADDetails)) {
+                foreach ($fetchADDetails as $caDetail) {
+                    $caDetail['timesReferred'] = $assetdisposal->timesReferred;
+                }
+            }
+
+            $caDetailArray = $fetchADDetails->toArray();
+
+            $storePVDetailHistory = AssetDisposalDetailReferred::insert($caDetailArray);
+
+
+            $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $assetdisposalMasterAutoID)
+                ->where('companySystemID', $assetdisposal->companySystemID)
+                ->where('documentSystemID', $assetdisposal->documentSystemID)
+                ->get();
+
+            if (!empty($fetchDocumentApproved)) {
+                foreach ($fetchDocumentApproved as $DocumentApproved) {
+                    $DocumentApproved['refTimes'] = $assetdisposal->timesReferred;
+                }
+            }
+
+            $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+            $storeDocumentReferedHistory = DocumentReferedHistory::create($DocumentApprovedArray);
+
+            $deleteApproval = DocumentApproved::where('documentSystemCode', $assetdisposalMasterAutoID)
+                ->where('companySystemID', $assetdisposal->companySystemID)
+                ->where('documentSystemID', $assetdisposal->documentSystemID)
+                ->delete();
+
+            if ($deleteApproval) {
+                $assetdisposal->refferedBackYN = 0;
+                $assetdisposal->confirmedYN = 0;
+                $assetdisposal->confimedByEmpSystemID = null;
+                $assetdisposal->confimedByEmpID = null;
+                $assetdisposal->confirmedDate = null;
+                $assetdisposal->RollLevForApp_curr = 1;
+                $assetdisposal->save();
+            }
+
+            DB::commit();
+            return $this->sendResponse($assetdisposal->toArray(), 'Asset Disposal amended successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 

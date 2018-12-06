@@ -1619,7 +1619,7 @@ HAVING
         $search = $request->input('search.value');
         if($search){
             $search = str_replace("\\", "\\\\\\\\", $search);
-            $filter = " AND ( erp_accountsreceivableledger.documentCode LIKE '%{$search}%') ";
+            $filter = " AND ( erp_accountsreceivableledger.documentCode LIKE '%{$search}%') OR ( erp_accountsreceivableledger.InvoiceNo LIKE '%{$search}%')";
         }
 
         $matchingDocdate = Carbon::parse($matchDocumentMasterData->matchingDocdate)->format('Y-m-d');
@@ -1642,6 +1642,7 @@ HAVING
 	erp_accountsreceivableledger.documentCode AS bookingInvDocCode,
 	erp_accountsreceivableledger.documentDate AS bookingInvoiceDate,
 	erp_accountsreceivableledger.documentType AS addedDocumentType,
+	erp_accountsreceivableledger.InvoiceNo AS docInvoiceNumber,
 	erp_accountsreceivableledger.customerID,
 	CurrencyCode,
 	DecimalPlaces,

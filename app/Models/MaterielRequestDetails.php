@@ -198,6 +198,7 @@ class MaterielRequestDetails extends Model
         'ClosedYN',
         'allowCreatePR',
         'selectedToCreatePR',
+        'timesReferred',
         'timeStamp'
     ];
 
@@ -231,7 +232,8 @@ class MaterielRequestDetails extends Model
         'selectedForIssue' => 'integer',
         'ClosedYN' => 'integer',
         'allowCreatePR' => 'integer',
-        'selectedToCreatePR' => 'integer'
+        'selectedToCreatePR' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**
