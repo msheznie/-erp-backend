@@ -514,6 +514,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
+    Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
     Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
     Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser');
@@ -1204,6 +1205,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getReferBackHistoryByMaterielReturn', 'ItemReturnMasterRefferedBackAPIController@getReferBackHistoryByMaterielReturn');
     Route::resource('mr_details_reffered_backs', 'ItemReturnDetailsRefferedBackAPIController');
     Route::get('getItemReturnDetailsReferBack', 'ItemReturnDetailsRefferedBackAPIController@getItemReturnDetailsReferBack');
+
+    Route::resource('request_reffered_back', 'RequestRefferedBackAPIController');
+    Route::post('getReferBackHistoryByRequest', 'RequestRefferedBackAPIController@getReferBackHistoryByRequest');
+    Route::resource('request_details_reffered_backs', 'RequestDetailsRefferedBackAPIController');
+    Route::get('getItemRequestDetailsReferBack', 'RequestDetailsRefferedBackAPIController@getItemRequestDetailsReferBack');
 });
 
 
@@ -1257,4 +1263,6 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
 
