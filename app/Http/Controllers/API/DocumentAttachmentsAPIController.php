@@ -17,6 +17,7 @@ use App\Criteria\FilterDocumentAttachmentsCriteria;
 use App\Http\Requests\API\CreateDocumentAttachmentsAPIRequest;
 use App\Http\Requests\API\UpdateDocumentAttachmentsAPIRequest;
 use App\Models\Company;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Repositories\DocumentAttachmentsRepository;
@@ -283,6 +284,16 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $attachment = DocumentAttachments::where('attachmentID', $id)
             ->first();
+
+        if($attachment['documentSystemID'] == 20){
+            $invoice = CustomerInvoiceDirect::find($attachment['documentSystemCode']);
+            if (!empty($invoice)) {
+                if($invoice->confirmedYN == 1 || $invoice->approved == -1){
+                    return $this->sendError('Customer invoice confirmed, you cannot delete the attachment', 500);
+                }
+
+            }
+        }
 
         if($attachment['pullFromAnotherDocument'] == 0){
             if ($exists = Storage::disk('public')->exists($path)) {
