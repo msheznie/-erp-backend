@@ -5411,12 +5411,9 @@ LEFT JOIN (
 		matchDocumentMasterAutoID DESC
 ) AS matchMaster ON erp_generalledger.documentSystemCode = matchMaster.PayMasterAutoId
 WHERE erp_generalledger.documentSystemID = 19 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-AND erp_generalledger.documentTransAmount < 0 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ') ORDER BY erp_generalledger.documentDate ASC';
+AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ') ORDER BY erp_generalledger.documentDate ASC';
 
-        //echo $qry;
-        //exit();
         $output = \DB::select($qry);
-
         return $output;
 
     }
