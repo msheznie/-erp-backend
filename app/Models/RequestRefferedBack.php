@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : MaterielRequest.php
+ * -- File Name : RequestRefferedBack.php
  * -- Project Name : ERP
- * -- Module Name : Materiel Request
+ * -- Module Name : Request Reffered Back
  * -- Author : Mohamed Fayas
- * -- Create date : 12- June 2018
+ * -- Create date : 06- December 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  */
 namespace App\Models;
@@ -14,8 +14,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="MaterielRequest",
+ *      definition="RequestRefferedBack",
  *      required={""},
+ *      @SWG\Property(
+ *          property="RequestRefferedBackID",
+ *          description="RequestRefferedBackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="RequestID",
  *          description="RequestID",
@@ -129,6 +135,11 @@ use Eloquent as Model;
  *          type="string"
  *      ),
  *      @SWG\Property(
+ *          property="confirmedEmpName",
+ *          description="confirmedEmpName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
  *          property="isActive",
  *          description="isActive",
  *          type="integer",
@@ -145,6 +156,54 @@ use Eloquent as Model;
  *          description="quantityInHand",
  *          type="number",
  *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="selectedForIssue",
+ *          description="selectedForIssue",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="approved",
+ *          description="approved",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="ClosedYN",
+ *          description="ClosedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="issueTrackID",
+ *          description="issueTrackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="RollLevForApp_curr",
+ *          description="RollLevForApp_curr",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="approvedByUserSystemID",
+ *          description="approvedByUserSystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @SWG\Property(
  *          property="createdUserGroup",
@@ -182,44 +241,22 @@ use Eloquent as Model;
  *          property="modifiedUser",
  *          description="modifiedUser",
  *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="selectedForIssue",
- *          description="selectedForIssue",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="approved",
- *          description="approved",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="ClosedYN",
- *          description="ClosedYN",
- *          type="integer",
- *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="issueTrackID",
- *          description="issueTrackID",
- *          type="integer",
- *          format="int32"
  *      )
  * )
  */
-class MaterielRequest extends Model
+class RequestRefferedBack extends Model
 {
 
-    public $table = 'erp_request';
-    
+    public $table = 'erp_request_refferedback';
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'RequestID';
+    protected $primaryKey  = 'RequestRefferedBackID';
+
 
 
     public $fillable = [
+        'RequestID',
         'companySystemID',
         'companyID',
         'departmentSystemID',
@@ -239,12 +276,22 @@ class MaterielRequest extends Model
         'RequestedDate',
         'ConfirmedYN',
         'ConfirmedBySystemID',
-        'confirmedEmpName',
         'ConfirmedBy',
+        'confirmedEmpName',
         'ConfirmedDate',
         'isActive',
         'quantityOnOrder',
         'quantityInHand',
+        'selectedForIssue',
+        'approved',
+        'ClosedYN',
+        'issueTrackID',
+        'timeStamp',
+        'RollLevForApp_curr',
+        'approvedDate',
+        'approvedByUserSystemID',
+        'refferedBackYN',
+        'timesReferred',
         'createdUserGroup',
         'createdPcID',
         'createdUserSystemID',
@@ -252,17 +299,7 @@ class MaterielRequest extends Model
         'modifiedPc',
         'modifiedUserSystemID',
         'modifiedUser',
-        'createdDateTime',
-        'selectedForIssue',
-        'approved',
-        'ClosedYN',
-        'issueTrackID',
-        'timeStamp',
-        'RollLevForApp_curr',
-        'approvedByUserSystemID',
-        'approvedDate',
-        'refferedBackYN',
-        'timesReferred'
+        'createdDateTime'
     ];
 
     /**
@@ -271,6 +308,7 @@ class MaterielRequest extends Model
      * @var array
      */
     protected $casts = [
+        'RequestRefferedBackID' => 'integer',
         'RequestID' => 'integer',
         'companySystemID' => 'integer',
         'companyID' => 'string',
@@ -295,22 +333,21 @@ class MaterielRequest extends Model
         'isActive' => 'integer',
         'quantityOnOrder' => 'float',
         'quantityInHand' => 'float',
-        'createdUserGroup' => 'string',
-        'createdPcID' => 'string',
-        'createdUserSystemID' => 'integer',
-        'createdUserID' => 'string',
-        'modifiedPc' => 'string',
-        'modifiedUserSystemID' => 'integer',
-        'modifiedUser' => 'string',
         'selectedForIssue' => 'integer',
         'approved' => 'integer',
         'ClosedYN' => 'integer',
         'issueTrackID' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'approvedByUserSystemID' => 'integer',
-        'approvedDate' => 'string',
         'refferedBackYN' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'createdUserGroup' => 'string',
+        'createdPcID' => 'string',
+        'createdUserSystemID' => 'integer',
+        'createdUserID' => 'string',
+        'modifiedPc' => 'string',
+        'modifiedUserSystemID' => 'integer',
+        'modifiedUser' => 'string'
     ];
 
     /**

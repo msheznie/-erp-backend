@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : MaterielRequestDetails.php
+ * -- File Name : RequestDetailsRefferedBack.php
  * -- Project Name : ERP
- * -- Module Name : Materiel Request Details
+ * -- Module Name : Request Details Reffered Back
  * -- Author : Mohamed Fayas
- * -- Create date : 12- June 2018
+ * -- Create date : 06- December 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  */
 namespace App\Models;
@@ -14,8 +14,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="MaterielRequestDetails",
+ *      definition="RequestDetailsRefferedBack",
  *      required={""},
+ *      @SWG\Property(
+ *          property="RequestDetailsRefferedBackID",
+ *          description="RequestDetailsRefferedBackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="RequestDetailsID",
  *          description="RequestDetailsID",
@@ -160,20 +166,28 @@ use Eloquent as Model;
  *          description="selectedToCreatePR",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class MaterielRequestDetails extends Model
+class RequestDetailsRefferedBack extends Model
 {
 
-    public $table = 'erp_requestdetails';
-    
+    public $table = 'erp_requestdetails_refferedback';
+
     const CREATED_AT = 'timeStamp';
     const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'RequestDetailsID';
+    protected $primaryKey  = 'RequestDetailsRefferedBackID';
+
 
 
     public $fillable = [
+        'RequestDetailsID',
         'RequestID',
         'itemCode',
         'itemDescription',
@@ -208,6 +222,7 @@ class MaterielRequestDetails extends Model
      * @var array
      */
     protected $casts = [
+        'RequestDetailsRefferedBackID' => 'integer',
         'RequestDetailsID' => 'integer',
         'RequestID' => 'integer',
         'itemCode' => 'integer',
