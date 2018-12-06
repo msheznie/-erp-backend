@@ -9,7 +9,7 @@
  * -- Create date : 03 - December 2018
  * -- Description : This file contains the all CRUD for Item Issue Master RefferedBack
  * -- REVISION HISTORY
- * -- Date: 03-December 2018 By: Fayas Description: Added new functions named as materielIssueReferBack()
+ * -- Date: 03-December 2018 By: Fayas Description: Added new functions named as getReferBackHistoryByMaterielIssues()
  */
 
 namespace App\Http\Controllers\API;

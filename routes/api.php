@@ -169,6 +169,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('procumentOrderTotalDiscountUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalDiscountUD');
     Route::post('procumentOrderTotalTaxUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalTaxUD');
     Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv');
+    Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend');
 
     /** Approval Level*/
     Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
@@ -893,7 +894,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('receiptVoucherMatchingCancel', 'MatchDocumentMasterAPIController@receiptVoucherMatchingCancel');
     Route::post('getRVMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getRVMatchDocumentMasterView');
     Route::get('getReceiptVoucherMatchItems', 'MatchDocumentMasterAPIController@getReceiptVoucherMatchItems');
-    Route::get('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail');
+    Route::post('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail');
     Route::post('updateReceiptVoucherMatching', 'MatchDocumentMasterAPIController@updateReceiptVoucherMatching');
 
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
@@ -1200,6 +1201,19 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackAPIController');
     Route::post('getJournalVoucherAmendHistory', 'JvMasterReferredbackAPIController@getJournalVoucherAmendHistory');
     Route::get('getJVDetailAmendHistory', 'JvDetailsReferredbackAPIController@getJVDetailAmendHistory');
+
+    Route::resource('mr_master_referred_back', 'ItemReturnMasterRefferedBackAPIController');
+    Route::post('getReferBackHistoryByMaterielReturn', 'ItemReturnMasterRefferedBackAPIController@getReferBackHistoryByMaterielReturn');
+    Route::resource('mr_details_reffered_backs', 'ItemReturnDetailsRefferedBackAPIController');
+    Route::get('getItemReturnDetailsReferBack', 'ItemReturnDetailsRefferedBackAPIController@getItemReturnDetailsReferBack');
+
+    Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
+
+    Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
+
+    Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
+
+    Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');
 });
 
 
@@ -1254,10 +1268,5 @@ Route::get('runQueueSR', function () {
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
 
-Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
 
-Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
 
-Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
-
-Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');

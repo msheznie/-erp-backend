@@ -764,35 +764,81 @@ class PaymentBankTransferAPIController extends AppBaseController
         $bankLedger = $bankLedger->orderBy('bankLedgerAutoID', 'desc')->get();
         $data = array();
         $x = 0;
-        foreach ($bankLedger as $val) {
-            $x++;
-            $accountNo13 = '';
-            $narration135 = '';
-            if ($val['supplier_by']) {
-                if ($val['supplier_by']['supplierCurrency']) {
-                    if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
-                        $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
-                        foreach ($memos as $memo) {
-                            if ($memo->bankMemoTypeID == 4) {
-                                $accountNo13 =  preg_replace("/[^0-9]/", "", $memo->memoDetail);
-                            } else if ($memo->bankMemoTypeID == 1) {
-                                $narration135 = $memo->memoDetail;
+
+        if($input['type'] == 2){
+
+            foreach ($bankLedger as $val) {
+                $x++;
+                $accountNo = '';
+                $benSwiftCode = '';
+                $benName  = "";
+                $benAdd1 = "";
+                if ($val['supplier_by']) {
+                    if ($val['supplier_by']['supplierCurrency']) {
+                        if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
+                            $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
+                            foreach ($memos as $memo) {
+                                if ($memo->bankMemoTypeID == 4) {
+                                    $accountNo = preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                                } else if ($memo->bankMemoTypeID == 1) {
+                                    $benName = $memo->memoDetail;
+                                }else if($memo->bankMemoTypeID == 9){
+                                    $benSwiftCode = $memo->memoDetail;
+                                }else if($memo->bankMemoTypeID == 3){
+                                    $benAdd1 = $memo->memoDetail;
+                                }
                             }
                         }
                     }
                 }
+                $data[$x]['Beneficiary Account No (30)'] = $accountNo;
+                $data[$x]['AMOUNT (15)'] = number_format($val->payAmountBank, $decimalPlaces);
+                $data[$x]['Ben Bank SWIFT Code (12)'] = $benSwiftCode;
+                $data[$x]['Ben Name (35)'] = $benName;
+                $data[$x]['Ben Add1 (35)'] = $benAdd1;
+                $data[$x]['Ben Add2 (35)'] = ""; // blank
+                $data[$x]['Ben Add3 (35)'] = ""; // blank
+                $data[$x]['Ben Branch Name (20)'] = ""; // blank
+                $data[$x]['Payment Details (140)'] = $val->documentNarration;
+                $data[$x]['Narration1 (35)'] = str_replace('\\',"",$val->documentCode);
+                $data[$x]['Narration2 (35)'] = ""; // blank
+                $data[$x]['Narration3 (35)'] = ""; //blank
+                $data[$x]['Mobile No'] = ""; // blank
+                $data[$x]['EmailID'] = ""; // blank
             }
-            $data[$x]['Account No(13)'] = $accountNo13;
-            $data[$x]['Amount(15)'] = number_format($val->payAmountBank, $decimalPlaces);
-            $data[$x]['Reference No (16)'] = $val->documentCode;
-            $data[$x]['Narration1 (35)'] = $narration135;
-            $data[$x]['Narration2 (35)'] = $val->documentNarration;
-            if ($val['supplier_by']) {
-                $data[$x]['Mobile No'] = $val['supplier_by']['telephone'];
-                $data[$x]['EmailID'] = $val['supplier_by']['supEmail'];
-            } else {
-                $data[$x]['Mobile No'] = '';
-                $data[$x]['EmailID'] = '';
+
+        }else {
+
+            foreach ($bankLedger as $val) {
+                $x++;
+                $accountNo13 = '';
+                $narration135 = '';
+                if ($val['supplier_by']) {
+                    if ($val['supplier_by']['supplierCurrency']) {
+                        if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
+                            $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
+                            foreach ($memos as $memo) {
+                                if ($memo->bankMemoTypeID == 4) {
+                                    $accountNo13 = preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                                } else if ($memo->bankMemoTypeID == 1) {
+                                    $narration135 = $memo->memoDetail;
+                                }
+                            }
+                        }
+                    }
+                }
+                $data[$x]['Account No(13)'] = $accountNo13;
+                $data[$x]['Amount(15)'] = number_format($val->payAmountBank, $decimalPlaces);
+                $data[$x]['Reference No (16)'] = $val->documentCode;
+                $data[$x]['Narration1 (35)'] = $narration135;
+                $data[$x]['Narration2 (35)'] = $val->documentNarration;
+                if ($val['supplier_by']) {
+                    $data[$x]['Mobile No'] = $val['supplier_by']['telephone'];
+                    $data[$x]['EmailID'] = $val['supplier_by']['supEmail'];
+                } else {
+                    $data[$x]['Mobile No'] = '';
+                    $data[$x]['EmailID'] = '';
+                }
             }
         }
 

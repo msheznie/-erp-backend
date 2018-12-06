@@ -693,42 +693,44 @@ class ProcumentOrderAPIController extends AppBaseController
                 if (!empty($getPoDetailForAddon)) {
                     foreach ($getPoDetailForAddon as $AddonDeta) {
 
-                        $calculateAddonLineAmount = (($poAddonMasterSumRounded / $poMasterSumRounded) * $AddonDeta['netAmount']) / $AddonDeta['noQty'];
+                        if ($AddonDeta['noQty'] > 0) {
 
-                        $currencyConversionForLineAmountAddon = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateAddonLineAmount);
+                            $calculateAddonLineAmount = (($poAddonMasterSumRounded / $poMasterSumRounded) * $AddonDeta['netAmount']) / $AddonDeta['noQty'];
 
-                        $currencyConversionLineAmountAddonDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierDefaultCurrencyID'], $calculateAddonLineAmount);
+                            $currencyConversionForLineAmountAddon = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateAddonLineAmount);
 
-                        $updatePoDetailAddonDetail = PurchaseOrderDetails::find($AddonDeta['purchaseOrderDetailsID']);
+                            $currencyConversionLineAmountAddonDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierDefaultCurrencyID'], $calculateAddonLineAmount);
 
-                        $GRVcostPerUnitLocalCurAddon = ($AddonDeta['GRVcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
-                        $updatePoDetailAddonDetail->GRVcostPerUnitLocalCur = \Helper::roundValue($GRVcostPerUnitLocalCurAddon);
+                            $updatePoDetailAddonDetail = PurchaseOrderDetails::find($AddonDeta['purchaseOrderDetailsID']);
 
-                        $GRVcostPerUnitSupDefaultCurAddon = ($AddonDeta['GRVcostPerUnitSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
-                        $updatePoDetailAddonDetail->GRVcostPerUnitSupDefaultCur = \Helper::roundValue($GRVcostPerUnitSupDefaultCurAddon);
+                            $GRVcostPerUnitLocalCurAddon = ($AddonDeta['GRVcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
+                            $updatePoDetailAddonDetail->GRVcostPerUnitLocalCur = \Helper::roundValue($GRVcostPerUnitLocalCurAddon);
 
-                        $GRVcostPerUnitSupTransCurAddon = ($AddonDeta['GRVcostPerUnitSupTransCur'] + $calculateAddonLineAmount);
-                        $updatePoDetailAddonDetail->GRVcostPerUnitSupTransCur = \Helper::roundValue($GRVcostPerUnitSupTransCurAddon);
+                            $GRVcostPerUnitSupDefaultCurAddon = ($AddonDeta['GRVcostPerUnitSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
+                            $updatePoDetailAddonDetail->GRVcostPerUnitSupDefaultCur = \Helper::roundValue($GRVcostPerUnitSupDefaultCurAddon);
 
-                        $GRVcostPerUnitComRptCurAddon = ($AddonDeta['GRVcostPerUnitComRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
-                        $updatePoDetailAddonDetail->GRVcostPerUnitComRptCur = \Helper::roundValue($GRVcostPerUnitComRptCurAddon);
+                            $GRVcostPerUnitSupTransCurAddon = ($AddonDeta['GRVcostPerUnitSupTransCur'] + $calculateAddonLineAmount);
+                            $updatePoDetailAddonDetail->GRVcostPerUnitSupTransCur = \Helper::roundValue($GRVcostPerUnitSupTransCurAddon);
 
-                        $purchaseRetcostPerUniSupDefaultCurAddon = ($AddonDeta['purchaseRetcostPerUniSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
-                        $updatePoDetailAddonDetail->purchaseRetcostPerUniSupDefaultCur = \Helper::roundValue($purchaseRetcostPerUniSupDefaultCurAddon);
+                            $GRVcostPerUnitComRptCurAddon = ($AddonDeta['GRVcostPerUnitComRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
+                            $updatePoDetailAddonDetail->GRVcostPerUnitComRptCur = \Helper::roundValue($GRVcostPerUnitComRptCurAddon);
 
-                        $purchaseRetcostPerUnitLocalCurAddon = ($AddonDeta['purchaseRetcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
-                        $updatePoDetailAddonDetail->purchaseRetcostPerUnitLocalCur = \Helper::roundValue($purchaseRetcostPerUnitLocalCurAddon);
+                            $purchaseRetcostPerUniSupDefaultCurAddon = ($AddonDeta['purchaseRetcostPerUniSupDefaultCur'] + $currencyConversionLineAmountAddonDefault['documentAmount']);
+                            $updatePoDetailAddonDetail->purchaseRetcostPerUniSupDefaultCur = \Helper::roundValue($purchaseRetcostPerUniSupDefaultCurAddon);
 
-                        $purchaseRetcostPerUnitTranCurAddon = ($AddonDeta['purchaseRetcostPerUnitTranCur'] + $calculateAddonLineAmount);
-                        $updatePoDetailAddonDetail->purchaseRetcostPerUnitTranCur = \Helper::roundValue($purchaseRetcostPerUnitTranCurAddon);
+                            $purchaseRetcostPerUnitLocalCurAddon = ($AddonDeta['purchaseRetcostPerUnitLocalCur'] + $currencyConversionForLineAmountAddon['localAmount']);
+                            $updatePoDetailAddonDetail->purchaseRetcostPerUnitLocalCur = \Helper::roundValue($purchaseRetcostPerUnitLocalCurAddon);
 
-                        $purchaseRetcostPerUnitRptCur = ($AddonDeta['purchaseRetcostPerUnitRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
-                        $updatePoDetailAddonDetail->purchaseRetcostPerUnitRptCur = \Helper::roundValue($purchaseRetcostPerUnitRptCur);
+                            $purchaseRetcostPerUnitTranCurAddon = ($AddonDeta['purchaseRetcostPerUnitTranCur'] + $calculateAddonLineAmount);
+                            $updatePoDetailAddonDetail->purchaseRetcostPerUnitTranCur = \Helper::roundValue($purchaseRetcostPerUnitTranCurAddon);
 
-                        $updatePoDetailAddonDetail->addonDistCost = \Helper::roundValue($calculateAddonLineAmount);
-                        $updatePoDetailAddonDetail->addonPurchaseReturnCost = \Helper::roundValue($calculateAddonLineAmount);
-                        $updatePoDetailAddonDetail->save();
+                            $purchaseRetcostPerUnitRptCur = ($AddonDeta['purchaseRetcostPerUnitRptCur'] + $currencyConversionForLineAmountAddon['reportingAmount']);
+                            $updatePoDetailAddonDetail->purchaseRetcostPerUnitRptCur = \Helper::roundValue($purchaseRetcostPerUnitRptCur);
 
+                            $updatePoDetailAddonDetail->addonDistCost = \Helper::roundValue($calculateAddonLineAmount);
+                            $updatePoDetailAddonDetail->addonPurchaseReturnCost = \Helper::roundValue($calculateAddonLineAmount);
+                            $updatePoDetailAddonDetail->save();
+                        }
                     }
 
                 }
@@ -794,7 +796,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
             $checkQuantity = PurchaseOrderDetails::where('purchaseOrderMasterID', $id)
-                ->where('noQty', '<', 1)
+                ->where('noQty', '<', 0.1)
                 ->count();
 
             if ($checkQuantity > 0) {
@@ -5141,5 +5143,29 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 	');
 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
+    }
+
+    public function poExpectedDeliveryDateAmend(Request $request)
+    {
+
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $purchaseOrderMasterData = ProcumentOrder::find($purchaseOrderID);
+
+        if (empty($purchaseOrderMasterData)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        if (isset($input['deliveryDate'])) {
+            if ($input['deliveryDate']) {
+                $input['deliveryDate'] = new Carbon($input['deliveryDate']);
+            }
+        }
+        $purchaseOrderMasterData->expectedDeliveryDate = $input['deliveryDate'];
+        $purchaseOrderMasterData->save();
+
+        return $this->sendResponse($purchaseOrderMasterData->toArray(), 'Record updated successfully');
     }
 }
