@@ -1,0 +1,281 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateAssetDisposalReferredAPIRequest;
+use App\Http\Requests\API\UpdateAssetDisposalReferredAPIRequest;
+use App\Models\AssetDisposalReferred;
+use App\Repositories\AssetDisposalReferredRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class AssetDisposalReferredController
+ * @package App\Http\Controllers\API
+ */
+
+class AssetDisposalReferredAPIController extends AppBaseController
+{
+    /** @var  AssetDisposalReferredRepository */
+    private $assetDisposalReferredRepository;
+
+    public function __construct(AssetDisposalReferredRepository $assetDisposalReferredRepo)
+    {
+        $this->assetDisposalReferredRepository = $assetDisposalReferredRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/assetDisposalReferreds",
+     *      summary="Get a listing of the AssetDisposalReferreds.",
+     *      tags={"AssetDisposalReferred"},
+     *      description="Get all AssetDisposalReferreds",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/AssetDisposalReferred")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->assetDisposalReferredRepository->pushCriteria(new RequestCriteria($request));
+        $this->assetDisposalReferredRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $assetDisposalReferreds = $this->assetDisposalReferredRepository->all();
+
+        return $this->sendResponse($assetDisposalReferreds->toArray(), 'Asset Disposal Referreds retrieved successfully');
+    }
+
+    /**
+     * @param CreateAssetDisposalReferredAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/assetDisposalReferreds",
+     *      summary="Store a newly created AssetDisposalReferred in storage",
+     *      tags={"AssetDisposalReferred"},
+     *      description="Store AssetDisposalReferred",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="AssetDisposalReferred that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/AssetDisposalReferred")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AssetDisposalReferred"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateAssetDisposalReferredAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $assetDisposalReferreds = $this->assetDisposalReferredRepository->create($input);
+
+        return $this->sendResponse($assetDisposalReferreds->toArray(), 'Asset Disposal Referred saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/assetDisposalReferreds/{id}",
+     *      summary="Display the specified AssetDisposalReferred",
+     *      tags={"AssetDisposalReferred"},
+     *      description="Get AssetDisposalReferred",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AssetDisposalReferred",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AssetDisposalReferred"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var AssetDisposalReferred $assetDisposalReferred */
+        $assetDisposalReferred = $this->assetDisposalReferredRepository->findWithoutFail($id);
+
+        if (empty($assetDisposalReferred)) {
+            return $this->sendError('Asset Disposal Referred not found');
+        }
+
+        return $this->sendResponse($assetDisposalReferred->toArray(), 'Asset Disposal Referred retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateAssetDisposalReferredAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/assetDisposalReferreds/{id}",
+     *      summary="Update the specified AssetDisposalReferred in storage",
+     *      tags={"AssetDisposalReferred"},
+     *      description="Update AssetDisposalReferred",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AssetDisposalReferred",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="AssetDisposalReferred that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/AssetDisposalReferred")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/AssetDisposalReferred"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateAssetDisposalReferredAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var AssetDisposalReferred $assetDisposalReferred */
+        $assetDisposalReferred = $this->assetDisposalReferredRepository->findWithoutFail($id);
+
+        if (empty($assetDisposalReferred)) {
+            return $this->sendError('Asset Disposal Referred not found');
+        }
+
+        $assetDisposalReferred = $this->assetDisposalReferredRepository->update($input, $id);
+
+        return $this->sendResponse($assetDisposalReferred->toArray(), 'AssetDisposalReferred updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/assetDisposalReferreds/{id}",
+     *      summary="Remove the specified AssetDisposalReferred from storage",
+     *      tags={"AssetDisposalReferred"},
+     *      description="Delete AssetDisposalReferred",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of AssetDisposalReferred",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var AssetDisposalReferred $assetDisposalReferred */
+        $assetDisposalReferred = $this->assetDisposalReferredRepository->findWithoutFail($id);
+
+        if (empty($assetDisposalReferred)) {
+            return $this->sendError('Asset Disposal Referred not found');
+        }
+
+        $assetDisposalReferred->delete();
+
+        return $this->sendResponse($id, 'Asset Disposal Referred deleted successfully');
+    }
+}
