@@ -1602,6 +1602,12 @@ HAVING
     {
         $input = $request->all();
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         $matchDocumentMasterAutoID = $input['matchDocumentMasterAutoID'];
 
         $matchDocumentMasterData = MatchDocumentMaster::find($matchDocumentMasterAutoID);
@@ -1609,9 +1615,16 @@ HAVING
             return $this->sendError('Matching document not found');
         }
 
+        $filter='';
+        $search = $request->input('search.value');
+        if($search){
+            $search = str_replace("\\", "\\\\\\\\", $search);
+            $filter = " AND ( erp_accountsreceivableledger.documentCode LIKE '%{$search}%') ";
+        }
+
         $matchingDocdate = Carbon::parse($matchDocumentMasterData->matchingDocdate)->format('Y-m-d');
 
-        $output = DB::select('SELECT
+        $qry = "SELECT
 	erp_accountsreceivableledger.arAutoID,
 	erp_accountsreceivableledger.documentCodeSystem AS bookingInvCodeSystem,
 	erp_accountsreceivableledger.custTransCurrencyID,
@@ -1681,8 +1694,8 @@ LEFT JOIN (
 	FROM
 		erp_matchdocumentmaster
 	WHERE
-		erp_matchdocumentmaster.companySystemID = ' . $matchDocumentMasterData->companySystemID . '
-	AND erp_matchdocumentmaster.documentSystemID = ' . $matchDocumentMasterData->documentSystemID . '
+		erp_matchdocumentmaster.companySystemID = $matchDocumentMasterData->companySystemID
+	AND erp_matchdocumentmaster.documentSystemID = $matchDocumentMasterData->documentSystemID
 	GROUP BY
 		companySystemID,
 		PayMasterAutoId,
@@ -1697,24 +1710,40 @@ AND md.companySystemID = erp_accountsreceivableledger.companySystemID
 LEFT JOIN currencymaster ON erp_accountsreceivableledger.custTransCurrencyID = currencymaster.currencyID
 WHERE
 	erp_accountsreceivableledger.documentType IN (11, 12)
-AND date(erp_accountsreceivableledger.documentDate) <= "' . $matchingDocdate . '"
+AND date(erp_accountsreceivableledger.documentDate) <= '{$matchingDocdate}'
+{$filter}
 AND erp_accountsreceivableledger.documentSystemID = 20
 AND erp_accountsreceivableledger.selectedToPaymentInv = 0
 AND erp_accountsreceivableledger.fullyInvoiced <> 2
-AND erp_accountsreceivableledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . '
-AND erp_accountsreceivableledger.customerID = ' . $matchDocumentMasterData->BPVsupplierID . '
-AND erp_accountsreceivableledger.custTransCurrencyID = ' . $matchDocumentMasterData->supplierTransCurrencyID . '
+AND erp_accountsreceivableledger.companySystemID =  $matchDocumentMasterData->companySystemID
+AND erp_accountsreceivableledger.customerID = $matchDocumentMasterData->BPVsupplierID
+AND erp_accountsreceivableledger.custTransCurrencyID = $matchDocumentMasterData->supplierTransCurrencyID
 HAVING
 	ROUND(
 		balanceMemAmount,
 		2
 	) != 0
 ORDER BY
-	erp_accountsreceivableledger.arAutoID DESC');
+	erp_accountsreceivableledger.arAutoID DESC";
 
-        return $this->sendResponse($output, 'Data retrived successfully');
+        $invMaster = DB::select($qry);
+
+        $col[0] = $input['order'][0]['column'];
+        $col[1] = $input['order'][0]['dir'];
+        $request->request->remove('order');
+        $data['order'] = [];
+        /*  $data['order'][0]['column'] = '';
+          $data['order'][0]['dir'] = '';*/
+        $data['search']['value'] = '';
+        $request->merge($data);
+
+        $request->request->remove('search.value');
+
+        return \DataTables::of($invMaster)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
-
 
     public function receiptVoucherMatchingCancel(Request $request)
     {
