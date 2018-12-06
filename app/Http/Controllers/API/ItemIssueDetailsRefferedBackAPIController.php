@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : ItemIssueDetailsRefferedBackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  IItem Issue Details Reffered Back
+ * -- Author : Mohamed Fayas
+ * -- Create date : 03 - December 2018
+ * -- Description : This file contains the all CRUD for IItem Issue Details Reffered Back
+ * -- REVISION HISTORY
+ * -- Date: 03-December 2018 By: Fayas Description: Added new functions named as getItemIssueDetailsReferBack()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateItemIssueDetailsRefferedBackAPIRequest;

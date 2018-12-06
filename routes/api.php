@@ -1198,6 +1198,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackAPIController');
     Route::post('getJournalVoucherAmendHistory', 'JvMasterReferredbackAPIController@getJournalVoucherAmendHistory');
     Route::get('getJVDetailAmendHistory', 'JvDetailsReferredbackAPIController@getJVDetailAmendHistory');
+
+    Route::resource('mr_master_referred_back', 'ItemReturnMasterRefferedBackAPIController');
+    Route::post('getReferBackHistoryByMaterielReturn', 'ItemReturnMasterRefferedBackAPIController@getReferBackHistoryByMaterielReturn');
+    Route::resource('mr_details_reffered_backs', 'ItemReturnDetailsRefferedBackAPIController');
+    Route::get('getItemReturnDetailsReferBack', 'ItemReturnDetailsRefferedBackAPIController@getItemReturnDetailsReferBack');
 });
 
 
@@ -1251,3 +1256,4 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
