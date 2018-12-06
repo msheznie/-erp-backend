@@ -5401,19 +5401,23 @@ LEFT JOIN (
 	LEFT JOIN (
 		SELECT
 			matchingDocID,
+			erp_custreceivepaymentdet.companySystemID,
 			SUM(erp_custreceivepaymentdet.receiveAmountTrans) AS detailSum
 		FROM
 			erp_custreceivepaymentdet GROUP BY matchingDocID
-	) AS custDetailRec ON erp_matchdocumentmaster.matchDocumentMasterAutoID = custDetailRec.matchingDocID
+	) AS custDetailRec ON erp_matchdocumentmaster.matchDocumentMasterAutoID = custDetailRec.matchingDocID AND erp_matchdocumentmaster.companySystemID = custDetailRec.companySystemID
 	WHERE
 		matchingConfirmedYN = 1
 	ORDER BY
 		matchDocumentMasterAutoID DESC
-) AS matchMaster ON erp_generalledger.documentSystemCode = matchMaster.PayMasterAutoId
+) AS matchMaster ON erp_generalledger.documentSystemCode = matchMaster.PayMasterAutoId AND erp_generalledger.companySystemID = matchMaster.companySystemID AND erp_generalledger.documentSystemID = matchMaster.documentSystemID
 WHERE erp_generalledger.documentSystemID = 19 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
 AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ') ORDER BY erp_generalledger.documentDate ASC';
 
+        //echo $qry;
+        //exit();
         $output = \DB::select($qry);
+
         return $output;
 
     }
