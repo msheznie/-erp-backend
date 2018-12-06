@@ -7,3 +7,7 @@ Route::resource('itemIssueDetailsRefferedBacks', 'ItemIssueDetailsRefferedBackCo
 Route::resource('jvMasterReferredbacks', 'JvMasterReferredbackController');
 
 Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackController');
+
+Route::resource('itemReturnMasterRefferedBacks', 'ItemReturnMasterRefferedBackController');
+
+Route::resource('itemReturnDetailsRefferedBacks', 'ItemReturnDetailsRefferedBackController');
