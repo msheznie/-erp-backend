@@ -5142,4 +5142,28 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         return $this->sendResponse($detail, 'payment status retrieved successfully');
     }
+
+    public function poExpectedDeliveryDateAmend(Request $request)
+    {
+
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $purchaseOrderMasterData = ProcumentOrder::find($purchaseOrderID);
+
+        if (empty($purchaseOrderMasterData)) {
+            return $this->sendError('Purchase Order not found');
+        }
+
+        if (isset($input['deliveryDate'])) {
+            if ($input['deliveryDate']) {
+                $input['deliveryDate'] = new Carbon($input['deliveryDate']);
+            }
+        }
+        $purchaseOrderMasterData->expectedDeliveryDate = $input['deliveryDate'];
+        $purchaseOrderMasterData->save();
+
+        return $this->sendResponse($purchaseOrderMasterData->toArray(), 'Record updated successfully');
+    }
 }
