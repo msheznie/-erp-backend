@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : PoPaymentTermsRefferedbackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Po Payment Terms Reffered back
+ * -- Author : Mohamed Nazir
+ * -- Create date : 30 - July 2018
+ * -- Description : This file contains the all CRUD for Po Payment Terms Reffered back
+ * -- REVISION HISTORY
+ * -- Date: 30-July 2018 By: Nazir Description: Added new function getPoPaymentTermsForAmendHistory(),
+ */
 
 namespace App\Http\Controllers\API;
 

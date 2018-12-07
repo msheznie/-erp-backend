@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : CreditNoteDetailsRefferdbackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Credit Note Details Refferdback
+ * -- Author : Mohamed Nazir
+ * -- Create date : 26 - November 2018
+ * -- Description : This file contains the all CRUD for Credit Note Details Refferdback
+ * -- REVISION HISTORY
+ * -- Date: 26-November 2018 By: Nazir Description: Added new function getCNDetailAmendHistory(),
+ */
 
 namespace App\Http\Controllers\API;
 

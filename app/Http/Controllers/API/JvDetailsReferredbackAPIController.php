@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : JvDetailsReferredbackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Jv Details Referred back
+ * -- Author : Mohamed Nazir
+ * -- Create date : 05 - December 2018
+ * -- Description : This file contains the all CRUD for Jv Details Referred back
+ * -- REVISION HISTORY
+ * -- Date: 05-December 2018 By: Nazir Description: Added new function getJVDetailAmendHistory(),
+ */
 
 namespace App\Http\Controllers\API;
 

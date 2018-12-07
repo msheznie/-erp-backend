@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : CustomerInvoiceDirectRefferedbackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Customer Invoice
+ * -- Author : Mohamed Nazir
+ * -- Create date : 27 - November 2018
+ * -- Description : This file contains the all CRUD for Customer Invoice Direct Refferedback
+ * -- REVISION HISTORY
+ * -- Date: 30-November 2018 By: Nazir Description: Added new function getCIMasterAmendHistory()
+ */
 
 namespace App\Http\Controllers\API;
 
