@@ -1,4 +1,14 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : CustomerInvoiceDirectDetailAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Customer Invoice Direct Detail
+ * -- Author : Mohamed Nazir
+ * -- Create date : 09 - September 2018
+ * -- Description : This file contains the all CRUD for Customer Invoice Direct Detail
+ * -- REVISION HISTORY
+ */
 
 namespace App\Http\Controllers\API;
 

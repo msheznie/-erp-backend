@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : DirectPaymentReferbackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Direct Payment Referback
+ * -- Author : Mohamed Nazir
+ * -- Create date : 21 - November 2018
+ * -- Description : This file contains the all CRUD for Direct Payment Referback
+ * -- REVISION HISTORY
+ * -- Date: 21-November 2018 By: Nazir Description: Added new function getDirectPaymentDetailsHistoryByID(),
+ */
 
 namespace App\Http\Controllers\API;
 

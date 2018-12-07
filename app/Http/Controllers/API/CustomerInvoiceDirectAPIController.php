@@ -1,17 +1,19 @@
 <?php
 /**
  * =============================================
- * -- File Name : GRVMasterAPIController.php
+ * -- File Name : CustomerInvoiceDirectAPIController.php
  * -- Project Name : ERP
- * -- Module Name :  GRV Master
- * -- Author : Mohamed Nazir
+ * -- Module Name :  Customer Invoice
+ * -- Author : Mohamed Shahmy
  * -- Create date : 11-June 2018
- * -- Description : This file contains the all CRUD for GRV Master
+ * -- Description : This file contains the all CRUD for Customer Invoice
  * -- REVISION HISTORY
  * -- Date: 13 Aug 2018 By: Shahmy Description: Added new functions named as getINVFormData() For load form View
  * -- Date: 18 November 2018 By: Nazir Description: Added new functions named as getAllcontractbyclientbase()
  * -- Date: 27 November 2018 By: Nazir Description: Added new functions named as getCustomerInvoiceApproval()
  * -- Date: 27 November 2018 By: Nazir Description: Added new functions named as getApprovedCustomerInvoiceForCurrentUser()
+ * -- Date: 28 November 2018 By: Nazir Description: Added new functions named as approveCustomerInvoice()
+ * -- Date: 28 November 2018 By: Nazir Description: Added new functions named as rejectCustomerInvoice()
  * -- Date: 28 November 2018 By: Nazir Description: Added new functions named as getCustomerInvoiceAmend()
  */
 

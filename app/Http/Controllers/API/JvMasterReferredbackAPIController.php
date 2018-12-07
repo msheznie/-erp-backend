@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : JvMasterReferredbackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Jv Master Referredback
+ * -- Author : Mohamed Nazir
+ * -- Create date : 05 - December 2018
+ * -- Description : This file contains the all CRUD for Jv Master Referred Back
+ * -- REVISION HISTORY
+ * -- Date: 05-December 2018 By: Nazir Description: Added new function getJournalVoucherAmendHistory(),
+ */
 
 namespace App\Http\Controllers\API;
 
