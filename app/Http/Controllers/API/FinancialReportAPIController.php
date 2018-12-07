@@ -614,8 +614,8 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountDebit'], $decimalPlaceLocal);
                             $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountCredit'], $decimalPlaceLocal);
                         }
-                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountDebit'], $decimalPlaceRpt);;
-                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountCredit'], $decimalPlaceRpt);;
+                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountDebit'], $decimalPlaceRpt);
+                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountCredit'], $decimalPlaceRpt);
                     }
                 } else {
                     if ($output) {
@@ -702,7 +702,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x]['Customer Short Code'] = $val->customerShortCode;
                             $data[$x]['Customer Name'] = $val->CustomerName;
                             $data[$x]['Currency'] = $val->CurrencyCode;
-                            $data[$x]['Value'] = $val->bookingAmountTrans ;
+                            $data[$x]['Value'] = $val->bookingAmountTrans;
                             $data[$x]['Discount'] = 0;
                             $data[$x]['Net Value'] = $val->bookingAmountTrans;
                             $data[$x]['VAT'] = $val->taxTotalAmount;
@@ -1379,5 +1379,83 @@ AND MASTER .canceledYN = 0';
 
 
     }
+
+    public function pdfExportReport(Request $request)
+    {
+        $reportID = $request->reportID;
+        switch ($reportID) {
+            case 'FGL':
+                $reportTypeID = $request->reportTypeID;
+                $reportSD = $request->reportSD;
+                $type = $request->type;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $checkIsGroup = Company::find($request->companySystemID);
+                $data = array();
+                $output = $this->getGeneralLedger($request);
+
+                $currencyIdLocal = 1;
+                $currencyIdRpt = 2;
+
+                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
+                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+
+                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
+                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
+
+
+                if (!empty($decimalPlaceUniqueLocal)) {
+                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+                }
+
+                if (!empty($decimalPlaceUniqueRpt)) {
+                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
+                }
+
+                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
+                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
+
+                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
+                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
+                $currencyLocal = $requestCurrencyLocal->CurrencyCode;
+                $currencyRpt = $requestCurrencyRpt->CurrencyCode;
+
+                $totaldocumentLocalAmountDebit = array_sum(collect($output)->pluck('localDebit')->toArray());
+                $totaldocumentLocalAmountCredit = array_sum(collect($output)->pluck('localCredit')->toArray());
+                $totaldocumentRptAmountDebit = array_sum(collect($output)->pluck('rptDebit')->toArray());
+                $totaldocumentRptAmountCredit = array_sum(collect($output)->pluck('rptCredit')->toArray());
+
+                $dataArr = array(
+                    'reportData' => $output,
+                    'companyName' => $checkIsGroup->CompanyName,
+                    'isGroup' => $checkIsGroup->isGroup,
+                    'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2,
+                    'currencyLocal' => $currencyLocal,
+                    'decimalPlaceLocal' => $decimalPlaceLocal,
+                    'decimalPlaceRpt' => $decimalPlaceRpt,
+                    'currencyRpt' => $currencyRpt,
+                    'reportDate' => date('d/m/Y H:i:s A'),
+                    'fromDate' => \Helper::dateFormat($request->fromDate),
+                    'toDate' => \Helper::dateFormat($request->toDate),
+                    'totaldocumentLocalAmountDebit' => $totaldocumentLocalAmountDebit,
+                    'totaldocumentLocalAmountCredit' => $totaldocumentLocalAmountCredit,
+                    'totaldocumentRptAmountDebit' => $totaldocumentRptAmountDebit,
+                    'totaldocumentRptAmountCredit' => $totaldocumentRptAmountCredit,
+                    );
+
+                $html = view('print.report_general_ledger', $dataArr);
+
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+
+                return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+
+                break;
+            default:
+                return $this->sendError('No report ID found');
+        }
+    }
+
 
 }
