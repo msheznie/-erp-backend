@@ -11,8 +11,10 @@
  * -- Date: 13-September 2018 By: Nazir Description: Added new functions named as getMatchDocumentMasterFormData() For load Master View
  * -- Date: 13-September 2018 By: Nazir Description: Added new functions named as getMatchDocumentMasterView()
  * -- Date: 18-September 2018 By: Nazir Description: Added new functions named as getPaymentVoucherMatchPullingDetail()
+ * -- Date: 24-September 2018 By: Nazir Description: Added new functions named as getMatchDocumentMasterRecord()
  * -- Date: 02-October 2018 By: Nazir Description: Added new functions named as PaymentVoucherMatchingCancel()
  * -- Date: 16-October 2018 By: Nazir Description: Added new functions named as getRVMatchDocumentMasterView()
+ * -- Date: 17-October 2018 By: Nazir Description: Added new functions named as getReceiptVoucherMatchItems()
  * -- Date: 22-October 2018 By: Nazir Description: Added new functions named as getReceiptVoucherPullingDetail()
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as receiptVoucherMatchingCancel()
  * -- Date: 25-October 2018 By: Nazir Description: Added new functions named as updateReceiptVoucherMatching()
@@ -1225,9 +1227,22 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $filter='';
+        $search = $request->input('search.value');
+        if($search){
+            $search = str_replace("\\", "\\\\\\\\", $search);
+            $filter = " AND ( erp_accountspayableledger.documentCode LIKE '%{$search}%') OR ( erp_accountspayableledger.supplierInvoiceNo LIKE '%{$search}%')";
+        }
+
         $matchingDocdate = Carbon::parse($matchDocumentMasterData->matchingDocdate)->format('Y-m-d');
 
-        $output = DB::select('SELECT
+        $qry = "SELECT
 	erp_accountspayableledger.apAutoID,
 	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
 	erp_accountspayableledger.supplierTransCurrencyID,
@@ -1285,7 +1300,7 @@ SELECT
 FROM
 	erp_matchdocumentmaster
 WHERE
-	erp_matchdocumentmaster.companySystemID = ' . $matchDocumentMasterData->companySystemID . '
+	erp_matchdocumentmaster.companySystemID = $matchDocumentMasterData->companySystemID
 	AND erp_matchdocumentmaster.documentSystemID = 15
 	GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
 	) md ON md.documentSystemID = erp_accountspayableledger.documentSystemID
@@ -1296,15 +1311,32 @@ WHERE
 	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID
 WHERE
 	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 )
-	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $matchingDocdate . '"
+	AND DATE_FORMAT(erp_accountspayableledger.documentDate,'%Y-%m-%d') <= '{$matchingDocdate}'
+	{$filter}
 	AND erp_accountspayableledger.selectedToPaymentInv = 0
 	AND erp_accountspayableledger.documentSystemID = 11
 	AND erp_accountspayableledger.fullyInvoice <> 2
-	AND erp_accountspayableledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . '
-	AND erp_accountspayableledger.supplierCodeSystem = ' . $matchDocumentMasterData->BPVsupplierID . '
-	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $matchDocumentMasterData->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount,2) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC');
+	AND erp_accountspayableledger.companySystemID =  $matchDocumentMasterData->companySystemID
+	AND erp_accountspayableledger.supplierCodeSystem = $matchDocumentMasterData->BPVsupplierID
+	AND erp_accountspayableledger.supplierTransCurrencyID = $matchDocumentMasterData->supplierTransCurrencyID HAVING ROUND(paymentBalancedAmount,2) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC";
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        $invMaster = DB::select($qry);
+
+        $col[0] = $input['order'][0]['column'];
+        $col[1] = $input['order'][0]['dir'];
+        $request->request->remove('order');
+        $data['order'] = [];
+        /*  $data['order'][0]['column'] = '';
+          $data['order'][0]['dir'] = '';*/
+        $data['search']['value'] = '';
+        $request->merge($data);
+
+        $request->request->remove('search.value');
+
+        return \DataTables::of($invMaster)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
     public function getMatchDocumentMasterRecord(Request $request)

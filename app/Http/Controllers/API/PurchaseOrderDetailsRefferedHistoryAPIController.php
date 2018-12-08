@@ -5,11 +5,12 @@
  * -- Project Name : ERP
  * -- Module Name :  PurchaseOrderDetailsRefferedHistory
  * -- Author : Nazir
- * -- Create date : 23 - July 2018
+ * -- Create date : 24 - July 2018
  * -- Description : This file contains the all CRUD for Purchase Order
  * -- REVISION HISTORY
- * --
+ * -- Date: 24-July 2018 By: Nazir Description: Added new function getPoItemsForAmendHistory(),
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseOrderDetailsRefferedHistoryAPIRequest;

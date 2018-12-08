@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  * -- Date: 08-August 2018 By: Nazir Description: Added new function getInvoiceMasterRecord(),
  * -- Date: 24-August 2018 By: Nazir Description: Added new function getInvoiceMasterView(),
+ * -- Date: 24-August 2018 By: Nazir Description: Added new function getInvoiceSupplierTypeBase(),
  * -- Date: 06-September 2018 By: Nazir Description: Added new function supplierInvoiceReopen(),
  * -- Date: 06-September 2018 By: Nazir Description: Added new function getInvoiceMasterApproval(),
  * -- Date: 06-September 2018 By: Nazir Description: Added new function getApprovedInvoiceForCurrentUser(),
@@ -1731,8 +1732,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         return $this->sendResponse($bookInvSuppMaster->toArray(), 'Supplier Invoice Amend successfully');
     }
 
-    public
-    function supplierInvoiceTaxPercentage(Request $request)
+    public function supplierInvoiceTaxPercentage(Request $request)
     {
         $input = $request->all();
 

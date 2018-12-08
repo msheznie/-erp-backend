@@ -1199,7 +1199,7 @@ WHERE
 
         $creditNoteDetailArray = $creditNoteDetailRec->toArray();
 
-        $storeSupplierInvoiceBookDetailHistory = CreditNoteDetailsRefferdback::insert($creditNoteDetailArray);
+        $storeCreditNoteDetailHistory = CreditNoteDetailsRefferdback::insert($creditNoteDetailArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $creditNoteAutoID)
             ->where('companySystemID', $creditNoteMasterData->companySystemID)

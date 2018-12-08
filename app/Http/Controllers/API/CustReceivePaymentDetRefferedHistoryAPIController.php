@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : BookInvSuppMasterRefferedBackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  BookInvSuppMasterRefferedBack
+ * -- Author : Mohamed Nazir
+ * -- Create date : 21 - November 2018
+ * -- Description : This file contains the all CRUD for Purchase Order
+ * -- REVISION HISTORY
+ * -- Date: 21-November 2018 By: Nazir Description: Added new function getRVDetailAmendHistory(),
+ */
 
 namespace App\Http\Controllers\API;
 
