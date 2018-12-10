@@ -578,6 +578,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 }else if($reportTypeID == 'UGRVAS'){
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
+                    $outputArr = $output;
                 }
 
                 $grandTotalArr['documentLocalAmount'] = array_sum(collect($output)->pluck('documentLocalAmount')->toArray());
@@ -593,6 +594,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $grandTotalArr['case4'] = array_sum(collect($output)->pluck('case4')->toArray());
                 $grandTotalArr['case5'] = array_sum(collect($output)->pluck('case5')->toArray());
                 $grandTotalArr['case6'] = array_sum(collect($output)->pluck('case6')->toArray());
+                $grandTotalArr['case7'] = array_sum(collect($output)->pluck('case7')->toArray());
+                $grandTotalArr['case8'] = array_sum(collect($output)->pluck('case8')->toArray());
+                $grandTotalArr['case9'] = array_sum(collect($output)->pluck('case9')->toArray());
+                $grandTotalArr['case10'] = array_sum(collect($output)->pluck('case10')->toArray());
 
                 return array('reportData' => $outputArr,
                     'companyName' => $checkIsGroup->CompanyName,
@@ -1104,8 +1109,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                             //$data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
-                            $data[$x]['Doc Number'] = $val->documentCode;
-                            $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
 
                             $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
                             $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
@@ -1122,7 +1125,48 @@ class AccountsPayableReportAPIController extends AppBaseController
                 }else if($reportTypeID == 'UGRVAD'){ //Unbilled GRV aging detail
 
                     $output = $this->getUnbilledGRVDetailAgingQRY($request);
-                    $name = "summary ";
+                    $name = "aging_detail";
+                    $decimal = 2;
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Supplier Code'] = $val->supplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Doc Number'] = $val->documentCode;
+                            $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
+                            if($request->currencyID == 2){
+                                $decimal = 3;
+                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
+                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
+                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+                            }else {
+                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
+                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
+                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            }
+
+                            $data[$x]['<=30']       = number_format($val->case1,$decimal);
+                            $data[$x]['31 to 60']   = number_format($val->case2,$decimal);
+                            $data[$x]['61 to 90']   = number_format($val->case3,$decimal);
+                            $data[$x]['91 to 120']  = number_format($val->case4,$decimal);
+                            $data[$x]['121 to 150'] = number_format($val->case5,$decimal);
+                            $data[$x]['151 to 180'] = number_format($val->case6,$decimal);
+                            $data[$x]['181 to 210'] = number_format($val->case7,$decimal);
+                            $data[$x]['211 to 240'] = number_format($val->case8,$decimal);
+                            $data[$x]['241 to 365'] = number_format($val->case9,$decimal);
+                            $data[$x]['Over 365']   = number_format($val->case10,$decimal);
+
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+                }else if($reportTypeID == 'UGRVAS'){//Unbilled GRV aging summary
+
+                    $output = $this->getUnbilledGRVSummaryAgingQRY($request);
+                    $name = "aging_summary";
+                    $decimal = 2;
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
@@ -1131,34 +1175,34 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Supplier Name'] = $val->supplierName;
 
                             if($request->currencyID == 2){
+                                $decimal = 3;
                                 $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
                                 $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
                                 $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
-
-                                $data[$x]['<=30'] = number_format($val->case1,3);
-                                $data[$x]['31 to 60'] = number_format($val->case2,3);
-                                $data[$x]['61 to 90'] = number_format($val->case3,3);
-                                $data[$x]['91 to 120'] = number_format($val->case4,3);
-                                $data[$x]['121 to 180'] = number_format($val->case5,3);
-                                $data[$x]['Over 180'] = number_format($val->case6,3);
                             }else {
                                 $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
                                 $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
                                 $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
-
-                                $data[$x]['<=30'] = number_format($val->case1,2);
-                                $data[$x]['31 to 60'] = number_format($val->case2,2);
-                                $data[$x]['61 to 90'] = number_format($val->case3,2);
-                                $data[$x]['91 to 120'] = number_format($val->case4,2);
-                                $data[$x]['121 to 180'] = number_format($val->case5,2);
-                                $data[$x]['Over 180'] = number_format($val->case6,2);
                             }
+
+                            $data[$x]['<=30']       = number_format($val->case1,$decimal);
+                            $data[$x]['31 to 60']   = number_format($val->case2,$decimal);
+                            $data[$x]['61 to 90']   = number_format($val->case3,$decimal);
+                            $data[$x]['91 to 120']  = number_format($val->case4,$decimal);
+                            $data[$x]['121 to 150'] = number_format($val->case5,$decimal);
+                            $data[$x]['151 to 180'] = number_format($val->case6,$decimal);
+                            $data[$x]['181 to 210'] = number_format($val->case7,$decimal);
+                            $data[$x]['211 to 240'] = number_format($val->case8,$decimal);
+                            $data[$x]['241 to 365'] = number_format($val->case9,$decimal);
+                            $data[$x]['Over 365']   = number_format($val->case10,$decimal);
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
+
                 }
+
                 $csv = \Excel::create('unbilled_grv_' . $name, function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
@@ -3958,14 +4002,14 @@ class AccountsPayableReportAPIController extends AppBaseController
             $caseColumn = 'balanceLocalAmount';
         }
 
-        $aging = ['0-30', '31-60', '61-90', '91-120', '121-180', '> 180'];
+        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150','151-180','181-210','211-240','241-365' ,'> 365'];
         $agingField = '';
         if (!empty($aging)) { /*calculate aging range in query*/
             $count = count($aging);
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "if(agingFinal.ageDays   > " . 180 . ",agingFinal.".$caseColumn.",0) as `case" . $c . "`,";
+                    $agingField .= "if(agingFinal.ageDays   > " . 365 . ",agingFinal.".$caseColumn.",0) as `case" . $c . "`,";
                 } else {
                     $list = explode("-", $val);
                     $agingField .= "if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal.".$caseColumn.",0) as `case" . $c . "`,";
@@ -4163,25 +4207,25 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $supplierGroup = "";
-        $finalSelect = "final.*";
+        $finalSelect = "agingFinal.*";
 
         if($reportTypeID == 'UGRVAS'){
-            $supplierGroup = "GROUP BY final.supplierID";
-            $finalSelect = "final.companySystemID,
-                final.companyID,
-                final.documentSystemID,
-                final.documentID,
-                final.documentCode,
-                final.documentDate,
-                final.supplierID,
-                final.supplierCode,
-                final.supplierName,
-                SUM(final.documentLocalAmount) as documentLocalAmount,
-                SUM(final.documentRptAmount) as documentRptAmount,
-                SUM(final.matchedLocalAmount) as matchedLocalAmount,
-                SUM(final.matchedRptAmount) as matchedRptAmount,
-                SUM(final.balanceLocalAmount) as balanceLocalAmount,
-                SUM(final.balanceRptAmount) as balanceRptAmount";
+            $supplierGroup = "GROUP BY supplierID";
+            $finalSelect = "agingFinal.companySystemID,
+                agingFinal.companyID,
+                agingFinal.documentSystemID,
+                agingFinal.documentID,
+                agingFinal.documentCode,
+                agingFinal.documentDate,
+                agingFinal.supplierID,
+                agingFinal.supplierCode,
+                agingFinal.supplierName,
+                SUM(agingFinal.documentLocalAmount) as documentLocalAmount,
+                SUM(agingFinal.documentRptAmount) as documentRptAmount,
+                SUM(agingFinal.matchedLocalAmount) as matchedLocalAmount,
+                SUM(agingFinal.matchedRptAmount) as matchedRptAmount,
+                SUM(agingFinal.balanceLocalAmount) as balanceLocalAmount,
+                SUM(agingFinal.balanceRptAmount) as balanceRptAmount";
         }
 
         $caseColumn = 'balanceRptAmount';
@@ -4190,14 +4234,14 @@ class AccountsPayableReportAPIController extends AppBaseController
             $caseColumn = 'balanceLocalAmount';
         }
 
-        $aging = ['0-30', '31-60', '61-90', '91-120', '121-180', '> 180'];
+        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150','151-180','181-210','211-240','241-365' ,'> 365'];
         $agingField = '';
         if (!empty($aging)) { /*calculate aging range in query*/
             $count = count($aging);
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "SUM(if(agingFinal.ageDays   > " . 180 . ",agingFinal.".$caseColumn.",0)) as `case" . $c . "`,";
+                    $agingField .= "SUM(if(agingFinal.ageDays   > " . 365 . ",agingFinal.".$caseColumn.",0)) as `case" . $c . "`,";
                 } else {
                     $list = explode("-", $val);
                     $agingField .= "SUM(if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal.".$caseColumn.",0)) as `case" . $c . "`,";
@@ -4208,7 +4252,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $agingField .= "SUM(if(agingFinal.ageDays <= 0,agingFinal.".$caseColumn.",0)) as `current`";
 
-        $qry = 'SELECT *,' . $agingField . ' FROM (SELECT '.$finalSelect.',
+        $qry = 'SELECT '.$finalSelect.',' . $agingField . ' FROM (SELECT final.*,
                 suppliermaster.countryID FROM (SELECT
                 finalUnbilled.companySystemID,
                 finalUnbilled.companyID,
@@ -4357,7 +4401,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                 round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) 
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
-                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter . ' '. $supplierGroup.') as agingFinal';
+                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter.') as agingFinal '.$supplierGroup;
+
         //DB::enableQueryLog();
         $output = \DB::select($qry);
 
