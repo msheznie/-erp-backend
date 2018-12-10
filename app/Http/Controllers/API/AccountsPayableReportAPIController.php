@@ -1070,8 +1070,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $type = $request->type;
                 $name = "";
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','localOrForeign','controlAccountsSystemID'));
-                $output = $this->getUnbilledDetailQRY($request);
+
                 if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
+                    $output = $this->getUnbilledDetailQRY($request);
                     $name = "detail";
                     if ($output) {
                         $x = 0;
@@ -1095,13 +1096,16 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 }else if($reportTypeID == 'UGRVS'){  //Unbilled GRV summary
-                    $name = "summary ";
+                    $output = $this->getUnbilledDetailQRY($request);
+                    $name = "aging_detail";
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
                             //$data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Doc Number'] = $val->documentCode;
+                            $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
 
                             $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
                             $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
@@ -1110,6 +1114,45 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
                             $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
                             $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+                }else if($reportTypeID == 'UGRVAD'){ //Unbilled GRV aging detail
+
+                    $output = $this->getUnbilledGRVDetailAgingQRY($request);
+                    $name = "summary ";
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Supplier Code'] = $val->supplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+
+                            if($request->currencyID == 2){
+                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
+                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
+                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+
+                                $data[$x]['<=30'] = number_format($val->case1,3);
+                                $data[$x]['31 to 60'] = number_format($val->case2,3);
+                                $data[$x]['61 to 90'] = number_format($val->case3,3);
+                                $data[$x]['91 to 120'] = number_format($val->case4,3);
+                                $data[$x]['121 to 180'] = number_format($val->case5,3);
+                                $data[$x]['Over 180'] = number_format($val->case6,3);
+                            }else {
+                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
+                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
+                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+
+                                $data[$x]['<=30'] = number_format($val->case1,2);
+                                $data[$x]['31 to 60'] = number_format($val->case2,2);
+                                $data[$x]['61 to 90'] = number_format($val->case3,2);
+                                $data[$x]['91 to 120'] = number_format($val->case4,2);
+                                $data[$x]['121 to 180'] = number_format($val->case5,2);
+                                $data[$x]['Over 180'] = number_format($val->case6,2);
+                            }
                             $x++;
                         }
                     } else {
