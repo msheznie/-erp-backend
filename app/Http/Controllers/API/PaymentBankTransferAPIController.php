@@ -186,7 +186,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $maxAsOfDate = PaymentBankTransfer::where('bankAccountAutoID', $input['bankAccountAutoID'])
             ->max('documentDate');
 
-        if ($maxAsOfDate >= $input['documentDate']) {
+        if ($maxAsOfDate > $input['documentDate']) {
             return $this->sendError('You cannot create bank transfer, Please select the as of date after ' . (new Carbon($maxAsOfDate))->format('d/m/Y'), 500);
         }
 
@@ -846,7 +846,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
 
         $time = strtotime("now");
-        $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time . '.pdf';
+        $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time;
 
         $csv = Excel::create($fileName, function ($excel) use ($data) {
             $excel->sheet('Firstsheet', function ($sheet) use ($data) {
