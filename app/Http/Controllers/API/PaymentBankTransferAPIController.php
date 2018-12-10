@@ -846,7 +846,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
 
         $time = strtotime("now");
-        $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time . '.pdf';
+        $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time;
 
         $csv = Excel::create($fileName, function ($excel) use ($data) {
             $excel->sheet('Firstsheet', function ($sheet) use ($data) {
