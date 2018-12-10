@@ -513,7 +513,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('documentDate', $input['order'][0]['dir']);
+                        $query->orderBy('paymentBankTransferID', $input['order'][0]['dir']);
                     }
                 }
             })
