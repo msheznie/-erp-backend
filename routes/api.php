@@ -1250,6 +1250,7 @@ Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@export
 
 Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
+Route::get('loginwithToken', 'UserAPIController@loginwithToken');
 
 Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
 

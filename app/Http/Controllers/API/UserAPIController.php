@@ -9,6 +9,7 @@
 -- Description : This file contains the all CRUD for User
 -- REVISION HISTORY
 -- Date: 14-March 2018 By: Fayas Description: Added new functions named as checkUser(),userCompanies()
+-- Date: 10-December-2018 By: Shahmy loginwithToken() function created to validate and login from portal token
  */
 namespace App\Http\Controllers\API;
 
@@ -227,5 +228,18 @@ class UserAPIController extends AppBaseController
         $user->delete();
 
         return $this->sendResponse($id, 'User deleted successfully');
+    }
+
+    public function loginwithToken(request $request){
+      $users=  User::with(['employee'])->where('login_token',$request->id)->first();
+      if($users){
+          $data['uname'] = $users->email;
+          $data['pw'] = $users->employee->empPassword;
+          $this->userRepository->update(['login_token'=>NULL],$users->id);
+          return $this->sendResponse($data, 'User retrieved successfully');
+      }else{
+          return $this->sendError('', 500);
+      }
+
     }
 }
