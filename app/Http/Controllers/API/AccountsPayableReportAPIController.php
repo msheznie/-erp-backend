@@ -1040,19 +1040,39 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 $name = "";
-                if ($reportTypeID == 'UGRVD') {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','localOrForeign','controlAccountsSystemID'));
-                    $output = $this->getUnbilledDetailQRY($request);
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','localOrForeign','controlAccountsSystemID'));
+                $output = $this->getUnbilledDetailQRY($request);
+                if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
                     $name = "detail";
-
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
-                            $data[$x]['Company ID'] = $val->companyID;
+                            //$data[$x]['Company ID'] = $val->companyID;
                             $data[$x]['Supplier Code'] = $val->supplierCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
                             $data[$x]['Doc Number'] = $val->documentCode;
                             $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
+
+                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
+                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
+                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+
+                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
+                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
+                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+                }else if($reportTypeID == 'UGRVS'){  //Unbilled GRV summary
+                    $name = "summary ";
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Supplier Code'] = $val->supplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
 
                             $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
                             $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
@@ -3653,12 +3673,29 @@ class AccountsPayableReportAPIController extends AppBaseController
         }
 
         $supplierGroup = "";
+        $finalSelect = "final.*";
 
         if($reportTypeID == 'UGRVS'){
             $supplierGroup = "GROUP BY final.supplierID";
+            $finalSelect = "final.companySystemID,
+                final.companyID,
+                final.documentSystemID,
+                final.documentID,
+                final.documentCode,
+                final.documentDate,
+                final.supplierID,
+                final.supplierCode,
+                final.supplierName,
+                SUM(final.documentLocalAmount) as documentLocalAmount,
+                SUM(final.documentRptAmount) as documentRptAmount,
+                SUM(final.matchedLocalAmount) as matchedLocalAmount,
+                SUM(final.matchedRptAmount) as matchedRptAmount,
+                SUM(final.balanceLocalAmount) as balanceLocalAmount,
+                SUM(final.balanceRptAmount) as balanceRptAmount";
         }
 
-        $qry = 'SELECT final.*,suppliermaster.countryID FROM (SELECT
+        $qry = 'SELECT '.$finalSelect.',
+                suppliermaster.countryID FROM (SELECT
                 finalUnbilled.companySystemID,
                 finalUnbilled.companyID,
                 finalUnbilled.documentSystemID,
