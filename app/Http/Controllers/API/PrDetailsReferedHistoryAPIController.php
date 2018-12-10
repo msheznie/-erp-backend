@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : PrDetailsReferedHistoryAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Pr Details Refered History
+ * -- Author : Mohamed Nazir
+ * -- Create date : 02 - August 2018
+ * -- Description : This file contains the all CRUD for Pr Details Refered History
+ * -- REVISION HISTORY
+ * -- Date: 02-August 2018 By: Nazir Description: Added new function getPrItemsForAmendHistory(),
+ */
 
 namespace App\Http\Controllers\API;
 

@@ -3,13 +3,14 @@
  * =============================================
  * -- File Name : PurchaseOrderMasterRefferedHistoryAPIController.php
  * -- Project Name : ERP
- * -- Module Name :  Procument Order
+ * -- Module Name :  Purchase Order Master Reffered History
  * -- Author : Nazir
- * -- Create date : 23 - July 2018
- * -- Description : This file contains the all CRUD for Purchase Order
+ * -- Create date : 24 - July 2018
+ * -- Description : This file contains the all CRUD for  Purchase Order Master Reffered History
  * -- REVISION HISTORY
- * --
+ * -- Date: 24-July 2018 By: Nazir Description: Added new function getPoMasterAmendHistory(),
  */
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreatePurchaseOrderMasterRefferedHistoryAPIRequest;

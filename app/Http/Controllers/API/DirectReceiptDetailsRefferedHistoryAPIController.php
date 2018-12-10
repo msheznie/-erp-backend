@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : DirectReceiptDetailsRefferedHistoryAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Direct Receipt Details Reffered History
+ * -- Author : Mohamed Nazir
+ * -- Create date : 21 - November 2018
+ * -- Description : This file contains the all CRUD for Purchase Order
+ * -- REVISION HISTORY
+ * -- Date: 21-November 2018 By: Nazir Description: Added new function getRVDetailDirectAmendHistory(),
+ */
 
 namespace App\Http\Controllers\API;
 

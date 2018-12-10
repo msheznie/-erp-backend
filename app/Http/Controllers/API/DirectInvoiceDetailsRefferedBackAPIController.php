@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : DirectInvoiceDetailsRefferedBackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Direct Invoice Details Reffered Back
+ * -- Author : Mohamed Nazir
+ * -- Create date : 01 - October 2018
+ * -- Description : This file contains the all CRUD for Direct Invoice Details Reffered Back
+ * -- REVISION HISTORY
+ * -- Date: 01-October 2018 By: Nazir Description: Added new function getSIDetailDirectAmendHistory(),
+ */
 
 namespace App\Http\Controllers\API;
 
