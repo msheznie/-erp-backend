@@ -45,7 +45,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'remember_token'
+        'remember_token',
+        'login_token'
     ];
 
     /**
@@ -58,7 +59,8 @@ class User extends Authenticatable
         'name' => 'string',
         'email' => 'string',
         'password' => 'string',
-        'remember_token' => 'string'
+        'remember_token' => 'string',
+        'login_token'=> 'string'
     ];
 
     /**
