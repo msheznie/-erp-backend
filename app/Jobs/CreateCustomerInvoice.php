@@ -226,8 +226,10 @@ class CreateCustomerInvoice implements ShouldQueue
             $masterModel = ['documentSystemID' => 20, 'autoID' => $customerInvoice->custInvoiceDirectAutoID, 'companySystemID' => $dpMaster->companySystemID, 'employeeSystemID' => $dpMaster->confimedByEmpSystemID];
             $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel);
 
-            $dpMaster['bookingInvCode'] = $bookingInvCode;
-            $grvInsert = CreateDirectGRV::dispatch($dpMaster);
+
+            $dpMaster2['invoiceCode'] = $bookingInvCode;
+            $dpMaster2['assetdisposalMasterAutoID'] = $dpMaster->assetdisposalMasterAutoID;
+            $grvInsert = CreateDirectGRV::dispatch($dpMaster2);
 
             DB::commit();
 

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AssetDisposalDetail;
+use App\Models\AssetDisposalMaster;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
@@ -47,7 +48,9 @@ class CreateDirectGRV implements ShouldQueue
     {
         //
         Log::useFiles(storage_path() . '/logs/create_direct_grv_jobs.log');
-        $dpMaster = $this->disposalMaster;
+        $data = $this->disposalMaster;
+        $dpMaster = AssetDisposalMaster::find($data['assetdisposalMasterAutoID']);
+        $invoiceCode = $data['invoiceCode'];
         DB::beginTransaction();
         try {
             $directGRV = array();
@@ -63,12 +66,12 @@ class CreateDirectGRV implements ShouldQueue
                 $directGRV["serviceLineCode"] = $serviceLine->ServiceLineCode;
             }
 
-            $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $dpMaster->companySystemID)->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
+            $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $dpMaster->toCompanySystemID)->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
 
-            $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->companySystemID)->where('departmentSystemID', 10)->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)->where('dateFrom', '<', NOW())->where('dateTo', '>', NOW())->first();
+            $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $dpMaster->toCompanySystemID)->where('departmentSystemID', 10)->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)->where('dateFrom', '<', NOW())->where('dateTo', '>', NOW())->first();
 
             $today = NOW();
-            $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode . ',' . $dpMaster->bookingInvCode;
+            $comment = "Inter Company Asset transfer from " . $dpMaster->companyID . " to " . $dpMaster->toCompanyID . " - " . $dpMaster->disposalDocumentCode . ',' . $invoiceCode;
 
             if (!empty($fromCompanyFinanceYear)) {
 
@@ -104,6 +107,7 @@ class CreateDirectGRV implements ShouldQueue
             $grvCode = ($dpMaster->toCompanyID . '\\' . $grvFinYear . '\\' . $directGRV['documentID'] . str_pad($grvInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
             $directGRV['grvPrimaryCode'] = $grvCode;
             $directGRV['grvDate'] = $today;
+            $directGRV['stampDate'] = $today;
             $directGRV['grvNarration'] = $comment;
 
             $supplier = SupplierMaster::where('companyLinkedToSystemID', $dpMaster->companySystemID)->first();
@@ -148,6 +152,12 @@ class CreateDirectGRV implements ShouldQueue
             $directGRV['interCompanyTransferYN'] = -1;
             $directGRV['FromCompanyID'] = $dpMaster->companyID;
             $directGRV['FromCompanySystemID'] = $dpMaster->companySystemID;
+            $directGRV['grvDoRefNo'] = $invoiceCode;
+
+            $directGRV['createdPcID'] = gethostname();
+            $directGRV['createdUserSystemID'] = $dpMaster->confimedByEmpSystemID;
+            $directGRV['createdUserID'] = $dpMaster->confimedByEmpID;
+
             Log::info($directGRV);
             $grvMaster = $grvMasterRepo->create($directGRV);
 

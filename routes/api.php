@@ -1282,6 +1282,7 @@ Route::get('runQueue', function () {
     //$job = \App\Jobs\CreateCustomerInvoice::dispatch($master);
     //$job = App\Helper\Helper::generateCustomerReceiptVoucher($master);
     //$job = \App\Jobs\CreateDepreciation::dispatch(100000398);
+    //$job = \App\Jobs\CreateGRVSupplierInvoice::dispatch(44094);
 });
 
 Route::get('runQueueSR', function () {
