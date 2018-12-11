@@ -46,7 +46,7 @@ class CreateGRVSupplierInvoice implements ShouldQueue
             $grvMaster = GRVMaster::find($this->grvMasterAutoID);
             if ($grvMaster) {
                 if ($grvMaster->interCompanyTransferYN == -1) {
-                    $grvDetail = GRVDetails::where('grvAutoID', $this->grvMasterAutoID)->get();
+                    $grvDetail = GRVDetails::selectRaw('SUM(landingCost_LocalCur) as landingCost_LocalCur,SUM(landingCost_RptCur) as landingCost_RptCur')->where('grvAutoID', $this->grvMasterAutoID)->first();
                     $today = NOW();
                     $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $grvMaster->companySystemID)->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
 
@@ -85,14 +85,14 @@ class CreateGRVSupplierInvoice implements ShouldQueue
                         $suppFinYear = date("Y");
                     }
 
-                    $comment = $grvMaster->grvNarration;
+                    $comment = $grvMaster->grvNarration.','.$grvMaster->grvPrimaryCode;
 
                     $bookingAmountRpt = 0;
                     $bookingAmountLocal = 0;
 
-                    foreach ($grvDetail as $new) {
-                        $bookingAmountLocal += $new['landingCost_LocalCur'];
-                        $bookingAmountRpt += $new['landingCost_RptCur'];
+                    if ($grvDetail) {
+                        $bookingAmountLocal = $grvDetail->landingCost_LocalCur;
+                        $bookingAmountRpt = $grvDetail->landingCost_RptCur;
                     }
 
                     $bookingInvCode = ($grvMaster->companyID . '\\' . $suppFinYear . '\\' . 'BSI' . str_pad($supInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
