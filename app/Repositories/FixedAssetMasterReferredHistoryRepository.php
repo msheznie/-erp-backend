@@ -8,7 +8,7 @@ use InfyOm\Generator\Common\BaseRepository;
 /**
  * Class FixedAssetMasterReferredHistoryRepository
  * @package App\Repositories
- * @version November 11, 2018, 7:15 am UTC
+ * @version December 7, 2018, 5:02 am UTC
  *
  * @method FixedAssetMasterReferredHistory findWithoutFail($id, $columns = ['*'])
  * @method FixedAssetMasterReferredHistory find($id, $columns = ['*'])

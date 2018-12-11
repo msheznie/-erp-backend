@@ -278,4 +278,11 @@ class AssetCapitalizatioDetReferredAPIController extends AppBaseController
 
         return $this->sendResponse($id, 'Asset Capitalizatio Det Referred deleted successfully');
     }
+
+    public function getCapitalizationDetailsHistory(Request $request)
+    {
+        $id = $request->capitalizationID;
+        $assetCapitalizationDetail = $this->assetCapitalizatioDetReferredRepository->with(['segment'])->findWhere(['capitalizationID' => $id,'timesReferred' => $request->timesReferred]);
+        return $this->sendResponse($assetCapitalizationDetail, 'Details retrieved successfully');
+    }
 }

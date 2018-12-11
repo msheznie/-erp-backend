@@ -8,7 +8,7 @@ use InfyOm\Generator\Common\BaseRepository;
 /**
  * Class DepreciationPeriodsReferredHistoryRepository
  * @package App\Repositories
- * @version November 11, 2018, 9:53 am UTC
+ * @version December 7, 2018, 5:59 am UTC
  *
  * @method DepreciationPeriodsReferredHistory findWithoutFail($id, $columns = ['*'])
  * @method DepreciationPeriodsReferredHistory find($id, $columns = ['*'])

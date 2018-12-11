@@ -1209,6 +1209,25 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('mr_details_reffered_backs', 'ItemReturnDetailsRefferedBackAPIController');
     Route::get('getItemReturnDetailsReferBack', 'ItemReturnDetailsRefferedBackAPIController@getItemReturnDetailsReferBack');
 
+    Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
+    Route::post('getAllCapitalizationAmendHistory', 'AssetCapitalizationReferredAPIController@getAllCapitalizationAmendHistory');
+    Route::get('assetCapitalizationHistoryByID', 'AssetCapitalizationReferredAPIController@assetCapitalizationHistoryByID');
+    Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
+    Route::get('getCapitalizationDetailsHistory', 'AssetCapitalizatioDetReferredAPIController@getCapitalizationDetailsHistory');
+    Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
+    Route::post('getAllAssetDisposalAmendHistory', 'AssetDisposalReferredAPIController@getAllAssetDisposalAmendHistory');
+    Route::get('assetDisposalHistoryByID', 'AssetDisposalReferredAPIController@assetDisposalHistoryByAutoID');
+    Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');
+    Route::get('getAssetDisposalDetailHistory', 'AssetDisposalDetailReferredAPIController@getAssetDisposalDetailHistory');
+
+    Route::resource('fixedassetmasterreferredhistory', 'FixedAssetMasterReferredHistoryAPIController');
+    Route::post('getAllAssetCostingAmendHistory', 'FixedAssetMasterReferredHistoryAPIController@getAllAssetCostingAmendHistory');
+    Route::get('assetCostingHistoryByAutoID', 'FixedAssetMasterReferredHistoryAPIController@assetCostingHistoryByAutoID');
+    Route::resource('depmasterreferredhistory', 'DepreciationMasterReferredHistoryAPIController');
+    Route::post('getAllDepreciationAmendHistory', 'DepreciationMasterReferredHistoryAPIController@getAllDepreciationAmendHistory');
+    Route::get('assetDepreciationHistoryByID', 'DepreciationMasterReferredHistoryAPIController@assetDepreciationHistoryByID');
+    Route::resource('depperiodsreferredhistory', 'DepreciationPeriodsReferredHistoryAPIController');
+    Route::post('getAssetDepPeriodHistoryByID', 'DepreciationPeriodsReferredHistoryAPIController@getAssetDepPeriodHistoryByID');
 
     Route::resource('request_reffered_back', 'RequestRefferedBackAPIController');
     Route::post('getReferBackHistoryByRequest', 'RequestRefferedBackAPIController@getReferBackHistoryByRequest');
@@ -1223,6 +1242,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('bankTransferRefferedBack', 'PaymentBankTransferRefferedBackAPIController');
     Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer');
     Route::resource('bankTransferDetailRefferedBacks', 'PaymentBankTransferDetailRefferedBackAPIController');
+
 });
 
 
@@ -1278,8 +1298,4 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
-
-
-
-
 
