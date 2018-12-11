@@ -219,8 +219,8 @@ class PaymentBankTransfer extends Model
         'exportedYN'  => 'integer',
         'exportedUserSystemID'  => 'integer',
         'exportedDate' => 'string',
-        'refferedBackYN' => 'string',
-        'timesReferred' => 'string'
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**
