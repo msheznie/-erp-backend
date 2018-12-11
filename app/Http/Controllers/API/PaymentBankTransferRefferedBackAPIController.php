@@ -180,6 +180,7 @@ class PaymentBankTransferRefferedBackAPIController extends AppBaseController
         $totalPaymentAmount = PaymentBankTransferDetailRefferedBack::where('companySystemID', $paymentBankTransfer->companySystemID)
             ->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $paymentBankTransfer->bankAccountAutoID)
+            ->where("timesReferred", $paymentBankTransfer->timesReferred)
             ->where("trsClearedYN", -1)
             ->where("bankClearedYN", 0)
             ->where(function ($q) use ($paymentBankTransfer, $confirmed) {
@@ -195,6 +196,7 @@ class PaymentBankTransferRefferedBackAPIController extends AppBaseController
         $totalPaymentClearedAmount = PaymentBankTransferDetailRefferedBack::where('companySystemID', $paymentBankTransfer->companySystemID)
             ->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $paymentBankTransfer->bankAccountAutoID)
+            ->where("timesReferred", $paymentBankTransfer->timesReferred)
             ->where("trsClearedYN", -1)
             ->where("bankClearedYN", 0)
             ->where(function ($q) use ($paymentBankTransfer) {
