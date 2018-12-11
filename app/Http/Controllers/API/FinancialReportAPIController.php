@@ -1257,7 +1257,145 @@ class FinancialReportAPIController extends AppBaseController
                         ) AS GL_final 
                     ORDER BY
                         documentDate ASC';
+        $output = \DB::select($query);
+        //dd(DB::getQueryLog());
+        return $output;
 
+    }
+
+    public function getGeneralLedgerQryForPDF($request)
+    {
+        $fromDate = new Carbon($request->fromDate);
+        $fromDate = $fromDate->format('Y-m-d');
+
+        $toDate = new Carbon($request->toDate);
+        $toDate = $toDate->format('Y-m-d');
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $glCodes = (array)$request->glCodes;
+        $type = $request->type;
+        $chartOfAccountId = array_filter(collect($glCodes)->pluck('chartOfAccountSystemID')->toArray());
+
+        $departments = (array)$request->departments;
+        $serviceLineId = array_filter(collect($departments)->pluck('serviceLineSystemID')->toArray());
+
+        array_push($serviceLineId, 24);
+
+        $contracts = (array)$request->contracts;
+        $contractsId = array_filter(collect($contracts)->pluck('contractUID')->toArray());
+
+        array_push($contractsId, 159);
+        //contracts
+
+        //DB::enableQueryLog();
+        $query = 'SELECT *
+                    FROM
+                        (
+                    SELECT
+                        *
+                    FROM
+                        (
+                    SELECT
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        erp_generalledger.serviceLineSystemID,
+                        erp_generalledger.serviceLineCode,
+                        erp_generalledger.documentSystemID,
+                        erp_generalledger.documentID,
+                        erp_generalledger.documentSystemCode,
+                        erp_generalledger.documentCode,
+                        erp_generalledger.documentDate,
+                        erp_generalledger.chartOfAccountSystemID,
+                        erp_generalledger.glCode,
+                        erp_generalledger.glAccountType,
+                        erp_generalledger.documentNarration,
+                        erp_generalledger.clientContractID,
+                        erp_generalledger.supplierCodeSystem,
+                        erp_generalledger.documentLocalCurrencyID,
+                        chartofaccounts.AccountDescription,
+                        companymaster.CompanyName,
+                    IF
+                        ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
+                    IF
+                        ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) AS localCredit,
+                        erp_generalledger.documentRptCurrencyID,
+                    IF
+                        ( documentRptAmount > 0, documentRptAmount, 0 ) AS rptDebit,
+                    IF
+                        ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
+                    IF
+                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID
+                    WHERE
+                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
+                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
+                        AND  erp_generalledger.contractUID IN (' . join(',', $contractsId) . ')
+                        ) AS erp_qry_GL UNION ALL
+                    SELECT
+                        *
+                    FROM
+                        (
+                    SELECT
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.companyID,
+                        erp_generalledger.serviceLineSystemID,
+                        erp_generalledger.serviceLineCode,
+                        "" AS documentSystemID,
+                        "" AS documentID,
+                        "" AS documentSystemCode,
+                        "" AS documentCode,
+                        "" AS documentDate,
+                        erp_generalledger.chartOfAccountSystemID,
+                        erp_generalledger.glCode,
+                        "BS" AS glAccountType,
+                        "Opening Balance" AS documentNarration,
+                        "" AS clientContractID,
+                        "" AS supplierCodeSystem,
+                        erp_generalledger.documentLocalCurrencyID,
+                        chartofaccounts.AccountDescription,
+                        companymaster.CompanyName,
+                        sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
+                        sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
+                        erp_generalledger.documentRptCurrencyID,
+                        sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ) AS rptDebit,
+                        sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) AS rptCredit,
+                        "" AS isCustomer
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
+                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID
+                    WHERE
+                        erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                        AND erp_generalledger.glAccountType = "BS"
+                        AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
+                        AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
+                        AND  erp_generalledger.contractUID IN (' . join(',', $contractsId) . ')
+                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                    GROUP BY
+                        erp_generalledger.glCode,
+                        erp_generalledger.companySystemID,
+                        erp_generalledger.serviceLineSystemID,
+                        erp_generalledger.chartOfAccountSystemID
+                        ) AS erp_qry_gl_bf
+                        ) AS GL_final
+                    ORDER BY
+                        documentDate,glCode ASC';
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;
@@ -1392,7 +1530,7 @@ AND MASTER .canceledYN = 0';
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
-                $output = $this->getGeneralLedger($request);
+                $output = $this->getGeneralLedgerQryForPDF($request);
 
                 $currencyIdLocal = 1;
                 $currencyIdRpt = 2;
@@ -1426,8 +1564,13 @@ AND MASTER .canceledYN = 0';
                 $totaldocumentRptAmountDebit = array_sum(collect($output)->pluck('rptDebit')->toArray());
                 $totaldocumentRptAmountCredit = array_sum(collect($output)->pluck('rptCredit')->toArray());
 
+                $finalData = array();
+                foreach($output as $val){
+                    $finalData[$val->glCode.' - '.$val->AccountDescription][] = $val;
+                }
+
                 $dataArr = array(
-                    'reportData' => $output,
+                    'reportData' => $finalData,
                     'companyName' => $checkIsGroup->CompanyName,
                     'isGroup' => $checkIsGroup->isGroup,
                     'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2,
