@@ -416,7 +416,7 @@ class BankReconciliationAPIController extends AppBaseController
             $checkItems = BankLedger::where('bankRecAutoID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every bank reconciliation should have at least one cleared item', 500);
+                //return $this->sendError('Every bank reconciliation should have at least one cleared item', 500);
             }
 
             $input['RollLevForApp_curr'] = 1;

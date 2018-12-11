@@ -207,7 +207,9 @@ class BankReconciliation extends Model
         'modifiedUser',
         'createdDateTime',
         'timeStamp',
-        'bankMasterID'
+        'bankMasterID',
+        'timesReferred',
+        'refferedBackYN'
     ];
 
     /**
@@ -244,7 +246,9 @@ class BankReconciliation extends Model
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUserSystemID' => 'integer',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer'
     ];
 
     /**

@@ -324,7 +324,8 @@ class CreditNoteAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID'));
-        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime'));
+        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
+        'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate'));
 
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
         $input['modifiedUser'] = \Helper::getEmployeeID();
@@ -515,11 +516,10 @@ class CreditNoteAPIController extends AppBaseController
 
                             $confirm = \Helper::confirmDocument($params);
                             if (!$confirm["success"]) {
-                                $customerInvoiceDirect = $this->creditNoteRepository->update($input, $id);
                                 return $this->sendError($confirm["message"], 500);
-                            } else {
-                                return $this->sendResponse('s', 'Credit note confirmed successfully');
                             }
+
+                            $customerInvoiceDirect = $this->creditNoteRepository->update($input, $id);
                         }
                     } else {
                         return $this->sendError('Credit note details not found.', 500);
