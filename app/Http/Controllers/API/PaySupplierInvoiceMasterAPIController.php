@@ -852,7 +852,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             $bankAccount->save();
                         }
                     } else {
-                        $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('PayMasterAutoId', 'DESC')->first();
+                        $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
                         if ($chkCheque) {
                             $input['BPVchequeNo'] = $chkCheque->BPVchequeNo + 1;
                         } else {
@@ -860,7 +860,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         }
                     }
                 } else {
-                    $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('PayMasterAutoId', 'DESC')->first();
+                    $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
                     if ($chkCheque) {
                         $input['BPVchequeNo'] = $chkCheque->BPVchequeNo + 1;
                     } else {
@@ -2054,6 +2054,7 @@ HAVING
                 $paymentVoucher->confirmedDate = null;
                 $paymentVoucher->RollLevForApp_curr = 1;
                 $paymentVoucher->BPVchequeNo = 0;
+                $paymentVoucher->chequePrintedYN = 0;
                 $paymentVoucher->save();
             }
 

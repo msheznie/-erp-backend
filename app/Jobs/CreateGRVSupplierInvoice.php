@@ -1,0 +1,193 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\BookInvSuppMaster;
+use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
+use App\Models\GRVDetails;
+use App\Models\GRVMaster;
+use App\Repositories\BookInvSuppDetRepository;
+use App\Repositories\BookInvSuppMasterRepository;
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class CreateGRVSupplierInvoice implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    protected $grvMasterAutoID;
+
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct($grvMasterAutoID)
+    {
+        //
+        $this->grvMasterAutoID = $grvMasterAutoID;
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle(BookInvSuppMasterRepository $bookInvSuppMasterRepo, BookInvSuppDetRepository $bookInvSuppDetRepo)
+    {
+        DB::beginTransaction();
+        try {
+            Log::useFiles(storage_path() . '/logs/create_supplier_invoice_jobs.log');
+            $grvMaster = GRVMaster::find($this->grvMasterAutoID);
+            if ($grvMaster) {
+                if ($grvMaster->interCompanyTransferYN == -1) {
+                    $grvDetail = GRVDetails::selectRaw('SUM(landingCost_LocalCur) as landingCost_LocalCur,SUM(landingCost_RptCur) as landingCost_RptCur')->where('grvAutoID', $this->grvMasterAutoID)->first();
+                    $today = NOW();
+                    $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $grvMaster->companySystemID)->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
+
+                    $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $grvMaster->companySystemID)->where('departmentSystemID', 10)->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)->where('dateFrom', '<', NOW())->where('dateTo', '>', NOW())->first();
+
+                    if (!empty($fromCompanyFinanceYear)) {
+
+                        $supplierInvoiceData['FYBiggin'] = $fromCompanyFinanceYear->bigginingDate;
+                        $supplierInvoiceData['FYEnd'] = $fromCompanyFinanceYear->endingDate;
+
+                        if (!empty($fromCompanyFinancePeriod)) {
+                            $supplierInvoiceData['companyFinanceYearID'] = $fromCompanyFinancePeriod->companyFinanceYearID;
+                            $supplierInvoiceData['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
+                            $supplierInvoiceData['FYPeriodDateFrom'] = $fromCompanyFinancePeriod->dateFrom;
+                            $supplierInvoiceData['FYPeriodDateTo'] = $fromCompanyFinancePeriod->dateTo;
+                        }
+                    }
+
+                    $bookingInvLastSerial = BookInvSuppMaster::where('companySystemID', $grvMaster->companySystemID)
+                        ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
+                        ->where('serialNo', '>', 0)
+                        ->orderBy('serialNo', 'desc')
+                        ->first();
+
+                    $supInvLastSerialNumber = 1;
+                    if ($bookingInvLastSerial) {
+                        $supInvLastSerialNumber = intval($bookingInvLastSerial->serialNo) + 1;
+                    }
+
+                    $suppFinYear = '';
+                    if ($fromCompanyFinancePeriod) {
+                        $suppStartYear = $fromCompanyFinanceYear->bigginingDate;
+                        $suppFinYearExp = explode('-', $suppStartYear);
+                        $suppFinYear = $suppFinYearExp[0];
+                    } else {
+                        $suppFinYear = date("Y");
+                    }
+
+                    $comment = $grvMaster->grvNarration.','.$grvMaster->grvPrimaryCode;
+
+                    $bookingAmountRpt = 0;
+                    $bookingAmountLocal = 0;
+
+                    if ($grvDetail) {
+                        $bookingAmountLocal = $grvDetail->landingCost_LocalCur;
+                        $bookingAmountRpt = $grvDetail->landingCost_RptCur;
+                    }
+
+                    $bookingInvCode = ($grvMaster->companyID . '\\' . $suppFinYear . '\\' . 'BSI' . str_pad($supInvLastSerialNumber, 6, '0', STR_PAD_LEFT));
+                    $supplierInvoiceData['serialNo'] = $supInvLastSerialNumber;
+                    $supplierInvoiceData['companySystemID'] = $grvMaster->companySystemID;
+                    $supplierInvoiceData['companyID'] = $grvMaster->companyID;
+                    $supplierInvoiceData['documentSystemID'] = 11;
+                    $supplierInvoiceData['documentID'] = 'SI';
+
+                    $supplierInvoiceData['bookingInvCode'] = $bookingInvCode;
+                    $supplierInvoiceData['bookingDate'] = $today;
+                    $supplierInvoiceData['comments'] = $comment;
+                    $supplierInvoiceData['secondaryRefNo'] = null;
+                    $supplierInvoiceData['supplierID'] = $grvMaster->supplierID;
+                    $supplierInvoiceData['supplierGLCode'] = $grvMaster->liabilityAccount;
+                    $supplierInvoiceData['supplierGLCodeSystemID'] = $grvMaster->liabilityAccountSysemID;
+                    $supplierInvoiceData['UnbilledGRVAccountSystemID'] = $grvMaster->UnbilledGRVAccountSystemID;
+                    $supplierInvoiceData['UnbilledGRVAccount'] = $grvMaster->UnbilledGRVAccount;
+                    $supplierInvoiceData['supplierInvoiceNo'] = $grvMaster->grvDoRefNo;
+                    $supplierInvoiceData['supplierInvoiceDate'] = $today;
+                    $supplierInvoiceData['supplierTransactionCurrencyID'] = $grvMaster->companyReportingCurrencyID;
+                    $supplierInvoiceData['supplierTransactionCurrencyER'] = 1;
+                    $supplierInvoiceData['companyReportingCurrencyID'] = $grvMaster->companyReportingCurrencyID;
+                    $supplierInvoiceData['companyReportingER'] = $grvMaster->companyReportingER;
+                    $supplierInvoiceData['localCurrencyID'] = $grvMaster->localCurrencyID;
+                    $supplierInvoiceData['localCurrencyER'] = $grvMaster->localCurrencyER;
+                    $supplierInvoiceData['bookingAmountTrans'] = $bookingAmountRpt;
+                    $supplierInvoiceData['bookingAmountLocal'] = $bookingAmountLocal;
+                    $supplierInvoiceData['bookingAmountRpt'] = $bookingAmountRpt;
+                    $supplierInvoiceData['confirmedYN'] = 1;
+                    $supplierInvoiceData['confirmedByEmpSystemID'] = $grvMaster->grvConfirmedByEmpSystemID;
+                    $supplierInvoiceData['confirmedByEmpID'] = $grvMaster->grvConfirmedByEmpID;
+                    $supplierInvoiceData['confirmedByName'] = $grvMaster->grvConfirmedByName;
+                    $supplierInvoiceData['confirmedDate'] = $today;
+                    $supplierInvoiceData['approved'] = -1;
+                    $supplierInvoiceData['approvedDate'] = $today;
+                    $supplierInvoiceData['approvedByUserSystemID'] = $grvMaster->grvConfirmedByEmpSystemID;
+                    $supplierInvoiceData['approvedByUserID'] = $grvMaster->grvConfirmedByEmpID;
+                    $supplierInvoiceData['postedDate'] = $today;
+                    $supplierInvoiceData['documentType'] = 0;
+                    $supplierInvoiceData['RollLevForApp_curr'] = 1;
+                    $supplierInvoiceData['interCompanyTransferYN'] = $grvMaster->interCompanyTransferYN;
+                    $supplierInvoiceData['createdUserSystemID'] = $grvMaster->grvConfirmedByEmpSystemID;
+                    $supplierInvoiceData['createdUserID'] = $grvMaster->grvConfirmedByName;
+                    $supplierInvoiceData['createdPcID'] = gethostname();
+                    $bookInvSuppMaster = $bookInvSuppMasterRepo->create($supplierInvoiceData);
+                    Log::info($bookInvSuppMaster);
+                    // supplier Invoice master end
+
+                    if (!empty($bookInvSuppMaster)) {
+                        // supplier Invoice details start
+                        $supplierInvoiceDetail = array();
+                        $supplierInvoiceDetail['bookingSuppMasInvAutoID'] = $bookInvSuppMaster->bookingSuppMasInvAutoID;
+                        $supplierInvoiceDetail['unbilledgrvAutoID'] = 0;
+                        $supplierInvoiceDetail['companySystemID'] = $bookInvSuppMaster->companySystemID;
+                        $supplierInvoiceDetail['companyID'] = $bookInvSuppMaster->companyID;
+                        $supplierInvoiceDetail['supplierID'] = $grvMaster->supplierID;
+                        $supplierInvoiceDetail['purchaseOrderID'] = 0;
+                        $supplierInvoiceDetail['grvAutoID'] = 0;
+                        $supplierInvoiceDetail['grvType'] = 0;
+                        $supplierInvoiceDetail['supplierTransactionCurrencyID'] = $grvMaster->companyReportingCurrencyID;
+                        $supplierInvoiceDetail['supplierTransactionCurrencyER'] = 1;
+                        $supplierInvoiceDetail['companyReportingCurrencyID'] = $grvMaster->companyReportingCurrencyID;
+                        $supplierInvoiceDetail['companyReportingER'] = $grvMaster->companyReportingER;
+                        $supplierInvoiceDetail['localCurrencyID'] = $grvMaster->localCurrencyID;
+                        $supplierInvoiceDetail['localCurrencyER'] = $grvMaster->localCurrencyER;
+                        $supplierInvoiceDetail['supplierInvoOrderedAmount'] = $bookingAmountRpt;
+                        $supplierInvoiceDetail['supplierInvoAmount'] = $bookingAmountRpt;
+                        $supplierInvoiceDetail['transSupplierInvoAmount'] = $bookingAmountRpt;
+                        $supplierInvoiceDetail['localSupplierInvoAmount'] = $bookingAmountLocal;
+                        $supplierInvoiceDetail['rptSupplierInvoAmount'] = $bookingAmountRpt;
+                        $supplierInvoiceDetail['totTransactionAmount'] = $bookingAmountRpt;
+                        $supplierInvoiceDetail['totLocalAmount'] = $bookingAmountLocal;
+                        $supplierInvoiceDetail['totRptAmount'] = $bookingAmountRpt;
+                        $supplierInvoiceDetail['isAddon'] = 0;
+                        $supplierInvoiceDetail['invoiceBeforeGRVYN'] = 0;
+                        $supplierInvoiceDetail['timesReferred'] = 0;
+                        $supplierInvoiceDetail['timeStamp'] = $today;
+                        $bookInvSuppDet = $bookInvSuppDetRepo->create($supplierInvoiceDetail);
+                        Log::info($bookInvSuppDet);
+                    }
+
+                    $masterModel = ['documentSystemID' => 11, 'autoID' => $bookInvSuppMaster->bookingSuppMasInvAutoID, 'companySystemID' => $bookInvSuppMaster->companySystemID, 'employeeSystemID' => $bookInvSuppMaster->confirmedByEmpSystemID];
+                    $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel);
+                }
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+        }
+    }
+
+    public function failed($exception)
+    {
+        return $exception->getMessage();
+    }
+}

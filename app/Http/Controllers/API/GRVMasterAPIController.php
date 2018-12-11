@@ -319,10 +319,11 @@ class GRVMasterAPIController extends AppBaseController
         if ($gRVMaster->grvCancelledYN == -1) {
             return $this->sendError('Good Receipt Voucher closed. You cannot edit.', 500);
         }
-        $currentDate = Carbon::parse(now())->format('Y-m-d'). ' 00:00:00';
+        $currentDate = Carbon::parse(now())->format('Y-m-d');
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
                 $input['grvDate'] = new Carbon($input['grvDate']);
+                $input['grvDate'] = $input['grvDate']->format('Y-m-d');
 
                 if($input['grvDate'] > $currentDate){
                     return $this->sendError( 'GRV date can not be greater than current date',500);
@@ -333,6 +334,7 @@ class GRVMasterAPIController extends AppBaseController
         if (isset($input['stampDate'])) {
             if ($input['stampDate']) {
                 $input['stampDate'] = new Carbon($input['stampDate']);
+                $input['stampDate'] = $input['stampDate']->format('Y-m-d');
 
                 if($input['stampDate'] > $currentDate){
                     return $this->sendError( 'Stamp date can not be greater than current date',500);
@@ -447,8 +449,8 @@ class GRVMasterAPIController extends AppBaseController
             unset($inputParam);
 
             $documentDate = $input['grvDate'];
-            $monthBegin = $input['FYBiggin'];
-            $monthEnd = $input['FYEnd'];
+            $monthBegin = Carbon::parse($input['FYBiggin'])->format('Y-m-d');
+            $monthEnd = Carbon::parse($input['FYEnd'])->format('Y-m-d');
 
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
