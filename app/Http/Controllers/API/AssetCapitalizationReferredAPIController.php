@@ -1,5 +1,16 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : AssetCapitalizationReferredAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 26 - Novemeber 2018
+ * -- Description : This file contains the all CRUD for Asset Capitalization Referback
+ * -- REVISION HISTORY
+ * -- Date: 26 - Novemeber 2018 By:Mubashir Description: Added new functions named as getAllCapitalizationAmendHistory(),assetCapitalizationHistoryByID()
+ *
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAssetCapitalizationReferredAPIRequest;
@@ -277,5 +288,70 @@ class AssetCapitalizationReferredAPIController extends AppBaseController
         $assetCapitalizationReferred->delete();
 
         return $this->sendResponse($id, 'Asset Capitalization Referred deleted successfully');
+    }
+
+
+    public function getAllCapitalizationAmendHistory(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $assetCositng = AssetCapitalizationReferred::with(['created_by'])->where('capitalizationID',$input['capitalizationID']);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCositng = $assetCositng->where(function ($query) use ($search) {
+                $query->where('capitalizationCode', 'LIKE', "%{$search}%")
+                    ->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($assetCositng)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('capitalizationReferredID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+
+    public function assetCapitalizationHistoryByID(Request $request){
+
+        $assetCapitalization = $this->assetCapitalizationReferredRepository->with(['confirmed_by', 'financeperiod_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'financeyear_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }, 'contra_account', 'asset_by' => function ($query) {
+            $query->selectRaw("CONCAT(faCode,' - ',assetDescription) as assetName,faID");
+        }])->findWithoutFail($request['capitalizationID']);
+
+        if (empty($assetCapitalization)) {
+            return $this->sendError('Asset Capitalization not found');
+        }
+
+        return $this->sendResponse($assetCapitalization->toArray(), 'Asset Capitalization retrieved successfully');
     }
 }

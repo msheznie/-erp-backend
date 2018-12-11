@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : AssetDisposalReferred.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mubashir
+ * -- Create date : 12 - December 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -282,6 +292,54 @@ class AssetDisposalReferred extends Model
     public static $rules = [
         
     ];
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCompany($query, $type)
+    {
+        return $query->whereIN('companySystemID', $type);
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'assetdisposalMasterAutoID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confimedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function disposal_type()
+    {
+        return $this->belongsTo('App\Models\AssetDisposalType', 'disposalType', 'disposalTypesID');
+    }
+
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
 
     
 }

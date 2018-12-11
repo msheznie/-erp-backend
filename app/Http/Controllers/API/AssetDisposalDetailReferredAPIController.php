@@ -1,10 +1,20 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : AssetDisposalDetailReferredAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 26 - Novemeber 2018
+ * -- Description : This file contains the all CRUD for Fixed Asset Master Referback
+ * -- REVISION HISTORY
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAssetDisposalDetailReferredAPIRequest;
 use App\Http\Requests\API\UpdateAssetDisposalDetailReferredAPIRequest;
 use App\Models\AssetDisposalDetailReferred;
+use App\Models\AssetDisposalReferred;
 use App\Repositories\AssetDisposalDetailReferredRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -277,5 +287,14 @@ class AssetDisposalDetailReferredAPIController extends AppBaseController
         $assetDisposalDetailReferred->delete();
 
         return $this->sendResponse($id, 'Asset Disposal Detail Referred deleted successfully');
+    }
+
+    function getAssetDisposalDetailHistory(Request $request)
+    {
+        $assetDisposalDetail = AssetDisposalDetailReferred::OfMaster($request->assetdisposalMasterAutoID)->where('timesReferred', $request->timesReferred)->with('segment_by', 'item_by')->get();
+        if (empty($assetDisposalDetail)) {
+            return $this->sendError('Asset Disposal Detail not found');
+        }
+        return $this->sendResponse($assetDisposalDetail->toArray(), 'Asset Disposal Detail retrieved successfully');
     }
 }

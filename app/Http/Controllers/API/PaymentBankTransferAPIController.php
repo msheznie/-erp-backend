@@ -12,6 +12,7 @@
  *    getBankTransferApprovalByUser,getBankTransferApprovedByUser
  * -- Date: 04 - October 2018 By: Fayas Description: Added new functions named as exportPaymentBankTransfer()
  * -- Date: 21 - November 2018 By: Fayas Description: Added new functions named as paymentBankTransferReopen()
+ * -- Date: 11 - December 2018 By: Fayas Description: Added new functions named as paymentBankTransferReferBack()
  */
 
 namespace App\Http\Controllers\API;
@@ -24,8 +25,11 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Models\PaymentBankTransfer;
+use App\Models\PaymentBankTransferDetailRefferedBack;
+use App\Models\PaymentBankTransferRefferedBack;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\PaymentBankTransferRepository;
 use Carbon\Carbon;
@@ -765,8 +769,24 @@ class PaymentBankTransferAPIController extends AppBaseController
         $data = array();
         $x = 0;
 
-        if($input['type'] == 2){
+        $columnArray  =  array();
 
+        if($input['type'] == 2){
+            $columnArray = array(
+                'A' => '@',
+                'C' => '@',
+                'D' => '@',
+                'E' => '@',
+                'F' => '@',
+                'G' => '@',
+                'H' => '@',
+                'I' => '@',
+                'J' => '@',
+                'K' => '@',
+                'L' => '@',
+                'M' => '@',
+                'N' => '@'
+            );
             foreach ($bankLedger as $val) {
                 $x++;
                 $accountNo = '';
@@ -807,8 +827,88 @@ class PaymentBankTransferAPIController extends AppBaseController
                 $data[$x]['EmailID'] = ""; // blank
             }
 
-        }else {
+        }else if($input['type'] == 3){
+            $columnArray = array(
+                'A' => '@',
+                'B' => '@',
+                'C' => '@',
+                //'D' => '@',
+                'E' => '@',
+                'F' => '@',
+                'G' => '@',
+                'H' => '@',
+                'I' => '@',
+                'J' => '@',
+                'K' => '@',
+                'L' => '@',
+                'M' => '@',
+                'N' => '@'
+            );
 
+            foreach ($bankLedger as $val) {
+                $x++;
+                $accountNo = '';
+                $benSwiftCode = '';
+                $benName  = "";
+                $benAdd1 = "";
+                $ifsc = "";
+                $intSwiftCode = "";
+                $intAccountNumber = "";
+                if ($val['supplier_by']) {
+                    if ($val['supplier_by']['supplierCurrency']) {
+                        if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
+                            $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
+                            foreach ($memos as $memo) {
+                                if ($memo->bankMemoTypeID == 4) {
+                                    $accountNo = preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                                } else if ($memo->bankMemoTypeID == 1) {
+                                    $benName = $memo->memoDetail;
+                                }else if($memo->bankMemoTypeID == 9){
+                                    $benSwiftCode = $memo->memoDetail;
+                                }else if($memo->bankMemoTypeID == 3){
+                                    $benAdd1 = $memo->memoDetail;
+                                }else if($memo->bankMemoTypeID == 16){
+                                    $ifsc = $memo->memoDetail;
+                                }else if($memo->bankMemoTypeID == 12){
+                                    $intSwiftCode = $memo->memoDetail;
+                                }else if($memo->bankMemoTypeID == 11){
+                                    $intAccountNumber = $memo->memoDetail;
+                                }
+                            }
+                        }
+                    }
+                }
+                $data[$x]['Ben Bank SWIFT Code (12 chars)'] =  $benSwiftCode;
+                $data[$x]['Ben Account No(34)'] = $accountNo;
+                $data[$x]['Beneficiary Name(35)'] = $benName;
+                $data[$x]['Amount (15)'] = number_format($val->payAmountBank, $decimalPlaces);
+                $data[$x]['Payment Details(140)'] = $val->documentNarration;
+                $data[$x]['Beneficiary Address1 (35)'] = $benAdd1;
+                $data[$x]['BeneficiaryAddress2(35)'] = ''; // blank
+                $data[$x]['Beneficiary Address3(35)'] = ''; // blank
+                $data[$x]['IFSC Code(11)'] = $ifsc;
+                $data[$x]['Ben Bank Branch'] = ''; // blank
+                $data[$x]['Intermediatory Bank (SWIFT Code)'] = $intSwiftCode;
+                $data[$x]['Intermediatory AccountNumber'] = $intAccountNumber;
+                $data[$x]['Mobile No'] = ''; // blank
+                $data[$x]['EmailID'] = ''; // blank
+            }
+        }else {
+            $columnArray = array(
+                'A' => '@',
+                'C' => '@',
+                'D' => '@',
+                'E' => '@',
+                'F' => '@',
+                'G' => '@',
+                'H' => '@',
+                'I' => '@',
+                'J' => '@',
+                'K' => '@',
+                'L' => '@',
+                'M' => '@',
+                'N' => '@'
+            );
             foreach ($bankLedger as $val) {
                 $x++;
                 $accountNo13 = '';
@@ -848,23 +948,9 @@ class PaymentBankTransferAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time;
 
-        $csv = Excel::create($fileName, function ($excel) use ($data) {
-            $excel->sheet('Firstsheet', function ($sheet) use ($data) {
-                $sheet->setColumnFormat(array(
-                    'A' => '@',
-                    'C' => '@',
-                    'D' => '@',
-                    'E' => '@',
-                    'F' => '@',
-                    'G' => '@',
-                    'H' => '@',
-                    'I' => '@',
-                    'J' => '@',
-                    'K' => '@',
-                    'L' => '@',
-                    'M' => '@',
-                    'N' => '@'
-                ));
+        $csv = Excel::create($fileName, function ($excel) use ($data,$columnArray) {
+            $excel->sheet('Firstsheet', function ($sheet) use ($data,$columnArray) {
+                $sheet->setColumnFormat($columnArray);
                 $sheet->fromArray($data, null, 'A1', true);
                 // $sheet->setAutoSize(true);
                 //$sheet->getStyle('A')->getAlignment()->setWrapText(true);
@@ -972,4 +1058,65 @@ class PaymentBankTransferAPIController extends AppBaseController
         return $this->sendResponse($bankTransfer->toArray(), 'Bank Transfer reopened successfully');
     }
 
+    public function paymentBankTransferReferBack(Request $request)
+    {
+        $input = $request->all();
+
+        $id = $input['id'];
+
+        $bankTransfer = $this->paymentBankTransferRepository->find($id);
+        if (empty($bankTransfer)) {
+            return $this->sendError('Bank Transfer not found');
+        }
+
+        if ($bankTransfer->refferedBackYN != -1) {
+            return $this->sendError('You cannot refer back this bank transfer');
+        }
+
+        $bankTransferArray = $bankTransfer->toArray();
+
+        $storeHistory = PaymentBankTransferRefferedBack::insert($bankTransferArray);
+
+        $fetchDetails = BankLedger::where('paymentBankTransferID', $id)
+            ->get();
+
+        if (!empty($fetchDetails)) {
+            foreach ($fetchDetails as $detail) {
+                $detail['timesReferred'] = $bankTransfer->timesReferred;
+            }
+        }
+
+        $bankTransferDetailArray = $fetchDetails->toArray();
+
+        $storeDetailHistory = PaymentBankTransferDetailRefferedBack::insert($bankTransferDetailArray);
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $bankTransfer->companySystemID)
+            ->where('documentSystemID', $bankTransfer->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $bankTransfer->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $bankTransfer->companySystemID)
+            ->where('documentSystemID', $bankTransfer->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $updateArray = ['refferedBackYN' => 0,'confirmedYN' => 0,'confirmedByEmpSystemID' => null,
+                'confirmedByEmpID' => null,'confirmedByName' => null,'confirmedDate' => null,'RollLevForApp_curr' => 1];
+
+            $this->paymentBankTransferRepository->update($updateArray,$id);
+        }
+
+        return $this->sendResponse($bankTransfer->toArray(), 'Bank Transfer Amend successfully');
+    }
 }

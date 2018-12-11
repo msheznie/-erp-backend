@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : AssetCapitalizatioDetReferred.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mubashir
+ * -- Create date : 12 - December 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -97,7 +107,7 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="timesReferred",
  *          description="timesReferred",
- *          type="boolean"
+ *          type="integer"
  *      ),
  *      @SWG\Property(
  *          property="createdUserGroup",
@@ -196,7 +206,7 @@ class AssetCapitalizatioDetReferred extends Model
         'assetNBVRpt' => 'float',
         'allocatedAmountLocal' => 'float',
         'allocatedAmountRpt' => 'float',
-        'timesReferred' => 'boolean',
+        'timesReferred' => 'integer',
         'createdUserGroup' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
@@ -207,13 +217,41 @@ class AssetCapitalizatioDetReferred extends Model
     ];
 
     /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCapitalization($query, $capitalizationID)
+    {
+        return $query->where('capitalizationID',  $capitalizationID);
+    }
+
+    /**
      * Validation rules
      *
      * @var array
      */
     public static $rules = [
-        
+
     ];
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID');
+    }
+
+    public function segment()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID');
+    }
+
+    public function master()
+    {
+        return $this->belongsTo('App\Models\AssetCapitalization', 'capitalizationID');
+    }
 
     
 }
