@@ -18,6 +18,7 @@ namespace App\helper;
 use App\Jobs\BankLedgerInsert;
 use App\Jobs\BudgetAdjustment;
 use App\Jobs\CreateCustomerInvoice;
+use App\Jobs\CreateGRVSupplierInvoice;
 use App\Jobs\CreateReceiptVoucher;
 use App\Jobs\CreateStockReceive;
 use App\Jobs\CreateSupplierInvoice;
@@ -1445,6 +1446,7 @@ class Helper
                                 $jobGL = GeneralLedgerInsert::dispatch($masterData);
                                 if ($input["documentSystemID"] == 3) {
                                     $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
+                                    $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
                                 }
                             }
 
