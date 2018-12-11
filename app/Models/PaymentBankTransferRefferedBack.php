@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : PaymentBankTransfer.php
+ * -- File Name : PaymentBankTransferRefferedBack.php
  * -- Project Name : ERP
- * -- Module Name :  Payment Bank Transfer
+ * -- Module Name :  Payment Bank Transfer Reffered Back
  * -- Author : Mohamed Fayas
- * -- Create date : 03 - October 2018
+ * -- Create date : 11 - December 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
  */
@@ -15,8 +15,14 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="PaymentBankTransfer",
+ *      definition="PaymentBankTransferRefferedBack",
  *      required={""},
+ *      @SWG\Property(
+ *          property="paymentBankTransferRefferedBackID",
+ *          description="paymentBankTransferRefferedBackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
  *      @SWG\Property(
  *          property="paymentBankTransferID",
  *          description="paymentBankTransferID",
@@ -50,6 +56,11 @@ use Eloquent as Model;
  *          description="serialNumber",
  *          type="integer",
  *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="narration",
+ *          description="narration",
+ *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="bankMasterID",
@@ -109,6 +120,18 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="createdPcID",
  *          description="createdPcID",
  *          type="string"
@@ -139,26 +162,41 @@ use Eloquent as Model;
  *          property="modifiedUser",
  *          description="modifiedUser",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="exportedYN",
+ *          description="exportedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="exportedUserSystemID",
+ *          description="exportedUserSystemID",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class PaymentBankTransfer extends Model
+class PaymentBankTransferRefferedBack extends Model
 {
 
-    public $table = 'erp_paymentbanktransfer';
-    
+    public $table = 'erp_paymentbanktransfer_refferedback';
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'paymentBankTransferID';
+    protected $primaryKey  = 'paymentBankTransferRefferedBackID';
+
 
 
     public $fillable = [
+        'paymentBankTransferID',
         'documentSystemID',
         'documentID',
         'companySystemID',
         'bankTransferDocumentCode',
         'serialNumber',
         'documentDate',
+        'narration',
         'bankMasterID',
         'bankAccountAutoID',
         'confirmedYN',
@@ -171,9 +209,10 @@ class PaymentBankTransfer extends Model
         'approvedByUserID',
         'approvedByUserSystemID',
         'RollLevForApp_curr',
+        'refferedBackYN',
+        'timesReferred',
         'createdPcID',
         'createdUserSystemID',
-        'narration',
         'createdUserID',
         'modifiedPc',
         'modifiedUserSystemID',
@@ -182,9 +221,7 @@ class PaymentBankTransfer extends Model
         'timeStamp',
         'exportedYN',
         'exportedUserSystemID',
-        'exportedDate',
-        'refferedBackYN',
-        'timesReferred'
+        'exportedDate'
     ];
 
     /**
@@ -193,12 +230,14 @@ class PaymentBankTransfer extends Model
      * @var array
      */
     protected $casts = [
+        'paymentBankTransferRefferedBackID' => 'integer',
         'paymentBankTransferID' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'companySystemID' => 'integer',
         'bankTransferDocumentCode' => 'string',
         'serialNumber' => 'integer',
+        'narration' => 'string',
         'bankMasterID' => 'integer',
         'bankAccountAutoID' => 'integer',
         'confirmedYN' => 'integer',
@@ -209,18 +248,16 @@ class PaymentBankTransfer extends Model
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'RollLevForApp_curr' => 'integer',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer',
         'createdPcID' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'narration' => 'string',
-        'exportedYN'  => 'integer',
-        'exportedUserSystemID'  => 'integer',
-        'exportedDate' => 'string',
-        'refferedBackYN' => 'string',
-        'timesReferred' => 'string'
+        'exportedYN' => 'integer',
+        'exportedUserSystemID' => 'integer'
     ];
 
     /**
@@ -253,5 +290,4 @@ class PaymentBankTransfer extends Model
     public function approved_by(){
         return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','paymentBankTransferID');
     }
-    
 }
