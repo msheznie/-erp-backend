@@ -182,7 +182,9 @@ class PaymentBankTransfer extends Model
         'timeStamp',
         'exportedYN',
         'exportedUserSystemID',
-        'exportedDate'
+        'exportedDate',
+        'refferedBackYN',
+        'timesReferred'
     ];
 
     /**
@@ -216,7 +218,9 @@ class PaymentBankTransfer extends Model
         'narration' => 'string',
         'exportedYN'  => 'integer',
         'exportedUserSystemID'  => 'integer',
-        'exportedDate' => 'string'
+        'exportedDate' => 'string',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**
