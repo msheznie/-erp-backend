@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : AssetDisposalReferredAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mohamed Mubashir
+ * -- Create date : 26 - Novemeber 2018
+ * -- Description : This file contains the all CRUD for Fixed Asset Master Referback
+ * -- REVISION HISTORY
+ * -- Date: 26 - Novemeber 2018 By:Mubashir Description: Added new functions named as getAllAssetDisposalAmendHistory(),assetDisposalHistoryByAutoID()
+ */
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAssetDisposalReferredAPIRequest;
@@ -277,5 +287,67 @@ class AssetDisposalReferredAPIController extends AppBaseController
         $assetDisposalReferred->delete();
 
         return $this->sendResponse($id, 'Asset Disposal Referred deleted successfully');
+    }
+
+    public function getAllAssetDisposalAmendHistory(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $selectedCompanyId = $request['companyID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $assetCositng = AssetDisposalReferred::with(['disposal_type', 'created_by'])->where('assetdisposalMasterAutoID',$input['assetdisposalMasterAutoID']);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $assetCositng = $assetCositng->where(function ($query) use ($search) {
+                $query->where('disposalDocumentCode', 'LIKE', "%{$search}%");
+                $query->orWhere('narration', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($assetCositng)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('assetdisposalMasterReferredID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+    }
+
+
+    public function assetDisposalHistoryByAutoID(Request $request){
+
+        $assetDisposalMaster = $this->assetDisposalReferredRepository->with(['financeperiod_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
+        }, 'financeyear_by' => function ($query) {
+            $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
+        }])->findWithoutFail($request['assetdisposalMasterAutoID']);
+
+        if (empty($assetDisposalMaster)) {
+            return $this->sendError('Asset Disposal Master not found');
+        }
+
+        return $this->sendResponse($assetDisposalMaster->toArray(), 'Asset Disposal Master retrieved successfully');
     }
 }
