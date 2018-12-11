@@ -1004,6 +1004,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
     Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck');
     Route::post('paymentBankTransferReopen', 'PaymentBankTransferAPIController@paymentBankTransferReopen');
+    Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack');
     Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
 
     Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
@@ -1233,6 +1234,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::resource('request_details_reffered_backs', 'RequestDetailsRefferedBackAPIController');
     Route::get('getItemRequestDetailsReferBack', 'RequestDetailsRefferedBackAPIController@getItemRequestDetailsReferBack');
 
+    Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
+    Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
+    Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
+    Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');
+
+    Route::resource('bankTransferRefferedBack', 'PaymentBankTransferRefferedBackAPIController');
+    Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer');
+    Route::resource('bankTransferDetailRefferedBacks', 'PaymentBankTransferDetailRefferedBackAPIController');
+
 });
 
 
@@ -1289,3 +1299,4 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+

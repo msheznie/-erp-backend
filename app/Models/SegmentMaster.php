@@ -69,7 +69,9 @@ class SegmentMaster extends Model
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
-        'timeStamp'
+        'timeStamp',
+        'consoleCode',
+        'consoleDescription'
     ];
 
     /**
@@ -94,7 +96,9 @@ class SegmentMaster extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'consoleCode' => 'string',
+        'consoleDescription' => 'string'
     ];
 
     /**

@@ -30,6 +30,7 @@ use App\Models\CustomerReceivePayment;
 use App\Models\DirectPaymentDetails;
 use App\Models\GeneralLedger;
 use App\Models\PaymentBankTransfer;
+use App\Models\PaymentBankTransferDetailRefferedBack;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierContactDetails;
@@ -37,6 +38,7 @@ use App\Models\SupplierMaster;
 use App\Repositories\BankLedgerRepository;
 use App\Repositories\BankReconciliationRepository;
 use App\Repositories\CustomerReceivePaymentRepository;
+use App\Repositories\PaymentBankTransferRefferedBackRepository;
 use App\Repositories\PaymentBankTransferRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Carbon\Carbon;
@@ -61,17 +63,20 @@ class BankLedgerAPIController extends AppBaseController
     private $paymentBankTransferRepository;
     private $paySupplierInvoiceMasterRepository;
     private $customerReceivePaymentRepository;
+    private $paymentBankTransferRefferedBackRepository;
 
     public function __construct(BankLedgerRepository $bankLedgerRepo, BankReconciliationRepository $bankReconciliationRepo,
                                 PaymentBankTransferRepository $paymentBankTransferRepo,
                                 PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo,
-                                CustomerReceivePaymentRepository $customerReceivePaymentRepo)
+                                CustomerReceivePaymentRepository $customerReceivePaymentRepo,
+                                PaymentBankTransferRefferedBackRepository $paymentBankTransferRefferedBackRepo)
     {
         $this->bankLedgerRepository = $bankLedgerRepo;
         $this->bankReconciliationRepository = $bankReconciliationRepo;
         $this->paymentBankTransferRepository = $paymentBankTransferRepo;
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
         $this->customerReceivePaymentRepository = $customerReceivePaymentRepo;
+        $this->paymentBankTransferRefferedBackRepository = $paymentBankTransferRefferedBackRepo;
     }
 
     /**
@@ -1006,7 +1011,14 @@ class BankLedgerAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $paymentBankTransfer = PaymentBankTransfer::find($input['paymentBankTransferID']);
+        $orderBy = 'bankLedgerAutoID';
+
+        if($input['isFromHistory'] == 0){
+            $paymentBankTransfer = PaymentBankTransfer::find($input['paymentBankTransferID']);
+        }else if($input['isFromHistory'] == 1) {
+            $paymentBankTransfer =  $this->paymentBankTransferRefferedBackRepository->find($input['paymentBankTransferID']);
+        }
+
         $confirmed = 0;
         if (!empty($paymentBankTransfer)) {
             $confirmed = $paymentBankTransfer->confirmedYN;
@@ -1016,8 +1028,17 @@ class BankLedgerAPIController extends AppBaseController
             $bankId = $paymentBankTransfer->bank_account->accountCurrencyID;
         }
 
-        $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
-            ->where('payAmountBank', '>', 0)
+        if($input['isFromHistory'] == 0){
+            $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies);
+        }else if($input['isFromHistory'] == 1) {
+            $orderBy = 'refferedbackAutoID';
+            $bankLedger = PaymentBankTransferDetailRefferedBack::whereIn('companySystemID', $subCompanies)
+                                                                ->where('timesReferred',$input['timesReferred']);
+
+            $input['paymentBankTransferID'] = $paymentBankTransfer->paymentBankTransferID;
+        }
+
+        $bankLedger = $bankLedger->where('payAmountBank', '>', 0)
             ->where("bankAccountID", $input['bankAccountAutoID'])
             ->where("trsClearedYN", -1)
             ->where("bankClearedYN", 0)
@@ -1055,10 +1076,10 @@ class BankLedgerAPIController extends AppBaseController
 
         return \DataTables::eloquent($bankLedger)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->order(function ($query) use ($input) {
+            ->order(function ($query) use ($input,$orderBy) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('bankLedgerAutoID', $input['order'][0]['dir']);
+                        $query->orderBy($orderBy, $input['order'][0]['dir']);
                     }
                 }
             })

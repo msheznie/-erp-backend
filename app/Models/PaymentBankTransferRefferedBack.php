@@ -1,11 +1,11 @@
 <?php
 /**
  * =============================================
- * -- File Name : BankReconciliation.php
+ * -- File Name : PaymentBankTransferRefferedBack.php
  * -- Project Name : ERP
- * -- Module Name :  Bank Reconciliation
+ * -- Module Name :  Payment Bank Transfer Reffered Back
  * -- Author : Mohamed Fayas
- * -- Create date : 18- September 2018
+ * -- Create date : 11 - December 2018
  * -- Description : This file is used to interact with database table and it contains relationships to the tables.
  * -- REVISION HISTORY
  */
@@ -15,11 +15,17 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="BankReconciliation",
+ *      definition="PaymentBankTransferRefferedBack",
  *      required={""},
  *      @SWG\Property(
- *          property="bankRecAutoID",
- *          description="bankRecAutoID",
+ *          property="paymentBankTransferRefferedBackID",
+ *          description="paymentBankTransferRefferedBackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="paymentBankTransferID",
+ *          description="paymentBankTransferID",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -41,49 +47,32 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="companyID",
- *          description="companyID",
+ *          property="bankTransferDocumentCode",
+ *          description="bankTransferDocumentCode",
  *          type="string"
  *      ),
  *      @SWG\Property(
- *          property="bankGLAutoID",
- *          description="bankGLAutoID",
+ *          property="serialNumber",
+ *          description="serialNumber",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="month",
- *          description="month",
+ *          property="narration",
+ *          description="narration",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="bankMasterID",
+ *          description="bankMasterID",
  *          type="integer",
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="bankRecPrimaryCode",
- *          description="bankRecPrimaryCode",
- *          type="string"
- *      ),
- *      @SWG\Property(
- *          property="year",
- *          description="year",
+ *          property="bankAccountAutoID",
+ *          description="bankAccountAutoID",
  *          type="integer",
  *          format="int32"
- *      ),
- *      @SWG\Property(
- *          property="openingBalance",
- *          description="openingBalance",
- *          type="number",
- *          format="float"
- *      ),
- *      @SWG\Property(
- *          property="closingBalance",
- *          description="closingBalance",
- *          type="number",
- *          format="float"
- *      ),
- *      @SWG\Property(
- *          property="description",
- *          description="description",
- *          type="string"
  *      ),
  *      @SWG\Property(
  *          property="confirmedYN",
@@ -131,6 +120,18 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
+ *          property="refferedBackYN",
+ *          description="refferedBackYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
  *          property="createdPcID",
  *          description="createdPcID",
  *          type="string"
@@ -161,34 +162,43 @@ use Eloquent as Model;
  *          property="modifiedUser",
  *          description="modifiedUser",
  *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="exportedYN",
+ *          description="exportedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="exportedUserSystemID",
+ *          description="exportedUserSystemID",
+ *          type="integer",
+ *          format="int32"
  *      )
  * )
  */
-class BankReconciliation extends Model
+class PaymentBankTransferRefferedBack extends Model
 {
 
-    public $table = 'erp_bankrecmaster';
-    
+    public $table = 'erp_paymentbanktransfer_refferedback';
+
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
-    protected $primaryKey  = 'bankRecAutoID';
+    protected $primaryKey  = 'paymentBankTransferRefferedBackID';
+
 
 
     public $fillable = [
+        'paymentBankTransferID',
         'documentSystemID',
         'documentID',
         'companySystemID',
-        'companyID',
-        'bankGLAutoID',
+        'bankTransferDocumentCode',
+        'serialNumber',
+        'documentDate',
+        'narration',
+        'bankMasterID',
         'bankAccountAutoID',
-        'month',
-        'serialNo',
-        'bankRecPrimaryCode',
-        'year',
-        'bankRecAsOf',
-        'openingBalance',
-        'closingBalance',
-        'description',
         'confirmedYN',
         'confirmedByEmpSystemID',
         'confirmedByEmpID',
@@ -199,6 +209,8 @@ class BankReconciliation extends Model
         'approvedByUserID',
         'approvedByUserSystemID',
         'RollLevForApp_curr',
+        'refferedBackYN',
+        'timesReferred',
         'createdPcID',
         'createdUserSystemID',
         'createdUserID',
@@ -207,9 +219,9 @@ class BankReconciliation extends Model
         'modifiedUser',
         'createdDateTime',
         'timeStamp',
-        'bankMasterID',
-        'timesReferred',
-        'refferedBackYN'
+        'exportedYN',
+        'exportedUserSystemID',
+        'exportedDate'
     ];
 
     /**
@@ -218,37 +230,34 @@ class BankReconciliation extends Model
      * @var array
      */
     protected $casts = [
-        'bankRecAutoID' => 'integer',
+        'paymentBankTransferRefferedBackID' => 'integer',
+        'paymentBankTransferID' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
         'companySystemID' => 'integer',
-        'companyID' => 'string',
-        'bankGLAutoID' => 'integer',
+        'bankTransferDocumentCode' => 'string',
+        'serialNumber' => 'integer',
+        'narration' => 'string',
+        'bankMasterID' => 'integer',
         'bankAccountAutoID' => 'integer',
-        'month' => 'integer',
-        'serialNo' => 'integer',
-        'bankRecPrimaryCode' => 'string',
-        'year' => 'integer',
-        'openingBalance' => 'float',
-        'closingBalance' => 'float',
-        'description' => 'string',
         'confirmedYN' => 'integer',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
         'confirmedByName' => 'string',
         'approvedYN' => 'integer',
-        'bankMasterID' => 'integer',
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'RollLevForApp_curr' => 'integer',
+        'refferedBackYN' => 'integer',
+        'timesReferred' => 'integer',
         'createdPcID' => 'string',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'timesReferred' => 'integer',
-        'refferedBackYN' => 'integer'
+        'exportedYN' => 'integer',
+        'exportedUserSystemID' => 'integer'
     ];
 
     /**
@@ -260,12 +269,6 @@ class BankReconciliation extends Model
         
     ];
 
-    public function month(){
-        return $this->belongsTo('App\Models\Months','month','monthID');
-    }
-    public function month_by(){
-        return $this->belongsTo('App\Models\Months','month','monthID');
-    }
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
@@ -285,6 +288,6 @@ class BankReconciliation extends Model
     }
 
     public function approved_by(){
-        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','bankRecAutoID');
+        return $this->hasMany('App\Models\DocumentApproved','documentSystemCode','paymentBankTransferID');
     }
 }
