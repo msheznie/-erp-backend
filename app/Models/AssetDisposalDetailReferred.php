@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : AssetDisposalDetailReferred.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mubashir
+ * -- Create date : 12 - December 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -224,13 +234,75 @@ class AssetDisposalDetailReferred extends Model
     ];
 
     /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfMaster($query, $id)
+    {
+        return $query->where('assetdisposalMasterAutoID', $id);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfAsset($query, $id)
+    {
+        return $query->where('faID', $id);
+    }
+
+    /**
      * Validation rules
      *
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    
+    public function master_by()
+    {
+        return $this->belongsTo('App\Models\AssetDisposalMaster', 'assetdisposalMasterAutoID', 'assetdisposalMasterAutoID');
+    }
+
+    public function segment_by()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function asset_by()
+    {
+        return $this->belongsTo('App\Models\FixedAssetMaster', 'faID', 'faID');
+    }
+
+    public function item_by()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemCode', 'itemCodeSystem');
+    }
+
+    public function accumilated_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'ACCDEPGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+    public function cost_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'COSTGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+    public function disposal_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'DISPOGLCODESystemID', 'chartOfAccountSystemID');
+    }
+
+
+
 }

@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : AssetCapitalizationReferred.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Mubashir
+ * -- Create date : 12 - December 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -113,12 +123,12 @@ use Eloquent as Model;
  *      @SWG\Property(
  *          property="timesReferred",
  *          description="timesReferred",
- *          type="boolean"
+ *          type="integer"
  *      ),
  *      @SWG\Property(
  *          property="refferedBackYN",
  *          description="refferedBackYN",
- *          type="boolean"
+ *          type="integer"
  *      ),
  *      @SWG\Property(
  *          property="confirmedYN",
@@ -317,8 +327,8 @@ class AssetCapitalizationReferred extends Model
         'contraAccountGLCode' => 'string',
         'assetNBVLocal' => 'float',
         'assetNBVRpt' => 'float',
-        'timesReferred' => 'boolean',
-        'refferedBackYN' => 'boolean',
+        'timesReferred' => 'integer',
+        'refferedBackYN' => 'integer',
         'confirmedYN' => 'integer',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
@@ -349,6 +359,70 @@ class AssetCapitalizationReferred extends Model
     public static $rules = [
         
     ];
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfAsset($query, $faID)
+    {
+        return $query->where('faID',  $faID);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
+    }
+
+    public function detail()
+    {
+        return $this->hasMany('App\Models\AssetCapitalizationDetail', 'capitalizationID', 'capitalizationID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'capitalizationID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
+    }
+
+    public function contra_account()
+    {
+        return $this->belongsTo('App\Models\ChartofAccount', 'contraAccountSystemID', 'chartOfAccountSystemID');
+    }
+
+    public function asset_by()
+    {
+        return $this->belongsTo('App\Models\FixedAssetMaster', 'faID', 'faID');
+    }
 
     
 }

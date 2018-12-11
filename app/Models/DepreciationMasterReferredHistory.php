@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : DepreciationMasterReferredHistory.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Nazir
+ * -- Create date : 7 - December 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -267,5 +277,37 @@ class DepreciationMasterReferredHistory extends Model
         
     ];
 
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCompany($query, $type)
+    {
+        return $query->whereIN('companySystemID',  $type);
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'depMasterAutoID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function depperiod_by()
+    {
+        return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'depMasterAutoID', 'depMasterAutoID');
+    }
     
 }

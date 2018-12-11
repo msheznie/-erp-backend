@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : DepreciationPeriodsReferredHistory.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Nazir
+ * -- Create date : 7 - December 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -186,8 +196,6 @@ class DepreciationPeriodsReferredHistory extends Model
 
     protected $primaryKey = 'DepreciationPeriodsReferredID';
 
-
-
     public $fillable = [
         'DepreciationPeriodsID',
         'depMasterAutoID',
@@ -270,6 +278,61 @@ class DepreciationPeriodsReferredHistory extends Model
     public static $rules = [
         
     ];
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCompany($query, $type)
+    {
+        return $query->whereIN('companySystemID',  $type);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfAsset($query, $faID)
+    {
+        return $query->where('faID',  $faID);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfDepreciation($query, $depMasterAutoID)
+    {
+        return $query->where('depMasterAutoID',  $depMasterAutoID);
+    }
+
+    public function master_by(){
+        return $this->belongsTo('App\Models\FixedAssetDepreciationMaster','depMasterAutoID','depMasterAutoID');
+    }
+
+    public function maincategory_by(){
+        return $this->belongsTo('App\Models\FixedAssetCategory','faMainCategory','faCatID');
+    }
+
+    public function financecategory_by(){
+        return $this->belongsTo('App\Models\AssetFinanceCategory','faFinanceCatID','faFinanceCatID');
+    }
+
+    public function serviceline_by(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
 
     
 }

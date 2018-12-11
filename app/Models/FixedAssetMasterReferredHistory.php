@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * =============================================
+ * -- File Name : FixedAssetMasterReferredHistory.php
+ * -- Project Name : ERP
+ * -- Module Name :  Asset Management
+ * -- Author : Nazir
+ * -- Create date : 7 - December 2018
+ * -- Description : This file is used to interact with database table and it contains relationships to the tables.
+ * -- REVISION HISTORY
+ * --
+ */
 namespace App\Models;
 
 use Eloquent as Model;
@@ -507,11 +517,13 @@ class FixedAssetMasterReferredHistory extends Model
 {
 
     public $table = 'erp_fa_asset_master_referred_history';
-    
+
     const CREATED_AT = 'createdDateAndTime';
     const UPDATED_AT = 'timestamp';
 
     protected $primaryKey = 'faReferredID';
+
+
 
     public $fillable = [
         'faID',
@@ -718,5 +730,169 @@ class FixedAssetMasterReferredHistory extends Model
         
     ];
 
-    
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCompany($query, $type)
+    {
+        return $query->whereIN('companySystemID',  $type);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeIsDisposed($query)
+    {
+        return $query->where('DIPOSED',  0);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeOfCategory($query, $category)
+    {
+        return $query->where('faCatID',  $category);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeIsSelectedForDisposal($query)
+    {
+        return $query->where('selectedForDisposal',  0);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeIsApproved($query)
+    {
+        return $query->where('approved',  -1);
+    }
+
+    /**
+     * Scope a query to only include users of a given type.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param mixed $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function scopeAssetType($query,$assetType)
+    {
+        return $query->where('assetType',  $assetType);
+    }
+
+    public function category_by(){
+        return $this->belongsTo('App\Models\FixedAssetCategory','faCatID','faCatID');
+    }
+
+    public function sub_category_by(){
+        return $this->belongsTo('App\Models\FixedAssetCategorySub','faSubCatID','faCatSubID');
+    }
+
+    public function approved_by()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'faID');
+    }
+
+    public function confirmed_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'confirmedByEmpSystemID', 'employeeSystemID');
+    }
+
+    public function created_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function modified_by()
+    {
+        return $this->belongsTo('App\Models\Employee', 'modifiedUserSystemID', 'employeeSystemID');
+    }
+
+    public function grvdetail_by()
+    {
+        return $this->belongsTo('App\Models\GRVDetails', 'docOriginDetailID', 'grvDetailsID');
+    }
+
+    public function depperiod_by()
+    {
+        return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function finance_category()
+    {
+        return $this->belongsTo('App\Models\AssetFinanceCategory','AUDITCATOGARY','faFinanceCatID');
+    }
+
+    public function asset_type()
+    {
+        return $this->belongsTo('App\Models\AssetType','assetType','typeID');
+    }
+
+    public function group_to()
+    {
+        return $this->belongsTo('App\Models\FixedAssetMaster','groupTO','faID');
+    }
+
+    public function departmentmaster(){
+        return $this->belongsTo('App\Models\DepartmentMaster','departmentSystemID','departmentSystemID');
+    }
+
+    public function assettypemaster(){
+        return $this->belongsTo('App\Models\AssetType','assetType','typeID');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierMaster', 'supplierIDRentedAsset', 'supplierCodeSystem');
+    }
+
+    public function sub_category_by2(){
+        return $this->belongsTo('App\Models\FixedAssetCategorySub','faSubCatID2','faCatSubID');
+    }
+
+    public function sub_category_by3(){
+        return $this->belongsTo('App\Models\FixedAssetCategorySub','faSubCatID3','faCatSubID');
+    }
+
+    public function posttogl_by()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount','postToGLCodeSystemID','chartOfAccountSystemID');
+    }
+
+
+
 }
