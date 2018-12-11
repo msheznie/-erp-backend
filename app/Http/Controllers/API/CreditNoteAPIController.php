@@ -207,12 +207,12 @@ class CreditNoteAPIController extends AppBaseController
 
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($input['creditNoteDate'] > $curentDate) {
-            return $this->sendError('Document date can not be greater than current date', 500);
+            return $this->sendError('Document date cannot be greater than current date', 500);
         }
 
         if (($input['creditNoteDate'] >= $companyfinanceperiod->dateFrom) && ($input['creditNoteDate'] <= $companyfinanceperiod->dateTo)) {
             $creditNotes = $this->creditNoteRepository->create($input);
-            return $this->sendResponse($creditNotes->toArray(), 'Credit Note saved successfully');
+            return $this->sendResponse($creditNotes->toArray(), 'Credit note saved successfully');
         } else {
             return $this->sendError('Credit note document date should be between financial period start and end date', 500);
         }
@@ -354,7 +354,7 @@ class CreditNoteAPIController extends AppBaseController
                 $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 /*end of currency*/
             } else {
-                return $this->sendError('Credit note details exist. You can not change the currency.', 500);
+                return $this->sendError('Credit note details exist. You cannot change the currency.', 500);
             }
         }
 
@@ -397,7 +397,7 @@ class CreditNoteAPIController extends AppBaseController
         /*customer*/
         if ($input['customerID'] != $creditNote->customerID) {
             if (count($detail) > 0) {
-                return $this->sendError('Invoice details exist. You can not change the customer.', 500);
+                return $this->sendError('Invoice details exist. You cannot change the customer.', 500);
             }
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
             /* if ($customer->creditDays == 0 || $customer->creditDays == '') {
@@ -413,16 +413,24 @@ class CreditNoteAPIController extends AppBaseController
 
         }
 
+        // updating header amounts
+        $totalAmount = CreditNoteDetails::selectRaw("COALESCE(SUM(creditAmount),0) as creditAmountTrans, COALESCE(SUM(localAmount),0) as creditAmountLocal, COALESCE(SUM(comRptAmount),0) as creditAmountRpt")->where('creditNoteAutoID', $id)->first();
+
+        $input['creditAmountTrans'] = $totalAmount->creditAmountTrans;
+        $input['creditAmountLocal'] = \Helper::roundValue($totalAmount->creditAmountLocal);
+        $input['creditAmountRpt'] = \Helper::roundValue($totalAmount->creditAmountRpt);
+
+
         $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($_post['creditNoteDate'] > $curentDate) {
-            return $this->sendError('Dcoument date can not be greater than current date', 500);
+            return $this->sendError('Document date cannot be greater than current date', 500);
         }
 
         if (($_post['creditNoteDate'] >= $input['FYPeriodDateFrom']) && ($_post['creditNoteDate'] <= $input['FYPeriodDateTo'])) {
 
         } else {
-            return $this->sendError('Document Date should be between financial period start date and end date.', 500);
+            return $this->sendError('Document date should be between financial period start date and end date.', 500);
 
         }
 
@@ -455,7 +463,7 @@ class CreditNoteAPIController extends AppBaseController
                 /*details check*/
 
                 if (count($detail) == 0) { /*==*/
-                    return $this->sendError('You can not confirm. Credit note details not found.', 500);
+                    return $this->sendError('You cannot confirm. Credit note details not found.', 500);
                 } else {
 
                     $detailValidation = CreditNoteDetails::selectRaw("IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( contractUID IS NULL OR contractUID = '' OR contractUID = 0, null, 1 ) AS contractUID,
@@ -495,7 +503,7 @@ class CreditNoteAPIController extends AppBaseController
                     if (count($groupby) != 0 || count($groupby) != 0) {
 
                         if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                            return $this->sendError('You can not continue . multiple service line or contract exist in details.', 500);
+                            return $this->sendError('You cannot continue . multiple service line or contract exist in details.', 500);
                         } else {
                             $params = array('autoID' => $id,
                                 'company' => $creditNote->companySystemID,
@@ -520,11 +528,8 @@ class CreditNoteAPIController extends AppBaseController
             }
         } else {
 
-
             $creditNote = $this->creditNoteRepository->update($input, $id);
         }
-        /*   exit;
-           $creditNote = $this->creditNoteRepository->update($input, $id);*/
 
         return $this->sendResponse($creditNote->toArray(), 'Credit note updated successfully');
     }
