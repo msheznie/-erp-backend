@@ -781,7 +781,6 @@ class BankReconciliationAPIController extends AppBaseController
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
                     ->orWhere(function ($q2) use ($bankReconciliation) {
-                        //$q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
                         if($bankReconciliation->confirmedYN == 1) {
                             $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
                                 ->where('bankClearedYN', -1)
@@ -798,7 +797,6 @@ class BankReconciliationAPIController extends AppBaseController
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
                     ->orWhere(function ($q2) use ($bankReconciliation) {
-                        //$q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
                         if($bankReconciliation->confirmedYN == 1){
                             $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
                                 ->where('bankClearedYN', -1)
@@ -815,7 +813,6 @@ class BankReconciliationAPIController extends AppBaseController
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
                     ->orWhere(function ($q2) use ($bankReconciliation) {
-                        //$q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
                         if($bankReconciliation->confirmedYN == 1) {
                             $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
                                 ->where('bankClearedYN', -1)
@@ -827,13 +824,11 @@ class BankReconciliationAPIController extends AppBaseController
 
         $totalUnClearedPayment = BankLedger::where('companySystemID', $bankReconciliation->companySystemID)
             ->where('bankAccountID', $bankReconciliation->bankAccountAutoID)
-            ->where('bankClearedYN', 0)
             ->whereDate('postedDate', '<=', $bankReconciliation->bankRecAsOf)
             ->where('payAmountBank', '>', 0)
             ->where(function ($q) use ($bankReconciliation) {
                 $q->where('bankClearedYN', 0)
                     ->orWhere(function ($q2) use ($bankReconciliation) {
-                        //$q2->where('bankClearedDate', '>', $bankReconciliation->bankRecAsOf)
                         if($bankReconciliation->confirmedYN == 1) {
                             $q2->where('bankRecAutoID', '!=', $bankReconciliation->bankRecAutoID)
                                 ->where('bankClearedYN', -1)

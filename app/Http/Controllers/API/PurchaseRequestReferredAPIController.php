@@ -3,12 +3,14 @@
  * =============================================
  * -- File Name : PurchaseRequestReferredAPIController.php
  * -- Project Name : ERP
- * -- Module Name :  Purchase Referred
+ * -- Module Name :  Purchase Request Referred
  * -- Author : Mohamed Nazir
  * -- Create date : 01 - August  2018
- * -- Description : This file contains the all CRUD for Purchase Request
+ * -- Description : This file contains the all CRUD for Purchase Request Referred
  * -- REVISION HISTORY
+ * -- Date: 01-August 2018 By: Nazir Description: Added new function getPrMasterAmendHistory(),
  */
+
 
 namespace App\Http\Controllers\API;
 

@@ -186,7 +186,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $maxAsOfDate = PaymentBankTransfer::where('bankAccountAutoID', $input['bankAccountAutoID'])
             ->max('documentDate');
 
-        if ($maxAsOfDate >= $input['documentDate']) {
+        if ($maxAsOfDate > $input['documentDate']) {
             return $this->sendError('You cannot create bank transfer, Please select the as of date after ' . (new Carbon($maxAsOfDate))->format('d/m/Y'), 500);
         }
 
@@ -513,7 +513,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('documentDate', $input['order'][0]['dir']);
+                        $query->orderBy('paymentBankTransferID', $input['order'][0]['dir']);
                     }
                 }
             })
@@ -846,13 +846,24 @@ class PaymentBankTransferAPIController extends AppBaseController
         $this->paymentBankTransferRepository->update($updateArray,$input['paymentBankTransferID']);
 
         $time = strtotime("now");
-        $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time . '.pdf';
+        $fileName = 'payment_bank_transfer_' . $input['paymentBankTransferID'] . '_' . $time;
 
         $csv = Excel::create($fileName, function ($excel) use ($data) {
             $excel->sheet('Firstsheet', function ($sheet) use ($data) {
                 $sheet->setColumnFormat(array(
-                    'A' => '0',
-                    'B' => '0',
+                    'A' => '@',
+                    'C' => '@',
+                    'D' => '@',
+                    'E' => '@',
+                    'F' => '@',
+                    'G' => '@',
+                    'H' => '@',
+                    'I' => '@',
+                    'J' => '@',
+                    'K' => '@',
+                    'L' => '@',
+                    'M' => '@',
+                    'N' => '@'
                 ));
                 $sheet->fromArray($data, null, 'A1', true);
                 // $sheet->setAutoSize(true);

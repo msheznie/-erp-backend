@@ -31,6 +31,7 @@ use App\Models\GeneralLedger;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\Company;
+use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -48,11 +49,27 @@ class AccountsPayableReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
-        if($request['reportID'] == 'TS'){
+        if ($request['reportID'] == 'TS') {
             $controlAccount = array();
             $supplierMaster = array();
             $departments = array();
-        }else{
+        } else if ($request['reportID'] == 'APUGRV') {
+
+            $controlAccount = SupplierMaster::groupBy('UnbilledGRVAccountSystemID')->pluck('UnbilledGRVAccountSystemID');
+            $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
+
+            $departments = array();
+
+            /*$filterSuppliers = UnbilledGrvGroupBy::whereIN('companySystemID', $companiesByGroup)
+                ->select('supplierID')
+                ->groupBy('supplierID')
+                ->pluck('supplierID');*/
+
+            $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)
+                                               //->whereIN('supplierCodeSytem', $filterSuppliers)
+                                               ->groupBy('supplierCodeSytem')->get();
+
+        } else {
             $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
             $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
 
@@ -66,11 +83,6 @@ class AccountsPayableReportAPIController extends AppBaseController
             $supplierMaster = SupplierAssigned::whereIN('companySystemID', $companiesByGroup)->whereIN('supplierCodeSytem', $filterSuppliers)->groupBy('supplierCodeSytem')->get();
         }
 
-        /*$years = GeneralLedger::select(DB::raw("YEAR(documentDate) as year"))
-                                ->whereNotNull('documentDate')
-                                ->groupby('year')
-                                ->orderby('year', 'desc')
-                                ->get(['year']);*/
 
         $years = Year::orderby('year', 'desc')->get();
 
@@ -188,6 +200,20 @@ class AccountsPayableReportAPIController extends AppBaseController
                     'reportTypeID' => 'required',
                     'year' => 'required',
                     'countries' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+            case 'APUGRV':
+                $validator = \Validator::make($request->all(), [
+                    'reportTypeID' => 'required',
+                    'fromDate' => 'required',
+                    'suppliers' => 'required',
+                    'controlAccountsSystemID' => 'required',
+                    'currencyID' => 'required',
+                    'localOrForeign' => 'required'
                 ]);
 
                 if ($validator->fails()) {
@@ -320,7 +346,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'SAD') { //Supplier aging detail
 
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingDetailQRY($request);
 
@@ -483,9 +509,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $total = array_sum(collect($output)->pluck('Amount')->toArray());
 
                 $finalArray = array('companyName' => $checkIsGroup->CompanyName,
-                                    'grandTotal' => $total,
-                                    //'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2
-                                    );
+                    'grandTotal' => $total,
+                    //'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2
+                );
 
                 if ($reportTypeID == 'TSCW') {
 
@@ -498,11 +524,87 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
 
                     $finalArray['reportData'] = $outputArr;
-                }else if($reportTypeID == 'TSC'){
+                } else if ($reportTypeID == 'TSC') {
                     $finalArray['reportData'] = $output;
                 }
 
                 return $finalArray;
+                break;
+            case 'APUGRV': //Unbilled GRV
+                $reportTypeID = $request->reportTypeID;
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','localOrForeign','controlAccountsSystemID'));
+                $checkIsGroup = Company::find($request->companySystemID);
+                $outputArr = array();
+                $grandTotalArr = array('documentLocalAmount' => 0,
+                                       'matchedLocalAmount' => 0,
+                                       'balanceLocalAmount' => 0,
+                                       'documentRptAmount' => 0,
+                                       'matchedRptAmount' => 0,
+                                       'balanceRptAmount' => 0,
+                                      );
+                $decimalPlaces = 2;
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                if ($companyCurrency) {
+                    if ($request->currencyID == 2) {
+                        $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
+                    } else if ($request->currencyID == 3) {
+                        $decimalPlaces = $companyCurrency->reportingcurrency->DecimalPlaces;
+                    }
+                }
+
+                $output = array();
+
+                if ($reportTypeID == 'UGRVD' || $reportTypeID == 'UGRVS') { //Unbilled Detail
+
+                    $output = $this->getUnbilledDetailQRY($request);
+                    if($reportTypeID == 'UGRVD') {
+                        if ($output) {
+                            foreach ($output as $val) {
+                                $outputArr[$val->supplierName][] = $val;
+                            }
+                        }
+                    }else{
+                        $outputArr = $output;
+                    }
+
+                }else if($reportTypeID == 'UGRVAD'){
+                    $output = $this->getUnbilledGRVDetailAgingQRY($request);
+                    if($reportTypeID == 'UGRVAD') {
+                        if ($output) {
+                            foreach ($output as $val) {
+                                $outputArr[$val->supplierName][] = $val;
+                            }
+                        }
+                    }
+                }else if($reportTypeID == 'UGRVAS'){
+                    $output = $this->getUnbilledGRVSummaryAgingQRY($request);
+                    $outputArr = $output;
+                }
+
+                $grandTotalArr['documentLocalAmount'] = array_sum(collect($output)->pluck('documentLocalAmount')->toArray());
+                $grandTotalArr['matchedLocalAmount']  = array_sum(collect($output)->pluck('matchedLocalAmount')->toArray());
+                $grandTotalArr['balanceLocalAmount']  = array_sum(collect($output)->pluck('balanceLocalAmount')->toArray());
+                $grandTotalArr['documentRptAmount']   = array_sum(collect($output)->pluck('documentRptAmount')->toArray());
+                $grandTotalArr['matchedRptAmount']    = array_sum(collect($output)->pluck('matchedRptAmount')->toArray());
+                $grandTotalArr['balanceRptAmount']    = array_sum(collect($output)->pluck('balanceRptAmount')->toArray());
+
+                $grandTotalArr['case1'] = array_sum(collect($output)->pluck('case1')->toArray());
+                $grandTotalArr['case2'] = array_sum(collect($output)->pluck('case2')->toArray());
+                $grandTotalArr['case3'] = array_sum(collect($output)->pluck('case3')->toArray());
+                $grandTotalArr['case4'] = array_sum(collect($output)->pluck('case4')->toArray());
+                $grandTotalArr['case5'] = array_sum(collect($output)->pluck('case5')->toArray());
+                $grandTotalArr['case6'] = array_sum(collect($output)->pluck('case6')->toArray());
+                $grandTotalArr['case7'] = array_sum(collect($output)->pluck('case7')->toArray());
+                $grandTotalArr['case8'] = array_sum(collect($output)->pluck('case8')->toArray());
+                $grandTotalArr['case9'] = array_sum(collect($output)->pluck('case9')->toArray());
+                $grandTotalArr['case10'] = array_sum(collect($output)->pluck('case10')->toArray());
+
+                return array('reportData' => $outputArr,
+                    'companyName' => $checkIsGroup->CompanyName,
+                    'grandTotal' => $grandTotalArr,
+                    'currencyDecimalPlace' => $decimalPlaces,
+                    'count' => count($output));
+
                 break;
             default:
                 return $this->sendError('No report ID found');
@@ -810,7 +912,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 if ($reportTypeID == 'SAD') { //supplier aging detail
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','controlAccountsSystemID'));
                     $output = $this->getSupplierAgingDetailQRY($request);
                     if ($output['data']) {
                         $x = 0;
@@ -933,9 +1035,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getTopSupplierQRY($request);
 
-                    if($reportTypeID == 'TSCW'){
+                    if ($reportTypeID == 'TSCW') {
                         $name = "company_wise";
-                    }else if($reportTypeID == 'TSC'){
+                    } else if ($reportTypeID == 'TSC') {
                         $name = "consolidated";
                     }
 
@@ -943,21 +1045,165 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $x = 0;
                         foreach ($output as $val) {
 
-                            if($reportTypeID == 'TSCW'){
+                            if ($reportTypeID == 'TSCW') {
                                 $data[$x]['Company ID'] = $val->companyID;
                                 $data[$x]['Company Name'] = $val->CompanyName;
                             }
                             $data[$x]['Supplier Code'] = $val->supplierPrimaryCode;
                             $data[$x]['Supplier Name'] = $val->supplierName;
                             $data[$x]['Supplier Country'] = $val->supplierCountry;
-                            $data[$x]['Amount'] = round($val->Amount,2);
+                            $data[$x]['Amount'] = round($val->Amount, 2);
                             $x++;
                         }
                     } else {
                         $data = array();
                     }
                 }
-                $csv = \Excel::create('top_suppliers_by_year_'.$name, function ($excel) use ($data) {
+                $csv = \Excel::create('top_suppliers_by_year_' . $name, function ($excel) use ($data) {
+                    $excel->sheet('sheet name', function ($sheet) use ($data) {
+                        $sheet->fromArray($data, null, 'A1', true);
+                        $sheet->setAutoSize(true);
+                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
+                    });
+                    $lastrow = $excel->getActiveSheet()->getHighestRow();
+                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
+                })->download($type);
+                return $this->sendResponse(array(), 'successfully export');
+                break;
+            case 'APUGRV':// Unbilled GRV
+                $reportTypeID = $request->reportTypeID;
+                $type = $request->type;
+                $name = "";
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','localOrForeign','controlAccountsSystemID'));
+
+                if ($reportTypeID == 'UGRVD') { //Unbilled GRV details
+                    $output = $this->getUnbilledDetailQRY($request);
+                    $name = "detail";
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Supplier Code'] = $val->supplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Doc Number'] = $val->documentCode;
+                            $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
+
+                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
+                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
+                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+
+                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
+                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
+                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+                }else if($reportTypeID == 'UGRVS'){  //Unbilled GRV summary
+                    $output = $this->getUnbilledDetailQRY($request);
+                    $name = "aging_detail";
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Supplier Code'] = $val->supplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+
+                            $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
+                            $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
+                            $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+
+                            $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
+                            $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
+                            $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+                }else if($reportTypeID == 'UGRVAD'){ //Unbilled GRV aging detail
+
+                    $output = $this->getUnbilledGRVDetailAgingQRY($request);
+                    $name = "aging_detail";
+                    $decimal = 2;
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Supplier Code'] = $val->supplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Doc Number'] = $val->documentCode;
+                            $data[$x]['Doc Date'] = \Helper::dateFormat($val->documentDate);
+                            if($request->currencyID == 2){
+                                $decimal = 3;
+                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
+                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
+                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+                            }else {
+                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
+                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
+                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            }
+
+                            $data[$x]['<=30']       = number_format($val->case1,$decimal);
+                            $data[$x]['31 to 60']   = number_format($val->case2,$decimal);
+                            $data[$x]['61 to 90']   = number_format($val->case3,$decimal);
+                            $data[$x]['91 to 120']  = number_format($val->case4,$decimal);
+                            $data[$x]['121 to 150'] = number_format($val->case5,$decimal);
+                            $data[$x]['151 to 180'] = number_format($val->case6,$decimal);
+                            $data[$x]['181 to 210'] = number_format($val->case7,$decimal);
+                            $data[$x]['211 to 240'] = number_format($val->case8,$decimal);
+                            $data[$x]['241 to 365'] = number_format($val->case9,$decimal);
+                            $data[$x]['Over 365']   = number_format($val->case10,$decimal);
+
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+                }else if($reportTypeID == 'UGRVAS'){//Unbilled GRV aging summary
+
+                    $output = $this->getUnbilledGRVSummaryAgingQRY($request);
+                    $name = "aging_summary";
+                    $decimal = 2;
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            //$data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Supplier Code'] = $val->supplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+
+                            if($request->currencyID == 2){
+                                $decimal = 3;
+                                $data[$x]['Doc Value (Local Currency)'] = number_format($val->documentLocalAmount,3);
+                                $data[$x]['Matched Value (Local Currency)'] = number_format($val->matchedLocalAmount,3);
+                                $data[$x]['Balance (Local Currency)'] = number_format($val->balanceLocalAmount,3);
+                            }else {
+                                $data[$x]['Doc Value (Reporting Currency)'] = number_format($val->documentRptAmount,2);
+                                $data[$x]['Matched Value (Reporting Currency)'] = number_format($val->matchedRptAmount,2);
+                                $data[$x]['Balance (Reporting Currency)'] = number_format($val->balanceRptAmount,2);
+                            }
+
+                            $data[$x]['<=30']       = number_format($val->case1,$decimal);
+                            $data[$x]['31 to 60']   = number_format($val->case2,$decimal);
+                            $data[$x]['61 to 90']   = number_format($val->case3,$decimal);
+                            $data[$x]['91 to 120']  = number_format($val->case4,$decimal);
+                            $data[$x]['121 to 150'] = number_format($val->case5,$decimal);
+                            $data[$x]['151 to 180'] = number_format($val->case6,$decimal);
+                            $data[$x]['181 to 210'] = number_format($val->case7,$decimal);
+                            $data[$x]['211 to 240'] = number_format($val->case8,$decimal);
+                            $data[$x]['241 to 365'] = number_format($val->case9,$decimal);
+                            $data[$x]['Over 365']   = number_format($val->case10,$decimal);
+                            $x++;
+                        }
+                    } else {
+                        $data = array();
+                    }
+
+                }
+
+                $csv = \Excel::create('unbilled_grv_' . $name, function ($excel) use ($data) {
                     $excel->sheet('sheet name', function ($sheet) use ($data) {
                         $sheet->fromArray($data, null, 'A1', true);
                         $sheet->setAutoSize(true);
@@ -3476,7 +3722,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $reportTypeID = $request->reportTypeID;
         if ($reportTypeID == 'TSCW') {
             $companyWise = 'erp_purchaseordermaster.companySystemID,';
-        }else if($reportTypeID == 'TSC'){
+        } else if ($reportTypeID == 'TSC') {
 
         }
 
@@ -3502,18 +3748,665 @@ class AccountsPayableReportAPIController extends AppBaseController
                         erp_purchaseordermaster.approved =- 1 
                         AND erp_purchaseordermaster.poCancelledYN = 0 
                         AND poType_N <> 5 
-                        AND YEAR ( erp_purchaseordermaster.approvedDate ) = '.$year.' 
+                        AND YEAR ( erp_purchaseordermaster.approvedDate ) = ' . $year . ' 
                         AND erp_purchaseordermaster.companySystemID IN (' . join(',', $companyID) . ')
                         AND suppliermaster.supplierCountryID IN (' . join(',', $countrySystemID) . ')
                     GROUP BY
-                        '.$companyWise.'
+                        ' . $companyWise . '
                         erp_purchaseordermaster.supplierID 	Order BY Amount DESC;';
-                //DB::enableQueryLog();
-         $output = \DB::select($qry);
+        //DB::enableQueryLog();
+        $output = \DB::select($qry);
+
+        return $output;
+
+    }
+
+    function getUnbilledDetailQRY($request)
+    {
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $localOrForeign          = $request->localOrForeign;
+        $reportTypeID            = $request->reportTypeID;
+        $asOfDate = new Carbon($request->fromDate);
+        $asOfDate = $asOfDate->format('Y-m-d');
+
+        $suppliers = (array)$request->suppliers;
+        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+
+        $countryFilter = '';
+
+        if($localOrForeign == 2){
+            $countryFilter = 'AND countryID = '.$checkIsGroup->companyCountry;
+        }else if($localOrForeign == 3){
+            $countryFilter = 'AND countryID != '.$checkIsGroup->companyCountry;;
+        }
+
+        $supplierGroup = "";
+        $finalSelect = "final.*";
+
+        if($reportTypeID == 'UGRVS'){
+            $supplierGroup = "GROUP BY final.supplierID";
+            $finalSelect = "final.companySystemID,
+                final.companyID,
+                final.documentSystemID,
+                final.documentID,
+                final.documentCode,
+                final.documentDate,
+                final.supplierID,
+                final.supplierCode,
+                final.supplierName,
+                SUM(final.documentLocalAmount) as documentLocalAmount,
+                SUM(final.documentRptAmount) as documentRptAmount,
+                SUM(final.matchedLocalAmount) as matchedLocalAmount,
+                SUM(final.matchedRptAmount) as matchedRptAmount,
+                SUM(final.balanceLocalAmount) as balanceLocalAmount,
+                SUM(final.balanceRptAmount) as balanceRptAmount";
+        }
+
+        $qry = 'SELECT '.$finalSelect.',
+                suppliermaster.countryID FROM (SELECT
+                finalUnbilled.companySystemID,
+                finalUnbilled.companyID,
+                finalUnbilled.documentSystemID,
+                finalUnbilled.documentID,
+                finalUnbilled.documentCode,
+                docDate.documentDate,
+                finalUnbilled.supplierID,
+                finalUnbilled.supplierCode,
+                finalUnbilled.supplierName,
+                finalUnbilled.localAmount AS documentLocalAmount,
+                finalUnbilled.rptAmount AS documentRptAmount,
+            IF
+                ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) AS matchedLocalAmount,
+            IF
+                ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
+                round( ( finalUnbilled.localAmount - ( IF ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) ) ), 3 ) AS balanceLocalAmount,
+                round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount 
+            FROM
+                (
+            SELECT
+                erp_generalledger.companySystemID,
+                erp_generalledger.companyID,
+                erp_generalledger.glCode,
+                erp_generalledger.documentID,
+                erp_generalledger.documentSystemID,
+                erp_generalledger.documentSystemCode,
+                erp_generalledger.documentCode,
+                sum( erp_generalledger.documentLocalAmount * - 1 ) AS localAmount,
+                sum( erp_generalledger.documentRptAmount * - 1 ) AS rptAmount,
+            IF
+                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierCodeSystem, SupplierForInvoice.supplierCodeSystem ) AS supplierID,
+            IF
+                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.primarySupplierCode, SupplierForInvoice.primarySupplierCode ) AS supplierCode,
+            IF
+                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierName, SupplierForInvoice.supplierName ) AS supplierName,
+                MatchedGRVAndInvoice.totLocalAmount1 AS matchedLocalAmount,
+                MatchedGRVAndInvoice.totRptAmount1 AS matchedRptAmount 
+            FROM
+                erp_generalledger
+                LEFT JOIN erp_grvmaster ON erp_generalledger.companySystemID = erp_grvmaster.companySystemID 
+                AND erp_generalledger.documentSystemID = erp_grvmaster.documentSystemID 
+                AND erp_generalledger.documentSystemCode = erp_grvmaster.grvAutoID
+                LEFT JOIN erp_bookinvsuppmaster ON erp_generalledger.documentSystemID = erp_bookinvsuppmaster.documentSystemID 
+                AND erp_generalledger.companySystemID = erp_bookinvsuppmaster.companySystemID 
+                AND erp_generalledger.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+                LEFT JOIN suppliermaster AS SupplierForGRV ON erp_grvmaster.supplierID = SupplierForGRV.supplierCodeSystem
+                LEFT JOIN suppliermaster AS SupplierForInvoice ON erp_bookinvsuppmaster.supplierID = SupplierForInvoice.supplierCodeSystem
+                LEFT JOIN (
+                (
+            SELECT
+                erp_bookinvsuppdet.companySystemID,
+                3 AS documentSystemID,
+                erp_bookinvsuppdet.grvAutoID AS documentSystemCode,
+                grvGL.documentCode,
+                SUM( erp_bookinvsuppdet.totLocalAmount ) AS totLocalAmount1,
+                SUM( erp_bookinvsuppdet.totRptAmount ) AS totRptAmount1 
+            FROM
+                erp_bookinvsuppdet
+                INNER JOIN (
+            SELECT
+                companySystemID,
+                documentSystemID,
+                documentSystemCode,
+                documentCode 
+            FROM
+                erp_generalledger 
+            WHERE
+                erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '" 
+                AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.documentSystemID = 11 
+            GROUP BY
+                companySystemID,
+                documentSystemID,
+                documentSystemCode 
+                ) AS grvGL ON grvGL.companySystemID = erp_bookinvsuppdet.companySystemID 
+                AND grvGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+            GROUP BY
+                erp_bookinvsuppdet.companySystemID,
+                erp_bookinvsuppdet.grvAutoID 
+                ) UNION ALL
+                (
+            SELECT
+                erp_bookinvsuppdet.companySystemID,
+                11 AS documentSystemID,
+                erp_bookinvsuppdet.bookingSuppMasInvAutoID AS documentSystemCode,
+                BsiGL.documentCode,
+                SUM( erp_bookinvsuppdet.totLocalAmount * - 1 ) AS totLocalAmount1,
+                SUM( erp_bookinvsuppdet.totRptAmount * - 1 ) AS totRptAmount1 
+            FROM
+                erp_bookinvsuppdet
+                INNER JOIN (
+            SELECT
+                companySystemID,
+                documentSystemID,
+                documentSystemCode,
+                documentCode 
+            FROM
+                erp_generalledger 
+            WHERE
+                erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
+                AND erp_generalledger.documentSystemID = 11 
+                ) AS BsiGL ON BsiGL.companySystemID = erp_bookinvsuppdet.companySystemID 
+                AND BsiGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+            GROUP BY
+                erp_bookinvsuppdet.companySystemID,
+                erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+                ) 
+                ) AS MatchedGRVAndInvoice ON erp_generalledger.companySystemID = MatchedGRVAndInvoice.companySystemID 
+                AND erp_generalledger.documentSystemID = MatchedGRVAndInvoice.documentSystemID 
+                AND erp_generalledger.documentSystemCode = MatchedGRVAndInvoice.documentSystemCode 
+            WHERE
+                erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                AND erp_generalledger.contraYN = 0 
+                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
+            GROUP BY
+                erp_generalledger.companySystemID,
+                erp_generalledger.documentSystemID,
+                erp_generalledger.documentSystemCode 
+                ) AS finalUnbilled
+                LEFT JOIN (
+            SELECT
+                companySystemID,
+                documentSystemID,
+                documentSystemCode,
+                documentDate 
+            FROM
+                erp_generalledger 
+            WHERE
+                erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+            GROUP BY
+                companySystemID,
+                documentSystemID,
+                documentSystemCode 
+                ) AS docDate ON docDate.companySystemID = finalUnbilled.companySystemID 
+                AND docDate.documentSystemID = finalUnbilled.documentSystemID 
+                AND docDate.documentSystemCode = finalUnbilled.documentSystemCode 
+            WHERE
+                (
+                round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) 
+                ) <>0 ) as final 
+                INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
+                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter . ' '. $supplierGroup;
+        //DB::enableQueryLog();
+        $output = \DB::select($qry);
+
+        return $output;
+
+    }
+
+    function getUnbilledGRVDetailAgingQRY($request)
+    {
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $localOrForeign          = $request->localOrForeign;
+        $reportTypeID            = $request->reportTypeID;
+        $currencyID              = $request->currencyID;
+        $asOfDate = new Carbon($request->fromDate);
+        $asOfDate = $asOfDate->format('Y-m-d');
+
+        $suppliers = (array)$request->suppliers;
+        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+
+        $countryFilter = '';
+
+        if($localOrForeign == 2){
+            $countryFilter = 'AND countryID = '.$checkIsGroup->companyCountry;
+        }else if($localOrForeign == 3){
+            $countryFilter = 'AND countryID != '.$checkIsGroup->companyCountry;;
+        }
+
+        $supplierGroup = "";
+        $finalSelect = "final.*";
+        $caseColumn = 'balanceRptAmount';
+
+        if($currencyID == 2){
+            $caseColumn = 'balanceLocalAmount';
+        }
+
+        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150','151-180','181-210','211-240','241-365' ,'> 365'];
+        $agingField = '';
+        if (!empty($aging)) { /*calculate aging range in query*/
+            $count = count($aging);
+            $c = 1;
+            foreach ($aging as $val) {
+                if ($count == $c) {
+                    $agingField .= "if(agingFinal.ageDays   > " . 365 . ",agingFinal.".$caseColumn.",0) as `case" . $c . "`,";
+                } else {
+                    $list = explode("-", $val);
+                    $agingField .= "if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal.".$caseColumn.",0) as `case" . $c . "`,";
+                }
+                $c++;
+            }
+        }
+
+        $agingField .= "if(agingFinal.ageDays <= 0,agingFinal.".$caseColumn.",0) as `current`";
+
+        $qry = 'SELECT *,' . $agingField . ' FROM (SELECT '.$finalSelect.',
+                suppliermaster.countryID FROM (SELECT
+                finalUnbilled.companySystemID,
+                finalUnbilled.companyID,
+                finalUnbilled.documentSystemID,
+                finalUnbilled.documentID,
+                finalUnbilled.documentCode,
+                docDate.documentDate,
+                finalUnbilled.supplierID,
+                finalUnbilled.supplierCode,
+                finalUnbilled.supplierName,
+                finalUnbilled.localAmount AS documentLocalAmount,
+                finalUnbilled.rptAmount AS documentRptAmount,
+            IF
+                ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) AS matchedLocalAmount,
+            IF
+                ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
+                round( ( finalUnbilled.localAmount - ( IF ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) ) ), 3 ) AS balanceLocalAmount,
+                round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount ,
+                DATEDIFF("'. $asOfDate . '",DATE(docDate.documentDate)) as ageDays
+            FROM
+                (
+            SELECT
+                erp_generalledger.companySystemID,
+                erp_generalledger.companyID,
+                erp_generalledger.glCode,
+                erp_generalledger.documentID,
+                erp_generalledger.documentSystemID,
+                erp_generalledger.documentSystemCode,
+                erp_generalledger.documentCode,
+                sum( erp_generalledger.documentLocalAmount * - 1 ) AS localAmount,
+                sum( erp_generalledger.documentRptAmount * - 1 ) AS rptAmount,
+            IF
+                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierCodeSystem, SupplierForInvoice.supplierCodeSystem ) AS supplierID,
+            IF
+                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.primarySupplierCode, SupplierForInvoice.primarySupplierCode ) AS supplierCode,
+            IF
+                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierName, SupplierForInvoice.supplierName ) AS supplierName,
+                MatchedGRVAndInvoice.totLocalAmount1 AS matchedLocalAmount,
+                MatchedGRVAndInvoice.totRptAmount1 AS matchedRptAmount 
+            FROM
+                erp_generalledger
+                LEFT JOIN erp_grvmaster ON erp_generalledger.companySystemID = erp_grvmaster.companySystemID 
+                AND erp_generalledger.documentSystemID = erp_grvmaster.documentSystemID 
+                AND erp_generalledger.documentSystemCode = erp_grvmaster.grvAutoID
+                LEFT JOIN erp_bookinvsuppmaster ON erp_generalledger.documentSystemID = erp_bookinvsuppmaster.documentSystemID 
+                AND erp_generalledger.companySystemID = erp_bookinvsuppmaster.companySystemID 
+                AND erp_generalledger.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+                LEFT JOIN suppliermaster AS SupplierForGRV ON erp_grvmaster.supplierID = SupplierForGRV.supplierCodeSystem
+                LEFT JOIN suppliermaster AS SupplierForInvoice ON erp_bookinvsuppmaster.supplierID = SupplierForInvoice.supplierCodeSystem
+                LEFT JOIN (
+                (
+            SELECT
+                erp_bookinvsuppdet.companySystemID,
+                3 AS documentSystemID,
+                erp_bookinvsuppdet.grvAutoID AS documentSystemCode,
+                grvGL.documentCode,
+                SUM( erp_bookinvsuppdet.totLocalAmount ) AS totLocalAmount1,
+                SUM( erp_bookinvsuppdet.totRptAmount ) AS totRptAmount1 
+            FROM
+                erp_bookinvsuppdet
+                INNER JOIN (
+            SELECT
+                companySystemID,
+                documentSystemID,
+                documentSystemCode,
+                documentCode 
+            FROM
+                erp_generalledger 
+            WHERE
+                erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '" 
+                AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.documentSystemID = 11 
+            GROUP BY
+                companySystemID,
+                documentSystemID,
+                documentSystemCode 
+                ) AS grvGL ON grvGL.companySystemID = erp_bookinvsuppdet.companySystemID 
+                AND grvGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+            GROUP BY
+                erp_bookinvsuppdet.companySystemID,
+                erp_bookinvsuppdet.grvAutoID 
+                ) UNION ALL
+                (
+            SELECT
+                erp_bookinvsuppdet.companySystemID,
+                11 AS documentSystemID,
+                erp_bookinvsuppdet.bookingSuppMasInvAutoID AS documentSystemCode,
+                BsiGL.documentCode,
+                SUM( erp_bookinvsuppdet.totLocalAmount * - 1 ) AS totLocalAmount1,
+                SUM( erp_bookinvsuppdet.totRptAmount * - 1 ) AS totRptAmount1 
+            FROM
+                erp_bookinvsuppdet
+                INNER JOIN (
+            SELECT
+                companySystemID,
+                documentSystemID,
+                documentSystemCode,
+                documentCode 
+            FROM
+                erp_generalledger 
+            WHERE
+                erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
+                AND erp_generalledger.documentSystemID = 11 
+                ) AS BsiGL ON BsiGL.companySystemID = erp_bookinvsuppdet.companySystemID 
+                AND BsiGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+            GROUP BY
+                erp_bookinvsuppdet.companySystemID,
+                erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+                ) 
+                ) AS MatchedGRVAndInvoice ON erp_generalledger.companySystemID = MatchedGRVAndInvoice.companySystemID 
+                AND erp_generalledger.documentSystemID = MatchedGRVAndInvoice.documentSystemID 
+                AND erp_generalledger.documentSystemCode = MatchedGRVAndInvoice.documentSystemCode 
+            WHERE
+                erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                AND erp_generalledger.contraYN = 0 
+                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
+            GROUP BY
+                erp_generalledger.companySystemID,
+                erp_generalledger.documentSystemID,
+                erp_generalledger.documentSystemCode 
+                ) AS finalUnbilled
+                LEFT JOIN (
+            SELECT
+                companySystemID,
+                documentSystemID,
+                documentSystemCode,
+                documentDate 
+            FROM
+                erp_generalledger 
+            WHERE
+                erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+            GROUP BY
+                companySystemID,
+                documentSystemID,
+                documentSystemCode 
+                ) AS docDate ON docDate.companySystemID = finalUnbilled.companySystemID 
+                AND docDate.documentSystemID = finalUnbilled.documentSystemID 
+                AND docDate.documentSystemCode = finalUnbilled.documentSystemCode 
+            WHERE
+                (
+                round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) 
+                ) <>0 ) as final 
+                INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
+                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter . ' '. $supplierGroup.') as agingFinal';
+        //DB::enableQueryLog();
+        $output = \DB::select($qry);
 
         return $output;
 
     }
 
 
+    function getUnbilledGRVSummaryAgingQRY($request)
+    {
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = (array)$request->companySystemID;
+        }
+
+        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $localOrForeign          = $request->localOrForeign;
+        $reportTypeID            = $request->reportTypeID;
+        $currencyID              = $request->currencyID;
+        $asOfDate = new Carbon($request->fromDate);
+        $asOfDate = $asOfDate->format('Y-m-d');
+
+        $suppliers = (array)$request->suppliers;
+        $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
+
+        $countryFilter = '';
+
+        if($localOrForeign == 2){
+            $countryFilter = 'AND countryID = '.$checkIsGroup->companyCountry;
+        }else if($localOrForeign == 3){
+            $countryFilter = 'AND countryID != '.$checkIsGroup->companyCountry;;
+        }
+
+        $supplierGroup = "";
+        $finalSelect = "agingFinal.*";
+
+        if($reportTypeID == 'UGRVAS'){
+            $supplierGroup = "GROUP BY supplierID";
+            $finalSelect = "agingFinal.companySystemID,
+                agingFinal.companyID,
+                agingFinal.documentSystemID,
+                agingFinal.documentID,
+                agingFinal.documentCode,
+                agingFinal.documentDate,
+                agingFinal.supplierID,
+                agingFinal.supplierCode,
+                agingFinal.supplierName,
+                SUM(agingFinal.documentLocalAmount) as documentLocalAmount,
+                SUM(agingFinal.documentRptAmount) as documentRptAmount,
+                SUM(agingFinal.matchedLocalAmount) as matchedLocalAmount,
+                SUM(agingFinal.matchedRptAmount) as matchedRptAmount,
+                SUM(agingFinal.balanceLocalAmount) as balanceLocalAmount,
+                SUM(agingFinal.balanceRptAmount) as balanceRptAmount";
+        }
+
+        $caseColumn = 'balanceRptAmount';
+
+        if($currencyID == 2){
+            $caseColumn = 'balanceLocalAmount';
+        }
+
+        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150','151-180','181-210','211-240','241-365' ,'> 365'];
+        $agingField = '';
+        if (!empty($aging)) { /*calculate aging range in query*/
+            $count = count($aging);
+            $c = 1;
+            foreach ($aging as $val) {
+                if ($count == $c) {
+                    $agingField .= "SUM(if(agingFinal.ageDays   > " . 365 . ",agingFinal.".$caseColumn.",0)) as `case" . $c . "`,";
+                } else {
+                    $list = explode("-", $val);
+                    $agingField .= "SUM(if(agingFinal.ageDays >= " . $list[0] . " AND agingFinal.ageDays <= " . $list[1] . ",agingFinal.".$caseColumn.",0)) as `case" . $c . "`,";
+                }
+                $c++;
+            }
+        }
+
+        $agingField .= "SUM(if(agingFinal.ageDays <= 0,agingFinal.".$caseColumn.",0)) as `current`";
+
+        $qry = 'SELECT '.$finalSelect.',' . $agingField . ' FROM (SELECT final.*,
+                suppliermaster.countryID FROM (SELECT
+                finalUnbilled.companySystemID,
+                finalUnbilled.companyID,
+                finalUnbilled.documentSystemID,
+                finalUnbilled.documentID,
+                finalUnbilled.documentCode,
+                docDate.documentDate,
+                finalUnbilled.supplierID,
+                finalUnbilled.supplierCode,
+                finalUnbilled.supplierName,
+                finalUnbilled.localAmount AS documentLocalAmount,
+                finalUnbilled.rptAmount AS documentRptAmount,
+            IF
+                ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) AS matchedLocalAmount,
+            IF
+                ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
+                round( ( finalUnbilled.localAmount - ( IF ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) ) ), 3 ) AS balanceLocalAmount,
+                round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount ,
+                DATEDIFF("'. $asOfDate . '",DATE(docDate.documentDate)) as ageDays
+            FROM
+                (
+            SELECT
+                erp_generalledger.companySystemID,
+                erp_generalledger.companyID,
+                erp_generalledger.glCode,
+                erp_generalledger.documentID,
+                erp_generalledger.documentSystemID,
+                erp_generalledger.documentSystemCode,
+                erp_generalledger.documentCode,
+                sum( erp_generalledger.documentLocalAmount * - 1 ) AS localAmount,
+                sum( erp_generalledger.documentRptAmount * - 1 ) AS rptAmount,
+            IF
+                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierCodeSystem, SupplierForInvoice.supplierCodeSystem ) AS supplierID,
+            IF
+                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.primarySupplierCode, SupplierForInvoice.primarySupplierCode ) AS supplierCode,
+            IF
+                ( erp_generalledger.documentSystemID = 3, SupplierForGRV.supplierName, SupplierForInvoice.supplierName ) AS supplierName,
+                MatchedGRVAndInvoice.totLocalAmount1 AS matchedLocalAmount,
+                MatchedGRVAndInvoice.totRptAmount1 AS matchedRptAmount 
+            FROM
+                erp_generalledger
+                LEFT JOIN erp_grvmaster ON erp_generalledger.companySystemID = erp_grvmaster.companySystemID 
+                AND erp_generalledger.documentSystemID = erp_grvmaster.documentSystemID 
+                AND erp_generalledger.documentSystemCode = erp_grvmaster.grvAutoID
+                LEFT JOIN erp_bookinvsuppmaster ON erp_generalledger.documentSystemID = erp_bookinvsuppmaster.documentSystemID 
+                AND erp_generalledger.companySystemID = erp_bookinvsuppmaster.companySystemID 
+                AND erp_generalledger.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+                LEFT JOIN suppliermaster AS SupplierForGRV ON erp_grvmaster.supplierID = SupplierForGRV.supplierCodeSystem
+                LEFT JOIN suppliermaster AS SupplierForInvoice ON erp_bookinvsuppmaster.supplierID = SupplierForInvoice.supplierCodeSystem
+                LEFT JOIN (
+                (
+            SELECT
+                erp_bookinvsuppdet.companySystemID,
+                3 AS documentSystemID,
+                erp_bookinvsuppdet.grvAutoID AS documentSystemCode,
+                grvGL.documentCode,
+                SUM( erp_bookinvsuppdet.totLocalAmount ) AS totLocalAmount1,
+                SUM( erp_bookinvsuppdet.totRptAmount ) AS totRptAmount1 
+            FROM
+                erp_bookinvsuppdet
+                INNER JOIN (
+            SELECT
+                companySystemID,
+                documentSystemID,
+                documentSystemCode,
+                documentCode 
+            FROM
+                erp_generalledger 
+            WHERE
+                erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '" 
+                AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.documentSystemID = 11 
+            GROUP BY
+                companySystemID,
+                documentSystemID,
+                documentSystemCode 
+                ) AS grvGL ON grvGL.companySystemID = erp_bookinvsuppdet.companySystemID 
+                AND grvGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+            GROUP BY
+                erp_bookinvsuppdet.companySystemID,
+                erp_bookinvsuppdet.grvAutoID 
+                ) UNION ALL
+                (
+            SELECT
+                erp_bookinvsuppdet.companySystemID,
+                11 AS documentSystemID,
+                erp_bookinvsuppdet.bookingSuppMasInvAutoID AS documentSystemCode,
+                BsiGL.documentCode,
+                SUM( erp_bookinvsuppdet.totLocalAmount * - 1 ) AS totLocalAmount1,
+                SUM( erp_bookinvsuppdet.totRptAmount * - 1 ) AS totRptAmount1 
+            FROM
+                erp_bookinvsuppdet
+                INNER JOIN (
+            SELECT
+                companySystemID,
+                documentSystemID,
+                documentSystemCode,
+                documentCode 
+            FROM
+                erp_generalledger 
+            WHERE
+                erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
+                AND erp_generalledger.documentSystemID = 11 
+                ) AS BsiGL ON BsiGL.companySystemID = erp_bookinvsuppdet.companySystemID 
+                AND BsiGL.documentSystemCode = erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+            GROUP BY
+                erp_bookinvsuppdet.companySystemID,
+                erp_bookinvsuppdet.bookingSuppMasInvAutoID 
+                ) 
+                ) AS MatchedGRVAndInvoice ON erp_generalledger.companySystemID = MatchedGRVAndInvoice.companySystemID 
+                AND erp_generalledger.documentSystemID = MatchedGRVAndInvoice.documentSystemID 
+                AND erp_generalledger.documentSystemCode = MatchedGRVAndInvoice.documentSystemCode 
+            WHERE
+                erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                AND erp_generalledger.contraYN = 0 
+                AND STR_TO_DATE( DATE_FORMAT( erp_generalledger.documentDate, "%d/%m/%Y" ), "%d/%m/%Y" ) <= "' . $asOfDate . '"
+            GROUP BY
+                erp_generalledger.companySystemID,
+                erp_generalledger.documentSystemID,
+                erp_generalledger.documentSystemCode 
+                ) AS finalUnbilled
+                LEFT JOIN (
+            SELECT
+                companySystemID,
+                documentSystemID,
+                documentSystemCode,
+                documentDate 
+            FROM
+                erp_generalledger 
+            WHERE
+                erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+            GROUP BY
+                companySystemID,
+                documentSystemID,
+                documentSystemCode 
+                ) AS docDate ON docDate.companySystemID = finalUnbilled.companySystemID 
+                AND docDate.documentSystemID = finalUnbilled.documentSystemID 
+                AND docDate.documentSystemCode = finalUnbilled.documentSystemCode 
+            WHERE
+                (
+                round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) 
+                ) <>0 ) as final 
+                INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
+                WHERE supplierID IN (' . join(',', $supplierSystemID) . ')'.$countryFilter.') as agingFinal '.$supplierGroup;
+
+        //DB::enableQueryLog();
+        $output = \DB::select($qry);
+
+        return $output;
+
+    }
 }

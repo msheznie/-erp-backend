@@ -1,4 +1,15 @@
 <?php
+/**
+ * =============================================
+ * -- File Name : CustomerInvoiceDirectDetRefferedbackAPIController.php
+ * -- Project Name : ERP
+ * -- Module Name :  Customer Invoice Direct Det Refferedback
+ * -- Author : Mohamed Nazir
+ * -- Create date : 28 - November 2018
+ * -- Description : This file contains the all CRUD for Purchase Order
+ * -- REVISION HISTORY
+ * -- Date: 28-November 2018 By: Nazir Description: Added new function getCIDetailsForAmendHistory(),
+ */
 
 namespace App\Http\Controllers\API;
 
