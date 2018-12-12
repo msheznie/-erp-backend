@@ -10,7 +10,7 @@
     }
 
     body {
-        font-size: 11px;
+        font-size: 8px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
 
@@ -30,7 +30,7 @@
     }
 
     table > tbody > th > tr > td {
-        font-size: 11px;
+        font-size: 20px;
     }
 
     .theme-tr-head {
@@ -58,6 +58,7 @@
 
     .table th {
         background-color: #EBEBEB !important;
+        font-size: 10px;
     }
 
     tfoot > tr > td {
@@ -101,7 +102,7 @@
 
     .footer {
         bottom: 0;
-        height: 40px;
+        height: 20px;
     }
 
     .footer {
@@ -109,7 +110,7 @@
         text-align: center;
         position: fixed;
         font-size: 10px;
-        padding-top: -20px;
+        padding-top: -10px;
     }
 
     .pagenum:after {
@@ -158,56 +159,45 @@
 </div>
 <div class="content">
     <table style="width:100%;border:1px solid #9fcdff" class="table">
-        <thead>
-        <tr>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th colspan="2" style="text-align: center">Local Currency ({{$currencyLocal}})</th>
-            <th colspan="2" style="text-align: center">Reporting Currency ({{$currencyRpt}})</th>
-        </tr>
-        <tr>
-            <th>GL Code</th>
-            <th width="15%">Account Description</th>
-            <th>Document Number</th>
-            <th>Date</th>
-            <th>Document Narration</th>
-            <th>Service Line</th>
-            <th>Contract</th>
-            <th>Supplier/Customer</th>
-            @if($isGroup == 0)
-                <th style="text-align: center">Debit</th>
-                <th style="text-align: center">Credit</th>
-            @endif
-            <th style="text-align: center">Debit</th>
-            <th style="text-align: center">Credit</th>
-        </tr>
-        </thead>
-        @foreach ($reportData as $det)
+        @foreach ($reportData as $key => $det)
             <tr>
-                <td>{{ $det->glCode  }}</td>
-                <td>{{ $det->AccountDescription  }}</td>
-                <td>{{ $det->documentCode  }}</td>
-                <td>{{\Helper::dateFormat($det->documentDate)}}</td>
-                <td>{{ $det->documentNarration  }}</td>
-                <td>{{ $det->serviceLineCode  }}</td>
-                <td>{{ $det->clientContractID  }}</td>
-                <td>{{ $det->isCustomer  }}</td>
-                @if($isGroup == 0)
-                    <td class="text-right">{{number_format($det->localDebit, $decimalPlaceLocal)}}</td>
-                    <td class="text-right">{{number_format($det->localCredit, $decimalPlaceLocal)}}</td>
-                @endif
-                <td class="text-right">{{number_format($det->rptDebit, $decimalPlaceRpt)}}</td>
-                <td class="text-right">{{number_format($det->rptCredit, $decimalPlaceRpt)}}</td>
+                <th colspan="6" width="80%">{{ $key  }}</th>
+                <th colspan="2" width="10%" style="text-align: center">Local Currency ({{$currencyLocal}})</th>
+                <th colspan="2" width="10%" style="text-align: center">Reporting Currency ({{$currencyRpt}})</th>
             </tr>
+            <tr>
+                <th width="14%">Document Number</th>
+                <th width="5%">Date</th>
+                <th width="30%">Document Narration</th>
+                <th width="10%">Service Line</th>
+                <th width="10%">Contract</th>
+                <th width="10%">Party Name</th>
+                @if($isGroup == 0)
+                    <th width="8%" style="text-align: center">Debit</th>
+                    <th width="8%" style="text-align: center">Credit</th>
+                @endif
+                <th width="8%" style="text-align: center">Debit</th>
+                <th width="8%" style="text-align: center">Credit</th>
+            </tr>
+            @foreach ($det as $key2 => $val)
+                <tr>
+                    <td>{{ $val->documentCode  }}</td>
+                    <td>{{\Helper::dateFormat($val->documentDate)}}</td>
+                    <td>{{ $val->documentNarration  }}</td>
+                    <td>{{ $val->serviceLineCode  }}</td>
+                    <td>{{ $val->clientContractID  }}</td>
+                    <td>{{ $val->isCustomer  }}</td>
+                    @if($isGroup == 0)
+                        <td class="text-right">{{number_format($val->localDebit, $decimalPlaceLocal)}}</td>
+                        <td class="text-right">{{number_format($val->localCredit, $decimalPlaceLocal)}}</td>
+                    @endif
+                    <td class="text-right">{{number_format($val->rptDebit, $decimalPlaceRpt)}}</td>
+                    <td class="text-right">{{number_format($val->rptCredit, $decimalPlaceRpt)}}</td>
+                </tr>
+            @endforeach
         @endforeach
         <tr style="background-color: #E7E7E7">
-            <td colspan="8" class="text-right"
+            <td colspan="6" class="text-right"
                 style=""><b>Total Amount:</b>
             </td>
             @if($isGroup == 0)
@@ -228,7 +218,7 @@
             </td>
         </tr>
         <tr style="background-color: #E7E7E7">
-            <td colspan="8" class="text-right"
+            <td colspan="6" class="text-right"
                 style="">
             </td>
             @if($isGroup == 0)
