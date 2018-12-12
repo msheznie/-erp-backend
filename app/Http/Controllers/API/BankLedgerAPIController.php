@@ -587,16 +587,31 @@ class BankLedgerAPIController extends AppBaseController
                     $bankId = $bankTransfer->bank_account->accountCurrencyID;
                 }
 
-                $checkBankAccount = BankLedger::where('bankLedgerAutoID', $id)
-                    ->whereHas('supplier_by', function ($q3) use ($bankId) {
+                $bankLedger = BankLedger::where('bankLedgerAutoID', $id)->first();
+
+                if(empty($bankLedger)){
+                    return $this->sendError('Payment not found.', 500);
+                }
+
+                $checkBankAccount = BankLedger::where('bankLedgerAutoID', $id);
+
+
+                if($bankLedger->payeeID){
+                    $checkBankAccount =  $checkBankAccount->whereHas('supplier_by', function ($q3) use ($bankId) {
                         $q3->whereHas('supplierCurrency', function ($q4) use ($bankId) {
                             $q4->where('currencyID', $bankId)
                                 ->whereHas('bankMemo_by', function ($q) {
                                     $q->where('bankMemoTypeID', 4);
                                 });
                         });
-                    })
-                    ->first();
+                    })->first();
+                }else{
+                    $checkBankAccount =  $checkBankAccount->whereHas('payee_bank_memos',function ($q) {
+                        $q->where('bankMemoTypeID', 4);
+                    })->first();
+                }
+
+
 
                 if (empty($checkBankAccount) && $input['pulledToBankTransferYN']) {
                     return $this->sendError('Supplier account is not updated. You cannot add this payment to the transfer.', 500);
@@ -1073,6 +1088,8 @@ class BankLedgerAPIController extends AppBaseController
                             $q->where('bankMemoTypeID', 4);
                         }]);
                 }]);
+            },'payee_bank_memos' => function ($q) {
+                $q->where('bankMemoTypeID', 4);
             }]);
 
         $search = $request->input('search.value');
