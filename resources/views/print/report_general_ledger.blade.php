@@ -10,7 +10,7 @@
     }
 
     body {
-        font-size: 10px;
+        font-size: 8px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
 
@@ -30,7 +30,7 @@
     }
 
     table > tbody > th > tr > td {
-        font-size: 11px;
+        font-size: 20px;
     }
 
     .theme-tr-head {
@@ -58,6 +58,7 @@
 
     .table th {
         background-color: #EBEBEB !important;
+        font-size: 10px;
     }
 
     tfoot > tr > td {
@@ -101,7 +102,7 @@
 
     .footer {
         bottom: 0;
-        height: 40px;
+        height: 20px;
     }
 
     .footer {
@@ -109,7 +110,7 @@
         text-align: center;
         position: fixed;
         font-size: 10px;
-        padding-top: -20px;
+        padding-top: -10px;
     }
 
     .pagenum:after {
@@ -160,23 +161,23 @@
     <table style="width:100%;border:1px solid #9fcdff" class="table">
         @foreach ($reportData as $key => $det)
             <tr>
-                <th colspan="6">{{ $key  }}</th>
-                <th colspan="2" style="text-align: center">Local Currency ({{$currencyLocal}})</th>
-                <th colspan="2" style="text-align: center">Reporting Currency ({{$currencyRpt}})</th>
+                <th colspan="6" width="80%">{{ $key  }}</th>
+                <th colspan="2" width="10%" style="text-align: center">Local Currency ({{$currencyLocal}})</th>
+                <th colspan="2" width="10%" style="text-align: center">Reporting Currency ({{$currencyRpt}})</th>
             </tr>
             <tr>
-                <th>Document Number</th>
-                <th>Date</th>
-                <th>Document Narration</th>
-                <th>Service Line</th>
-                <th>Contract</th>
-                <th width="8%">Party Name</th>
+                <th width="14%">Document Number</th>
+                <th width="5%">Date</th>
+                <th width="30%">Document Narration</th>
+                <th width="10%">Service Line</th>
+                <th width="10%">Contract</th>
+                <th width="10%">Party Name</th>
                 @if($isGroup == 0)
-                    <th style="text-align: center">Debit</th>
-                    <th style="text-align: center">Credit</th>
+                    <th width="8%" style="text-align: center">Debit</th>
+                    <th width="8%" style="text-align: center">Credit</th>
                 @endif
-                <th style="text-align: center">Debit</th>
-                <th style="text-align: center">Credit</th>
+                <th width="8%" style="text-align: center">Debit</th>
+                <th width="8%" style="text-align: center">Credit</th>
             </tr>
             @foreach ($det as $key2 => $val)
                 <tr>
