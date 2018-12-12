@@ -928,6 +928,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getBankReconciliationApprovalByUser', 'BankReconciliationAPIController@getBankReconciliationApprovalByUser');
     Route::post('getBankReconciliationApprovedByUser', 'BankReconciliationAPIController@getBankReconciliationApprovedByUser');
     Route::post('bankRecReopen', 'BankReconciliationAPIController@bankRecReopen');
+    Route::post('bankReconciliationReferBack', 'BankReconciliationAPIController@bankReconciliationReferBack');
 
     Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
     Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
@@ -1244,6 +1245,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer');
     Route::resource('bankTransferDetailRefferedBacks', 'PaymentBankTransferDetailRefferedBackAPIController');
 
+    Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
+    Route::post('getReferBackHistoryByBankRec', 'BankReconciliationRefferedBackAPIController@getReferBackHistoryByBankRec');
 });
 
 
@@ -1300,4 +1303,6 @@ Route::get('runQueueSR', function () {
     //$bt = \App\Models\BudgetTransferForm::find(463);
     //$job = \App\Jobs\BudgetAdjustment::dispatch($bt);
 });
+
+
 

@@ -1410,7 +1410,7 @@ HAVING
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);
-             $originalFileName = $excelUpload[0]['filename'];
+            $originalFileName = $excelUpload[0]['filename'];
 
             Storage::disk('local')->put($originalFileName, $decodeFile);
 
@@ -1419,96 +1419,75 @@ HAVING
             })->first();
             $formatChk2 = '';
 
-            if(!$formatChk){
+            if (!$formatChk) {
                 return $this->sendError('No records found', 500);
-            }else{
+            } else {
                 $formatChk2 = collect($formatChk)->toArray();
             }
 
             if (count($formatChk2) > 0) {
-                if (!isset($formatChk['gl_account']) || !isset($formatChk['gl_account_description'])) {
+                if (!isset($formatChk['gl_account']) || !isset($formatChk['gl_account_description']) || !isset($formatChk['department']) || !isset($formatChk['client_contract']) || !isset($formatChk['comments']) || !isset($formatChk['debit_amount']) || !isset($formatChk['credit_amount'])) {
                     return $this->sendError('Uploaded data format is invalid', 500);
                 }
             }
 
             $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('gl_account', 'gl_account_description'))->get()->toArray();
-
-            return $this->sendError('No Records found!', 500);
-
-            $uploadSerialNumber = array_filter(collect($record)->pluck('serial_no')->toArray());
-            $uploadSerialNumberUnique = array_unique($uploadSerialNumber);
-
-            $fixedAsset = $this->fixedAssetMasterRepository->findWhere(['companySystemID' => $input['companySystemID']])->pluck('faUnitSerialNo')->toArray();
+            })->select(array('gl_account', 'gl_account_description', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount'))->get()->toArray();
 
             if (count($record) > 0) {
-                // check for duplicate serial number in db
-                $chkDuplicateAssetInDB = array_intersect($fixedAsset,$uploadSerialNumber);
 
-                // check for duplicate serial number in uploaded asset
-                if ((count($uploadSerialNumber) != count($uploadSerialNumberUnique)) || count($chkDuplicateAssetInDB) > 0) {
-                    return $this->sendError('The uploaded assets has duplicate serial numbers, please check and re-upload', 500);
-                }
+                $jvMasterData = JvMaster::find($input['jvMasterAutoId']);
 
-                $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
-                if ($lastSerial) {
-                    $lastSerialNumber = intval($lastSerial->serialNo) + 1;
-                }
-
-                $department = DepartmentMaster::find($input['departmentSystemID']);
-                if ($department) {
-                    $input['departmentID'] = $department->DepartmentID;
-                }
-
-                $segment = SegmentMaster::find($input['serviceLineSystemID']);
-                if ($segment) {
-                    $input['serviceLineCode'] = $segment->ServiceLineCode;
-                }
-
-                $company = Company::find($input['companySystemID']);
-                if ($company) {
-                    $input['companyID'] = $company->CompanyID;
+                if (empty($jvMasterData)) {
+                    return $this->sendError('Journal Voucher not found');
                 }
 
                 foreach ($record as $val) {
-                    if ($val['asset_description'] || $val['serial_no']) {
-                        $data = [];
-                        $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-                        $data['assetDescription'] = $val['asset_description'];
-                        $data['faUnitSerialNo'] = $val['serial_no'];
-                        $data['serialNo'] = $lastSerialNumber;
-                        $data['faCode'] = $documentCode;
-                        $data['supplierIDRentedAsset'] = $input['supplierID'];
-                        $data['faCatID'] = $input['faCatID'];
-                        $data['faSubCatID'] = $input['faSubCatID'];
-                        $data['faSubCatID2'] = $input['faSubCatID2'];
-                        $data['faSubCatID3'] = $input['faSubCatID3'];
-                        $data['faSubCatID3'] = $input['faSubCatID3'];
-                        $data['documentID'] = 'FA';
-                        $data['documentSystemID'] = 22;
-                        $data['companySystemID'] = $input['companySystemID'];
-                        $data['companyID'] = $input['companyID'];
-                        $data['serviceLineSystemID'] = $input['serviceLineSystemID'];
-                        $data['serviceLineCode'] = $input['serviceLineCode'];
-                        $data['departmentSystemID'] = $input['departmentSystemID'];
-                        $data['departmentID'] = $input['departmentID'];
-                        $data['dateAQ'] = NOW();
-                        $data['MANUFACTURE'] = '-';
-                        $data['assetType'] = 2;
-                        $data['confirmedYN'] = 1;
-                        $data['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
-                        $data['confirmedByEmpID'] = \Helper::getEmployeeID();
-                        $data['confirmedDate'] = NOW();
-                        $data['approved'] = -1;
-                        $data['approvedDate'] = NOW();
-                        $data['approvedByUserID'] = \Helper::getEmployeeID();
-                        $data['approvedByUserSystemID'] = \Helper::getEmployeeSystemID();
-                        $data['createdPcID'] = gethostname();
-                        $data['createdUserID'] = \Helper::getEmployeeID();
-                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                        $finalData[] = $data;
-                        $lastSerialNumber++;
+
+                    $segmentData = SegmentMaster::where('ServiceLineDes', $val['department'])
+                        ->where('companySystemID', $jvMasterData->companySystemID)
+                        ->first();
+                    $serviceLineSystemID = 0;
+                    $chartOfAccountSystemID = 0;
+                    $debitAmount = 0;
+                    $creditAmount = 0;
+                    if ($segmentData) {
+                        $serviceLineSystemID = $segmentData['serviceLineSystemID'];
                     }
+                    $chartOfAccountData = chartofaccountsassigned::where('AccountCode', $val['gl_account'])
+                        ->where('companySystemID', $jvMasterData->companySystemID)
+                        ->first();
+
+                    if ($chartOfAccountData) {
+                       $chartOfAccountSystemID = $chartOfAccountData->chartOfAccountSystemID;
+                    }
+                    if($val['debit_amount'] != ''){
+                        $debitAmount = $val['debit_amount'];
+                    }
+                    if($val['credit_amount'] != ''){
+                        $creditAmount = $val['credit_amount'];
+                    }
+                    $data = [];
+                    $data['jvMasterAutoId'] = $input['jvMasterAutoId'];
+                    $data['documentSystemID'] = $jvMasterData->documentSystemID;
+                    $data['documentID'] = $jvMasterData->documentID;
+                    $data['companySystemID'] = $jvMasterData->companySystemID;
+                    $data['companyID'] = $jvMasterData->companyID;
+                    $data['serviceLineSystemID'] = $serviceLineSystemID;
+                    $data['serviceLineCode'] = $val['department'];
+                    $data['chartOfAccountSystemID'] = $chartOfAccountSystemID;
+                    $data['glAccount'] = $val['gl_account'];
+                    $data['glAccountDescription'] = $val['gl_account_description'];
+                    $data['clientContractID'] = $val['client_contract'];
+                    $data['comments'] = $val['comments'];
+                    $data['currencyID'] = $jvMasterData->currencyID;
+                    $data['currencyER'] = $jvMasterData->currencyER;
+                    $data['debitAmount'] = $debitAmount;
+                    $data['creditAmount'] = $creditAmount;
+                    $data['createdPcID'] = gethostname();
+                    $data['createdUserID'] = \Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $finalData[] = $data;
                 }
             } else {
                 return $this->sendError('No Records found!', 500);
@@ -1516,12 +1495,12 @@ HAVING
 
             if (count($finalData) > 0) {
                 foreach (array_chunk($finalData, 500) as $t) {
-                    FixedAssetMaster::insert($t);
+                    JvDetail::insert($t);
                 }
             }
             Storage::disk('local')->delete($originalFileName);
             DB::commit();
-            return $this->sendResponse([], 'Assets uploaded successfully');
+            return $this->sendResponse([], 'JV Details uploaded successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
