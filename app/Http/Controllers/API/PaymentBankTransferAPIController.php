@@ -754,7 +754,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                     $q4->where('currencyID', $bankId)
                         ->with(['bankMemo_by']);
                 }]);
-            }]);
+            },'payee_bank_memos']);
 
         $search = $request->input('search.value');
 
@@ -793,21 +793,36 @@ class PaymentBankTransferAPIController extends AppBaseController
                 $benSwiftCode = '';
                 $benName  = "";
                 $benAdd1 = "";
-                if ($val['supplier_by']) {
-                    if ($val['supplier_by']['supplierCurrency']) {
-                        if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
-                            $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
-                            foreach ($memos as $memo) {
-                                if ($memo->bankMemoTypeID == 4) {
-                                    $accountNo = preg_replace("/[^0-9]/", "", $memo->memoDetail);
-                                } else if ($memo->bankMemoTypeID == 1) {
-                                    $benName = $memo->memoDetail;
-                                }else if($memo->bankMemoTypeID == 9){
-                                    $benSwiftCode = $memo->memoDetail;
-                                }else if($memo->bankMemoTypeID == 3){
-                                    $benAdd1 = $memo->memoDetail;
+                if ($val->payeeID && $val['supplier_by']) {
+                    if ($val['supplier_by']) {
+                        if ($val['supplier_by']['supplierCurrency']) {
+                            if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
+                                $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
+                                foreach ($memos as $memo) {
+                                    if ($memo->bankMemoTypeID == 4) {
+                                        $accountNo = preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                                    } else if ($memo->bankMemoTypeID == 1) {
+                                        $benName = $memo->memoDetail;
+                                    } else if ($memo->bankMemoTypeID == 9) {
+                                        $benSwiftCode = $memo->memoDetail;
+                                    } else if ($memo->bankMemoTypeID == 3) {
+                                        $benAdd1 = $memo->memoDetail;
+                                    }
                                 }
                             }
+                        }
+                    }
+                }else if(!$val->payeeID && $val['payee_bank_memos']) {
+                    $memos = $val['payee_bank_memos'];
+                    foreach ($memos as $memo) {
+                        if ($memo->bankMemoTypeID == 4) {
+                            $accountNo = preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                        } else if ($memo->bankMemoTypeID == 1) {
+                            $benName = $memo->memoDetail;
+                        } else if ($memo->bankMemoTypeID == 9) {
+                            $benSwiftCode = $memo->memoDetail;
+                        } else if ($memo->bankMemoTypeID == 3) {
+                            $benAdd1 = $memo->memoDetail;
                         }
                     }
                 }
@@ -854,13 +869,13 @@ class PaymentBankTransferAPIController extends AppBaseController
                 $ifsc = "";
                 $intSwiftCode = "";
                 $intAccountNumber = "";
-                if ($val['supplier_by']) {
+                if ($val->payeeID && $val['supplier_by']) {
                     if ($val['supplier_by']['supplierCurrency']) {
                         if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
                             $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
                             foreach ($memos as $memo) {
                                 if ($memo->bankMemoTypeID == 4) {
-                                    $accountNo = preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                                    $accountNo = $memo->memoDetail ; //preg_replace("/[^0-9]/", "", $memo->memoDetail);
                                 } else if ($memo->bankMemoTypeID == 1) {
                                     $benName = $memo->memoDetail;
                                 }else if($memo->bankMemoTypeID == 9){
@@ -877,12 +892,32 @@ class PaymentBankTransferAPIController extends AppBaseController
                             }
                         }
                     }
+                }else if(!$val->payeeID && $val['payee_bank_memos']){
+                    $memos = $val['payee_bank_memos'];
+                    foreach ($memos as $memo) {
+                        if ($memo->bankMemoTypeID == 4) {
+                            $accountNo = $memo->memoDetail ; //preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                        } else if ($memo->bankMemoTypeID == 1) {
+                            $benName = $memo->memoDetail;
+                        }else if($memo->bankMemoTypeID == 9){
+                            $benSwiftCode = $memo->memoDetail;
+                        }else if($memo->bankMemoTypeID == 3){
+                            $benAdd1 = $memo->memoDetail;
+                        }else if($memo->bankMemoTypeID == 16){
+                            $ifsc = $memo->memoDetail;
+                        }else if($memo->bankMemoTypeID == 12){
+                            $intSwiftCode = $memo->memoDetail;
+                        }else if($memo->bankMemoTypeID == 11){
+                            $intAccountNumber = $memo->memoDetail;
+                        }
+                    }
                 }
+
                 $data[$x]['Ben Bank SWIFT Code (12 chars)'] =  $benSwiftCode;
-                $data[$x]['Ben Account No(34)'] = $accountNo;
+                $data[$x]['Ben Account No(34)'] = str_replace(' ', '', $accountNo);
                 $data[$x]['Beneficiary Name(35)'] = $benName;
                 $data[$x]['Amount (15)'] = number_format($val->payAmountBank, $decimalPlaces);
-                $data[$x]['Payment Details(140)'] = $val->documentNarration;
+                $data[$x]['Payment Details(140)'] = str_replace('\\',"",$val->documentCode);
                 $data[$x]['Beneficiary Address1 (35)'] = $benAdd1;
                 $data[$x]['BeneficiaryAddress2(35)'] = ''; // blank
                 $data[$x]['Beneficiary Address3(35)'] = ''; // blank
@@ -913,23 +948,34 @@ class PaymentBankTransferAPIController extends AppBaseController
                 $x++;
                 $accountNo13 = '';
                 $narration135 = '';
-                if ($val['supplier_by']) {
-                    if ($val['supplier_by']['supplierCurrency']) {
-                        if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
-                            $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
-                            foreach ($memos as $memo) {
-                                if ($memo->bankMemoTypeID == 4) {
-                                    $accountNo13 = preg_replace("/[^0-9]/", "", $memo->memoDetail);
-                                } else if ($memo->bankMemoTypeID == 1) {
-                                    $narration135 = $memo->memoDetail;
+                if ($val->payeeID && $val['supplier_by']) {
+                    if ($val['supplier_by']) {
+                        if ($val['supplier_by']['supplierCurrency']) {
+                            if ($val['supplier_by']['supplierCurrency'][0]['bankMemo_by']) {
+                                $memos = $val['supplier_by']['supplierCurrency'][0]['bankMemo_by'];
+                                foreach ($memos as $memo) {
+                                    if ($memo->bankMemoTypeID == 4) {
+                                        $accountNo13 = preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                                    } else if ($memo->bankMemoTypeID == 1) {
+                                        $narration135 = $memo->memoDetail;
+                                    }
                                 }
                             }
+                        }
+                    }
+                }else if(!$val->payeeID && $val['payee_bank_memos']) {
+                    $memos = $val['payee_bank_memos'];
+                    foreach ($memos as $memo) {
+                        if ($memo->bankMemoTypeID == 4) {
+                            $accountNo13 = preg_replace("/[^0-9]/", "", $memo->memoDetail);
+                        } else if ($memo->bankMemoTypeID == 1) {
+                            $narration135 = $memo->memoDetail;
                         }
                     }
                 }
                 $data[$x]['Account No(13)'] = $accountNo13;
                 $data[$x]['Amount(15)'] = number_format($val->payAmountBank, $decimalPlaces);
-                $data[$x]['Reference No (16)'] = $val->documentCode;
+                $data[$x]['Reference No (16)'] = str_replace('\\',"",$val->documentCode);
                 $data[$x]['Narration1 (35)'] = $narration135;
                 $data[$x]['Narration2 (35)'] = $val->documentNarration;
                 if ($val['supplier_by']) {
