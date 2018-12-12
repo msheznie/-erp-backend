@@ -1024,9 +1024,16 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $invMaster = $invMaster->where(function ($query) use ($search) {
+            $search_without_comma = str_replace(",", "", $search);
+            $invMaster = $invMaster->where(function ($query) use ($search, $search_without_comma) {
                 $query->where('bookingInvCode', 'LIKE', "%{$search}%")
-                    ->orWhere('comments', 'LIKE', "%{$search}%");
+                    ->orWhere('supplierInvoiceNo', 'LIKE', "%{$search}%")
+                    ->orWhere('comments', 'LIKE', "%{$search}%")
+                    ->orWhere('bookingAmountTrans', 'LIKE', "%{$search_without_comma}%")
+                    ->orWhereHas('supplier', function ($query) use ($search) {
+                        $query->where('supplierName', 'like', "%{$search}%")
+                            ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
+                    });
             });
         }
 

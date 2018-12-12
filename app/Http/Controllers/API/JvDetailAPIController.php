@@ -19,6 +19,7 @@ use App\Http\Requests\API\CreateJvDetailAPIRequest;
 use App\Http\Requests\API\UpdateJvDetailAPIRequest;
 use App\Models\AccruavalFromOPMaster;
 use App\Models\ChartOfAccount;
+use App\Models\Contract;
 use App\Models\HRMSJvDetails;
 use App\Models\HRMSJvMaster;
 use App\Models\JvDetail;
@@ -317,6 +318,18 @@ class JvDetailAPIController extends AppBaseController
             }
         }
 
+        if (isset($input['contractUID'])) {
+
+            $input['clientContractID'] = NULL;
+
+            $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')
+                ->where('contractUID', $input['contractUID'])
+                ->first();
+
+            $input['clientContractID'] = $contract['ContractNumber'];
+
+        }
+
         $jvDetail = $this->jvDetailRepository->update($input, $id);
 
         return $this->sendResponse($jvDetail->toArray(), 'JvDetail updated successfully');
@@ -564,7 +577,7 @@ class JvDetailAPIController extends AppBaseController
 
         $detailRecordGrouping = DB::select("SELECT
 	accruvalfromop.accMasterID,
-	accruvalfromop.contractID as  accrualNarration,
+	accruvalfromop.contractID as accrualNarration,
 	accruvalfromop.accrualDateAsOF,
 	accruvalfromop.companyID,
 	accruvalfromop.contractID,
@@ -581,6 +594,7 @@ class JvDetailAPIController extends AppBaseController
 	chartofaccounts.chartOfAccountSystemID,
 	accruvalfromop.GlCode,
 	chartofaccounts.AccountDescription,
+	contractmaster.contractUID AS contractSystemID,
 	Sum(
 		accruvalfromop.accrualAmount
 	) AS SumOfaccrualAmount
@@ -622,6 +636,8 @@ GROUP BY
                 $detail_arr['glAccount'] = $rowData->GlCode;
                 $detail_arr['glAccountDescription'] = $rowData->AccountDescription;
                 $detail_arr['comments'] = 'Revenue Accrual for the month of ' . date('F Y') . '';
+                $detail_arr['contractUID'] = $rowData->contractSystemID;
+                $detail_arr['clientContractID'] = $rowData->accrualNarration;
                 $detail_arr['currencyID'] = $jvMasterData->currencyID;
                 $detail_arr['currencyER'] = $jvMasterData->currencyER;
                 $detail_arr['createdPcID'] = gethostname();
