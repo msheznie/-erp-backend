@@ -25,6 +25,7 @@ use App\Models\BankAccount;
 use App\Models\BankLedger;
 use App\Models\BankMaster;
 use App\Models\BankReconciliation;
+use App\Models\BankReconciliationRefferedBack;
 use App\Models\Company;
 use App\Models\CustomerReceivePayment;
 use App\Models\DirectPaymentDetails;
@@ -836,7 +837,7 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         $type = '<';
-
+        $orderBy = 'bankLedgerAutoID';
         if (array_key_exists('type', $input) && ($input['type'] == 1 || $input['type'] == 2)) {
 
             if ($input['type'] == 1) {
@@ -846,26 +847,39 @@ class BankLedgerAPIController extends AppBaseController
             }
         }
 
-        $bankReconciliation = BankReconciliation::find($input['bankRecAutoID']);
+        if($input['isFromHistory'] == 0){
+            $bankReconciliation = BankReconciliation::find($input['bankRecAutoID']);
+
+            $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies);
+        }else if($input['isFromHistory'] == 1) {
+            $orderBy = 'refferedbackAutoID';
+            $bankReconciliation = BankReconciliationRefferedBack::find($input['bankRecAutoID']);
+
+            $bankLedger = PaymentBankTransferDetailRefferedBack::whereIn('companySystemID', $subCompanies)
+                                    ->where('timesReferred',$input['timesReferred']);
+
+            $input['bankRecAutoID'] = $bankReconciliation->bankRecAutoID;
+        }
+
+
         $confirmed = 0;
         if (!empty($bankReconciliation)) {
             $confirmed = $bankReconciliation->confirmedYN;
         }
 
-        $bankLedger = BankLedger::whereIn('companySystemID', $subCompanies)
-            ->where('payAmountBank', $type, 0)
-            ->where("bankAccountID", $input['bankAccountAutoID'])
-            ->where("trsClearedYN", -1)
-            ->whereDate("postedDate", '<=', $bankReconciliation->bankRecAsOf)
-            ->where(function ($q) use ($input, $confirmed) {
-                $q->where(function ($q1) use ($input) {
-                    $q1->where('bankRecAutoID', $input['bankRecAutoID'])
-                        ->where("bankClearedYN", -1);
-                })->when($confirmed == 0, function ($q2) {
-                    $q2->orWhere("bankClearedYN", 0);
-                });
+        $bankLedger = $bankLedger->where('payAmountBank', $type, 0)
+                                    ->where("bankAccountID", $input['bankAccountAutoID'])
+                                    ->where("trsClearedYN", -1)
+                                    ->whereDate("postedDate", '<=', $bankReconciliation->bankRecAsOf)
+                                    ->where(function ($q) use ($input, $confirmed) {
+                                        $q->where(function ($q1) use ($input) {
+                                            $q1->where('bankRecAutoID', $input['bankRecAutoID'])
+                                                ->where("bankClearedYN", -1);
+                                        })->when($confirmed == 0, function ($q2) {
+                                            $q2->orWhere("bankClearedYN", 0);
+                                        });
 
-            });
+                                    });
 
         $search = $request->input('search.value');
 
@@ -881,10 +895,10 @@ class BankLedgerAPIController extends AppBaseController
 
         return \DataTables::eloquent($bankLedger)
             ->addColumn('Actions', 'Actions', "Actions")
-            ->order(function ($query) use ($input) {
+            ->order(function ($query) use ($input,$orderBy) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('bankLedgerAutoID', $input['order'][0]['dir']);
+                        $query->orderBy($orderBy, $input['order'][0]['dir']);
                     }
                 }
             })
