@@ -490,4 +490,9 @@ class BankLedger extends Model
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
     }
+
+    public function payee_bank_memos()
+    {
+        return $this->hasMany('App\Models\BankMemoPayee','documentSystemCode','documentSystemCode');
+    }
 }

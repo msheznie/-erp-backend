@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Events\DocumentCreated;
 use App\Events\logHistory;
+use App\Listeners\AfterDocumentCreated;
 use App\Listeners\AfterLogin;
 use App\Listeners\RevokeOldTokens;
 use App\Models\AccessTokens;
+use App\Models\ItemIssueMaster;
 use App\Models\User;
 use Illuminate\Contracts\Logging\Log;
 use Illuminate\Support\Facades\Event;
@@ -28,6 +31,9 @@ class EventServiceProvider extends ServiceProvider
         'Laravel\Passport\Events\RefreshTokenCreated' => [
             'App\Listeners\PruneOldTokens',
         ],
+        DocumentCreated::class => [
+            AfterDocumentCreated::class
+        ]
     ];
 
     /**
@@ -38,5 +44,8 @@ class EventServiceProvider extends ServiceProvider
     public function boot()
     {
         parent::boot();
+        ItemIssueMaster::created(function (ItemIssueMaster $document) {
+            //event(new DocumentCreated($document));
+        });
     }
 }
