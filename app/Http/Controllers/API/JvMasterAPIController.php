@@ -495,7 +495,7 @@ class JvMasterAPIController extends AppBaseController
                         $chartOfAccount = ChartOfAccountsAssigned::select('controlAccountsSystemID')->where('chartOfAccountSystemID', $item->chartOfAccountSystemID)->first();
 
                         if ($chartOfAccount->controlAccountsSystemID == 1) {
-                            if ($item['clientContractID'] == '' || $item['clientContractID'] == 0) {
+                            if ($item['contractUID'] == '' || $item['contractUID'] == 0) {
                                 array_push($finalError['contract_check'], $item->glAccount);
                                 $error_count++;
                             }
@@ -1142,6 +1142,14 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
     public function journalVoucherForPOAccrualJVDetail(Request $request)
     {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
         $companySystemID = $request['companyId'];
         $jvMasterAutoId = $request['jvMasterAutoId'];
 
@@ -1150,7 +1158,16 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             return $this->sendError('Jv Master not found');
         }
 
-        $output = DB::select("SELECT
+        $filter='';
+        $search = $request->input('search.value');
+        if($search){
+            $search = str_replace("\\", "\\\\\\\\", $search);
+            $filter = " AND ( pomaster.purchaseOrderCode LIKE '%{$search}%') OR ( podetail.itemPrimaryCode LIKE '%{$search}%') OR ( podetail.itemDescription LIKE '%{$search}%') OR ( pomaster.supplierName LIKE '%{$search}%')";
+        }
+
+        $formattedJVdate = Carbon::parse($jvMasterData->JVdate)->format('Y-m-d');
+
+        $qry = "SELECT
 	pomaster.purchaseOrderID,
 	pomaster.poType,
 	pomaster.purchaseOrderCode,
@@ -1206,31 +1223,52 @@ LEFT JOIN (
 	INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID
 	WHERE
 		grvTypeID = 2
-	AND DATE(grvDate) <= '$jvMasterData->JVdate'
+	AND DATE(grvDate) <= '$formattedJVdate' AND erp_grvmaster.companySystemID = $companySystemID
 	GROUP BY
 		purchaseOrderMastertID,
 		itemCode
 ) AS grvdetail ON grvdetail.purchaseOrderMastertID = pomaster.purchaseOrderID
 INNER JOIN suppliermaster AS supmaster ON pomaster.supplierID = supmaster.supplierCodeSystem
 WHERE
-	pomaster.companySystemID = 11
+	pomaster.companySystemID = $companySystemID
 AND pomaster.poConfirmedYN = 1
 AND pomaster.poCancelledYN = 0
 AND pomaster.approved = - 1
-AND pomaster.poType_N <> 6
+AND pomaster.poType_N <> 5
 AND pomaster.manuallyClosed = 0
 AND pomaster.financeCategory IN (2, 4)
-AND date(pomaster.approvedDate) >= '$jvMasterData->JVdate'
+AND date(pomaster.approvedDate) >= '2016-05-01'
 AND date(
 	pomaster.expectedDeliveryDate
-) <= '$jvMasterData->JVdate'
+) <= '$formattedJVdate'
+{$filter}
 AND supmaster.companyLinkedToSystemID IS NULL
 GROUP BY
 	podetail.itemCode
 HAVING
-	round(balanceCost, 2) > 0");
+	round(balanceCost, 2) > 0";
 
-        return $this->sendResponse($output, 'Data retrieved successfully');
+        $invMaster = DB::select($qry);
+
+        $col[0] = $input['order'][0]['column'];
+        $col[1] = $input['order'][0]['dir'];
+        $request->request->remove('order');
+        $data['order'] = [];
+        /*  $data['order'][0]['column'] = '';
+          $data['order'][0]['dir'] = '';*/
+        $data['search']['value'] = '';
+        $request->merge($data);
+
+        $depAmountLocal = collect($invMaster)->pluck('balanceCost')->toArray();
+        $depAmountLocal = array_sum($depAmountLocal);
+
+        $request->request->remove('search.value');
+
+        return \DataTables::of($invMaster)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->with('balanceTotal', $depAmountLocal)
+            ->make(true);
     }
 
     public function journalVoucherReopen(Request $request)
