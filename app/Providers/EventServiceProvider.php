@@ -8,7 +8,21 @@ use App\Listeners\AfterDocumentCreated;
 use App\Listeners\AfterLogin;
 use App\Listeners\RevokeOldTokens;
 use App\Models\AccessTokens;
+use App\Models\BookInvSuppMaster;
+use App\Models\CreditNote;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerReceivePayment;
+use App\Models\DebitNote;
+use App\Models\GRVMaster;
+use App\Models\InventoryReclassification;
 use App\Models\ItemIssueMaster;
+use App\Models\ItemReturnMaster;
+use App\Models\JvMaster;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\PurchaseReturn;
+use App\Models\StockAdjustment;
+use App\Models\StockReceive;
+use App\Models\StockTransfer;
 use App\Models\User;
 use Illuminate\Contracts\Logging\Log;
 use Illuminate\Support\Facades\Event;
@@ -44,8 +58,61 @@ class EventServiceProvider extends ServiceProvider
     public function boot()
     {
         parent::boot();
-        ItemIssueMaster::created(function (ItemIssueMaster $document) {
-            //event(new DocumentCreated($document));
+
+        //Inventory Documents
+        GRVMaster::created(function (GRVMaster $document) {
+            event(new DocumentCreated($document));
         });
+        StockAdjustment::created(function (StockAdjustment $document) {
+            event(new DocumentCreated($document));
+        });
+        ItemIssueMaster::created(function (ItemIssueMaster $document) {
+            event(new DocumentCreated($document));
+        });
+        StockReceive::created(function (StockReceive $document) {
+            event(new DocumentCreated($document));
+        });
+        ItemReturnMaster::created(function (ItemReturnMaster $document) {
+            event(new DocumentCreated($document));
+        });
+        StockTransfer::created(function (StockTransfer $document) {
+            event(new DocumentCreated($document));
+        });
+        PurchaseReturn::created(function (PurchaseReturn $document) {
+            event(new DocumentCreated($document));
+        });
+        InventoryReclassification::created(function (InventoryReclassification $document) {
+            event(new DocumentCreated($document));
+        });
+
+        // Account Payable Documents
+        DebitNote::created(function (DebitNote $document) {
+            event(new DocumentCreated($document));
+        });
+        BookInvSuppMaster::created(function (BookInvSuppMaster $document) {
+            event(new DocumentCreated($document));
+        });
+        PaySupplierInvoiceMaster::created(function (PaySupplierInvoiceMaster $document) {
+            event(new DocumentCreated($document));
+        });
+
+        // Account Receivable Documents
+        CreditNote::created(function (CreditNote $document) {
+            $document->documentSystemID = $document->documentSystemiD;
+            event(new DocumentCreated($document));
+        });
+        CustomerInvoiceDirect::created(function (CustomerInvoiceDirect $document) {
+            $document->documentSystemID = $document->documentSystemiD;
+            event(new DocumentCreated($document));
+        });
+        CustomerReceivePayment::created(function (CustomerReceivePayment $document) {
+            event(new DocumentCreated($document));
+        });
+
+        // General Ledger
+        JvMaster::created(function (JvMaster $document) {
+            event(new DocumentCreated($document));
+        });
+
     }
 }
