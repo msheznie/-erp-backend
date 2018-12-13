@@ -202,6 +202,7 @@ class JvDetail extends Model
         'referenceGLCode',
         'referenceGLDescription',
         'comments',
+        'contractUID',
         'clientContractID',
         'currencyID',
         'currencyER',
@@ -240,6 +241,7 @@ class JvDetail extends Model
         'referenceGLCode' => 'string',
         'referenceGLDescription' => 'string',
         'comments' => 'string',
+        'contractUID' => 'integer',
         'clientContractID' => 'string',
         'currencyID' => 'integer',
         'currencyER' => 'float',
@@ -275,6 +277,11 @@ class JvDetail extends Model
     public function chartofaccount()
     {
         return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
+    }
+
+    public function contract()
+    {
+        return $this->belongsTo('App\Models\Contract', 'contractUID', 'contractUID');
     }
 
     
